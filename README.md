@@ -4,136 +4,183 @@
 
 ---
 
-## 🎯 Project Overview & Real-World Context
+## 🛠️ Confirmed Technology Stack
 
-Monk's Dream Jazz Bar requires a zero-downtime, zero-latency system capable of running seamlessly during live sets and crowded nights, even when local ISP internet fails completely.
-
-### Confirmed Physical Hardware Topology:
-- **1 On-Premise PC (Local Server & Cashier Console):** Runs the local PostgreSQL database, NestJS/Fastify engine, and hosts the Admin/Cashier kiosk UI.
-- **1 Thermal Receipt Printer (USB):** Connected directly to the PC (`/dev/usb/receipt-printer`). Handles customer bills, payment receipts, reprints, and cash drawer kicks.
-- **4–8 Android Tablets (Over Local Wi-Fi):**
-  - **Waiters / Cashiers:** Handheld devices for 2D floor plans, taking orders, splitting tabs, and taking payments.
-  - **Station Displays (KDS):** Paperless wall/stand screens for **Cafe**, **Bar**, and **Food** stations.
-- **Dedicated POS Wi-Fi Router:** Keeps all tablets and the PC on a private 5 GHz LAN (`192.168.50.0/24`), isolated from guest Wi-Fi.
-
----
-
-## 🏗️ Architectural Core Principles
-
-```
-  [ Waiter Handhelds ]            [ Station Tablets (KDS) ]
-           \                                /
-      (HTTP REST Writes)            (WebSocket Live Pushes)
-             \                            /
-         ┌─────────────────────────────────────┐
-         │     ON-PREMISE LOCAL PC (HUB)       │
-         │  Fastify API  •  Postgres  •  Caddy │
-         └──────────────────┬──────────────────┘
-                            │
-               ┌────────────┴────────────┐
-               │                         │
-     [ USB Receipt Printer ]     [ Supabase Cloud ]
-        (Instant 2ms Print)     (Background Sync Outbox)
-```
-
-1. **HTTP REST for Mutations (Actions):** All orders, payments, void requests, and status changes use standard HTTP `POST` with `Idempotency-Key` headers. This prevents duplicate charges and ensures clean ACID transactions.
-2. **WebSockets (Socket.IO) for Notifications & Chat:** WebSockets are used strictly for downstream event pushes (`ticket.created` for KDS screens, `floor.table_updated` for table color/icon changes) and two-way **Team Chat** between staff.
-3. **Local PC as the Primary System of Record:** Every order, inventory deduction, and payment is committed locally to PostgreSQL first. If the internet goes down, service continues with zero interruption.
-4. **Cloud Mirroring via Transactional Outbox:** As sales complete, rows are recorded in a `sync_outbox` table and synced up to Supabase using **Hybrid Logical Clocks (HLC)** for conflict-free cloud reporting and owner dashboards.
-5. **Unified Role-Based App:** Tablets and the PC run the exact same UI, but logging in as **Cashier / Admin on the PC** unlocks counter hardware controls (Manual Reprint with audit reasons, Pop Cash Drawer).
+| Layer | Technology | Details |
+| :--- | :--- | :--- |
+| **Frontend** | **React Native + NativeWind (Tailwind CSS)** | Built with Expo (`apps/pos-mobile`). Unified app for Android tablets, iOS, and Web Kiosk. |
+| **Backend** | **NestJS (Fastify engine)** | High-throughput local hub server (`apps/hub-api`). |
+| **Database & ORM** | **PostgreSQL + Drizzle ORM** | Resilient local storage with Drizzle schemas (`packages/db`) + in-memory fallback. |
+| **Operations Realtime**| **Server-Sent Events (SSE)** | Lightweight stream (`/api/v1/operations/stream`) for taking orders, KDS tickets, floor updates & 86 items. |
+| **Messaging & Chat** | **WebSockets (Socket.IO)** | Dedicated two-way staff chat channels (`#all`, `#bar`, `#kitchen`, `#cafe`, `#admin`) and urgent alerts. |
+| **Validation & Types**| **Zod + TypeScript** | Shared schemas and domain models across monorepo (`packages/shared`). |
+| **Hardware Driver** | **ESC/POS Binary Engine** | Direct Linux USB driver (`packages/printing`) for 80mm thermal receipts and cash drawer kicks. |
 
 ---
 
-## 📁 Repository Structure (Turborepo Monorepo)
+## 🎯 Real-World Context & Hardware Topology
+
+Monk's Dream Jazz Bar requires zero-downtime and sub-5ms latency during crowded live music sets, even if the venue's internet fails completely.
 
 ```
-Monk's Dream Jazz Bar POS/
-├── apps/
-│   └── hub-api/             # Local PC server engine (Fastify, Socket.IO, DB hooks)
-│
-├── packages/
-│   ├── shared/              # Domain types, Zod schemas, HLC utility, Corkage rate
-│   ├── db/                  # Drizzle ORM schema for local Postgres & Supabase
-│   └── printing/            # Low-level ESC/POS USB thermal printer driver
-│
-├── infra/
-│   └── hub/                 # Production deployment (Docker Compose, Ubuntu setup scripts)
-│
-├── ARCHITECTURE_AND_SETUP_PLAN.md  # Comprehensive technical architecture document
-└── README.md                       # This project guide
+                  [ Waiter / Cashier Tablets ]        [ Barista / Kitchen / Bartender KDS ]
+                              \                                      /
+                        (HTTP REST Writes)                  (SSE Realtime Stream)
+                               \                                    /
+                     ┌─────────────────────────────────────────────────────┐
+                     │              ON-PREMISE LOCAL PC (HUB)              │
+                     │    NestJS (Fastify)  •  PostgreSQL  •  Drizzle     │
+                     └───────────────┬─────────────────┬───────────────────┘
+                                     │                 │
+                           (WebSocket Messaging)       │ (Background Outbox)
+                                     │                 │
+                         [ Two-Way Staff Chat ]   [ Supabase Cloud Mirror ]
 ```
 
-### Detailed Breakdown of Packages & Apps:
-
-| Folder / Package | Responsibility |
-| :--- | :--- |
-| **`packages/shared`** | **Single source of truth.** Defines all validation schemas with Zod (`CreateOrderSchema`, `RecordPaymentSchema`, `ReprintReceiptSchema`, `KickDrawerSchema`), station enums (`cafe`, `bar`, `food`), and the `HybridLogicalClock` class for monotonic offline time. |
-| **`packages/db`** | **Database layer (Drizzle ORM).** Maps PostgreSQL tables: `orders` (with idempotency `command_id`), `order_items`, `station_tickets`, `event_log` (for sequence replay), `print_jobs`, and `sync_outbox`. |
-| **`packages/printing`** | **Hardware driver.** Translates receipts into raw binary ESC/POS sequences (cut commands, bolding, 20% corkage breakdown, drawer pulse `ESC p 0 25 250`). Includes `MockPrinter` for testing on dev laptops without physical hardware. |
-| **`apps/hub-api`** | **The Local Server.** Fastify backend providing REST write endpoints and Socket.IO broadcast channels. Implements station fan-out logic and corkage calculations. |
-| **`infra/hub`** | **PC Host Setup.** Contains `docker-compose.yml` (Postgres 17 + Fastify + Caddy) and `setup-host.sh` for one-command Ubuntu configuration (UFW firewall, mDNS Avahi, udev rules for USB printers). |
+### Physical Hardware:
+1. **1 On-Premise PC (Server + Cashier Counter Console):** Runs PostgreSQL, NestJS, and Chrome Kiosk on `http://localhost:8080`.
+2. **1 USB Thermal Receipt Printer:** Connected directly to PC (`/dev/usb/receipt-printer`). Handles guest checks, payment slips, and pops the RJ-11 cash drawer.
+3. **4–8 Handheld Android Tablets (Local 5GHz Wi-Fi):**
+   - **Waiter / Cashier:** Floor map, ordering, 20% flat corkage calculation, tab splitting, bill checkout.
+   - **Station Displays (KDS):** Paperless queues for Barista, Kitchen, and Bartender.
+4. **Dedicated Router (`192.168.50.0/24`):** Isolates POS traffic from venue guest Wi-Fi.
 
 ---
 
-## 🚀 Quickstart for Local Development
+## 👥 User Roles & File Structure
 
-### Prerequisites:
+Every staff member is a distinct user with individual PIN sign-in (`src/auth/`):
+
+```
+apps/pos-mobile/src/
+│
+├── auth/                               # Staff Login & PIN Authentication
+│   ├── components/
+│   │   └── PinPadModal.tsx             # 4-digit keypad modal
+│   ├── screens/
+│   │   └── LoginScreen.tsx             # Staff user selection & PIN sign-in
+│   └── index.ts
+│
+├── users/                              # All User Roles
+│   │
+│   ├── waiter-cashier/                 # Merged Waiter / Cashier User
+│   │   ├── components/
+│   │   │   ├── FloorPlanView.tsx       # 2D table layout & status
+│   │   │   ├── MenuCatalogue.tsx       # Cocktails, food, coffee & 20% corkage
+│   │   │   └── ActiveTabCart.tsx       # Tab cart, bill splitting & pay
+│   │   ├── screens/
+│   │   │   └── WaiterCashierScreen.tsx # Floor POS ordering view
+│   │   └── index.ts
+│   │
+│   ├── admin/                          # Admin / Manager User
+│   │   ├── components/
+│   │   │   ├── ItemAvailabilityManager.tsx # Instant 86 item manager
+│   │   │   └── HardwareTerminalControls.tsx# Printer & cash drawer test
+│   │   ├── screens/
+│   │   │   └── AdminDashboardScreen.tsx # Shift KPIs & device status
+│   │   └── index.ts
+│   │
+│   ├── barista/                        # Barista User (Coffee Station)
+│   │   ├── components/
+│   │   │   └── BaristaTicketCard.tsx   # Coffee tickets & prep timers
+│   │   ├── screens/
+│   │   │   └── BaristaKdsScreen.tsx    # Espresso & brew queue
+│   │   └── index.ts
+│   │
+│   ├── kitchen/                        # Kitchen User (Food Station)
+│   │   ├── components/
+│   │   │   └── KitchenTicketCard.tsx   # Food tickets & grill timers
+│   │   ├── screens/
+│   │   │   └── KitchenKdsScreen.tsx    # Kitchen pass queue
+│   │   └── index.ts
+│   │
+│   ├── bartender/                      # Bartender User (Liquor Station)
+│   │   ├── components/
+│   │   │   └── BartenderTicketCard.tsx # Cocktails, neat pours & corkage prep
+│   │   ├── screens/
+│   │   │   └── BartenderKdsScreen.tsx  # Bar drink queue
+│   │   └── index.ts
+│   │
+│   └── index.ts                        # Unified export of all user screens
+│
+├── services/                           # Client Network Layer
+│   ├── operationsStream.ts             # Server-Sent Events (SSE) for orders & KDS
+│   ├── messagingSocket.ts              # WebSockets (Socket.IO) for staff chat
+│   ├── api.ts                          # Typed REST client for mutations
+│   └── index.ts
+│
+├── components/                         # Shared Cross-Role UI
+│   ├── Header.tsx                      # Top bar with "Switch User" & LAN sync badge
+│   └── TeamChatScreen.tsx              # Staff channels & urgent 86 broadcasts
+│
+├── store/                              # State Management (Zustand)
+│   ├── useAuthStore.ts                 # Logged-in user, active view, logout
+│   └── useCartStore.ts                 # Live tab cart & 20% flat corkage fee
+│
+└── mockData.ts                         # Seed staff with PINs, menu & tickets
+```
+
+### Seed Staff PINs:
+- **Manager Miles (Admin):** `9999`
+- **Server Chet (Waiter / Cashier):** `1111`
+- **Server Nina (Waiter / Cashier):** `2222`
+- **Barista Sam (Barista):** `0002`
+- **Chef Leo (Kitchen):** `0003`
+- **Bartender Max (Bartender):** `0001`
+
+---
+
+## 📡 Realtime Protocol Separation
+
+1. **Server-Sent Events (SSE)** on `GET /api/v1/operations/stream`:
+   - Operations: `order.created`, `ticket.created`, `ticket.status_updated`, `floor.table_updated`, `menu.item_availability` (86 items), `tab.paid`.
+   - Supports station filtering: `?station=barista`, `?station=kitchen`, `?station=bartender`.
+2. **WebSocket (Socket.IO)** on `ws://host:3000`:
+   - Staff Messaging & Team Chat: Channels `#all`, `#bar`, `#kitchen`, `#cafe`, `#admin`.
+   - Emergency 86 broadcasts.
+3. **HTTP REST Mutations**:
+   - `POST /api/v1/orders` (with `Idempotency-Key` header)
+   - `PATCH /api/v1/tickets/:id/status`
+   - `PATCH /api/v1/menu/:id/availability`
+   - `POST /api/v1/payments`
+   - `POST /api/v1/hardware/kick-drawer`
+
+---
+
+## 🚀 Development Quickstart
+
+### Prerequisites
 - **Node.js:** v20+ or v22+ LTS
-- **pnpm:** Installed globally (`npm i -g pnpm` or via corepack)
+- **pnpm:** v10+
 
 ### 1. Install Dependencies
 ```bash
 pnpm install
 ```
 
-### 2. Build All Packages
+### 2. Build Monorepo Packages
 ```bash
 pnpm -r build
 ```
 
-### 3. Run the Local Hub API in Development
+### 3. Start the Backend Server (`apps/hub-api`)
 ```bash
 pnpm --filter @monks/hub-api dev
 ```
-The server will boot on `http://127.0.0.1:3000` (or `PORT=3099`).
+*Listens on `http://localhost:3000` (Fastify + NestJS + Drizzle).*
 
-### 4. Health Check Smoke Test
+### 4. Start the Frontend App (`apps/pos-mobile`)
 ```bash
-curl http://127.0.0.1:3000/health/live
-# Returns: {"status":"ok","time":"..."}
+# Web / Browser mode
+pnpm --filter pos-mobile run web
+
+# Or target Android device / tablet
+pnpm --filter pos-mobile run android
 ```
+*Frontend opens at `http://localhost:8081`.*
 
 ---
 
-## 🖥️ Production Machine Setup (On the Restaurant PC)
-
-When provisioning the restaurant's physical PC running Ubuntu Linux:
-
-1. **Clone the repository** onto the PC:
-   ```bash
-   git clone <repo-url> /opt/monks-pos
-   cd /opt/monks-pos
-   ```
-
-2. **Run Host Setup Script as Root:**
-   ```bash
-   sudo ./infra/hub/setup-host.sh
-   ```
-   *This automatically sets the hostname to `pos-hub`, configures UFW firewall rules (TCP 443, UDP 5353 for mDNS), installs udev rules for the USB printer (`/dev/usb/receipt-printer`), and configures Avahi mDNS advertisement.*
-
-3. **Launch Production Stack via Docker Compose:**
-   ```bash
-   cd infra/hub
-   docker compose up -d
-   ```
-
-4. **Kiosk Console Display:**
-   The PC's screen automatically runs Google Chrome in Kiosk mode opening `http://localhost:8080`, providing the Cashier/Admin with immediate access to table billing, receipt reprints, and cash drawer management.
-
----
-
-## 📋 Architectural References
-
-For complete deep-dive documentation on conflict resolution, recovery runbooks, and network security policies, refer to:
-- 📖 [ARCHITECTURE_AND_SETUP_PLAN.md](file:///home/ichannnj/Documents/Commisions/Monk's%20Dream%20Jazz%20Bar%20POS/ARCHITECTURE_AND_SETUP_PLAN.md)
-- 📄 [Jazz_Bar_Platform_Proposal.pdf](file:///home/ichannnj/Documents/Commisions/Monk's%20Dream%20Jazz%20Bar%20POS/Jazz_Bar_Platform_Proposal.pdf)
+## 📋 Documentation References
+- 📖 [ARCHITECTURE_AND_SETUP_PLAN.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/ARCHITECTURE_AND_SETUP_PLAN.md) — Comprehensive technical architecture, HLC clock sync & USB hardware setup.
+- 📄 [Jazz_Bar_Platform_Proposal.pdf](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/Jazz_Bar_Platform_Proposal.pdf) — Client specifications and business requirements.
