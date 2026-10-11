@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+export const RoleEnum = z.enum(['admin', 'cashier', 'waiter', 'station_bar', 'station_cafe', 'station_food']);
+export type Role = z.infer<typeof RoleEnum>;
+
 export const StationEnum = z.enum(['cafe', 'bar', 'food']);
 export type Station = z.infer<typeof StationEnum>;
 
@@ -52,6 +55,23 @@ export const RecordPaymentSchema = z.object({
   cashierId: z.string().uuid(),
 });
 export type RecordPayment = z.infer<typeof RecordPaymentSchema>;
+
+// Reprint Receipt (PC Counter Station)
+export const ReprintReceiptSchema = z.object({
+  orderId: z.string().uuid(),
+  reason: z.string().min(3),
+  requestedBy: z.string().uuid(),
+  approverPin: z.string().length(4).optional(),
+});
+export type ReprintReceipt = z.infer<typeof ReprintReceiptSchema>;
+
+// Cash Drawer Pulse (PC Counter Station)
+export const KickDrawerSchema = z.object({
+  pin: z.string().length(4), // Manager/Cashier PIN required to pop drawer manually
+  userId: z.string().uuid(),
+  reason: z.string().default('Manual Open / Change'),
+});
+export type KickDrawer = z.infer<typeof KickDrawerSchema>;
 
 // Void Order Item
 export const VoidOrderItemSchema = z.object({

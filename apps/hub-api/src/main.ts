@@ -280,6 +280,57 @@ fastify.post('/api/v1/tabs/:id/payments', async (request, reply) => {
   });
 });
 
+// 4. PC Counter: Manual Reprint of Receipt
+fastify.post('/api/v1/printer/reprint', async (request, reply) => {
+  const { orderId, reason } = request.body as { orderId: string; reason: string };
+  const order = db.orders.get(orderId);
+  if (!order) {
+    return reply.status(404).send({ error: 'Order not found' });
+  }
+
+  const reprintPayload = {
+    receiptNumber: `REC-${Date.now().toString().slice(-6)}`,
+    tableNumber: order.tableNumber,
+    tabName: order.tabName,
+    waiterName: 'Staff',
+    items: order.items,
+    subtotal: order.subtotal,
+    corkageFee: order.corkageAmount,
+    total: order.totalAmount,
+    tendered: order.totalAmount,
+    change: 0,
+    paymentMethod: 'REPRINT',
+    timestamp: new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }),
+    isReprint: true,
+  };
+
+  try {
+    await printer.printReceipt(reprintPayload);
+    fastify.log.info({ orderId, reason }, 'Receipt reprinted from PC counter');
+    return reply.status(200).send({ status: 'reprinted', receipt: reprintPayload });
+  } catch (err) {
+    fastify.log.error(err, 'Failed to reprint');
+    return reply.status(500).send({ error: 'Printer communication failure' });
+  }
+});
+
+// 5. PC Counter: Open/Kick Cash Drawer (Protected)
+fastify.post('/api/v1/printer/kick-drawer', async (request, reply) => {
+  const { pin, reason } = request.body as { pin: string; reason?: string };
+  // Simple validation for manager/cashier PIN
+  if (!pin || pin.length !== 4) {
+    return reply.status(403).send({ error: 'Invalid PIN' });
+  }
+
+  const success = await printer.kickCashDrawer();
+  if (success) {
+    fastify.log.info({ reason: reason || 'Manual kick' }, 'Cash drawer opened from PC counter');
+    return reply.status(200).send({ status: 'drawer_kicked' });
+  } else {
+    return reply.status(500).send({ error: 'Failed to kick drawer' });
+  }
+});
+
 // Start Server
 try {
   await fastify.listen({ port: PORT, host: '0.0.0.0' });

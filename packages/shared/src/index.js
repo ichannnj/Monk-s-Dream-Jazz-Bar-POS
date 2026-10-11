@@ -1,4 +1,5 @@
 import { z } from 'zod';
+export const RoleEnum = z.enum(['admin', 'cashier', 'waiter', 'station_bar', 'station_cafe', 'station_food']);
 export const StationEnum = z.enum(['cafe', 'bar', 'food']);
 export const TicketStatusEnum = z.enum(['NEW', 'PREPARING', 'READY', 'SERVED', 'CANCELLED']);
 export const TableStatusEnum = z.enum(['EMPTY', 'OCCUPIED', 'PREPARING', 'READY', 'SERVED', 'BILL_REQUESTED']);
@@ -34,6 +35,19 @@ export const RecordPaymentSchema = z.object({
     method: PaymentMethodEnum,
     referenceNumber: z.string().optional(),
     cashierId: z.string().uuid(),
+});
+// Reprint Receipt (PC Counter Station)
+export const ReprintReceiptSchema = z.object({
+    orderId: z.string().uuid(),
+    reason: z.string().min(3),
+    requestedBy: z.string().uuid(),
+    approverPin: z.string().length(4).optional(),
+});
+// Cash Drawer Pulse (PC Counter Station)
+export const KickDrawerSchema = z.object({
+    pin: z.string().length(4), // Manager/Cashier PIN required to pop drawer manually
+    userId: z.string().uuid(),
+    reason: z.string().default('Manual Open / Change'),
 });
 // Void Order Item
 export const VoidOrderItemSchema = z.object({

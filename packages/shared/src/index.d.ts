@@ -1,4 +1,6 @@
 import { z } from 'zod';
+export declare const RoleEnum: z.ZodEnum<["admin", "cashier", "waiter", "station_bar", "station_cafe", "station_food"]>;
+export type Role = z.infer<typeof RoleEnum>;
 export declare const StationEnum: z.ZodEnum<["cafe", "bar", "food"]>;
 export type Station = z.infer<typeof StationEnum>;
 export declare const TicketStatusEnum: z.ZodEnum<["NEW", "PREPARING", "READY", "SERVED", "CANCELLED"]>;
@@ -125,20 +127,51 @@ export declare const RecordPaymentSchema: z.ZodObject<{
     referenceNumber?: string | undefined;
 }>;
 export type RecordPayment = z.infer<typeof RecordPaymentSchema>;
+export declare const ReprintReceiptSchema: z.ZodObject<{
+    orderId: z.ZodString;
+    reason: z.ZodString;
+    requestedBy: z.ZodString;
+    approverPin: z.ZodOptional<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    orderId: string;
+    reason: string;
+    requestedBy: string;
+    approverPin?: string | undefined;
+}, {
+    orderId: string;
+    reason: string;
+    requestedBy: string;
+    approverPin?: string | undefined;
+}>;
+export type ReprintReceipt = z.infer<typeof ReprintReceiptSchema>;
+export declare const KickDrawerSchema: z.ZodObject<{
+    pin: z.ZodString;
+    userId: z.ZodString;
+    reason: z.ZodDefault<z.ZodString>;
+}, "strip", z.ZodTypeAny, {
+    reason: string;
+    pin: string;
+    userId: string;
+}, {
+    pin: string;
+    userId: string;
+    reason?: string | undefined;
+}>;
+export type KickDrawer = z.infer<typeof KickDrawerSchema>;
 export declare const VoidOrderItemSchema: z.ZodObject<{
     orderItemId: z.ZodString;
     reason: z.ZodString;
     approverPin: z.ZodString;
     requesterId: z.ZodString;
 }, "strip", z.ZodTypeAny, {
-    orderItemId: string;
     reason: string;
     approverPin: string;
+    orderItemId: string;
     requesterId: string;
 }, {
-    orderItemId: string;
     reason: string;
     approverPin: string;
+    orderItemId: string;
     requesterId: string;
 }>;
 export type VoidOrderItem = z.infer<typeof VoidOrderItemSchema>;
@@ -151,7 +184,7 @@ export declare const ChatMessageSchema: z.ZodObject<{
     isUrgent: z.ZodDefault<z.ZodBoolean>;
     tableContext: z.ZodOptional<z.ZodNumber>;
 }, "strip", z.ZodTypeAny, {
-    channel: "cafe" | "bar" | "food" | "all" | "admin";
+    channel: "admin" | "cafe" | "bar" | "food" | "all";
     senderId: string;
     senderName: string;
     senderRole: string;
@@ -159,7 +192,7 @@ export declare const ChatMessageSchema: z.ZodObject<{
     isUrgent: boolean;
     tableContext?: number | undefined;
 }, {
-    channel: "cafe" | "bar" | "food" | "all" | "admin";
+    channel: "admin" | "cafe" | "bar" | "food" | "all";
     senderId: string;
     senderName: string;
     senderRole: string;
