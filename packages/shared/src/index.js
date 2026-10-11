@@ -66,4 +66,8 @@ export const ChatMessageSchema = z.object({
     isUrgent: z.boolean().default(false),
     tableContext: z.number().int().optional(),
 });
+// Staff PIN Login
+export const PinLoginSchema = z.object({
+    pin: z.string().length(4),
+});
 export * from './hlc.js';

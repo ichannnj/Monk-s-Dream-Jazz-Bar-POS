@@ -200,5 +200,12 @@ export declare const ChatMessageSchema: z.ZodObject<{
     isUrgent?: boolean | undefined;
     tableContext?: number | undefined;
 }>;
-export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+export declare const PinLoginSchema: z.ZodObject<{
+    pin: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    pin: string;
+}, {
+    pin: string;
+}>;
+export type PinLogin = z.infer<typeof PinLoginSchema>;
 export * from './hlc.js';

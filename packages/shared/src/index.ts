@@ -92,6 +92,11 @@ export const ChatMessageSchema = z.object({
   isUrgent: z.boolean().default(false),
   tableContext: z.number().int().optional(),
 });
-export type ChatMessage = z.infer<typeof ChatMessageSchema>;
+// Staff PIN Login
+export const PinLoginSchema = z.object({
+  pin: z.string().length(4),
+});
+export type PinLogin = z.infer<typeof PinLoginSchema>;
 
 export * from './hlc.js';
+

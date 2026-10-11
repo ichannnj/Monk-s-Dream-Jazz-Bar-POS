@@ -8,13 +8,21 @@
     "start": "node dist/main.js"
   },
   "dependencies": {
-    "@monks/shared": "workspace:*",
+    "@fastify/cors": "^10.0.1",
     "@monks/db": "workspace:*",
     "@monks/printing": "workspace:*",
+    "@monks/shared": "workspace:*",
+    "@nestjs/common": "^12.1.2",
+    "@nestjs/core": "^12.1.2",
+    "@nestjs/platform-fastify": "^12.1.2",
+    "@nestjs/platform-socket.io": "^12.1.2",
+    "@nestjs/websockets": "^12.1.2",
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.36.0",
     "fastify": "^5.1.0",
-    "@fastify/cors": "^10.0.1",
-    "socket.io": "^4.8.1",
-    "dotenv": "^16.4.5"
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@types/node": "^22.8.2",
