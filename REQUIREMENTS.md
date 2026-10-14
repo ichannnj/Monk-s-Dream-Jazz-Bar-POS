@@ -36,13 +36,15 @@ flowchart TD
 
 ## 2. User Roles & Station Matrix
 
+> **Hardware Standardization:** All active floor, bar, and kitchen roles operate on **Tablets** with touch-first interfaces. Only the receipt printer station runs on a PC (due to USB thermal hardware).
+
 | Role | Interface / Device | Primary Responsibilities | Access Restrictions |
 |---|---|---|---|
-| **Admin** | Desktop / Tablet Web | • Venue Mode Toggle (`Cafe` vs `Event`)<br>• Menu & Inventory Management<br>• Real-time & Historical Sales Analytics<br>• Staff PIN & User Management | Full system access |
-| **Cashier / Waiter** | Tablet / Mobile Handheld | • Floor / Table Layout View (Cafe & Bar zones)<br>• Order Creation & Customization<br>• Bill Splitting, Discounts, Cash/Card Settlement<br>• Trigger Receipt Printing | Cannot alter global operating modes or financial reports |
-| **Barista / Bartender** | Station Screen (KDS) | • Real-time queue for Coffee, Mocktails, Wine, Cocktails<br>• Mark items as `In Progress` or `Ready` | Station view only; no billing or floor assignment |
-| **Kitchen Chef** | Station Screen (KDS) | • Real-time queue for Hot/Cold Food (Pizza, Pasta, Sides)<br>• Course firing & preparation timers<br>• Mark items as `In Progress` or `Ready` | Station view only; no drink tickets or payment access |
-| **FOH (Runner / Expediter)** | Tablet / Mobile / Wall KDS | • Consolidated order overview showing item statuses across all stations<br>• Alerted when all items (or courses) for a table are `Ready`<br>• Marks items as `Served` to table | No billing or menu configuration |
+| **Admin** | Tablet / Desktop Web | • Venue Mode Toggle (`Cafe` vs `Event`)<br>• Menu & Inventory Management<br>• Real-time & Historical Sales Analytics<br>• Staff PIN & User Management | Full system access |
+| **Cashier / Waiter** | Handheld Tablet | • Floor / Table Layout View (Cafe & Bar zones)<br>• Open Named Tabs per Table<br>• Order Creation & Customization<br>• Bill Settlement & Remote Print Triggering | Cannot alter global operating modes or financial reports |
+| **Barista / Bartender** | Counter-Mounted Tablet (KDS) | • Real-time queue for Coffee, Mocktails, Wine, Cocktails<br>• Tap **"Accept"** $\rightarrow$ moves ticket to **Preparing**<br>• Tap **"Done"** $\rightarrow$ marks drink **Ready** for buzzout | Station queue only; no billing or floor layout |
+| **Kitchen Chef** | Kitchen-Mounted Tablet (KDS) | • Real-time queue for Food (Pasta, Pizza, Sides)<br>• Tap **"Accept"** $\rightarrow$ moves ticket to **Preparing**<br>• Tap **"Done"** $\rightarrow$ marks food **Ready** for buzzout | Station queue only; no drink tickets or payment access |
+| **FOH Runner (Buzzout Device)** | Dedicated Expediter Tablet | • Consolidated view across Bar and Kitchen stations<br>• Buzzes/alerts automatically when all items for a tab are marked **Done**<br>• Runner delivers to table and taps **"Mark Served"** | No billing or menu modification |
 | **Receipt Printer Station** | Dedicated PC with USB Thermal Printer | • Always-open Web Client listening to print dispatch events<br>• Renders formatted receipts and prints directly via USB ESC/POS driver | Terminal client; automated background print listener |
 
 ---
@@ -68,43 +70,47 @@ Orders are structured with a **Table $\rightarrow$ Tab $\rightarrow$ Items** hie
 ### 3.2. Category-Based Routing (Independent of Seating)
 Orders are composed of line items belonging to product categories. **Station routing is determined solely by item category, NEVER by seating location or tab owner:**
 
-* **Beverages & Drinks Category** $\rightarrow$ Routes to **Barista / Bartender KDS**.
-* **Kitchen & Food Category** $\rightarrow$ Routes to **Kitchen Station KDS**.
+* **Beverages & Drinks Category** $\rightarrow$ Routes to **Barista / Bartender Tablet KDS**.
+* **Kitchen & Food Category** $\rightarrow$ Routes to **Kitchen Tablet KDS**.
 
 > **Important Rule:** A customer named "Alice" seated at a Bar Counter seat who orders Pasta will have her food routed directly to the **Kitchen**. A customer seated in the Cafe Lounge who orders an Espresso Martini will have their drink routed to the **Bar**. The KDS ticket displays both the **Table Number** and the **Customer Tab Name** for clear server delivery.
 
-### 3.3. Order & Item State Lifecycle
+### 3.3. Order & Item State Lifecycle (Tablet & Buzzout Flow)
 
 ```mermaid
 stateDiagram-v2
-    [*] --> Tab_Opened: Waiter opens Tab on Table with Name
-    Tab_Opened --> Items_Placed: Add Items & Submit to Stations
+    [*] --> Tab_Opened: Waiter opens Tab on Table with Customer Name
+    Tab_Opened --> Items_Placed: Add Items & Send Order
     
-    state Items_Placed {
-        [*] --> Station_Pending
-        Station_Pending --> Station_InProgress: Cook / Barista Starts
-        Station_InProgress --> Station_Ready: Cook / Barista Finishes
+    state Station_KDS_Tablet {
+        [*] --> Pending: Card appears on Tablet
+        Pending --> Preparing: Cook/Barista taps "Accept"
+        Preparing --> Done: Cook/Barista taps "Done"
     }
     
-    Items_Placed --> ReadyToServe: All Tab Items "Ready"
-    ReadyToServe --> Served: FOH Delivers to Table/Customer
-    Served --> Paid: Cashier Settles Specific Tab
+    Items_Placed --> Station_KDS_Tablet: Dispatched to Bar & Kitchen
+    Done --> Buzzout_Alert: All Station Items marked "Done"
+    Buzzout_Alert --> Served: FOH delivers to Table & taps "Served"
+    Served --> Paid: Cashier Settles Specific Tab at Checkout
     Paid --> [*]: Tab Closed (Table frees when 0 open tabs)
 ```
 
-1. **Tab & Order Creation:** Waiter selects Table $\rightarrow$ enters or selects Customer Name (e.g., "John") $\rightarrow$ adds drinks and food items $\rightarrow$ sends order.
-2. **Atomic Dispatch:**
+1. **Tab & Order Creation (Waiter Tablet):**
+   * Waiter selects Table $\rightarrow$ enters Customer Name (e.g., "John") $\rightarrow$ selects items $\rightarrow$ taps **Send Order**.
+2. **Atomic Tablet Dispatch:**
    * Backend assigns items to the customer's `Tab`.
    * Backend generates individual `OrderItem` tickets tagged with `Table #`, `Tab: Name`, and destination station (`station_bar` or `station_food`).
-   * Real-time WebSockets push new cards to Bar and Kitchen screens simultaneously.
-3. **Station Preparation:**
-   * Barista sees ticket: `Table 4 - Tab: John: 1x Flat White` $\rightarrow$ marks `Ready`.
-   * Kitchen sees ticket: `Table 4 - Tab: John: 1x Truffle Pasta` $\rightarrow$ marks `Ready`.
-4. **FOH Expediting:**
-   * FOH screen shows aggregated order status for Table 4 / Tab John.
-   * When all items are ready, FOH delivers items specifically to John at Table 4 and taps **"Mark Served"**.
+   * WebSockets push live ticket cards to the Barista and Kitchen tablets simultaneously.
+3. **Station Preparation on Tablets ("Accept" $\rightarrow$ "Done"):**
+   * **Step 1 (Pending):** New ticket card flashes on Barista/Kitchen tablet.
+   * **Step 2 (Accept $\rightarrow$ Preparing):** Staff taps **"Accept"** when starting prep; card highlights in yellow/orange.
+   * **Step 3 (Done $\rightarrow$ Ready):** Staff taps **"Done"** when prep finishes; item transitions to completed state.
+4. **FOH Expediting ("Buzzout Device" Tablet):**
+   * The dedicated FOH Expediter tablet acts as the **Buzzout Device**, monitoring all active table tabs across stations.
+   * When both drink items (Bar) and food items (Kitchen) for a tab are marked **Done**, the buzzout device triggers a visual & audio alert notifying the runner that the complete order is **Ready to Serve**.
+   * Runner collects items, delivers them directly to the customer at the table, and taps **"Mark Served"**.
 5. **Checkout & Bill Printing (Strictly at Checkout):**
-   * **Paperless Kitchen/Bar:** No paper chits are ever printed during order placement or preparation—station workflows are 100% digital via KDS screens.
+   * **Paperless Kitchen/Bar:** No paper chits are ever printed during order placement or preparation—station workflows are 100% digital via tablets.
    * **Checkout-Only Printing:** Receipt printing occurs **only when a table or customer tab is settling their bill at checkout**.
    * Cashier views open tabs for Table 4 $\rightarrow$ selects "John" $\rightarrow$ processes payment $\rightarrow$ triggers **"Print Receipt"**.
    * Dedicated Printer PC outputs the thermal paper receipt (`Table 4 | Guest: John | Total Paid: $...`).
