@@ -1,186 +1,138 @@
-# 🎷 Monk's Dream Jazz Bar — Digital Operations Platform (POS & KDS)
+# 🎷 Monk's Dream Jazz Bar — Cloud POS & KDS Platform
 
-> A local-first, offline-resilient Point of Sale (POS) and Kitchen Display System (KDS) designed for live jazz bar operations with real-time station routing, USB ESC/POS thermal printing, and background Supabase cloud sync.
-
----
-
-## 🛠️ Confirmed Technology Stack
-
-| Layer | Technology | Details |
-| :--- | :--- | :--- |
-| **Frontend** | **React Native + NativeWind (Tailwind CSS)** | Built with Expo (`apps/pos-mobile`). Unified app for Android tablets, iOS, and Web Kiosk. |
-| **Backend** | **NestJS (Fastify engine)** | High-throughput local hub server (`apps/hub-api`). |
-| **Database & ORM** | **PostgreSQL + Drizzle ORM** | Resilient local storage with Drizzle schemas (`packages/db`) + in-memory fallback. |
-| **Operations Realtime**| **Server-Sent Events (SSE)** | Lightweight stream (`/api/v1/operations/stream`) for taking orders, KDS tickets, floor updates & 86 items. |
-| **Messaging & Chat** | **WebSockets (Socket.IO)** | Dedicated two-way staff chat channels (`#all`, `#bar`, `#kitchen`, `#cafe`, `#admin`) and urgent alerts. |
-| **Validation & Types**| **Zod + TypeScript** | Shared schemas and domain models across monorepo (`packages/shared`). |
-| **Hardware Driver** | **ESC/POS Binary Engine** | Direct Linux USB driver (`packages/printing`) for 80mm thermal receipts and cash drawer kicks. |
+> A full-stack, cloud-native Point of Sale (POS) and Kitchen Display System (KDS) engineered for **Monk's Dream Jazz Bar**. Built with **React Native (Expo)**, **NestJS (Fastify)**, **Prisma ORM**, and **Supabase Database Hosting**.
 
 ---
 
-## 🎯 Real-World Context & Hardware Topology
+## 📖 System Documentation & Specifications
 
-Monk's Dream Jazz Bar requires zero-downtime and sub-5ms latency during crowded live music sets, even if the venue's internet fails completely.
+Detailed architectural specifications, station routing rules, data models, and business logic are fully documented in:
+
+👉 **[REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)** — *Comprehensive system architecture, order lifecycle state machines, role matrix, and thermal printing design.*
+
+---
+
+## 🏛️ System Overview & Architecture
+
+Monk's Dream operates as an artisan cafe by day and an intimate jazz bar & live event lounge by night.
 
 ```
-                  [ Waiter / Cashier Tablets ]        [ Barista / Kitchen / Bartender KDS ]
-                              \                                      /
-                        (HTTP REST Writes)                  (SSE Realtime Stream)
-                               \                                    /
-                     ┌─────────────────────────────────────────────────────┐
-                     │              ON-PREMISE LOCAL PC (HUB)              │
-                     │    NestJS (Fastify)  •  PostgreSQL  •  Drizzle     │
-                     └───────────────┬─────────────────┬───────────────────┘
-                                     │                 │
-                           (WebSocket Messaging)       │ (Background Outbox)
-                                     │                 │
-                         [ Two-Way Staff Chat ]   [ Supabase Cloud Mirror ]
+                              ┌─────────────────────────────────────────┐
+                              │           Waiter / Cashier POS          │
+                              │  (Table layout: Cafe Zone & Bar Zone)   │
+                              └────────────────────┬────────────────────┘
+                                                   │
+                                                   ▼
+                              ┌─────────────────────────────────────────┐
+                              │         NestJS WebSocket Gateway        │
+                              │       & Prisma Database Service         │
+                              └───────┬─────────────────────────┬───────┘
+                                      │                         │
+                   Beverage Items     │                         │  Food Items
+                   (Coffee, Drinks)   │                         │  (Pasta, Pizza)
+                                      ▼                         ▼
+                        ┌──────────────────────────┐ ┌──────────────────────────┐
+                        │   Barista / Bartender    │ │     Kitchen Station      │
+                        │       Station KDS        │ │       Station KDS        │
+                        └─────────────┬────────────┘ └─────────────┬────────────┘
+                                      │                            │
+                                      └─────────────┬──────────────┘
+                                                    │ All items marked READY
+                                                    ▼
+                                       ┌────────────────────────┐
+                                       │ FOH Runner / Expediter │
+                                       │    (Delivers Table)    │
+                                       └────────────────────────┘
+                                                    │
+                                                    ▼
+                                       ┌────────────────────────┐
+                                       │ Receipt Print Terminal │
+                                       │ (PC + USB Thermal Web) │
+                                       └────────────────────────┘
 ```
 
-### Physical Hardware:
-1. **1 On-Premise PC (Server + Cashier Counter Console):** Runs PostgreSQL, NestJS, and Chrome Kiosk on `http://localhost:8080`.
-2. **1 USB Thermal Receipt Printer:** Connected directly to PC (`/dev/usb/receipt-printer`). Handles guest checks, payment slips, and pops the RJ-11 cash drawer.
-3. **4–8 Handheld Android Tablets (Local 5GHz Wi-Fi):**
-   - **Waiter / Cashier:** Floor map, ordering, 20% flat corkage calculation, tab splitting, bill checkout.
-   - **Station Displays (KDS):** Paperless queues for Barista, Kitchen, and Bartender.
-4. **Dedicated Router (`192.168.50.0/24`):** Isolates POS traffic from venue guest Wi-Fi.
+### Key Functional Concepts
+
+1. **Category-Based Station Routing (Not Location-Based):**
+   - **Drinks & Coffees** $\rightarrow$ Route to **Barista / Bartender Station**.
+   - **Food (Pizza, Pasta, etc.)** $\rightarrow$ Route to **Kitchen Station**.
+   - *Seating Zones (Cafe Area vs. Bar Area) are strictly for floor layout and table identification, not item routing.*
+2. **Admin Operating Mode Toggle:**
+   - **☀️ Normal Cafe Mode:** Standard daytime operations and baseline sales tracking.
+   - **🎷 Event Mode:** Tagged sales sessions for live jazz nights and private shows for separate revenue accounting.
+3. **FOH Expediter:**
+   - Consolidated screen that tracks multi-station orders and notifies runners when all items for a table are ready for delivery.
+4. **Dedicated Receipt Printer Station (Workaround):**
+   - A dedicated PC connected via USB to a thermal printer running the web app to automatically listen and print receipts triggered remotely by cashiers.
+5. **Table Tabs by Customer Name (Split & Shared Billing):**
+   - Tables support multiple independent customer tabs (e.g., Table 4 $\rightarrow$ `Tab: Alice`, `Tab: Bob`). Allows friends to split bills effortlessly or strangers sharing communal tables/bar counter seats to pay their own tab without closing the table for others.
 
 ---
 
-## 👥 User Roles & File Structure
+## 🛠️ Technology Stack
 
-Every staff member is a distinct user with individual PIN sign-in (`src/auth/`):
-
-```
-apps/pos-mobile/src/
-│
-├── auth/                               # Staff Login & PIN Authentication
-│   ├── components/
-│   │   └── PinPadModal.tsx             # 4-digit keypad modal
-│   ├── screens/
-│   │   └── LoginScreen.tsx             # Staff user selection & PIN sign-in
-│   └── index.ts
-│
-├── users/                              # All User Roles
-│   │
-│   ├── waiter-cashier/                 # Merged Waiter / Cashier User
-│   │   ├── components/
-│   │   │   ├── FloorPlanView.tsx       # 2D table layout & status
-│   │   │   ├── MenuCatalogue.tsx       # Cocktails, food, coffee & 20% corkage
-│   │   │   └── ActiveTabCart.tsx       # Tab cart, bill splitting & pay
-│   │   ├── screens/
-│   │   │   └── WaiterCashierScreen.tsx # Floor POS ordering view
-│   │   └── index.ts
-│   │
-│   ├── admin/                          # Admin / Manager User
-│   │   ├── components/
-│   │   │   ├── ItemAvailabilityManager.tsx # Instant 86 item manager
-│   │   │   └── HardwareTerminalControls.tsx# Printer & cash drawer test
-│   │   ├── screens/
-│   │   │   └── AdminDashboardScreen.tsx # Shift KPIs & device status
-│   │   └── index.ts
-│   │
-│   ├── barista/                        # Barista User (Coffee Station)
-│   │   ├── components/
-│   │   │   └── BaristaTicketCard.tsx   # Coffee tickets & prep timers
-│   │   ├── screens/
-│   │   │   └── BaristaKdsScreen.tsx    # Espresso & brew queue
-│   │   └── index.ts
-│   │
-│   ├── kitchen/                        # Kitchen User (Food Station)
-│   │   ├── components/
-│   │   │   └── KitchenTicketCard.tsx   # Food tickets & grill timers
-│   │   ├── screens/
-│   │   │   └── KitchenKdsScreen.tsx    # Kitchen pass queue
-│   │   └── index.ts
-│   │
-│   ├── bartender/                      # Bartender User (Liquor Station)
-│   │   ├── components/
-│   │   │   └── BartenderTicketCard.tsx # Cocktails, neat pours & corkage prep
-│   │   ├── screens/
-│   │   │   └── BartenderKdsScreen.tsx  # Bar drink queue
-│   │   └── index.ts
-│   │
-│   └── index.ts                        # Unified export of all user screens
-│
-├── services/                           # Client Network Layer
-│   ├── operationsStream.ts             # Server-Sent Events (SSE) for orders & KDS
-│   ├── messagingSocket.ts              # WebSockets (Socket.IO) for staff chat
-│   ├── api.ts                          # Typed REST client for mutations
-│   └── index.ts
-│
-├── components/                         # Shared Cross-Role UI
-│   ├── Header.tsx                      # Top bar with "Switch User" & LAN sync badge
-│   └── TeamChatScreen.tsx              # Staff channels & urgent 86 broadcasts
-│
-├── store/                              # State Management (Zustand)
-│   ├── useAuthStore.ts                 # Logged-in user, active view, logout
-│   └── useCartStore.ts                 # Live tab cart & 20% flat corkage fee
-│
-└── mockData.ts                         # Seed staff with PINs, menu & tickets
-```
-
-### Seed Staff PINs:
-- **Manager Miles (Admin):** `9999`
-- **Server Chet (Waiter / Cashier):** `1111`
-- **Server Nina (Waiter / Cashier):** `2222`
-- **Barista Sam (Barista):** `0002`
-- **Chef Leo (Kitchen):** `0003`
-- **Bartender Max (Bartender):** `0001`
+- **Frontend (`frontend/`)**: React Native (Expo SDK) + NativeWind v4 (Tailwind CSS 3.4) + Zustand State Management.
+- **Backend (`backend/`)**: NestJS with Fastify Adapter, WebSocket Gateway (`socket.io` / native ws), and class-validator.
+- **ORM & Database**: Prisma ORM connecting to Supabase Cloud PostgreSQL with connection pooling.
+- **Shared Libraries (`packages/`)**:
+  - `packages/shared`: Shared Zod schemas, TypeScript types, and validation models.
+  - `packages/printing`: ESC/POS binary generator and WebUSB thermal printing utilities.
 
 ---
 
-## 📡 Realtime Protocol Separation
+## 👥 Staff Profiles & Default PINs
 
-1. **Server-Sent Events (SSE)** on `GET /api/v1/operations/stream`:
-   - Operations: `order.created`, `ticket.created`, `ticket.status_updated`, `floor.table_updated`, `menu.item_availability` (86 items), `tab.paid`.
-   - Supports station filtering: `?station=barista`, `?station=kitchen`, `?station=bartender`.
-2. **WebSocket (Socket.IO)** on `ws://host:3000`:
-   - Staff Messaging & Team Chat: Channels `#all`, `#bar`, `#kitchen`, `#cafe`, `#admin`.
-   - Emergency 86 broadcasts.
-3. **HTTP REST Mutations**:
-   - `POST /api/v1/orders` (with `Idempotency-Key` header)
-   - `PATCH /api/v1/tickets/:id/status`
-   - `PATCH /api/v1/menu/:id/availability`
-   - `POST /api/v1/payments`
-   - `POST /api/v1/hardware/kick-drawer`
+| Role | Username | Display Name | Station / Screen | 4-Digit PIN |
+|---|---|---|---|---|
+| **Admin** | `admin` | Miles (Manager) | Admin Dashboard & Mode Toggle | `9999` |
+| **Cashier** | `cashier1` | Coltrane (Cashier) | Checkout & Billing Screen | `1111` |
+| **Waiter** | `waiter1` | Ella (Floor Waiter) | Table Order Taking Screen | `2222` |
+| **Bartender** | `bar1` | Thelonious (Bartender) | Bar KDS (Drinks & Cocktails) | `0001` |
+| **Barista** | `cafe1` | Bill (Barista) | Cafe KDS (Coffee & Tea) | `0002` |
+| **Kitchen Chef** | `kitchen1` | Chet (Chef) | Kitchen KDS (Food & Pizza) | `0003` |
+| **FOH Runner** | `runner1` | Sarah (Expediter) | Ready-to-Serve Dispatch Screen | `3333` |
+| **Printer PC** | `printer1` | Receipt Terminal | Dedicated USB Web Print Client | `0000` |
 
 ---
 
-## 🚀 Development Quickstart
+## ⚡ Quickstart
 
 ### Prerequisites
-- **Node.js:** v20+ or v22+ LTS
-- **pnpm:** v10+
+- Node.js $\ge$ 20.x
+- **pnpm** $\ge$ 12.x (`corepack enable pnpm` or `npm install -g pnpm`)
 
-### 1. Install Dependencies
+### 1. Install & Build
 ```bash
+# Install monorepo dependencies
 pnpm install
+
+# Build shared packages
+pnpm run build
 ```
 
-### 2. Build Monorepo Packages
+### 2. Environment Configuration
+Ensure `.env` exists in `backend/` with your Supabase PostgreSQL credentials:
 ```bash
-pnpm -r build
+cp backend/.env.example backend/.env
 ```
 
-### 3. Start the Backend Server (`apps/hub-api`)
+### 3. Run Development Servers
 ```bash
-pnpm --filter @monks/hub-api dev
-```
-*Listens on `http://localhost:3000` (Fastify + NestJS + Drizzle).*
+# Start Backend API (http://localhost:3000)
+pnpm --filter @monks/backend run dev
 
-### 4. Start the Frontend App (`apps/pos-mobile`)
-```bash
-# Web / Browser mode
-pnpm --filter pos-mobile run web
-
-# Or target Android device / tablet
-pnpm --filter pos-mobile run android
+# Start Frontend (Expo Web & Mobile)
+pnpm --filter @monks/frontend run web
 ```
-*Frontend opens at `http://localhost:8081`.*
 
 ---
 
-## 📋 Documentation References
-- 📖 [ARCHITECTURE_AND_SETUP_PLAN.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/ARCHITECTURE_AND_SETUP_PLAN.md) — Comprehensive technical architecture, HLC clock sync & USB hardware setup.
-- 📄 [Jazz_Bar_Platform_Proposal.pdf](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/Jazz_Bar_Platform_Proposal.pdf) — Client specifications and business requirements.
+## 🗺️ Project Implementation Roadmap
+
+- [x] **Monorepo Foundation:** Turborepo, NestJS (Fastify), Expo, NativeWind, Prisma setup.
+- [x] **Authentication:** 4-digit staff PIN authentication system.
+- [ ] **Data Model Expansion:** Prisma models for Orders, LineItems, Categories, Tables, OperatingSessions (per [REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)).
+- [ ] **KDS Real-Time Dispatch:** WebSocket gateway for live order routing between Waiter $\rightarrow$ Bar/Kitchen $\rightarrow$ FOH.
+- [ ] **Floor & Table View:** Cafe Area and Bar Area table seating layout.
+- [ ] **Admin Mode Toggle:** Cafe Mode vs Event Mode sales tracking.
+- [ ] **Web Thermal Printing Client:** Dedicated print station listener for USB thermal receipts.
