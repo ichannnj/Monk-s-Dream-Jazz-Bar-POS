@@ -8,9 +8,11 @@
 
 ## 1. System Vision & Overview
 
-**Monk's Dream Jazz Bar** is a dual-concept hospitality venue:
-* **Daytime:** Artisan Specialty Coffee & Daytime Cafe.
-* **Evening & Night:** Intimate Jazz Bar, Cocktail Lounge, and Ticketed/Special Performance Venue.
+**Monk's Dream Jazz Bar** operates primarily as an artisan cafe and bar. While live jazz performances, gigs, and private events occur, **they are strictly optional and event-driven (not an everyday occurrence)**:
+* **Default Baseline (Everyday):** Standard daily Cafe & Bar operations.
+* **Optional Event Nights (On-Demand):** Live music gigs, ticketed performances, or private jazz showcases.
+
+Because events do not take place every day, the system does **not** enforce an automated evening event schedule. Instead, the **Admin has an explicit on-demand toggle** (`Normal Cafe Mode` $\leftrightarrow$ `Event Mode`) to activate event-tagged tracking only when an actual event is scheduled.
 
 The POS & Kitchen Display System (KDS) orchestrates real-time order intake, category-based station dispatch, floor table tracking, and thermal receipt printing without relying on paper kitchen chits.
 
@@ -127,11 +129,11 @@ The Admin can toggle the venue operating mode at any time from the administratio
 ```
 
 ### 4.1. Purpose & Functional Difference
-* **Normal Cafe Mode:** Standard daytime operations. Sales, orders, and average ticket values are tagged under general daily cafe revenue.
-* **Event Mode:** Activated for live jazz gigs, evening ticketed shows, or private events.
-  * Every order created during this window is tagged with `operating_mode: "event"`.
-  * Allows the management to track **per-event gross sales, bar-to-kitchen sales ratios during shows, and artist night profitability** separately from regular daily cafe trading.
-  * *Note:* Future iterations may support event cover charges or special event-only cocktail menus.
+* **Normal Cafe Mode (Default Baseline):** Standard daily operations. All sales, orders, and average ticket metrics are recorded under regular cafe/bar business revenue. The POS operates in this mode unless an event is explicitly declared.
+* **Event Mode (Optional On-Demand):** Activated manually by the Admin **only** when a live jazz gig, ticketed show, or special event takes place.
+  * Not mandatory on a daily basis; enabled only during scheduled events.
+  * Every order created while Event Mode is active is tagged with `operating_mode: "event"`.
+  * Enables management to isolate and track **per-event gross sales, bar-to-kitchen sales ratios during shows, and artist night profitability** separately from everyday cafe trading.
 
 ---
 
