@@ -62,8 +62,9 @@ Monk's Dream operates as an artisan cafe by day and an intimate jazz bar & live 
    - **🎷 Event Mode:** Tagged sales sessions for live jazz nights and private shows for separate revenue accounting.
 3. **FOH Expediter:**
    - Consolidated screen that tracks multi-station orders and notifies runners when all items for a table are ready for delivery.
-4. **Dedicated Receipt Printer Station (Workaround):**
-   - A dedicated PC connected via USB to a thermal printer running the web app to automatically listen and print receipts triggered remotely by cashiers.
+4. **Two-Print Thermal Printing Workflow:**
+   - **Order Dispatch Slip (Runner Chit):** Auto-prints at the USB printer terminal when the waiter taps **"Send Order"** (includes Order #, Table #, Guest Name, and Item Checklist) to clip to the serving tray.
+   - **Customer Payment Receipt:** Prints at the terminal when the cashier settles payment at checkout.
 5. **Table Tabs by Customer Name (Split & Shared Billing):**
    - Tables support multiple independent customer tabs (e.g., Table 4 $\rightarrow$ `Tab: Alice`, `Tab: Bob`). Allows friends to split bills effortlessly or strangers sharing communal tables/bar counter seats to pay their own tab without closing the table for others.
 

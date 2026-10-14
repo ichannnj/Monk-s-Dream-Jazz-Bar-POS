@@ -18,20 +18,24 @@ The POS & Kitchen Display System (KDS) orchestrates real-time order intake, cate
 
 ```mermaid
 flowchart TD
-    W[Waiter / Cashier POS] -->|Submits Order| B[NestJS Core API & WebSocket Gateway]
+    W[Waiter Tablet POS] -->|1. Submits Order| B[NestJS Core API & WebSocket Gateway]
     
     subgraph RoutingEngine [Automatic Item Routing Engine]
-        B -->|Drinks / Coffee / Cocktails| S_BAR[Barista & Bartender Station KDS]
-        B -->|Food / Pasta / Pizza| S_KIT[Kitchen Station KDS]
+        B -->|Drinks / Coffee / Cocktails| S_BAR[Barista & Bartender Tablet KDS]
+        B -->|Food / Pasta / Pizza| S_KIT[Kitchen Tablet KDS]
     end
 
-    S_BAR -->|Mark Item Ready| FOH[FOH / Runner Dispatch Screen]
-    S_KIT -->|Mark Item Ready| FOH
+    B -->|2. Auto-Print Dispatch Slip| PRN[Thermal Printer Web Client PC]
+    PRN -->|Print Runner Chit| SLIP[Physical Order Dispatch Slip]
+
+    S_BAR -->|Mark Item Done| FOH[FOH Buzzout Tablet Device]
+    S_KIT -->|Mark Item Done| FOH
     
-    FOH -->|Delivers to Customer| TBL[Customer Table / Bar Seat]
+    FOH -->|Matches Slip & Delivers| TBL[Customer Table / Bar Seat]
     
-    W -->|Bill Requested / Paid| PRN[Thermal Receipt Web Client PC]
-    PRN -->|USB ESC/POS| PAP[Paper Receipt]
+    CASH[Cashier Tablet] -->|3. Bill Paid / Checkout| B
+    B -->|Print Receipt Event| PRN
+    PRN -->|USB ESC/POS| PAP[Customer Paper Receipt]
 ```
 
 ---
@@ -99,23 +103,27 @@ stateDiagram-v2
 
 1. **Tab & Order Creation (Waiter Tablet):**
    * Waiter selects Table $\rightarrow$ enters Customer Name (e.g., "John") $\rightarrow$ selects items $\rightarrow$ taps **Send Order**.
-2. **Atomic Tablet Dispatch:**
-   * Backend assigns items to the customer's `Tab`.
-   * Backend generates individual `OrderItem` tickets tagged with `Table #`, `Tab: Name`, and destination station (`station_bar` or `station_food`).
-   * WebSockets push live ticket cards to the Barista and Kitchen tablets simultaneously.
+2. **Atomic Dispatch & Automatic Dispatch Slip Print:**
+   * **Digital KDS:** Backend generates `OrderItem` tickets; WebSockets push live cards to Barista and Kitchen tablets simultaneously.
+   * **Physical Slip (Auto-Print):** The backend simultaneously dispatches a `dispatch:print` event to the dedicated Printer PC, which automatically prints a physical **Order Dispatch Slip** with:
+     - Order Number (e.g., `#1042`)
+     - Table Number (e.g., `Table 4`)
+     - Customer Tab Name (e.g., `Guest: John`)
+     - Item checklist (e.g., `[ ] 1x Truffle Pasta`, `[ ] 1x Flat White`)
+   * Staff places this physical slip at the staging pass/tray counter.
 3. **Station Preparation on Tablets ("Accept" $\rightarrow$ "Done"):**
    * **Step 1 (Pending):** New ticket card flashes on Barista/Kitchen tablet.
    * **Step 2 (Accept $\rightarrow$ Preparing):** Staff taps **"Accept"** when starting prep; card highlights in yellow/orange.
    * **Step 3 (Done $\rightarrow$ Ready):** Staff taps **"Done"** when prep finishes; item transitions to completed state.
-4. **FOH Expediting ("Buzzout Device" Tablet):**
+4. **FOH Expediting & Slip Matching ("Buzzout Device" Tablet):**
    * The dedicated FOH Expediter tablet acts as the **Buzzout Device**, monitoring all active table tabs across stations.
-   * When both drink items (Bar) and food items (Kitchen) for a tab are marked **Done**, the buzzout device triggers a visual & audio alert notifying the runner that the complete order is **Ready to Serve**.
-   * Runner collects items, delivers them directly to the customer at the table, and taps **"Mark Served"**.
-5. **Checkout & Bill Printing (Strictly at Checkout):**
-   * **Paperless Kitchen/Bar:** No paper chits are ever printed during order placement or preparation—station workflows are 100% digital via tablets.
-   * **Checkout-Only Printing:** Receipt printing occurs **only when a table or customer tab is settling their bill at checkout**.
+   * When both drink items (Bar) and food items (Kitchen) for a tab are marked **Done**, the buzzout device triggers a visual & audio alert:  
+     🔔 *"Order #1042 ready for John (Table 4)"*
+   * Runner takes the physical slip `#1042` with the assembled tray, verifies the items against the checklist, and delivers directly to the customer at the table.
+   * Runner taps **"Mark Served"** on the buzzout tablet.
+5. **Checkout & Customer Payment Receipt (Checkout Only):**
    * Cashier views open tabs for Table 4 $\rightarrow$ selects "John" $\rightarrow$ processes payment $\rightarrow$ triggers **"Print Receipt"**.
-   * Dedicated Printer PC outputs the thermal paper receipt (`Table 4 | Guest: John | Total Paid: $...`).
+   * Dedicated Printer PC outputs the official thermal paper customer receipt (`Table 4 | Guest: John | Total Paid: $... | Payment Method`).
    * Other tabs on Table 4 remain open until their respective checkout times.
 
 ---
@@ -169,20 +177,68 @@ The Admin can toggle the venue operating mode at any time from the administratio
 
 ---
 
-## 6. Temporary Receipt Printing Architecture (Dedicated USB PC)
+## 6. Thermal Paper Printing Architecture (Dedicated USB PC)
 
-> **Core Rule:** Thermal printing happens **strictly and exclusively at checkout**. Kitchen and Bar stations operate 100% paperless on digital KDS screens—no kitchen order tickets (KOT) or bar chits are printed. Thermal printing is only engaged when a guest requests the bill or finishes payment.
+Until wireless network/Bluetooth ESC/POS thermal printers are deployed, printing operations run via a dedicated web terminal connected to the USB thermal printer.
 
-Until wireless network/Bluetooth ESC/POS thermal printers are deployed, receipt printing operates via a dedicated web terminal:
+### 6.1. The Two-Print Workflow
 
-### Architecture Flow:
+The printer handles two distinct print jobs during an order's lifecycle:
+
+| Print Job Type | Trigger | Destination / Recipient | Contents |
+|---|---|---|---|
+| **1. Order Dispatch Slip (Runner Chit)** | Automatic when Waiter taps **"Send Order"** | Placed on the runner pass / tray staging counter | • Large Order # (e.g., `#1042`)<br>• Table # & Guest Tab Name<br>• Timestamp<br>• Full item checklist for tray assembly |
+| **2. Customer Receipt** | Manual when Cashier settles payment at **Checkout** | Given to paying customer | • Venue branding & date/time<br>• Itemized prices & subtotal<br>• Discounts, tax, total paid<br>• Payment method & Table/Guest info |
+
+### 6.2. Print Output Mockups
+
+#### (A) Order Dispatch Slip (Printed at Order Send)
+```
+================================
+     MONK'S DREAM JAZZ BAR      
+       *** RUNNER SLIP ***      
+================================
+ORDER: #1042       TIME: 20:45
+TABLE: Table 4     AREA: Cafe
+GUEST: John
+--------------------------------
+ [ ] 1x Truffle Pasta   (Kitchen)
+ [ ] 1x Flat White      (Barista)
+--------------------------------
+Notes: Extra hot oat milk
+================================
+```
+
+#### (B) Customer Payment Receipt (Printed at Checkout)
+```
+================================
+     MONK'S DREAM JAZZ BAR      
+   Specialty Coffee & Jazz Bar  
+================================
+TABLE: Table 4     GUEST: John
+DATE: 2026-10-14   TIME: 21:15
+CASHIER: Coltrane  ORDER: #1042
+--------------------------------
+ 1x Truffle Pasta         $18.00
+ 1x Flat White             $4.50
+--------------------------------
+SUBTOTAL:                 $22.50
+TAX (10%):                 $2.25
+TOTAL PAID:               $24.75
+METHOD: Card (Visa ****1234)
+================================
+     Thank you for jamming!     
+```
+
+### 6.3. Architecture Flow
 1. **Hardware Setup:** A desktop/laptop PC is physically connected via USB to an 80mm/58mm thermal paper printer (e.g., Epson, Xprinter, Rongta).
-2. **Web Client Listener:** The PC runs the Monk's Dream Web App logged in with the `printer_station` profile.
-3. **Checkout Print Dispatch:**
-   * When Cashier clicks **"Print Bill"** or completes checkout for a tab/table, the backend dispatches a `receipt:print` WebSocket event to the printer station.
-   * **Direct WebUSB / Raw ESC/POS:** If using Chromium-based browsers, the web app interfaces with the USB device via the WebUSB API using `@monks/printing`.
-   * **Socket-Triggered Print Dialog:** Alternatively, the client executes a silent/formatted `window.print()` using an optimized thermal CSS receipt template (`@media print { width: 80mm; }`).
-4. **Remote Handheld Trigger:** Cashiers and waiters on mobile/tablet devices can trigger receipt printing on the dedicated station from anywhere on the floor without physical cables.
+2. **Web Client Listener:** The PC runs the Monk's Dream Web App logged in with the `printer_station` profile, subscribing to WebSocket events:
+   * `dispatch:print` $\rightarrow$ Triggers auto-printing of the Runner Slip.
+   * `receipt:print` $\rightarrow$ Triggers printing of the Customer Payment Receipt.
+3. **Print Execution:**
+   * **Direct WebUSB / Raw ESC/POS:** If using Chromium-based browsers, the web app interfaces with the USB device via WebUSB using `@monks/printing`.
+   * **Socket-Triggered Print Dialog:** Alternatively, the client executes a formatted `window.print()` using an optimized thermal CSS receipt template (`@media print { width: 80mm; }`).
+4. **Remote Handheld Trigger:** Cashiers and waiters on mobile/tablet devices can trigger receipt and dispatch printing on the dedicated station from anywhere on the floor without physical cables.
 
 ---
 
