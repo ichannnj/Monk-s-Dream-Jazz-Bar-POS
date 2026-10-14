@@ -103,11 +103,12 @@ stateDiagram-v2
 4. **FOH Expediting:**
    * FOH screen shows aggregated order status for Table 4 / Tab John.
    * When all items are ready, FOH delivers items specifically to John at Table 4 and taps **"Mark Served"**.
-5. **Checkout & Printing:**
-   * Cashier views open tabs for Table 4.
-   * Cashier selects "John" $\rightarrow$ processes payment $\rightarrow$ taps **"Print Receipt"**.
-   * Dedicated Printer PC prints receipt with header `Table 4 | Guest: John`.
-   * Other tabs on Table 4 remain open and active.
+5. **Checkout & Bill Printing (Strictly at Checkout):**
+   * **Paperless Kitchen/Bar:** No paper chits are ever printed during order placement or preparation—station workflows are 100% digital via KDS screens.
+   * **Checkout-Only Printing:** Receipt printing occurs **only when a table or customer tab is settling their bill at checkout**.
+   * Cashier views open tabs for Table 4 $\rightarrow$ selects "John" $\rightarrow$ processes payment $\rightarrow$ triggers **"Print Receipt"**.
+   * Dedicated Printer PC outputs the thermal paper receipt (`Table 4 | Guest: John | Total Paid: $...`).
+   * Other tabs on Table 4 remain open until their respective checkout times.
 
 ---
 
@@ -150,15 +151,18 @@ The floor layout is organized into distinct zones for staff navigation:
 
 ## 6. Temporary Receipt Printing Architecture (Dedicated USB PC)
 
+> **Core Rule:** Thermal printing happens **strictly and exclusively at checkout**. Kitchen and Bar stations operate 100% paperless on digital KDS screens—no kitchen order tickets (KOT) or bar chits are printed. Thermal printing is only engaged when a guest requests the bill or finishes payment.
+
 Until wireless network/Bluetooth ESC/POS thermal printers are deployed, receipt printing operates via a dedicated web terminal:
 
 ### Architecture Flow:
 1. **Hardware Setup:** A desktop/laptop PC is physically connected via USB to an 80mm/58mm thermal paper printer (e.g., Epson, Xprinter, Rongta).
 2. **Web Client Listener:** The PC runs the Monk's Dream Web App logged in with the `printer_station` profile.
-3. **Print Dispatch Methods:**
+3. **Checkout Print Dispatch:**
+   * When Cashier clicks **"Print Bill"** or completes checkout for a tab/table, the backend dispatches a `receipt:print` WebSocket event to the printer station.
    * **Direct WebUSB / Raw ESC/POS:** If using Chromium-based browsers, the web app interfaces with the USB device via the WebUSB API using `@monks/printing`.
-   * **Socket Triggered Print Window:** The client subscribes to `receipt:print` WebSocket events. When the cashier clicks "Print", the printer PC immediately executes `window.print()` using an optimized thermal CSS receipt template (`@media print { width: 80mm; }`).
-4. **Cashier Remote Trigger:** Cashiers on mobile/tablet devices can trigger receipt printing on the dedicated station without needing physical cables to their handhelds.
+   * **Socket-Triggered Print Dialog:** Alternatively, the client executes a silent/formatted `window.print()` using an optimized thermal CSS receipt template (`@media print { width: 80mm; }`).
+4. **Remote Handheld Trigger:** Cashiers and waiters on mobile/tablet devices can trigger receipt printing on the dedicated station from anywhere on the floor without physical cables.
 
 ---
 
