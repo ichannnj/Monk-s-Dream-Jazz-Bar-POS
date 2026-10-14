@@ -303,7 +303,15 @@ The Menu Catalog allows the Admin to configure items with strict dietary and kit
 3. **Preset Modifiers & Custom Preparation Notes:**
    - Configurable modifier groups (e.g., Milk Substitutions: Oat +$0.50, Almond +$0.50; Temperature: Iced / Hot; Sweetness level).
    - Freeform special request text field for custom kitchen directions.
-4. **Instant 86 (Out-of-Stock) Toggle:**
+4. **Resold Pre-Made Outside Foods (Fixed +20% Markup Constraint):**
+   - The venue sometimes purchases already-made foods from outside suppliers/bakeries to resell to customers.
+   - **Automated Pricing Constraint:** When an item is flagged as `is_resold_outside_food`, the Admin enters the `original_cost` (vendor purchase price), and the system automatically calculates and locks the selling price at exactly 20% higher:
+     $$\text{Selling Price} = \text{Original Cost} \times 1.20$$
+   - Captures both the vendor purchase cost (for expense tracking) and the 20% gross margin.
+5. **Fixed 20% Corkage Fee for Outside Food & Beverages:**
+   - When customers bring their own outside food or drinks into the venue, a **FIXED 20% corkage fee** is applied.
+   - Waiters/Cashiers have a dedicated one-tap button on the tab: **"Add Corkage Fee (20%)"**, which computes 20% on the declared item value or applies a standard 20% outside consumption surcharge to the tab.
+6. **Instant 86 (Out-of-Stock) Toggle:**
    - Admin or Chef can tap "86" on an item; it immediately greys out on all Waiter tablets in real time via WebSockets.
 
 ---
@@ -336,32 +344,42 @@ The inventory engine tracks ingredients, raw materials, and packaged goods to pr
 
 ---
 
-### 7.3. Staff Shift & Salary Auditing
+### 7.3. Staff Attendance Tracking & Daily Salary Expense Management
 
-The system maintains a tamper-evident audit log of employee working hours, wage rates, and shift compensation:
+Instead of complex hourly rates or event premiums, staff compensation operates on a **daily salary model** integrated into a comprehensive Admin Expense Management suite:
 
 ```
-┌────────────────────────────────────────────────────────────────────────────────────┐
-│ Staff Member     Role      Date         Clock In   Clock Out  Hours   Rate    Total │
-├──────────────────┼─────────┼────────────┼──────────┼──────────┼───────┼───────┼─────┤
-│ Bill (Barista)   cafe1     2026-10-14   07:45 AM   03:45 PM   8.0h    $16/h   $128  │
-│ Chet (Chef)      kitchen1  2026-10-14   10:00 AM   06:00 PM   8.0h    $22/h   $176  │
-│ Miles (Manager)  admin     2026-10-14   08:00 AM   08:00 PM   12.0h   $25/h   $300  │
-└────────────────────────────────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│ Employee            Role / Category   Shift Days This Month   Daily Rate   Total Due   │
+├─────────────────────┼─────────────────┼───────────────────────┼────────────┼───────────┤
+│ Bill                Barista (POS)     22 days                 $50 / day    $1,100      │
+│ Chet                Chef (Kitchen)    24 days                 $65 / day    $1,560      │
+│ Ella                Waiter (Floor)    20 days                 $45 / day    $900        │
+│ Rosa                Dishwasher (Non)  26 days                 $40 / day    $1,040      │
+│ Marcus              Sound Tech (Non)  12 days                 $60 / day    $720        │
+├─────────────────────┴─────────────────┴───────────────────────┴────────────┼───────────┤
+│ TOTAL MONTHLY SALARY EXPENSE:                                              │ $5,320    │
+└────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Key Capabilities:
-1. **PIN-Based Shift Clock-In / Clock-Out:**
-   * Staff log their shift start and end times directly on their tablet using their 4-digit PIN.
-   * Automatically calculates active shift duration, excluding logged unpaid meal breaks.
-2. **Wage Rate & Role Differential:**
-   * Configurable base hourly wage per staff profile.
-   * **Event Shift Premium:** Optional multiplier (e.g., 1.5x) or bonus rate when staff work during an active **Event Mode** shift.
-3. **Payroll Audit & Export:**
-   * Summarizes total hours worked, regular pay, overtime/event pay, and gross compensation per pay period.
-   * One-click CSV and PDF export formatted for bookkeeping and payroll disbursement.
-4. **Manager Adjustment Audit Trail:**
-   * If a manager edits a forgotten clock-out or adjusts shift hours, the system logs the editor's ID, the timestamp, and the adjustment rationale.
+#### Key Capabilities & Rules:
+1. **Daily Salary Structure (No Hourly / Event Shift Premiums):**
+   * Staff earn a **fixed daily salary per working day**.
+   * There are no complex hourly calculations or event-specific shift premiums; each worked day increments their attended days count.
+2. **Attendance Tracking:**
+   * **Workflow Staff (POS / KDS):** Automatically recorded as present when signing in with their 4-digit PIN at the start of the day.
+   * **Non-Workflow Employees:** Staff who are not part of the active POS/KDS ordering system (e.g., dishwashers, cleaners, security guards, utility staff, sound & lighting technicians) can be marked present by the Admin or via a dedicated PIN attendance kiosk.
+3. **Monthly Salary Calculation & Admin Input:**
+   * The Admin can manually adjust or record monthly salary components:
+     $$\text{Monthly Pay} = (\text{Days Attended} \times \text{Daily Rate}) + \text{Bonuses} - \text{Deductions/Advances}$$
+   * Supports manual adjustments (e.g. half-day deductions, performance bonuses).
+4. **Comprehensive Admin Expense Management Suite:**
+   * Integrates total monthly employee payroll with overall venue operational expenses:
+     - **Employee Salaries** (calculated from attendance $\times$ daily rate)
+     - **Inventory & Outsourced Food Purchases** (pre-made resold foods and ingredient deliveries)
+     - **Utilities & Venue Overhead** (rent, electricity, jazz artist booking fees)
+   * Displays net venue profitability: $\text{Grand Total Sales} - \text{Total Operating Expenses}$.
+   * One-click CSV and PDF export formatted for monthly accounting and payroll disbursement.
 
 ---
 
@@ -434,12 +452,15 @@ enum Allergen {
 // ==========================================
 // Core Entity Relationship Topology:
 // ==========================================
-// Table (1) ────< Tab (Many, identified by customerName)
+// Table (1) ────< Tab (Many, identified by customerName, with corkageFee)
 // Tab (1) ──────< Order (Many) ──< OrderItem (Many)
 // OrderItem ────> Product ──< ProductIngredient ──> InventoryItem
+// Product (with isResoldOutsideFood, originalCost, price = cost * 1.20)
 // Product ──────> Allergen (Many-to-Many)
-// User (1) ─────< StaffShift (Many, clock-in, clock-out, rate, totalPay)
+// Employee (1) ─< AttendanceRecord (Many, date, isPresent, notes)
+// Employee: has dailyRate, isWorkflowStaff (cleaner, dishwasher, security, barista, etc.)
 // InventoryItem ─< WasteLog (Many)
+// AdminExpense: records salary expenses, supplier food deliveries, overheads
 ```
 
 ---
@@ -447,8 +468,8 @@ enum Allergen {
 ## 9. Development Implementation Roadmap
 
 1. **Phase 1: Prisma Schema Expansion & Seeding**
-   - Implement `Category`, `Product`, `Allergen`, `Table`, `Tab` (with `customerName`), `Order`, `OrderItem`, `InventoryItem`, `ProductIngredient`, `StaffShift`, and `OperatingSession` models.
-   - Seed sample menu items with allergen tags and station mappings.
+   - Implement `Category`, `Product` (with 20% markup constraint for resold outside food), `Allergen`, `Table`, `Tab` (with `customerName` & corkage fee support), `Order`, `OrderItem`, `InventoryItem`, `ProductIngredient`, `Employee`, `AttendanceRecord`, and `OperatingSession` models.
+   - Seed sample menu items with allergen tags, station mappings, and staff roster (workflow and non-workflow employees).
 2. **Phase 2: Real-time Station Gateway (NestJS WebSockets)**
    - Create WebSocket gateway for live order broadcast.
    - Room subscriptions for `/stations/bar`, `/stations/kitchen`, `/stations/foh`, and `/printer`.
@@ -459,13 +480,14 @@ enum Allergen {
 4. **Phase 4: Table Grid View & Order Creation Screen**
    - Responsive card grid for tables with Area filter tabs (`All`, `Cafe Area`, `Bar Area`).
    - Modal to open new named tab or select active open tabs on a table.
-   - Order basket with allergen warning indicators and modifier selection.
+   - Order basket with allergen warning indicators, 20% corkage fee toggle, and modifier selection.
 5. **Phase 5: Thermal Printing Web Client (Two-Print Flow)**
    - Implement automatic Order Dispatch Slip print listener (`dispatch:print`).
    - Implement Customer Payment Receipt print listener (`receipt:print`).
-6. **Phase 6: Admin Back-Office Operations**
+6. **Phase 6: Admin Back-Office & Expense Management**
    - Multi-mode sales analytics (Normal Cafe vs. Event Mode vs. Grand Total consolidated).
-   - Menu management with allergen constraints and preset modifiers.
+   - Menu management with allergen constraints and automatic +20% price lock for resold outside foods.
    - Real-time inventory tracking with recipe depletion and low-stock alerts.
-   - Staff PIN clock-in shift audit and payroll export.
+   - Employee attendance tracking and monthly daily-salary calculation for full staff roster (workflow + non-workflow).
+   - Overall venue operating expense management dashboard.
 

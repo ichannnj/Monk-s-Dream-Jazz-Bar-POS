@@ -69,9 +69,9 @@ Monk's Dream operates as an artisan cafe by day and an intimate jazz bar & live 
    - Tables support multiple independent customer tabs (e.g., Table 4 $\rightarrow$ `Tab: Alice`, `Tab: Bob`). Allows friends to split bills effortlessly or strangers sharing communal tables/bar counter seats to pay their own tab without closing the table for others.
 6. **Admin Back-Office Suite (Analytics, Menu Constraints, Inventory & Salaries):**
    - **Multi-Lens Sales Analytics:** Normal Cafe Mode sales, Event Mode sales, and Grand Total consolidated revenue reports.
-   - **Menu Allergen Constraints:** Allergen tags (`Dairy, Gluten, Nuts, etc.`), preparation notes, and instant 86 out-of-stock toggles.
+   - **Menu & Pricing Constraints:** Allergen tags (`Dairy, Gluten, Nuts, etc.`), fixed **20% Corkage Fee** for outside food/drinks, and automated **+20% markup constraint on pre-made resold foods** (`selling_price = cost * 1.20`).
    - **Real-Time Inventory Depletion:** Direct unit and recipe-level stock tracking with low-stock warning banners.
-   - **Employee Salary & Shift Auditing:** PIN clock-in/out tracking, hourly wages, event shift premiums, and payroll export.
+   - **Staff Attendance & Daily Salary Expense Management:** Shift attendance logging for all staff (both POS/KDS workflow staff and non-workflow employees such as dishwashers, cleaners, security), monthly daily-salary calculation, and venue operating expense tracking.
 
 ---
 
