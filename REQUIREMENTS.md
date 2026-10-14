@@ -43,7 +43,7 @@ flowchart TD
 | Role | Interface / Device | Primary Responsibilities | Access Restrictions |
 |---|---|---|---|
 | **Admin** | Tablet / Desktop Web | • Venue Mode Toggle (`Cafe` vs `Event`)<br>• Menu & Inventory Management<br>• Real-time & Historical Sales Analytics<br>• Staff PIN & User Management | Full system access |
-| **Cashier / Waiter** | Handheld Tablet | • Floor / Table Layout View (Cafe & Bar zones)<br>• Open Named Tabs per Table<br>• Order Creation & Customization<br>• Bill Settlement & Remote Print Triggering | Cannot alter global operating modes or financial reports |
+| **Cashier / Waiter** | Handheld Tablet | • Responsive Table Grid View (Cafe & Bar filters)<br>• Open Named Tabs per Table<br>• Order Creation & Customization<br>• Bill Settlement & Remote Print Triggering | Cannot alter global operating modes or financial reports |
 | **Barista / Bartender** | Counter-Mounted Tablet (KDS) | • Real-time queue for Coffee, Mocktails, Wine, Cocktails<br>• Tap **"Accept"** $\rightarrow$ moves ticket to **Preparing**<br>• Tap **"Done"** $\rightarrow$ marks drink **Ready** for buzzout | Station queue only; no billing or floor layout |
 | **Kitchen Chef** | Kitchen-Mounted Tablet (KDS) | • Real-time queue for Food (Pasta, Pizza, Sides)<br>• Tap **"Accept"** $\rightarrow$ moves ticket to **Preparing**<br>• Tap **"Done"** $\rightarrow$ marks food **Ready** for buzzout | Station queue only; no drink tickets or payment access |
 | **FOH Runner (Buzzout Device)** | Dedicated Expediter Tablet | • Consolidated view across Bar and Kitchen stations<br>• Buzzes/alerts automatically when all items for a tab are marked **Done**<br>• Runner delivers to table and taps **"Mark Served"** | No billing or menu modification |
@@ -137,23 +137,35 @@ The Admin can toggle the venue operating mode at any time from the administratio
 
 ---
 
-## 5. Table & Floor Plan Architecture
+## 5. Table Management & Grid View Architecture
 
-The floor layout is organized into distinct zones for staff navigation:
-* **Cafe Lounge / Dining Tables:** Low tables, booths, cafe seating.
-* **Bar Counter Area:** High-top stools, bar rail seating.
+> **Design Decision: Grid View Only (No 2D Floor Plan Canvas)**  
+> Due to the venue's dynamic layout (tables frequently move together for large parties, and chairs shift between morning cafe seating and evening jazz arrangements), a 2D spatial floor plan is unnecessarily complex and prone to becoming obsolete. Instead, table selection is implemented **strictly as a responsive Card Grid**.
 
-### 5.1. Zone Isolation Principle
-* Zones exist strictly for **floor plan clarity and server navigation** (knowing where to deliver items).
-* Seating area does **not** restrict what can be ordered or where items route.
+```
+┌─────────────────────────────────────────────────────────────┐
+│ Filter: [ All Tables ]  [ ☕ Cafe Area ]  [ 🍸 Bar Area ]    │
+├─────────────┬─────────────┬─────────────┬───────────────────┤
+│ Table 1     │ Table 2     │ Table 3     │ Bar Seat 1        │
+│ [Available] │ [2 Tabs] 👥 │ [1 Tab]  👥 │ [1 Tab]  👥       │
+│ Green Card  │ Amber Card  │ Amber Card  │ Amber Card        │
+└─────────────┴─────────────┴─────────────┴───────────────────┘
+```
 
-### 5.2. Multi-Tab Table Management
-* **Communal & Split Occupancy:** A table is not limited to a single bill. A table can host multiple independent **Customer Tabs** simultaneously.
-* **Visual Status on Floor Plan:**
-  * **Green (Available):** 0 active tabs.
-  * **Amber (Occupied):** 1 or more active open tabs (shows badge with active tab count, e.g., `Table 4 (2 tabs)`).
+### 5.1. Area Filtering (Category Filter, Not Spatial Layout)
+* Tables are categorized into two physical areas:
+  * **Cafe Area:** Dining tables, booths, low seating.
+  * **Bar Area:** High-top bar stools, bar counter rail seats.
+* Top filter tabs (`[All]`, `[Cafe Area]`, `[Bar Area]`) allow waitstaff to quickly narrow down the grid cards.
+* **Routing Independence Reminder:** Area tag is purely for server navigation (knowing where to deliver items) and filtering; it never restricts what items can be ordered or where orders route.
+
+### 5.2. Multi-Tab Grid Card States
+* **Communal & Split Occupancy:** A table card can host multiple independent **Customer Tabs** simultaneously.
+* **Grid Card Indicators:**
+  * **Green (Available):** 0 active tabs. Tapping opens modal to open the first customer tab.
+  * **Amber (Occupied):** 1 or more active open tabs. Shows badge with active tab count (e.g. `Table 4 (2 tabs)`) and elapsed duration. Tapping displays list of active tabs to view, add items, or add another new tab.
   * **Blue (Bill Requested):** Guest requested bill for one or more tabs.
-* **Closing a Table:** A table only returns to "Available" once **all** associated customer tabs have been settled (`PAID`) and marked `CLOSED`.
+* **Closing a Table:** A table card returns to "Available" (Green) only once **all** associated customer tabs on that table have been settled (`PAID`) and closed.
 
 ---
 
@@ -246,8 +258,9 @@ enum StationTarget {
    - Build Barista/Bartender KDS screen (ticket cards with timer indicators).
    - Build Kitchen KDS screen.
    - Build FOH Expediter screen.
-4. **Phase 4: Floor Plan & Order Creation Screen**
-   - Waiter table selection (Cafe Area vs Bar Area toggle).
+4. **Phase 4: Table Grid View & Order Creation Screen**
+   - Responsive card grid for tables with Area filter tabs (`All`, `Cafe Area`, `Bar Area`).
+   - Modal to open new named tab or select active open tabs on a table.
    - Order basket and item customization.
 5. **Phase 5: Receipt Printing Station Web App**
    - Create specialized print view with thermal stylesheet and auto-print socket listener.

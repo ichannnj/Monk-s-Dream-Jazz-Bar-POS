@@ -19,7 +19,7 @@ Monk's Dream operates as an artisan cafe by day and an intimate jazz bar & live 
 ```
                               ┌─────────────────────────────────────────┐
                               │           Waiter / Cashier POS          │
-                              │  (Table layout: Cafe Zone & Bar Zone)   │
+                              │  (Table Grid View: Cafe & Bar filters)  │
                               └────────────────────┬────────────────────┘
                                                    │
                                                    ▼
@@ -56,7 +56,7 @@ Monk's Dream operates as an artisan cafe by day and an intimate jazz bar & live 
 1. **Category-Based Station Routing (Not Location-Based):**
    - **Drinks & Coffees** $\rightarrow$ Route to **Barista / Bartender Station**.
    - **Food (Pizza, Pasta, etc.)** $\rightarrow$ Route to **Kitchen Station**.
-   - *Seating Zones (Cafe Area vs. Bar Area) are strictly for floor layout and table identification, not item routing.*
+   - *Table Grid Filters (Cafe Area vs. Bar Area) are strictly for table identification and organization on the grid, never restricting item routing.*
 2. **Admin Operating Mode Toggle:**
    - **☀️ Normal Cafe Mode:** Standard daytime operations and baseline sales tracking.
    - **🎷 Event Mode:** Tagged sales sessions for live jazz nights and private shows for separate revenue accounting.
@@ -133,6 +133,6 @@ pnpm --filter @monks/frontend run web
 - [x] **Authentication:** 4-digit staff PIN authentication system.
 - [ ] **Data Model Expansion:** Prisma models for Orders, LineItems, Categories, Tables, OperatingSessions (per [REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)).
 - [ ] **KDS Real-Time Dispatch:** WebSocket gateway for live order routing between Waiter $\rightarrow$ Bar/Kitchen $\rightarrow$ FOH.
-- [ ] **Floor & Table View:** Cafe Area and Bar Area table seating layout.
+- [ ] **Table Grid View:** Responsive card grid with Cafe Area and Bar Area filters and multi-tab badges.
 - [ ] **Admin Mode Toggle:** Cafe Mode vs Event Mode sales tracking.
 - [ ] **Web Thermal Printing Client:** Dedicated print station listener for USB thermal receipts.
