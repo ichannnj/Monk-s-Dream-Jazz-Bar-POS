@@ -363,19 +363,20 @@ Instead of complex hourly rates or event premiums, staff compensation operates o
 ```
 
 #### Key Capabilities & Rules:
-1. **Daily Salary Structure (No Hourly / Event Shift Premiums):**
-   * Staff earn a **fixed daily salary per working day**.
-   * There are no complex hourly calculations or event-specific shift premiums; each worked day increments their attended days count.
+1. **Daily Salary Structure with Admin Per-Day Overrides:**
+   * **Baseline Daily Rate:** Configured per employee (typically aligned with standard minimum wage).
+   * **Editable Daily Rate per Shift (Discretionary Event / Stress Top-Ups):** While the baseline is standard minimum wage, the Admin has full discretion to **edit and increase the daily rate for any specific shift/day** (e.g., bumping a $45 daily rate to $65 for staff working a hectic live jazz show, packed festival, or unusually stressful shift).
+   * **Audit Log for Overrides:** When an Admin increases a day's salary, an optional note/tag can be attached (e.g. *"Live Jazz Event Top-Up"*, *"High-Volume Rush Bonus"*).
 2. **Attendance Tracking:**
    * **Workflow Staff (POS / KDS):** Automatically recorded as present when signing in with their 4-digit PIN at the start of the day.
    * **Non-Workflow Employees:** Staff who are not part of the active POS/KDS ordering system (e.g., dishwashers, cleaners, security guards, utility staff, sound & lighting technicians) can be marked present by the Admin or via a dedicated PIN attendance kiosk.
-3. **Monthly Salary Calculation & Admin Input:**
-   * The Admin can manually adjust or record monthly salary components:
-     $$\text{Monthly Pay} = (\text{Days Attended} \times \text{Daily Rate}) + \text{Bonuses} - \text{Deductions/Advances}$$
-   * Supports manual adjustments (e.g. half-day deductions, performance bonuses).
+3. **Monthly Salary Calculation:**
+   * Monthly pay aggregates the actual rate paid across all attended shifts in that month:
+     $$\text{Monthly Pay} = \sum_{d \in \text{Attended Days}} \text{ActualDailyRate}(d) + \text{Discretionary Bonuses} - \text{Deductions}$$
+   * Displays transparently in the monthly summary with breakdowns of standard days vs. top-up days.
 4. **Comprehensive Admin Expense Management Suite:**
    * Integrates total monthly employee payroll with overall venue operational expenses:
-     - **Employee Salaries** (calculated from attendance $\times$ daily rate)
+     - **Employee Salaries** (calculated from actual daily rates across attendance days)
      - **Inventory & Outsourced Food Purchases** (pre-made resold foods and ingredient deliveries)
      - **Utilities & Venue Overhead** (rent, electricity, jazz artist booking fees)
    * Displays net venue profitability: $\text{Grand Total Sales} - \text{Total Operating Expenses}$.
@@ -457,8 +458,8 @@ enum Allergen {
 // OrderItem ────> Product ──< ProductIngredient ──> InventoryItem
 // Product (with isResoldOutsideFood, originalCost, price = cost * 1.20)
 // Product ──────> Allergen (Many-to-Many)
-// Employee (1) ─< AttendanceRecord (Many, date, isPresent, notes)
-// Employee: has dailyRate, isWorkflowStaff (cleaner, dishwasher, security, barista, etc.)
+// Employee (1) ─< AttendanceRecord (Many, date, isPresent, baseRate, actualRate, overrideReason)
+// Employee: has defaultDailyRate, isWorkflowStaff (cleaner, dishwasher, security, barista, etc.)
 // InventoryItem ─< WasteLog (Many)
 // AdminExpense: records salary expenses, supplier food deliveries, overheads
 ```
