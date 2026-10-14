@@ -346,41 +346,62 @@ The inventory engine tracks ingredients, raw materials, and packaged goods to pr
 
 ### 7.3. Staff Attendance Tracking & Daily Salary Expense Management
 
-Instead of complex hourly rates or event premiums, staff compensation operates on a **daily salary model** integrated into a comprehensive Admin Expense Management suite:
+Instead of complex hourly rates or event formulas, staff compensation operates on a **daily salary model** with flexible Admin per-day add-ons, feeding directly into the venue's overall monthly business expense tracker:
 
+#### 1. Venue-Wide Monthly Staff Payroll Summary
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
-│ Employee            Role / Category   Shift Days This Month   Daily Rate   Total Due   │
-├─────────────────────┼─────────────────┼───────────────────────┼────────────┼───────────┤
-│ Bill                Barista (POS)     22 days                 $50 / day    $1,100      │
-│ Chet                Chef (Kitchen)    24 days                 $65 / day    $1,560      │
-│ Ella                Waiter (Floor)    20 days                 $45 / day    $900        │
-│ Rosa                Dishwasher (Non)  26 days                 $40 / day    $1,040      │
-│ Marcus              Sound Tech (Non)  12 days                 $60 / day    $720        │
-├─────────────────────┴─────────────────┴───────────────────────┴────────────┼───────────┤
-│ TOTAL MONTHLY SALARY EXPENSE:                                              │ $5,320    │
+│ Employee            Role / Category   Days Worked   Base Total   Add-ons Total  Pay Due│
+├─────────────────────┼─────────────────┼─────────────┼────────────┼──────────────┼──────┤
+│ Bill                Barista (POS)     22 days       $1,100       +$120          $1,220 │
+│ Chet                Chef (Kitchen)    24 days       $1,200       +$180          $1,380 │
+│ Ella                Waiter (Floor)    20 days       $1,000       +$75           $1,075 │
+│ Rosa                Dishwasher (Non)  26 days       $1,300       +$50           $1,350 │
+│ Marcus              Sound Tech (Non)  12 days       $600         +$100          $700   │
+├─────────────────────┴─────────────────┴─────────────┴────────────┴──────────────┼──────┤
+│ TOTAL MONTHLY LABOR EXPENSE:                                                    │$5,725│
 └────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
+#### 2. Employee Day-by-Day Shift Breakdown (Admin Detail View)
+Clicking on any employee opens their monthly shift calendar table:
+
+```
+┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ Employee: Bill (Barista) — October 2026 Shift Log                                                │
+├────────────┬─────────┬───────────────┬─────────────────────────┬───────────┬─────────────────────┤
+│ Date       │ Status  │ Base Daily Pay│ Additional Add-on (Edit)│ Day Total │ Notes / Reason      │
+├────────────┼─────────┼───────────────┼─────────────────────────┼───────────┼─────────────────────┤
+│ 2026-10-01 │ Worked  │ $50 (Min Wage)│ $0.00                   │ $50.00    │ Normal weekday      │
+│ 2026-10-02 │ Worked  │ $50 (Min Wage)│ +$20.00  [✏️ Edit]      │ $70.00    │ Heavy Friday event  │
+│ 2026-10-03 │ Worked  │ $50 (Min Wage)│ +$15.00  [✏️ Edit]      │ $65.00    │ Super stressful rush│
+│ 2026-10-04 │ Off     │ $0            │ $0.00                   │ $0.00     │ Scheduled day off   │
+│ 2026-10-05 │ Worked  │ $50 (Min Wage)│ +$10.00  [✏️ Edit]      │ $60.00    │ Short-staffed assist│
+├────────────┴─────────┴───────────────┴─────────────────────────┴───────────┼─────────────────────┤
+│ MONTHLY TOTAL FOR BILL:                                                    │ $1,220.00           │
+└──────────────────────────────────────────────────────────────────────────────────────────────────┘
+```
+
 #### Key Capabilities & Rules:
-1. **Daily Salary Structure with Admin Per-Day Overrides:**
-   * **Baseline Daily Rate:** Configured per employee (typically aligned with standard minimum wage).
-   * **Editable Daily Rate per Shift (Discretionary Event / Stress Top-Ups):** While the baseline is standard minimum wage, the Admin has full discretion to **edit and increase the daily rate for any specific shift/day** (e.g., bumping a $45 daily rate to $65 for staff working a hectic live jazz show, packed festival, or unusually stressful shift).
-   * **Audit Log for Overrides:** When an Admin increases a day's salary, an optional note/tag can be attached (e.g. *"Live Jazz Event Top-Up"*, *"High-Volume Rush Bonus"*).
-2. **Attendance Tracking:**
+1. **Minimum Wage Baseline with Flexible Discretionary Add-ons:**
+   * Every worked day automatically defaults to the employee's **base daily rate** (set to local daily minimum wage).
+   * **Arbitrary, Flexible Add-ons:** For hectic or high-stress shifts (e.g., packed live jazz events, holiday rushes, or being short-staffed), the Admin can edit that specific day's row to add an **arbitrary extra amount** (e.g. +$10, +$15, +$25—whatever amount the manager deems fair for that day's stress level).
+   * If there is no add-on, the day remains at standard minimum wage ($0 add-on).
+2. **Attendance Tracking for Full Staff Roster:**
    * **Workflow Staff (POS / KDS):** Automatically recorded as present when signing in with their 4-digit PIN at the start of the day.
-   * **Non-Workflow Employees:** Staff who are not part of the active POS/KDS ordering system (e.g., dishwashers, cleaners, security guards, utility staff, sound & lighting technicians) can be marked present by the Admin or via a dedicated PIN attendance kiosk.
-3. **Monthly Salary Calculation:**
-   * Monthly pay aggregates the actual rate paid across all attended shifts in that month:
-     $$\text{Monthly Pay} = \sum_{d \in \text{Attended Days}} \text{ActualDailyRate}(d) + \text{Discretionary Bonuses} - \text{Deductions}$$
-   * Displays transparently in the monthly summary with breakdowns of standard days vs. top-up days.
-4. **Comprehensive Admin Expense Management Suite:**
-   * Integrates total monthly employee payroll with overall venue operational expenses:
-     - **Employee Salaries** (calculated from actual daily rates across attendance days)
-     - **Inventory & Outsourced Food Purchases** (pre-made resold foods and ingredient deliveries)
-     - **Utilities & Venue Overhead** (rent, electricity, jazz artist booking fees)
-   * Displays net venue profitability: $\text{Grand Total Sales} - \text{Total Operating Expenses}$.
-   * One-click CSV and PDF export formatted for monthly accounting and payroll disbursement.
+   * **Non-Workflow Employees:** Staff who are not part of the active POS/KDS ordering system (e.g., dishwashers, cleaners, security guards, utility staff, sound & lighting technicians) are maintained in the roster and marked present by the Admin or via a dedicated PIN attendance kiosk.
+3. **Automatic Monthly Salary Calculation:**
+   * The system aggregates each day's actual compensation for the entire month:
+     $$\text{Monthly Pay} = \sum_{d \in \text{Attended Days}} \Big(\text{Base Minimum Wage} + \text{Day Add-on}(d)\Big) + \text{Bonuses} - \text{Deductions}$$
+4. **Comprehensive Venue Expense Management Suite:**
+   * The total labor cost rolls up directly into the Admin's **Business Expenses Dashboard**:
+     - **Staff Salaries:** Dynamic total calculated from base daily wages + all daily add-ons across the month.
+     - **Ingredient & Beverage Deliveries:** Invoices from coffee bean roasters, dairy suppliers, liquor distributors.
+     - **Outsourced Pre-Made Foods:** Invoices for outside food purchased for resale (+20% markup).
+     - **Venue Overheads:** Rent, electricity, live jazz band / artist appearance fees.
+   * **Net Profit Dashboard:** Automatically computes real venue profit:
+     $$\text{Net Profit} = \text{Grand Total Sales} - \text{Total Operating Expenses (Labor + COGS + Overhead)}$$
+   * Exportable as CSV / PDF for monthly accounting and tax reporting.
 
 ---
 
