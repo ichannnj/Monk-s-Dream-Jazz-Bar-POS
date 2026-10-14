@@ -67,6 +67,11 @@ Monk's Dream operates as an artisan cafe by day and an intimate jazz bar & live 
    - **Customer Payment Receipt:** Prints at the terminal when the cashier settles payment at checkout.
 5. **Table Tabs by Customer Name (Split & Shared Billing):**
    - Tables support multiple independent customer tabs (e.g., Table 4 $\rightarrow$ `Tab: Alice`, `Tab: Bob`). Allows friends to split bills effortlessly or strangers sharing communal tables/bar counter seats to pay their own tab without closing the table for others.
+6. **Admin Back-Office Suite (Analytics, Menu Constraints, Inventory & Salaries):**
+   - **Multi-Lens Sales Analytics:** Normal Cafe Mode sales, Event Mode sales, and Grand Total consolidated revenue reports.
+   - **Menu Allergen Constraints:** Allergen tags (`Dairy, Gluten, Nuts, etc.`), preparation notes, and instant 86 out-of-stock toggles.
+   - **Real-Time Inventory Depletion:** Direct unit and recipe-level stock tracking with low-stock warning banners.
+   - **Employee Salary & Shift Auditing:** PIN clock-in/out tracking, hourly wages, event shift premiums, and payroll export.
 
 ---
 
@@ -137,3 +142,4 @@ pnpm --filter @monks/frontend run web
 - [ ] **Table Grid View:** Responsive card grid with Cafe Area and Bar Area filters and multi-tab badges.
 - [ ] **Admin Mode Toggle:** Cafe Mode vs Event Mode sales tracking.
 - [ ] **Web Thermal Printing Client:** Dedicated print station listener for USB thermal receipts.
+- [ ] **Admin Back-Office Operations:** Mode-specific & grand total sales reports, allergen menu constraints, inventory tracking with low-stock alerts, and staff shift salary auditing.

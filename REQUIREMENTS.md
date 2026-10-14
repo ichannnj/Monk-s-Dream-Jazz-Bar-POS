@@ -128,7 +128,7 @@ stateDiagram-v2
 
 ---
 
-## 4. Operating Modes (Admin Toggle)
+## 4. Operating Modes & Sales Reporting Engine
 
 The Admin can toggle the venue operating mode at any time from the administration dashboard:
 
@@ -136,12 +136,39 @@ The Admin can toggle the venue operating mode at any time from the administratio
 [ Mode: ☀️ Normal Cafe Mode ]  <--- TOGGLE --->  [ Mode: 🎷 Event Mode ]
 ```
 
-### 4.1. Purpose & Functional Difference
+### 4.1. Operational Purpose & Mode Definitions
 * **Normal Cafe Mode (Default Baseline):** Standard daily operations. All sales, orders, and average ticket metrics are recorded under regular cafe/bar business revenue. The POS operates in this mode unless an event is explicitly declared.
 * **Event Mode (Optional On-Demand):** Activated manually by the Admin **only** when a live jazz gig, ticketed show, or special event takes place.
   * Not mandatory on a daily basis; enabled only during scheduled events.
   * Every order created while Event Mode is active is tagged with `operating_mode: "event"`.
   * Enables management to isolate and track **per-event gross sales, bar-to-kitchen sales ratios during shows, and artist night profitability** separately from everyday cafe trading.
+
+### 4.2. Multi-Mode Sales Reporting & Analytics
+
+The Admin Analytics view provides three distinct sales reporting lenses:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ Report Filter:  [ 📊 Grand Total ]   [ ☀️ Normal Cafe ]   [ 🎷 Event Mode ] │
+├────────────────────────────────────────────────────────────────────────┤
+│ Date Range: [ Today: Oct 14, 2026 ] 📅       Export: [ 📄 CSV / PDF ]  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+1. **☀️ Normal Cafe Sales Report:**
+   * Filtered strictly to orders tagged with `operating_mode: "cafe"`.
+   * **Metrics:** Gross cafe revenue, net revenue, daytime average order size, peak coffee hours (8 AM - 12 PM), top-selling beverages (Flat White, Espresso) and cafe foods.
+2. **🎷 Event Sales Report:**
+   * Filtered strictly to orders tagged with `operating_mode: "event"`.
+   * **Metrics:** Per-event gross revenue, peak bar cocktail hours during performances, bar-to-kitchen sales ratio during shows (e.g. 70% alcohol vs. 30% snacks), cover charges/ticketed revenue (if applicable), and artist night sales comparison.
+3. **📊 Grand Total Consolidated Report (All Operations):**
+   * Combines all daytime cafe sales and evening event sales across the selected date range.
+   * **Key Performance Indicators (KPIs):**
+     * **Grand Total Revenue:** Combined gross & net sales.
+     * **Sales by Category / Station:** Total Beverage Revenue (Barista + Bar) vs. Total Kitchen Revenue.
+     * **Payment Method Breakdown:** Total Cash vs. Card vs. Digital Wallet.
+     * **Discounts & Comps Audit:** Total staff discounts, promotional deductions, or voided tabs.
+     * **Tax & Surcharge Summary:** Total VAT/GST collected.
 
 ---
 
@@ -240,9 +267,105 @@ METHOD: Card (Visa ****1234)
    * **Socket-Triggered Print Dialog:** Alternatively, the client executes a formatted `window.print()` using an optimized thermal CSS receipt template (`@media print { width: 80mm; }`).
 4. **Remote Handheld Trigger:** Cashiers and waiters on mobile/tablet devices can trigger receipt and dispatch printing on the dedicated station from anywhere on the floor without physical cables.
 
+## 7. Admin Back-Office: Menu Constraints, Inventory & Salary Auditing
+
+Beyond the front-of-house ordering flow, the Admin interface provides complete operational governance for menu integrity, stock levels, and payroll auditing.
+
 ---
 
-## 7. Data Model Schema Design (Prisma)
+### 7.1. Menu Management with Constraints & Allergens
+
+The Menu Catalog allows the Admin to configure items with strict dietary and kitchen constraints:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ Product: Truffle Carbonara                Station: [ 🍳 Kitchen ]       │
+├────────────────────────────────────────────────────────────────────────┤
+│ Base Price: $18.00                        Tax Rate: 10%                │
+│ Category: Pasta & Mains                   Available / In-Stock: [ON]   │
+├────────────────────────────────────────────────────────────────────────┤
+│ ⚠️ Allergen Flags:  [✓] Dairy   [✓] Gluten   [✓] Eggs   [ ] Nuts       │
+│ Dietary Badges:    [ ] Vegan   [✓] Vegetarian                          │
+├────────────────────────────────────────────────────────────────────────┤
+│ Preset Modifiers:  • Gluten-Free Penne (+$2.00)                        │
+│                    • Extra Parmigiano (+$1.50)                         │
+│ Custom Notes Allowed: [YES] (e.g. "Sauce on the side", "No pepper")    │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Key Capabilities & Constraints:
+1. **Station Assignment:** Every item must be explicitly linked to a target preparation station (`station_bar` or `station_food`).
+2. **Allergen Warnings & Dietary Constraints:**
+   - Products are tagged with standard allergen flags: **Dairy, Gluten, Peanuts, Tree Nuts, Shellfish, Eggs, Soy, Fish, Sesame**.
+   - Waiters see distinct visual warnings when selecting items on the POS tablet.
+   - When an order contains a noted allergy, the KDS ticket and the printed Runner Slip prominently display high-visibility alert headers:  
+     `⚠️ ALLERGY ALERT: PEANUTS / NO DAIRY`
+3. **Preset Modifiers & Custom Preparation Notes:**
+   - Configurable modifier groups (e.g., Milk Substitutions: Oat +$0.50, Almond +$0.50; Temperature: Iced / Hot; Sweetness level).
+   - Freeform special request text field for custom kitchen directions.
+4. **Instant 86 (Out-of-Stock) Toggle:**
+   - Admin or Chef can tap "86" on an item; it immediately greys out on all Waiter tablets in real time via WebSockets.
+
+---
+
+### 7.2. Real-Time Inventory & Stock Depletion
+
+The inventory engine tracks ingredients, raw materials, and packaged goods to prevent stockouts and audit shrinkage:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│ Inventory Item          Current Stock    Unit     Min Alert   Status   │
+├─────────────────────────┼────────────────┼────────┼───────────┼────────┤
+│ Specialty Espresso Bean │ 14.5           kg       5.0 kg      🟢 Good  │
+│ Barista Oat Milk        │ 8              Cartons  12 Cartons  🔴 LOW   │
+│ Guanciale / Pancetta    │ 3.2            kg       2.0 kg      🟢 Good  │
+│ Bourbon Whiskey (750ml) │ 4              Bottles  2 Bottles   🟢 Good  │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Key Capabilities:
+1. **Depletion Methods:**
+   * **Direct Unit Deduction:** Packaged goods (e.g., bottled craft soda, beer cans) deduct 1 unit per item sold upon order submission.
+   * **Recipe / Ingredient Linkage:** Menu items link to raw inventory components (e.g., 1x Flat White deducts 18g espresso beans and 200ml milk).
+2. **Low-Stock Alerts:**
+   * Automatic alert thresholds (`minAlertLevel`). When stock falls below the threshold, the Admin dashboard and station tablets display low-stock warning banners.
+3. **Waste & Spillage Logging:**
+   * Staff can record wasted or dropped items (e.g., dropped cocktail, burned pizza, spoiled milk) with mandatory reason codes (`dropped`, `expired`, `preparation_error`) for accurate cost-of-goods (COGS) auditing.
+4. **Stock Replenishment Entry:**
+   * Admin enters new stock deliveries with supplier cost, updating current inventory levels and maintaining purchase cost history.
+
+---
+
+### 7.3. Staff Shift & Salary Auditing
+
+The system maintains a tamper-evident audit log of employee working hours, wage rates, and shift compensation:
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────┐
+│ Staff Member     Role      Date         Clock In   Clock Out  Hours   Rate    Total │
+├──────────────────┼─────────┼────────────┼──────────┼──────────┼───────┼───────┼─────┤
+│ Bill (Barista)   cafe1     2026-10-14   07:45 AM   03:45 PM   8.0h    $16/h   $128  │
+│ Chet (Chef)      kitchen1  2026-10-14   10:00 AM   06:00 PM   8.0h    $22/h   $176  │
+│ Miles (Manager)  admin     2026-10-14   08:00 AM   08:00 PM   12.0h   $25/h   $300  │
+└────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Key Capabilities:
+1. **PIN-Based Shift Clock-In / Clock-Out:**
+   * Staff log their shift start and end times directly on their tablet using their 4-digit PIN.
+   * Automatically calculates active shift duration, excluding logged unpaid meal breaks.
+2. **Wage Rate & Role Differential:**
+   * Configurable base hourly wage per staff profile.
+   * **Event Shift Premium:** Optional multiplier (e.g., 1.5x) or bonus rate when staff work during an active **Event Mode** shift.
+3. **Payroll Audit & Export:**
+   * Summarizes total hours worked, regular pay, overtime/event pay, and gross compensation per pay period.
+   * One-click CSV and PDF export formatted for bookkeeping and payroll disbursement.
+4. **Manager Adjustment Audit Trail:**
+   * If a manager edits a forgotten clock-out or adjusts shift hours, the system logs the editor's ID, the timestamp, and the adjustment rationale.
+
+---
+
+## 8. Data Model Schema Design (Prisma)
 
 To support these requirements, the database schema will extend the current baseline:
 
@@ -296,27 +419,53 @@ enum StationTarget {
   KITCHEN
 }
 
-// Core Entity Relations:
-// Table (1) ──< Tab (Many, identified by customerName) ──< Order (Many) ──< OrderItem (Many)
+enum Allergen {
+  DAIRY
+  GLUTEN
+  PEANUTS
+  TREE_NUTS
+  SHELLFISH
+  EGGS
+  SOY
+  FISH
+  SESAME
+}
+
+// ==========================================
+// Core Entity Relationship Topology:
+// ==========================================
+// Table (1) ────< Tab (Many, identified by customerName)
+// Tab (1) ──────< Order (Many) ──< OrderItem (Many)
+// OrderItem ────> Product ──< ProductIngredient ──> InventoryItem
+// Product ──────> Allergen (Many-to-Many)
+// User (1) ─────< StaffShift (Many, clock-in, clock-out, rate, totalPay)
+// InventoryItem ─< WasteLog (Many)
 ```
 
 ---
 
-## 8. Development Implementation Roadmap
+## 9. Development Implementation Roadmap
 
 1. **Phase 1: Prisma Schema Expansion & Seeding**
-   - Implement `Category`, `Product`, `Table`, `Tab` (with `customerName`), `Order`, `OrderItem`, and `OperatingSession` models.
-   - Seed sample menu items (Espresso, Cappuccino, Negroni, Pasta Carbonara, Margherita Pizza) with pre-assigned stations.
+   - Implement `Category`, `Product`, `Allergen`, `Table`, `Tab` (with `customerName`), `Order`, `OrderItem`, `InventoryItem`, `ProductIngredient`, `StaffShift`, and `OperatingSession` models.
+   - Seed sample menu items with allergen tags and station mappings.
 2. **Phase 2: Real-time Station Gateway (NestJS WebSockets)**
    - Create WebSocket gateway for live order broadcast.
-   - Separate room subscriptions for `/stations/bar`, `/stations/kitchen`, `/stations/foh`, and `/printer`.
-3. **Phase 3: Station UIs (KDS)**
-   - Build Barista/Bartender KDS screen (ticket cards with timer indicators).
+   - Room subscriptions for `/stations/bar`, `/stations/kitchen`, `/stations/foh`, and `/printer`.
+3. **Phase 3: Station KDS UIs on Tablets**
+   - Build Barista/Bartender KDS screen (Accept $\rightarrow$ Done flow).
    - Build Kitchen KDS screen.
-   - Build FOH Expediter screen.
+   - Build FOH Expediter (Buzzout Device) screen with audio/visual alert.
 4. **Phase 4: Table Grid View & Order Creation Screen**
    - Responsive card grid for tables with Area filter tabs (`All`, `Cafe Area`, `Bar Area`).
    - Modal to open new named tab or select active open tabs on a table.
-   - Order basket and item customization.
-5. **Phase 5: Receipt Printing Station Web App**
-   - Create specialized print view with thermal stylesheet and auto-print socket listener.
+   - Order basket with allergen warning indicators and modifier selection.
+5. **Phase 5: Thermal Printing Web Client (Two-Print Flow)**
+   - Implement automatic Order Dispatch Slip print listener (`dispatch:print`).
+   - Implement Customer Payment Receipt print listener (`receipt:print`).
+6. **Phase 6: Admin Back-Office Operations**
+   - Multi-mode sales analytics (Normal Cafe vs. Event Mode vs. Grand Total consolidated).
+   - Menu management with allergen constraints and preset modifiers.
+   - Real-time inventory tracking with recipe depletion and low-stock alerts.
+   - Staff PIN clock-in shift audit and payroll export.
+
