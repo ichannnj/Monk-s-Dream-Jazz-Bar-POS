@@ -1,77 +1,97 @@
-# 🎷 Monk's Dream Jazz Bar — Cloud POS & KDS Platform
+# 🎷 Monk's Dream Jazz Bar — Cloud POS, KDS & Inventory Platform
 
-> A full-stack, cloud-native Point of Sale (POS) and Kitchen Display System (KDS) engineered for **Monk's Dream Jazz Bar**. Built with **React Native (Expo)**, **NestJS (Fastify)**, **Prisma ORM**, and **Supabase Database Hosting**.
+> A full-stack, cloud-native Point of Sale (POS), Kitchen Display System (KDS), and Recipe Inventory Platform engineered for **Monk's Dream Jazz Bar**. Built with **React Native (Expo)**, **NestJS (Fastify)**, **Prisma ORM**, and **Supabase Database Hosting**.
 
 ---
 
 ## 📖 System Documentation & Specifications
 
-Detailed architectural specifications, station routing rules, data models, and business logic are fully documented in:
+Detailed architectural specifications, multi-channel intake rules, recipe BOM depletion mechanics, data models, and business logic are fully documented in:
 
-👉 **[REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)** — *Comprehensive system architecture, order lifecycle state machines, role matrix, and thermal printing design.*
+👉 **[REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)** — *Comprehensive system architecture, order lifecycle state machines, role matrix, recipe bill of materials, table transfer engine, and thermal printing design.*
 
 ---
 
 ## 🏛️ System Overview & Architecture
 
-Monk's Dream operates as an artisan cafe by day and an intimate jazz bar & live event lounge by night.
+Monk's Dream operates as an artisan cafe by day and an intimate live jazz bar & event lounge by night.
 
 ```
-                              ┌─────────────────────────────────────────┐
-                              │           Waiter / Cashier POS          │
-                              │  (Table Grid View: Cafe & Bar filters)  │
-                              └────────────────────┬────────────────────┘
-                                                   │
-                                                   ▼
-                              ┌─────────────────────────────────────────┐
-                              │         NestJS WebSocket Gateway        │
-                              │       & Prisma Database Service         │
-                              └───────┬─────────────────────────┬───────┘
-                                      │                         │
-                   Beverage Items     │                         │  Food Items
-                   (Coffee, Drinks)   │                         │  (Pasta, Pizza)
-                                      ▼                         ▼
-                        ┌──────────────────────────┐ ┌──────────────────────────┐
-                        │   Barista / Bartender    │ │     Kitchen Station      │
-                        │       Station KDS        │ │       Station KDS        │
-                        └─────────────┬────────────┘ └─────────────┬────────────┘
-                                      │                            │
-                                      └─────────────┬──────────────┘
-                                                    │ All items marked READY
-                                                    ▼
-                                       ┌────────────────────────┐
-                                       │ FOH Runner / Expediter │
-                                       │    (Delivers Table)    │
-                                       └────────────────────────┘
-                                                    │
-                                                    ▼
-                                       ┌────────────────────────┐
-                                       │ Receipt Print Terminal │
-                                       │ (PC + USB Thermal Web) │
-                                       └────────────────────────┘
+       ┌─────────────────────────────────────────────────────────────┐
+       │             Multi-Channel Order Intake (POS)                │
+       │  [Dine-In Tables]  [Takeout / To-Go]  [GrabFood / Foodpanda]│
+       │                   Cashier / Waiter Tablets                  │
+       └──────────────────────────────┬──────────────────────────────┘
+                                      │
+                                      ▼
+       ┌─────────────────────────────────────────────────────────────┐
+       │                  NestJS WebSocket Gateway                   │
+       │           & Order-Driven Inventory Depletion Engine         │
+       └───────┬─────────────────────────────────────────────┬───────┘
+               │                                             │
+Beverage Items │                                             │ Food Items
+(Coffee, Tea,  │                                             │ (Pasta, Pizza,
+Bar Cocktails) │                                             │ Kitchen Bites)
+               ▼                                             ▼
+ ┌───────────────────────────┐                 ┌───────────────────────────┐
+ │    Barista / Bartender    │                 │      Kitchen Station      │
+ │    Station Tablet KDS     │                 │    Station Tablet KDS     │
+ │  (NO TVs / Public Views)  │                 │  (NO TVs / Public Views)  │
+ └─────────────┬─────────────┘                 └─────────────┬─────────────┘
+               │                                             │
+               └──────────────────────┬──────────────────────┘
+                                      │ All items marked READY
+                                      ▼
+                        ┌───────────────────────────┐
+                        │  FOH Runner / Expediter   │
+                        │   Tablet (Buzzout View)   │
+                        │(Table / Takeout / Delivery)│
+                        └─────────────┬─────────────┘
+                                      │
+                                      ▼
+                        ┌───────────────────────────┐
+                        │  Receipt & Dispatch Print │
+                        │  Terminal (PC + USB Web)  │
+                        └───────────────────────────┘
 ```
+
+> [!IMPORTANT]
+> **KDS Hardware Architecture (Zero Public Screens):**
+> Monk's Dream is an atmospheric jazz bar and artisan cafe. Overhead TV displays, public queue boards, or customer-facing screens are **strictly forbidden**. The KDS operates entirely on authenticated staff touchscreen tablets mounted at workstations (`station_bar`, `station_food`) or carried handheld (`foh_runner`).
+
+---
 
 ### Key Functional Concepts
 
-1. **Category-Based Station Routing (Not Location-Based):**
-   - **Drinks & Coffees** $\rightarrow$ Route to **Barista / Bartender Station**.
-   - **Food (Pizza, Pasta, etc.)** $\rightarrow$ Route to **Kitchen Station**.
-   - *Table Grid Filters (Cafe Area vs. Bar Area) are strictly for table identification and organization on the grid, never restricting item routing.*
-2. **Admin Operating Mode Toggle:**
-   - **☀️ Normal Cafe Mode:** Standard daytime operations and baseline sales tracking.
-   - **🎷 Event Mode:** Tagged sales sessions for live jazz nights and private shows for separate revenue accounting.
-3. **FOH Expediter:**
-   - Consolidated screen that tracks multi-station orders and notifies runners when all items for a table are ready for delivery.
-4. **Two-Print Thermal Printing Workflow:**
-   - **Order Dispatch Slip (Runner Chit):** Auto-prints at the USB printer terminal when the waiter taps **"Send Order"** (includes Order #, Table #, Guest Name, and Item Checklist) to clip to the serving tray.
-   - **Customer Payment Receipt:** Prints at the terminal when the cashier settles payment at checkout.
-5. **Table Tabs by Customer Name (Split & Shared Billing):**
-   - Tables support multiple independent customer tabs (e.g., Table 4 $\rightarrow$ `Tab: Alice`, `Tab: Bob`). Allows friends to split bills effortlessly or strangers sharing communal tables/bar counter seats to pay their own tab without closing the table for others.
-6. **Admin Back-Office Suite (Analytics, Menu Constraints, Inventory & Salaries):**
-   - **Multi-Lens Sales Analytics:** Normal Cafe Mode sales, Event Mode sales, and Grand Total consolidated revenue reports.
-   - **Menu & Pricing Constraints:** Allergen tags (`Dairy, Gluten, Nuts, etc.`), fixed **20% Corkage Fee** for outside food/drinks, and automated **+20% markup constraint on pre-made resold foods** (`selling_price = cost * 1.20`).
-   - **Real-Time Inventory Depletion:** Direct unit and recipe-level stock tracking with low-stock warning banners.
-   - **Staff Attendance & Daily Salary Expense Management:** Shift attendance logging for all staff (both POS/KDS workflow staff and non-workflow employees such as dishwashers, cleaners, security), monthly daily-salary calculation, and venue operating expense tracking.
+1. **Unified Cashier & Waiter Role (Floor Staff):**
+   - Floor staff perform both table service (ordering, table moves) and checkout/billing on handheld tablets without needing role-switching or manager overrides.
+2. **Category-Based Station Routing (Not Location-Based):**
+   - **Drinks, Coffee & Cocktails** $\rightarrow$ Route directly to **Barista / Bartender Tablet KDS**.
+   - **Food (Pizza, Pasta, Kitchen Items)** $\rightarrow$ Route directly to **Kitchen Station Tablet KDS**.
+   - *Table Grid Filters (Cafe Area vs. Bar Area) are strictly for table navigation and floor organization, never restricting station item routing.*
+3. **Multi-Channel Fulfillment (Dine-In, Takeout & Third-Party Delivery):**
+   - **Dine-In:** Assigned to physical tables with per-customer named tabs.
+   - **Takeout / To-Go:** Virtual queue tabs (`#T-105`) with packaging tags and cup labels.
+   - **Online Delivery Intake (GrabFood & Foodpanda):** Cashier inputs third-party delivery orders manually for unified kitchen routing, automated recipe stock decrement, and multi-channel revenue analytics (no direct API integration needed).
+4. **Table & Tab Transfers:**
+   - Floor staff can transfer **entire tables** or split and move **individual named customer tabs** (e.g. guest moves from Table 4 to Bar Seat 1).
+   - Reassignments trigger real-time WebSocket updates (`order:table_transferred`) to Bar, Kitchen, and Runner tablets with visual badges without interrupting cooking/prep timers.
+5. **Recipe Bill of Materials (BOM) & Inventory Depletion Engine:**
+   - Every product is linked to an exact recipe with precise measurements (`g`, `ml`, `pcs`).
+   - Ingredients automatically decrement from inventory upon order creation/acceptance.
+   - **Auto-86 Safeguard:** Menu items automatically grey out on POS tablets when key ingredients drop below threshold levels.
+   - Full audit trail with immutable stock movement ledgers and a spillage/waste logger.
+6. **Operating Mode Toggle & Multi-Lens Sales Analytics:**
+   - **☀️ Normal Cafe Mode:** Standard daytime cafe and kitchen operations.
+   - **🎷 Event Mode:** Tagged revenue sessions for live jazz nights and ticketed performances.
+   - Granular channel breakdowns: `Cafe Area`, `Bar Area`, `Takeout Counter`, `GrabFood`, and `Foodpanda`.
+7. **Two-Print Thermal Printing Workflow:**
+   - **Order Dispatch Slip (Runner Chit):** Auto-prints at the dedicated USB PC station when staff taps **"Send Order"** (includes order checklist, guest name, and destination table or delivery bag tag) to clip to the tray.
+   - **Customer Payment Receipt:** Prints upon billing settlement.
+8. **Table Tabs by Customer Name (Split Billing):**
+   - Tables support multiple independent customer tabs (e.g., Table 4 $\rightarrow$ `Tab: Alice`, `Tab: Bob`). Allows friends or communal seating guests to settle their own tabs independently.
+9. **Staff Attendance & Daily Salary Expense Management:**
+   - PIN-based attendance logging for all venue staff (both POS/KDS workflow staff and support staff like cleaners, security, sound tech) with baseline daily rates, discretionary shift add-ons, and net operating cost auditing.
 
 ---
 
@@ -88,16 +108,16 @@ Monk's Dream operates as an artisan cafe by day and an intimate jazz bar & live 
 
 ## 👥 Staff Profiles & Default PINs
 
-| Role | Username | Display Name | Station / Screen | 4-Digit PIN |
-|---|---|---|---|---|
-| **Admin** | `admin` | Miles (Manager) | Admin Dashboard & Mode Toggle | `9999` |
-| **Cashier** | `cashier1` | Coltrane (Cashier) | Checkout & Billing Screen | `1111` |
-| **Waiter** | `waiter1` | Ella (Floor Waiter) | Table Order Taking Screen | `2222` |
-| **Bartender** | `bar1` | Thelonious (Bartender) | Bar KDS (Drinks & Cocktails) | `0001` |
-| **Barista** | `cafe1` | Bill (Barista) | Cafe KDS (Coffee & Tea) | `0002` |
-| **Kitchen Chef** | `kitchen1` | Chet (Chef) | Kitchen KDS (Food & Pizza) | `0003` |
-| **FOH Runner** | `runner1` | Sarah (Expediter) | Ready-to-Serve Dispatch Screen | `3333` |
-| **Printer PC** | `printer1` | Receipt Terminal | Dedicated USB Web Print Client | `0000` |
+| Role | Username | Display Name | Station / Screen | 4-Digit PIN | Permissions |
+|---|---|---|---|---|---|
+| **Admin** | `admin` | Miles (Manager) | Admin Hub & Back-Office | `9999` | Full system control, mode toggle, recipe builder, inventory, salaries |
+| **Cashier / Waiter** | `cashier_waiter1` | Coltrane (Floor Staff) | Handheld POS Tablet | `1111` | Table grid, takeout queue, Grab/Foodpanda intake, table transfers, billing |
+| **Cashier / Waiter** | `cashier_waiter2` | Ella (Floor Staff) | Handheld POS Tablet | `2222` | Table grid, takeout queue, Grab/Foodpanda intake, table transfers, billing |
+| **Bartender** | `bar1` | Thelonious (Bartender) | Bar Tablet KDS | `0001` | Cocktail & beverage prep queue |
+| **Barista** | `cafe1` | Bill (Barista) | Cafe Tablet KDS | `0002` | Espresso & tea prep queue |
+| **Kitchen Chef** | `kitchen1` | Chet (Chef) | Kitchen Tablet KDS | `0003` | Food & culinary prep queue |
+| **FOH Runner** | `runner1` | Sarah (Expediter) | Runner Tablet (Buzzout) | `3333` | Ready-to-serve dispatch & pickup handoff |
+| **Printer PC** | `printer1` | Receipt Terminal | Dedicated USB Web Print Station | `0000` | Automated runner slip & customer receipt printing |
 
 ---
 
@@ -137,9 +157,29 @@ pnpm --filter @monks/frontend run web
 
 - [x] **Monorepo Foundation:** Turborepo, NestJS (Fastify), Expo, NativeWind, Prisma setup.
 - [x] **Authentication:** 4-digit staff PIN authentication system.
-- [ ] **Data Model Expansion:** Prisma models for Orders, LineItems, Categories, Tables, OperatingSessions (per [REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)).
-- [ ] **KDS Real-Time Dispatch:** WebSocket gateway for live order routing between Waiter $\rightarrow$ Bar/Kitchen $\rightarrow$ FOH.
-- [ ] **Table Grid View:** Responsive card grid with Cafe Area and Bar Area filters and multi-tab badges.
-- [ ] **Admin Mode Toggle:** Cafe Mode vs Event Mode sales tracking.
-- [ ] **Web Thermal Printing Client:** Dedicated print station listener for USB thermal receipts.
-- [ ] **Admin Back-Office Operations:** Mode-specific & grand total sales reports, allergen menu constraints, inventory tracking with low-stock alerts, and staff shift salary auditing.
+- [ ] **Phase 1: Prisma Schema Expansion, Recipe BOM & Seeding:**
+  - [ ] Implement `Category`, `Product` (+20% resale markup constraint), `ProductIngredient` (exact BOM measurements), `InventoryItem`, `StockMovement`, and `WasteLog`.
+  - [ ] Implement `Table`, `Tab` (supporting `DINE_IN`, `TAKEOUT`, and `ONLINE_DELIVERY`), `Order`, `OrderItem`, and `TableTransferLog`.
+  - [ ] Seed sample menu items with exact recipe measurements, initial par levels, and staff roster.
+- [ ] **Phase 2: Real-time Station Gateway, Live Transfers & Depletion Engine (NestJS):**
+  - [ ] WebSocket gateway for live order routing (`/stations/bar`, `/stations/kitchen`, `/stations/foh`, `/printer`).
+  - [ ] Real-time recipe ingredient depletion engine and Auto-86 broadcast safeguard.
+  - [ ] Live table/tab transfer event broadcast (`order:table_transferred` / `tab:transferred`).
+- [ ] **Phase 3: Station KDS UIs on Tablets (No TVs / Public Views):**
+  - [ ] Barista/Bartender KDS screen with channel tags (`DINE-IN`, `TAKEOUT`, `GRAB/FOODPANDA`) and transfer badges.
+  - [ ] Kitchen Chef KDS screen with food tickets, allergen alerts, and live table tags.
+  - [ ] FOH Expediter screen with multi-station consolidation and ready chime.
+- [ ] **Phase 4: Multi-Channel Order Intake, Table Grid & Table Transfer Modal:**
+  - [ ] Responsive card grid with Area & Channel filters (`All`, `Cafe Area`, `Bar Area`, `Takeout Queue`, `Online Delivery`).
+  - [ ] Table & Tab Transfer modal (full table moves, tab splits, reason logging).
+  - [ ] Fast entry modal for third-party online delivery (GrabFood & Foodpanda).
+  - [ ] One-tap counter takeout order flow with to-go packaging flags.
+- [ ] **Phase 5: Thermal Printing Web Client (Multi-Document Flow):**
+  - [ ] Automatic Order Dispatch Slip printing listener (`dispatch:print`).
+  - [ ] Takeout cup slip and Grab/Foodpanda sealed delivery bag tag formatting.
+  - [ ] Customer payment receipt printing listener (`receipt:print`).
+- [ ] **Phase 6: Admin Back-Office, Inventory Hub & Multi-Channel Sales Auditing:**
+  - [ ] Multi-mode & multi-channel sales analytics (Cafe vs. Bar vs. Takeout vs. GrabFood vs. Foodpanda across Cafe & Event modes).
+  - [ ] Menu Management: interactive Recipe BOM Builder with real-time portion COGS calculation.
+  - [ ] Inventory Hub: stock level overview, PO delivery intake, waste logger, and immutable audit ledger.
+  - [ ] Staff attendance tracking and daily salary expense auditing.
