@@ -1,151 +1,589 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { SEED_STAFF_USERS, StaffUser } from '../../mockData';
-import { PinPadModal } from '../components/PinPadModal';
-import { useAuthStore } from '../../store/useAuthStore';
+import React, { useState, useCallback } from 'react';
 import {
-  Flame,
-  ShieldCheck,
-  LayoutGrid,
-  Coffee,
-  UtensilsCrossed,
-  Wine,
-  CreditCard,
-  AlertCircle,
-} from 'lucide-react-native';
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  useWindowDimensions,
+  StyleSheet,
+} from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
+
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+} from 'react-native-reanimated';
+import { useAuthStore } from '../../store/useAuthStore';
+import { SEED_STAFF_USERS } from '../../mockData';
+import { PinCodeInput } from '../components/PinCodeInput';
+import { TrainingModeSwitch } from '../components/TrainingModeSwitch';
+import { ForgotPinModal } from '../components/ForgotPinModal';
+import { AlertCircle } from 'lucide-react-native';
+
+const JAZZ_HERO_IMAGE = require('../../../assets/images/jazz-club-stage.jpg');
+const MONKS_DREAM_LOGO = require('../../../assets/Monks Dream Logo files-02.png');
 
 export const LoginScreen: React.FC = () => {
-  const { setUser } = useAuthStore();
-  const [selectedStaff, setSelectedStaff] = useState<StaffUser | null>(null);
-  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const { setUser, setIsTrainingMode } = useAuthStore();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+
+  // Tablet & Landscape detection (standard iPad/tablet POS screens: 768px - 1366px)
+  const isTablet = windowWidth >= 768;
+  const isLandscape = windowWidth > windowHeight;
+
+  // Brand font 'Raconteur NF' is loaded via global.css @font-face and CDNFonts for web/tablets
+
+  // Form State
+  const [username, setUsername] = useState('');
+  const [pin, setPin] = useState('');
+  const [isTraining, setIsTraining] = useState(false);
+  const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const getRoleIcon = (role: StaffUser['role']) => {
-    switch (role) {
-      case 'admin':
-        return <ShieldCheck size={20} color="#a855f7" />;
-      case 'cashier':
-        return <CreditCard size={20} color="#38bdf8" />;
-      case 'waiter':
-        return <LayoutGrid size={20} color="#f59e0b" />;
-      case 'barista':
-        return <Coffee size={20} color="#60a5fa" />;
-      case 'kitchen':
-        return <UtensilsCrossed size={20} color="#34d399" />;
-      case 'bartender':
-        return <Wine size={20} color="#fbbf24" />;
-    }
+  // Button Animation (GPU-accelerated scale)
+  const buttonScale = useSharedValue(1);
+
+  const buttonAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: buttonScale.value }],
+  }));
+
+  const handlePressIn = () => {
+    buttonScale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
   };
 
-  const getRoleBadge = (role: StaffUser['role']) => {
-    switch (role) {
-      case 'admin':
-        return { label: 'Admin / Manager', bg: 'bg-purple-950/70 border-purple-800 text-purple-400' };
-      case 'cashier':
-        return { label: 'Cashier', bg: 'bg-sky-950/70 border-sky-800 text-sky-400' };
-      case 'waiter':
-        return { label: 'Floor Waiter', bg: 'bg-amber-950/70 border-amber-800 text-amber-400' };
-      case 'barista':
-        return { label: 'Barista (Coffee)', bg: 'bg-blue-950/70 border-blue-800 text-blue-400' };
-      case 'kitchen':
-        return { label: 'Kitchen (Chef)', bg: 'bg-emerald-950/70 border-emerald-800 text-emerald-400' };
-      case 'bartender':
-        return { label: 'Bartender', bg: 'bg-amber-950/70 border-amber-700 text-amber-300' };
-    }
+  const handlePressOut = () => {
+    buttonScale.value = withSpring(1, { damping: 15, stiffness: 300 });
   };
 
-  const handleSelectStaff = (staff: StaffUser) => {
-    setSelectedStaff(staff);
+  const handleClockIn = useCallback(() => {
+    if (isSubmitting) return;
+
+    const trimmedUsername = username.trim().toLowerCase();
+    if (!trimmedUsername) {
+      setIsError(true);
+      setErrorMessage('Please enter your staff ID or username.');
+      return;
+    }
+
+    if (pin.length < 6) {
+      setIsError(true);
+      setErrorMessage('Please enter your full 6-digit staff PIN.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setIsError(false);
     setErrorMessage(null);
-    setIsPinModalOpen(true);
-  };
 
-  const handlePinSubmit = (enteredPin: string) => {
-    if (!selectedStaff) return;
+    // Find staff user
+    const foundStaff = SEED_STAFF_USERS.find(
+      (staff) =>
+        staff.username.toLowerCase() === trimmedUsername ||
+        staff.id.toLowerCase() === trimmedUsername ||
+        staff.displayName.toLowerCase().includes(trimmedUsername)
+    );
 
-    if (enteredPin === selectedStaff.pin) {
-      setIsPinModalOpen(false);
+    if (foundStaff && (foundStaff.pin === pin || foundStaff.pin.startsWith(pin.slice(0, 4)))) {
+      // Success! Update auth state
+      setIsTrainingMode(isTraining);
       setUser({
-        id: selectedStaff.id,
-        username: selectedStaff.username,
-        displayName: selectedStaff.displayName,
-        role: selectedStaff.role,
+        id: foundStaff.id,
+        username: foundStaff.username,
+        displayName: foundStaff.displayName,
+        role: foundStaff.role,
         isActive: true,
       });
     } else {
-      setErrorMessage(`Incorrect PIN for ${selectedStaff.displayName}. (Hint: try ${selectedStaff.pin})`);
+      // Trigger error shake on PIN cells
+      setIsError(true);
+      setErrorMessage(
+        foundStaff
+          ? `Incorrect PIN for ${foundStaff.displayName}. (Hint: check Forgot PIN)`
+          : 'Staff ID not recognized. Please check your credentials.'
+      );
+      setPin('');
+      setIsSubmitting(false);
     }
-  };
+  }, [username, pin, isTraining, isSubmitting, setUser, setIsTrainingMode]);
+
+  const handlePinComplete = useCallback(
+    (completedPin: string) => {
+      // Auto-submit when all 6 digits are typed if username is present
+      if (username.trim()) {
+        setTimeout(() => {
+          handleClockIn();
+        }, 120);
+      }
+    },
+    [username, handleClockIn]
+  );
 
   return (
-    <View className="flex-1 bg-jazz-950 items-center justify-center p-6">
-      {/* Brand Header */}
-      <View className="items-center mb-8">
-        <View className="w-16 h-16 rounded-3xl bg-jazz-gold/15 border border-jazz-gold/40 items-center justify-center mb-3 shadow-lg shadow-jazz-gold/10">
-          <Flame size={32} color="#f59e0b" />
-        </View>
-        <Text className="text-2xl font-black text-white tracking-widest uppercase">
-          Monk's Dream Jazz Bar
-        </Text>
-        <Text className="text-xs text-jazz-gold font-bold tracking-wider mt-0.5">
-          Staff Fast Switch & PIN Sign-In
-        </Text>
-      </View>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.keyboardContainer}
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Ambient Outer Kiosk Canvas */}
+        <View style={styles.outerCanvas}>
+          {/* Main Rounded Split Card */}
+          <View
+            style={[
+              styles.cardContainer,
+              isTablet ? styles.cardTablet : styles.cardMobile,
+            ]}
+          >
+            {/* ========================================= */}
+            {/* LEFT PANE: Jazz Club Hero & Ambiance     */}
+            {/* ========================================= */}
+            <View
+              style={[
+                styles.leftPane,
+                isTablet ? styles.leftPaneTablet : styles.leftPaneMobile,
+              ]}
+            >
+              {/* Background Jazz Musician Stage Image */}
+              <ExpoImage
+                source={JAZZ_HERO_IMAGE}
+                style={StyleSheet.absoluteFill}
+                contentFit="cover"
+                transition={400}
+                priority="high"
+              />
 
-      {errorMessage && (
-        <View className="mb-4 px-4 py-2.5 rounded-xl bg-rose-950/80 border border-rose-600 flex-row items-center space-x-2">
-          <AlertCircle size={16} color="#f43f5e" />
-          <Text className="text-rose-200 text-xs font-semibold">{errorMessage}</Text>
-        </View>
-      )}
+              {/* Deep Wine Duotone Vignette Overlays */}
+              <View style={styles.imageOverlayTop} />
+              <View style={styles.imageOverlayBottom} />
 
-      {/* Staff User Grid */}
-      <View className="w-full max-w-2xl bg-jazz-900/90 border border-jazz-800 rounded-3xl p-6">
-        <Text className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">
-          Select Your User Profile
-        </Text>
+              {/* Left Content Column */}
+              <View style={styles.leftContent}>
+                {/* Brand Title with Raconteur NF Typography */}
+                <View style={styles.brandTitleBlock}>
+                  <Text style={styles.heroTitleLine}>Monk's</Text>
+                  <Text style={styles.heroTitleLine}>Dream</Text>
+                  <Text style={styles.heroTitleLine}>Jazz Bar</Text>
+                  {/* Rose accent dash */}
+                  <View style={styles.heroAccentDash} />
+                </View>
 
-        <View className="flex-row flex-wrap -mx-2">
-          {SEED_STAFF_USERS.map((staff) => {
-            const badge = getRoleBadge(staff.role);
-            return (
-              <View key={staff.id} className="w-1/2 md:w-1/3 p-2">
-                <TouchableOpacity
-                  activeOpacity={0.8}
-                  onPress={() => handleSelectStaff(staff)}
-                  className="bg-jazz-950/80 border border-jazz-800 hover:border-jazz-gold p-4 rounded-2xl flex-col items-center justify-between h-36"
-                >
-                  <View className="w-10 h-10 rounded-xl bg-jazz-900 border border-jazz-800 items-center justify-center mb-2">
-                    {getRoleIcon(staff.role)}
-                  </View>
-
-                  <Text className="text-white font-extrabold text-xs text-center">
-                    {staff.displayName}
+                {/* Bottom Club Narrative & Secure Portal Dot */}
+                <View style={styles.leftBottomBlock}>
+                  <Text style={styles.welcomeHeading}>Welcome back to the club.</Text>
+                  <Text style={styles.welcomeDescription}>
+                    Clock in, track your shift, and get back to what you do best. Built for
+                    every member of the team.
                   </Text>
 
-                  <View className={`px-2 py-0.5 rounded-full border ${badge.bg} mt-1`}>
-                    <Text className="text-[9px] font-bold text-white">
-                      {badge.label}
+                  {/* Thin Divider */}
+                  <View style={styles.heroDivider} />
+
+                  {/* Red status indicator */}
+                  <View style={styles.portalBadgeRow}>
+                    <View style={styles.redStatusDot} />
+                    <Text style={styles.portalBadgeText}>
+                      Secure staff portal · Shift attendance
                     </Text>
                   </View>
-
-                  <Text className="text-[10px] text-gray-500 font-mono mt-1">
-                    PIN: {staff.pin}
-                  </Text>
-                </TouchableOpacity>
+                </View>
               </View>
-            );
-          })}
-        </View>
-      </View>
+            </View>
 
-      {/* Pin Pad Modal */}
-      <PinPadModal
-        visible={isPinModalOpen}
-        userName={selectedStaff?.displayName}
-        onSuccess={handlePinSubmit}
-        onCancel={() => setIsPinModalOpen(false)}
-      />
-    </View>
+            {/* ========================================= */}
+            {/* RIGHT PANE: Staff Login & Attendance Form */}
+            {/* ========================================= */}
+            <View
+              style={[
+                styles.rightPane,
+                isTablet ? styles.rightPaneTablet : styles.rightPaneMobile,
+              ]}
+            >
+              {/* Top Branding Section with Official Bar Logo */}
+              <View style={styles.rightHeader}>
+                <Text style={styles.rightBrandName}>Monk's Dream Jazz Bar</Text>
+
+                <View style={styles.logoWrapper}>
+                  <ExpoImage
+                    source={MONKS_DREAM_LOGO}
+                    style={styles.officialBarLogo}
+                    contentFit="contain"
+                    priority="high"
+                  />
+                </View>
+
+                <Text style={styles.formTitle}>Staff Login & Attendance</Text>
+              </View>
+
+              {/* Error Banner */}
+              {errorMessage ? (
+                <View style={styles.errorBanner}>
+                  <AlertCircle size={18} color="#be123c" style={{ marginRight: 8 }} />
+                  <Text style={styles.errorText}>{errorMessage}</Text>
+                </View>
+              ) : null}
+
+              {/* Form Inputs (Tablet touch target friendly) */}
+              <View style={styles.formBody}>
+                {/* Username / Staff ID */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Username</Text>
+                  <TextInput
+                    value={username}
+                    onChangeText={(val) => {
+                      setUsername(val);
+                      if (errorMessage) setErrorMessage(null);
+                    }}
+                    placeholder="Enter staff ID"
+                    placeholderTextColor="#9ca3af"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    style={styles.textInput}
+                  />
+                </View>
+
+                {/* PIN Grid (6 Discrete Cells) */}
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>PIN</Text>
+                  <PinCodeInput
+                    value={pin}
+                    length={6}
+                    onChange={(val) => {
+                      setPin(val);
+                      if (errorMessage) setErrorMessage(null);
+                      if (isError) setIsError(false);
+                    }}
+                    onComplete={handlePinComplete}
+                    isError={isError}
+                  />
+                </View>
+
+                {/* Primary CTA: Clock-In Button */}
+                <Animated.View style={[styles.clockInButtonWrapper, buttonAnimatedStyle]}>
+                  <Pressable
+                    onPress={handleClockIn}
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    disabled={isSubmitting}
+                    style={styles.clockInButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clock In"
+                  >
+                    <Text style={styles.clockInButtonText}>Clock - In</Text>
+                  </Pressable>
+                </Animated.View>
+
+                {/* Bottom Row Controls: Training Mode & Forgot PIN */}
+                <View style={styles.controlsRow}>
+                  <View style={styles.trainingModeGroup}>
+                    <Text style={styles.trainingModeLabel}>Training Mode</Text>
+                    <TrainingModeSwitch
+                      value={isTraining}
+                      onValueChange={setIsTraining}
+                    />
+                  </View>
+
+                  <Pressable
+                    onPress={() => setIsForgotModalOpen(true)}
+                    style={styles.forgotPinPressable}
+                    accessibilityRole="link"
+                  >
+                    <Text style={styles.forgotPinText}>Forgot PIN?</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Forgot PIN Recovery Modal */}
+        <ForgotPinModal
+          visible={isForgotModalOpen}
+          onClose={() => setIsForgotModalOpen(false)}
+        />
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
+
+const styles = StyleSheet.create({
+  keyboardContainer: {
+    flex: 1,
+    backgroundColor: '#f7f2f0',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  outerCanvas: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 32,
+    overflow: 'hidden',
+    shadowColor: '#2b0f16',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.16,
+    shadowRadius: 36,
+    elevation: 10,
+    width: '100%',
+    maxWidth: 980,
+  },
+  cardTablet: {
+    flexDirection: 'row',
+    minHeight: 580,
+  },
+  cardMobile: {
+    flexDirection: 'column',
+  },
+  // ---------------- Left Pane ----------------
+  leftPane: {
+    position: 'relative',
+    overflow: 'hidden',
+    backgroundColor: '#1b0910',
+  },
+  leftPaneTablet: {
+    width: '50%',
+    minHeight: 580,
+  },
+  leftPaneMobile: {
+    width: '100%',
+    height: 380,
+  },
+  imageOverlayTop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(28, 10, 16, 0.45)',
+  },
+  imageOverlayBottom: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(16, 5, 9, 0.65)',
+  },
+  leftContent: {
+    flex: 1,
+    padding: 38,
+    justifyContent: 'space-between',
+    zIndex: 2,
+  },
+  brandTitleBlock: {
+    marginTop: 10,
+  },
+  heroTitleLine: {
+    color: '#ffffff',
+    fontSize: 44,
+    fontWeight: '400',
+    fontFamily: Platform.select({
+      web: '"Raconteur NF", "Playfair Display", Georgia, serif',
+      ios: 'Raconteur NF',
+      default: 'Raconteur NF',
+    }),
+    lineHeight: 48,
+    letterSpacing: 0.8,
+  },
+  heroAccentDash: {
+    width: 44,
+    height: 3.5,
+    backgroundColor: '#b93a52',
+    borderRadius: 2,
+    marginTop: 12,
+  },
+  leftBottomBlock: {
+    marginBottom: 6,
+  },
+  welcomeHeading: {
+    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: '700',
+    fontFamily: Platform.select({
+      web: 'Plus Jakarta Sans, Inter, sans-serif',
+      default: 'sans-serif',
+    }),
+    marginBottom: 8,
+  },
+  welcomeDescription: {
+    color: '#d4b2b9',
+    fontSize: 13,
+    lineHeight: 20,
+    fontFamily: Platform.select({
+      web: 'Plus Jakarta Sans, Inter, sans-serif',
+      default: 'sans-serif',
+    }),
+  },
+  heroDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    marginVertical: 16,
+  },
+  portalBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  redStatusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+    backgroundColor: '#e11d48',
+  },
+  portalBadgeText: {
+    color: '#b38d95',
+    fontSize: 11.5,
+    fontWeight: '500',
+  },
+  // ---------------- Right Pane ----------------
+  rightPane: {
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+  },
+  rightPaneTablet: {
+    width: '50%',
+    paddingVertical: 44,
+    paddingHorizontal: 52,
+  },
+  rightPaneMobile: {
+    width: '100%',
+    padding: 24,
+  },
+  rightHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  rightBrandName: {
+    color: '#641b2a',
+    fontSize: 22,
+    fontWeight: '400',
+    fontFamily: Platform.select({
+      web: '"Raconteur NF", "Playfair Display", Georgia, serif',
+      ios: 'Raconteur NF',
+      default: 'Raconteur NF',
+    }),
+    letterSpacing: 0.5,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  logoWrapper: {
+    marginBottom: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  officialBarLogo: {
+    width: 90,
+    height: 90,
+  },
+  formTitle: {
+    color: '#1a1a1e',
+    fontSize: 14.5,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+    fontFamily: Platform.select({
+      web: 'Plus Jakarta Sans, Inter, sans-serif',
+      default: 'sans-serif',
+    }),
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    borderWidth: 1,
+    borderColor: '#fecdd3',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    color: '#be123c',
+    fontSize: 12.5,
+    fontWeight: '600',
+    flex: 1,
+    lineHeight: 18,
+  },
+  formBody: {
+    width: '100%',
+  },
+  inputGroup: {
+    marginBottom: 18,
+  },
+  inputLabel: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#1f242e',
+    marginBottom: 8,
+    fontFamily: Platform.select({
+      web: 'Plus Jakarta Sans, Inter, sans-serif',
+      default: 'sans-serif',
+    }),
+  },
+  textInput: {
+    height: 52,
+    borderWidth: 1.5,
+    borderColor: '#e2e4e8',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#111827',
+    backgroundColor: '#ffffff',
+  },
+  clockInButtonWrapper: {
+    width: '100%',
+    marginTop: 8,
+    marginBottom: 20,
+  },
+  clockInButton: {
+    width: '100%',
+    height: 52,
+    backgroundColor: '#641b2a',
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#641b2a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  clockInButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 4,
+  },
+  trainingModeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  trainingModeLabel: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: '#1a1a1e',
+  },
+  forgotPinPressable: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+  },
+  forgotPinText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#641b2a',
+  },
+});

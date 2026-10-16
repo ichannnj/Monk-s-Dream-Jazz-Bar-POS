@@ -12,9 +12,11 @@ interface AuthState {
   currentUser: User | null;
   serverUrl: string;
   isOnline: boolean;
+  isTrainingMode: boolean;
   setUser: (user: User | null) => void;
   setServerUrl: (url: string) => void;
   setIsOnline: (online: boolean) => void;
+  setIsTrainingMode: (val: boolean) => void;
   logout: () => void;
 }
 
@@ -22,8 +24,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   currentUser: null,
   serverUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000',
   isOnline: true,
+  isTrainingMode: false,
   setUser: (user) => set({ currentUser: user }),
   setServerUrl: (serverUrl) => set({ serverUrl }),
   setIsOnline: (isOnline) => set({ isOnline }),
+  setIsTrainingMode: (isTrainingMode) => set({ isTrainingMode }),
   logout: () => set({ currentUser: null }),
 }));

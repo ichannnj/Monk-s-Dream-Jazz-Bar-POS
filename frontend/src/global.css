@@ -1,3 +1,24 @@
+@import url('https://fonts.cdnfonts.com/css/raconteur-nf');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@font-face {
+  font-family: 'Raconteur NF';
+  src: url('../../assets/fonts/RaconteurNF.woff') format('woff'),
+       url('https://fonts.cdnfonts.com/s/29158/RaconteurNF.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Tablet Touch and Text Readability Optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+

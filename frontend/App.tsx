@@ -10,11 +10,14 @@ export default function App() {
   const { currentUser } = useAuthStore();
 
   return (
-    <SafeAreaView className="flex-1 bg-jazz-950">
-      <StatusBar barStyle="light-content" backgroundColor="#07090e" />
-      <View className="flex-1 flex-col bg-jazz-950">
+    <SafeAreaView style={{ flex: 1, backgroundColor: currentUser ? '#07090e' : '#f7f2f0' }}>
+      <StatusBar
+        barStyle={currentUser ? 'light-content' : 'dark-content'}
+        backgroundColor={currentUser ? '#07090e' : '#f7f2f0'}
+      />
+      <View style={{ flex: 1, backgroundColor: currentUser ? '#07090e' : '#f7f2f0' }}>
         {currentUser && <Header />}
-        <View className="flex-1">
+        <View style={{ flex: 1 }}>
           {!currentUser ? <LoginScreen /> : <HomeScreen />}
         </View>
       </View>
