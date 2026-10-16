@@ -37,6 +37,16 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     table.activeTabs[0] || 1
   );
 
+  React.useEffect(() => {
+    if (table) {
+      const firstTab = table.tabs?.[0]?.tabIndex ?? table.activeTabs[0] ?? 1;
+      setSelectedTabIndex((prev) => {
+        const stillExists = table.tabs?.some((t) => t.tabIndex === prev);
+        return stillExists ? prev : firstTab;
+      });
+    }
+  }, [table]);
+
   // Active customer tab data
   const currentTab = (table.tabs || []).find(
     (t) => t.tabIndex === selectedTabIndex

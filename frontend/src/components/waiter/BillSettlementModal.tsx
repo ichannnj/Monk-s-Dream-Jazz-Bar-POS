@@ -82,6 +82,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
     100,
   ].filter((v, i, a) => a.indexOf(v) === i && v >= grandTotal);
 
+  const activeTabsCount =
+    table.tabs && table.tabs.length > 0
+      ? table.tabs.filter((t) => t.status !== 'closed').length
+      : table.activeTabs.length;
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
@@ -106,7 +111,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
           </View>
 
           {/* Settlement Scope Toggle if multiple tabs */}
-          {table.activeTabs.length > 1 ? (
+          {activeTabsCount > 1 ? (
             <View style={styles.scopeToggleRow}>
               <Pressable
                 onPress={() => setSettlementMode('single_tab')}
@@ -138,7 +143,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                     settlementMode === 'entire_table' && styles.scopeOptionTextActive,
                   ]}
                 >
-                  Table Group Settle (All {table.activeTabs.length} Tabs)
+                  Table Group Settle (All {activeTabsCount} Tabs)
                 </Text>
               </Pressable>
             </View>

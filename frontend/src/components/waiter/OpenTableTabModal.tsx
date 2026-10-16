@@ -78,7 +78,11 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
           >
             {tables.map((t) => {
               const isSelected = selectedTableId === t.id;
-              const isEmpty = t.status === 'empty';
+              const activeCount =
+                t.tabs && t.tabs.length > 0
+                  ? t.tabs.filter((tab) => tab.status !== 'closed').length
+                  : t.activeTabs.length;
+              const isEmpty = t.status === 'empty' || activeCount === 0;
 
               return (
                 <Pressable
@@ -99,7 +103,9 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                     {t.code}
                   </Text>
                   <Text style={styles.tableChipSub}>
-                    {isEmpty ? 'Available' : `${t.activeTabs.length} tabs`}
+                    {isEmpty
+                      ? 'Available'
+                      : `${activeCount} ${activeCount === 1 ? 'tab' : 'tabs'}`}
                   </Text>
                 </Pressable>
               );

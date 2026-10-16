@@ -120,13 +120,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
         const existingTabs = t.tabs || [];
         const nextTabs = [...existingTabs, newTab];
+        const nextActiveTabs = [...t.activeTabs, nextTabIndex];
 
         return {
           ...t,
           status: 'occupied' as const,
           guests: t.guests > 0 ? t.guests + guestCount : guestCount,
           hasOpenCheck: true,
-          activeTabs: [...t.activeTabs, nextTabIndex],
+          activeTabs: nextActiveTabs,
+          maxTabs: Math.max(t.maxTabs || 1, nextTabIndex, nextActiveTabs.length, t.seats || 1),
           tabs: nextTabs,
           elapsedTime: t.status === 'empty' ? '1m' : t.elapsedTime,
         };
@@ -201,10 +203,34 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const target = state.tables.find((t) => t.id === targetId);
       if (!origin || !target) return state;
 
+      // Ensure origin has populated tabs array
+      const originTabs =
+        origin.tabs && origin.tabs.length > 0
+          ? origin.tabs
+          : origin.activeTabs.map((num) => ({
+              id: `tab-${origin.id}-${num}`,
+              tabIndex: num,
+              guestName: `Guest ${num}`,
+              status: 'open' as const,
+              totalAmount:
+                (origin.totalAmount || 0) / (origin.activeTabs.length || 1),
+              items: [],
+            }));
+
       if (mode === 'entire') {
-        const transferredTabs = origin.tabs || [];
-        const transferredAmount = origin.totalAmount || 0;
         const targetExistingTabs = target.tabs || [];
+        const targetExistingCount = targetExistingTabs.length;
+
+        const reindexedTransferredTabs = originTabs.map((t, idx) => ({
+          ...t,
+          id: `tab-${target.id}-${targetExistingCount + idx + 1}`,
+          tabIndex: targetExistingCount + idx + 1,
+        }));
+
+        const combinedTabs = [...targetExistingTabs, ...reindexedTransferredTabs];
+        const combinedActiveTabs = combinedTabs.map((t) => t.tabIndex);
+        const combinedAmount =
+          (target.totalAmount || 0) + (origin.totalAmount || 0);
 
         const updatedTables = state.tables.map((t) => {
           if (t.id === originId) {
@@ -222,19 +248,21 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           if (t.id === targetId) {
             return {
               ...t,
-              status: origin.status,
-              guests: (target.guests || 0) + origin.guests,
+              status: target.status === 'empty' ? origin.status : target.status,
+              guests: target.guests + origin.guests,
               hasOpenCheck: true,
-              totalAmount: (target.totalAmount || 0) + transferredAmount,
-              activeTabs: [
-                ...target.activeTabs,
-                ...origin.activeTabs.map(
-                  (num) => num + targetExistingTabs.length
-                ),
-              ],
-              tabs: [...targetExistingTabs, ...transferredTabs],
-              assignedStaff: origin.assignedStaff || target.assignedStaff,
-              elapsedTime: origin.elapsedTime,
+              totalAmount: combinedAmount,
+              activeTabs: combinedActiveTabs,
+              maxTabs: Math.max(
+                target.maxTabs || 1,
+                combinedActiveTabs.length,
+                ...combinedActiveTabs,
+                target.seats || 1
+              ),
+              tabs: combinedTabs,
+              assignedStaff: target.assignedStaff || origin.assignedStaff,
+              elapsedTime:
+                target.status === 'empty' ? origin.elapsedTime : target.elapsedTime,
             };
           }
           return t;
@@ -243,7 +271,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         const newAlert: FloorAlert = {
           id: `alt-${Date.now()}`,
           title: `🔁 Table Transferred: ${origin.code} ➔ ${target.code}`,
-          description: `All open orders re-routed to Table ${target.code}. Reason: ${
+          description: `All open tabs re-routed to Table ${target.code}. Reason: ${
             reason || 'Party relocation'
           }`,
           type: 'transfer',
@@ -258,56 +286,74 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         };
       } else {
         // Specific Tab Transfer
-        const tabToMove = origin.tabs?.find((t) => t.tabIndex === tabIndex);
+        const effectiveTabIndex = tabIndex ?? originTabs[0]?.tabIndex ?? 1;
+        const tabToMove =
+          originTabs.find((t) => t.tabIndex === effectiveTabIndex) ||
+          originTabs[0];
+
         if (!tabToMove) return state;
 
-        const remainingOriginTabs = (origin.tabs || []).filter(
-          (t) => t.tabIndex !== tabIndex
+        const remainingOriginTabs = originTabs.filter(
+          (t) => t.id !== tabToMove.id
         );
-        const remainingOriginActiveTabs = origin.activeTabs.filter(
-          (num) => num !== tabIndex
+        const remainingOriginActiveTabs = remainingOriginTabs.map(
+          (t) => t.tabIndex
         );
-        const originRemainingAmount = remainingOriginTabs.reduce(
+        const remainingOriginAmount = remainingOriginTabs.reduce(
           (acc, cur) => acc + (cur.totalAmount || 0),
           0
         );
 
-        const targetTabs = target.tabs || [];
+        const targetExistingTabs = target.tabs || [];
         const nextTargetTabIndex =
-          target.activeTabs.length > 0 ? Math.max(...target.activeTabs) + 1 : 1;
+          targetExistingTabs.length > 0
+            ? Math.max(...targetExistingTabs.map((t) => t.tabIndex)) + 1
+            : 1;
+
         const movedTabAdjusted: CustomerTab = {
           ...tabToMove,
+          id: `tab-${target.id}-${nextTargetTabIndex}`,
           tabIndex: nextTargetTabIndex,
         };
 
+        const nextTargetTabs = [...targetExistingTabs, movedTabAdjusted];
+        const nextTargetActiveTabs = nextTargetTabs.map((t) => t.tabIndex);
+        const nextTargetAmount =
+          (target.totalAmount || 0) + tabToMove.totalAmount;
+
         const updatedTables = state.tables.map((t) => {
           if (t.id === originId) {
+            const isEmptyNow = remainingOriginTabs.length === 0;
             return {
               ...t,
-              status:
-                remainingOriginActiveTabs.length === 0
-                  ? ('empty' as const)
-                  : t.status,
-              guests: Math.max(0, t.guests - 1),
-              hasOpenCheck: remainingOriginActiveTabs.length > 0,
-              totalAmount:
-                remainingOriginActiveTabs.length === 0
-                  ? undefined
-                  : originRemainingAmount,
+              status: isEmptyNow ? ('empty' as const) : t.status,
+              guests: isEmptyNow ? 0 : Math.max(1, t.guests - 1),
+              hasOpenCheck: !isEmptyNow,
+              totalAmount: isEmptyNow ? undefined : remainingOriginAmount,
               activeTabs: remainingOriginActiveTabs,
               tabs: remainingOriginTabs,
+              elapsedTime: isEmptyNow ? '0m' : t.elapsedTime,
             };
           }
           if (t.id === targetId) {
             return {
               ...t,
-              status: 'occupied' as const,
-              guests: t.guests + 1,
+              status:
+                target.status === 'empty' ? ('occupied' as const) : target.status,
+              guests: target.status === 'empty' ? 1 : target.guests + 1,
               hasOpenCheck: true,
-              totalAmount: (t.totalAmount || 0) + tabToMove.totalAmount,
-              activeTabs: [...t.activeTabs, nextTargetTabIndex],
-              tabs: [...targetTabs, movedTabAdjusted],
-              assignedStaff: origin.assignedStaff || t.assignedStaff,
+              totalAmount: nextTargetAmount,
+              activeTabs: nextTargetActiveTabs,
+              maxTabs: Math.max(
+                target.maxTabs || 1,
+                nextTargetTabIndex,
+                nextTargetActiveTabs.length,
+                target.seats || 1
+              ),
+              tabs: nextTargetTabs,
+              assignedStaff: target.assignedStaff || origin.assignedStaff,
+              elapsedTime:
+                target.status === 'empty' ? '1m' : target.elapsedTime,
             };
           }
           return t;
@@ -315,8 +361,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
         const newAlert: FloorAlert = {
           id: `alt-${Date.now()}`,
-          title: `🔁 Tab Moved: ${tabToMove.guestName} (${origin.code} ➔ ${target.code})`,
-          description: `Guest tab transferred. Station tickets re-routed.`,
+          title: `🔁 Tab Moved: "${tabToMove.guestName}" (${origin.code} ➔ ${target.code})`,
+          description: `Guest tab transferred. Station tickets re-routed. Reason: ${
+            reason || 'Guest relocation request'
+          }`,
           type: 'transfer',
           time: 'Just now',
           isRead: false,

@@ -93,6 +93,33 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
         : `$ ${totalAmount.toFixed(2)}`
       : null;
 
+  // Derive accurate active tabs list and count
+  const activeTabNumbers = React.useMemo(() => {
+    const fromTabs = (table.tabs || [])
+      .filter((t) => t.status !== 'closed')
+      .map((t) => t.tabIndex);
+    const fromActiveTabs = activeTabs || [];
+    return Array.from(new Set([...fromActiveTabs, ...fromTabs])).sort((a, b) => a - b);
+  }, [table.tabs, activeTabs]);
+
+  const activeCount = activeTabNumbers.length;
+  const highestActiveTab = activeCount > 0 ? Math.max(...activeTabNumbers) : 0;
+
+  // Total tab slots to render:
+  // If table is empty and has no active tabs, show 1 empty slot.
+  // Otherwise show at least all active tabs (highestActiveTab) and up to maxTabs/seats capacity.
+  const totalSlotsCount = React.useMemo(() => {
+    if (status === 'empty' && activeCount === 0) {
+      return 1;
+    }
+    const baseCapacity = Math.max(maxTabs || 1, seats || 1);
+    return Math.max(highestActiveTab, baseCapacity, 1);
+  }, [status, activeCount, maxTabs, seats, highestActiveTab]);
+
+  const slotNumbers = React.useMemo(() => {
+    return Array.from({ length: totalSlotsCount }, (_, i) => i + 1);
+  }, [totalSlotsCount]);
+
   return (
     <Pressable
       onPress={() => onPress(table)}
@@ -161,9 +188,9 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
 
       {/* 4. Bottom Tabs Row */}
       <View style={styles.tabsRow}>
-        {maxTabs > 1 ? (
-          Array.from({ length: maxTabs }, (_, i) => i + 1).map((tabNum) => {
-            const isActive = activeTabs.includes(tabNum);
+        <View style={styles.tabPillsContainer}>
+          {slotNumbers.map((tabNum) => {
+            const isActive = activeTabNumbers.includes(tabNum);
             return (
               <View
                 key={tabNum}
@@ -182,22 +209,18 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
                 </Text>
               </View>
             );
-          })
-        ) : (
-          <View
-            style={[
-              styles.tabButton,
-              activeTabs.includes(1) ? styles.tabButtonActive : styles.tabButtonEmpty,
-            ]}
-          >
-            <Text
-              style={[
-                styles.tabButtonText,
-                activeTabs.includes(1) ? styles.tabTextActive : styles.tabTextMuted,
-              ]}
-            >
-              1
+          })}
+        </View>
+
+        {activeCount > 0 ? (
+          <View style={styles.tabCountBadge}>
+            <Text style={styles.tabCountText}>
+              {activeCount} {activeCount === 1 ? 'tab' : 'tabs'}
             </Text>
+          </View>
+        ) : (
+          <View style={styles.tabCountBadgeEmpty}>
+            <Text style={styles.tabCountTextEmpty}>Available</Text>
           </View>
         )}
       </View>
@@ -339,32 +362,45 @@ const styles = StyleSheet.create({
   tabsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingTop: 4,
+    justifyContent: 'space-between',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f7f3f0',
+    marginTop: 4,
+  },
+  tabPillsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    flexShrink: 1,
   },
   tabButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tabButtonActive: {
     backgroundColor: '#641b2a',
     shadowColor: '#641b2a',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.25,
-    shadowRadius: 3,
+    shadowRadius: 2,
     elevation: 2,
   },
   tabButtonInactive: {
     backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   tabButtonEmpty: {
     backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   tabButtonText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '800',
   },
   tabTextActive: {
@@ -374,6 +410,33 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
   },
   tabTextMuted: {
+    color: '#9ca3af',
+  },
+  tabCountBadge: {
+    backgroundColor: '#fceeed',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fad4db',
+  },
+  tabCountText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#832238',
+    letterSpacing: 0.2,
+  },
+  tabCountBadgeEmpty: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  tabCountTextEmpty: {
+    fontSize: 10.5,
+    fontWeight: '700',
     color: '#9ca3af',
   },
 });
