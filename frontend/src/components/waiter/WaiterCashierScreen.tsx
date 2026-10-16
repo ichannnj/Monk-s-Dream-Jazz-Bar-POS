@@ -1,0 +1,561 @@
+import React, { useState, useMemo } from 'react';
+import { View, StyleSheet, ScrollView, useWindowDimensions, Text } from 'react-native';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useOrderStore } from '../../store/useOrderStore';
+import {
+  TableItem,
+  ChannelCategory,
+  TakeoutOrder,
+  OnlineDeliveryOrder,
+  OrderLineItem,
+  CustomerTab,
+} from '../../mockData';
+import { Sidebar, NavTabId } from '../navigation/Sidebar';
+import { TableOverviewHeader } from './TableOverviewHeader';
+import { TableFilterBar, StatusFilter } from './TableFilterBar';
+import { TableCard } from './TableCard';
+import { TakeoutQueueCard } from './TakeoutQueueCard';
+import { OnlineDeliveryCard } from './OnlineDeliveryCard';
+import { TableActionModal } from './TableActionModal';
+import { TableTransferModal } from './TableTransferModal';
+import { OpenTableTabModal } from './OpenTableTabModal';
+import { NewTakeoutModal } from './NewTakeoutModal';
+import { OnlineDeliveryModal } from './OnlineDeliveryModal';
+import { OrderEntryModal } from './OrderEntryModal';
+import { BillSettlementModal } from './BillSettlementModal';
+import { ChecksHistoryView } from './ChecksHistoryView';
+import { CashDrawerModalView } from './CashDrawerModalView';
+import { FloorAlertsView } from './FloorAlertsView';
+import { FloorChatView } from './FloorChatView';
+import { ShiftSettingsModal } from './ShiftSettingsModal';
+
+export const WaiterCashierScreen: React.FC = () => {
+  const { currentUser, logout } = useAuthStore();
+  const { width: windowWidth } = useWindowDimensions();
+
+  // Zustand state
+  const {
+    tables,
+    takeoutOrders,
+    onlineOrders,
+    alerts,
+    chatMessages,
+    openTableTab,
+    addItemsToTab,
+    transferTableOrTab,
+    settleTab,
+    settleTableGroup,
+    createTakeoutOrder,
+    updateTakeoutStatus,
+    createOnlineOrder,
+    updateOnlineStatus,
+  } = useOrderStore();
+
+  // Navigation state (Sidebar)
+  const [activeNavTab, setActiveNavTab] = useState<NavTabId>('tables');
+
+  // Channel & Status Filter state
+  const [selectedChannel, setSelectedChannel] = useState<ChannelCategory>('all');
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('all');
+
+  // Modal Visibility States
+  const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
+  const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+  const [tableToTransfer, setTableToTransfer] = useState<TableItem | null>(null);
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+
+  // New Workflow Modals
+  const [isOpenTabModalOpen, setIsOpenTabModalOpen] = useState(false);
+  const [isTakeoutModalOpen, setIsTakeoutModalOpen] = useState(false);
+  const [isOnlineModalOpen, setIsOnlineModalOpen] = useState(false);
+  const [isOrderEntryOpen, setIsOrderEntryOpen] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  // Order Entry Context
+  const [orderEntryContext, setOrderEntryContext] = useState<{
+    type: 'dine_in' | 'takeout' | 'online';
+    title: string;
+    tableId?: string;
+    tabIndex?: number;
+    initialItems?: OrderLineItem[];
+    hasExistingCorkage?: boolean;
+    takeoutCustomer?: string;
+    takeoutPrepaid?: boolean;
+    takeoutNotes?: string;
+    onlinePlatform?: 'grabfood' | 'foodpanda';
+    onlineRef?: string;
+    onlineRider?: string;
+    onlineCustomer?: string;
+  } | null>(null);
+
+  // Checkout Context
+  const [checkoutContext, setCheckoutContext] = useState<{
+    table: TableItem;
+    activeTab?: CustomerTab | null;
+  } | null>(null);
+
+  // Unread badge counts
+  const unreadAlerts = useMemo(
+    () => alerts.filter((a) => !a.isRead).length,
+    [alerts]
+  );
+
+  // Channel Counts
+  const channelCounts = useMemo(() => {
+    return {
+      all: tables.length + takeoutOrders.length + onlineOrders.length,
+      cafe: tables.filter((t) => t.area === 'cafe').length,
+      bar: tables.filter((t) => t.area === 'bar').length,
+      takeout: takeoutOrders.filter((t) => t.status !== 'completed').length,
+      online: onlineOrders.filter((o) => o.status !== 'completed').length,
+    };
+  }, [tables, takeoutOrders, onlineOrders]);
+
+  // Status Counts for active channel
+  const statusCounts = useMemo(() => {
+    let relevantTables = tables;
+    if (selectedChannel === 'cafe') {
+      relevantTables = tables.filter((t) => t.area === 'cafe');
+    } else if (selectedChannel === 'bar') {
+      relevantTables = tables.filter((t) => t.area === 'bar');
+    }
+
+    return {
+      all: relevantTables.length,
+      empty: relevantTables.filter((t) => t.status === 'empty').length,
+      occupied: relevantTables.filter((t) => t.status === 'occupied').length,
+      preparing: relevantTables.filter((t) => t.status === 'preparing').length,
+      ready: relevantTables.filter((t) => t.status === 'ready').length,
+      served: relevantTables.filter((t) => t.status === 'served').length,
+    };
+  }, [tables, selectedChannel]);
+
+  // Filtered Tables
+  const filteredTables = useMemo(() => {
+    if (selectedChannel === 'takeout' || selectedChannel === 'online') {
+      return [];
+    }
+    return tables.filter((table) => {
+      if (selectedChannel !== 'all' && table.area !== selectedChannel) {
+        return false;
+      }
+      if (selectedStatus !== 'all' && table.status !== selectedStatus) {
+        return false;
+      }
+      return true;
+    });
+  }, [tables, selectedChannel, selectedStatus]);
+
+  // Filtered Takeout Orders
+  const filteredTakeoutOrders = useMemo(() => {
+    if (selectedChannel === 'cafe' || selectedChannel === 'bar') {
+      return [];
+    }
+    return takeoutOrders.filter((o) => {
+      if (o.status === 'completed') return false;
+      if (selectedStatus === 'preparing' && o.status !== 'preparing') return false;
+      if (selectedStatus === 'ready' && o.status !== 'ready') return false;
+      if (selectedStatus === 'empty' || selectedStatus === 'occupied' || selectedStatus === 'served')
+        return false;
+      return true;
+    });
+  }, [takeoutOrders, selectedChannel, selectedStatus]);
+
+  // Filtered Online Orders
+  const filteredOnlineOrders = useMemo(() => {
+    if (selectedChannel === 'cafe' || selectedChannel === 'bar') {
+      return [];
+    }
+    return onlineOrders.filter((o) => {
+      if (o.status === 'completed') return false;
+      if (selectedStatus === 'preparing' && o.status !== 'preparing') return false;
+      if (selectedStatus === 'ready' && o.status !== 'ready') return false;
+      if (selectedStatus === 'empty' || selectedStatus === 'occupied' || selectedStatus === 'served')
+        return false;
+      return true;
+    });
+  }, [onlineOrders, selectedChannel, selectedStatus]);
+
+  // Card click handlers
+  const handleTablePress = (table: TableItem) => {
+    if (table.status === 'empty') {
+      // If table is empty, directly open tab creation
+      setSelectedTable(table);
+      setIsOpenTabModalOpen(true);
+    } else {
+      setSelectedTable(table);
+      setIsActionModalOpen(true);
+    }
+  };
+
+  const handleOpenOrderEntryFromModal = (table: TableItem, tabIndex: number) => {
+    const tab = table.tabs?.find((t) => t.tabIndex === tabIndex);
+    setOrderEntryContext({
+      type: 'dine_in',
+      title: `Table ${table.code} • Tab: "${tab?.guestName || `Tab #${tabIndex}`}"`,
+      tableId: table.id,
+      tabIndex: tabIndex,
+      initialItems: tab?.items || [],
+      hasExistingCorkage: tab?.hasCorkageFee || false,
+    });
+    setIsOrderEntryOpen(true);
+  };
+
+  const handleOpenNewSplitTab = (table: TableItem) => {
+    setSelectedTable(table);
+    setIsOpenTabModalOpen(true);
+  };
+
+  const handleOpenCheckout = (table: TableItem, tabIndex: number) => {
+    const tab = table.tabs?.find((t) => t.tabIndex === tabIndex);
+    setCheckoutContext({
+      table,
+      activeTab: tab,
+    });
+    setIsCheckoutOpen(true);
+  };
+
+  // Quick Action Flow: Open Tab
+  const handleConfirmOpenTab = (
+    tableId: string,
+    guestName: string,
+    guestCount: number
+  ) => {
+    openTableTab(tableId, guestName, guestCount);
+    const targetTable = tables.find((t) => t.id === tableId);
+    const nextTabIndex =
+      targetTable && targetTable.activeTabs.length > 0
+        ? Math.max(...targetTable.activeTabs) + 1
+        : 1;
+
+    // Immediately open order entry catalog for this newly opened tab!
+    setOrderEntryContext({
+      type: 'dine_in',
+      title: `Table ${targetTable?.code || ''} • Tab: "${guestName}"`,
+      tableId: tableId,
+      tabIndex: nextTabIndex,
+      initialItems: [],
+      hasExistingCorkage: false,
+    });
+    setIsOrderEntryOpen(true);
+  };
+
+  // Quick Action Flow: New Takeout
+  const handleProceedTakeout = (
+    customerName: string,
+    isPrepaid: boolean,
+    notes: string
+  ) => {
+    const nextTicket = `T-${107 + takeoutOrders.length}`;
+    setOrderEntryContext({
+      type: 'takeout',
+      title: `Takeout #${nextTicket} • "${customerName}"`,
+      takeoutCustomer: customerName,
+      takeoutPrepaid: isPrepaid,
+      takeoutNotes: notes,
+      initialItems: [],
+    });
+    setIsOrderEntryOpen(true);
+  };
+
+  // Quick Action Flow: Online Delivery
+  const handleProceedOnline = (
+    platform: 'grabfood' | 'foodpanda',
+    platformRef: string,
+    riderName: string,
+    customerName: string
+  ) => {
+    setOrderEntryContext({
+      type: 'online',
+      title: `${platform === 'grabfood' ? 'GrabFood' : 'Foodpanda'} #${platformRef} • "${customerName}"`,
+      onlinePlatform: platform,
+      onlineRef: platformRef,
+      onlineRider: riderName,
+      onlineCustomer: customerName,
+      initialItems: [],
+    });
+    setIsOrderEntryOpen(true);
+  };
+
+  // Order Entry Submission Dispatch
+  const handleOrderEntrySubmit = (
+    items: OrderLineItem[],
+    hasCorkage: boolean,
+    corkageAmount: number
+  ) => {
+    if (!orderEntryContext) return;
+
+    if (orderEntryContext.type === 'dine_in' && orderEntryContext.tableId) {
+      addItemsToTab(
+        orderEntryContext.tableId,
+        orderEntryContext.tabIndex || 1,
+        items,
+        hasCorkage,
+        corkageAmount
+      );
+    } else if (orderEntryContext.type === 'takeout') {
+      createTakeoutOrder(
+        orderEntryContext.takeoutCustomer || 'Walk-in Guest',
+        items,
+        orderEntryContext.takeoutPrepaid ?? true,
+        orderEntryContext.takeoutNotes
+      );
+    } else if (orderEntryContext.type === 'online') {
+      createOnlineOrder(
+        orderEntryContext.onlinePlatform || 'grabfood',
+        orderEntryContext.onlineRef || 'GF-8842',
+        orderEntryContext.onlineRider || 'Rider Assigned',
+        orderEntryContext.onlineCustomer || 'Customer',
+        items
+      );
+    }
+
+    setOrderEntryContext(null);
+  };
+
+  // Checkout Payment Confirmation
+  const handleConfirmPayment = (
+    mode: 'single_tab' | 'entire_table',
+    tabIndex: number,
+    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    tenderedAmount?: number
+  ) => {
+    if (!checkoutContext) return;
+
+    if (mode === 'entire_table') {
+      settleTableGroup(checkoutContext.table.id, method);
+    } else {
+      settleTab(checkoutContext.table.id, tabIndex, method);
+    }
+
+    setCheckoutContext(null);
+  };
+
+  // Responsive tablet grid column width
+  const cardWidth =
+    windowWidth >= 1250
+      ? '18.6%'
+      : windowWidth >= 960
+      ? '23.4%'
+      : windowWidth >= 700
+      ? '31.2%'
+      : '48%';
+
+  return (
+    <View style={styles.screenContainer}>
+      {/* 1. Dedicated Left Navigation Sidebar */}
+      <Sidebar
+        activeTab={activeNavTab}
+        onTabChange={setActiveNavTab}
+        onLogout={logout}
+        alertCount={unreadAlerts}
+        unreadChatCount={0}
+      />
+
+      {/* 2. Main Viewport */}
+      <View style={styles.mainContent}>
+        {activeNavTab === 'tables' ? (
+          <ScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Top Header with Quick Action Buttons */}
+            <TableOverviewHeader
+              staffName={currentUser?.displayName || 'Jess Santos'}
+              staffRole="Waiter / Cashier"
+              staffInitials={
+                currentUser?.displayName
+                  ? currentUser.displayName
+                      .split(' ')
+                      .map((s) => s[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase()
+                  : 'JS'
+              }
+              onOpenTableTab={() => setIsOpenTabModalOpen(true)}
+              onNewTakeout={() => setIsTakeoutModalOpen(true)}
+              onInputOnlineOrder={() => setIsOnlineModalOpen(true)}
+            />
+
+            {/* Channels & Statuses Filter Bar */}
+            <TableFilterBar
+              selectedChannel={selectedChannel}
+              onChannelChange={setSelectedChannel}
+              selectedStatus={selectedStatus}
+              onStatusChange={setSelectedStatus}
+              channelCounts={channelCounts}
+              statusCounts={statusCounts}
+            />
+
+            {/* Combined Responsive Grid: Tables, Takeout Queue & Online Orders */}
+            <View style={styles.tablesGrid}>
+              {/* Dine-In Physical Tables */}
+              {filteredTables.map((table) => (
+                <View key={table.id} style={[styles.cardCol, { width: cardWidth }]}>
+                  <TableCard table={table} onPress={handleTablePress} />
+                </View>
+              ))}
+
+              {/* Walk-In Takeout Queue Cards */}
+              {filteredTakeoutOrders.map((toOrder) => (
+                <View key={toOrder.id} style={[styles.cardCol, { width: cardWidth }]}>
+                  <TakeoutQueueCard
+                    order={toOrder}
+                    onPress={(o) => {
+                      setOrderEntryContext({
+                        type: 'takeout',
+                        title: `Takeout #${o.ticketNumber} • "${o.customerName}"`,
+                        takeoutCustomer: o.customerName,
+                        takeoutPrepaid: o.isPrepaid,
+                        initialItems: o.items,
+                      });
+                      setIsOrderEntryOpen(true);
+                    }}
+                    onMarkReady={(id) => updateTakeoutStatus(id, 'ready')}
+                    onMarkCollected={(id) => updateTakeoutStatus(id, 'completed')}
+                  />
+                </View>
+              ))}
+
+              {/* Online Delivery Queue Cards (GrabFood & Foodpanda) */}
+              {filteredOnlineOrders.map((olOrder) => (
+                <View key={olOrder.id} style={[styles.cardCol, { width: cardWidth }]}>
+                  <OnlineDeliveryCard
+                    order={olOrder}
+                    onPress={(o) => {
+                      setOrderEntryContext({
+                        type: 'online',
+                        title: `${o.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda'} #${o.platformOrderRef} • "${o.customerName}"`,
+                        onlinePlatform: o.platform,
+                        onlineRef: o.platformOrderRef,
+                        onlineRider: o.riderName,
+                        onlineCustomer: o.customerName,
+                        initialItems: o.items,
+                      });
+                      setIsOrderEntryOpen(true);
+                    }}
+                    onMarkReady={(id) => updateOnlineStatus(id, 'ready')}
+                    onHandToRider={(id) => updateOnlineStatus(id, 'completed')}
+                  />
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        ) : activeNavTab === 'checks' ? (
+          <ChecksHistoryView />
+        ) : activeNavTab === 'drawer' ? (
+          <CashDrawerModalView />
+        ) : activeNavTab === 'alerts' ? (
+          <FloorAlertsView />
+        ) : activeNavTab === 'chat' ? (
+          <FloorChatView />
+        ) : (
+          <ShiftSettingsModal onLogout={logout} />
+        )}
+      </View>
+
+      {/* MODAL 1: Table Action Modal */}
+      <TableActionModal
+        visible={isActionModalOpen}
+        table={selectedTable}
+        onClose={() => setIsActionModalOpen(false)}
+        onTransferTable={(t) => {
+          setTableToTransfer(t);
+          setIsTransferModalOpen(true);
+        }}
+        onOpenOrderEntry={handleOpenOrderEntryFromModal}
+        onOpenNewTab={handleOpenNewSplitTab}
+        onCheckout={handleOpenCheckout}
+      />
+
+      {/* MODAL 2: Table & Tab Transfer Modal */}
+      <TableTransferModal
+        visible={isTransferModalOpen}
+        originTable={tableToTransfer}
+        allTables={tables}
+        onClose={() => setIsTransferModalOpen(false)}
+        onConfirmTransfer={transferTableOrTab}
+      />
+
+      {/* MODAL 3: Open Table Tab Modal */}
+      <OpenTableTabModal
+        visible={isOpenTabModalOpen}
+        tables={tables}
+        preselectedTable={selectedTable}
+        onClose={() => setIsOpenTabModalOpen(false)}
+        onConfirmOpenTab={handleConfirmOpenTab}
+      />
+
+      {/* MODAL 4: New Walk-In Takeout Modal */}
+      <NewTakeoutModal
+        visible={isTakeoutModalOpen}
+        nextTicketNumber={`T-${107 + takeoutOrders.length}`}
+        onClose={() => setIsTakeoutModalOpen(false)}
+        onProceedToOrder={handleProceedTakeout}
+      />
+
+      {/* MODAL 5: Online Delivery Intake Modal */}
+      <OnlineDeliveryModal
+        visible={isOnlineModalOpen}
+        onClose={() => setIsOnlineModalOpen(false)}
+        onProceedToOrder={handleProceedOnline}
+      />
+
+      {/* MODAL 6: Fullscreen Menu Catalog & Order Entry Modal */}
+      <OrderEntryModal
+        visible={isOrderEntryOpen}
+        title={orderEntryContext?.title || 'Order Entry'}
+        initialItems={orderEntryContext?.initialItems || []}
+        hasExistingCorkage={orderEntryContext?.hasExistingCorkage || false}
+        onClose={() => {
+          setIsOrderEntryOpen(false);
+          setOrderEntryContext(null);
+        }}
+        onSendOrder={handleOrderEntrySubmit}
+      />
+
+      {/* MODAL 7: Bill Settlement & Checkout Modal */}
+      <BillSettlementModal
+        visible={isCheckoutOpen}
+        table={checkoutContext?.table || null}
+        activeTab={checkoutContext?.activeTab}
+        onClose={() => {
+          setIsCheckoutOpen(false);
+          setCheckoutContext(null);
+        }}
+        onConfirmPayment={handleConfirmPayment}
+      />
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#f6f0ed',
+    paddingVertical: 14,
+    paddingLeft: 14,
+    paddingRight: 18,
+    gap: 18,
+  },
+  mainContent: {
+    flex: 1,
+  },
+  scrollArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 28,
+  },
+  tablesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  cardCol: {
+    minWidth: 175,
+  },
+});
