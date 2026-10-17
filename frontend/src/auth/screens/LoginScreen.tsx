@@ -20,10 +20,12 @@ import Animated, {
 import { useAuthStore } from '../../store/useAuthStore';
 import { toast } from '../../store/useToastStore';
 import { SEED_STAFF_USERS } from '../../mockData';
+import { posApi } from '../../services/api';
 import { PinCodeInput } from '../components/PinCodeInput';
 import { TrainingModeSwitch } from '../components/TrainingModeSwitch';
 import { ForgotPinModal } from '../components/ForgotPinModal';
 import { AlertCircle } from 'lucide-react-native';
+import { styles } from './LoginScreen.styles';
 
 const JAZZ_HERO_IMAGE = require('../../../assets/images/jazz-club-stage.jpg');
 const MONKS_DREAM_LOGO = require('../../../assets/Monks Dream Logo files-02.png');
@@ -62,85 +64,96 @@ export const LoginScreen: React.FC = () => {
     buttonScale.value = withSpring(1, { damping: 15, stiffness: 300 });
   };
 
-  const handleClockIn = useCallback(() => {
-    if (isSubmitting) return;
+  const handleClockIn = useCallback(
+    async (pinOverride?: string) => {
+      if (isSubmitting) return;
 
-    const trimmedUsername = username.trim().toLowerCase();
-    if (!trimmedUsername) {
-      setIsError(true);
-      setErrorMessage('Please enter your staff ID or username.');
-      toast.warning('Please enter your staff ID or username.', {
-        title: 'Staff ID Required',
-      });
-      return;
-    }
+      const trimmedUsername = username.trim();
+      if (!trimmedUsername) {
+        setIsError(true);
+        setErrorMessage('Staff ID / Username is required.');
+        toast.warning('Please enter your Staff ID / Username.', {
+          title: 'Username Required',
+        });
+        return;
+      }
 
-    if (pin.length < 6) {
-      setIsError(true);
-      setErrorMessage('Please enter your full 6-digit staff PIN.');
-      toast.warning('Please enter your complete 6-digit staff PIN.', {
-        title: 'Incomplete PIN',
-      });
-      return;
-    }
+      const targetPin = (pinOverride || pin).trim();
+      if (!targetPin) {
+        setIsError(true);
+        setErrorMessage('Please enter your 4-digit staff PIN.');
+        toast.warning('Please enter your 4-digit staff PIN.', {
+          title: 'PIN Required',
+        });
+        return;
+      }
 
-    setIsSubmitting(true);
-    setIsError(false);
-    setErrorMessage(null);
+      if (targetPin.length !== 4) {
+        setIsError(true);
+        setErrorMessage('Staff PIN must be exactly 4 digits.');
+        toast.warning('Staff PIN must be exactly 4 digits.', {
+          title: 'Incomplete PIN',
+        });
+        return;
+      }
 
-    // Find staff user
-    const foundStaff = SEED_STAFF_USERS.find(
-      (staff) =>
-        staff.username.toLowerCase() === trimmedUsername ||
-        staff.id.toLowerCase() === trimmedUsername ||
-        staff.displayName.toLowerCase().includes(trimmedUsername)
-    );
+      setIsSubmitting(true);
+      setIsError(false);
+      setErrorMessage(null);
 
-    if (foundStaff && (foundStaff.pin === pin || foundStaff.pin.startsWith(pin.slice(0, 4)))) {
-      // Success! Update auth state
-      setIsTrainingMode(isTraining);
-      setUser({
-        id: foundStaff.id,
-        username: foundStaff.username,
-        displayName: foundStaff.displayName,
-        role: foundStaff.role,
-        isActive: true,
-      });
+      try {
+        // Authenticate directly against Supabase BaaS via authenticate_staff_credentials RPC
+        const result = await posApi.loginWithCredentials(trimmedUsername, targetPin);
 
-      toast.success(
-        `Welcome, ${foundStaff.displayName}! Role: ${foundStaff.role.toUpperCase()}`,
-        {
-          title: isTraining ? 'Sandbox Mode Active' : 'Staff Clock-In Successful',
+        if (result && result.success && result.user) {
+          setIsTrainingMode(isTraining);
+          setUser({
+            id: result.user.id,
+            username: result.user.username,
+            displayName: result.user.displayName,
+            role: result.user.role as any,
+            isActive: true,
+          });
+
+          toast.success(
+            `Welcome, ${result.user.displayName}! Role: ${result.user.role.toUpperCase()}`,
+            {
+              title: isTraining ? 'Sandbox Mode Active' : 'Staff Clock-In Successful',
+            }
+          );
+          return;
         }
-      );
-    } else {
-      // Trigger error shake on PIN cells
-      const errText = foundStaff
-        ? `Incorrect PIN for ${foundStaff.displayName}.`
-        : 'Staff ID not recognized. Please check your credentials.';
-      setIsError(true);
-      setErrorMessage(
-        foundStaff
-          ? `Incorrect PIN for ${foundStaff.displayName}. (Hint: check Forgot PIN)`
-          : 'Staff ID not recognized. Please check your credentials.'
-      );
-      setPin('');
-      setIsSubmitting(false);
 
-      toast.error(errText, {
-        title: 'Authentication Failed',
-      });
-    }
-  }, [username, pin, isTraining, isSubmitting, setUser, setIsTrainingMode]);
+        throw new Error('Invalid Staff ID or PIN. Access denied.');
+      } catch (err: any) {
+        setIsError(true);
+        const errText = err.message || 'Invalid Staff ID or PIN. Access denied.';
+        setErrorMessage(errText);
+        setPin('');
+        toast.error(errText, {
+          title: 'Authentication Failed',
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [username, pin, isTraining, isSubmitting, setUser, setIsTrainingMode]
+  );
 
   const handlePinComplete = useCallback(
     (completedPin: string) => {
-      // Auto-submit when all 6 digits are typed if username is present
-      if (username.trim()) {
-        setTimeout(() => {
-          handleClockIn();
-        }, 120);
+      if (!username.trim()) {
+        setIsError(true);
+        setErrorMessage('Please enter your Staff ID / Username first.');
+        toast.warning('Please enter your Staff ID before entering your PIN.', {
+          title: 'Username Required',
+        });
+        return;
       }
+      // Auto-submit when both Username is non-empty and all 4 digits are punched
+      setTimeout(() => {
+        handleClockIn(completedPin);
+      }, 100);
     },
     [username, handleClockIn]
   );
@@ -271,12 +284,12 @@ export const LoginScreen: React.FC = () => {
                   />
                 </View>
 
-                {/* PIN Grid (6 Discrete Cells) */}
+                {/* PIN Grid (4 Discrete Cells) */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>PIN</Text>
+                  <Text style={styles.inputLabel}>4-Digit Staff PIN</Text>
                   <PinCodeInput
                     value={pin}
-                    length={6}
+                    length={4}
                     onChange={(val) => {
                       setPin(val);
                       if (errorMessage) setErrorMessage(null);
@@ -290,15 +303,20 @@ export const LoginScreen: React.FC = () => {
                 {/* Primary CTA: Clock-In Button */}
                 <Animated.View style={[styles.clockInButtonWrapper, buttonAnimatedStyle]}>
                   <Pressable
-                    onPress={handleClockIn}
+                    onPress={() => handleClockIn()}
                     onPressIn={handlePressIn}
                     onPressOut={handlePressOut}
-                    disabled={isSubmitting}
-                    style={styles.clockInButton}
+                    disabled={isSubmitting || !username.trim() || pin.length !== 4}
+                    style={[
+                      styles.clockInButton,
+                      (isSubmitting || !username.trim() || pin.length !== 4) && styles.clockInButtonDisabled,
+                    ]}
                     accessibilityRole="button"
                     accessibilityLabel="Clock In"
                   >
-                    <Text style={styles.clockInButtonText}>Clock - In</Text>
+                    <Text style={styles.clockInButtonText}>
+                      {isSubmitting ? 'Verifying...' : 'Clock - In'}
+                    </Text>
                   </Pressable>
                 </Animated.View>
 
@@ -340,292 +358,9 @@ export const LoginScreen: React.FC = () => {
         <ForgotPinModal
           visible={isForgotModalOpen}
           onClose={() => setIsForgotModalOpen(false)}
-          onSelectStaff={(staff) => {
-            setUsername(staff.username);
-            setPin(staff.pin);
-            setIsForgotModalOpen(false);
-            setIsError(false);
-            setErrorMessage(null);
-            toast.info(`Loaded credentials for ${staff.displayName} (${staff.role.toUpperCase()})`, {
-              title: 'Staff Demo Selected',
-            });
-          }}
         />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
-const styles = StyleSheet.create({
-  keyboardContainer: {
-    flex: 1,
-    backgroundColor: '#f7f2f0',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  outerCanvas: {
-    width: '100%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cardContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 32,
-    overflow: 'hidden',
-    shadowColor: '#2b0f16',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.16,
-    shadowRadius: 36,
-    elevation: 10,
-    width: '100%',
-    maxWidth: 980,
-  },
-  cardTablet: {
-    flexDirection: 'row',
-    minHeight: 580,
-  },
-  cardMobile: {
-    flexDirection: 'column',
-  },
-  // ---------------- Left Pane ----------------
-  leftPane: {
-    position: 'relative',
-    overflow: 'hidden',
-    backgroundColor: '#1b0910',
-  },
-  leftPaneTablet: {
-    width: '50%',
-    minHeight: 580,
-  },
-  leftPaneMobile: {
-    width: '100%',
-    height: 380,
-  },
-  imageOverlayTop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(28, 10, 16, 0.45)',
-  },
-  imageOverlayBottom: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(16, 5, 9, 0.65)',
-  },
-  leftContent: {
-    flex: 1,
-    padding: 38,
-    justifyContent: 'space-between',
-    zIndex: 2,
-  },
-  brandTitleBlock: {
-    marginTop: 10,
-  },
-  heroTitleLine: {
-    color: '#ffffff',
-    fontSize: 44,
-    fontWeight: '400',
-    fontFamily: Platform.select({
-      web: '"Raconteur NF", "Playfair Display", Georgia, serif',
-      ios: 'Raconteur NF',
-      default: 'Raconteur NF',
-    }),
-    lineHeight: 48,
-    letterSpacing: 0.8,
-  },
-  heroAccentDash: {
-    width: 44,
-    height: 3.5,
-    backgroundColor: '#b93a52',
-    borderRadius: 2,
-    marginTop: 12,
-  },
-  leftBottomBlock: {
-    marginBottom: 6,
-  },
-  welcomeHeading: {
-    color: '#ffffff',
-    fontSize: 17,
-    fontWeight: '700',
-    fontFamily: Platform.select({
-      web: 'Plus Jakarta Sans, Inter, sans-serif',
-      default: 'sans-serif',
-    }),
-    marginBottom: 8,
-  },
-  welcomeDescription: {
-    color: '#d4b2b9',
-    fontSize: 13,
-    lineHeight: 20,
-    fontFamily: Platform.select({
-      web: 'Plus Jakarta Sans, Inter, sans-serif',
-      default: 'sans-serif',
-    }),
-  },
-  heroDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    marginVertical: 16,
-  },
-  portalBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  redStatusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#e11d48',
-  },
-  portalBadgeText: {
-    color: '#b38d95',
-    fontSize: 11.5,
-    fontWeight: '500',
-  },
-  // ---------------- Right Pane ----------------
-  rightPane: {
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-  },
-  rightPaneTablet: {
-    width: '50%',
-    paddingVertical: 44,
-    paddingHorizontal: 52,
-  },
-  rightPaneMobile: {
-    width: '100%',
-    padding: 24,
-  },
-  rightHeader: {
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  rightBrandName: {
-    color: '#641b2a',
-    fontSize: 22,
-    fontWeight: '400',
-    fontFamily: Platform.select({
-      web: '"Raconteur NF", "Playfair Display", Georgia, serif',
-      ios: 'Raconteur NF',
-      default: 'Raconteur NF',
-    }),
-    letterSpacing: 0.5,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  logoWrapper: {
-    marginBottom: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  officialBarLogo: {
-    width: 90,
-    height: 90,
-  },
-  formTitle: {
-    color: '#1a1a1e',
-    fontSize: 14.5,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-    fontFamily: Platform.select({
-      web: 'Plus Jakarta Sans, Inter, sans-serif',
-      default: 'sans-serif',
-    }),
-  },
-  errorBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecdd3',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#be123c',
-    fontSize: 12.5,
-    fontWeight: '600',
-    flex: 1,
-    lineHeight: 18,
-  },
-  formBody: {
-    width: '100%',
-  },
-  inputGroup: {
-    marginBottom: 18,
-  },
-  inputLabel: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#1f242e',
-    marginBottom: 8,
-    fontFamily: Platform.select({
-      web: 'Plus Jakarta Sans, Inter, sans-serif',
-      default: 'sans-serif',
-    }),
-  },
-  textInput: {
-    height: 52,
-    borderWidth: 1.5,
-    borderColor: '#e2e4e8',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#111827',
-    backgroundColor: '#ffffff',
-  },
-  clockInButtonWrapper: {
-    width: '100%',
-    marginTop: 8,
-    marginBottom: 20,
-  },
-  clockInButton: {
-    width: '100%',
-    height: 52,
-    backgroundColor: '#641b2a',
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#641b2a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  clockInButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  controlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 4,
-  },
-  trainingModeGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  trainingModeLabel: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: '#1a1a1e',
-  },
-  forgotPinPressable: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-  },
-  forgotPinText: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#641b2a',
-  },
-});

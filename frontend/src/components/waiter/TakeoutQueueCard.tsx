@@ -19,85 +19,88 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
   const isReady = order.status === 'ready';
 
   return (
-    <Pressable
-      onPress={() => onPress(order)}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.cardContainer,
         isReady ? styles.cardReady : styles.cardPreparing,
-        pressed && styles.cardPressed,
       ]}
-      accessibilityRole="button"
-      accessibilityLabel={`Takeout ticket ${order.ticketNumber} for ${order.customerName}`}
     >
-      {/* 1. Top Row: Ticket Code & Customer + Status Badge */}
-      <View style={styles.cardHeader}>
-        <View style={styles.codeCol}>
-          <View style={styles.ticketBadgeRow}>
-            <ShoppingBag size={13} color="#15803d" strokeWidth={2.4} />
-            <Text style={styles.ticketCodeText}>Takeout #{order.ticketNumber}</Text>
+      <Pressable
+        onPress={() => onPress(order)}
+        style={({ pressed }) => [
+          styles.mainPressableArea,
+          pressed && styles.cardPressed,
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`Takeout ticket ${order.ticketNumber} for ${order.customerName}`}
+      >
+        {/* 1. Top Row: Ticket Code & Customer + Status Badge */}
+        <View style={styles.cardHeader}>
+          <View style={styles.codeCol}>
+            <View style={styles.ticketBadgeRow}>
+              <ShoppingBag size={13} color="#15803d" strokeWidth={2.4} />
+              <Text style={styles.ticketCodeText}>Takeout #{order.ticketNumber}</Text>
+            </View>
+            <Text style={styles.customerNameText} numberOfLines={1}>
+              {order.customerName}
+            </Text>
           </View>
-          <Text style={styles.customerNameText} numberOfLines={1}>
-            {order.customerName}
-          </Text>
-        </View>
 
-        <View
-          style={[
-            styles.statusBadge,
-            isReady ? styles.statusBadgeReady : styles.statusBadgePrep,
-          ]}
-        >
           <View
             style={[
-              styles.statusDot,
-              { backgroundColor: isReady ? '#16a34a' : '#d97706' },
-            ]}
-          />
-          <Text
-            style={[
-              styles.statusText,
-              { color: isReady ? '#15803d' : '#b45309' },
+              styles.statusBadge,
+              isReady ? styles.statusBadgeReady : styles.statusBadgePrep,
             ]}
           >
-            {isReady ? 'READY' : 'PREP'}
-          </Text>
-          <Text
-            style={[
-              styles.timeText,
-              { color: isReady ? '#15803d' : '#b45309' },
-            ]}
-          >
-            · {order.elapsedTime}
-          </Text>
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: isReady ? '#16a34a' : '#d97706' },
+              ]}
+            />
+            <Text
+              style={[
+                styles.statusText,
+                { color: isReady ? '#15803d' : '#b45309' },
+              ]}
+            >
+              {isReady ? 'READY' : 'PREP'}
+            </Text>
+            <Text
+              style={[
+                styles.timeText,
+                { color: isReady ? '#15803d' : '#b45309' },
+              ]}
+            >
+              · {order.elapsedTime}
+            </Text>
+          </View>
         </View>
-      </View>
 
-      {/* 2. Middle Row: Items Line + Amount & Payment Flag */}
-      <View style={styles.midRow}>
-        <Text style={styles.itemsSummaryText} numberOfLines={1}>
-          {order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
-        </Text>
-        <View style={styles.amountCol}>
-          <Text style={styles.amountText}>${order.total.toFixed(2)}</Text>
-          <Text
-            style={[
-              styles.paidText,
-              { color: order.isPrepaid ? '#15803d' : '#b45309' },
-            ]}
-          >
-            {order.isPrepaid ? 'PAID' : 'DUE'}
+        {/* 2. Middle Row: Items Line + Amount & Payment Flag */}
+        <View style={styles.midRow}>
+          <Text style={styles.itemsSummaryText} numberOfLines={1}>
+            {order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
           </Text>
+          <View style={styles.amountCol}>
+            <Text style={styles.amountText}>${order.total.toFixed(2)}</Text>
+            <Text
+              style={[
+                styles.paidText,
+                { color: order.isPrepaid ? '#15803d' : '#b45309' },
+              ]}
+            >
+              {order.isPrepaid ? 'PAID' : 'DUE'}
+            </Text>
+          </View>
         </View>
-      </View>
+      </Pressable>
 
       {/* 3. Bottom Row: Direct Action */}
       <View style={styles.actionRow}>
         {isReady ? (
           <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              onMarkCollected?.(order.id);
-            }}
+            onPress={() => onMarkCollected?.(order.id)}
             style={styles.actionBtnCollect}
             accessibilityRole="button"
             accessibilityLabel={`Mark order ${order.ticketNumber} as collected`}
@@ -107,10 +110,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
           </Pressable>
         ) : (
           <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              onMarkReady?.(order.id);
-            }}
+            onPress={() => onMarkReady?.(order.id)}
             style={styles.actionBtnReady}
             accessibilityRole="button"
             accessibilityLabel={`Mark order ${order.ticketNumber} as ready`}
@@ -120,7 +120,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
           </Pressable>
         )}
       </View>
-    </Pressable>
+    </View>
   );
 };
 
@@ -137,6 +137,10 @@ const styles = StyleSheet.create({
     elevation: 2,
     justifyContent: 'space-between',
     minHeight: 156,
+  },
+  mainPressableArea: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
   cardPreparing: {
     borderColor: '#fde68a',

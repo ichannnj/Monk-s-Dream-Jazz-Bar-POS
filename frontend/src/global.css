@@ -3,8 +3,7 @@
 
 @font-face {
   font-family: 'Raconteur NF';
-  src: url('../../assets/fonts/RaconteurNF.woff') format('woff'),
-       url('https://fonts.cdnfonts.com/s/29158/RaconteurNF.woff') format('woff');
+  src: url('https://fonts.cdnfonts.com/s/29158/RaconteurNF.woff') format('woff');
   font-weight: normal;
   font-style: normal;
   font-display: swap;

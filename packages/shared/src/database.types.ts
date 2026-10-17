@@ -752,6 +752,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      authenticate_staff_credentials: {
+        Args: { p_username: string; p_pin: string }
+        Returns: Json
+      }
       authenticate_staff_pin: { Args: { p_pin: string }; Returns: Json }
       dispatch_order_with_depletion: {
         Args: { p_order_id: string }

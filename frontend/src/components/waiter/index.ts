@@ -17,3 +17,6 @@ export * from './CashDrawerModalView';
 export * from './FloorAlertsView';
 export * from './FloorChatView';
 export * from './ShiftSettingsModal';
+export * from './FloorGridView';
+export * from './WaiterModalsCluster';
+export * from './AdminItemImageModal';

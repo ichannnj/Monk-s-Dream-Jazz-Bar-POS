@@ -1,62 +1,66 @@
 /**
- * Typed API Client for Monk's Dream Jazz Bar (Supabase BaaS)
+ * Unified POS API Client & Domain Aggregator
+ * Monk's Dream Jazz Bar POS (Supabase BaaS)
+ *
+ * Domain APIs are modularized into dedicated files:
+ * - auth.api.ts   -> Authentication, credentials, staff directory
+ * - orders.api.ts -> Order placement, inventory depletion, cancellations
+ * - tables.api.ts -> Table management, floor occupancy, tab transfers
+ * - menu.api.ts   -> Product catalog, categories, inventory levels
+ * - system.api.ts -> Health checks and latency diagnostics
  */
-import { supabase } from './supabase';
-import { SEED_STAFF_USERS } from '../mockData';
 
+import { authApi, AuthApi } from './auth.api';
+import { ordersApi, OrdersApi } from './orders.api';
+import { tablesApi, TablesApi } from './tables.api';
+import { menuApi, MenuApi } from './menu.api';
+import { systemApi, SystemApi } from './system.api';
+
+// Export individual domain API modules
+export { authApi, AuthApi } from './auth.api';
+export * from './auth.api';
+
+export { ordersApi, OrdersApi } from './orders.api';
+export * from './orders.api';
+
+export { tablesApi, TablesApi } from './tables.api';
+export * from './tables.api';
+
+export { menuApi, MenuApi } from './menu.api';
+export * from './menu.api';
+
+export { systemApi, SystemApi } from './system.api';
+export * from './system.api';
+
+/**
+ * Unified POS API Client providing access to all domain services
+ * with backward-compatible delegates.
+ */
 export class PosApiClient {
-  // --- Auth & Staff PIN ---
-  async loginWithPin(pin: string) {
-    try {
-      const { data, error } = await supabase.rpc('authenticate_staff_pin', {
-        p_pin: pin,
-      });
+  readonly auth: AuthApi = authApi;
+  readonly orders: OrdersApi = ordersApi;
+  readonly tables: TablesApi = tablesApi;
+  readonly menu: MenuApi = menuApi;
+  readonly system: SystemApi = systemApi;
 
-      if (!error && data && (data as any).success) {
-        return { success: true, user: (data as any).user };
-      }
-    } catch {
-      // Offline fallback
-    }
-
-    // Local Seed Fallback (Offline resilience)
-    const found = SEED_STAFF_USERS.find((u) => u.pin === pin);
-    if (found) {
-      return {
-        success: true,
-        user: {
-          id: found.id,
-          username: found.username,
-          displayName: found.displayName,
-          role: found.role,
-        },
-      };
-    }
-
-    throw new Error('Invalid staff PIN or inactive account');
+  // --- Auth Delegates ---
+  loginWithCredentials(username: string, pin: string) {
+    return this.auth.loginWithCredentials(username, pin);
   }
 
-  async getStaffList() {
-    try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('id, username, display_name, role, is_active')
-        .eq('is_active', true);
-
-      if (!error && data && data.length > 0) {
-        return data;
-      }
-    } catch {
-      // Offline fallback
-    }
-
-    return SEED_STAFF_USERS;
+  loginWithPin(pin: string) {
+    return this.auth.loginWithPin(pin);
   }
 
-  // --- Health Check ---
-  async checkHealth() {
-    return { status: 'ok', provider: 'supabase' };
+  getStaffList() {
+    return this.auth.getStaffList();
+  }
+
+  // --- Health Delegates ---
+  checkHealth() {
+    return this.system.checkHealth();
   }
 }
 
 export const posApi = new PosApiClient();
+export default posApi;

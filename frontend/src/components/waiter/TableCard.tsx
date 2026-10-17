@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Plus, Utensils, Receipt } from 'lucide-react-native';
 import { TableItem } from '../../mockData';
 
 interface TableCardProps {
@@ -14,14 +15,36 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
     guests,
     status,
     elapsedTime,
-    assignedStaff,
     totalAmount,
     hasOpenCheck,
     activeTabs,
-    maxTabs,
   } = table;
 
-  // Status-specific badges & accents
+  const isEmpty = status === 'empty';
+  const isReady = status === 'ready';
+  const isPrep = status === 'preparing';
+  const isServed = status === 'served';
+
+  // Derive accurate active tabs count
+  const activeTabCount = useMemo(() => {
+    const fromTabs = (table.tabs || [])
+      .filter((t) => t.status !== 'closed')
+      .map((t) => t.tabIndex);
+    const fromActiveTabs = activeTabs || [];
+    return new Set([...fromActiveTabs, ...fromTabs]).size;
+  }, [table.tabs, activeTabs]);
+
+  // Derive 1-line items snippet preview
+  const itemsSummary = useMemo(() => {
+    if (isEmpty) return 'Available · Ready for guests';
+    const allItems = (table.tabs || []).flatMap((t) => t.items || []);
+    if (allItems.length === 0) {
+      return hasOpenCheck ? 'Tab active · No items added yet' : 'No items';
+    }
+    return allItems.map((i) => `${i.quantity}x ${i.productName}`).join(', ');
+  }, [table.tabs, isEmpty, hasOpenCheck]);
+
+  // Status configuration badge
   const getStatusBadge = () => {
     switch (status) {
       case 'ready':
@@ -55,10 +78,10 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
       case 'empty':
       default:
         return {
-          label: 'EMPTY',
+          label: 'AVAILABLE',
           bg: '#f3f4f6',
-          color: '#9ca3af',
-          dotColor: '#d1d5db',
+          color: '#6b7280',
+          dotColor: '#9ca3af',
         };
     }
   };
@@ -67,128 +90,120 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
 
   // Format amount with commas if >= 1000
   const formattedAmount =
-    totalAmount !== undefined
+    totalAmount !== undefined && totalAmount > 0
       ? totalAmount >= 1000
-        ? `$ ${totalAmount.toLocaleString('en-US')}`
-        : `$ ${totalAmount.toFixed(2)}`
+        ? `$${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+        : `$${totalAmount.toFixed(2)}`
       : null;
 
-  // Derive accurate active tabs list and count
-  const activeTabNumbers = React.useMemo(() => {
-    const fromTabs = (table.tabs || [])
-      .filter((t) => t.status !== 'closed')
-      .map((t) => t.tabIndex);
-    const fromActiveTabs = activeTabs || [];
-    return Array.from(new Set([...fromActiveTabs, ...fromTabs])).sort((a, b) => a - b);
-  }, [table.tabs, activeTabs]);
-
-  const activeCount = activeTabNumbers.length;
-  const highestActiveTab = activeCount > 0 ? Math.max(...activeTabNumbers) : 0;
-
-  // Total tab slots to render:
-  // If table is empty and has no active tabs, show 1 empty slot.
-  // Otherwise show at least all active tabs (highestActiveTab) and up to maxTabs/seats capacity.
-  const totalSlotsCount = React.useMemo(() => {
-    if (status === 'empty' && activeCount === 0) {
-      return 1;
-    }
-    const baseCapacity = Math.max(maxTabs || 1, seats || 1);
-    return Math.max(highestActiveTab, baseCapacity, 1);
-  }, [status, activeCount, maxTabs, seats, highestActiveTab]);
-
-  const slotNumbers = React.useMemo(() => {
-    return Array.from({ length: totalSlotsCount }, (_, i) => i + 1);
-  }, [totalSlotsCount]);
+  // Card border & background based on status
+  const getCardVariantStyle = () => {
+    if (isEmpty) return styles.cardEmpty;
+    if (isReady) return styles.cardReady;
+    if (isPrep) return styles.cardPrep;
+    if (isServed) return styles.cardServed;
+    return styles.cardOccupied;
+  };
 
   return (
-    <Pressable
-      onPress={() => onPress(table)}
-      style={({ pressed }) => [
-        styles.cardContainer,
-        pressed && styles.cardPressed,
-      ]}
-      accessibilityRole="button"
-      accessibilityLabel={`Table ${code}, ${status}`}
-    >
-      {/* 1. Top Row: Table Code & Seats + Status & Timer Badge */}
-      <View style={styles.cardHeader}>
-        <View style={styles.codeCol}>
-          <Text style={styles.tableCodeText}>{code}</Text>
-          <Text style={styles.seatsText}>
-            {guests > 0 ? `${guests}g · ` : ''}
-            {seats} seats
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.statusBadge,
-            statusConfig.bg !== 'transparent' && { backgroundColor: statusConfig.bg },
-          ]}
-        >
-          <View style={[styles.statusDot, { backgroundColor: statusConfig.dotColor }]} />
-          <Text style={[styles.statusText, { color: statusConfig.color }]}>
-            {statusConfig.label}
-          </Text>
-          {elapsedTime && status !== 'empty' ? (
-            <Text style={[styles.timeText, { color: statusConfig.color }]}>
-              · {elapsedTime}
+    <View style={[styles.cardContainer, getCardVariantStyle()]}>
+      <Pressable
+        onPress={() => onPress(table)}
+        style={({ pressed }) => [
+          styles.mainPressableArea,
+          pressed && styles.cardPressed,
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={
+          isEmpty
+            ? `Table ${code}, ${seats} seats, available. Tap to open tab.`
+            : `Table ${code}, ${guests} of ${seats} seats, ${status}, total ${formattedAmount || 'open check'}`
+        }
+      >
+        {/* 1. Top Row: Table Identifier + Status Badge */}
+        <View style={styles.cardHeader}>
+          <View style={styles.codeCol}>
+            <Text style={[styles.tableCodeText, isEmpty && styles.tableCodeTextEmpty]}>
+              Table {code}
             </Text>
-          ) : null}
-        </View>
-      </View>
-
-      {/* 2. Middle Row: Server Avatar & Financial Balance */}
-      <View style={styles.midRow}>
-        {assignedStaff ? (
-          <View style={styles.staffWrapper}>
-            <View style={styles.staffAvatar}>
-              <Text style={styles.staffAvatarText}>{assignedStaff.initials}</Text>
-            </View>
-            <Text style={styles.staffNameText}>{assignedStaff.name.split(' ')[0]}</Text>
+            <Text style={[styles.seatsText, isEmpty && styles.seatsTextEmpty]}>
+              {isEmpty
+                ? `${seats} seats`
+                : guests > 0
+                ? `${guests} / ${seats} seats`
+                : `${seats} seats`}
+            </Text>
           </View>
+
+          <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
+            <View style={[styles.statusDot, { backgroundColor: statusConfig.dotColor }]} />
+            <Text style={[styles.statusText, { color: statusConfig.color }]}>
+              {statusConfig.label}
+            </Text>
+            {!isEmpty && elapsedTime ? (
+              <Text style={[styles.timeText, { color: statusConfig.color }]}>
+                · {elapsedTime}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+
+        {/* 2. Middle Row: Items Line + Amount & Tab Tag */}
+        <View style={styles.midRow}>
+          <Text
+            style={[styles.itemsSummaryText, isEmpty && styles.itemsSummaryTextEmpty]}
+            numberOfLines={1}
+          >
+            {itemsSummary}
+          </Text>
+          <View style={styles.amountCol}>
+            <Text style={[styles.amountText, isEmpty && styles.amountTextEmpty]}>
+              {formattedAmount ? formattedAmount : isEmpty ? '$0.00' : '$0.00'}
+            </Text>
+            {isEmpty ? (
+              <Text style={styles.tagEmpty}>EMPTY</Text>
+            ) : activeTabCount > 1 ? (
+              <Text style={styles.tagWine}>{activeTabCount} TABS</Text>
+            ) : (
+              <Text style={styles.tagWine}>DINE-IN</Text>
+            )}
+          </View>
+        </View>
+      </Pressable>
+
+      {/* 3. Bottom Row: Direct Action Button */}
+      <View style={styles.actionRow}>
+        {isEmpty ? (
+          <Pressable
+            onPress={() => onPress(table)}
+            style={({ pressed }) => [
+              styles.actionBtnOpenTab,
+              pressed && styles.cardPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`Open Tab at Table ${code}`}
+          >
+            <Plus size={15} color="#ffffff" strokeWidth={2.5} />
+            <Text style={styles.actionBtnOpenTabText}>OPEN TABLE TAB</Text>
+          </Pressable>
         ) : (
-          <Text style={styles.unassignedText}>Unassigned</Text>
+          <Pressable
+            onPress={() => onPress(table)}
+            style={({ pressed }) => [
+              styles.actionBtnManage,
+              pressed && styles.cardPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`Manage Table ${code}`}
+          >
+            <Utensils size={14} color="#832238" strokeWidth={2.3} />
+            <Text style={styles.actionBtnManageText}>
+              {status === 'served' ? 'SETTLE BILL / ORDER' : 'VIEW & ADD ORDERS'}
+            </Text>
+          </Pressable>
         )}
-
-        <View style={styles.amountWrapper}>
-          {formattedAmount ? (
-            <Text style={styles.amountText}>{formattedAmount}</Text>
-          ) : hasOpenCheck ? (
-            <Text style={styles.openCheckText}>Open check</Text>
-          ) : (
-            <Text style={styles.noCheckText}>Available</Text>
-          )}
-        </View>
       </View>
-
-      {/* 3. Bottom Row: Tactile Tab Position Circles */}
-      <View style={styles.tabsRow}>
-        <View style={styles.tabPillsContainer}>
-          {slotNumbers.map((tabNum) => {
-            const isActive = activeTabNumbers.includes(tabNum);
-            return (
-              <View
-                key={tabNum}
-                style={[
-                  styles.tabButton,
-                  isActive ? styles.tabButtonActive : styles.tabButtonInactive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tabButtonText,
-                    isActive ? styles.tabTextActive : styles.tabTextInactive,
-                  ]}
-                >
-                  {tabNum}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-      </View>
-    </Pressable>
+    </View>
   );
 });
 
@@ -198,9 +213,9 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#eee8e3',
-    padding: 16,
+    padding: 15,
     shadowColor: '#2b0f16',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -209,51 +224,82 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     minHeight: 156,
   },
+  cardOccupied: {
+    backgroundColor: '#ffffff',
+    borderColor: '#fad4db',
+  },
+  cardReady: {
+    backgroundColor: '#fbfdfc',
+    borderColor: '#bbf7d0',
+  },
+  cardPrep: {
+    backgroundColor: '#ffffff',
+    borderColor: '#fef3c7',
+  },
+  cardServed: {
+    backgroundColor: '#ffffff',
+    borderColor: '#fecdd3',
+  },
+  cardEmpty: {
+    backgroundColor: '#fcfbfa',
+    borderColor: '#e8e2dc',
+  },
+  mainPressableArea: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
   cardPressed: {
     transform: [{ scale: 0.985 }],
-    opacity: 0.95,
+    opacity: 0.92,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   codeCol: {
     justifyContent: 'center',
   },
   tableCodeText: {
-    fontSize: 26,
+    fontSize: 20,
     fontWeight: '900',
     color: '#111827',
-    lineHeight: 30,
+    letterSpacing: -0.2,
+  },
+  tableCodeTextEmpty: {
+    color: '#374151',
   },
   seatsText: {
-    fontSize: 13,
+    fontSize: 12.5,
     fontWeight: '600',
     color: '#4b5563',
     marginTop: 2,
+    fontVariant: ['tabular-nums'],
+  },
+  seatsTextEmpty: {
+    color: '#9ca3af',
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 9,
-    paddingVertical: 5,
-    borderRadius: 11,
+    paddingHorizontal: 8,
+    paddingVertical: 4.5,
+    borderRadius: 10,
   },
   statusDot: {
-    width: 7,
-    height: 7,
+    width: 6.5,
+    height: 6.5,
     borderRadius: 3.5,
   },
   statusText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   timeText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
@@ -263,98 +309,86 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 7,
     borderTopWidth: 1,
-    borderTopColor: '#f7f3f0',
-    marginBottom: 8,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+    gap: 8,
   },
-  staffWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-  },
-  staffAvatar: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: '#fceeed',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#fad4db',
-  },
-  staffAvatarText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#832238',
-  },
-  staffNameText: {
+  itemsSummaryText: {
+    flex: 1,
     fontSize: 13,
-    fontWeight: '700',
-    color: '#374151',
+    color: '#4b5563',
+    fontWeight: '500',
   },
-  unassignedText: {
-    fontSize: 13,
-    fontWeight: '600',
+  itemsSummaryTextEmpty: {
     color: '#9ca3af',
+    fontStyle: 'italic',
   },
-  amountWrapper: {
+  amountCol: {
     alignItems: 'flex-end',
   },
   amountText: {
-    fontSize: 19,
+    fontSize: 17,
     fontWeight: '900',
     color: '#111827',
-    letterSpacing: -0.3,
     fontVariant: ['tabular-nums'],
   },
-  openCheckText: {
-    fontSize: 14,
+  amountTextEmpty: {
+    color: '#9ca3af',
+    fontWeight: '700',
+  },
+  tagWine: {
+    fontSize: 10.5,
     fontWeight: '800',
     color: '#832238',
+    marginTop: 1,
   },
-  noCheckText: {
-    fontSize: 13,
-    fontWeight: '600',
+  tagEmpty: {
+    fontSize: 10.5,
+    fontWeight: '700',
     color: '#9ca3af',
+    marginTop: 1,
   },
-  tabsRow: {
+  actionRow: {
+    paddingTop: 6,
+  },
+  actionBtnOpenTab: {
+    backgroundColor: '#832238',
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingTop: 4,
-  },
-  tabPillsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    flexWrap: 'wrap',
-  },
-  tabButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  tabButtonActive: {
-    backgroundColor: '#641b2a',
-    shadowColor: '#641b2a',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.25,
-    shadowRadius: 2,
+    gap: 6,
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    shadowColor: '#832238',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
     elevation: 2,
   },
-  tabButtonInactive: {
-    backgroundColor: 'transparent',
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-  },
-  tabButtonText: {
-    fontSize: 12.5,
-    fontWeight: '800',
-  },
-  tabTextActive: {
+  actionBtnOpenTabText: {
     color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.4,
   },
-  tabTextInactive: {
-    color: '#9ca3af',
+  actionBtnManage: {
+    backgroundColor: '#fdf2f4',
+    borderWidth: 1,
+    borderColor: '#fad4db',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+  },
+  actionBtnManageText: {
+    color: '#832238',
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.2,
   },
 });

@@ -1,15 +1,13 @@
 import React from 'react';
 import { View, Text, Pressable, Modal, StyleSheet, ScrollView } from 'react-native';
-import { HelpCircle, X, ShieldAlert, KeyRound } from 'lucide-react-native';
-import { SEED_STAFF_USERS } from '../../mockData';
+import { ShieldCheck, X, ShieldAlert, UserCheck } from 'lucide-react-native';
 
 interface ForgotPinModalProps {
   visible: boolean;
   onClose: () => void;
-  onSelectStaff?: (staff: (typeof SEED_STAFF_USERS)[0]) => void;
 }
 
-export const ForgotPinModal: React.FC<ForgotPinModalProps> = ({ visible, onClose, onSelectStaff }) => {
+export const ForgotPinModal: React.FC<ForgotPinModalProps> = ({ visible, onClose }) => {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
@@ -23,11 +21,11 @@ export const ForgotPinModal: React.FC<ForgotPinModalProps> = ({ visible, onClose
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.iconBadge}>
-                <KeyRound size={20} color="#641b2a" />
+                <ShieldCheck size={20} color="#641b2a" />
               </View>
               <View>
-                <Text style={styles.title}>Staff PIN Recovery</Text>
-                <Text style={styles.subtitle}>Monk's Dream Jazz Bar Security</Text>
+                <Text style={styles.title}>Credential Security</Text>
+                <Text style={styles.subtitle}>Monk's Dream Jazz Bar POS</Text>
               </View>
             </View>
             <Pressable onPress={onClose} style={styles.closeBtn}>
@@ -35,36 +33,29 @@ export const ForgotPinModal: React.FC<ForgotPinModalProps> = ({ visible, onClose
             </Pressable>
           </View>
 
-          {/* Alert Notice */}
+          {/* Security Policy Notice */}
           <View style={styles.noticeBox}>
-            <ShieldAlert size={16} color="#b93a52" />
+            <ShieldAlert size={18} color="#991b1b" style={{ marginTop: 2, marginRight: 8 }} />
             <Text style={styles.noticeText}>
-              Tap any demo staff account below to auto-fill credentials for testing.
+              For audit security and shift fraud prevention, staff PINs are confidential and cannot be viewed on floor tablets.
             </Text>
           </View>
 
-          {/* Staff Reference List */}
-          <Text style={styles.sectionTitle}>Default Staff Accounts (Tap to Select):</Text>
-          <ScrollView style={styles.staffList} showsVerticalScrollIndicator={false}>
-            {SEED_STAFF_USERS.map((staff) => (
-              <Pressable
-                key={staff.id}
-                onPress={() => onSelectStaff?.(staff)}
-                style={({ pressed }) => [
-                  styles.staffRow,
-                  pressed && { opacity: 0.7, backgroundColor: '#fef2f2' },
-                ]}
-              >
-                <View>
-                  <Text style={styles.staffName}>{staff.displayName}</Text>
-                  <Text style={styles.staffUsername}>ID: {staff.username} • Role: {staff.role}</Text>
-                </View>
-                <View style={styles.pinBadge}>
-                  <Text style={styles.pinText}>{staff.pin}</Text>
-                </View>
-              </Pressable>
-            ))}
-          </ScrollView>
+          <Text style={styles.instructionText}>
+            If you have forgotten your PIN or your account is locked, contact a Shift Administrator to verify your identity and reset your PIN in the Admin Accounts Dashboard.
+          </Text>
+
+          {/* Admin Contact Reference */}
+          <Text style={styles.sectionTitle}>Shift Administrators:</Text>
+          <View style={styles.adminCard}>
+            <View style={styles.adminAvatar}>
+              <UserCheck size={18} color="#641b2a" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.adminName}>Miles (Manager)</Text>
+              <Text style={styles.adminRole}>Shift Administrator · Admin Accounts Panel</Text>
+            </View>
+          </View>
 
           {/* Close button */}
           <Pressable onPress={onClose} style={styles.dismissBtn}>
@@ -146,6 +137,12 @@ const styles = StyleSheet.create({
     flex: 1,
     lineHeight: 16,
   },
+  instructionText: {
+    fontSize: 13,
+    color: '#4b5563',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
   sectionTitle: {
     fontSize: 12,
     fontWeight: '600',
@@ -154,40 +151,34 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  staffList: {
-    maxHeight: 200,
-    marginBottom: 16,
-  },
-  staffRow: {
+  adminCard: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    gap: 12,
+    padding: 12,
     backgroundColor: '#f9fafb',
-    borderRadius: 10,
-    marginBottom: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    marginBottom: 20,
   },
-  staffName: {
+  adminAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#f7e8eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  adminName: {
     fontSize: 13,
     fontWeight: '600',
     color: '#1f2937',
   },
-  staffUsername: {
+  adminRole: {
     fontSize: 11,
     color: '#6b7280',
-  },
-  pinBadge: {
-    backgroundColor: '#641b2a',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  pinText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-    fontFamily: 'monospace',
+    marginTop: 2,
   },
   dismissBtn: {
     backgroundColor: '#641b2a',

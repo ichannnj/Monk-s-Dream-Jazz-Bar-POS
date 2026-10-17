@@ -20,85 +20,88 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
   const isReady = order.status === 'ready';
 
   return (
-    <Pressable
-      onPress={() => onPress(order)}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.cardContainer,
         isGrab ? styles.cardGrab : styles.cardFoodpanda,
-        pressed && styles.cardPressed,
       ]}
-      accessibilityRole="button"
-      accessibilityLabel={`Online delivery ${order.platform} ${order.platformOrderRef}`}
     >
-      {/* 1. Top Row: Platform Order # & Rider + Status Badge */}
-      <View style={styles.cardHeader}>
-        <View style={styles.codeCol}>
-          <View style={styles.platformBadgeRow}>
-            <Bike size={13} color={isGrab ? '#059669' : '#db2777'} strokeWidth={2.4} />
-            <Text
-              style={[
-                styles.platformCodeText,
-                { color: isGrab ? '#059669' : '#db2777' },
-              ]}
-            >
-              {isGrab ? 'Grab' : 'Panda'} #{order.platformOrderRef}
+      <Pressable
+        onPress={() => onPress(order)}
+        style={({ pressed }) => [
+          styles.mainPressableArea,
+          pressed && styles.cardPressed,
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`Online delivery ${order.platform} ${order.platformOrderRef}`}
+      >
+        {/* 1. Top Row: Platform Order # & Rider + Status Badge */}
+        <View style={styles.cardHeader}>
+          <View style={styles.codeCol}>
+            <View style={styles.platformBadgeRow}>
+              <Bike size={13} color={isGrab ? '#059669' : '#db2777'} strokeWidth={2.4} />
+              <Text
+                style={[
+                  styles.platformCodeText,
+                  { color: isGrab ? '#059669' : '#db2777' },
+                ]}
+              >
+                {isGrab ? 'Grab' : 'Panda'} #{order.platformOrderRef}
+              </Text>
+            </View>
+            <Text style={styles.customerNameText} numberOfLines={1}>
+              {order.customerName} · {order.riderName}
             </Text>
           </View>
-          <Text style={styles.customerNameText} numberOfLines={1}>
-            {order.customerName} · {order.riderName}
-          </Text>
-        </View>
 
-        <View
-          style={[
-            styles.statusBadge,
-            isReady ? styles.statusBadgeReady : styles.statusBadgePrep,
-          ]}
-        >
           <View
             style={[
-              styles.statusDot,
-              { backgroundColor: isReady ? '#16a34a' : '#d97706' },
-            ]}
-          />
-          <Text
-            style={[
-              styles.statusText,
-              { color: isReady ? '#15803d' : '#b45309' },
+              styles.statusBadge,
+              isReady ? styles.statusBadgeReady : styles.statusBadgePrep,
             ]}
           >
-            {isReady ? 'READY' : 'PREP'}
-          </Text>
-          <Text
-            style={[
-              styles.timeText,
-              { color: isReady ? '#15803d' : '#b45309' },
-            ]}
-          >
-            · {order.elapsedTime}
-          </Text>
+            <View
+              style={[
+                styles.statusDot,
+                { backgroundColor: isReady ? '#16a34a' : '#d97706' },
+              ]}
+            />
+            <Text
+              style={[
+                styles.statusText,
+                { color: isReady ? '#15803d' : '#b45309' },
+              ]}
+            >
+              {isReady ? 'READY' : 'PREP'}
+            </Text>
+            <Text
+              style={[
+                styles.timeText,
+                { color: isReady ? '#15803d' : '#b45309' },
+              ]}
+            >
+              · {order.elapsedTime}
+            </Text>
+          </View>
         </View>
-      </View>
 
-      {/* 2. Middle Row: Items Line + Amount & Paid Tag */}
-      <View style={styles.midRow}>
-        <Text style={styles.itemsSummaryText} numberOfLines={1}>
-          {order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
-        </Text>
-        <View style={styles.amountCol}>
-          <Text style={styles.amountText}>${order.total.toFixed(2)}</Text>
-          <Text style={styles.paidText}>PAID APP</Text>
+        {/* 2. Middle Row: Items Line + Amount & Paid Tag */}
+        <View style={styles.midRow}>
+          <Text style={styles.itemsSummaryText} numberOfLines={1}>
+            {order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
+          </Text>
+          <View style={styles.amountCol}>
+            <Text style={styles.amountText}>${order.total.toFixed(2)}</Text>
+            <Text style={styles.paidText}>PAID APP</Text>
+          </View>
         </View>
-      </View>
+      </Pressable>
 
       {/* 3. Bottom Row: Direct Action */}
       <View style={styles.actionRow}>
         {isReady ? (
           <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              onHandToRider?.(order.id);
-            }}
+            onPress={() => onHandToRider?.(order.id)}
             style={styles.actionBtnHandOver}
             accessibilityRole="button"
             accessibilityLabel={`Hand over order ${order.platformOrderRef} to rider`}
@@ -108,10 +111,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
           </Pressable>
         ) : (
           <Pressable
-            onPress={(e) => {
-              e.stopPropagation();
-              onMarkReady?.(order.id);
-            }}
+            onPress={() => onMarkReady?.(order.id)}
             style={styles.actionBtnReady}
             accessibilityRole="button"
             accessibilityLabel={`Mark online order ${order.platformOrderRef} as ready`}
@@ -121,7 +121,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
           </Pressable>
         )}
       </View>
-    </Pressable>
+    </View>
   );
 };
 
@@ -138,6 +138,10 @@ const styles = StyleSheet.create({
     elevation: 2,
     justifyContent: 'space-between',
     minHeight: 156,
+  },
+  mainPressableArea: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
   cardGrab: {
     borderColor: '#bbf7d0',

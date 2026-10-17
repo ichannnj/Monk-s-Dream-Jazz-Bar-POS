@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, useWindowDimensions, Text } from 'react-native';
+import { View, ScrollView, useWindowDimensions, Text } from 'react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useOrderStore } from '../../store/useOrderStore';
 import {
@@ -13,16 +13,10 @@ import {
 import { toast } from '../../store/useToastStore';
 import { Sidebar, NavTabId } from '../navigation/Sidebar';
 import { UnifiedCommandBar, StatusFilter } from './UnifiedCommandBar';
-import { TableCard } from './TableCard';
-import { TakeoutQueueCard } from './TakeoutQueueCard';
-import { OnlineDeliveryCard } from './OnlineDeliveryCard';
-import { TableActionModal } from './TableActionModal';
-import { TableTransferModal } from './TableTransferModal';
-import { OpenTableTabModal } from './OpenTableTabModal';
-import { NewTakeoutModal } from './NewTakeoutModal';
-import { OnlineDeliveryModal } from './OnlineDeliveryModal';
-import { OrderEntryModal } from './OrderEntryModal';
-import { BillSettlementModal } from './BillSettlementModal';
+import { FloorGridView } from './FloorGridView';
+import { useFloorFilters } from './useFloorFilters';
+import { styles } from './WaiterCashierScreen.styles';
+import { WaiterModalsCluster } from './WaiterModalsCluster';
 import { ChecksHistoryView } from './ChecksHistoryView';
 import { CashDrawerModalView } from './CashDrawerModalView';
 import { FloorAlertsView } from './FloorAlertsView';
@@ -105,81 +99,20 @@ export const WaiterCashierScreen: React.FC = () => {
     [alerts]
   );
 
-  // Channel Counts
-  const channelCounts = useMemo(() => {
-    return {
-      all: tables.length + takeoutOrders.length + onlineOrders.length,
-      cafe: tables.filter((t) => t.area === 'cafe').length,
-      bar: tables.filter((t) => t.area === 'bar').length,
-      takeout: takeoutOrders.filter((t) => t.status !== 'completed').length,
-      online: onlineOrders.filter((o) => o.status !== 'completed').length,
-    };
-  }, [tables, takeoutOrders, onlineOrders]);
-
-  // Status Counts for active channel
-  const statusCounts = useMemo(() => {
-    let relevantTables = tables;
-    if (selectedChannel === 'cafe') {
-      relevantTables = tables.filter((t) => t.area === 'cafe');
-    } else if (selectedChannel === 'bar') {
-      relevantTables = tables.filter((t) => t.area === 'bar');
-    }
-
-    return {
-      all: relevantTables.length,
-      empty: relevantTables.filter((t) => t.status === 'empty').length,
-      occupied: relevantTables.filter((t) => t.status === 'occupied').length,
-      preparing: relevantTables.filter((t) => t.status === 'preparing').length,
-      ready: relevantTables.filter((t) => t.status === 'ready').length,
-      served: relevantTables.filter((t) => t.status === 'served').length,
-    };
-  }, [tables, selectedChannel]);
-
-  // Filtered Tables
-  const filteredTables = useMemo(() => {
-    if (selectedChannel === 'takeout' || selectedChannel === 'online') {
-      return [];
-    }
-    return tables.filter((table) => {
-      if (selectedChannel !== 'all' && table.area !== selectedChannel) {
-        return false;
-      }
-      if (selectedStatus !== 'all' && table.status !== selectedStatus) {
-        return false;
-      }
-      return true;
-    });
-  }, [tables, selectedChannel, selectedStatus]);
-
-  // Filtered Takeout Orders
-  const filteredTakeoutOrders = useMemo(() => {
-    if (selectedChannel === 'cafe' || selectedChannel === 'bar') {
-      return [];
-    }
-    return takeoutOrders.filter((o) => {
-      if (o.status === 'completed') return false;
-      if (selectedStatus === 'preparing' && o.status !== 'preparing') return false;
-      if (selectedStatus === 'ready' && o.status !== 'ready') return false;
-      if (selectedStatus === 'empty' || selectedStatus === 'occupied' || selectedStatus === 'served')
-        return false;
-      return true;
-    });
-  }, [takeoutOrders, selectedChannel, selectedStatus]);
-
-  // Filtered Online Orders
-  const filteredOnlineOrders = useMemo(() => {
-    if (selectedChannel === 'cafe' || selectedChannel === 'bar') {
-      return [];
-    }
-    return onlineOrders.filter((o) => {
-      if (o.status === 'completed') return false;
-      if (selectedStatus === 'preparing' && o.status !== 'preparing') return false;
-      if (selectedStatus === 'ready' && o.status !== 'ready') return false;
-      if (selectedStatus === 'empty' || selectedStatus === 'occupied' || selectedStatus === 'served')
-        return false;
-      return true;
-    });
-  }, [onlineOrders, selectedChannel, selectedStatus]);
+  // Floor filtering & category counts via custom hook
+  const {
+    channelCounts,
+    statusCounts,
+    filteredTables,
+    filteredTakeoutOrders,
+    filteredOnlineOrders,
+  } = useFloorFilters(
+    tables,
+    takeoutOrders,
+    onlineOrders,
+    selectedChannel,
+    selectedStatus
+  );
 
   // Card click handlers
   const handleTablePress = (table: TableItem) => {
@@ -416,15 +349,30 @@ export const WaiterCashierScreen: React.FC = () => {
     setCheckoutContext(null);
   };
 
-  // Responsive tablet grid column width (3 spacious cards on 10" tablets, 4 on 12"+, 5 on wide desktops)
-  const cardWidth =
-    windowWidth >= 1440
-      ? '18.8%'
-      : windowWidth >= 1180
-      ? '23.8%'
-      : windowWidth >= 740
-      ? '31.8%'
-      : '48.5%';
+  const [gridWidth, setGridWidth] = useState<number>(0);
+
+  // Tablet-optimized dynamic grid column distribution:
+  // - 5 columns on desktop/wide display (>= 1440px)
+  // - 4 columns on large landscape tablets / iPad Pro 12.9" (>= 1140px)
+  // - 3 columns on standard 10" landscape tablets / iPad (>= 740px)
+  // - 2 columns on compact tablets / portrait screens (< 740px)
+  const numColumns = useMemo(() => {
+    if (windowWidth >= 1440) return 5;
+    if (windowWidth >= 1140) return 4;
+    if (windowWidth >= 740) return 3;
+    return 2;
+  }, [windowWidth]);
+
+  const gridGap = 16;
+  const cardWidth = useMemo(() => {
+    if (gridWidth > 0) {
+      // Exact integer pixel distribution with gap subtracted
+      return Math.floor((gridWidth - (numColumns - 1) * gridGap) / numColumns);
+    }
+    // Reliable initial fallback percentage before first layout measurement
+    const fallbackPercent = ((100 - (numColumns - 1) * 1.6) / numColumns).toFixed(2);
+    return `${fallbackPercent}%` as any;
+  }, [gridWidth, numColumns]);
 
   return (
     <View style={styles.screenContainer}>
@@ -470,88 +418,70 @@ export const WaiterCashierScreen: React.FC = () => {
             />
 
             {/* Combined Responsive Grid: Tables, Takeout Queue & Online Orders */}
-            <View style={styles.tablesGrid}>
-              {/* Dine-In Physical Tables */}
-              {filteredTables.map((table) => (
-                <View key={table.id} style={[styles.cardCol, { width: cardWidth }]}>
-                  <TableCard table={table} onPress={handleTablePress} />
-                </View>
-              ))}
-
-              {/* Walk-In Takeout Queue Cards */}
-              {filteredTakeoutOrders.map((toOrder) => (
-                <View key={toOrder.id} style={[styles.cardCol, { width: cardWidth }]}>
-                  <TakeoutQueueCard
-                    order={toOrder}
-                    onPress={(o) => {
-                      setOrderEntryContext({
-                        type: 'takeout',
-                        title: `Takeout #${o.ticketNumber} • "${o.customerName}"`,
-                        takeoutCustomer: o.customerName,
-                        takeoutPrepaid: o.isPrepaid,
-                        initialItems: o.items,
-                      });
-                      setIsOrderEntryOpen(true);
-                    }}
-                    onMarkReady={(id) => {
-                      const o = takeoutOrders.find((x) => x.id === id);
-                      updateTakeoutStatus(id, 'ready');
-                      toast.success(
-                        `Takeout #${o?.ticketNumber || ''} (${o?.customerName || ''}) is READY for pickup!`,
-                        { title: 'Takeout Ready' }
-                      );
-                    }}
-                    onMarkCollected={(id) => {
-                      const o = takeoutOrders.find((x) => x.id === id);
-                      updateTakeoutStatus(id, 'completed');
-                      toast.info(
-                        `Takeout #${o?.ticketNumber || ''} handed to ${o?.customerName || 'guest'}. Order completed.`,
-                        { title: 'Takeout Handed Off' }
-                      );
-                    }}
-                  />
-                </View>
-              ))}
-
-              {/* Online Delivery Queue Cards (GrabFood & Foodpanda) */}
-              {filteredOnlineOrders.map((olOrder) => (
-                <View key={olOrder.id} style={[styles.cardCol, { width: cardWidth }]}>
-                  <OnlineDeliveryCard
-                    order={olOrder}
-                    onPress={(o) => {
-                      setOrderEntryContext({
-                        type: 'online',
-                        title: `${o.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda'} #${o.platformOrderRef} • "${o.customerName}"`,
-                        onlinePlatform: o.platform,
-                        onlineRef: o.platformOrderRef,
-                        onlineRider: o.riderName,
-                        onlineCustomer: o.customerName,
-                        initialItems: o.items,
-                      });
-                      setIsOrderEntryOpen(true);
-                    }}
-                    onMarkReady={(id) => {
-                      const o = onlineOrders.find((x) => x.id === id);
-                      updateOnlineStatus(id, 'ready');
-                      const plat = o?.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
-                      toast.success(
-                        `${plat} #${o?.platformOrderRef || ''} bagged & READY for driver pickup!`,
-                        { title: 'Delivery Ready' }
-                      );
-                    }}
-                    onHandToRider={(id) => {
-                      const o = onlineOrders.find((x) => x.id === id);
-                      updateOnlineStatus(id, 'completed');
-                      const plat = o?.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
-                      toast.info(
-                        `${plat} #${o?.platformOrderRef || ''} handed to courier ${o?.riderName || ''}. Delivery on way.`,
-                        { title: 'Dispatched to Courier' }
-                      );
-                    }}
-                  />
-                </View>
-              ))}
-            </View>
+            <FloorGridView
+              cardWidth={cardWidth}
+              filteredTables={filteredTables}
+              filteredTakeoutOrders={filteredTakeoutOrders}
+              filteredOnlineOrders={filteredOnlineOrders}
+              onTablePress={handleTablePress}
+              onTakeoutPress={(o) => {
+                setOrderEntryContext({
+                  type: 'takeout',
+                  title: `Takeout #${o.ticketNumber} • "${o.customerName}"`,
+                  takeoutCustomer: o.customerName,
+                  takeoutPrepaid: o.isPrepaid,
+                  initialItems: o.items,
+                });
+                setIsOrderEntryOpen(true);
+              }}
+              onTakeoutReady={(id) => {
+                const o = takeoutOrders.find((x) => x.id === id);
+                updateTakeoutStatus(id, 'ready');
+                toast.success(
+                  `Takeout #${o?.ticketNumber || ''} (${o?.customerName || ''}) is READY for pickup!`,
+                  { title: 'Takeout Ready' }
+                );
+              }}
+              onTakeoutCollected={(id) => {
+                const o = takeoutOrders.find((x) => x.id === id);
+                updateTakeoutStatus(id, 'completed');
+                toast.info(
+                  `Takeout #${o?.ticketNumber || ''} handed to ${o?.customerName || 'guest'}. Order completed.`,
+                  { title: 'Takeout Handed Off' }
+                );
+              }}
+              onOnlinePress={(o) => {
+                setOrderEntryContext({
+                  type: 'online',
+                  title: `${o.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda'} #${o.platformOrderRef} • "${o.customerName}"`,
+                  onlinePlatform: o.platform,
+                  onlineRef: o.platformOrderRef,
+                  onlineRider: o.riderName,
+                  onlineCustomer: o.customerName,
+                  initialItems: o.items,
+                });
+                setIsOrderEntryOpen(true);
+              }}
+              onOnlineReady={(id) => {
+                const o = onlineOrders.find((x) => x.id === id);
+                updateOnlineStatus(id, 'ready');
+                const plat = o?.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
+                toast.success(
+                  `${plat} #${o?.platformOrderRef || ''} bagged & READY for driver pickup!`,
+                  { title: 'Delivery Ready' }
+                );
+              }}
+              onOnlineHandToRider={(id) => {
+                const o = onlineOrders.find((x) => x.id === id);
+                updateOnlineStatus(id, 'completed');
+                const plat = o?.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
+                toast.info(
+                  `${plat} #${o?.platformOrderRef || ''} handed to courier ${o?.riderName || ''}. Delivery on way.`,
+                  { title: 'Dispatched to Courier' }
+                );
+              }}
+              onLayoutGrid={(w) => setGridWidth(w)}
+            />
           </ScrollView>
         ) : activeNavTab === 'checks' ? (
           <ChecksHistoryView />
@@ -566,72 +496,43 @@ export const WaiterCashierScreen: React.FC = () => {
         )}
       </View>
 
-      {/* MODAL 1: Table Action Modal */}
-      <TableActionModal
-        visible={isActionModalOpen}
-        table={selectedTable}
-        onClose={() => setIsActionModalOpen(false)}
-        onTransferTable={(t) => {
+      {/* Modal Hub Cluster */}
+      <WaiterModalsCluster
+        tables={tables}
+        takeoutOrdersCount={takeoutOrders.length}
+        selectedTable={selectedTable}
+        isActionModalOpen={isActionModalOpen}
+        onCloseActionModal={() => setIsActionModalOpen(false)}
+        onOpenOrderEntryFromModal={handleOpenOrderEntryFromModal}
+        onOpenNewSplitTab={handleOpenNewSplitTab}
+        onCheckoutFromModal={handleOpenCheckout}
+        onTransferTableFromModal={(t) => {
           setTableToTransfer(t);
           setIsTransferModalOpen(true);
         }}
-        onOpenOrderEntry={handleOpenOrderEntryFromModal}
-        onOpenNewTab={handleOpenNewSplitTab}
-        onCheckout={handleOpenCheckout}
-      />
-
-      {/* MODAL 2: Table & Tab Transfer Modal */}
-      <TableTransferModal
-        visible={isTransferModalOpen}
-        originTable={tableToTransfer}
-        allTables={tables}
-        onClose={() => setIsTransferModalOpen(false)}
+        tableToTransfer={tableToTransfer}
+        isTransferModalOpen={isTransferModalOpen}
+        onCloseTransferModal={() => setIsTransferModalOpen(false)}
         onConfirmTransfer={handleConfirmTransfer}
-      />
-
-      {/* MODAL 3: Open Table Tab Modal */}
-      <OpenTableTabModal
-        visible={isOpenTabModalOpen}
-        tables={tables}
-        preselectedTable={selectedTable}
-        onClose={() => setIsOpenTabModalOpen(false)}
+        isOpenTabModalOpen={isOpenTabModalOpen}
+        onCloseOpenTabModal={() => setIsOpenTabModalOpen(false)}
         onConfirmOpenTab={handleConfirmOpenTab}
-      />
-
-      {/* MODAL 4: New Walk-In Takeout Modal */}
-      <NewTakeoutModal
-        visible={isTakeoutModalOpen}
-        nextTicketNumber={`T-${107 + takeoutOrders.length}`}
-        onClose={() => setIsTakeoutModalOpen(false)}
-        onProceedToOrder={handleProceedTakeout}
-      />
-
-      {/* MODAL 5: Online Delivery Intake Modal */}
-      <OnlineDeliveryModal
-        visible={isOnlineModalOpen}
-        onClose={() => setIsOnlineModalOpen(false)}
-        onProceedToOrder={handleProceedOnline}
-      />
-
-      {/* MODAL 6: Fullscreen Menu Catalog & Order Entry Modal */}
-      <OrderEntryModal
-        visible={isOrderEntryOpen}
-        title={orderEntryContext?.title || 'Order Entry'}
-        initialItems={orderEntryContext?.initialItems || []}
-        hasExistingCorkage={orderEntryContext?.hasExistingCorkage || false}
-        onClose={() => {
+        isTakeoutModalOpen={isTakeoutModalOpen}
+        onCloseTakeoutModal={() => setIsTakeoutModalOpen(false)}
+        onProceedTakeout={handleProceedTakeout}
+        isOnlineModalOpen={isOnlineModalOpen}
+        onCloseOnlineModal={() => setIsOnlineModalOpen(false)}
+        onProceedOnline={handleProceedOnline}
+        isOrderEntryOpen={isOrderEntryOpen}
+        orderEntryContext={orderEntryContext}
+        onCloseOrderEntry={() => {
           setIsOrderEntryOpen(false);
           setOrderEntryContext(null);
         }}
         onSendOrder={handleOrderEntrySubmit}
-      />
-
-      {/* MODAL 7: Bill Settlement & Checkout Modal */}
-      <BillSettlementModal
-        visible={isCheckoutOpen}
-        table={checkoutContext?.table || null}
-        activeTab={checkoutContext?.activeTab}
-        onClose={() => {
+        isCheckoutOpen={isCheckoutOpen}
+        checkoutContext={checkoutContext}
+        onCloseCheckout={() => {
           setIsCheckoutOpen(false);
           setCheckoutContext(null);
         }}
@@ -641,31 +542,3 @@ export const WaiterCashierScreen: React.FC = () => {
   );
 };
 
-const styles = StyleSheet.create({
-  screenContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    backgroundColor: '#f6f0ed',
-    paddingVertical: 14,
-    paddingLeft: 14,
-    paddingRight: 18,
-    gap: 18,
-  },
-  mainContent: {
-    flex: 1,
-  },
-  scrollArea: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingBottom: 28,
-  },
-  tablesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  cardCol: {
-    minWidth: 175,
-  },
-});
