@@ -5,6 +5,7 @@
   "dependencies": {
     "@expo/metro-runtime": "~57.0.17",
     "@monks/shared": "workspace:*",
+    "@supabase/supabase-js": "^2.118.0",
     "@tanstack/react-query": "^5.104.1",
     "expo": "~57.0.30",
     "expo-font": "~57.0.4",

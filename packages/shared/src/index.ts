@@ -25,3 +25,25 @@ export const UserSchema = z.object({
   isActive: z.boolean().default(true),
 });
 export type User = z.infer<typeof UserSchema>;
+
+// Product / Menu Item
+export const StationTargetEnum = z.enum(['bar', 'kitchen']);
+export type StationTarget = z.infer<typeof StationTargetEnum>;
+
+export const ProductSchema = z.object({
+  id: z.string(),
+  categoryId: z.string(),
+  name: z.string().min(1),
+  imageUrl: z.string().url().optional().nullable(),
+  basePrice: z.number().positive(),
+  stationTarget: StationTargetEnum,
+  isResoldOutsideFood: z.boolean().default(false),
+  originalCost: z.number().positive().optional().nullable(),
+  auto86: z.boolean().default(false),
+  allergens: z.array(z.string()).default([]),
+});
+export type Product = z.infer<typeof ProductSchema>;
+
+export * from './database.types.js';
+
+

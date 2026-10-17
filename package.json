@@ -6,7 +6,13 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "pnpm -r run build",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:push": "npx supabase db push",
+    "supabase:reset": "npx supabase db reset",
+    "supabase:setup": "bash scripts/setup-supabase.sh",
+    "supabase:types": "npx supabase gen types typescript --linked > packages/shared/src/database.types.ts"
   },
   "keywords": [],
   "author": "",

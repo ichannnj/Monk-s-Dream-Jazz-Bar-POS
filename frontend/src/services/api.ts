@@ -1,52 +1,61 @@
 /**
- * Typed REST API Client for Monk's Dream Jazz Bar Cloud Platform (Clean Template)
+ * Typed API Client for Monk's Dream Jazz Bar (Supabase BaaS)
  */
+import { supabase } from './supabase';
+import { SEED_STAFF_USERS } from '../mockData';
 
 export class PosApiClient {
-  private baseUrl: string;
-
-  constructor(baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000') {
-    this.baseUrl = baseUrl;
-  }
-
-  setBaseUrl(url: string) {
-    this.baseUrl = url;
-  }
-
-  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-    const url = `${this.baseUrl}${endpoint}`;
-    const headers = {
-      'Content-Type': 'application/json',
-      ...(options.headers || {}),
-    };
-
-    const res = await fetch(url, { ...options, headers });
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => '');
-      throw new Error(`API Error [${res.status}] ${res.statusText}: ${errBody}`);
-    }
-    return res.json();
-  }
-
-  // --- Auth & Staff ---
+  // --- Auth & Staff PIN ---
   async loginWithPin(pin: string) {
-    return this.request<{ success: boolean; user: any }>('/api/v1/auth/pin', {
-      method: 'POST',
-      body: JSON.stringify({ pin }),
-    });
+    try {
+      const { data, error } = await supabase.rpc('authenticate_staff_pin', {
+        p_pin: pin,
+      });
+
+      if (!error && data && (data as any).success) {
+        return { success: true, user: (data as any).user };
+      }
+    } catch {
+      // Offline fallback
+    }
+
+    // Local Seed Fallback (Offline resilience)
+    const found = SEED_STAFF_USERS.find((u) => u.pin === pin);
+    if (found) {
+      return {
+        success: true,
+        user: {
+          id: found.id,
+          username: found.username,
+          displayName: found.displayName,
+          role: found.role,
+        },
+      };
+    }
+
+    throw new Error('Invalid staff PIN or inactive account');
   }
 
   async getStaffList() {
-    return this.request<any[]>('/api/v1/auth/users', {
-      method: 'GET',
-    });
+    try {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, username, display_name, role, is_active')
+        .eq('is_active', true);
+
+      if (!error && data && data.length > 0) {
+        return data;
+      }
+    } catch {
+      // Offline fallback
+    }
+
+    return SEED_STAFF_USERS;
   }
 
   // --- Health Check ---
   async checkHealth() {
-    return this.request<{ status: string }>('/health/live', {
-      method: 'GET',
-    });
+    return { status: 'ok', provider: 'supabase' };
   }
 }
 

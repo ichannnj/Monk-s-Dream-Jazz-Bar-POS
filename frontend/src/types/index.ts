@@ -1,3 +1,5 @@
+export * from './floor';
+
 export type UserRole =
   | 'admin'
   | 'waiter'
