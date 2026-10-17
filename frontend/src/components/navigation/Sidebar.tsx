@@ -122,7 +122,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Switch Staff User"
           >
-            <LogOut size={18} color="#b38d95" />
+            <LogOut size={20} color="#b38d95" />
           </Pressable>
         ) : null}
       </View>
@@ -132,7 +132,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
 const styles = StyleSheet.create({
   sidebarContainer: {
-    width: 80,
+    width: 84,
     backgroundColor: '#431621',
     borderRadius: 26,
     paddingVertical: 18,
@@ -150,8 +150,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   logoBadge: {
-    width: 48,
-    height: 48,
+    width: 50,
+    height: 50,
     borderRadius: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderWidth: 1,
@@ -161,8 +161,8 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   logoImage: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
   },
   navGroup: {
     width: '100%',
@@ -170,8 +170,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   navButton: {
-    width: 58,
-    paddingVertical: 10,
+    width: 62,
+    minHeight: 52,
+    paddingVertical: 8,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -193,15 +194,15 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -3,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: '#f43f5e',
     borderWidth: 1,
     borderColor: '#431621',
   },
   navLabel: {
-    fontSize: 10.5,
+    fontSize: 11.5,
     fontWeight: '600',
     color: '#d8b4bc',
     marginTop: 4,
@@ -217,8 +218,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   settingsBtn: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,
@@ -231,8 +232,8 @@ const styles = StyleSheet.create({
     borderColor: '#ffffff',
   },
   logoutBtn: {
-    width: 38,
-    height: 38,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',

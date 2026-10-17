@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Bike, Clock, CheckCircle2, UserCheck } from 'lucide-react-native';
+import { Bike, CheckCircle2, UserCheck } from 'lucide-react-native';
 import { OnlineDeliveryOrder } from '../../mockData';
 
 interface OnlineDeliveryCardProps {
@@ -30,57 +30,69 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
       accessibilityRole="button"
       accessibilityLabel={`Online delivery ${order.platform} ${order.platformOrderRef}`}
     >
-      {/* Top Header: Platform + Elapsed Timer */}
+      {/* 1. Top Row: Platform Order # & Rider + Status Badge */}
       <View style={styles.cardHeader}>
+        <View style={styles.codeCol}>
+          <View style={styles.platformBadgeRow}>
+            <Bike size={13} color={isGrab ? '#059669' : '#db2777'} strokeWidth={2.4} />
+            <Text
+              style={[
+                styles.platformCodeText,
+                { color: isGrab ? '#059669' : '#db2777' },
+              ]}
+            >
+              {isGrab ? 'Grab' : 'Panda'} #{order.platformOrderRef}
+            </Text>
+          </View>
+          <Text style={styles.customerNameText} numberOfLines={1}>
+            {order.customerName} · {order.riderName}
+          </Text>
+        </View>
+
         <View
           style={[
-            styles.platformBadge,
-            isGrab ? styles.badgeGrabBg : styles.badgePandaBg,
+            styles.statusBadge,
+            isReady ? styles.statusBadgeReady : styles.statusBadgePrep,
           ]}
         >
-          <Bike size={13} color="#ffffff" strokeWidth={2.3} />
-          <Text style={styles.platformBadgeText}>
-            {isGrab ? 'GrabFood' : 'Foodpanda'} #{order.platformOrderRef}
+          <View
+            style={[
+              styles.statusDot,
+              { backgroundColor: isReady ? '#16a34a' : '#d97706' },
+            ]}
+          />
+          <Text
+            style={[
+              styles.statusText,
+              { color: isReady ? '#15803d' : '#b45309' },
+            ]}
+          >
+            {isReady ? 'READY' : 'PREP'}
           </Text>
-        </View>
-
-        <View style={styles.timerRow}>
-          <Clock size={12} color="#6b7280" />
-          <Text style={styles.timerText}>{order.elapsedTime}</Text>
+          <Text
+            style={[
+              styles.timeText,
+              { color: isReady ? '#15803d' : '#b45309' },
+            ]}
+          >
+            · {order.elapsedTime}
+          </Text>
         </View>
       </View>
 
-      {/* Rider & Customer Row */}
-      <View style={styles.deliveryDetails}>
-        <Text style={styles.riderText} numberOfLines={1}>
-          🛵 {order.riderName}
+      {/* 2. Middle Row: Items Line + Amount & Paid Tag */}
+      <View style={styles.midRow}>
+        <Text style={styles.itemsSummaryText} numberOfLines={1}>
+          {order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
         </Text>
-        <Text style={styles.customerText} numberOfLines={1}>
-          Customer: {order.customerName}
-        </Text>
-      </View>
-
-      {/* Items Preview */}
-      <View style={styles.itemsBox}>
-        {order.items.slice(0, 2).map((item, idx) => (
-          <Text key={idx} style={styles.itemLine} numberOfLines={1}>
-            • {item.quantity}x {item.productName}
-          </Text>
-        ))}
-        {order.items.length > 2 ? (
-          <Text style={styles.moreItemsText}>
-            +{order.items.length - 2} more items...
-          </Text>
-        ) : null}
-      </View>
-
-      {/* Footer: Prepaid Tag & Hand-Off Action */}
-      <View style={styles.cardFooter}>
-        <View>
-          <Text style={styles.totalText}>${order.total.toFixed(2)}</Text>
-          <Text style={styles.prepaidTag}>✓ PAID ONLINE ({isGrab ? 'GRAB' : 'PANDA'})</Text>
+        <View style={styles.amountCol}>
+          <Text style={styles.amountText}>${order.total.toFixed(2)}</Text>
+          <Text style={styles.paidText}>PAID APP</Text>
         </View>
+      </View>
 
+      {/* 3. Bottom Row: Direct Action */}
+      <View style={styles.actionRow}>
         {isReady ? (
           <Pressable
             onPress={(e) => {
@@ -88,8 +100,10 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
               onHandToRider?.(order.id);
             }}
             style={styles.actionBtnHandOver}
+            accessibilityRole="button"
+            accessibilityLabel={`Hand over order ${order.platformOrderRef} to rider`}
           >
-            <UserCheck size={14} color="#ffffff" strokeWidth={2.2} />
+            <UserCheck size={16} color="#ffffff" strokeWidth={2.3} />
             <Text style={styles.actionBtnText}>Rider Pickup</Text>
           </Pressable>
         ) : (
@@ -99,8 +113,10 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
               onMarkReady?.(order.id);
             }}
             style={styles.actionBtnReady}
+            accessibilityRole="button"
+            accessibilityLabel={`Mark online order ${order.platformOrderRef} as ready`}
           >
-            <CheckCircle2 size={13} color="#92400e" strokeWidth={2.2} />
+            <CheckCircle2 size={16} color="#92400e" strokeWidth={2.3} />
             <Text style={styles.actionBtnReadyText}>Mark Ready</Text>
           </Pressable>
         )}
@@ -113,125 +129,129 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
-    padding: 14,
-    borderWidth: 1.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
+    borderWidth: 1,
+    padding: 16,
+    shadowColor: '#2b0f16',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
     shadowRadius: 8,
-    elevation: 3,
-    minHeight: 180,
+    elevation: 2,
     justifyContent: 'space-between',
+    minHeight: 156,
   },
   cardGrab: {
     borderColor: '#bbf7d0',
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#f6fdf8',
   },
   cardFoodpanda: {
     borderColor: '#fbcfe8',
     backgroundColor: '#fdf2f8',
   },
   cardPressed: {
-    transform: [{ scale: 0.98 }],
-    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
+    opacity: 0.95,
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  platformBadge: {
+  codeCol: {
+    flex: 1,
+    marginRight: 6,
+  },
+  platformBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
+    marginBottom: 3,
   },
-  badgeGrabBg: {
-    backgroundColor: '#059669',
-  },
-  badgePandaBg: {
-    backgroundColor: '#db2777',
-  },
-  platformBadgeText: {
-    color: '#ffffff',
-    fontSize: 12,
+  platformCodeText: {
+    fontSize: 14,
     fontWeight: '800',
   },
-  timerRow: {
+  customerNameText: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#111827',
+  },
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 11,
   },
-  timerText: {
+  statusBadgePrep: {
+    backgroundColor: '#fef7e6',
+  },
+  statusBadgeReady: {
+    backgroundColor: '#e8f9ee',
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  statusText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  deliveryDetails: {
-    marginBottom: 8,
-  },
-  riderText: {
-    fontSize: 13.5,
     fontWeight: '800',
-    color: '#1f2937',
-    marginBottom: 2,
+    letterSpacing: 0.4,
   },
-  customerText: {
-    fontSize: 11.5,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  itemsBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-    borderRadius: 10,
-    padding: 8,
-    marginBottom: 10,
-  },
-  itemLine: {
+  timeText: {
     fontSize: 12,
-    color: '#374151',
-    fontWeight: '500',
-    marginBottom: 2,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
-  moreItemsText: {
-    fontSize: 11,
-    color: '#9ca3af',
-    fontStyle: 'italic',
-  },
-  cardFooter: {
+  midRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 7,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
-    paddingTop: 8,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+    gap: 8,
   },
-  totalText: {
-    fontSize: 15,
+  itemsSummaryText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#4b5563',
+    fontWeight: '500',
+  },
+  amountCol: {
+    alignItems: 'flex-end',
+  },
+  amountText: {
+    fontSize: 17,
     fontWeight: '900',
-    color: '#1a1a1e',
+    color: '#111827',
+    fontVariant: ['tabular-nums'],
   },
-  prepaidTag: {
-    fontSize: 9,
+  paidText: {
+    fontSize: 11,
     fontWeight: '800',
     color: '#059669',
     marginTop: 1,
+  },
+  actionRow: {
+    paddingTop: 6,
   },
   actionBtnHandOver: {
     backgroundColor: '#1f2937',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
   },
   actionBtnText: {
     color: '#ffffff',
-    fontSize: 11.5,
+    fontSize: 13.5,
     fontWeight: '800',
   },
   actionBtnReady: {
@@ -240,14 +260,16 @@ const styles = StyleSheet.create({
     borderColor: '#fde68a',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: 10,
+    justifyContent: 'center',
+    gap: 5,
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
   },
   actionBtnReadyText: {
     color: '#92400e',
-    fontSize: 11.5,
-    fontWeight: '700',
+    fontSize: 13.5,
+    fontWeight: '800',
   },
 });

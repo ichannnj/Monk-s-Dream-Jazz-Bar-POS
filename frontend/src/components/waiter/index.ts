@@ -1,6 +1,7 @@
 export * from './WaiterCashierScreen';
 export * from './TableOverviewHeader';
-export * from './TableFilterBar';
+export { TableFilterBar } from './TableFilterBar';
+export * from './UnifiedCommandBar';
 export * from './TableCard';
 export * from './TakeoutQueueCard';
 export * from './OnlineDeliveryCard';

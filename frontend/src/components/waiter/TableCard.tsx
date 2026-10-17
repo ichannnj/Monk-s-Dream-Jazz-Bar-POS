@@ -1,13 +1,5 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import {
-  Users,
-  Bell,
-  ChefHat,
-  ConciergeBell,
-  Utensils,
-  Clock,
-} from 'lucide-react-native';
 import { TableItem } from '../../mockData';
 
 interface TableCardProps {
@@ -29,7 +21,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
     maxTabs,
   } = table;
 
-  // Status-specific badges & icons
+  // Status-specific badges & accents
   const getStatusBadge = () => {
     switch (status) {
       case 'ready':
@@ -37,53 +29,41 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
           label: 'READY',
           bg: '#e8f9ee',
           color: '#15803d',
-          Icon: Bell,
-          iconBg: '#dcfce7',
-          iconColor: '#15803d',
+          dotColor: '#16a34a',
         };
       case 'preparing':
         return {
-          label: 'PREPARING',
+          label: 'PREP',
           bg: '#fef7e6',
           color: '#b45309',
-          Icon: ChefHat,
-          iconBg: '#fef3c7',
-          iconColor: '#b45309',
+          dotColor: '#d97706',
         };
       case 'served':
         return {
-          label: 'FOOD SERVED',
+          label: 'SERVED',
           bg: '#fff1f2',
           color: '#be123c',
-          Icon: ConciergeBell,
-          iconBg: '#ffe4e6',
-          iconColor: '#be123c',
-          hasDot: true,
+          dotColor: '#e11d48',
         };
       case 'occupied':
         return {
           label: 'OCCUPIED',
-          bg: 'transparent',
-          color: '#1a1a1e',
-          Icon: Users,
-          iconBg: '#fceeed',
-          iconColor: '#832238',
+          bg: '#fdf2f4',
+          color: '#832238',
+          dotColor: '#832238',
         };
       case 'empty':
       default:
         return {
           label: 'EMPTY',
-          bg: 'transparent',
-          color: '#6b7280',
-          Icon: Utensils,
-          iconBg: '#f5f0ec',
-          iconColor: '#9ca3af',
+          bg: '#f3f4f6',
+          color: '#9ca3af',
+          dotColor: '#d1d5db',
         };
     }
   };
 
   const statusConfig = getStatusBadge();
-  const CategoryIcon = statusConfig.Icon;
 
   // Format amount with commas if >= 1000
   const formattedAmount =
@@ -130,49 +110,45 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
       accessibilityRole="button"
       accessibilityLabel={`Table ${code}, ${status}`}
     >
-      {/* 1. Top Status Banner */}
-      <View
-        style={[
-          styles.statusBar,
-          statusConfig.bg !== 'transparent' && { backgroundColor: statusConfig.bg },
-        ]}
-      >
-        <View style={styles.statusLeft}>
-          {statusConfig.hasDot ? <View style={styles.servedDot} /> : null}
-          <Text style={[styles.statusLabel, { color: statusConfig.color }]}>
-            {statusConfig.label}
-          </Text>
-        </View>
-
-        <View style={styles.timeWrapper}>
-          <Clock size={11} color="#6b7280" />
-          <Text style={styles.timeText}>{elapsedTime}</Text>
-        </View>
-      </View>
-
-      {/* 2. Main Row: Category Icon + Table Code & Seats */}
-      <View style={styles.mainInfoRow}>
-        <View style={[styles.iconCircle, { backgroundColor: statusConfig.iconBg }]}>
-          <CategoryIcon size={20} color={statusConfig.iconColor} strokeWidth={2} />
-        </View>
-
-        <View style={styles.tableTextCol}>
+      {/* 1. Top Row: Table Code & Seats + Status & Timer Badge */}
+      <View style={styles.cardHeader}>
+        <View style={styles.codeCol}>
           <Text style={styles.tableCodeText}>{code}</Text>
           <Text style={styles.seatsText}>
-            {guests > 0 ? `${guests} ${guests === 1 ? 'guest' : 'guests'} · ` : ''}
+            {guests > 0 ? `${guests}g · ` : ''}
             {seats} seats
           </Text>
         </View>
+
+        <View
+          style={[
+            styles.statusBadge,
+            statusConfig.bg !== 'transparent' && { backgroundColor: statusConfig.bg },
+          ]}
+        >
+          <View style={[styles.statusDot, { backgroundColor: statusConfig.dotColor }]} />
+          <Text style={[styles.statusText, { color: statusConfig.color }]}>
+            {statusConfig.label}
+          </Text>
+          {elapsedTime && status !== 'empty' ? (
+            <Text style={[styles.timeText, { color: statusConfig.color }]}>
+              · {elapsedTime}
+            </Text>
+          ) : null}
+        </View>
       </View>
 
-      {/* 3. Middle Check & Server Details */}
-      <View style={styles.checkRow}>
+      {/* 2. Middle Row: Server Avatar & Financial Balance */}
+      <View style={styles.midRow}>
         {assignedStaff ? (
-          <View style={styles.staffAvatar}>
-            <Text style={styles.staffAvatarText}>{assignedStaff.initials}</Text>
+          <View style={styles.staffWrapper}>
+            <View style={styles.staffAvatar}>
+              <Text style={styles.staffAvatarText}>{assignedStaff.initials}</Text>
+            </View>
+            <Text style={styles.staffNameText}>{assignedStaff.name.split(' ')[0]}</Text>
           </View>
         ) : (
-          <View style={styles.staffAvatarPlaceholder} />
+          <Text style={styles.unassignedText}>Unassigned</Text>
         )}
 
         <View style={styles.amountWrapper}>
@@ -181,12 +157,12 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
           ) : hasOpenCheck ? (
             <Text style={styles.openCheckText}>Open check</Text>
           ) : (
-            <Text style={styles.noCheckText}>No open check</Text>
+            <Text style={styles.noCheckText}>Available</Text>
           )}
         </View>
       </View>
 
-      {/* 4. Bottom Tabs Row */}
+      {/* 3. Bottom Row: Tactile Tab Position Circles */}
       <View style={styles.tabsRow}>
         <View style={styles.tabPillsContainer}>
           {slotNumbers.map((tabNum) => {
@@ -211,18 +187,6 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
             );
           })}
         </View>
-
-        {activeCount > 0 ? (
-          <View style={styles.tabCountBadge}>
-            <Text style={styles.tabCountText}>
-              {activeCount} {activeCount === 1 ? 'tab' : 'tabs'}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.tabCountBadgeEmpty}>
-            <Text style={styles.tabCountTextEmpty}>Available</Text>
-          </View>
-        )}
       </View>
     </Pressable>
   );
@@ -233,151 +197,140 @@ TableCard.displayName = 'TableCard';
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: '#eee8e3',
     padding: 16,
     shadowColor: '#2b0f16',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
     elevation: 2,
     justifyContent: 'space-between',
-    minHeight: 200,
+    minHeight: 156,
   },
   cardPressed: {
     transform: [{ scale: 0.985 }],
     opacity: 0.95,
   },
-  statusBar: {
+  cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 12,
     marginBottom: 10,
   },
-  statusLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  servedDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10b981',
-  },
-  statusLabel: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-  },
-  timeWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  timeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  mainInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tableTextCol: {
+  codeCol: {
     justifyContent: 'center',
   },
   tableCodeText: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '900',
     color: '#111827',
-    lineHeight: 28,
+    lineHeight: 30,
   },
   seatsText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6b7280',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4b5563',
     marginTop: 2,
   },
-  checkRow: {
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 11,
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  timeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  midRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderTopWidth: 1,
     borderTopColor: '#f7f3f0',
-    marginBottom: 10,
+    marginBottom: 8,
+  },
+  staffWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
   },
   staffAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     backgroundColor: '#fceeed',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#fad4db',
   },
-  staffAvatarPlaceholder: {
-    width: 24,
-    height: 24,
-  },
   staffAvatarText: {
-    fontSize: 10,
+    fontSize: 10.5,
     fontWeight: '800',
     color: '#832238',
+  },
+  staffNameText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  unassignedText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#9ca3af',
   },
   amountWrapper: {
     alignItems: 'flex-end',
   },
   amountText: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '900',
     color: '#111827',
     letterSpacing: -0.3,
+    fontVariant: ['tabular-nums'],
   },
   openCheckText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#111827',
+    color: '#832238',
   },
   noCheckText: {
-    fontSize: 12,
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '600',
     color: '#9ca3af',
   },
   tabsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#f7f3f0',
-    marginTop: 4,
+    paddingTop: 4,
   },
   tabPillsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    flexShrink: 1,
+    gap: 5,
+    flexWrap: 'wrap',
   },
   tabButton: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -391,52 +344,17 @@ const styles = StyleSheet.create({
   },
   tabButtonInactive: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  tabButtonEmpty: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e5e7eb',
   },
   tabButtonText: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '800',
   },
   tabTextActive: {
     color: '#ffffff',
   },
   tabTextInactive: {
-    color: '#9ca3af',
-  },
-  tabTextMuted: {
-    color: '#9ca3af',
-  },
-  tabCountBadge: {
-    backgroundColor: '#fceeed',
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#fad4db',
-  },
-  tabCountText: {
-    fontSize: 10.5,
-    fontWeight: '800',
-    color: '#832238',
-    letterSpacing: 0.2,
-  },
-  tabCountBadgeEmpty: {
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 7,
-    paddingVertical: 2.5,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  tabCountTextEmpty: {
-    fontSize: 10.5,
-    fontWeight: '700',
     color: '#9ca3af',
   },
 });

@@ -63,7 +63,12 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                 Start a new named guest tab for dine-in seating
               </Text>
             </View>
-            <Pressable onPress={onClose} style={styles.closeBtn}>
+            <Pressable
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close open table tab"
+            >
               <X size={20} color="#6b7280" />
             </Pressable>
           </View>
@@ -212,18 +217,21 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   closeBtn: {
-    padding: 6,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sectionLabel: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#374151',
     marginBottom: 8,
   },
   tableScroll: {
-    maxHeight: 70,
+    maxHeight: 74,
     marginBottom: 16,
   },
   tableScrollContent: {
@@ -235,7 +243,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 14,
     alignItems: 'center',
-    minWidth: 70,
+    justifyContent: 'center',
+    minWidth: 76,
+    minHeight: 48,
     borderWidth: 1.5,
   },
   tableChipEmpty: {
@@ -251,7 +261,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#641b2a',
   },
   tableChipText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: '#1f2937',
   },
@@ -259,7 +269,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   tableChipSub: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     color: '#6b7280',
     marginTop: 2,
@@ -274,7 +284,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 15,
+    minHeight: 48,
+    fontSize: 16,
     color: '#111827',
     fontWeight: '600',
   },
@@ -287,6 +298,7 @@ const styles = StyleSheet.create({
   },
   guestCountBtn: {
     flex: 1,
+    minHeight: 48,
     paddingVertical: 10,
     borderRadius: 12,
     backgroundColor: '#f3f4f6',
@@ -297,9 +309,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#641b2a',
   },
   guestCountText: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '800',
     color: '#4b5563',
+    fontVariant: ['tabular-nums'],
   },
   guestCountTextActive: {
     color: '#ffffff',
@@ -310,20 +323,22 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    paddingVertical: 14,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#4b5563',
   },
   confirmBtn: {
     flex: 2,
-    paddingVertical: 14,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#641b2a',
     flexDirection: 'row',
@@ -335,7 +350,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   confirmBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: '#ffffff',
   },

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { ShoppingBag, Clock, CheckCircle2, PackageCheck } from 'lucide-react-native';
+import { ShoppingBag, CheckCircle2, PackageCheck } from 'lucide-react-native';
 import { TakeoutOrder } from '../../mockData';
 
 interface TakeoutQueueCardProps {
@@ -29,57 +29,69 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
       accessibilityRole="button"
       accessibilityLabel={`Takeout ticket ${order.ticketNumber} for ${order.customerName}`}
     >
-      {/* Top Header */}
+      {/* 1. Top Row: Ticket Code & Customer + Status Badge */}
       <View style={styles.cardHeader}>
-        <View style={styles.ticketBadge}>
-          <ShoppingBag size={13} color="#ffffff" strokeWidth={2.3} />
-          <Text style={styles.ticketText}>Takeout #{order.ticketNumber}</Text>
-        </View>
-
-        <View style={styles.timerRow}>
-          <Clock size={12} color="#6b7280" />
-          <Text style={styles.timerText}>{order.elapsedTime}</Text>
-        </View>
-      </View>
-
-      {/* Guest Name & Packaging */}
-      <View style={styles.guestSection}>
-        <Text style={styles.guestNameText} numberOfLines={1}>
-          {order.customerName}
-        </Text>
-        <View style={styles.packagingBadge}>
-          <Text style={styles.packagingBadgeText}>To-Go Cups & Boxes</Text>
-        </View>
-      </View>
-
-      {/* Items Preview */}
-      <View style={styles.itemsBox}>
-        {order.items.slice(0, 2).map((item, idx) => (
-          <Text key={idx} style={styles.itemLine} numberOfLines={1}>
-            • {item.quantity}x {item.productName}
+        <View style={styles.codeCol}>
+          <View style={styles.ticketBadgeRow}>
+            <ShoppingBag size={13} color="#15803d" strokeWidth={2.4} />
+            <Text style={styles.ticketCodeText}>Takeout #{order.ticketNumber}</Text>
+          </View>
+          <Text style={styles.customerNameText} numberOfLines={1}>
+            {order.customerName}
           </Text>
-        ))}
-        {order.items.length > 2 ? (
-          <Text style={styles.moreItemsText}>
-            +{order.items.length - 2} more items...
-          </Text>
-        ) : null}
-      </View>
+        </View>
 
-      {/* Footer: Price, Prepaid Flag & Quick Action */}
-      <View style={styles.cardFooter}>
-        <View>
-          <Text style={styles.totalText}>${order.total.toFixed(2)}</Text>
+        <View
+          style={[
+            styles.statusBadge,
+            isReady ? styles.statusBadgeReady : styles.statusBadgePrep,
+          ]}
+        >
+          <View
+            style={[
+              styles.statusDot,
+              { backgroundColor: isReady ? '#16a34a' : '#d97706' },
+            ]}
+          />
           <Text
             style={[
-              styles.prepaidText,
-              order.isPrepaid ? styles.prepaidGreen : styles.prepaidAmber,
+              styles.statusText,
+              { color: isReady ? '#15803d' : '#b45309' },
             ]}
           >
-            {order.isPrepaid ? '● PAID AT COUNTER' : '○ PAY ON PICKUP'}
+            {isReady ? 'READY' : 'PREP'}
+          </Text>
+          <Text
+            style={[
+              styles.timeText,
+              { color: isReady ? '#15803d' : '#b45309' },
+            ]}
+          >
+            · {order.elapsedTime}
           </Text>
         </View>
+      </View>
 
+      {/* 2. Middle Row: Items Line + Amount & Payment Flag */}
+      <View style={styles.midRow}>
+        <Text style={styles.itemsSummaryText} numberOfLines={1}>
+          {order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
+        </Text>
+        <View style={styles.amountCol}>
+          <Text style={styles.amountText}>${order.total.toFixed(2)}</Text>
+          <Text
+            style={[
+              styles.paidText,
+              { color: order.isPrepaid ? '#15803d' : '#b45309' },
+            ]}
+          >
+            {order.isPrepaid ? 'PAID' : 'DUE'}
+          </Text>
+        </View>
+      </View>
+
+      {/* 3. Bottom Row: Direct Action */}
+      <View style={styles.actionRow}>
         {isReady ? (
           <Pressable
             onPress={(e) => {
@@ -87,8 +99,10 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
               onMarkCollected?.(order.id);
             }}
             style={styles.actionBtnCollect}
+            accessibilityRole="button"
+            accessibilityLabel={`Mark order ${order.ticketNumber} as collected`}
           >
-            <PackageCheck size={14} color="#ffffff" strokeWidth={2.2} />
+            <PackageCheck size={16} color="#ffffff" strokeWidth={2.3} />
             <Text style={styles.actionBtnText}>Collected</Text>
           </Pressable>
         ) : (
@@ -98,8 +112,10 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
               onMarkReady?.(order.id);
             }}
             style={styles.actionBtnReady}
+            accessibilityRole="button"
+            accessibilityLabel={`Mark order ${order.ticketNumber} as ready`}
           >
-            <CheckCircle2 size={13} color="#92400e" strokeWidth={2.2} />
+            <CheckCircle2 size={16} color="#92400e" strokeWidth={2.3} />
             <Text style={styles.actionBtnReadyText}>Mark Ready</Text>
           </Pressable>
         )}
@@ -112,131 +128,129 @@ const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
-    padding: 14,
-    borderWidth: 1.5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
+    borderWidth: 1,
+    padding: 16,
+    shadowColor: '#2b0f16',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
     shadowRadius: 8,
-    elevation: 3,
-    minHeight: 180,
+    elevation: 2,
     justifyContent: 'space-between',
+    minHeight: 156,
   },
   cardPreparing: {
-    borderColor: '#fef08a',
-    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+    backgroundColor: '#fffdfa',
   },
   cardReady: {
-    borderColor: '#86efac',
-    backgroundColor: '#f0fdf4',
+    borderColor: '#bbf7d0',
+    backgroundColor: '#f6fdf8',
   },
   cardPressed: {
-    transform: [{ scale: 0.98 }],
-    opacity: 0.9,
+    transform: [{ scale: 0.985 }],
+    opacity: 0.95,
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  ticketBadge: {
+  codeCol: {
+    flex: 1,
+    marginRight: 6,
+  },
+  ticketBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#15803d',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
+    marginBottom: 3,
   },
-  ticketText: {
-    color: '#ffffff',
-    fontSize: 12,
+  ticketCodeText: {
+    fontSize: 14,
     fontWeight: '800',
+    color: '#15803d',
   },
-  timerRow: {
+  customerNameText: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#111827',
+  },
+  statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 11,
   },
-  timerText: {
+  statusBadgePrep: {
+    backgroundColor: '#fef7e6',
+  },
+  statusBadgeReady: {
+    backgroundColor: '#e8f9ee',
+  },
+  statusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  statusText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  guestSection: {
-    marginBottom: 8,
-  },
-  guestNameText: {
-    fontSize: 15,
     fontWeight: '800',
-    color: '#1a1a1e',
-    marginBottom: 3,
+    letterSpacing: 0.4,
   },
-  packagingBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(21, 128, 61, 0.1)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  packagingBadgeText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: '#15803d',
-  },
-  itemsBox: {
-    backgroundColor: 'rgba(255, 255, 255, 0.7)',
-    borderRadius: 10,
-    padding: 8,
-    marginBottom: 10,
-  },
-  itemLine: {
+  timeText: {
     fontSize: 12,
-    color: '#374151',
-    fontWeight: '500',
-    marginBottom: 2,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
-  moreItemsText: {
-    fontSize: 11,
-    color: '#9ca3af',
-    fontStyle: 'italic',
-  },
-  cardFooter: {
+  midRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 7,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0, 0, 0, 0.05)',
-    paddingTop: 8,
+    borderTopColor: 'rgba(0,0,0,0.05)',
+    gap: 8,
   },
-  totalText: {
-    fontSize: 15,
+  itemsSummaryText: {
+    flex: 1,
+    fontSize: 13,
+    color: '#4b5563',
+    fontWeight: '500',
+  },
+  amountCol: {
+    alignItems: 'flex-end',
+  },
+  amountText: {
+    fontSize: 17,
     fontWeight: '900',
-    color: '#1a1a1e',
+    color: '#111827',
+    fontVariant: ['tabular-nums'],
   },
-  prepaidText: {
-    fontSize: 9.5,
+  paidText: {
+    fontSize: 11,
     fontWeight: '800',
+    marginTop: 1,
   },
-  prepaidGreen: {
-    color: '#16a34a',
-  },
-  prepaidAmber: {
-    color: '#d97706',
+  actionRow: {
+    paddingTop: 6,
   },
   actionBtnCollect: {
     backgroundColor: '#16a34a',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
   },
   actionBtnText: {
     color: '#ffffff',
-    fontSize: 11.5,
+    fontSize: 13.5,
     fontWeight: '800',
   },
   actionBtnReady: {
@@ -245,14 +259,16 @@ const styles = StyleSheet.create({
     borderColor: '#fde68a',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-    borderRadius: 10,
+    justifyContent: 'center',
+    gap: 5,
+    minHeight: 44,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 12,
   },
   actionBtnReadyText: {
     color: '#92400e',
-    fontSize: 11.5,
-    fontWeight: '700',
+    fontSize: 13.5,
+    fontWeight: '800',
   },
 });

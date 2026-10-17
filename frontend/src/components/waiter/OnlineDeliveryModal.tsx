@@ -67,7 +67,12 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
               </View>
             </View>
 
-            <Pressable onPress={onClose} style={styles.closeBtn}>
+            <Pressable
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close online delivery intake"
+            >
               <X size={20} color="#6b7280" />
             </Pressable>
           </View>
@@ -225,22 +230,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#db2777',
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: '#1a1a1e',
   },
   subtitle: {
-    fontSize: 12.5,
+    fontSize: 13.5,
     color: '#6b7280',
     marginTop: 2,
   },
   closeBtn: {
-    padding: 6,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   label: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#374151',
     marginBottom: 8,
@@ -252,6 +260,7 @@ const styles = StyleSheet.create({
   },
   platformOption: {
     flex: 1,
+    minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#f3f4f6',
@@ -269,7 +278,7 @@ const styles = StyleSheet.create({
     borderColor: '#db2777',
   },
   platformOptionText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: '#4b5563',
   },
@@ -290,7 +299,8 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 15,
+    minHeight: 48,
+    fontSize: 16,
     color: '#111827',
     fontWeight: '600',
   },
@@ -300,11 +310,11 @@ const styles = StyleSheet.create({
     gap: 8,
     backgroundColor: '#ecfdf5',
     borderRadius: 12,
-    padding: 12,
+    padding: 14,
     marginBottom: 22,
   },
   prepaidBannerText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
     color: '#065f46',
     flex: 1,
@@ -315,20 +325,22 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    paddingVertical: 14,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#4b5563',
   },
   proceedBtn: {
     flex: 2,
-    paddingVertical: 14,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -342,7 +354,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#db2777',
   },
   proceedBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: '#ffffff',
   },

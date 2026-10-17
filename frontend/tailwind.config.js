@@ -59,25 +59,28 @@ module.exports = {
         mono: ['JetBrains Mono', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       fontSize: {
-        'pos-2xs': ['11px', { lineHeight: '15px', letterSpacing: '0.02em' }],
-        'pos-xs': ['13px', { lineHeight: '18px', letterSpacing: '0.01em' }],
-        'pos-sm': ['14px', { lineHeight: '20px', letterSpacing: '0.005em' }],
-        'pos-base': ['16px', { lineHeight: '24px', letterSpacing: '0em' }],
-        'pos-md': ['18px', { lineHeight: '26px', letterSpacing: '-0.01em' }],
-        'pos-lg': ['20px', { lineHeight: '28px', letterSpacing: '-0.015em' }],
-        'pos-xl': ['24px', { lineHeight: '32px', letterSpacing: '-0.02em' }],
-        'pos-2xl': ['30px', { lineHeight: '38px', letterSpacing: '-0.025em' }],
-        'pos-3xl': ['38px', { lineHeight: '46px', letterSpacing: '-0.03em' }],
-        'brand-hero': ['48px', { lineHeight: '52px', letterSpacing: '0.01em' }],
-        'brand-title': ['22px', { lineHeight: '28px', letterSpacing: '0.02em' }],
+        'pos-xs': ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0.01em' }], // 14px
+        'pos-sm': ['0.9375rem', { lineHeight: '1.375rem', letterSpacing: '0.005em' }], // 15px
+        'pos-base': ['1rem', { lineHeight: '1.5rem', letterSpacing: '0em' }], // 16px (1rem)
+        'pos-md': ['1.125rem', { lineHeight: '1.625rem', letterSpacing: '-0.01em' }], // 18px
+        'pos-lg': ['1.25rem', { lineHeight: '1.75rem', letterSpacing: '-0.015em' }], // 20px
+        'pos-xl': ['1.5rem', { lineHeight: '2rem', letterSpacing: '-0.02em' }], // 24px
+        'pos-2xl': ['1.75rem', { lineHeight: '2.25rem', letterSpacing: '-0.025em' }], // 28px
+        'pos-3xl': ['2.25rem', { lineHeight: '2.75rem', letterSpacing: '-0.03em' }], // 36px
+        'brand-hero': ['3rem', { lineHeight: '3.25rem', letterSpacing: '0.01em' }], // 48px
+        'brand-title': ['1.375rem', { lineHeight: '1.75rem', letterSpacing: '0.02em' }], // 22px
       },
       minHeight: {
-        touch: '48px',
-        'touch-lg': '54px',
+        'touch-sm': '40px',
+        touch: '44px',
+        'touch-md': '48px',
+        'touch-lg': '56px',
       },
       minWidth: {
-        touch: '48px',
-        'touch-lg': '54px',
+        'touch-sm': '40px',
+        touch: '44px',
+        'touch-md': '48px',
+        'touch-lg': '56px',
       }
     },
   },

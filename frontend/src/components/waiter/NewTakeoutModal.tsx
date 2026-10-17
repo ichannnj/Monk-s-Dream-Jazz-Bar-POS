@@ -53,7 +53,12 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
               </View>
             </View>
 
-            <Pressable onPress={onClose} style={styles.closeBtn}>
+            <Pressable
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close takeout modal"
+            >
               <X size={20} color="#6b7280" />
             </Pressable>
           </View>
@@ -157,12 +162,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
     color: '#1a1a1e',
   },
   ticketSub: {
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#6b7280',
     marginTop: 2,
   },
@@ -171,15 +176,18 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   closeBtn: {
-    padding: 6,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   formGroup: {
     marginBottom: 16,
   },
   label: {
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#374151',
     marginBottom: 8,
@@ -191,12 +199,14 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 15,
+    minHeight: 48,
+    fontSize: 16,
     color: '#111827',
     fontWeight: '600',
   },
   textArea: {
-    minHeight: 65,
+    minHeight: 70,
+    fontSize: 15,
     textAlignVertical: 'top',
   },
   toggleRow: {
@@ -207,18 +217,19 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 14,
     marginBottom: 22,
+    minHeight: 52,
   },
   toggleInfo: {
     flex: 1,
     marginRight: 12,
   },
   toggleTitle: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '800',
     color: '#1a1a1e',
   },
   toggleSub: {
-    fontSize: 11.5,
+    fontSize: 12,
     color: '#6b7280',
     marginTop: 2,
   },
@@ -228,20 +239,22 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    paddingVertical: 14,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#4b5563',
   },
   proceedBtn: {
     flex: 2,
-    paddingVertical: 14,
+    minHeight: 48,
+    paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#15803d',
     flexDirection: 'row',
@@ -250,7 +263,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   proceedBtnText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: '#ffffff',
   },

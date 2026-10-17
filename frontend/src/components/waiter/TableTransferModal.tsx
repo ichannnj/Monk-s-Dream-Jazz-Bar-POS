@@ -101,7 +101,12 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
               </View>
             </View>
 
-            <Pressable onPress={onClose} style={styles.closeBtn}>
+            <Pressable
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close table transfer"
+            >
               <X size={20} color="#6b7280" />
             </Pressable>
           </View>
@@ -419,19 +424,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '800',
     color: '#111827',
   },
   headerSubtitle: {
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#6b7280',
     marginTop: 2,
   },
   closeBtn: {
-    padding: 6,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   bodyScroll: {
     maxHeight: 520,
@@ -440,7 +448,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   sectionLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: '#4b5563',
     marginBottom: 8,
@@ -452,11 +460,13 @@ const styles = StyleSheet.create({
   },
   modeBtn: {
     flex: 1,
-    paddingVertical: 11,
-    paddingHorizontal: 12,
+    minHeight: 48,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
     borderRadius: 12,
     backgroundColor: '#f5efe9',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 1.5,
     borderColor: '#e8e2dc',
   },
@@ -465,7 +475,7 @@ const styles = StyleSheet.create({
     borderColor: '#641b2a',
   },
   modeBtnText: {
-    fontSize: 12.5,
+    fontSize: 14,
     fontWeight: '700',
     color: '#374151',
   },
@@ -544,18 +554,21 @@ const styles = StyleSheet.create({
   },
   reasonChip: {
     backgroundColor: '#f3f4f6',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minHeight: 44,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#e5e7eb',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   reasonChipSelected: {
     backgroundColor: '#641b2a',
     borderColor: '#641b2a',
   },
   reasonChipText: {
-    fontSize: 12,
+    fontSize: 13.5,
     fontWeight: '600',
     color: '#4b5563',
   },
@@ -571,22 +584,23 @@ const styles = StyleSheet.create({
   },
   areaFilterRow: {
     flexDirection: 'row',
-    gap: 4,
+    gap: 6,
   },
   areaPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    minHeight: 38,
+    borderRadius: 9,
     backgroundColor: '#f3f4f6',
   },
   areaPillActive: {
     backgroundColor: '#641b2a',
   },
   areaPillText: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     color: '#6b7280',
   },
@@ -600,6 +614,7 @@ const styles = StyleSheet.create({
   },
   targetCard: {
     width: '31%',
+    minHeight: 64,
     paddingVertical: 12,
     borderRadius: 14,
     alignItems: 'center',
@@ -619,7 +634,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff1f2',
   },
   targetCode: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
     color: '#1f2937',
   },
@@ -627,7 +642,7 @@ const styles = StyleSheet.create({
     color: '#641b2a',
   },
   targetStatus: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: '#6b7280',
     marginTop: 2,
@@ -646,7 +661,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   targetSummaryText: {
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#4b5563',
   },
   targetSummaryBold: {
@@ -654,7 +669,7 @@ const styles = StyleSheet.create({
     color: '#641b2a',
   },
   targetSummaryTextMuted: {
-    fontSize: 12,
+    fontSize: 12.5,
     color: '#9ca3af',
     fontStyle: 'italic',
   },
@@ -663,21 +678,23 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   cancelBtn: {
+    minHeight: 48,
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 18,
     borderRadius: 12,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtnText: {
-    fontSize: 13.5,
+    fontSize: 14.5,
     fontWeight: '700',
     color: '#4b5563',
   },
   confirmBtn: {
+    minHeight: 48,
     paddingVertical: 12,
-    paddingHorizontal: 18,
+    paddingHorizontal: 22,
     borderRadius: 12,
     backgroundColor: '#641b2a',
     flexDirection: 'row',
@@ -688,7 +705,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   confirmBtnText: {
-    fontSize: 13.5,
+    fontSize: 14.5,
     fontWeight: '800',
     color: '#ffffff',
   },

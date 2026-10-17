@@ -8,9 +8,8 @@ import {
   UtensilsCrossed,
   Wine,
   ChefHat,
-  ShoppingBag,
 } from 'lucide-react-native';
-import { TableItem, CustomerTab } from '../../mockData';
+import { TableItem } from '../../mockData';
 
 interface TableActionModalProps {
   visible: boolean;
@@ -58,7 +57,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.modalCard}>
-          {/* Header */}
+          {/* 1. Header */}
           <View style={styles.modalHeader}>
             <View style={styles.headerLeft}>
               <View style={styles.tableCodeBadge}>
@@ -66,24 +65,28 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
               </View>
               <View>
                 <Text style={styles.headerTitle}>
-                  Table {table.code} • {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
+                  Table {table.code} · {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
                 </Text>
                 <Text style={styles.headerSubtitle}>
                   {table.guests > 0 ? `${table.guests} Guests · ` : ''}
-                  {table.seats} Seats · Elapsed: {table.elapsedTime}
+                  {table.seats} Seats · {table.assignedStaff ? table.assignedStaff.name : 'Unassigned'}
                 </Text>
               </View>
             </View>
 
-            <Pressable onPress={onClose} style={styles.closeBtn}>
+            <Pressable
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close table actions"
+            >
               <X size={20} color="#6b7280" />
             </Pressable>
           </View>
 
-          {/* Tab Selector if multiple tabs */}
+          {/* 2. Tab Selector */}
           {table.tabs && table.tabs.length > 0 ? (
             <View style={styles.tabSelectorRow}>
-              <Text style={styles.selectorLabel}>Active Customer Tabs:</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -116,34 +119,18 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
             </View>
           ) : null}
 
-          {/* Current Tab Details */}
+          {/* 3. Items on Tab Section */}
           <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
-            <View style={styles.summaryCard}>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Guest Name:</Text>
-                <Text style={styles.guestHighlight}>
-                  {currentTab?.guestName || 'Table Guest'}
+            <View style={styles.itemsPreviewBox}>
+              <View style={styles.itemsHeaderRow}>
+                <Text style={styles.itemsPreviewTitle}>
+                  Items ({currentTab?.items.length || 0}) · {currentTab?.guestName || 'Guest Tab'}
                 </Text>
+                <Text style={styles.itemsHeaderTotal}>${tabTotal.toFixed(2)}</Text>
               </View>
 
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Tab Subtotal:</Text>
-                <Text style={styles.summaryAmount}>${tabTotal.toFixed(2)}</Text>
-              </View>
-
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Server in Charge:</Text>
-                <Text style={styles.summaryValue}>
-                  {table.assignedStaff ? table.assignedStaff.name : 'Jess Santos'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Active Items on this tab */}
-            {currentTab && currentTab.items.length > 0 ? (
-              <View style={styles.itemsPreviewBox}>
-                <Text style={styles.itemsPreviewTitle}>Items on Tab:</Text>
-                {currentTab.items.map((item, idx) => (
+              {currentTab && currentTab.items.length > 0 ? (
+                currentTab.items.map((item, idx) => (
                   <View key={idx} style={styles.itemRow}>
                     <View style={styles.itemRowLeft}>
                       {item.stationTarget === 'bar' ? (
@@ -159,84 +146,65 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                       ${(item.unitPrice * item.quantity).toFixed(2)}
                     </Text>
                   </View>
-                ))}
+                ))
+              ) : (
+                <Text style={styles.emptyItemsText}>No items added yet to this tab.</Text>
+              )}
+            </View>
+
+            {/* 4. Streamlined Actions */}
+            <View style={styles.actionsContainer}>
+              {/* Primary Actions */}
+              <View style={styles.primaryActionsRow}>
+                <Pressable
+                  onPress={() => {
+                    onClose();
+                    onOpenOrderEntry(table, selectedTabIndex);
+                  }}
+                  style={[styles.primaryActionBtn, styles.btnOrder]}
+                >
+                  <UtensilsCrossed size={16} color="#ffffff" strokeWidth={2.3} />
+                  <Text style={styles.primaryActionBtnText}>+ Order Items</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    onClose();
+                    onCheckout(table, selectedTabIndex);
+                  }}
+                  style={[styles.primaryActionBtn, styles.btnSettle]}
+                >
+                  <CreditCard size={16} color="#ffffff" strokeWidth={2.3} />
+                  <Text style={styles.primaryActionBtnText}>
+                    Settle · ${tabTotal.toFixed(2)}
+                  </Text>
+                </Pressable>
               </View>
-            ) : null}
 
-            {/* Quick Actions List according to REQUIREMENTS.md */}
-            <Text style={styles.sectionHeader}>Floor Actions</Text>
-            <View style={styles.actionsGrid}>
-              {/* Order / Add Items */}
-              <Pressable
-                onPress={() => {
-                  onClose();
-                  onOpenOrderEntry(table, selectedTabIndex);
-                }}
-                style={[styles.actionBtn, styles.actionBtnOrder]}
-              >
-                <UtensilsCrossed size={18} color="#ffffff" />
-                <View style={styles.actionBtnTextCol}>
-                  <Text style={[styles.actionBtnTitle, { color: '#ffffff' }]}>
-                    + Order Menu Items
-                  </Text>
-                  <Text style={[styles.actionBtnSub, { color: '#fceeed' }]}>
-                    Open catalog, modifiers & send to KDS
-                  </Text>
-                </View>
-              </Pressable>
+              {/* Secondary Actions */}
+              <View style={styles.secondaryActionsRow}>
+                <Pressable
+                  onPress={() => {
+                    onClose();
+                    onTransferTable(table);
+                  }}
+                  style={styles.secondaryActionBtn}
+                >
+                  <Repeat size={14} color="#641b2a" strokeWidth={2.2} />
+                  <Text style={styles.secondaryActionBtnText}>Transfer Tab/Table</Text>
+                </Pressable>
 
-              {/* Checkout & Settle Tab */}
-              <Pressable
-                onPress={() => {
-                  onClose();
-                  onCheckout(table, selectedTabIndex);
-                }}
-                style={[styles.actionBtn, styles.actionBtnSettle]}
-              >
-                <CreditCard size={18} color="#ffffff" />
-                <View style={styles.actionBtnTextCol}>
-                  <Text style={[styles.actionBtnTitle, { color: '#ffffff' }]}>
-                    Checkout & Print Receipt
-                  </Text>
-                  <Text style={[styles.actionBtnSub, { color: '#f7d7dc' }]}>
-                    Cash, Card, QR Wallet settlement
-                  </Text>
-                </View>
-              </Pressable>
-
-              {/* Transfer Table / Tab */}
-              <Pressable
-                onPress={() => {
-                  onClose();
-                  onTransferTable(table);
-                }}
-                style={styles.actionBtn}
-              >
-                <Repeat size={18} color="#641b2a" />
-                <View style={styles.actionBtnTextCol}>
-                  <Text style={styles.actionBtnTitle}>Transfer Table / Tab</Text>
-                  <Text style={styles.actionBtnSub}>
-                    Move full table or tab to bar rail
-                  </Text>
-                </View>
-              </Pressable>
-
-              {/* Open Split Tab */}
-              <Pressable
-                onPress={() => {
-                  onClose();
-                  onOpenNewTab(table);
-                }}
-                style={styles.actionBtn}
-              >
-                <PlusCircle size={18} color="#15803d" />
-                <View style={styles.actionBtnTextCol}>
-                  <Text style={styles.actionBtnTitle}>Open Split Tab</Text>
-                  <Text style={styles.actionBtnSub}>
-                    Add another named bill for shared table
-                  </Text>
-                </View>
-              </Pressable>
+                <Pressable
+                  onPress={() => {
+                    onClose();
+                    onOpenNewTab(table);
+                  }}
+                  style={styles.secondaryActionBtn}
+                >
+                  <PlusCircle size={14} color="#15803d" strokeWidth={2.2} />
+                  <Text style={styles.secondaryActionBtnTextGreen}>+ Open Split Tab</Text>
+                </Pressable>
+              </View>
             </View>
           </ScrollView>
         </View>
@@ -257,12 +225,12 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 540,
     backgroundColor: '#ffffff',
-    borderRadius: 28,
-    padding: 24,
+    borderRadius: 24,
+    padding: 22,
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.22,
+    shadowRadius: 20,
     elevation: 8,
     maxHeight: '90%',
   },
@@ -270,7 +238,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -291,168 +259,169 @@ const styles = StyleSheet.create({
     fontWeight: '900',
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '800',
     color: '#111827',
   },
   headerSubtitle: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6b7280',
     marginTop: 2,
   },
   closeBtn: {
-    padding: 6,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   tabSelectorRow: {
     marginBottom: 14,
   },
-  selectorLabel: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#4b5563',
-    marginBottom: 8,
-    textTransform: 'uppercase',
-  },
   tabsButtonGroup: {
     flexDirection: 'row',
     gap: 8,
-    paddingBottom: 4,
   },
   tabSelectBtn: {
-    paddingVertical: 7,
+    minHeight: 44,
+    paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 12,
     backgroundColor: '#f3f4f6',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#e5e7eb',
+    justifyContent: 'center',
   },
   tabSelectBtnActive: {
     backgroundColor: '#641b2a',
     borderColor: '#641b2a',
   },
   tabSelectBtnText: {
-    fontSize: 12,
+    fontSize: 13.5,
     fontWeight: '700',
     color: '#374151',
+    fontVariant: ['tabular-nums'],
   },
   tabSelectBtnTextActive: {
     color: '#ffffff',
   },
   contentScroll: {
-    maxHeight: 460,
-  },
-  summaryCard: {
-    backgroundColor: '#fcfaf9',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#f0e6e4',
-    marginBottom: 14,
-    gap: 10,
-  },
-  summaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  summaryLabel: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '600',
-  },
-  guestHighlight: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#111827',
-  },
-  summaryValue: {
-    fontSize: 13,
-    color: '#1f2937',
-    fontWeight: '700',
-  },
-  summaryAmount: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: '#641b2a',
+    maxHeight: 400,
   },
   itemsPreviewBox: {
     backgroundColor: '#f9fafb',
-    borderRadius: 14,
-    padding: 12,
-    marginBottom: 14,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#eee8e3',
     gap: 6,
   },
-  itemsPreviewTitle: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#4b5563',
+  itemsHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
     marginBottom: 4,
+  },
+  itemsPreviewTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#374151',
     textTransform: 'uppercase',
+  },
+  itemsHeaderTotal: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#641b2a',
+    fontVariant: ['tabular-nums'],
   },
   itemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 4,
   },
   itemRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 7,
+    flex: 1,
   },
   itemName: {
-    fontSize: 12.5,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1f2937',
   },
   itemPrice: {
-    fontSize: 12.5,
+    fontSize: 14,
     fontWeight: '700',
     color: '#4b5563',
+    fontVariant: ['tabular-nums'],
   },
-  sectionHeader: {
+  emptyItemsText: {
     fontSize: 13,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: '#9ca3af',
+    fontStyle: 'italic',
+    paddingVertical: 6,
   },
-  actionsGrid: {
+  actionsContainer: {
     gap: 10,
-    paddingBottom: 8,
   },
-  actionBtn: {
+  primaryActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  primaryActionBtn: {
+    flex: 1,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    justifyContent: 'center',
+    gap: 7,
     paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 16,
-    backgroundColor: '#f9fafb',
+    borderRadius: 14,
+  },
+  btnOrder: {
+    backgroundColor: '#641b2a',
+  },
+  btnSettle: {
+    backgroundColor: '#15803d',
+  },
+  primaryActionBtnText: {
+    color: '#ffffff',
+    fontSize: 14.5,
+    fontWeight: '800',
+    fontVariant: ['tabular-nums'],
+  },
+  secondaryActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  secondaryActionBtn: {
+    flex: 1,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  actionBtnOrder: {
-    backgroundColor: '#641b2a',
-    borderColor: '#641b2a',
+  secondaryActionBtnText: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#641b2a',
   },
-  actionBtnSettle: {
-    backgroundColor: '#15803d',
-    borderColor: '#15803d',
-  },
-  actionBtnTextCol: {
-    flex: 1,
-  },
-  actionBtnTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#111827',
-  },
-  actionBtnSub: {
-    fontSize: 11.5,
-    color: '#6b7280',
-    marginTop: 2,
+  secondaryActionBtnTextGreen: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: '#15803d',
   },
 });

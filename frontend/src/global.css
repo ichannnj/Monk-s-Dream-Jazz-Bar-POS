@@ -14,6 +14,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Root Tablet Typography Scale & Web Interface Guidelines */
+:root,
+html {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-size: 1rem; /* 16px */
+  line-height: 1.5;
+  color: #111827;
+}
+
 /* Tablet Touch and Text Readability Optimizations */
 * {
   -webkit-font-smoothing: antialiased;

@@ -210,7 +210,12 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
               </Text>
             </View>
 
-            <Pressable onPress={onClose} style={styles.topCloseBtn}>
+            <Pressable
+              onPress={onClose}
+              style={styles.topCloseBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close order entry"
+            >
               <X size={22} color="#4b5563" />
             </Pressable>
           </View>
@@ -241,9 +246,12 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
                           styles.catPill,
                           isActive && styles.catPillActive,
                         ]}
+                        accessibilityRole="tab"
+                        accessibilityState={{ selected: isActive }}
+                        accessibilityLabel={`${cat.label} category`}
                       >
                         <Icon
-                          size={15}
+                          size={16}
                           color={isActive ? '#ffffff' : '#4b5563'}
                           strokeWidth={2.2}
                         />
@@ -269,9 +277,17 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
                     placeholderTextColor="#9ca3af"
                     value={searchQuery}
                     onChangeText={setSearchQuery}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    spellCheck={false}
+                    accessibilityLabel="Search menu items"
                   />
                   {searchQuery.length > 0 ? (
-                    <Pressable onPress={() => setSearchQuery('')}>
+                    <Pressable
+                      onPress={() => setSearchQuery('')}
+                      accessibilityRole="button"
+                      accessibilityLabel="Clear search"
+                    >
                       <X size={16} color="#9ca3af" />
                     </Pressable>
                   ) : null}
@@ -442,11 +458,13 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
                           <Pressable
                             onPress={() => updateQuantity(idx, -1)}
                             style={styles.stepperBtn}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Decrease quantity of ${cartItem.productName}`}
                           >
                             {cartItem.quantity === 1 ? (
-                              <Trash2 size={13} color="#ef4444" />
+                              <Trash2 size={15} color="#ef4444" />
                             ) : (
-                              <Minus size={13} color="#4b5563" />
+                              <Minus size={15} color="#4b5563" />
                             )}
                           </Pressable>
 
@@ -457,8 +475,10 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
                           <Pressable
                             onPress={() => updateQuantity(idx, 1)}
                             style={styles.stepperBtn}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Increase quantity of ${cartItem.productName}`}
                           >
-                            <Plus size={13} color="#4b5563" />
+                            <Plus size={15} color="#4b5563" />
                           </Pressable>
                         </View>
                       </View>
@@ -549,8 +569,10 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
                   <Pressable
                     onPress={() => setActiveCustomizingItem(null)}
                     style={styles.closeBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close customizer"
                   >
-                    <X size={18} color="#4b5563" />
+                    <X size={20} color="#4b5563" />
                   </Pressable>
                 </View>
 
@@ -670,24 +692,27 @@ const styles = StyleSheet.create({
   },
   activeDestinationBadge: {
     backgroundColor: '#641b2a',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 14,
   },
   activeDestinationText: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
   },
   topBarSub: {
-    fontSize: 13,
+    fontSize: 13.5,
     color: '#6b7280',
     fontWeight: '500',
   },
   topCloseBtn: {
-    padding: 8,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   mainSplit: {
     flex: 1,
@@ -714,17 +739,18 @@ const styles = StyleSheet.create({
   catPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
+    gap: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    minHeight: 44,
+    borderRadius: 13,
     backgroundColor: '#f3f4f6',
   },
   catPillActive: {
     backgroundColor: '#641b2a',
   },
   catPillText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
     color: '#4b5563',
   },
@@ -738,13 +764,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    borderRadius: 13,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minHeight: 44,
   },
   searchInput: {
     flex: 1,
-    fontSize: 13.5,
+    fontSize: 15,
     color: '#111827',
     fontWeight: '500',
   },
@@ -761,10 +788,10 @@ const styles = StyleSheet.create({
     width: '48.5%',
     backgroundColor: '#ffffff',
     borderRadius: 18,
-    padding: 14,
+    padding: 15,
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    minHeight: 140,
+    minHeight: 146,
     justifyContent: 'space-between',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -788,9 +815,9 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   stationBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 7,
   },
   badgeBar: {
     backgroundColor: '#e0f2fe',
@@ -799,7 +826,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffedd5',
   },
   stationBadgeText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
   },
   textBar: {
@@ -809,20 +836,21 @@ const styles = StyleSheet.create({
     color: '#c2410c',
   },
   productPrice: {
-    fontSize: 15,
+    fontSize: 16.5,
     fontWeight: '800',
     color: '#1a1a1e',
+    fontVariant: ['tabular-nums'],
   },
   productName: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     color: '#1a1a1e',
     marginBottom: 4,
   },
   productDesc: {
-    fontSize: 11.5,
+    fontSize: 12.5,
     color: '#6b7280',
-    lineHeight: 16,
+    lineHeight: 17,
     marginBottom: 8,
   },
   badgesRow: {
@@ -908,20 +936,21 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f4f6',
   },
   cartHeaderTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '800',
     color: '#1a1a1e',
   },
   itemCountBadge: {
     backgroundColor: '#fceeed',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
     borderRadius: 8,
   },
   itemCountText: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#832238',
+    fontVariant: ['tabular-nums'],
   },
   cartScroll: {
     flex: 1,
@@ -936,22 +965,22 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyCartTitle: {
-    fontSize: 15,
+    fontSize: 15.5,
     fontWeight: '700',
     color: '#6b7280',
   },
   emptyCartSub: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#9ca3af',
     textAlign: 'center',
     marginTop: 4,
-    maxWidth: 220,
+    maxWidth: 240,
   },
   cartItemRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 9,
     borderBottomWidth: 1,
     borderBottomColor: '#f9fafb',
   },
@@ -965,77 +994,84 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   miniStationDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
   cartItemName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: '#1a1a1e',
   },
   cartItemModText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#059669',
     fontWeight: '600',
     marginTop: 2,
   },
   cartItemNotesText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#d97706',
     fontStyle: 'italic',
     marginTop: 1,
   },
   cartItemUnitPrice: {
-    fontSize: 11,
+    fontSize: 12.5,
     color: '#9ca3af',
     marginTop: 2,
+    fontVariant: ['tabular-nums'],
   },
   cartItemControls: {
     alignItems: 'flex-end',
     gap: 6,
   },
   cartItemTotal: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
     color: '#1a1a1e',
+    fontVariant: ['tabular-nums'],
   },
   stepperBox: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    paddingHorizontal: 4,
+    borderRadius: 10,
+    padding: 2,
   },
   stepperBtn: {
-    padding: 6,
+    width: 38,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   stepperQuantity: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '800',
     color: '#111827',
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
+    fontVariant: ['tabular-nums'],
   },
   corkageBox: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: '#fff1f2',
-    padding: 12,
+    padding: 14,
     borderRadius: 14,
     marginVertical: 8,
+    minHeight: 52,
   },
   corkageLabelGroup: {
     flex: 1,
     marginRight: 8,
   },
   corkageTitle: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
     color: '#832238',
   },
   corkageSub: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#9f1239',
   },
   pricingSummary: {
@@ -1051,14 +1087,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryLabel: {
-    fontSize: 12.5,
+    fontSize: 13.5,
     color: '#6b7280',
     fontWeight: '500',
   },
   summaryValue: {
-    fontSize: 13,
+    fontSize: 14.5,
     color: '#374151',
     fontWeight: '700',
+    fontVariant: ['tabular-nums'],
   },
   totalLine: {
     borderTopWidth: 1,
@@ -1067,18 +1104,20 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   grandTotalLabel: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     color: '#111827',
   },
   grandTotalValue: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '900',
     color: '#641b2a',
+    fontVariant: ['tabular-nums'],
   },
   sendOrderBtn: {
     backgroundColor: '#641b2a',
     borderRadius: 16,
+    minHeight: 52,
     paddingVertical: 14,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1095,7 +1134,7 @@ const styles = StyleSheet.create({
   },
   sendOrderBtnText: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
   },
   // Customizer sheet overlay
@@ -1112,10 +1151,10 @@ const styles = StyleSheet.create({
   },
   customizerCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 22,
+    borderRadius: 24,
     width: '100%',
-    maxWidth: 460,
-    padding: 20,
+    maxWidth: 480,
+    padding: 22,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
@@ -1129,22 +1168,26 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   customizerTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '800',
     color: '#1a1a1e',
   },
   customizerSub: {
-    fontSize: 12.5,
+    fontSize: 13,
     color: '#6b7280',
     marginTop: 2,
+    fontVariant: ['tabular-nums'],
   },
   closeBtn: {
-    padding: 6,
-    borderRadius: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     backgroundColor: '#f3f4f6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   customizerSectionTitle: {
-    fontSize: 12.5,
+    fontSize: 13,
     fontWeight: '700',
     color: '#374151',
     marginBottom: 8,
@@ -1157,8 +1200,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 10,
-    borderRadius: 10,
+    minHeight: 48,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
     backgroundColor: '#f9fafb',
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
@@ -1168,7 +1213,7 @@ const styles = StyleSheet.create({
     borderColor: '#15803d',
   },
   modName: {
-    fontSize: 13,
+    fontSize: 14.5,
     fontWeight: '600',
     color: '#374151',
   },
@@ -1177,9 +1222,10 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   modPrice: {
-    fontSize: 12.5,
+    fontSize: 14,
     fontWeight: '700',
     color: '#6b7280',
+    fontVariant: ['tabular-nums'],
   },
   modPriceSelected: {
     color: '#15803d',
@@ -1189,24 +1235,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 13,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 48,
+    fontSize: 14.5,
     color: '#111827',
     marginBottom: 18,
   },
   confirmCustomizeBtn: {
     backgroundColor: '#15803d',
     borderRadius: 14,
+    minHeight: 48,
     paddingVertical: 12,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 7,
   },
   confirmCustomizeBtnText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '800',
   },
 });

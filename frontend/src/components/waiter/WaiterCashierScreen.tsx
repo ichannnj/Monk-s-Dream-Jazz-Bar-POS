@@ -11,8 +11,7 @@ import {
   CustomerTab,
 } from '../../mockData';
 import { Sidebar, NavTabId } from '../navigation/Sidebar';
-import { TableOverviewHeader } from './TableOverviewHeader';
-import { TableFilterBar, StatusFilter } from './TableFilterBar';
+import { UnifiedCommandBar, StatusFilter } from './UnifiedCommandBar';
 import { TableCard } from './TableCard';
 import { TakeoutQueueCard } from './TakeoutQueueCard';
 import { OnlineDeliveryCard } from './OnlineDeliveryCard';
@@ -331,15 +330,15 @@ export const WaiterCashierScreen: React.FC = () => {
     setCheckoutContext(null);
   };
 
-  // Responsive tablet grid column width
+  // Responsive tablet grid column width (3 spacious cards on 10" tablets, 4 on 12"+, 5 on wide desktops)
   const cardWidth =
-    windowWidth >= 1250
-      ? '18.6%'
-      : windowWidth >= 960
-      ? '23.4%'
-      : windowWidth >= 700
-      ? '31.2%'
-      : '48%';
+    windowWidth >= 1440
+      ? '18.8%'
+      : windowWidth >= 1180
+      ? '23.8%'
+      : windowWidth >= 740
+      ? '31.8%'
+      : '48.5%';
 
   return (
     <View style={styles.screenContainer}>
@@ -360,10 +359,18 @@ export const WaiterCashierScreen: React.FC = () => {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Top Header with Quick Action Buttons */}
-            <TableOverviewHeader
+            {/* Unified Sleek Top Command Bar */}
+            <UnifiedCommandBar
+              selectedChannel={selectedChannel}
+              onChannelChange={setSelectedChannel}
+              selectedStatus={selectedStatus}
+              onStatusChange={setSelectedStatus}
+              channelCounts={channelCounts}
+              statusCounts={statusCounts}
+              onOpenTableTab={() => setIsOpenTabModalOpen(true)}
+              onNewTakeout={() => setIsTakeoutModalOpen(true)}
+              onInputOnlineOrder={() => setIsOnlineModalOpen(true)}
               staffName={currentUser?.displayName || 'Jess Santos'}
-              staffRole="Waiter / Cashier"
               staffInitials={
                 currentUser?.displayName
                   ? currentUser.displayName
@@ -374,19 +381,6 @@ export const WaiterCashierScreen: React.FC = () => {
                       .toUpperCase()
                   : 'JS'
               }
-              onOpenTableTab={() => setIsOpenTabModalOpen(true)}
-              onNewTakeout={() => setIsTakeoutModalOpen(true)}
-              onInputOnlineOrder={() => setIsOnlineModalOpen(true)}
-            />
-
-            {/* Channels & Statuses Filter Bar */}
-            <TableFilterBar
-              selectedChannel={selectedChannel}
-              onChannelChange={setSelectedChannel}
-              selectedStatus={selectedStatus}
-              onStatusChange={setSelectedStatus}
-              channelCounts={channelCounts}
-              statusCounts={statusCounts}
             />
 
             {/* Combined Responsive Grid: Tables, Takeout Queue & Online Orders */}
