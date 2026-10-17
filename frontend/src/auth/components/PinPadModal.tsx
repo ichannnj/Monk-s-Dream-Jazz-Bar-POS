@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Pressable, StyleSheet } from 'react-native';
 import { Delete, Lock, X } from 'lucide-react-native';
 
 interface PinPadModalProps {
@@ -42,8 +42,13 @@ export const PinPadModal: React.FC<PinPadModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade">
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View className="flex-1 bg-black/80 items-center justify-center p-4">
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={handleClose}
+          accessibilityLabel="Close modal"
+        />
         <View className="w-80 bg-jazz-900 border border-jazz-800 rounded-3xl p-6 items-center">
           {/* Header */}
           <View className="w-full flex-row items-center justify-between mb-4">

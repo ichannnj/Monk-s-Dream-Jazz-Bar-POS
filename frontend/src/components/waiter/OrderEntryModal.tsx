@@ -33,6 +33,8 @@ import {
   OrderLineItem,
 } from '../../mockData';
 
+import { toast } from '../../store/useToastStore';
+
 interface OrderEntryModalProps {
   visible: boolean;
   title: string; // e.g. "Table B1 • Tab: Miles" or "Takeout #T-105"
@@ -109,7 +111,12 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
 
   // Add Item to Cart
   const handleItemClick = (item: MenuItem) => {
-    if (!item.isAvailable || item.auto86) return;
+    if (!item.isAvailable || item.auto86) {
+      toast.error(`${item.name} is currently 86'd / sold out.`, {
+        title: 'Item Unavailable',
+      });
+      return;
+    }
 
     if (item.modifiers.length > 0) {
       setActiveCustomizingItem(item);
@@ -174,6 +181,10 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
       const nextQty = target.quantity + delta;
 
       if (nextQty <= 0) {
+        toast.info(`Removed ${target.productName} from order`, {
+          title: 'Item Removed',
+          duration: 2000,
+        });
         return copy.filter((_, i) => i !== index);
       } else {
         copy[index] = { ...target, quantity: nextQty };
@@ -182,7 +193,24 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     });
   };
 
+  const handleToggleCorkage = (val: boolean) => {
+    setHasCorkage(val);
+    if (val) {
+      toast.info('Outside bottle corkage fee (+20%) applied to order.', {
+        title: 'Corkage Fee Added',
+      });
+    } else {
+      toast.info('Corkage fee removed.', { title: 'Corkage Removed' });
+    }
+  };
+
   const handleSend = () => {
+    if (cartItems.length === 0) {
+      toast.warning('Cart is empty. Please select menu items to dispatch.', {
+        title: 'Empty Order',
+      });
+      return;
+    }
     onSendOrder(cartItems, hasCorkage, corkageAmount);
     onClose();
   };
@@ -198,6 +226,11 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close modal"
+        />
         <View style={styles.fullscreenModal}>
           {/* Top Bar */}
           <View style={styles.topBar}>
@@ -497,7 +530,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
                 </View>
                 <Switch
                   value={hasCorkage}
-                  onValueChange={setHasCorkage}
+                  onValueChange={handleToggleCorkage}
                   trackColor={{ false: '#d1d5db', true: '#fca5a5' }}
                   thumbColor={hasCorkage ? '#832238' : '#f4f3f4'}
                 />
@@ -556,6 +589,11 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
           {/* ITEM CUSTOMIZER SHEET (MODIFIERS & NOTES) */}
           {activeCustomizingItem ? (
             <View style={styles.customizerBackdrop}>
+              <Pressable
+                style={StyleSheet.absoluteFill}
+                onPress={() => setActiveCustomizingItem(null)}
+                accessibilityLabel="Close customizer"
+              />
               <View style={styles.customizerCard}>
                 <View style={styles.customizerHeader}>
                   <View>

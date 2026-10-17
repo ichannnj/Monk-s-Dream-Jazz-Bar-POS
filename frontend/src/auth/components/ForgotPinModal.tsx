@@ -6,12 +6,18 @@ import { SEED_STAFF_USERS } from '../../mockData';
 interface ForgotPinModalProps {
   visible: boolean;
   onClose: () => void;
+  onSelectStaff?: (staff: (typeof SEED_STAFF_USERS)[0]) => void;
 }
 
-export const ForgotPinModal: React.FC<ForgotPinModalProps> = ({ visible, onClose }) => {
+export const ForgotPinModal: React.FC<ForgotPinModalProps> = ({ visible, onClose, onSelectStaff }) => {
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close modal"
+        />
         <View style={styles.card}>
           {/* Header */}
           <View style={styles.header}>
@@ -33,15 +39,22 @@ export const ForgotPinModal: React.FC<ForgotPinModalProps> = ({ visible, onClose
           <View style={styles.noticeBox}>
             <ShieldAlert size={16} color="#b93a52" />
             <Text style={styles.noticeText}>
-              In live operations, please ask your floor manager or administrator (Miles) to reset your PIN.
+              Tap any demo staff account below to auto-fill credentials for testing.
             </Text>
           </View>
 
           {/* Staff Reference List */}
-          <Text style={styles.sectionTitle}>Default Staff Accounts (Demo Reference):</Text>
+          <Text style={styles.sectionTitle}>Default Staff Accounts (Tap to Select):</Text>
           <ScrollView style={styles.staffList} showsVerticalScrollIndicator={false}>
             {SEED_STAFF_USERS.map((staff) => (
-              <View key={staff.id} style={styles.staffRow}>
+              <Pressable
+                key={staff.id}
+                onPress={() => onSelectStaff?.(staff)}
+                style={({ pressed }) => [
+                  styles.staffRow,
+                  pressed && { opacity: 0.7, backgroundColor: '#fef2f2' },
+                ]}
+              >
                 <View>
                   <Text style={styles.staffName}>{staff.displayName}</Text>
                   <Text style={styles.staffUsername}>ID: {staff.username} • Role: {staff.role}</Text>
@@ -49,7 +62,7 @@ export const ForgotPinModal: React.FC<ForgotPinModalProps> = ({ visible, onClose
                 <View style={styles.pinBadge}>
                   <Text style={styles.pinText}>{staff.pin}</Text>
                 </View>
-              </View>
+              </Pressable>
             ))}
           </ScrollView>
 

@@ -21,6 +21,7 @@ import {
 } from 'lucide-react-native';
 import { useOrderStore } from '../../store/useOrderStore';
 import { CheckItem } from '../../mockData';
+import { toast } from '../../store/useToastStore';
 
 export const ChecksHistoryView: React.FC = () => {
   const { checks } = useOrderStore();
@@ -52,6 +53,12 @@ export const ChecksHistoryView: React.FC = () => {
 
   const handleReprint = () => {
     setReprintSuccess(true);
+    if (selectedCheck) {
+      toast.success(
+        `Check ${selectedCheck.checkNumber} (${selectedCheck.guestName}) re-sent to thermal printer!`,
+        { title: 'Receipt Reprinted' }
+      );
+    }
     setTimeout(() => setReprintSuccess(false), 2500);
   };
 

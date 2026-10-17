@@ -18,6 +18,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useAuthStore } from '../../store/useAuthStore';
+import { toast } from '../../store/useToastStore';
 import { SEED_STAFF_USERS } from '../../mockData';
 import { PinCodeInput } from '../components/PinCodeInput';
 import { TrainingModeSwitch } from '../components/TrainingModeSwitch';
@@ -68,12 +69,18 @@ export const LoginScreen: React.FC = () => {
     if (!trimmedUsername) {
       setIsError(true);
       setErrorMessage('Please enter your staff ID or username.');
+      toast.warning('Please enter your staff ID or username.', {
+        title: 'Staff ID Required',
+      });
       return;
     }
 
     if (pin.length < 6) {
       setIsError(true);
       setErrorMessage('Please enter your full 6-digit staff PIN.');
+      toast.warning('Please enter your complete 6-digit staff PIN.', {
+        title: 'Incomplete PIN',
+      });
       return;
     }
 
@@ -99,8 +106,18 @@ export const LoginScreen: React.FC = () => {
         role: foundStaff.role,
         isActive: true,
       });
+
+      toast.success(
+        `Welcome, ${foundStaff.displayName}! Role: ${foundStaff.role.toUpperCase()}`,
+        {
+          title: isTraining ? 'Sandbox Mode Active' : 'Staff Clock-In Successful',
+        }
+      );
     } else {
       // Trigger error shake on PIN cells
+      const errText = foundStaff
+        ? `Incorrect PIN for ${foundStaff.displayName}.`
+        : 'Staff ID not recognized. Please check your credentials.';
       setIsError(true);
       setErrorMessage(
         foundStaff
@@ -109,6 +126,10 @@ export const LoginScreen: React.FC = () => {
       );
       setPin('');
       setIsSubmitting(false);
+
+      toast.error(errText, {
+        title: 'Authentication Failed',
+      });
     }
   }, [username, pin, isTraining, isSubmitting, setUser, setIsTrainingMode]);
 
@@ -287,7 +308,18 @@ export const LoginScreen: React.FC = () => {
                     <Text style={styles.trainingModeLabel}>Training Mode</Text>
                     <TrainingModeSwitch
                       value={isTraining}
-                      onValueChange={setIsTraining}
+                      onValueChange={(val) => {
+                        setIsTraining(val);
+                        if (val) {
+                          toast.info('Training Sandbox Mode active — tickets won\'t route to live stations.', {
+                            title: 'Sandbox Mode ON',
+                          });
+                        } else {
+                          toast.info('Live Production Mode active.', {
+                            title: 'Live Mode',
+                          });
+                        }
+                      }}
                     />
                   </View>
 
@@ -308,6 +340,16 @@ export const LoginScreen: React.FC = () => {
         <ForgotPinModal
           visible={isForgotModalOpen}
           onClose={() => setIsForgotModalOpen(false)}
+          onSelectStaff={(staff) => {
+            setUsername(staff.username);
+            setPin(staff.pin);
+            setIsForgotModalOpen(false);
+            setIsError(false);
+            setErrorMessage(null);
+            toast.info(`Loaded credentials for ${staff.displayName} (${staff.role.toUpperCase()})`, {
+              title: 'Staff Demo Selected',
+            });
+          }}
         />
       </ScrollView>
     </KeyboardAvoidingView>

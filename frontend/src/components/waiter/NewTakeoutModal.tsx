@@ -38,6 +38,11 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close modal"
+        />
         <View style={styles.modalCard}>
           {/* Header */}
           <View style={styles.header}>

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react-native';
 import { useOrderStore } from '../../store/useOrderStore';
 import { DrawerEntry } from '../../mockData';
+import { toast } from '../../store/useToastStore';
 
 export const CashDrawerModalView: React.FC = () => {
   const { drawerEntries, addDrawerEntry } = useOrderStore();
@@ -66,29 +67,46 @@ export const CashDrawerModalView: React.FC = () => {
 
   const handleConfirmAction = () => {
     const amt = parseFloat(modalAmount) || 0;
-    if (amt <= 0) return;
+    if (amt <= 0) {
+      toast.warning('Please enter a valid cash amount greater than $0.00', {
+        title: 'Invalid Amount',
+      });
+      return;
+    }
 
     if (activeModal === 'cash_in') {
+      const reason = modalReason.trim() || 'Change restock';
       addDrawerEntry(
         'cash_in',
         amt,
-        modalReason.trim() || 'Change restock',
+        reason,
         'Coltrane (Cashier)'
       );
+      toast.success(`Cash In: $${amt.toFixed(2)} added to drawer (${reason})`, {
+        title: 'Cash In Recorded',
+      });
     } else if (activeModal === 'cash_out') {
+      const reason = modalReason.trim() || 'Petty cash expense';
       addDrawerEntry(
         'cash_out',
         -amt,
-        modalReason.trim() || 'Petty cash expense',
+        reason,
         'Coltrane (Cashier)'
       );
+      toast.warning(`Petty Cash Out: $${amt.toFixed(2)} recorded (${reason})`, {
+        title: 'Paid Out Recorded',
+      });
     } else if (activeModal === 'drop') {
+      const reason = modalReason.trim() || 'Mid-shift safe cash drop';
       addDrawerEntry(
         'drop',
         -amt,
-        modalReason.trim() || 'Mid-shift safe cash drop',
+        reason,
         'Coltrane (Cashier)'
       );
+      toast.info(`Safe Drop: $${amt.toFixed(2)} transferred to floor safe`, {
+        title: 'Safe Drop Confirmed',
+      });
     }
 
     setModalAmount('');
@@ -238,7 +256,6 @@ export const CashDrawerModalView: React.FC = () => {
         </ScrollView>
       </View>
 
-      {/* MODAL: CASH IN / OUT / DROP */}
       <Modal
         visible={
           activeModal === 'cash_in' ||
@@ -247,8 +264,14 @@ export const CashDrawerModalView: React.FC = () => {
         }
         transparent
         animationType="fade"
+        onRequestClose={() => setActiveModal('none')}
       >
         <View style={styles.modalBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => setActiveModal('none')}
+            accessibilityLabel="Close modal"
+          />
           <View style={styles.actionModalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
@@ -308,9 +331,24 @@ export const CashDrawerModalView: React.FC = () => {
         </View>
       </Modal>
 
-      {/* MODAL: END SHIFT AUDIT / RECONCILIATION */}
-      <Modal visible={activeModal === 'audit'} transparent animationType="fade">
+      <Modal
+        visible={activeModal === 'audit'}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setActiveModal('none');
+          setAuditDone(false);
+        }}
+      >
         <View style={styles.modalBackdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={() => {
+              setActiveModal('none');
+              setAuditDone(false);
+            }}
+            accessibilityLabel="Close modal"
+          />
           <View style={styles.actionModalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>End-of-Shift Cash Audit</Text>
@@ -388,6 +426,14 @@ export const CashDrawerModalView: React.FC = () => {
               </Pressable>
               <Pressable
                 onPress={() => {
+                  const varianceStr =
+                    variance === 0
+                      ? 'Reconciled ($0.00)'
+                      : `${variance > 0 ? '+' : ''}$${variance.toFixed(2)} (${variance > 0 ? 'Over' : 'Short'})`;
+                  toast.success(
+                    `Shift Z-Report printed to thermal station • Counted: $${numericCounted.toFixed(2)} • Variance: ${varianceStr}`,
+                    { title: 'Z-Report Dispatched' }
+                  );
                   setActiveModal('none');
                   setAuditDone(false);
                 }}

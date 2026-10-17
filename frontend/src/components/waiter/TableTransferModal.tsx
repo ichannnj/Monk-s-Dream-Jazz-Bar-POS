@@ -86,6 +86,11 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close modal"
+        />
         <View style={styles.modalCard}>
           {/* Header */}
           <View style={styles.modalHeader}>

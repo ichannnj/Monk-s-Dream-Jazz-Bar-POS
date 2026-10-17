@@ -56,6 +56,11 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close modal"
+        />
         <View style={styles.modalCard}>
           {/* 1. Header */}
           <View style={styles.modalHeader}>

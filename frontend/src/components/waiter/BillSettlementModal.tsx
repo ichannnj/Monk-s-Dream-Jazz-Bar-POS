@@ -20,6 +20,7 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import { TableItem, CustomerTab } from '../../mockData';
+import { toast } from '../../store/useToastStore';
 
 interface BillSettlementModalProps {
   visible: boolean;
@@ -66,6 +67,14 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const changeDue = Math.max(0, numericTendered - grandTotal);
 
   const handleConfirm = () => {
+    if (selectedMethod === 'cash' && numericTendered > 0 && numericTendered < grandTotal) {
+      toast.warning(
+        `Tendered amount ($${numericTendered.toFixed(2)}) is less than total due ($${grandTotal.toFixed(2)})`,
+        { title: 'Insufficient Cash' }
+      );
+      return;
+    }
+
     onConfirmPayment(
       settlementMode,
       activeTab?.tabIndex || 1,
@@ -90,6 +99,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close modal"
+        />
         <View style={styles.modalCard}>
           {/* Header */}
           <View style={styles.header}>

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { MessageSquare, Send, Users, Wine, ChefHat } from 'lucide-react-native';
 import { useOrderStore } from '../../store/useOrderStore';
+import { toast } from '../../store/useToastStore';
 
 export const FloorChatView: React.FC = () => {
   const { chatMessages, addChatMessage } = useOrderStore();
@@ -31,9 +32,24 @@ export const FloorChatView: React.FC = () => {
 
   const handleSend = (text?: string) => {
     const msg = (text || inputText).trim();
-    if (!msg) return;
+    if (!msg) {
+      toast.warning('Please enter a message before sending.', {
+        title: 'Empty Message',
+      });
+      return;
+    }
 
     addChatMessage(activeChannel, msg, 'Jess Santos', 'Waiter');
+    const channelName =
+      activeChannel === 'all'
+        ? '#all-staff'
+        : activeChannel === 'bar'
+        ? '#bar-station'
+        : '#kitchen-station';
+    toast.success(`Broadcast sent to ${channelName}`, {
+      title: 'Message Dispatched',
+      duration: 2500,
+    });
     setInputText('');
   };
 

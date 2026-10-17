@@ -10,6 +10,7 @@ import {
   OrderLineItem,
   CustomerTab,
 } from '../../mockData';
+import { toast } from '../../store/useToastStore';
 import { Sidebar, NavTabId } from '../navigation/Sidebar';
 import { UnifiedCommandBar, StatusFilter } from './UnifiedCommandBar';
 import { TableCard } from './TableCard';
@@ -31,6 +32,11 @@ import { ShiftSettingsModal } from './ShiftSettingsModal';
 export const WaiterCashierScreen: React.FC = () => {
   const { currentUser, logout } = useAuthStore();
   const { width: windowWidth } = useWindowDimensions();
+
+  const handleLogout = () => {
+    toast.info('Terminal locked. Staff session ended.', { title: 'Clocked Out' });
+    logout();
+  };
 
   // Zustand state
   const {
@@ -227,6 +233,11 @@ export const WaiterCashierScreen: React.FC = () => {
         ? Math.max(...targetTable.activeTabs) + 1
         : 1;
 
+    toast.success(
+      `Tab opened for "${guestName}" (${guestCount} guests) at Table ${targetTable?.code}`,
+      { title: 'Dine-In Tab Created' }
+    );
+
     // Immediately open order entry catalog for this newly opened tab!
     setOrderEntryContext({
       type: 'dine_in',
@@ -246,6 +257,10 @@ export const WaiterCashierScreen: React.FC = () => {
     notes: string
   ) => {
     const nextTicket = `T-${107 + takeoutOrders.length}`;
+    toast.info(`Configuring Takeout #${nextTicket} for "${customerName}"`, {
+      title: 'Takeout Intake',
+    });
+
     setOrderEntryContext({
       type: 'takeout',
       title: `Takeout #${nextTicket} • "${customerName}"`,
@@ -264,9 +279,14 @@ export const WaiterCashierScreen: React.FC = () => {
     riderName: string,
     customerName: string
   ) => {
+    const platformLabel = platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
+    toast.info(`Entering ${platformLabel} #${platformRef} (${customerName})`, {
+      title: 'Online Delivery Intake',
+    });
+
     setOrderEntryContext({
       type: 'online',
-      title: `${platform === 'grabfood' ? 'GrabFood' : 'Foodpanda'} #${platformRef} • "${customerName}"`,
+      title: `${platformLabel} #${platformRef} • "${customerName}"`,
       onlinePlatform: platform,
       onlineRef: platformRef,
       onlineRider: riderName,
@@ -285,6 +305,7 @@ export const WaiterCashierScreen: React.FC = () => {
     if (!orderEntryContext) return;
 
     if (orderEntryContext.type === 'dine_in' && orderEntryContext.tableId) {
+      const targetTable = tables.find((t) => t.id === orderEntryContext.tableId);
       addItemsToTab(
         orderEntryContext.tableId,
         orderEntryContext.tabIndex || 1,
@@ -292,24 +313,64 @@ export const WaiterCashierScreen: React.FC = () => {
         hasCorkage,
         corkageAmount
       );
+      toast.success(
+        `${items.length} item(s) dispatched to Bar & Kitchen for Table ${targetTable?.code || ''} (Chit printed)`,
+        { title: 'Order Sent to Stations' }
+      );
     } else if (orderEntryContext.type === 'takeout') {
-      createTakeoutOrder(
+      const newOrder = createTakeoutOrder(
         orderEntryContext.takeoutCustomer || 'Walk-in Guest',
         items,
         orderEntryContext.takeoutPrepaid ?? true,
         orderEntryContext.takeoutNotes
       );
+      toast.success(
+        `Takeout #${newOrder.ticketNumber} created for ${newOrder.customerName} (${items.length} items)`,
+        { title: 'Takeout Order Queued' }
+      );
     } else if (orderEntryContext.type === 'online') {
-      createOnlineOrder(
+      const platformLabel =
+        orderEntryContext.onlinePlatform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
+      const newOrder = createOnlineOrder(
         orderEntryContext.onlinePlatform || 'grabfood',
         orderEntryContext.onlineRef || 'GF-8842',
         orderEntryContext.onlineRider || 'Rider Assigned',
         orderEntryContext.onlineCustomer || 'Customer',
         items
       );
+      toast.success(
+        `${platformLabel} #${newOrder.platformOrderRef} logged (${items.length} items) • Rider: ${newOrder.riderName}`,
+        { title: 'Online Delivery Queued' }
+      );
     }
 
     setOrderEntryContext(null);
+  };
+
+  // Table or Tab Transfer Dispatch
+  const handleConfirmTransfer = (
+    originId: string,
+    targetId: string,
+    mode: 'entire' | 'tab',
+    tabIndex?: number,
+    reason?: string
+  ) => {
+    const origin = tables.find((t) => t.id === originId);
+    const target = tables.find((t) => t.id === targetId);
+    transferTableOrTab(originId, targetId, mode, tabIndex, reason);
+
+    if (mode === 'entire') {
+      toast.success(
+        `Table ${origin?.code} transferred to Table ${target?.code} (All tabs moved)`,
+        { title: 'Table Relocated' }
+      );
+    } else {
+      const originTab = origin?.tabs?.find((t) => t.tabIndex === tabIndex);
+      toast.success(
+        `Tab "${originTab?.guestName || `Tab #${tabIndex}`}" moved from ${origin?.code} to ${target?.code}`,
+        { title: 'Tab Relocated' }
+      );
+    }
   };
 
   // Checkout Payment Confirmation
@@ -321,10 +382,35 @@ export const WaiterCashierScreen: React.FC = () => {
   ) => {
     if (!checkoutContext) return;
 
+    const tableCode = checkoutContext.table.code;
+    const tabName = checkoutContext.activeTab?.guestName || `Tab #${tabIndex}`;
+    const rawSubtotal =
+      mode === 'single_tab' && checkoutContext.activeTab
+        ? checkoutContext.activeTab.totalAmount
+        : checkoutContext.table.totalAmount || 0;
+    const totalWithTax = rawSubtotal * 1.1;
+
+    const methodLabels: Record<string, string> = {
+      cash: 'Cash',
+      card: 'Credit / Debit Card',
+      digital_wallet: 'Digital Wallet (QR)',
+      platform_prepaid: 'Platform Prepaid',
+      comp: 'House Comp (100%)',
+    };
+    const methodName = methodLabels[method] || method.toUpperCase();
+
     if (mode === 'entire_table') {
       settleTableGroup(checkoutContext.table.id, method);
+      toast.success(
+        `Table ${tableCode} settled in full via ${methodName} ($${totalWithTax.toFixed(2)}) • Receipt printed`,
+        { title: 'Table Bill Settled' }
+      );
     } else {
       settleTab(checkoutContext.table.id, tabIndex, method);
+      toast.success(
+        `Tab "${tabName}" on Table ${tableCode} settled via ${methodName} ($${totalWithTax.toFixed(2)}) • Receipt printed`,
+        { title: 'Tab Payment Confirmed' }
+      );
     }
 
     setCheckoutContext(null);
@@ -346,7 +432,7 @@ export const WaiterCashierScreen: React.FC = () => {
       <Sidebar
         activeTab={activeNavTab}
         onTabChange={setActiveNavTab}
-        onLogout={logout}
+        onLogout={handleLogout}
         alertCount={unreadAlerts}
         unreadChatCount={0}
       />
@@ -407,8 +493,22 @@ export const WaiterCashierScreen: React.FC = () => {
                       });
                       setIsOrderEntryOpen(true);
                     }}
-                    onMarkReady={(id) => updateTakeoutStatus(id, 'ready')}
-                    onMarkCollected={(id) => updateTakeoutStatus(id, 'completed')}
+                    onMarkReady={(id) => {
+                      const o = takeoutOrders.find((x) => x.id === id);
+                      updateTakeoutStatus(id, 'ready');
+                      toast.success(
+                        `Takeout #${o?.ticketNumber || ''} (${o?.customerName || ''}) is READY for pickup!`,
+                        { title: 'Takeout Ready' }
+                      );
+                    }}
+                    onMarkCollected={(id) => {
+                      const o = takeoutOrders.find((x) => x.id === id);
+                      updateTakeoutStatus(id, 'completed');
+                      toast.info(
+                        `Takeout #${o?.ticketNumber || ''} handed to ${o?.customerName || 'guest'}. Order completed.`,
+                        { title: 'Takeout Handed Off' }
+                      );
+                    }}
                   />
                 </View>
               ))}
@@ -430,8 +530,24 @@ export const WaiterCashierScreen: React.FC = () => {
                       });
                       setIsOrderEntryOpen(true);
                     }}
-                    onMarkReady={(id) => updateOnlineStatus(id, 'ready')}
-                    onHandToRider={(id) => updateOnlineStatus(id, 'completed')}
+                    onMarkReady={(id) => {
+                      const o = onlineOrders.find((x) => x.id === id);
+                      updateOnlineStatus(id, 'ready');
+                      const plat = o?.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
+                      toast.success(
+                        `${plat} #${o?.platformOrderRef || ''} bagged & READY for driver pickup!`,
+                        { title: 'Delivery Ready' }
+                      );
+                    }}
+                    onHandToRider={(id) => {
+                      const o = onlineOrders.find((x) => x.id === id);
+                      updateOnlineStatus(id, 'completed');
+                      const plat = o?.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
+                      toast.info(
+                        `${plat} #${o?.platformOrderRef || ''} handed to courier ${o?.riderName || ''}. Delivery on way.`,
+                        { title: 'Dispatched to Courier' }
+                      );
+                    }}
                   />
                 </View>
               ))}
@@ -446,7 +562,7 @@ export const WaiterCashierScreen: React.FC = () => {
         ) : activeNavTab === 'chat' ? (
           <FloorChatView />
         ) : (
-          <ShiftSettingsModal onLogout={logout} />
+          <ShiftSettingsModal onLogout={handleLogout} />
         )}
       </View>
 
@@ -470,7 +586,7 @@ export const WaiterCashierScreen: React.FC = () => {
         originTable={tableToTransfer}
         allTables={tables}
         onClose={() => setIsTransferModalOpen(false)}
-        onConfirmTransfer={transferTableOrTab}
+        onConfirmTransfer={handleConfirmTransfer}
       />
 
       {/* MODAL 3: Open Table Tab Modal */}

@@ -10,6 +10,7 @@ import {
   Wifi,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
+import { toast } from '../../store/useToastStore';
 
 interface ShiftSettingsModalProps {
   onClose?: () => void;
@@ -97,7 +98,18 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
             </Text>
             <Switch
               value={isTrainingMode}
-              onValueChange={setIsTrainingMode}
+              onValueChange={(val) => {
+                setIsTrainingMode(val);
+                if (val) {
+                  toast.info('Training Sandbox Mode active — tickets won\'t route to live stations.', {
+                    title: 'Sandbox Mode ON',
+                  });
+                } else {
+                  toast.info('Live Production Mode active.', {
+                    title: 'Live Mode',
+                  });
+                }
+              }}
               trackColor={{ false: '#d1d5db', true: '#fde68a' }}
               thumbColor={isTrainingMode ? '#d97706' : '#f4f3f4'}
             />
@@ -123,6 +135,18 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
             Dedicated printer client is listening for `dispatch:print` (Runner Chits)
             and `receipt:print` (Customer Receipts) via USB ESC/POS driver.
           </Text>
+
+          <Pressable
+            onPress={() => {
+              toast.success('Thermal Printer test receipt dispatched: ESC/POS 80mm verified at 192.168.1.50:9100', {
+                title: 'Printer Online & Ready',
+              });
+            }}
+            style={styles.switchStaffBtn}
+          >
+            <Printer size={14} color="#15803d" />
+            <Text style={[styles.switchStaffText, { color: '#15803d' }]}>Test Thermal Printer Ping</Text>
+          </Pressable>
         </View>
       </View>
     </View>

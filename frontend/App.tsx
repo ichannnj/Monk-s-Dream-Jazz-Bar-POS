@@ -2,7 +2,7 @@ import './src/global.css';
 import React, { useEffect } from 'react';
 import { SafeAreaView, StatusBar, View } from 'react-native';
 import { rem } from 'nativewind';
-import { WaiterCashierScreen } from './src/components';
+import { WaiterCashierScreen, ToastContainer } from './src/components';
 import { LoginScreen } from './src/auth';
 import { useAuthStore } from './src/store/useAuthStore';
 
@@ -21,6 +21,7 @@ export default function App() {
       <StatusBar barStyle="dark-content" backgroundColor="#f6f0ed" />
       <View style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
         {!currentUser ? <LoginScreen /> : <WaiterCashierScreen />}
+        <ToastContainer />
       </View>
     </SafeAreaView>
   );

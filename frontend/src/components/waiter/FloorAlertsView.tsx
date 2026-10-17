@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from 'lucide-react-native';
 import { useOrderStore } from '../../store/useOrderStore';
+import { toast } from '../../store/useToastStore';
 
 export const FloorAlertsView: React.FC = () => {
   const { alerts, markAlertRead } = useOrderStore();
@@ -103,7 +104,13 @@ export const FloorAlertsView: React.FC = () => {
 
                 {!alert.isRead ? (
                   <Pressable
-                    onPress={() => markAlertRead(alert.id)}
+                    onPress={() => {
+                      markAlertRead(alert.id);
+                      toast.info(`Dismissed: ${alert.title}`, {
+                        title: 'Alert Acknowledged',
+                        duration: 2000,
+                      });
+                    }}
                     style={styles.ackBtn}
                   >
                     <Text style={styles.ackBtnText}>Dismiss</Text>
