@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Modal, Pressable, StyleSheet } from 'react-native';
 import { X } from 'lucide-react-native';
-import { MenuItem, SEED_MENU_ITEMS, MenuCategory, OrderLineItem } from '../../../mockData';
+import { MenuItem, MenuCategory, OrderLineItem } from '../../../types/floor';
 
 import { toast } from '../../../store/useToastStore';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -39,7 +39,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItems, setCartItems] = useState<OrderLineItem[]>(initialItems);
   const [hasCorkage, setHasCorkage] = useState(hasExistingCorkage);
-  const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>(SEED_MENU_ITEMS);
+  const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>([]);
 
   // Admin image upload state
   const [editingImageItem, setEditingImageItem] = useState<MenuItem | null>(null);
@@ -50,32 +50,22 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
   const [itemNotes, setItemNotes] = useState('');
 
-  // Sync latest product images from Supabase
+  // Fetch real menu items directly from local DB
   useEffect(() => {
     let isMounted = true;
-    async function syncDbProducts() {
+    async function loadDbMenuItems() {
       try {
-        const dbProducts = await menuApi.getProducts();
-        if (dbProducts && dbProducts.length > 0 && isMounted) {
-          setMenuItemsList((prev) =>
-            prev.map((item) => {
-              const matched = dbProducts.find(
-                (p) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
-              );
-              if (matched && matched.image_url) {
-                return { ...item, imageUrl: matched.image_url };
-              }
-              return item;
-            })
-          );
+        const items = await menuApi.getMenuItems();
+        if (isMounted && items.length > 0) {
+          setMenuItemsList(items);
         }
       } catch (err) {
-        console.warn('Failed to sync DB products in OrderEntryModal:', err);
+        console.warn('Failed to load DB menu items in OrderEntryModal:', err);
       }
     }
 
     if (visible) {
-      syncDbProducts();
+      loadDbMenuItems();
     }
 
     return () => {

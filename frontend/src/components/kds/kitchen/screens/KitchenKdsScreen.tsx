@@ -8,7 +8,7 @@ import { Sidebar, NavTabId } from '../../../navigation/Sidebar';
 import { StationHeader } from '../../common/components/StationHeader';
 import { StationTicketCard } from '../../common/components/StationTicketCard';
 import { KdsTicket } from '../../types';
-import { SEED_MENU_ITEMS } from '../../../../mock/menu.mock';
+import { supabase } from '../../../../services/supabase';
 import { SharedChatView, SharedAlertsView } from '../../../shared';
 import { StationSettingsModal } from '../../common/modals/StationSettingsModal';
 
@@ -26,23 +26,42 @@ export const KitchenKdsScreen: React.FC = () => {
     logout();
   };
 
+  const [recallTray, setRecallTray] = useState<KdsTicket[]>([]);
+  const [isRecallOpen, setIsRecallOpen] = useState(false);
+  const [isAllDayOpen, setIsAllDayOpen] = useState(false);
+  const [is86ModalOpen, setIs86ModalOpen] = useState(false);
+  const [menuList, setMenuList] = useState<any[]>([]);
+
+  // Load menu items from DB
+  React.useEffect(() => {
+    let isMounted = true;
+    async function loadMenu() {
+      try {
+        const { data } = await supabase.from('products').select('*').order('name');
+        if (isMounted && data) {
+          setMenuList(data);
+        }
+      } catch (err) {
+        console.warn('Failed to load menu products in KitchenKdsScreen:', err);
+      }
+    }
+    loadMenu();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Lookup map for product allergens
   const allergenMap = useMemo(() => {
     const map = new Map<string, string[]>();
-    SEED_MENU_ITEMS.forEach((item) => {
+    menuList.forEach((item) => {
       if (item.allergens && item.allergens.length > 0) {
         map.set(item.id, item.allergens);
         map.set(item.name.toLowerCase(), item.allergens);
       }
     });
     return map;
-  }, []);
-
-  const [recallTray, setRecallTray] = useState<KdsTicket[]>([]);
-  const [isRecallOpen, setIsRecallOpen] = useState(false);
-  const [isAllDayOpen, setIsAllDayOpen] = useState(false);
-  const [is86ModalOpen, setIs86ModalOpen] = useState(false);
-  const [menuList, setMenuList] = useState(SEED_MENU_ITEMS);
+  }, [menuList]);
 
   // Extract all active tickets containing Kitchen items (isolated by Sub-Order Rounds)
   const kitchenTickets: KdsTicket[] = useMemo(() => {

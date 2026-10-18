@@ -14,6 +14,7 @@ import { AdjustStockModal } from '../modals/AdjustStockModal';
 import { FohStatusModal } from '../modals/FohStatusModal';
 import { SharedChatView, SharedAlertsView } from '../../../shared';
 import { StationSettingsModal } from '../../common/modals/StationSettingsModal';
+import { supabase } from '../../../../services/supabase';
 
 // Initial baseline mock items matching the exact screenshot reference
 const INITIAL_BAR_TICKETS: BarTicket[] = [
@@ -319,11 +320,43 @@ export const BaristaKdsScreen: React.FC = () => {
     useOrderStore();
 
   // Local state for tickets, modals, and station configuration
-  const [tickets, setTickets] = useState<BarTicket[]>(INITIAL_BAR_TICKETS);
-  const [inventory, setInventory] = useState<StockInventoryItem[]>(INITIAL_INVENTORY);
+  const [tickets, setTickets] = useState<BarTicket[]>([]);
+  const [inventory, setInventory] = useState<StockInventoryItem[]>([]);
   const [activeSidebarTab, setActiveSidebarTab] = useState<NavTabId>('board');
   const [audioChimes, setAudioChimes] = useState(true);
   const [barOnlyFilter, setBarOnlyFilter] = useState(true);
+
+  // Load real inventory items from DB
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDbInventory() {
+      try {
+        const { data, error } = await supabase
+          .from('inventory_items')
+          .select('id, name, category, unit, current_stock, min_alert_level')
+          .order('name');
+        if (isMounted && data) {
+          setInventory(
+            data.map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              category: (item.category || 'spirits').toLowerCase(),
+              unit: item.unit,
+              inStockCount: parseFloat(item.current_stock) || 0,
+              lowStockThreshold: parseFloat(item.min_alert_level) || 0,
+              is86: (parseFloat(item.current_stock) || 0) <= 0,
+            }))
+          );
+        }
+      } catch (err) {
+        console.warn('Failed to load inventory from DB in BaristaKdsScreen:', err);
+      }
+    }
+    loadDbInventory();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Modals visibility
   const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);

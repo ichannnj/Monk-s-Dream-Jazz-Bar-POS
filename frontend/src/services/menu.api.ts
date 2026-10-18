@@ -52,6 +52,75 @@ export class MenuApi {
   }
 
   /**
+   * Fetch all active menu products mapped to the frontend MenuItem model.
+   */
+  async getMenuItems(): Promise<import('../types/floor').MenuItem[]> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select(
+          `
+          id,
+          name,
+          category_id,
+          image_url,
+          base_price,
+          station_target,
+          is_available,
+          auto_86,
+          out_of_stock_reason,
+          description,
+          allergens,
+          dietary,
+          is_resold_outside_food,
+          original_cost,
+          categories (
+            id,
+            name,
+            slug
+          ),
+          product_modifiers (
+            id,
+            name,
+            price_delta
+          )
+        `
+        )
+        .order('name');
+
+      if (error || !data) {
+        console.warn('getMenuItems query error:', error?.message);
+        return [];
+      }
+
+      return data.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        imageUrl: p.image_url || undefined,
+        category: (p.categories?.slug || 'coffee') as any,
+        price: parseFloat(p.base_price) || 0,
+        stationTarget: (p.station_target || 'bar') as 'bar' | 'kitchen',
+        description: p.description || '',
+        allergens: Array.isArray(p.allergens) ? p.allergens : [],
+        dietary: Array.isArray(p.dietary) ? p.dietary : [],
+        isAvailable: p.is_available ?? true,
+        auto86: p.auto_86 ?? false,
+        outOfStockReason: p.out_of_stock_reason || undefined,
+        isResoldOutsideFood: p.is_resold_outside_food || false,
+        originalCost: p.original_cost ? parseFloat(p.original_cost) : undefined,
+        modifiers: (p.product_modifiers || []).map((m: any) => ({
+          id: m.id,
+          name: m.name,
+          priceDelta: parseFloat(m.price_delta) || 0,
+        })),
+      }));
+    } catch (err) {
+      console.warn('getMenuItems error:', err);
+      return [];
+    }
+  }
+
+  /**
    * Fetch all product categories (Cocktails, Wine, Beer, Kitchen, Non-Alcoholic, etc.).
    */
   async getCategories() {

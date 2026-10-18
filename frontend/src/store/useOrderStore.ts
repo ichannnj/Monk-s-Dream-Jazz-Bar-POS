@@ -2,22 +2,15 @@ import { create } from 'zustand';
 import { HybridLogicalClock } from '@monks/shared';
 import {
   TableItem,
-  SEED_TABLES,
   TakeoutOrder,
-  SEED_TAKEOUT_ORDERS,
   OnlineDeliveryOrder,
-  SEED_ONLINE_ORDERS,
   CheckItem,
-  SEED_CHECKS,
   DrawerEntry,
-  SEED_DRAWER_TRANSACTIONS,
   FloorAlert,
-  SEED_ALERTS,
   ChatMessage,
-  SEED_CHAT_MESSAGES,
   OrderLineItem,
   CustomerTab,
-} from '../mockData';
+} from '../types/floor';
 import { supabase } from '../services/supabase';
 import { ordersApi } from '../services/orders.api';
 import { tablesApi } from '../services/tables.api';
@@ -118,13 +111,13 @@ interface OrderState {
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
-  tables: SEED_TABLES,
-  takeoutOrders: SEED_TAKEOUT_ORDERS,
-  onlineOrders: SEED_ONLINE_ORDERS,
-  checks: SEED_CHECKS,
-  drawerEntries: SEED_DRAWER_TRANSACTIONS,
-  alerts: SEED_ALERTS,
-  chatMessages: SEED_CHAT_MESSAGES,
+  tables: [],
+  takeoutOrders: [],
+  onlineOrders: [],
+  checks: [],
+  drawerEntries: [],
+  alerts: [],
+  chatMessages: [],
   isHydrated: false,
   offlineQueue: [],
 
@@ -1099,7 +1092,110 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         };
       });
 
-      set({ tables: mappedTables, isHydrated: true });
+      // Also fetch Takeout and Online Delivery tabs
+      const { data: nonDineInTabs } = await supabase
+        .from('tabs')
+        .select(
+          `
+          id,
+          customer_name,
+          status,
+          order_type,
+          order_channel,
+          rider_name,
+          external_order_ref,
+          corkage_amount,
+          has_corkage_fee,
+          created_at,
+          orders (
+            id,
+            order_number,
+            round_number,
+            status,
+            order_items (
+              id,
+              product_id,
+              quantity,
+              unit_price,
+              status,
+              station_target,
+              modifiers,
+              notes,
+              products (
+                name,
+                base_price,
+                station_target,
+                image_url
+              )
+            )
+          )
+        `
+        )
+        .in('order_type', ['TAKEOUT', 'ONLINE_DELIVERY']);
+
+      const dbTakeout: TakeoutOrder[] = [];
+      const dbOnline: OnlineDeliveryOrder[] = [];
+
+      (nonDineInTabs || []).forEach((t: any) => {
+        const rawOrders = t.orders || [];
+        const lineItems: OrderLineItem[] = rawOrders
+          .flatMap((o: any) => o.order_items || [])
+          .map((oi: any) => ({
+            id: oi.id,
+            productId: oi.product_id,
+            productName: oi.products?.name || 'Menu Item',
+            unitPrice: parseFloat(oi.unit_price) || 0,
+            quantity: oi.quantity || 1,
+            stationTarget: (oi.station_target || oi.products?.station_target || 'bar') as
+              'bar' | 'kitchen',
+            modifiers: Array.isArray(oi.modifiers) ? oi.modifiers : [],
+            notes: oi.notes || undefined,
+            status: (oi.status || 'PENDING').toLowerCase() as any,
+          }));
+
+        const itemsTotal = lineItems.reduce((acc, cur) => acc + cur.unitPrice * cur.quantity, 0);
+        const orderStatus =
+          lineItems.every((i) => i.status === 'ready' || i.status === 'served') &&
+          lineItems.length > 0
+            ? 'ready'
+            : lineItems.every((i) => i.status === 'served') && lineItems.length > 0
+              ? 'completed'
+              : 'preparing';
+
+        if (t.order_type === 'TAKEOUT') {
+          dbTakeout.push({
+            id: t.id,
+            ticketNumber: t.orders?.[0]?.order_number || 'T-100',
+            customerName: t.customer_name || 'Takeout Customer',
+            items: lineItems,
+            total: itemsTotal,
+            status: orderStatus as any,
+            elapsedTime: '5m',
+            isPrepaid: true,
+          });
+        } else if (t.order_type === 'ONLINE_DELIVERY') {
+          const platform = t.order_channel === 'FOODPANDA' ? 'foodpanda' : 'grabfood';
+          dbOnline.push({
+            id: t.id,
+            platform,
+            platformOrderRef: t.external_order_ref || t.orders?.[0]?.order_number || 'ONL-101',
+            riderName: t.rider_name || 'Assigned Driver',
+            customerName: t.customer_name || 'Delivery Customer',
+            items: lineItems,
+            total: itemsTotal,
+            status: orderStatus as any,
+            elapsedTime: '7m',
+            paymentStatus: platform === 'foodpanda' ? 'PAID_ONLINE_FOODPANDA' : 'PAID_ONLINE_GRAB',
+          });
+        }
+      });
+
+      set({
+        tables: mappedTables,
+        takeoutOrders: dbTakeout,
+        onlineOrders: dbOnline,
+        isHydrated: true,
+      });
     } catch (err) {
       console.warn('hydrateFromSupabase error:', err);
     }
