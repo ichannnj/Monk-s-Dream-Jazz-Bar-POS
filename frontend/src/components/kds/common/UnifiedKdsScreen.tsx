@@ -151,8 +151,10 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
 
           list.push({
             id: ticketId,
-            orderNumber: `#${table.code.replace('Table ', 'T')}-${tab.tabIndex}${roundNum > 1 ? `-R${roundNum}` : ''}`,
-            tableOrSource: `${table.code} · Tab ${tab.tabIndex}`,
+            tableId: table.id,
+            tabIndex: tab.tabIndex,
+            orderNumber: `#${table.code.replace('Table ', 'T')}-${tab.tabIndex}-R${roundNum}`,
+            tableOrSource: `${table.code} · Tab ${tab.tabIndex} (${tab.guestName || 'Guest'})`,
             stage,
             roundNumber: roundNum,
             elapsedTime: table.elapsedTime || '1m',
@@ -280,14 +282,14 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   };
 
   const handleDismissReadyTicket = (ticket: BarTicket) => {
-    if (ticket.id.startsWith('tbl-')) {
+    if (ticket.tableId && ticket.tabIndex !== undefined) {
+      markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber || 1, stationTarget);
+    } else if (ticket.id.startsWith('tbl-')) {
       const parts = ticket.id.split('-');
-      // format: tbl-${table.id}-${tab.id || tab.tabIndex}-r${roundNum}
       const tableId = parts[1];
-      const tabRef = parts[2];
       const roundNum = ticket.roundNumber || 1;
       const targetTable = tables.find((t) => t.id === tableId);
-      const tabIndex = parseInt(tabRef, 10) || targetTable?.tabs?.[0]?.tabIndex || 1;
+      const tabIndex = ticket.tabIndex || targetTable?.tabs?.[0]?.tabIndex || 1;
       markRoundServed(tableId, tabIndex, roundNum, stationTarget);
     } else if (ticket.id.startsWith('takeout-')) {
       const orderId = ticket.id.replace('takeout-', '');

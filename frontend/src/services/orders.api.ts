@@ -59,6 +59,7 @@ export class OrdersApi {
           id,
           tab_id,
           order_number,
+          round_number,
           order_channel,
           order_type,
           status,
@@ -175,26 +176,6 @@ export class OrdersApi {
     }
 
     try {
-      // Check if table has an open tab
-      if (params.tableId) {
-        const isTableUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-          params.tableId
-        );
-        if (isTableUuid) {
-          const { data: openTab } = await supabase
-            .from('tabs')
-            .select('id')
-            .eq('table_id', params.tableId)
-            .eq('status', 'OPEN')
-            .order('created_at', { ascending: false })
-            .limit(1);
-
-          if (openTab && openTab.length > 0) {
-            return openTab[0].id;
-          }
-        }
-      }
-
       // Resolve valid table UUID if needed
       let validTableId: string | null = null;
       if (params.tableId) {
@@ -211,6 +192,22 @@ export class OrdersApi {
             .or(`table_number.eq.${params.tableId},table_number.eq.Table ${params.tableId}`)
             .limit(1);
           validTableId = tableData?.[0]?.id || null;
+        }
+      }
+
+      // Check if table has an open tab specifically matching this customer name
+      if (validTableId && params.customerName) {
+        const { data: matchingTabs } = await supabase
+          .from('tabs')
+          .select('id, customer_name')
+          .eq('table_id', validTableId)
+          .eq('status', 'OPEN');
+
+        const found = matchingTabs?.find(
+          (t) => t.customer_name.trim().toLowerCase() === params.customerName?.trim().toLowerCase()
+        );
+        if (found) {
+          return found.id;
         }
       }
 

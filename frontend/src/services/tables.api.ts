@@ -58,6 +58,65 @@ export class TablesApi {
   }
 
   /**
+   * Immediately open and persist a new customer tab for a table in Supabase.
+   */
+  async openTab(params: {
+    tableId: string;
+    customerName: string;
+    guestCount?: number;
+    orderType?: 'DINE_IN' | 'TAKEOUT' | 'ONLINE_DELIVERY';
+    orderChannel?: 'CAFE_AREA' | 'BAR_AREA';
+  }): Promise<{ id: string; customerName: string; tableId: string }> {
+    try {
+      const isTableUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+        params.tableId
+      );
+      let validTableId = params.tableId;
+      if (!isTableUuid) {
+        const { data } = await supabase
+          .from('tables')
+          .select('id')
+          .or(`table_number.eq.${params.tableId},table_number.eq.Table ${params.tableId}`)
+          .limit(1);
+        if (data && data.length > 0) validTableId = data[0].id;
+      }
+
+      const { data, error } = await supabase
+        .from('tabs')
+        .insert({
+          table_id: validTableId,
+          customer_name: params.customerName.trim() || 'Guest',
+          order_type: params.orderType || 'DINE_IN',
+          order_channel: params.orderChannel || 'CAFE_AREA',
+          status: 'OPEN',
+        })
+        .select('id, customer_name, table_id')
+        .single();
+
+      if (error) {
+        throw new Error(error.message || 'Failed to open customer tab.');
+      }
+
+      // Mark physical table as occupied
+      if (validTableId) {
+        await supabase
+          .from('tables')
+          .update({ is_occupied: true, updated_at: new Date().toISOString() })
+          .eq('id', validTableId);
+      }
+
+      return {
+        id: data.id,
+        customerName: data.customer_name,
+        tableId: data.table_id || validTableId,
+      };
+    } catch (err) {
+      console.error('openTab error:', err);
+      throw err;
+    }
+  }
+
+  /**
    * Transfer a tab or entire table to a new location.
    * Calls PostgreSQL stored procedure `transfer_table_tab`.
    */

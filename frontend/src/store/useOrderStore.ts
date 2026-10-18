@@ -130,15 +130,21 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   offlineQueue: [],
 
   openTableTab: (tableId, guestName, guestCount = 1) => {
+    const finalGuestName = guestName.trim() || 'Guest';
+    let assignedTabIndex = 1;
+
     set((state) => {
       const updatedTables = state.tables.map((t) => {
         if (t.id !== tableId) return t;
 
         const nextTabIndex = t.activeTabs.length > 0 ? Math.max(...t.activeTabs) + 1 : 1;
+        assignedTabIndex = nextTabIndex;
         const newTab: CustomerTab = {
           id: `tab-${tableId}-${nextTabIndex}`,
           tabIndex: nextTabIndex,
-          guestName: guestName.trim() || `Guest ${nextTabIndex}`,
+          guestName: finalGuestName.includes('Guest')
+            ? `${finalGuestName} ${nextTabIndex}`
+            : finalGuestName,
           status: 'open',
           totalAmount: 0,
           items: [],
@@ -163,6 +169,32 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
       return { tables: updatedTables };
     });
+
+    // Immediately persist tab to Supabase public.tabs
+    tablesApi
+      .openTab({
+        tableId,
+        customerName: finalGuestName,
+        guestCount,
+      })
+      .then((res) => {
+        if (res && res.id) {
+          set((state) => ({
+            tables: state.tables.map((t) => {
+              if (t.id !== tableId) return t;
+              return {
+                ...t,
+                tabs: (t.tabs || []).map((tb) =>
+                  tb.tabIndex === assignedTabIndex ? { ...tb, id: res.id } : tb
+                ),
+              };
+            }),
+          }));
+        }
+      })
+      .catch((err) => {
+        console.warn('Background Supabase openTab failed:', err);
+      });
   },
 
   addItemsToTab: (tableId, tabIndex, items, hasCorkageFee = false, corkageAmount = 0) => {
@@ -1121,6 +1153,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             orders (
               id,
               order_number,
+              round_number,
               status,
               order_items (
                 id,
@@ -1387,7 +1420,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       },
 
       onTabChange: (payload) => {
-        if (payload.new && (payload.new.status === 'BILLED' || payload.new.status === 'CLOSED')) {
+        if (payload.eventType === 'INSERT') {
+          get().hydrateFromSupabase();
+        } else if (
+          payload.new &&
+          (payload.new.status === 'BILLED' || payload.new.status === 'CLOSED')
+        ) {
           const tabId = payload.new.id;
           set((state) => ({
             tables: state.tables.map((t) => ({
@@ -1397,6 +1435,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
               ),
             })),
           }));
+        }
+      },
+
+      onOrderChange: (payload) => {
+        if (payload.eventType === 'INSERT') {
+          get().hydrateFromSupabase();
         }
       },
 

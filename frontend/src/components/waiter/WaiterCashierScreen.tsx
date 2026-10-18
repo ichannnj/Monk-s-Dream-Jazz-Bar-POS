@@ -60,6 +60,13 @@ export const WaiterCashierScreen: React.FC = () => {
   // Modal Visibility States
   const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
+
+  // Always derive fresh live selected table from store
+  const liveSelectedTable = useMemo(() => {
+    if (!selectedTable) return null;
+    return tables.find((t) => t.id === selectedTable.id) || selectedTable;
+  }, [selectedTable, tables]);
+
   const [tableToTransfer, setTableToTransfer] = useState<TableItem | null>(null);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
 
@@ -171,13 +178,19 @@ export const WaiterCashierScreen: React.FC = () => {
       { title: 'Dine-In Tab Created' }
     );
 
+    if (targetTable) {
+      setSelectedTable(targetTable);
+    }
+
     // Immediately open order entry catalog for this newly opened tab!
     setOrderEntryContext({
       type: 'dine_in',
-      title: `Table ${targetTable?.code || ''} • Tab: "${guestName}"`,
+      title: `Table ${targetTable?.code || ''} • Tab: "${guestName}" • Round 1`,
       tableId: tableId,
       tabIndex: nextTabIndex,
+      roundNumber: 1,
       initialItems: [],
+      previousTabItems: [],
       hasExistingCorkage: false,
     });
     setIsOrderEntryOpen(true);
@@ -500,7 +513,7 @@ export const WaiterCashierScreen: React.FC = () => {
       <WaiterModalsCluster
         tables={tables}
         takeoutOrdersCount={takeoutOrders.length}
-        selectedTable={selectedTable}
+        selectedTable={liveSelectedTable}
         isActionModalOpen={isActionModalOpen}
         onCloseActionModal={() => setIsActionModalOpen(false)}
         onOpenOrderEntryFromModal={handleOpenOrderEntryFromModal}
