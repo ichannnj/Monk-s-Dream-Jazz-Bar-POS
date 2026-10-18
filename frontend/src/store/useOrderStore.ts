@@ -1022,9 +1022,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
         const customerTabs: CustomerTab[] = openTabs.map((tb: any, idx: number) => {
           const rawOrders = tb.orders || [];
-          const lineItems: OrderLineItem[] = rawOrders
-            .flatMap((o: any) => o.order_items || [])
-            .map((oi: any) => ({
+          const lineItems: OrderLineItem[] = rawOrders.flatMap((o: any) =>
+            (o.order_items || []).map((oi: any) => ({
               id: oi.id,
               productId: oi.product_id,
               productName: oi.products?.name || 'Menu Item',
@@ -1035,7 +1034,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
               modifiers: Array.isArray(oi.modifiers) ? oi.modifiers : [],
               notes: oi.notes || undefined,
               status: (oi.status || 'PENDING').toLowerCase() as any,
-            }));
+              roundNumber: o.round_number || 1,
+            }))
+          );
 
           const itemsSum = lineItems.reduce((acc, cur) => acc + cur.unitPrice * cur.quantity, 0);
           const corkage = parseFloat(tb.corkage_amount) || 0;
@@ -1138,9 +1139,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
       (nonDineInTabs || []).forEach((t: any) => {
         const rawOrders = t.orders || [];
-        const lineItems: OrderLineItem[] = rawOrders
-          .flatMap((o: any) => o.order_items || [])
-          .map((oi: any) => ({
+        const lineItems: OrderLineItem[] = rawOrders.flatMap((o: any) =>
+          (o.order_items || []).map((oi: any) => ({
             id: oi.id,
             productId: oi.product_id,
             productName: oi.products?.name || 'Menu Item',
@@ -1151,7 +1151,9 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             modifiers: Array.isArray(oi.modifiers) ? oi.modifiers : [],
             notes: oi.notes || undefined,
             status: (oi.status || 'PENDING').toLowerCase() as any,
-          }));
+            roundNumber: o.round_number || 1,
+          }))
+        );
 
         const itemsTotal = lineItems.reduce((acc, cur) => acc + cur.unitPrice * cur.quantity, 0);
         const orderStatus =
