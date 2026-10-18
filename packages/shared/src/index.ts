@@ -45,3 +45,4 @@ export const ProductSchema = z.object({
 export type Product = z.infer<typeof ProductSchema>;
 
 export * from './database.types.js';
+export * from './hlc.js';

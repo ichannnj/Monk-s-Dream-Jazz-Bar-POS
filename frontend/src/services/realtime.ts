@@ -44,6 +44,17 @@ export interface BuzzoutPayload {
   totalItemsCount: number;
 }
 
+export interface GlobalRealtimeCallbacks {
+  onTableChange?: (payload: any) => void;
+  onTabChange?: (payload: any) => void;
+  onOrderItemChange?: (payload: any) => void;
+  onOrderChange?: (payload: any) => void;
+  onProductChange?: (payload: any) => void;
+  onTransferLog?: (payload: any) => void;
+  onBuzzout?: (payload: any) => void;
+  onCashDrawerChange?: (payload: any) => void;
+}
+
 export class RealtimeGateway {
   private channels: Map<string, RealtimeChannel> = new Map();
 
@@ -192,6 +203,56 @@ export class RealtimeGateway {
           onProductChange(payload);
         }
       )
+      .subscribe();
+
+    this.channels.set(channelName, channel);
+
+    return () => {
+      channel.unsubscribe();
+      this.channels.delete(channelName);
+    };
+  }
+
+  /**
+   * Subscribe to all Floor POS and station events across all tablets simultaneously.
+   * Single websocket connection multiplexed for optimal performance.
+   */
+  subscribeGlobalPOSRealtime(callbacks: GlobalRealtimeCallbacks): () => void {
+    const channelName = 'pos_global_sync';
+    if (this.channels.has(channelName)) {
+      this.channels.get(channelName)?.unsubscribe();
+    }
+
+    const channel = supabase
+      .channel(channelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload) =>
+        callbacks.onTableChange?.(payload)
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tabs' }, (payload) =>
+        callbacks.onTabChange?.(payload)
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) =>
+        callbacks.onOrderChange?.(payload)
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, (payload) =>
+        callbacks.onOrderItemChange?.(payload)
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) =>
+        callbacks.onProductChange?.(payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'table_transfer_logs' },
+        (payload) => callbacks.onTransferLog?.(payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'cash_drawer_transactions' },
+        (payload) => callbacks.onCashDrawerChange?.(payload)
+      )
+      .on('broadcast', { event: 'foh:buzzout' }, (event) => {
+        callbacks.onBuzzout?.(event.payload);
+      })
       .subscribe();
 
     this.channels.set(channelName, channel);

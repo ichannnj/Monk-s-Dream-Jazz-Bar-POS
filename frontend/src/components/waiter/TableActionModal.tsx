@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, Modal, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, Pressable, Modal, StyleSheet, ScrollView, TextInput } from 'react-native';
 import {
   X,
   PlusCircle,
@@ -8,8 +8,13 @@ import {
   UtensilsCrossed,
   Wine,
   ChefHat,
+  Trash2,
+  AlertTriangle,
 } from 'lucide-react-native';
-import { TableItem } from '../../mockData';
+import { TableItem, OrderLineItem } from '../../mockData';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useOrderStore } from '../../store/useOrderStore';
+import { toast } from '../../store/useToastStore';
 
 interface TableActionModalProps {
   visible: boolean;
@@ -30,7 +35,15 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   onOpenNewTab,
   onCheckout,
 }) => {
+  const { currentUser } = useAuthStore();
+  const { voidOrderItem } = useOrderStore();
+
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(table?.activeTabs?.[0] || 1);
+  const [itemToVoid, setItemToVoid] = useState<OrderLineItem | null>(null);
+  const [voidReason, setVoidReason] = useState<string>('Customer Changed Mind');
+  const [managerPin, setManagerPin] = useState<string>('');
+  const [pinError, setPinError] = useState<string>('');
+  const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
 
   React.useEffect(() => {
     if (table) {
@@ -49,161 +62,492 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
 
   const tabTotal = currentTab?.totalAmount ?? (table.totalAmount || 0);
 
+  const handleOpenVoidModal = (item: OrderLineItem) => {
+    setItemToVoid(item);
+    setVoidReason(
+      item.status === 'pending' ? 'Customer Changed Mind' : 'Preparation Error / Spoilage'
+    );
+    setManagerPin('');
+    setPinError('');
+    setIsVoidModalOpen(true);
+  };
+
+  const handleConfirmVoid = async () => {
+    if (!itemToVoid || !table) return;
+
+    const isPostPrep = itemToVoid.status === 'preparing' || itemToVoid.status === 'ready';
+
+    if (isPostPrep) {
+      if (managerPin !== '9999') {
+        setPinError('Invalid Manager PIN. Admin PIN (9999) required for post-prep waste.');
+        return;
+      }
+    }
+
+    const staffId = currentUser?.id || '00000000-0000-0000-0000-000000000001';
+    await voidOrderItem(itemToVoid.id, staffId, voidReason, table.id, selectedTabIndex);
+
+    toast.success(
+      `${itemToVoid.productName} voided (${isPostPrep ? 'Waste Logged' : 'Stock Restored'})`,
+      {
+        title: 'Item Cancelled',
+      }
+    );
+
+    setIsVoidModalOpen(false);
+    setItemToVoid(null);
+  };
+
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
-          accessibilityLabel="Close modal"
-        />
-        <View style={styles.modalCard}>
-          {/* 1. Header */}
-          <View style={styles.modalHeader}>
-            <View style={styles.headerLeft}>
-              <View style={styles.tableCodeBadge}>
-                <Text style={styles.tableCodeText}>{table.code}</Text>
+    <>
+      <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+        <View style={styles.backdrop}>
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={onClose}
+            accessibilityLabel="Close modal"
+          />
+          <View style={styles.modalCard}>
+            {/* 1. Header */}
+            <View style={styles.modalHeader}>
+              <View style={styles.headerLeft}>
+                <View style={styles.tableCodeBadge}>
+                  <Text style={styles.tableCodeText}>{table.code}</Text>
+                </View>
+                <View>
+                  <Text style={styles.headerTitle}>
+                    Table {table.code} · {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
+                  </Text>
+                  <Text style={styles.headerSubtitle}>
+                    {table.guests > 0 ? `${table.guests} Guests · ` : ''}
+                    {table.seats} Seats ·{' '}
+                    {table.assignedStaff ? table.assignedStaff.name : 'Unassigned'}
+                  </Text>
+                </View>
               </View>
-              <View>
-                <Text style={styles.headerTitle}>
-                  Table {table.code} · {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
-                </Text>
-                <Text style={styles.headerSubtitle}>
-                  {table.guests > 0 ? `${table.guests} Guests · ` : ''}
-                  {table.seats} Seats ·{' '}
-                  {table.assignedStaff ? table.assignedStaff.name : 'Unassigned'}
-                </Text>
-              </View>
-            </View>
 
-            <Pressable
-              onPress={onClose}
-              style={styles.closeBtn}
-              accessibilityRole="button"
-              accessibilityLabel="Close table actions"
-            >
-              <X size={20} color="#6b7280" />
-            </Pressable>
-          </View>
-
-          {/* 2. Tab Selector */}
-          {table.tabs && table.tabs.length > 0 ? (
-            <View style={styles.tabSelectorRow}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.tabsButtonGroup}
+              <Pressable
+                onPress={onClose}
+                style={styles.closeBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Close table actions"
               >
-                {table.tabs.map((tab) => {
-                  const isActive = selectedTabIndex === tab.tabIndex;
-
-                  return (
-                    <Pressable
-                      key={tab.id}
-                      onPress={() => setSelectedTabIndex(tab.tabIndex)}
-                      style={[styles.tabSelectBtn, isActive && styles.tabSelectBtnActive]}
-                    >
-                      <Text
-                        style={[styles.tabSelectBtnText, isActive && styles.tabSelectBtnTextActive]}
-                      >
-                        Tab #{tab.tabIndex}: {tab.guestName} (${tab.totalAmount.toFixed(2)})
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
+                <X size={20} color="#6b7280" />
+              </Pressable>
             </View>
-          ) : null}
 
-          {/* 3. Items on Tab Section */}
-          <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
-            <View style={styles.itemsPreviewBox}>
-              <View style={styles.itemsHeaderRow}>
-                <Text style={styles.itemsPreviewTitle}>
-                  Items ({currentTab?.items.length || 0}) · {currentTab?.guestName || 'Guest Tab'}
-                </Text>
-                <Text style={styles.itemsHeaderTotal}>${tabTotal.toFixed(2)}</Text>
+            {/* 2. Tab Selector */}
+            {table.tabs && table.tabs.length > 0 ? (
+              <View style={styles.tabSelectorRow}>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.tabsButtonGroup}
+                >
+                  {table.tabs.map((tab) => {
+                    const isActive = selectedTabIndex === tab.tabIndex;
+
+                    return (
+                      <Pressable
+                        key={tab.id}
+                        onPress={() => setSelectedTabIndex(tab.tabIndex)}
+                        style={[styles.tabSelectBtn, isActive && styles.tabSelectBtnActive]}
+                      >
+                        <Text
+                          style={[
+                            styles.tabSelectBtnText,
+                            isActive && styles.tabSelectBtnTextActive,
+                          ]}
+                        >
+                          Tab #{tab.tabIndex}: {tab.guestName} (${tab.totalAmount.toFixed(2)})
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            ) : null}
+
+            {/* 3. Items on Tab Section */}
+            <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.itemsPreviewBox}>
+                <View style={styles.itemsHeaderRow}>
+                  <Text style={styles.itemsPreviewTitle}>
+                    Items ({currentTab?.items.length || 0}) · {currentTab?.guestName || 'Guest Tab'}
+                  </Text>
+                  <Text style={styles.itemsHeaderTotal}>${tabTotal.toFixed(2)}</Text>
+                </View>
+
+                {currentTab && currentTab.items.length > 0 ? (
+                  currentTab.items.map((item, idx) => {
+                    const isVoided = item.status === 'cancelled';
+                    return (
+                      <View key={item.id || idx} style={styles.itemRow}>
+                        <View style={styles.itemRowLeft}>
+                          {item.stationTarget === 'bar' ? (
+                            <Wine size={13} color={isVoided ? '#9ca3af' : '#0284c7'} />
+                          ) : (
+                            <ChefHat size={13} color={isVoided ? '#9ca3af' : '#ea580c'} />
+                          )}
+                          <Text
+                            style={[
+                              styles.itemName,
+                              isVoided && { textDecorationLine: 'line-through', color: '#9ca3af' },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {item.quantity}x {item.productName}
+                          </Text>
+
+                          {/* Round Badge */}
+                          {item.roundNumber ? (
+                            <View
+                              style={{
+                                backgroundColor: '#f1f5f9',
+                                paddingHorizontal: 5,
+                                paddingVertical: 1,
+                                borderRadius: 4,
+                              }}
+                            >
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#64748b' }}>
+                                R{item.roundNumber}
+                              </Text>
+                            </View>
+                          ) : null}
+
+                          {/* Item Status Badge */}
+                          <View
+                            style={{
+                              backgroundColor:
+                                item.status === 'ready'
+                                  ? '#dcfce7'
+                                  : item.status === 'preparing'
+                                    ? '#fef3c7'
+                                    : item.status === 'served'
+                                      ? '#f1f5f9'
+                                      : isVoided
+                                        ? '#fee2e2'
+                                        : '#f3f4f6',
+                              paddingHorizontal: 5,
+                              paddingVertical: 1,
+                              borderRadius: 4,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 10,
+                                fontWeight: '700',
+                                textTransform: 'uppercase',
+                                color:
+                                  item.status === 'ready'
+                                    ? '#15803d'
+                                    : item.status === 'preparing'
+                                      ? '#b45309'
+                                      : item.status === 'served'
+                                        ? '#475569'
+                                        : isVoided
+                                          ? '#b91c1c'
+                                          : '#6b7280',
+                              }}
+                            >
+                              {isVoided ? 'VOIDED' : item.status}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Text
+                            style={[
+                              styles.itemPrice,
+                              isVoided && { textDecorationLine: 'line-through', color: '#9ca3af' },
+                            ]}
+                          >
+                            ${(item.unitPrice * item.quantity).toFixed(2)}
+                          </Text>
+
+                          {!isVoided ? (
+                            <Pressable
+                              onPress={() => handleOpenVoidModal(item)}
+                              style={{
+                                padding: 5,
+                                borderRadius: 6,
+                                backgroundColor: '#fef2f2',
+                              }}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Void ${item.productName}`}
+                            >
+                              <Trash2 size={13} color="#ef4444" />
+                            </Pressable>
+                          ) : null}
+                        </View>
+                      </View>
+                    );
+                  })
+                ) : (
+                  <Text style={styles.emptyItemsText}>No items added yet to this tab.</Text>
+                )}
               </View>
 
-              {currentTab && currentTab.items.length > 0 ? (
-                currentTab.items.map((item, idx) => (
-                  <View key={idx} style={styles.itemRow}>
-                    <View style={styles.itemRowLeft}>
-                      {item.stationTarget === 'bar' ? (
-                        <Wine size={13} color="#0284c7" />
-                      ) : (
-                        <ChefHat size={13} color="#ea580c" />
-                      )}
-                      <Text style={styles.itemName}>
-                        {item.quantity}x {item.productName}
-                      </Text>
-                    </View>
-                    <Text style={styles.itemPrice}>
-                      ${(item.unitPrice * item.quantity).toFixed(2)}
+              {/* 4. Streamlined Actions */}
+              <View style={styles.actionsContainer}>
+                {/* Primary Actions */}
+                <View style={styles.primaryActionsRow}>
+                  <Pressable
+                    onPress={() => {
+                      onClose();
+                      onOpenOrderEntry(table, selectedTabIndex);
+                    }}
+                    style={[styles.primaryActionBtn, styles.btnOrder]}
+                  >
+                    <UtensilsCrossed size={16} color="#ffffff" strokeWidth={2.3} />
+                    <Text style={styles.primaryActionBtnText}>+ Order Items</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      onClose();
+                      onCheckout(table, selectedTabIndex);
+                    }}
+                    style={[styles.primaryActionBtn, styles.btnSettle]}
+                  >
+                    <CreditCard size={16} color="#ffffff" strokeWidth={2.3} />
+                    <Text style={styles.primaryActionBtnText}>Settle · ${tabTotal.toFixed(2)}</Text>
+                  </Pressable>
+                </View>
+
+                {/* Secondary Actions */}
+                <View style={styles.secondaryActionsRow}>
+                  <Pressable
+                    onPress={() => {
+                      onClose();
+                      onTransferTable(table);
+                    }}
+                    style={styles.secondaryActionBtn}
+                  >
+                    <Repeat size={14} color="#641b2a" strokeWidth={2.2} />
+                    <Text style={styles.secondaryActionBtnText}>Transfer Tab/Table</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      onClose();
+                      onOpenNewTab(table);
+                    }}
+                    style={styles.secondaryActionBtn}
+                  >
+                    <PlusCircle size={14} color="#15803d" strokeWidth={2.2} />
+                    <Text style={styles.secondaryActionBtnTextGreen}>+ Open Split Tab</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Void / Cancellation Modal */}
+      {isVoidModalOpen && itemToVoid ? (
+        <Modal
+          visible={isVoidModalOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setIsVoidModalOpen(false)}
+        >
+          <View style={styles.backdrop}>
+            <View
+              style={{
+                width: '90%',
+                maxWidth: 420,
+                backgroundColor: '#ffffff',
+                borderRadius: 18,
+                padding: 20,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 12,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View
+                    style={{
+                      width: 34,
+                      height: 34,
+                      borderRadius: 10,
+                      backgroundColor: '#fee2e2',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Trash2 size={18} color="#b91c1c" />
+                  </View>
+                  <View>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>
+                      Void Order Item
+                    </Text>
+                    <Text style={{ fontSize: 12, color: '#6b7280' }}>
+                      {itemToVoid.quantity}x {itemToVoid.productName} ($
+                      {(itemToVoid.unitPrice * itemToVoid.quantity).toFixed(2)})
                     </Text>
                   </View>
-                ))
+                </View>
+                <Pressable onPress={() => setIsVoidModalOpen(false)} style={styles.closeBtn}>
+                  <X size={18} color="#6b7280" />
+                </Pressable>
+              </View>
+
+              {/* Status Warning */}
+              {itemToVoid.status === 'preparing' || itemToVoid.status === 'ready' ? (
+                <View
+                  style={{
+                    backgroundColor: '#fffbeb',
+                    borderWidth: 1,
+                    borderColor: '#fef3c7',
+                    borderRadius: 10,
+                    padding: 10,
+                    marginBottom: 14,
+                  }}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#92400e' }}>
+                    ⚠️ Item already in {itemToVoid.status.toUpperCase()} stage!
+                  </Text>
+                  <Text style={{ fontSize: 11, color: '#b45309', marginTop: 2 }}>
+                    Ingredients were used. Voiding will record a loss in waste logs and requires
+                    Manager PIN (9999).
+                  </Text>
+                </View>
               ) : (
-                <Text style={styles.emptyItemsText}>No items added yet to this tab.</Text>
+                <View
+                  style={{
+                    backgroundColor: '#f0fdf4',
+                    borderWidth: 1,
+                    borderColor: '#bbf7d0',
+                    borderRadius: 10,
+                    padding: 10,
+                    marginBottom: 14,
+                  }}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#166534' }}>
+                    Pre-Preparation Cancellation
+                  </Text>
+                  <Text style={{ fontSize: 11, color: '#15803d', marginTop: 2 }}>
+                    Item is PENDING. Voiding will restore ingredient stocks to inventory.
+                  </Text>
+                </View>
               )}
-            </View>
 
-            {/* 4. Streamlined Actions */}
-            <View style={styles.actionsContainer}>
-              {/* Primary Actions */}
-              <View style={styles.primaryActionsRow}>
-                <Pressable
-                  onPress={() => {
-                    onClose();
-                    onOpenOrderEntry(table, selectedTabIndex);
-                  }}
-                  style={[styles.primaryActionBtn, styles.btnOrder]}
-                >
-                  <UtensilsCrossed size={16} color="#ffffff" strokeWidth={2.3} />
-                  <Text style={styles.primaryActionBtnText}>+ Order Items</Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => {
-                    onClose();
-                    onCheckout(table, selectedTabIndex);
-                  }}
-                  style={[styles.primaryActionBtn, styles.btnSettle]}
-                >
-                  <CreditCard size={16} color="#ffffff" strokeWidth={2.3} />
-                  <Text style={styles.primaryActionBtnText}>Settle · ${tabTotal.toFixed(2)}</Text>
-                </Pressable>
+              {/* Reason Selector */}
+              <Text style={{ fontSize: 12, fontWeight: '700', color: '#374151', marginBottom: 6 }}>
+                Cancellation Reason:
+              </Text>
+              <View style={{ gap: 6, marginBottom: 14 }}>
+                {[
+                  'Customer Changed Mind',
+                  'Accidental Entry',
+                  'Preparation Error / Spoilage',
+                  'Customer Return',
+                ].map((r) => (
+                  <Pressable
+                    key={r}
+                    onPress={() => setVoidReason(r)}
+                    style={{
+                      paddingVertical: 8,
+                      paddingHorizontal: 12,
+                      borderRadius: 8,
+                      borderWidth: 1.5,
+                      borderColor: voidReason === r ? '#641b2a' : '#e5e7eb',
+                      backgroundColor: voidReason === r ? '#fdf2f4' : '#ffffff',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        fontWeight: '600',
+                        color: voidReason === r ? '#641b2a' : '#4b5563',
+                      }}
+                    >
+                      {r}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
 
-              {/* Secondary Actions */}
-              <View style={styles.secondaryActionsRow}>
-                <Pressable
-                  onPress={() => {
-                    onClose();
-                    onTransferTable(table);
-                  }}
-                  style={styles.secondaryActionBtn}
-                >
-                  <Repeat size={14} color="#641b2a" strokeWidth={2.2} />
-                  <Text style={styles.secondaryActionBtnText}>Transfer Tab/Table</Text>
-                </Pressable>
+              {/* Manager PIN (if post-prep) */}
+              {itemToVoid.status === 'preparing' || itemToVoid.status === 'ready' ? (
+                <View style={{ marginBottom: 14 }}>
+                  <Text
+                    style={{ fontSize: 12, fontWeight: '700', color: '#374151', marginBottom: 4 }}
+                  >
+                    Manager 4-Digit PIN (9999):
+                  </Text>
+                  <TextInput
+                    value={managerPin}
+                    onChangeText={(txt) => {
+                      setManagerPin(txt);
+                      setPinError('');
+                    }}
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    secureTextEntry
+                    placeholder="Enter 4-digit PIN"
+                    placeholderTextColor="#9ca3af"
+                    style={{
+                      borderWidth: 1.5,
+                      borderColor: pinError ? '#ef4444' : '#d1d5db',
+                      borderRadius: 10,
+                      paddingHorizontal: 12,
+                      paddingVertical: 10,
+                      fontSize: 16,
+                      fontWeight: '700',
+                      letterSpacing: 4,
+                      textAlign: 'center',
+                    }}
+                  />
+                  {pinError ? (
+                    <Text style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{pinError}</Text>
+                  ) : null}
+                </View>
+              ) : null}
 
+              {/* Actions */}
+              <View style={{ flexDirection: 'row', gap: 10 }}>
                 <Pressable
-                  onPress={() => {
-                    onClose();
-                    onOpenNewTab(table);
+                  onPress={() => setIsVoidModalOpen(false)}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 10,
+                    backgroundColor: '#f3f4f6',
+                    alignItems: 'center',
                   }}
-                  style={styles.secondaryActionBtn}
                 >
-                  <PlusCircle size={14} color="#15803d" strokeWidth={2.2} />
-                  <Text style={styles.secondaryActionBtnTextGreen}>+ Open Split Tab</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#4b5563' }}>
+                    Keep Item
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleConfirmVoid}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 12,
+                    borderRadius: 10,
+                    backgroundColor: '#b91c1c',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#ffffff' }}>
+                    Confirm Void
+                  </Text>
                 </Pressable>
               </View>
             </View>
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
+          </View>
+        </Modal>
+      ) : null}
+    </>
   );
 };
 

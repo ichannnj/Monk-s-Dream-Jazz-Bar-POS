@@ -34,3 +34,4 @@ export const ProductSchema = z.object({
     allergens: z.array(z.string()).default([]),
 });
 export * from './database.types.js';
+export * from './hlc.js';

@@ -34,7 +34,9 @@ export interface OrderLineItem {
   stationTarget: 'bar' | 'kitchen';
   modifiers?: string[];
   notes?: string;
-  status: 'pending' | 'preparing' | 'ready' | 'served';
+  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  roundNumber?: number;
+  voidReason?: string;
 }
 
 export interface CustomerTab {
@@ -151,7 +153,7 @@ export interface FloorAlert {
   id: string;
   title: string;
   description: string;
-  type: 'station_ready' | 'auto_86' | 'transfer' | 'system';
+  type: 'station_ready' | 'auto_86' | 'transfer' | 'system' | 'spoilage_alert';
   time: string;
   isRead: boolean;
   targetRef?: string;

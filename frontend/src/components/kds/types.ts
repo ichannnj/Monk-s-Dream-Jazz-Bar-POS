@@ -16,6 +16,10 @@ export interface KdsTicket {
   minutesElapsed: number;
   items: OrderLineItem[];
   transferAlert?: string; // e.g., "Re-routed from Table 2"
+  roundNumber?: number;
+  badges?: string[];
+  voidAlert?: string;
+  multiStationTag?: string;
 }
 
 export interface KdsFilterState {

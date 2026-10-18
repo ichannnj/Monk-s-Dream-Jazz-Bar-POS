@@ -120,6 +120,13 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
               </View>
             );
           }
+          if (badge.startsWith('ROUND')) {
+            return (
+              <View key={idx} style={styles.badgeRound}>
+                <Text style={styles.badgeRoundText}>{badge}</Text>
+              </View>
+            );
+          }
           return null;
         })}
       </View>
@@ -387,6 +394,20 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     color: '#15803d',
+    letterSpacing: 0.4,
+  },
+  badgeRound: {
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  badgeRoundText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#1d4ed8',
     letterSpacing: 0.4,
   },
   multiStationRow: {

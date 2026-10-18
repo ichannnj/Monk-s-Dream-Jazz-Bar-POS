@@ -57,9 +57,10 @@ export const FohRunnerScreen: React.FC = () => {
     // 1. Tables
     tables.forEach((table) => {
       (table.tabs || []).forEach((tab) => {
-        if (tab.items.length > 0 && tab.items.some((i) => i.status !== 'served')) {
-          const readyCount = tab.items.filter((i) => i.status === 'ready').length;
-          const totalCount = tab.items.length;
+        const activeItems = (tab.items || []).filter((i) => i.status !== 'cancelled');
+        if (activeItems.length > 0 && activeItems.some((i) => i.status !== 'served')) {
+          const readyCount = activeItems.filter((i) => i.status === 'ready').length;
+          const totalCount = activeItems.length;
           const allDone = readyCount === totalCount && totalCount > 0;
 
           list.push({
@@ -81,8 +82,9 @@ export const FohRunnerScreen: React.FC = () => {
     // 2. Takeout
     takeoutOrders.forEach((order) => {
       if (order.status !== 'completed') {
-        const readyCount = order.items.filter((i) => i.status === 'ready').length;
-        const totalCount = order.items.length;
+        const activeItems = (order.items || []).filter((i) => i.status !== 'cancelled');
+        const readyCount = activeItems.filter((i) => i.status === 'ready').length;
+        const totalCount = activeItems.length;
         const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
 
         list.push({
@@ -103,8 +105,9 @@ export const FohRunnerScreen: React.FC = () => {
     // 3. Online
     onlineOrders.forEach((order) => {
       if (order.status !== 'completed') {
-        const readyCount = order.items.filter((i) => i.status === 'ready').length;
-        const totalCount = order.items.length;
+        const activeItems = (order.items || []).filter((i) => i.status !== 'cancelled');
+        const readyCount = activeItems.filter((i) => i.status === 'ready').length;
+        const totalCount = activeItems.length;
         const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
         const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
 
@@ -136,7 +139,9 @@ export const FohRunnerScreen: React.FC = () => {
   const handleMarkServed = (ticket: RunnerTicket) => {
     // Mark items as served
     ticket.items.forEach((item) => {
-      updateOrderItemStatus(item.id, 'served');
+      if (item.status !== 'cancelled') {
+        updateOrderItemStatus(item.id, 'served');
+      }
     });
 
     if (ticket.orderType === 'takeout') {
@@ -148,6 +153,15 @@ export const FohRunnerScreen: React.FC = () => {
     }
 
     toast.success(`Handoff complete for ${ticket.sourceTitle}`);
+  };
+
+  const handleMarkPartialServed = (ticket: RunnerTicket, target: 'bar' | 'kitchen') => {
+    ticket.items
+      .filter((i) => i.stationTarget === target && i.status === 'ready')
+      .forEach((item) => {
+        updateOrderItemStatus(item.id, 'served');
+      });
+    toast.success(`Dispatched ${target === 'bar' ? 'Drinks' : 'Food'} for ${ticket.sourceTitle}`);
   };
 
   const unreadAlertCount = alerts.filter((a) => !a.isRead).length;
@@ -292,6 +306,79 @@ export const FohRunnerScreen: React.FC = () => {
                             );
                           })}
                         </View>
+
+                        {/* Partial Dispatch Actions */}
+                        {!ticket.allDone ? (
+                          <View
+                            style={{ flexDirection: 'row', gap: 8, marginTop: 10, marginBottom: 8 }}
+                          >
+                            {ticket.items.some(
+                              (i) => i.stationTarget === 'bar' && i.status === 'ready'
+                            ) &&
+                            ticket.items.some(
+                              (i) =>
+                                i.stationTarget === 'kitchen' &&
+                                i.status !== 'ready' &&
+                                i.status !== 'served' &&
+                                i.status !== 'cancelled'
+                            ) ? (
+                              <Pressable
+                                onPress={() => handleMarkPartialServed(ticket, 'bar')}
+                                style={{
+                                  flex: 1,
+                                  paddingVertical: 8,
+                                  paddingHorizontal: 8,
+                                  borderRadius: 8,
+                                  backgroundColor: '#e0f2fe',
+                                  borderWidth: 1,
+                                  borderColor: '#bae6fd',
+                                  alignItems: 'center',
+                                  flexDirection: 'row',
+                                  justifyContent: 'center',
+                                  gap: 4,
+                                }}
+                              >
+                                <Coffee size={13} color="#0284c7" />
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: '#0284c7' }}>
+                                  Deliver Drinks
+                                </Text>
+                              </Pressable>
+                            ) : null}
+
+                            {ticket.items.some(
+                              (i) => i.stationTarget === 'kitchen' && i.status === 'ready'
+                            ) &&
+                            ticket.items.some(
+                              (i) =>
+                                i.stationTarget === 'bar' &&
+                                i.status !== 'ready' &&
+                                i.status !== 'served' &&
+                                i.status !== 'cancelled'
+                            ) ? (
+                              <Pressable
+                                onPress={() => handleMarkPartialServed(ticket, 'kitchen')}
+                                style={{
+                                  flex: 1,
+                                  paddingVertical: 8,
+                                  paddingHorizontal: 8,
+                                  borderRadius: 8,
+                                  backgroundColor: '#fef3c7',
+                                  borderWidth: 1,
+                                  borderColor: '#fde68a',
+                                  alignItems: 'center',
+                                  flexDirection: 'row',
+                                  justifyContent: 'center',
+                                  gap: 4,
+                                }}
+                              >
+                                <Utensils size={13} color="#d97706" />
+                                <Text style={{ fontSize: 11, fontWeight: '700', color: '#d97706' }}>
+                                  Deliver Food
+                                </Text>
+                              </Pressable>
+                            ) : null}
+                          </View>
+                        ) : null}
 
                         {/* Handoff Button */}
                         <Pressable

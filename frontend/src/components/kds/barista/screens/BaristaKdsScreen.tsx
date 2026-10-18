@@ -315,7 +315,8 @@ const INITIAL_INVENTORY: StockInventoryItem[] = [
 
 export const BaristaKdsScreen: React.FC = () => {
   const { logout, isOnline, setIsOnline } = useAuthStore();
-  const { tables, alerts, addAlert } = useOrderStore();
+  const { tables, takeoutOrders, onlineOrders, alerts, addAlert, updateOrderItemStatus } =
+    useOrderStore();
 
   // Local state for tickets, modals, and station configuration
   const [tickets, setTickets] = useState<BarTicket[]>(INITIAL_BAR_TICKETS);
@@ -335,50 +336,149 @@ export const BaristaKdsScreen: React.FC = () => {
   useEffect(() => {
     const liveNewTickets: BarTicket[] = [];
 
+    // 1. Dine-in tables (Grouped by Sub-Order Round)
     tables.forEach((table) => {
       (table.tabs || []).forEach((tab) => {
         const barItems = tab.items.filter((item) => item.stationTarget === 'bar');
         if (barItems.length > 0) {
-          const hasPrep = barItems.some((i) => i.status === 'preparing');
-          const allReady = barItems.every((i) => i.status === 'ready');
+          // Group items by round number
+          const roundsMap = new Map<number, typeof barItems>();
+          barItems.forEach((item) => {
+            const r = item.roundNumber || 1;
+            if (!roundsMap.has(r)) roundsMap.set(r, []);
+            roundsMap.get(r)!.push(item);
+          });
 
-          const ticketId = `tbl-${table.id}-${tab.id}`;
-          const existing = tickets.find((t) => t.id === ticketId);
-          if (!existing) {
-            let stage: BarTicket['stage'] = 'new';
-            if (allReady) stage = 'ready';
-            else if (hasPrep) stage = 'preparing';
+          roundsMap.forEach((roundItems, roundNum) => {
+            if (roundItems.some((i) => i.status !== 'served')) {
+              const ticketId = `tbl-${table.id}-${tab.id}-r${roundNum}`;
+              const existing = tickets.find((t) => t.id === ticketId);
+              const hasPrep = roundItems.some((i) => i.status === 'preparing');
+              const allReady = roundItems.every(
+                (i) => i.status === 'ready' || i.status === 'cancelled'
+              );
+              const hasCancelled = roundItems.some((i) => i.status === 'cancelled');
 
-            liveNewTickets.push({
-              id: ticketId,
-              orderNumber: `#${table.code.replace('Table ', 'T')}-${tab.tabIndex}`,
-              tableOrSource: `${table.code} · Tab ${tab.tabIndex}`,
-              stage,
-              elapsedTime: table.elapsedTime || '1m',
-              minutesElapsed: parseInt(table.elapsedTime || '1', 10) || 1,
-              badges:
-                stage === 'new'
-                  ? ['NEW', 'JUST IN']
-                  : stage === 'preparing'
-                    ? ['PREPARING']
-                    : ['READY'],
-              items: barItems.map((bi) => ({
-                ...bi,
-                is86: inventory.find((inv) =>
-                  inv.name.toLowerCase().includes(bi.productName.toLowerCase())
-                )?.is86,
-              })),
-              serverName: tab.guestName,
-            });
-          }
+              let stage: BarTicket['stage'] = 'new';
+              if (allReady) stage = 'ready';
+              else if (hasPrep) stage = 'preparing';
+
+              const badges: string[] = [];
+              if (roundNum > 1) badges.push(`ROUND ${roundNum}`);
+              if (stage === 'new') badges.push('NEW', 'JUST IN');
+              else if (stage === 'preparing') badges.push('PREPARING');
+              else badges.push('READY');
+              if (hasCancelled) badges.push('ITEM VOIDED');
+
+              const otherStationItems = (tab.items || []).filter(
+                (i) => (i.roundNumber || 1) === roundNum && i.stationTarget !== 'bar'
+              );
+              const multiStationTag =
+                otherStationItems.length > 0
+                  ? `Multi-Station · ${otherStationItems.length} food item(s) at Kitchen`
+                  : undefined;
+
+              if (!existing) {
+                liveNewTickets.push({
+                  id: ticketId,
+                  orderNumber: `#${table.code.replace('Table ', 'T')}-${tab.tabIndex}${roundNum > 1 ? `-R${roundNum}` : ''}`,
+                  tableOrSource: `${table.code} · Tab ${tab.tabIndex}`,
+                  stage,
+                  roundNumber: roundNum,
+                  elapsedTime: table.elapsedTime || '1m',
+                  minutesElapsed: parseInt(table.elapsedTime || '1', 10) || 1,
+                  badges,
+                  multiStationTag,
+                  items: roundItems.map((bi) => ({
+                    ...bi,
+                    isVoided: bi.status === 'cancelled',
+                    is86: inventory.find((inv) =>
+                      inv.name.toLowerCase().includes(bi.productName.toLowerCase())
+                    )?.is86,
+                  })),
+                  voidNote: hasCancelled ? '! Item(s) voided · Do not prepare' : undefined,
+                  serverName: tab.guestName,
+                });
+              } else if (hasCancelled && !existing.badges.includes('ITEM VOIDED')) {
+                // Synchronize existing ticket with store void status
+                setTickets((prev) =>
+                  prev.map((t) =>
+                    t.id === ticketId
+                      ? {
+                          ...t,
+                          badges: Array.from(new Set([...t.badges, 'ITEM VOIDED'])),
+                          voidNote: '! Item(s) voided · Do not prepare',
+                          items: t.items.map((it) => {
+                            const updated = roundItems.find((ri) => ri.id === it.id);
+                            return updated
+                              ? {
+                                  ...it,
+                                  status: updated.status,
+                                  isVoided: updated.status === 'cancelled',
+                                }
+                              : it;
+                          }),
+                        }
+                      : t
+                  )
+                );
+              }
+            }
+          });
         }
       });
+    });
+
+    // 2. Takeout orders with Bar items
+    takeoutOrders.forEach((order) => {
+      const barItems = order.items.filter((i) => i.stationTarget === 'bar');
+      if (barItems.length > 0 && order.status !== 'completed') {
+        const ticketId = `takeout-${order.id}`;
+        const existing = tickets.find((t) => t.id === ticketId);
+        if (!existing) {
+          liveNewTickets.push({
+            id: ticketId,
+            orderNumber: order.ticketNumber,
+            tableOrSource: `Takeout · ${order.customerName}`,
+            stage: order.status === 'ready' ? 'ready' : 'new',
+            elapsedTime: order.elapsedTime || '1m',
+            minutesElapsed: 1,
+            badges: ['NEW', 'JUST IN'],
+            items: barItems,
+            serverName: order.customerName,
+          });
+        }
+      }
+    });
+
+    // 3. Online delivery orders with Bar items
+    onlineOrders.forEach((order) => {
+      const barItems = order.items.filter((i) => i.stationTarget === 'bar');
+      if (barItems.length > 0 && order.status !== 'completed') {
+        const ticketId = `online-${order.id}`;
+        const existing = tickets.find((t) => t.id === ticketId);
+        if (!existing) {
+          const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
+          liveNewTickets.push({
+            id: ticketId,
+            orderNumber: order.platformOrderRef,
+            tableOrSource: `${platformLabel} · ${order.riderName}`,
+            stage: order.status === 'ready' ? 'ready' : 'new',
+            elapsedTime: order.elapsedTime || '1m',
+            minutesElapsed: 1,
+            badges: ['NEW', 'RUSH'],
+
+            items: barItems,
+            serverName: order.customerName,
+          });
+        }
+      }
     });
 
     if (liveNewTickets.length > 0) {
       setTickets((prev) => [...liveNewTickets, ...prev]);
     }
-  }, [tables, inventory, tickets]);
+  }, [tables, takeoutOrders, onlineOrders, inventory, tickets]);
 
   // Derived products for availability manager
   const barProducts: BarProductStock[] = useMemo(() => {
@@ -405,6 +505,8 @@ export const BaristaKdsScreen: React.FC = () => {
 
   // Actions
   const handleStartTicket = (ticket: BarTicket) => {
+    ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
+
     setTickets((prev) =>
       prev.map((t) =>
         t.id === ticket.id
@@ -422,6 +524,8 @@ export const BaristaKdsScreen: React.FC = () => {
   };
 
   const handleReadyTicket = (ticket: BarTicket) => {
+    ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'ready'));
+
     setTickets((prev) =>
       prev.map((t) =>
         t.id === ticket.id

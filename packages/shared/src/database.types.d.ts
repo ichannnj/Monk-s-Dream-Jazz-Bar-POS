@@ -255,6 +255,7 @@ export type Database = {
                     order_channel: Database["public"]["Enums"]["order_channel"];
                     order_number: string;
                     order_type: Database["public"]["Enums"]["order_type"];
+                    round_number: number;
                     status: Database["public"]["Enums"]["order_status"];
                     tab_id: string;
                     updated_at: string;
@@ -266,6 +267,7 @@ export type Database = {
                     order_channel?: Database["public"]["Enums"]["order_channel"];
                     order_number: string;
                     order_type?: Database["public"]["Enums"]["order_type"];
+                    round_number?: number;
                     status?: Database["public"]["Enums"]["order_status"];
                     tab_id: string;
                     updated_at?: string;
@@ -277,6 +279,7 @@ export type Database = {
                     order_channel?: Database["public"]["Enums"]["order_channel"];
                     order_number?: string;
                     order_type?: Database["public"]["Enums"]["order_type"];
+                    round_number?: number;
                     status?: Database["public"]["Enums"]["order_status"];
                     tab_id?: string;
                     updated_at?: string;

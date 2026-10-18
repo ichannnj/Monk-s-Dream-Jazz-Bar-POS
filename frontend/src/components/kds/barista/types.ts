@@ -15,7 +15,8 @@ export interface BarTicket {
   stage: KdsStage;
   elapsedTime: string; // e.g. "00:20" or "06:20"
   minutesElapsed: number;
-  badges: ('NEW' | 'RUSH' | 'JUST IN' | 'PREPARING' | 'ITEM VOIDED' | 'READY')[];
+  badges: string[];
+  roundNumber?: number;
   multiStationTag?: string; // e.g. "Multi-Station · Cafe · Preparing"
   items: BarItemLine[];
   specialNote?: string; // e.g. "! Serve with lemon"

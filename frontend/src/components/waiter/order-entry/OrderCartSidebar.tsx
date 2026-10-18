@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Switch } from 'react-native';
-import { Send, Trash2, Minus, Plus } from 'lucide-react-native';
+import { Send, Trash2, Minus, Plus, History, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { OrderLineItem } from '../../../mockData';
 import { styles } from './OrderEntryModal.styles';
 
 export interface OrderCartSidebarProps {
   cartItems: OrderLineItem[];
+  previousTabItems?: OrderLineItem[];
   hasCorkage: boolean;
   corkageAmount: number;
   itemsSubtotal: number;
@@ -18,6 +19,7 @@ export interface OrderCartSidebarProps {
 
 export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
   cartItems,
+  previousTabItems = [],
   hasCorkage,
   corkageAmount,
   itemsSubtotal,
@@ -27,6 +29,8 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
   onToggleCorkage,
   onSend,
 }) => {
+  const [showHistory, setShowHistory] = useState(false);
+
   return (
     <View style={styles.cartPanel}>
       <View style={styles.cartHeader}>
@@ -37,6 +41,92 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
           </Text>
         </View>
       </View>
+
+      {/* Previous Tab Orders Accordion (for Add-On Rounds) */}
+      {previousTabItems && previousTabItems.length > 0 ? (
+        <View
+          style={{
+            borderBottomWidth: 1,
+            borderBottomColor: '#f3f4f6',
+            paddingBottom: 8,
+            marginBottom: 8,
+            marginHorizontal: 16,
+          }}
+        >
+          <Pressable
+            onPress={() => setShowHistory(!showHistory)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: '#f8fafc',
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: '#e2e8f0',
+            }}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <History size={14} color="#64748b" />
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#475569' }}>
+                Previous Tab Items ({previousTabItems.length})
+              </Text>
+            </View>
+            {showHistory ? (
+              <ChevronUp size={14} color="#64748b" />
+            ) : (
+              <ChevronDown size={14} color="#64748b" />
+            )}
+          </Pressable>
+
+          {showHistory ? (
+            <View style={{ marginTop: 6, gap: 4 }}>
+              {previousTabItems.map((prevItem, pIdx) => (
+                <View
+                  key={prevItem.id || pIdx}
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    paddingVertical: 4,
+                    paddingHorizontal: 6,
+                    borderRadius: 4,
+                    backgroundColor: prevItem.status === 'cancelled' ? '#fef2f2' : '#f1f5f9',
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      color: prevItem.status === 'cancelled' ? '#991b1b' : '#334155',
+                      textDecorationLine: prevItem.status === 'cancelled' ? 'line-through' : 'none',
+                    }}
+                  >
+                    {prevItem.quantity}x {prevItem.productName}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                      color:
+                        prevItem.status === 'ready'
+                          ? '#15803d'
+                          : prevItem.status === 'preparing'
+                            ? '#b45309'
+                            : prevItem.status === 'cancelled'
+                              ? '#b91c1c'
+                              : '#64748b',
+                    }}
+                  >
+                    {prevItem.status}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
+        </View>
+      ) : null}
 
       {/* Cart Items List */}
       <ScrollView

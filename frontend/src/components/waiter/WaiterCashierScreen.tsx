@@ -77,6 +77,7 @@ export const WaiterCashierScreen: React.FC = () => {
     tableId?: string;
     tabIndex?: number;
     initialItems?: OrderLineItem[];
+    previousTabItems?: OrderLineItem[];
     hasExistingCorkage?: boolean;
     takeoutCustomer?: string;
     takeoutPrepaid?: boolean;
@@ -119,12 +120,19 @@ export const WaiterCashierScreen: React.FC = () => {
 
   const handleOpenOrderEntryFromModal = (table: TableItem, tabIndex: number) => {
     const tab = table.tabs?.find((t) => t.tabIndex === tabIndex);
+    const existingItems = tab?.items || [];
+    const maxRound =
+      existingItems.length > 0 ? Math.max(1, ...existingItems.map((i) => i.roundNumber || 1)) : 0;
+    const nextRound = maxRound + 1;
+    const roundSuffix = existingItems.length > 0 ? ` (Round ${nextRound})` : '';
+
     setOrderEntryContext({
       type: 'dine_in',
-      title: `Table ${table.code} • Tab: "${tab?.guestName || `Tab #${tabIndex}`}"`,
+      title: `Table ${table.code} • Tab: "${tab?.guestName || `Tab #${tabIndex}`}"${roundSuffix}`,
       tableId: table.id,
       tabIndex: tabIndex,
-      initialItems: tab?.items || [],
+      initialItems: [],
+      previousTabItems: existingItems,
       hasExistingCorkage: tab?.hasCorkageFee || false,
     });
     setIsOrderEntryOpen(true);
@@ -317,13 +325,13 @@ export const WaiterCashierScreen: React.FC = () => {
     if (mode === 'entire_table') {
       settleTableGroup(checkoutContext.table.id, method);
       toast.success(
-        `Table ${tableCode} settled in full via ${methodName} ($${totalWithTax.toFixed(2)}) • Receipt printed`,
+        `Table ${tableCode} settled in full via ${methodName} ($${totalWithTax.toFixed(2)}) • Receipt dispatched to printer station`,
         { title: 'Table Bill Settled' }
       );
     } else {
       settleTab(checkoutContext.table.id, tabIndex, method);
       toast.success(
-        `Tab "${tabName}" on Table ${tableCode} settled via ${methodName} ($${totalWithTax.toFixed(2)}) • Receipt printed`,
+        `Tab "${tabName}" on Table ${tableCode} settled via ${methodName} ($${totalWithTax.toFixed(2)}) • Receipt dispatched to printer station`,
         { title: 'Tab Payment Confirmed' }
       );
     }

@@ -101,9 +101,30 @@ export const StationTicketCard: React.FC<StationTicketCardProps> = ({
               </Text>
             </View>
             <Text style={styles.orderNumberText}>{ticket.orderNumber}</Text>
+
+            {/* Round Badge */}
+            {ticket.roundNumber && ticket.roundNumber > 1 ? (
+              <View
+                style={{
+                  backgroundColor: '#832238',
+                  paddingHorizontal: 6,
+                  paddingVertical: 2,
+                  borderRadius: 6,
+                }}
+              >
+                <Text style={{ fontSize: 10, fontWeight: '800', color: '#ffffff' }}>
+                  ROUND {ticket.roundNumber}
+                </Text>
+              </View>
+            ) : null}
           </View>
           <Text style={styles.sourceTitleText}>{sourceTitle}</Text>
           <Text style={styles.guestNameText}>Guest: {guestName}</Text>
+          {ticket.multiStationTag ? (
+            <Text style={{ fontSize: 11, fontWeight: '600', color: '#0284c7', marginTop: 2 }}>
+              {ticket.multiStationTag}
+            </Text>
+          ) : null}
         </View>
 
         {/* Timer Chip */}
@@ -126,23 +147,72 @@ export const StationTicketCard: React.FC<StationTicketCardProps> = ({
         </View>
       ) : null}
 
+      {/* Void Alert Banner (If items cancelled) */}
+      {items.some((i) => i.status === 'cancelled') ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            backgroundColor: '#fee2e2',
+            paddingVertical: 6,
+            paddingHorizontal: 10,
+            borderRadius: 8,
+            marginBottom: 8,
+            borderWidth: 1,
+            borderColor: '#fca5a5',
+          }}
+        >
+          <Text style={{ fontSize: 11, fontWeight: '800', color: '#b91c1c' }}>
+            🚨 VOIDED ITEMS ON TICKET — DO NOT PREPARE
+          </Text>
+        </View>
+      ) : null}
+
       {/* 3. Items Checklist */}
       <View style={styles.itemsList}>
         {items.map((item) => {
+          const isCancelled = item.status === 'cancelled';
           const isItemReady = item.status === 'ready' || item.status === 'served';
           const isItemPrep = item.status === 'preparing';
 
           return (
-            <View key={item.id} style={styles.itemRow}>
+            <View key={item.id} style={[styles.itemRow, isCancelled && { opacity: 0.6 }]}>
               {/* Item Details */}
               <View style={styles.itemDetailsCol}>
                 <View style={styles.itemNameRow}>
-                  <View style={styles.quantityBadge}>
-                    <Text style={styles.quantityText}>{item.quantity}x</Text>
+                  <View
+                    style={[styles.quantityBadge, isCancelled && { backgroundColor: '#fee2e2' }]}
+                  >
+                    <Text style={[styles.quantityText, isCancelled && { color: '#b91c1c' }]}>
+                      {item.quantity}x
+                    </Text>
                   </View>
-                  <Text style={[styles.productNameText, isItemReady && styles.productNameReady]}>
+                  <Text
+                    style={[
+                      styles.productNameText,
+                      isItemReady && styles.productNameReady,
+                      isCancelled && { textDecorationLine: 'line-through', color: '#9ca3af' },
+                    ]}
+                  >
                     {item.productName}
                   </Text>
+                  {isCancelled ? (
+                    <View
+                      style={{
+                        backgroundColor: '#fef2f2',
+                        paddingHorizontal: 5,
+                        paddingVertical: 1,
+                        borderRadius: 4,
+                        borderWidth: 1,
+                        borderColor: '#fecaca',
+                      }}
+                    >
+                      <Text style={{ fontSize: 9, fontWeight: '800', color: '#b91c1c' }}>
+                        CANCELLED
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
 
                 {/* Modifiers */}
@@ -157,39 +227,61 @@ export const StationTicketCard: React.FC<StationTicketCardProps> = ({
                 ) : null}
 
                 {/* Notes */}
-                {item.notes ? <Text style={styles.notesText}>📝 {item.notes}</Text> : null}
+                {item.notes ? (
+                  <Text
+                    style={[
+                      styles.notesText,
+                      isCancelled && { textDecorationLine: 'line-through', color: '#9ca3af' },
+                    ]}
+                  >
+                    📝 {item.notes}
+                  </Text>
+                ) : null}
               </View>
 
               {/* Individual Item Status Toggle */}
-              <Pressable
-                onPress={() => {
-                  if (onUpdateItemStatus) {
-                    if (item.status === 'pending') {
-                      onUpdateItemStatus(item.id, 'preparing');
-                    } else if (item.status === 'preparing') {
-                      onUpdateItemStatus(item.id, 'ready');
-                    } else {
-                      onUpdateItemStatus(item.id, 'preparing');
+              {!isCancelled ? (
+                <Pressable
+                  onPress={() => {
+                    if (onUpdateItemStatus) {
+                      if (item.status === 'pending') {
+                        onUpdateItemStatus(item.id, 'preparing');
+                      } else if (item.status === 'preparing') {
+                        onUpdateItemStatus(item.id, 'ready');
+                      } else {
+                        onUpdateItemStatus(item.id, 'preparing');
+                      }
                     }
-                  }
-                }}
-                style={({ pressed }) => [
-                  styles.itemStatusBtn,
-                  isItemReady && styles.itemStatusBtnReady,
-                  isItemPrep && styles.itemStatusBtnPrep,
-                  pressed && styles.btnPressed,
-                ]}
-              >
-                {isItemReady ? (
-                  <CheckCircle2 size={16} color="#ffffff" />
-                ) : (
-                  <Text
-                    style={[styles.itemStatusBtnText, isItemPrep && styles.itemStatusBtnTextPrep]}
-                  >
-                    {isItemPrep ? 'PREP' : 'START'}
-                  </Text>
-                )}
-              </Pressable>
+                  }}
+                  style={({ pressed }) => [
+                    styles.itemStatusBtn,
+                    isItemReady && styles.itemStatusBtnReady,
+                    isItemPrep && styles.itemStatusBtnPrep,
+                    pressed && styles.btnPressed,
+                  ]}
+                >
+                  {isItemReady ? (
+                    <CheckCircle2 size={16} color="#ffffff" />
+                  ) : (
+                    <Text
+                      style={[styles.itemStatusBtnText, isItemPrep && styles.itemStatusBtnTextPrep]}
+                    >
+                      {isItemPrep ? 'PREP' : 'START'}
+                    </Text>
+                  )}
+                </Pressable>
+              ) : (
+                <View
+                  style={{
+                    paddingHorizontal: 8,
+                    paddingVertical: 6,
+                    borderRadius: 8,
+                    backgroundColor: '#fee2e2',
+                  }}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#b91c1c' }}>VOID</Text>
+                </View>
+              )}
             </View>
           );
         })}

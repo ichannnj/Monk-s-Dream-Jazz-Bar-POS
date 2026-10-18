@@ -17,6 +17,7 @@ export interface OrderEntryModalProps {
   visible: boolean;
   title: string; // e.g. "Table B1 • Tab: Miles" or "Takeout #T-105"
   initialItems?: OrderLineItem[];
+  previousTabItems?: OrderLineItem[];
   hasExistingCorkage?: boolean;
   onClose: () => void;
   onSendOrder: (items: OrderLineItem[], hasCorkageFee: boolean, corkageAmount: number) => void;
@@ -26,6 +27,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   visible,
   title,
   initialItems = [],
+  previousTabItems = [],
   hasExistingCorkage = false,
   onClose,
   onSendOrder,
@@ -284,6 +286,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
 
             <OrderCartSidebar
               cartItems={cartItems}
+              previousTabItems={previousTabItems}
               hasCorkage={hasCorkage}
               corkageAmount={corkageAmount}
               itemsSubtotal={itemsSubtotal}

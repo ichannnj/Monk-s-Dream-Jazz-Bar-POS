@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { HybridLogicalClock } from '@monks/shared';
 import {
   TableItem,
   SEED_TABLES,
@@ -17,6 +18,20 @@ import {
   OrderLineItem,
   CustomerTab,
 } from '../mockData';
+import { supabase } from '../services/supabase';
+import { ordersApi } from '../services/orders.api';
+import { tablesApi } from '../services/tables.api';
+import { realtimeGateway } from '../services/realtime';
+
+export interface QueuedMutation {
+  id: string;
+  hlc: string;
+  type: 'create_order' | 'transfer_table' | 'settle_tab' | 'update_status';
+  payload: any;
+  timestamp: number;
+}
+
+const posHlc = new HybridLogicalClock(`pos-node-${Math.random().toString(36).substring(2, 7)}`);
 
 interface OrderState {
   tables: TableItem[];
@@ -26,6 +41,8 @@ interface OrderState {
   drawerEntries: DrawerEntry[];
   alerts: FloorAlert[];
   chatMessages: ChatMessage[];
+  isHydrated: boolean;
+  offlineQueue: QueuedMutation[];
 
   // Action methods
   openTableTab: (tableId: string, guestName: string, guestCount?: number) => void;
@@ -86,8 +103,17 @@ interface OrderState {
   addAlert: (alert: Omit<FloorAlert, 'id' | 'time' | 'isRead'>) => void;
   updateOrderItemStatus: (
     itemId: string,
-    status: 'pending' | 'preparing' | 'ready' | 'served'
+    status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled'
   ) => void;
+  voidOrderItem: (
+    itemId: string,
+    staffId: string,
+    reason: string,
+    tableId?: string,
+    tabIndex?: number
+  ) => Promise<boolean>;
+  hydrateFromSupabase: () => Promise<void>;
+  drainOfflineQueue: () => Promise<void>;
   initRealtimeSync: () => () => void;
 }
 
@@ -99,6 +125,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   drawerEntries: SEED_DRAWER_TRANSACTIONS,
   alerts: SEED_ALERTS,
   chatMessages: SEED_CHAT_MESSAGES,
+  isHydrated: false,
+  offlineQueue: [],
 
   openTableTab: (tableId, guestName, guestCount = 1) => {
     set((state) => {
@@ -137,9 +165,23 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   },
 
   addItemsToTab: (tableId, tabIndex, items, hasCorkageFee = false, corkageAmount = 0) => {
+    // 1. Calculate current round number
+    const existingTable = get().tables.find((t) => t.id === tableId);
+    const existingTab = existingTable?.tabs?.find((t) => t.tabIndex === tabIndex);
+    const existingItems = existingTab?.items || [];
+    const maxRound =
+      existingItems.length > 0 ? Math.max(1, ...existingItems.map((i) => i.roundNumber || 1)) : 0;
+    const currentRound = maxRound + 1;
+
+    const roundTaggedItems = items.map((i) => ({
+      ...i,
+      roundNumber: currentRound,
+      status: i.status || 'pending',
+    }));
+
     set((state) => {
       let itemsTotal = 0;
-      items.forEach((item) => {
+      roundTaggedItems.forEach((item) => {
         itemsTotal += item.unitPrice * item.quantity;
       });
       if (hasCorkageFee) itemsTotal += corkageAmount;
@@ -150,7 +192,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         const updatedTabs = (table.tabs || []).map((tab) => {
           if (tab.tabIndex !== tabIndex) return tab;
 
-          const updatedItems = [...tab.items, ...items];
+          const updatedItems = [...tab.items, ...roundTaggedItems];
           const newTotal = (tab.totalAmount || 0) + itemsTotal;
 
           return {
@@ -177,8 +219,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const targetTable = state.tables.find((t) => t.id === tableId);
       const newAlert: FloorAlert = {
         id: `alt-${Date.now()}`,
-        title: `🚀 Order Sent for Table ${targetTable?.code || tableId}`,
-        description: `${items.length} items dispatched to Bar/Kitchen stations. Chit #1043 printed.`,
+        title: `🚀 Order Sent for Table ${targetTable?.code || tableId} (Round ${currentRound})`,
+        description: `Round ${currentRound}: ${items.length} items dispatched to Bar/Kitchen stations. Chit printed.`,
         type: 'station_ready',
         time: 'Just now',
         isRead: false,
@@ -190,6 +232,68 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         alerts: [newAlert, ...state.alerts],
       };
     });
+
+    // Background asynchronous Supabase persistence
+    const currentTable = get().tables.find((t) => t.id === tableId);
+    const currentTab = currentTable?.tabs?.find((t) => t.tabIndex === tabIndex);
+    const mutationId = `mut-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+    const hlcTs = posHlc.now();
+
+    ordersApi
+      .createOrderWithItems({
+        tabId: currentTab?.id || `tab-${tableId}-${tabIndex}`,
+        tableId: tableId,
+        customerName: currentTab?.guestName || `Guest ${tabIndex}`,
+        orderNumber: `#${currentTable?.code || 'T'}-${tabIndex}-R${currentRound}-${Date.now().toString().slice(-4)}`,
+        orderType: 'DINE_IN',
+        hasCorkageFee,
+        corkageAmount,
+        roundNumber: currentRound,
+        items: roundTaggedItems.map((i) => ({
+          id: i.id,
+          productId: i.productId,
+          productName: i.productName,
+          quantity: i.quantity,
+          unitPrice: i.unitPrice,
+          stationTarget: i.stationTarget,
+          modifiers: i.modifiers,
+          notes: i.notes,
+        })),
+      })
+      .then((res) => {
+        if (res.items && res.items.length > 0) {
+          set((state) => ({
+            tables: state.tables.map((t) => {
+              if (t.id !== tableId) return t;
+              return {
+                ...t,
+                tabs: (t.tabs || []).map((tb) => {
+                  if (tb.tabIndex !== tabIndex) return tb;
+                  return {
+                    ...tb,
+                    id: res.order.tab_id || tb.id,
+                  };
+                }),
+              };
+            }),
+          }));
+        }
+      })
+      .catch((err) => {
+        console.warn('Background order dispatch deferred to offline queue:', err);
+        set((state) => ({
+          offlineQueue: [
+            ...state.offlineQueue,
+            {
+              id: mutationId,
+              hlc: hlcTs,
+              type: 'create_order',
+              payload: { tableId, tabIndex, items, hasCorkageFee, corkageAmount },
+              timestamp: Date.now(),
+            },
+          ],
+        }));
+      });
   },
 
   transferTableOrTab: (originId, targetId, mode, tabIndex, reason) => {
@@ -360,6 +464,24 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         };
       }
     });
+
+    // Background asynchronous Supabase RPC execution
+    const originTable = get().tables.find((t) => t.id === originId);
+    const targetTable = get().tables.find((t) => t.id === targetId);
+    const tabToMove =
+      originTable?.tabs?.find((t) => t.tabIndex === tabIndex) || originTable?.tabs?.[0];
+
+    tablesApi
+      .transferTableTab({
+        originTableId: originId,
+        targetTableId: targetId,
+        tabId: tabToMove?.id || '00000000-0000-0000-0000-000000000000',
+        staffId: '00000000-0000-0000-0000-000000000001',
+        reason: reason || 'Guest relocation request',
+      })
+      .catch((err) => {
+        console.warn('Background transferTableTab offline notice:', err);
+      });
   },
 
   settleTab: (
@@ -369,15 +491,20 @@ export const useOrderStore = create<OrderState>((set, get) => ({
     cashierName = 'Coltrane (Cashier)',
     discountAmount = 0
   ) => {
+    let grandTotalPaid = 0;
+    let targetTabRef: CustomerTab | undefined;
+
     set((state) => {
       const table = state.tables.find((t) => t.id === tableId);
       if (!table) return state;
 
       const targetTab = table.tabs?.find((t) => t.tabIndex === tabIndex);
+      targetTabRef = targetTab;
       const subtotal = targetTab?.totalAmount || 0;
       const netSubtotal = Math.max(0, subtotal - discountAmount);
       const tax = netSubtotal * 0.1;
       const grandTotal = netSubtotal + tax;
+      grandTotalPaid = grandTotal;
 
       // Create Check record
       const newCheck: CheckItem = {
@@ -443,6 +570,24 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         drawerEntries: nextDrawer,
       };
     });
+
+    // Background asynchronous Supabase tab settlement
+    let dbMethod: 'CASH' | 'CARD' | 'DIGITAL_WALLET' | 'COMP' = 'CASH';
+    if (paymentMethod === 'card') dbMethod = 'CARD';
+    else if (paymentMethod === 'digital_wallet') dbMethod = 'DIGITAL_WALLET';
+    else if (paymentMethod === 'comp') dbMethod = 'COMP';
+
+    tablesApi
+      .settleTabAndRecordPayment({
+        tabId: targetTabRef?.id || '00000000-0000-0000-0000-000000000000',
+        paymentMethod: dbMethod,
+        amount: grandTotalPaid,
+        discountAmount,
+        notes: `Settled by ${cashierName}`,
+      })
+      .catch((err) => {
+        console.warn('Background settleTab offline notice:', err);
+      });
   },
 
   settleTableGroup: (tableId, paymentMethod, cashierName = 'Coltrane (Cashier)') => {
@@ -725,16 +870,275 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         onlineOrders: updatedOnline,
       };
     });
+
+    // Background update to Supabase
+    ordersApi.updateOrderItemStatus(itemId, newStatus);
+  },
+
+  voidOrderItem: async (itemId, staffId, reason, tableId, tabIndex) => {
+    let cancelledItemName = 'Item';
+    let cancelledPrice = 0;
+
+    set((state) => {
+      // 1. Update Tables
+      const updatedTables = state.tables.map((table) => {
+        if (tableId && table.id !== tableId) return table;
+
+        let found = false;
+        const updatedTabs = (table.tabs || []).map((tab) => {
+          if (tabIndex !== undefined && tab.tabIndex !== tabIndex) return tab;
+
+          const updatedItems = tab.items.map((item) => {
+            if (item.id === itemId) {
+              found = true;
+              cancelledItemName = item.productName;
+              cancelledPrice = item.unitPrice * item.quantity;
+              return {
+                ...item,
+                status: 'cancelled' as const,
+                voidReason: reason,
+              };
+            }
+            return item;
+          });
+
+          if (!found) return tab;
+
+          const newTotal = Math.max(0, (tab.totalAmount || 0) - cancelledPrice);
+          return {
+            ...tab,
+            items: updatedItems,
+            totalAmount: newTotal,
+          };
+        });
+
+        if (!found) return table;
+
+        const tableTotal = updatedTabs.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
+        return {
+          ...table,
+          tabs: updatedTabs,
+          totalAmount: tableTotal,
+        };
+      });
+
+      // 2. Update Takeout
+      const updatedTakeout = state.takeoutOrders.map((order) => {
+        const updatedItems = order.items.map((item) => {
+          if (item.id === itemId) {
+            cancelledItemName = item.productName;
+            return { ...item, status: 'cancelled' as const, voidReason: reason };
+          }
+          return item;
+        });
+        return { ...order, items: updatedItems };
+      });
+
+      // 3. Update Online
+      const updatedOnline = state.onlineOrders.map((order) => {
+        const updatedItems = order.items.map((item) => {
+          if (item.id === itemId) {
+            cancelledItemName = item.productName;
+            return { ...item, status: 'cancelled' as const, voidReason: reason };
+          }
+          return item;
+        });
+        return { ...order, items: updatedItems };
+      });
+
+      const newAlert: FloorAlert = {
+        id: `alt-void-${Date.now()}`,
+        title: `🚨 Item Voided: ${cancelledItemName}`,
+        description: `${cancelledItemName} cancelled. Reason: ${reason}. Restoral/waste logged.`,
+        type: 'spoilage_alert',
+        time: 'Just now',
+        isRead: false,
+      };
+
+      return {
+        tables: updatedTables,
+        takeoutOrders: updatedTakeout,
+        onlineOrders: updatedOnline,
+        alerts: [newAlert, ...state.alerts],
+      };
+    });
+
+    try {
+      await ordersApi.cancelOrderItem(itemId, staffId, reason);
+      return true;
+    } catch (err) {
+      console.warn('cancelOrderItem network/db error (mutation preserved in UI):', err);
+      return false;
+    }
+  },
+
+  hydrateFromSupabase: async () => {
+    try {
+      const { data: dbTables, error } = await supabase
+        .from('tables')
+        .select(
+          `
+          id,
+          table_number,
+          zone,
+          capacity,
+          is_occupied,
+          tabs (
+            id,
+            customer_name,
+            status,
+            order_type,
+            corkage_amount,
+            has_corkage_fee,
+            created_at,
+            orders (
+              id,
+              order_number,
+              status,
+              order_items (
+                id,
+                product_id,
+                quantity,
+                unit_price,
+                status,
+                station_target,
+                modifiers,
+                notes,
+                products (
+                  name,
+                  base_price,
+                  station_target,
+                  image_url
+                )
+              )
+            )
+          )
+        `
+        )
+        .order('table_number', { ascending: true });
+
+      if (error || !dbTables || dbTables.length === 0) {
+        console.warn('Hydration skipped / database empty, keeping baseline state:', error?.message);
+        return;
+      }
+
+      const mappedTables: TableItem[] = dbTables.map((dbt: any) => {
+        const rawTabs = dbt.tabs || [];
+        const openTabs = rawTabs.filter((tb: any) => tb.status === 'OPEN');
+        const activeTabsIndices = openTabs.map((_: any, idx: number) => idx + 1);
+
+        const customerTabs: CustomerTab[] = openTabs.map((tb: any, idx: number) => {
+          const rawOrders = tb.orders || [];
+          const lineItems: OrderLineItem[] = rawOrders
+            .flatMap((o: any) => o.order_items || [])
+            .map((oi: any) => ({
+              id: oi.id,
+              productId: oi.product_id,
+              productName: oi.products?.name || 'Menu Item',
+              unitPrice: parseFloat(oi.unit_price) || 0,
+              quantity: oi.quantity || 1,
+              stationTarget: (oi.station_target || oi.products?.station_target || 'bar') as
+                'bar' | 'kitchen',
+              modifiers: Array.isArray(oi.modifiers) ? oi.modifiers : [],
+              notes: oi.notes || undefined,
+              status: (oi.status || 'PENDING').toLowerCase() as any,
+            }));
+
+          const itemsSum = lineItems.reduce((acc, cur) => acc + cur.unitPrice * cur.quantity, 0);
+          const corkage = parseFloat(tb.corkage_amount) || 0;
+
+          return {
+            id: tb.id,
+            tabIndex: idx + 1,
+            guestName: tb.customer_name || `Guest ${idx + 1}`,
+            status: 'open',
+            hasCorkageFee: tb.has_corkage_fee,
+            corkageAmount: corkage,
+            items: lineItems,
+            totalAmount: itemsSum + corkage,
+            openedAt: tb.created_at
+              ? new Date(tb.created_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })
+              : 'Open',
+          };
+        });
+
+        const totalTableAmount = customerTabs.reduce((acc, cur) => acc + cur.totalAmount, 0);
+
+        // Determine table preparation status
+        const allItems = customerTabs.flatMap((t) => t.items);
+        let tableStatus: TableItem['status'] = dbt.is_occupied ? 'occupied' : 'empty';
+        if (allItems.length > 0) {
+          if (allItems.every((i) => i.status === 'served')) {
+            tableStatus = 'served';
+          } else if (allItems.every((i) => i.status === 'ready')) {
+            tableStatus = 'ready';
+          } else if (allItems.some((i) => i.status === 'preparing')) {
+            tableStatus = 'preparing';
+          }
+        }
+
+        const isBar = dbt.zone === 'BAR_AREA' || dbt.table_number.toLowerCase().includes('bar');
+
+        return {
+          id: dbt.id,
+          code: dbt.table_number,
+          area: isBar ? 'bar' : 'cafe',
+          seats: dbt.capacity || 4,
+          guests: dbt.is_occupied ? Math.max(1, customerTabs.length) : 0,
+          status: tableStatus,
+          elapsedTime: dbt.is_occupied ? '10m' : '0m',
+          hasOpenCheck: dbt.is_occupied,
+          activeTabs: activeTabsIndices,
+          maxTabs: dbt.capacity || 4,
+          isMyTable: false,
+          tabs: customerTabs,
+          totalAmount: dbt.is_occupied ? totalTableAmount : undefined,
+        };
+      });
+
+      set({ tables: mappedTables, isHydrated: true });
+    } catch (err) {
+      console.warn('hydrateFromSupabase error:', err);
+    }
+  },
+
+  drainOfflineQueue: async () => {
+    const queue = get().offlineQueue;
+    if (queue.length === 0) return;
+
+    const remainingQueue: QueuedMutation[] = [];
+
+    for (const item of queue) {
+      try {
+        if (item.type === 'create_order') {
+          await ordersApi.createOrderWithItems(item.payload);
+        } else if (item.type === 'transfer_table') {
+          await tablesApi.transferTableTab(item.payload);
+        } else if (item.type === 'settle_tab') {
+          await tablesApi.settleTabAndRecordPayment(item.payload);
+        } else if (item.type === 'update_status') {
+          await ordersApi.updateOrderItemStatus(item.payload.itemId, item.payload.status);
+        }
+      } catch {
+        remainingQueue.push(item);
+      }
+    }
+
+    set({ offlineQueue: remainingQueue });
   },
 
   initRealtimeSync: () => {
-    // Dynamic import/reference to avoid circular dependencies
-    const { realtimeGateway } = require('../services/realtime');
+    // 1. Initial live hydration and offline queue drain
+    get().hydrateFromSupabase();
+    get().drainOfflineQueue();
 
-    // 1. Subscribe to Floor table occupancy and transfers
-    const unsubFloor = realtimeGateway.subscribeFloorTables(
-      (payload: any) => {
-        if (payload.eventType === 'UPDATE' && payload.new) {
+    // 2. Subscribe to centralized global realtime channels
+    const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
+      onTableChange: (payload) => {
+        if (payload.new) {
           const updatedTable = payload.new;
           set((state) => ({
             tables: state.tables.map((t) =>
@@ -749,33 +1153,135 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           }));
         }
       },
-      (transferLog: any) => {
-        if (transferLog.new) {
+
+      onTabChange: (payload) => {
+        if (payload.new && (payload.new.status === 'BILLED' || payload.new.status === 'CLOSED')) {
+          const tabId = payload.new.id;
+          set((state) => ({
+            tables: state.tables.map((t) => ({
+              ...t,
+              tabs: (t.tabs || []).map((tab) =>
+                tab.id === tabId ? { ...tab, status: 'billed' as const } : tab
+              ),
+            })),
+          }));
+        }
+      },
+
+      onOrderItemChange: (payload) => {
+        const item = payload.new;
+        if (!item) return;
+
+        const itemId = item.id;
+        const newStatus = (item.status || 'pending').toLowerCase() as any;
+
+        set((state) => {
+          // A. Update in Tables
+          const updatedTables = state.tables.map((table) => {
+            let tableModified = false;
+            const updatedTabs = (table.tabs || []).map((tab) => {
+              const itemIdx = tab.items.findIndex((i) => i.id === itemId);
+              if (itemIdx >= 0) {
+                tableModified = true;
+                const itemsCopy = [...tab.items];
+                itemsCopy[itemIdx] = { ...itemsCopy[itemIdx], status: newStatus };
+                return { ...tab, items: itemsCopy };
+              }
+              return tab;
+            });
+
+            if (!tableModified) return table;
+
+            const allItems = updatedTabs.flatMap((t) => t.items);
+            let nextStatus = table.status;
+            if (allItems.length > 0) {
+              if (allItems.every((i) => i.status === 'served')) {
+                nextStatus = 'served';
+              } else if (allItems.every((i) => i.status === 'ready')) {
+                nextStatus = 'ready';
+              } else if (allItems.some((i) => i.status === 'preparing')) {
+                nextStatus = 'preparing';
+              }
+            }
+
+            return {
+              ...table,
+              status: nextStatus,
+              tabs: updatedTabs,
+            };
+          });
+
+          // B. Update in Takeout
+          const updatedTakeout = state.takeoutOrders.map((order) => {
+            const itemIdx = order.items.findIndex((i) => i.id === itemId);
+            if (itemIdx >= 0) {
+              const itemsCopy = [...order.items];
+              itemsCopy[itemIdx] = { ...itemsCopy[itemIdx], status: newStatus };
+              return {
+                ...order,
+                items: itemsCopy,
+                status: itemsCopy.every((i) => i.status === 'ready')
+                  ? ('ready' as const)
+                  : order.status,
+              };
+            }
+            return order;
+          });
+
+          // C. Update in Online
+          const updatedOnline = state.onlineOrders.map((order) => {
+            const itemIdx = order.items.findIndex((i) => i.id === itemId);
+            if (itemIdx >= 0) {
+              const itemsCopy = [...order.items];
+              itemsCopy[itemIdx] = { ...itemsCopy[itemIdx], status: newStatus };
+              return {
+                ...order,
+                items: itemsCopy,
+                status: itemsCopy.every((i) => i.status === 'ready')
+                  ? ('ready' as const)
+                  : order.status,
+              };
+            }
+            return order;
+          });
+
+          return {
+            tables: updatedTables,
+            takeoutOrders: updatedTakeout,
+            onlineOrders: updatedOnline,
+          };
+        });
+
+        // If item was an INSERT from another tablet, re-hydrate to retrieve complete order data
+        if (payload.eventType === 'INSERT') {
+          get().hydrateFromSupabase();
+        }
+      },
+
+      onTransferLog: (payload) => {
+        if (payload.new) {
           get().addAlert({
             title: 'Table Transferred',
-            description: `Tab re-routed from origin table. Reason: ${transferLog.new.reason || 'Floor rearrangement'}`,
+            description: `Tab re-routed from origin table. Reason: ${payload.new.reason || 'Floor rearrangement'}`,
             type: 'transfer',
-            targetRef: transferLog.new.tab_id,
+            targetRef: payload.new.tab_id,
+          });
+          get().hydrateFromSupabase();
+        }
+      },
+
+      onProductChange: (payload) => {
+        if (payload.new && payload.new.auto_86) {
+          get().addAlert({
+            title: 'Product Auto-86',
+            description: `${payload.new.name} is now 86'd (${payload.new.out_of_stock_reason || 'Depleted'}).`,
+            type: 'auto_86',
+            targetRef: payload.new.id,
           });
         }
-      }
-    );
+      },
 
-    // 2. Subscribe to Auto-86 updates
-    const unsub86 = realtimeGateway.subscribeAuto86((payload: any) => {
-      if (payload.new && payload.new.auto_86) {
-        get().addAlert({
-          title: 'Product Auto-86',
-          description: `${payload.new.name} is now 86'd (${payload.new.out_of_stock_reason || 'Depleted'}).`,
-          type: 'auto_86',
-          targetRef: payload.new.id,
-        });
-      }
-    });
-
-    // 3. Subscribe to Runner Buzzout notifications
-    const unsubBuzzout = realtimeGateway.subscribeRunnerBuzzout(
-      (buzzoutPayload: any) => {
+      onBuzzout: (buzzoutPayload) => {
         get().addAlert({
           title: 'Order Ready for Runner',
           description: `Order for ${buzzoutPayload.customerName || buzzoutPayload.tableNumber || 'Guest'} is completely prepared.`,
@@ -783,20 +1289,22 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           targetRef: buzzoutPayload.orderId,
         });
       },
-      (itemReadyPayload: any) => {
-        get().addAlert({
-          title: 'Station Item Ready',
-          description: 'An item has reached READY status on the KDS display.',
-          type: 'station_ready',
-          targetRef: itemReadyPayload.new?.id,
-        });
-      }
-    );
+
+      onCashDrawerChange: (payload) => {
+        if (payload.new) {
+          const entry = payload.new;
+          get().addDrawerEntry(
+            (entry.action_type || 'sale').toLowerCase() as any,
+            parseFloat(entry.amount) || 0,
+            entry.reason || 'Cash movement',
+            'Staff'
+          );
+        }
+      },
+    });
 
     return () => {
-      unsubFloor();
-      unsub86();
-      unsubBuzzout();
+      unsub();
     };
   },
 }));

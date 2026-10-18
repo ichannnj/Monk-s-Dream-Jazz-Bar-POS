@@ -11,6 +11,7 @@ import {
 } from './src/components';
 import { LoginScreen } from './src/auth';
 import { useAuthStore } from './src/store/useAuthStore';
+import { useOrderStore } from './src/store/useOrderStore';
 
 // Ensure 1rem = 16px root scale for tablet typography
 try {
@@ -21,6 +22,15 @@ try {
 
 export default function App() {
   const { currentUser } = useAuthStore();
+  const { initRealtimeSync } = useOrderStore();
+
+  // Keep all stations (Waiter, Barista, Kitchen, Runner) synchronized in real-time
+  useEffect(() => {
+    const unsub = initRealtimeSync();
+    return () => {
+      unsub();
+    };
+  }, [initRealtimeSync]);
 
   const renderScreen = () => {
     if (!currentUser) {

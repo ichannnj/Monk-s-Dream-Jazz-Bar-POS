@@ -58,6 +58,7 @@ export interface WaiterModalsClusterProps {
   orderEntryContext: {
     title: string;
     initialItems?: OrderLineItem[];
+    previousTabItems?: OrderLineItem[];
     hasExistingCorkage?: boolean;
   } | null;
   onCloseOrderEntry: () => void;
@@ -165,6 +166,7 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
         visible={isOrderEntryOpen}
         title={orderEntryContext?.title || 'Order Entry'}
         initialItems={orderEntryContext?.initialItems || []}
+        previousTabItems={orderEntryContext?.previousTabItems || []}
         hasExistingCorkage={orderEntryContext?.hasExistingCorkage || false}
         onClose={onCloseOrderEntry}
         onSendOrder={onSendOrder}
