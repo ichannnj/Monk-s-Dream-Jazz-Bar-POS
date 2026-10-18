@@ -9,9 +9,14 @@ interface StationSettingsModalProps {
   onToggleOnline: (val: boolean) => void;
   audioChimes: boolean;
   onToggleAudio: (val: boolean) => void;
-  barOnlyFilter: boolean;
-  onToggleBarFilter: (val: boolean) => void;
+  filterActive?: boolean;
+  barOnlyFilter?: boolean;
+  onToggleFilter?: (val: boolean) => void;
+  onToggleBarFilter?: (val: boolean) => void;
   onClockOut: () => void;
+  stationName?: string;
+  filterLabel?: string;
+  filterDesc?: string;
 }
 
 export const StationSettingsModal: React.FC<StationSettingsModalProps> = ({
@@ -21,10 +26,17 @@ export const StationSettingsModal: React.FC<StationSettingsModalProps> = ({
   onToggleOnline,
   audioChimes,
   onToggleAudio,
+  filterActive,
   barOnlyFilter,
+  onToggleFilter,
   onToggleBarFilter,
   onClockOut,
+  stationName = 'Station KDS',
+  filterLabel = 'Filter Station Items Only',
+  filterDesc = 'Hide other station items from tickets on this screen',
 }) => {
+  const isFilterOn = filterActive ?? barOnlyFilter ?? false;
+  const handleToggleFilter = onToggleFilter ?? onToggleBarFilter ?? (() => {});
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
@@ -33,7 +45,7 @@ export const StationSettingsModal: React.FC<StationSettingsModalProps> = ({
           <View style={styles.headerRow}>
             <View>
               <Text style={styles.modalTitle}>Station Settings</Text>
-              <Text style={styles.modalSubtitle}>Bar & Barista KDS Configuration</Text>
+              <Text style={styles.modalSubtitle}>{stationName} Configuration</Text>
             </View>
             <Pressable onPress={onClose} style={styles.closeBtn}>
               <X size={20} color="#6b7280" />
@@ -66,9 +78,7 @@ export const StationSettingsModal: React.FC<StationSettingsModalProps> = ({
               </View>
               <View style={styles.textCol}>
                 <Text style={styles.settingTitle}>Audio Chimes & Rush Chimes</Text>
-                <Text style={styles.settingDesc}>
-                  Play alert sounds when new drink orders arrive
-                </Text>
+                <Text style={styles.settingDesc}>Play alert sounds when new tickets arrive</Text>
               </View>
               <Switch
                 value={audioChimes}
@@ -83,16 +93,14 @@ export const StationSettingsModal: React.FC<StationSettingsModalProps> = ({
                 <Filter size={18} color="#3b82f6" />
               </View>
               <View style={styles.textCol}>
-                <Text style={styles.settingTitle}>Filter: Bar Items Only</Text>
-                <Text style={styles.settingDesc}>
-                  Hide kitchen food items from tickets on this screen
-                </Text>
+                <Text style={styles.settingTitle}>{filterLabel}</Text>
+                <Text style={styles.settingDesc}>{filterDesc}</Text>
               </View>
               <Switch
-                value={barOnlyFilter}
-                onValueChange={onToggleBarFilter}
+                value={isFilterOn}
+                onValueChange={handleToggleFilter}
                 trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-                thumbColor={barOnlyFilter ? '#1d4ed8' : '#f4f3f4'}
+                thumbColor={isFilterOn ? '#1d4ed8' : '#f4f3f4'}
               />
             </View>
           </View>

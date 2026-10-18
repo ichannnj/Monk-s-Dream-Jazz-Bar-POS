@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
-import { BarTicket, KdsStage } from './types';
+import { BarTicket, KdsStage } from '../types';
 import { BaristaTicketCard } from './BaristaTicketCard';
 
 interface BaristaKanbanColumnProps {

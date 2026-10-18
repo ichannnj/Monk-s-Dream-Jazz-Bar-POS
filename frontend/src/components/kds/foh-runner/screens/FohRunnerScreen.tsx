@@ -11,13 +11,13 @@ import {
   Coffee,
   CheckCircle2,
 } from 'lucide-react-native';
-import { useAuthStore } from '../../store/useAuthStore';
-import { useOrderStore } from '../../store/useOrderStore';
-import { toast } from '../../store/useToastStore';
-import { Sidebar, NavTabId } from '../navigation/Sidebar';
-import { SharedChatView, SharedAlertsView } from '../shared';
-import { StationHeader } from './StationHeader';
-import { OrderLineItem } from '../../types/floor';
+import { useAuthStore } from '../../../../store/useAuthStore';
+import { useOrderStore } from '../../../../store/useOrderStore';
+import { toast } from '../../../../store/useToastStore';
+import { Sidebar, NavTabId } from '../../../navigation/Sidebar';
+import { SharedChatView, SharedAlertsView } from '../../../shared';
+import { StationHeader } from '../../common/components/StationHeader';
+import { OrderLineItem } from '../../../../types/floor';
 
 interface RunnerTicket {
   id: string;

@@ -1,14 +1,15 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import { Coffee, UtensilsCrossed, BellRing, LogOut, Sparkles, Flame } from 'lucide-react-native';
-import { useAuthStore } from '../../store/useAuthStore';
+import { Coffee, UtensilsCrossed, BellRing, LogOut } from 'lucide-react-native';
+import { useAuthStore } from '../../../../store/useAuthStore';
+import { StationType } from '../../types';
 
-const MONKS_DREAM_LOGO = require('../../../assets/Monks Dream Logo files-02.png');
+const MONKS_DREAM_LOGO = require('../../../../../assets/Monks Dream Logo files-02.png');
 
 interface StationHeaderProps {
   title: string;
-  stationType: 'bar' | 'kitchen' | 'runner';
+  stationType: StationType;
   activeTicketsCount: number;
   urgentTicketsCount?: number;
   onLogout?: () => void;

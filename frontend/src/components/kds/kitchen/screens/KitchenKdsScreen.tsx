@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { View, ScrollView, Text, StyleSheet } from 'react-native';
-import { useAuthStore } from '../../store/useAuthStore';
-import { useOrderStore } from '../../store/useOrderStore';
-import { toast } from '../../store/useToastStore';
-import { Sidebar, NavTabId } from '../navigation/Sidebar';
-import { StationHeader } from '../kds/StationHeader';
-import { StationTicketCard, KdsTicket } from '../kds/StationTicketCard';
-import { SEED_MENU_ITEMS } from '../../mock/menu.mock';
-import { SharedChatView, SharedAlertsView } from '../shared';
-import { StationSettingsModal } from '../bar_barista/modals/StationSettingsModal';
+import { useAuthStore } from '../../../../store/useAuthStore';
+import { useOrderStore } from '../../../../store/useOrderStore';
+import { toast } from '../../../../store/useToastStore';
+import { Sidebar, NavTabId } from '../../../navigation/Sidebar';
+import { StationHeader } from '../../common/components/StationHeader';
+import { StationTicketCard } from '../../common/components/StationTicketCard';
+import { KdsTicket } from '../../types';
+import { SEED_MENU_ITEMS } from '../../../../mock/menu.mock';
+import { SharedChatView, SharedAlertsView } from '../../../shared';
+import { StationSettingsModal } from '../../common/modals/StationSettingsModal';
 
 export const KitchenKdsScreen: React.FC = () => {
   const { logout, isOnline, setIsOnline } = useAuthStore();

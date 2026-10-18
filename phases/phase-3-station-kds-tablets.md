@@ -39,7 +39,7 @@
 
 ### Step 3.1: Barista / Bartender Tablet KDS Screen
 
-- [x] Target file: [frontend/src/components/kds/BaristaKdsScreen.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/components/kds/BaristaKdsScreen.tsx)
+- [x] Target file: [frontend/src/components/kds/barista/screens/BaristaKdsScreen.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/components/kds/barista/screens/BaristaKdsScreen.tsx)
 - [x] Role filter: User role `station_bar`, `station_cafe`, `bartender`, or `barista`.
 - [x] Visual Ticket Structure:
   - Header badge: `[ 🍽️ Table 4 — Guest: Miles ]`, `[ 🛍️ Takeout #T-105 — Sarah ]`, or `[ 🛵 GrabFood #GF-8842 — Rider: Mike ]`.

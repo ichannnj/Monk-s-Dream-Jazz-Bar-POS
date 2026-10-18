@@ -1,4 +1,4 @@
-import { OrderLineItem } from '../../types/floor';
+import { OrderLineItem } from '../../../types/floor';
 
 export type KdsStage = 'new' | 'preparing' | 'ready';
 
@@ -13,7 +13,7 @@ export interface BarTicket {
   orderNumber: string; // e.g. "#1047"
   tableOrSource: string; // e.g. "Table A3"
   stage: KdsStage;
-  elapsedTime: string; // e.g. "00:20" or "06:20" or "1m ago"
+  elapsedTime: string; // e.g. "00:20" or "06:20"
   minutesElapsed: number;
   badges: ('NEW' | 'RUSH' | 'JUST IN' | 'PREPARING' | 'ITEM VOIDED' | 'READY')[];
   multiStationTag?: string; // e.g. "Multi-Station · Cafe · Preparing"
@@ -34,4 +34,12 @@ export interface StockInventoryItem {
   inStockCount: number;
   lowStockThreshold: number;
   is86: boolean;
+}
+
+export interface BarProductStock {
+  id: string;
+  name: string;
+  category: string;
+  is86: boolean;
+  stockCount?: number;
 }

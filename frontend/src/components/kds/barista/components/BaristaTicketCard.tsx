@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { BarTicket } from './types';
+import { BarTicket } from '../types';
 
 interface BaristaTicketCardProps {
   ticket: BarTicket;

@@ -1,7 +1,5 @@
 export * from './navigation/Sidebar';
 export * from './waiter';
-export * from './bar_barista';
-export * from './kitchen_kds';
 export * from './kds';
 export * from './Header';
 export * from './HomeScreen';

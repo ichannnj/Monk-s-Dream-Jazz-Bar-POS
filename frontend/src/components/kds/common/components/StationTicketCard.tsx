@@ -1,28 +1,9 @@
 import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import {
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowRight,
-  Flame,
-  Utensils,
-  ShoppingBag,
-  Bike,
-} from 'lucide-react-native';
-import { OrderLineItem } from '../../types/floor';
+import { Clock, CheckCircle2, Flame, Utensils, ShoppingBag, Bike } from 'lucide-react-native';
+import { KdsTicket } from '../../types';
 
-export interface KdsTicket {
-  ticketId: string;
-  orderNumber: string;
-  orderType: 'dine_in' | 'takeout' | 'online_delivery';
-  sourceTitle: string; // "Table 4", "Takeout #T-105", "GrabFood #GF-8842"
-  guestName: string;
-  elapsedTime: string;
-  minutesElapsed: number;
-  items: OrderLineItem[];
-  transferAlert?: string; // e.g., "Re-routed from Table 2"
-}
+export { KdsTicket };
 
 interface StationTicketCardProps {
   ticket: KdsTicket;
@@ -34,7 +15,6 @@ interface StationTicketCardProps {
 
 export const StationTicketCard: React.FC<StationTicketCardProps> = ({
   ticket,
-  stationType,
   onAcceptAll,
   onDoneAll,
   onUpdateItemStatus,

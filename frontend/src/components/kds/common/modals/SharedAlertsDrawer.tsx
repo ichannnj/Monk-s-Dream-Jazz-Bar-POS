@@ -1,31 +1,18 @@
 import React from 'react';
 import { View, StyleSheet, Modal } from 'react-native';
-import { SharedChatView } from '../../shared/SharedChatView';
+import { SharedAlertsView } from '../../../shared/SharedAlertsView';
 
-interface BarChatDrawerProps {
+interface SharedAlertsDrawerProps {
   visible: boolean;
   onClose: () => void;
-  staffName?: string;
-  staffRole?: string;
 }
 
-export const BarChatDrawer: React.FC<BarChatDrawerProps> = ({
-  visible,
-  onClose,
-  staffName = 'Ana Reyes',
-  staffRole = 'Bar Staff',
-}) => {
+export const SharedAlertsDrawer: React.FC<SharedAlertsDrawerProps> = ({ visible, onClose }) => {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
         <View style={styles.modalCard}>
-          <SharedChatView
-            senderName={staffName}
-            senderRole={staffRole}
-            defaultChannel="bar"
-            onBack={onClose}
-            backLabel="Close Chat"
-          />
+          <SharedAlertsView onBack={onClose} backLabel="Close Alerts" />
         </View>
       </View>
     </Modal>

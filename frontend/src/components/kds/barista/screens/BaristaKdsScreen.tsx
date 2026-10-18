@@ -1,19 +1,19 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MessageSquare } from 'lucide-react-native';
-import { useAuthStore } from '../../store/useAuthStore';
-import { useOrderStore } from '../../store/useOrderStore';
-import { toast } from '../../store/useToastStore';
-import { Sidebar, NavTabId } from '../navigation/Sidebar';
-import { BaristaKdsHeader } from './BaristaKdsHeader';
-import { BaristaKanbanColumn } from './BaristaKanbanColumn';
-import { BarTicket, StockInventoryItem } from './types';
-import { OutOfStockModal, BarProductStock } from './modals/OutOfStockModal';
-import { OutOfStockListModal } from './modals/OutOfStockListModal';
-import { AdjustStockModal } from './modals/AdjustStockModal';
-import { FohStatusModal } from './modals/FohStatusModal';
-import { SharedChatView, SharedAlertsView } from '../shared';
-import { StationSettingsModal } from './modals/StationSettingsModal';
+import { useAuthStore } from '../../../../store/useAuthStore';
+import { useOrderStore } from '../../../../store/useOrderStore';
+import { toast } from '../../../../store/useToastStore';
+import { Sidebar, NavTabId } from '../../../navigation/Sidebar';
+import { BaristaKdsHeader } from '../components/BaristaKdsHeader';
+import { BaristaKanbanColumn } from '../components/BaristaKanbanColumn';
+import { BarTicket, StockInventoryItem } from '../types';
+import { OutOfStockModal, BarProductStock } from '../modals/OutOfStockModal';
+import { OutOfStockListModal } from '../modals/OutOfStockListModal';
+import { AdjustStockModal } from '../modals/AdjustStockModal';
+import { FohStatusModal } from '../modals/FohStatusModal';
+import { SharedChatView, SharedAlertsView } from '../../../shared';
+import { StationSettingsModal } from '../../common/modals/StationSettingsModal';
 
 // Initial baseline mock items matching the exact screenshot reference
 const INITIAL_BAR_TICKETS: BarTicket[] = [
