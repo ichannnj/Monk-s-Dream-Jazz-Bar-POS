@@ -38,10 +38,18 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   chatDefaultChannel,
 }) => {
   const { currentUser, logout, isOnline, setIsOnline } = useAuthStore();
-  const { tables, takeoutOrders, onlineOrders, alerts, addAlert, updateOrderItemStatus } =
-    useOrderStore();
+  const {
+    tables,
+    takeoutOrders,
+    onlineOrders,
+    alerts,
+    addAlert,
+    updateOrderItemStatus,
+    markRoundServed,
+    markTakeoutServed,
+    markOnlineServed,
+  } = useOrderStore();
 
-  const [tickets, setTickets] = useState<BarTicket[]>([]);
   const [inventory, setInventory] = useState<StockInventoryItem[]>([]);
   const [activeSidebarTab, setActiveSidebarTab] = useState<NavTabId>('board');
   const [audioChimes, setAudioChimes] = useState(true);
@@ -86,9 +94,9 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
     };
   }, [stationTarget]);
 
-  // Sync live orders added to the store into the KDS tickets
-  useEffect(() => {
-    const liveNewTickets: BarTicket[] = [];
+  // Pure reactive tickets selector derived from Zustand store (Single Source of Truth)
+  const allTickets: BarTicket[] = useMemo(() => {
+    const list: BarTicket[] = [];
 
     // 1. Dine-in tables (Grouped by Sub-Order Round)
     tables.forEach((table) => {
@@ -96,146 +104,139 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
         const stationItems = (tab.items || []).filter(
           (item) => item.stationTarget === stationTarget
         );
-        if (stationItems.length > 0) {
-          // Group items by round number
-          const roundsMap = new Map<number, typeof stationItems>();
-          stationItems.forEach((item) => {
-            const r = item.roundNumber || 1;
-            if (!roundsMap.has(r)) roundsMap.set(r, []);
-            roundsMap.get(r)!.push(item);
+        if (stationItems.length === 0) return;
+
+        // Group items strictly by round number
+        const roundsMap = new Map<number, typeof stationItems>();
+        stationItems.forEach((item) => {
+          const r = item.roundNumber || 1;
+          if (!roundsMap.has(r)) roundsMap.set(r, []);
+          roundsMap.get(r)!.push(item);
+        });
+
+        roundsMap.forEach((roundItems, roundNum) => {
+          // Prune round if all active items are served or voided
+          const activeRoundItems = roundItems.filter((i) => i.status !== 'cancelled');
+          if (activeRoundItems.length === 0) return;
+          const allServed = activeRoundItems.every((i) => i.status === 'served');
+          if (allServed) return; // Immediately removed from active board!
+
+          const ticketId = `tbl-${table.id}-${tab.id || tab.tabIndex}-r${roundNum}`;
+          const allReady = activeRoundItems.every((i) => i.status === 'ready');
+          const hasPrep = activeRoundItems.some((i) => i.status === 'preparing');
+          const hasCancelled = roundItems.some((i) => i.status === 'cancelled');
+
+          let stage: BarTicket['stage'] = 'new';
+          if (allReady) stage = 'ready';
+          else if (hasPrep) stage = 'preparing';
+
+          const badges: string[] = [];
+          if (roundNum > 1) badges.push(`ROUND ${roundNum}`);
+          if (stage === 'new') badges.push('NEW', 'JUST IN');
+          else if (stage === 'preparing') badges.push('PREPARING');
+          else badges.push('READY');
+          if (hasCancelled) badges.push('ITEM VOIDED');
+
+          const otherStationItems = (tab.items || []).filter(
+            (i) => (i.roundNumber || 1) === roundNum && i.stationTarget !== stationTarget
+          );
+          const otherLabel =
+            stationTarget === 'bar' ? 'food item(s) at Kitchen' : 'drink(s) at Bar';
+          const multiStationTag =
+            otherStationItems.length > 0
+              ? `Multi-Station · ${otherStationItems.length} ${otherLabel}`
+              : undefined;
+
+          const minutes = parseInt(table.elapsedTime || '1', 10) || 1;
+
+          list.push({
+            id: ticketId,
+            orderNumber: `#${table.code.replace('Table ', 'T')}-${tab.tabIndex}${roundNum > 1 ? `-R${roundNum}` : ''}`,
+            tableOrSource: `${table.code} · Tab ${tab.tabIndex}`,
+            stage,
+            roundNumber: roundNum,
+            elapsedTime: table.elapsedTime || '1m',
+            minutesElapsed: minutes,
+            badges,
+            multiStationTag,
+            items: roundItems.map((bi) => ({
+              ...bi,
+              isVoided: bi.status === 'cancelled',
+              is86: inventory.find((inv) =>
+                inv.name.toLowerCase().includes(bi.productName.toLowerCase())
+              )?.is86,
+            })),
+            voidNote: hasCancelled ? '! Item(s) voided · Do not prepare' : undefined,
+            serverName: tab.guestName,
           });
-
-          roundsMap.forEach((roundItems, roundNum) => {
-            if (roundItems.some((i) => i.status !== 'served')) {
-              const ticketId = `tbl-${table.id}-${tab.id}-r${roundNum}`;
-              const existing = tickets.find((t) => t.id === ticketId);
-              const hasPrep = roundItems.some((i) => i.status === 'preparing');
-              const allReady = roundItems.every(
-                (i) => i.status === 'ready' || i.status === 'cancelled'
-              );
-              const hasCancelled = roundItems.some((i) => i.status === 'cancelled');
-
-              let stage: BarTicket['stage'] = 'new';
-              if (allReady) stage = 'ready';
-              else if (hasPrep) stage = 'preparing';
-
-              const badges: string[] = [];
-              if (roundNum > 1) badges.push(`ROUND ${roundNum}`);
-              if (stage === 'new') badges.push('NEW', 'JUST IN');
-              else if (stage === 'preparing') badges.push('PREPARING');
-              else badges.push('READY');
-              if (hasCancelled) badges.push('ITEM VOIDED');
-
-              const otherStationItems = (tab.items || []).filter(
-                (i) => (i.roundNumber || 1) === roundNum && i.stationTarget !== stationTarget
-              );
-              const otherLabel =
-                stationTarget === 'bar' ? 'food item(s) at Kitchen' : 'drink(s) at Bar';
-              const multiStationTag =
-                otherStationItems.length > 0
-                  ? `Multi-Station · ${otherStationItems.length} ${otherLabel}`
-                  : undefined;
-
-              if (!existing) {
-                liveNewTickets.push({
-                  id: ticketId,
-                  orderNumber: `#${table.code.replace('Table ', 'T')}-${tab.tabIndex}${roundNum > 1 ? `-R${roundNum}` : ''}`,
-                  tableOrSource: `${table.code} · Tab ${tab.tabIndex}`,
-                  stage,
-                  roundNumber: roundNum,
-                  elapsedTime: table.elapsedTime || '1m',
-                  minutesElapsed: parseInt(table.elapsedTime || '1', 10) || 1,
-                  badges,
-                  multiStationTag,
-                  items: roundItems.map((bi) => ({
-                    ...bi,
-                    isVoided: bi.status === 'cancelled',
-                    is86: inventory.find((inv) =>
-                      inv.name.toLowerCase().includes(bi.productName.toLowerCase())
-                    )?.is86,
-                  })),
-                  voidNote: hasCancelled ? '! Item(s) voided · Do not prepare' : undefined,
-                  serverName: tab.guestName,
-                });
-              } else if (hasCancelled && !existing.badges.includes('ITEM VOIDED')) {
-                // Synchronize existing ticket with store void status
-                setTickets((prev) =>
-                  prev.map((t) =>
-                    t.id === ticketId
-                      ? {
-                          ...t,
-                          badges: Array.from(new Set([...t.badges, 'ITEM VOIDED'])),
-                          voidNote: '! Item(s) voided · Do not prepare',
-                          items: t.items.map((it) => {
-                            const updated = roundItems.find((ri) => ri.id === it.id);
-                            return updated
-                              ? {
-                                  ...it,
-                                  status: updated.status,
-                                  isVoided: updated.status === 'cancelled',
-                                }
-                              : it;
-                          }),
-                        }
-                      : t
-                  )
-                );
-              }
-            }
-          });
-        }
+        });
       });
     });
 
     // 2. Takeout orders
     takeoutOrders.forEach((order) => {
+      if (order.status === 'completed') return;
       const stationItems = (order.items || []).filter((i) => i.stationTarget === stationTarget);
-      if (stationItems.length > 0 && order.status !== 'completed') {
-        const ticketId = `takeout-${order.id}`;
-        const existing = tickets.find((t) => t.id === ticketId);
-        if (!existing) {
-          liveNewTickets.push({
-            id: ticketId,
-            orderNumber: order.ticketNumber,
-            tableOrSource: `Takeout · ${order.customerName}`,
-            stage: order.status === 'ready' ? 'ready' : 'new',
-            elapsedTime: order.elapsedTime || '1m',
-            minutesElapsed: 1,
-            badges: ['NEW', 'JUST IN'],
-            items: stationItems,
-            serverName: order.customerName,
-          });
-        }
-      }
+      const activeItems = stationItems.filter((i) => i.status !== 'cancelled');
+      if (activeItems.length === 0) return;
+      if (activeItems.every((i) => i.status === 'served')) return;
+
+      const allReady = activeItems.every((i) => i.status === 'ready');
+      const hasPrep = activeItems.some((i) => i.status === 'preparing');
+      let stage: BarTicket['stage'] = 'new';
+      if (order.status === 'ready' || allReady) stage = 'ready';
+      else if (hasPrep || order.status === 'preparing') stage = 'preparing';
+
+      const minutes = parseInt(order.elapsedTime || '1', 10) || 1;
+
+      list.push({
+        id: `takeout-${order.id}`,
+        orderNumber: order.ticketNumber,
+        tableOrSource: `Takeout · ${order.customerName}`,
+        stage,
+        elapsedTime: order.elapsedTime || '1m',
+        minutesElapsed: minutes,
+        badges:
+          stage === 'new' ? ['NEW', 'JUST IN'] : stage === 'preparing' ? ['PREPARING'] : ['READY'],
+        items: stationItems,
+        serverName: order.customerName,
+      });
     });
 
     // 3. Online delivery orders
     onlineOrders.forEach((order) => {
+      if (order.status === 'completed') return;
       const stationItems = (order.items || []).filter((i) => i.stationTarget === stationTarget);
-      if (stationItems.length > 0 && order.status !== 'completed') {
-        const ticketId = `online-${order.id}`;
-        const existing = tickets.find((t) => t.id === ticketId);
-        if (!existing) {
-          const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
-          liveNewTickets.push({
-            id: ticketId,
-            orderNumber: order.platformOrderRef,
-            tableOrSource: `${platformLabel} · ${order.riderName}`,
-            stage: order.status === 'ready' ? 'ready' : 'new',
-            elapsedTime: order.elapsedTime || '1m',
-            minutesElapsed: 1,
-            badges: ['NEW', 'RUSH'],
-            items: stationItems,
-            serverName: order.customerName,
-          });
-        }
-      }
+      const activeItems = stationItems.filter((i) => i.status !== 'cancelled');
+      if (activeItems.length === 0) return;
+      if (activeItems.every((i) => i.status === 'served')) return;
+
+      const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
+      const allReady = activeItems.every((i) => i.status === 'ready');
+      const hasPrep = activeItems.some((i) => i.status === 'preparing');
+      let stage: BarTicket['stage'] = 'new';
+      if (order.status === 'ready' || allReady) stage = 'ready';
+      else if (hasPrep || order.status === 'preparing') stage = 'preparing';
+
+      const minutes = parseInt(order.elapsedTime || '1', 10) || 1;
+
+      list.push({
+        id: `online-${order.id}`,
+        orderNumber: order.platformOrderRef,
+        tableOrSource: `${platformLabel} · ${order.riderName}`,
+        stage,
+        elapsedTime: order.elapsedTime || '1m',
+        minutesElapsed: minutes,
+        badges:
+          stage === 'new' ? ['NEW', 'RUSH'] : stage === 'preparing' ? ['PREPARING'] : ['READY'],
+        items: stationItems,
+        serverName: order.customerName,
+      });
     });
 
-    if (liveNewTickets.length > 0) {
-      setTickets((prev) => [...liveNewTickets, ...prev]);
-    }
-  }, [tables, takeoutOrders, onlineOrders, inventory, tickets, stationTarget]);
+    // Strict FIFO / FCFS Sorting: Oldest tickets (longest elapsed time) first
+    return list.sort((a, b) => (b.minutesElapsed || 0) - (a.minutesElapsed || 0));
+  }, [tables, takeoutOrders, onlineOrders, inventory, stationTarget]);
 
   // Derived products for availability manager
   const stationProducts: BarProductStock[] = useMemo(() => {
@@ -253,89 +254,65 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   }, [stationProducts]);
 
   // Tickets grouped by stage
-  const newTickets = useMemo(() => tickets.filter((t) => t.stage === 'new'), [tickets]);
-  const preparingTickets = useMemo(() => tickets.filter((t) => t.stage === 'preparing'), [tickets]);
-  const readyTickets = useMemo(() => tickets.filter((t) => t.stage === 'ready'), [tickets]);
+  const newTickets = useMemo(() => allTickets.filter((t) => t.stage === 'new'), [allTickets]);
+  const preparingTickets = useMemo(
+    () => allTickets.filter((t) => t.stage === 'preparing'),
+    [allTickets]
+  );
+  const readyTickets = useMemo(() => allTickets.filter((t) => t.stage === 'ready'), [allTickets]);
 
   const activeTicketsCount = newTickets.length + preparingTickets.length;
   const unreadAlertCount = alerts.filter((a) => !a.isRead).length;
 
   // Actions
   const handleStartTicket = (ticket: BarTicket) => {
-    ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
-
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === ticket.id
-          ? {
-              ...t,
-              stage: 'preparing',
-              badges: ['PREPARING'],
-              elapsedTime: '00:01',
-              items: t.items.map((i) => ({ ...i, status: 'preparing' })),
-            }
-          : t
-      )
-    );
+    ticket.items
+      .filter((i) => i.status === 'pending')
+      .forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
     toast.success(`Preparing ${ticket.orderNumber} (${ticket.tableOrSource})`);
   };
 
   const handleReadyTicket = (ticket: BarTicket) => {
-    ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'ready'));
-
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === ticket.id
-          ? {
-              ...t,
-              stage: 'ready',
-              badges: ['READY'],
-              elapsedTime: 'Just now',
-              items: t.items.map((i) => ({ ...i, status: 'ready' })),
-            }
-          : t
-      )
-    );
+    ticket.items
+      .filter((i) => i.status === 'preparing' || i.status === 'pending')
+      .forEach((item) => updateOrderItemStatus(item.id, 'ready'));
     toast.success(`Order Ready: ${ticket.orderNumber} for pickup`);
   };
 
-  const handleRecallTicket = (ticket: BarTicket) => {
-    ticket.items.forEach((item) => {
-      if (item.status !== 'cancelled') {
-        updateOrderItemStatus(item.id, 'preparing');
-      }
-    });
+  const handleDismissReadyTicket = (ticket: BarTicket) => {
+    if (ticket.id.startsWith('tbl-')) {
+      const parts = ticket.id.split('-');
+      // format: tbl-${table.id}-${tab.id || tab.tabIndex}-r${roundNum}
+      const tableId = parts[1];
+      const tabRef = parts[2];
+      const roundNum = ticket.roundNumber || 1;
+      const targetTable = tables.find((t) => t.id === tableId);
+      const tabIndex = parseInt(tabRef, 10) || targetTable?.tabs?.[0]?.tabIndex || 1;
+      markRoundServed(tableId, tabIndex, roundNum, stationTarget);
+    } else if (ticket.id.startsWith('takeout-')) {
+      const orderId = ticket.id.replace('takeout-', '');
+      markTakeoutServed(orderId);
+    } else if (ticket.id.startsWith('online-')) {
+      const orderId = ticket.id.replace('online-', '');
+      markOnlineServed(orderId);
+    } else {
+      ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'served'));
+    }
+    toast.success(`Picked up: ${ticket.orderNumber}`);
+  };
 
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === ticket.id
-          ? {
-              ...t,
-              stage: 'preparing',
-              badges: ['PREPARING'],
-              items: t.items.map((i) => ({ ...i, status: 'preparing' })),
-            }
-          : t
-      )
-    );
+  const handleRecallTicket = (ticket: BarTicket) => {
+    ticket.items
+      .filter((i) => i.status !== 'cancelled')
+      .forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
     toast.info(`Recalled ${ticket.orderNumber} to Preparing`);
   };
 
-  const handleToggleItem = (ticketId: string, itemId: string) => {
-    setTickets((prev) =>
-      prev.map((t) => {
-        if (t.id !== ticketId) return t;
-        return {
-          ...t,
-          items: t.items.map((i) => {
-            if (i.id !== itemId) return i;
-            const nextStatus = i.status === 'ready' ? 'preparing' : 'ready';
-            updateOrderItemStatus(i.id, nextStatus);
-            return { ...i, status: nextStatus };
-          }),
-        };
-      })
-    );
+  const handleToggleItem = (_ticketId: string, itemId: string) => {
+    const item = allTickets.flatMap((t) => t.items).find((i) => i.id === itemId);
+    if (!item) return;
+    const nextStatus = item.status === 'ready' ? 'preparing' : 'ready';
+    updateOrderItemStatus(itemId, nextStatus);
   };
 
   // Toggle item availability
@@ -368,21 +345,6 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
       targetRef: prodName,
     });
 
-    setTickets((prev) =>
-      prev.map((t) => ({
-        ...t,
-        items: t.items.map((i) => {
-          if (
-            i.productName.toLowerCase().includes(prodName.toLowerCase()) ||
-            prodName.toLowerCase().includes(i.productName.toLowerCase())
-          ) {
-            return { ...i, is86: willBeUnavailable };
-          }
-          return i;
-        }),
-      }))
-    );
-
     if (willBeUnavailable) {
       toast.warning(`${prodName} is now out of stock (${reason})`, { title: 'Item Out of Stock' });
     } else {
@@ -414,7 +376,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   };
 
   const handleSendSubstitutionRequest = (ticketId: string, suggestion: string) => {
-    const ticket = tickets.find((t) => t.id === ticketId);
+    const ticket = allTickets.find((t) => t.id === ticketId);
     if (!ticket) return;
 
     addAlert({
@@ -427,18 +389,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
     toast.success(`Prompt sent to waiter for ${ticket.tableOrSource}`);
   };
 
-  const handleForceUnblock = (ticketId: string) => {
-    setTickets((prev) =>
-      prev.map((t) =>
-        t.id === ticketId
-          ? {
-              ...t,
-              isReadyBlocked: false,
-              hasFohStatusAlert: false,
-            }
-          : t
-      )
-    );
+  const handleForceUnblock = (_ticketId: string) => {
     toast.success('Order unblocked. Proceeding with preparation.');
   };
 
@@ -570,6 +521,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
                 tickets={readyTickets}
                 overflowCount={readyTickets.length > 2 ? 1 : 0}
                 onRecallTicket={handleRecallTicket}
+                onDismissTicket={handleDismissReadyTicket}
                 onToggleItem={handleToggleItem}
               />
             </View>

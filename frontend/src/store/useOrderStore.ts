@@ -98,6 +98,14 @@ interface OrderState {
     itemId: string,
     status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled'
   ) => void;
+  markRoundServed: (
+    tableId: string,
+    tabIndex: number,
+    roundNumber: number,
+    stationTarget?: 'bar' | 'kitchen'
+  ) => void;
+  markTakeoutServed: (orderId: string) => void;
+  markOnlineServed: (orderId: string) => void;
   voidOrderItem: (
     itemId: string,
     staffId: string,
@@ -262,9 +270,24 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 ...t,
                 tabs: (t.tabs || []).map((tb) => {
                   if (tb.tabIndex !== tabIndex) return tb;
+                  // Map returned database item UUIDs onto the corresponding round line items
+                  const updatedItems = tb.items.map((it) => {
+                    if (
+                      it.roundNumber === currentRound &&
+                      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(it.id)
+                    ) {
+                      const matched = res.items.find(
+                        (dbIt: any) =>
+                          dbIt.station_target === it.stationTarget && dbIt.quantity === it.quantity
+                      );
+                      if (matched) return { ...it, id: matched.id };
+                    }
+                    return it;
+                  });
                   return {
                     ...tb,
                     id: res.order.tab_id || tb.id,
+                    items: updatedItems,
                   };
                 }),
               };
@@ -866,6 +889,117 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     // Background update to Supabase
     ordersApi.updateOrderItemStatus(itemId, newStatus);
+  },
+
+  markRoundServed: (tableId, tabIndex, roundNumber, stationTarget) => {
+    const itemIdsToUpdate: string[] = [];
+
+    set((state) => {
+      const updatedTables = state.tables.map((table) => {
+        if (table.id !== tableId) return table;
+
+        const updatedTabs = (table.tabs || []).map((tab) => {
+          if (tab.tabIndex !== tabIndex) return tab;
+
+          const updatedItems = tab.items.map((item) => {
+            const matchesRound = (item.roundNumber || 1) === roundNumber;
+            const matchesStation = !stationTarget || item.stationTarget === stationTarget;
+            if (
+              matchesRound &&
+              matchesStation &&
+              item.status !== 'cancelled' &&
+              item.status !== 'served'
+            ) {
+              itemIdsToUpdate.push(item.id);
+              return { ...item, status: 'served' as const };
+            }
+            return item;
+          });
+
+          return { ...tab, items: updatedItems };
+        });
+
+        const allItems = updatedTabs.flatMap((t) => t.items);
+        const hasPrep = allItems.some((i) => i.status === 'preparing');
+        const hasReady = allItems.some((i) => i.status === 'ready');
+        const allServed = allItems.length > 0 && allItems.every((i) => i.status === 'served');
+
+        let nextTableStatus = table.status;
+        if (hasReady) {
+          nextTableStatus = 'ready';
+        } else if (hasPrep) {
+          nextTableStatus = 'preparing';
+        } else if (allServed) {
+          nextTableStatus = 'served';
+        }
+
+        return {
+          ...table,
+          tabs: updatedTabs,
+          status: nextTableStatus,
+        };
+      });
+
+      return { tables: updatedTables };
+    });
+
+    itemIdsToUpdate.forEach((id) => {
+      ordersApi.updateOrderItemStatus(id, 'served');
+    });
+  },
+
+  markTakeoutServed: (orderId) => {
+    const itemIdsToUpdate: string[] = [];
+
+    set((state) => {
+      const updatedTakeout = state.takeoutOrders.map((order) => {
+        if (order.id !== orderId) return order;
+        const updatedItems = order.items.map((i) => {
+          if (i.status !== 'cancelled') {
+            itemIdsToUpdate.push(i.id);
+            return { ...i, status: 'served' as const };
+          }
+          return i;
+        });
+        return {
+          ...order,
+          items: updatedItems,
+          status: 'completed' as const,
+        };
+      });
+      return { takeoutOrders: updatedTakeout };
+    });
+
+    itemIdsToUpdate.forEach((id) => {
+      ordersApi.updateOrderItemStatus(id, 'served');
+    });
+  },
+
+  markOnlineServed: (orderId) => {
+    const itemIdsToUpdate: string[] = [];
+
+    set((state) => {
+      const updatedOnline = state.onlineOrders.map((order) => {
+        if (order.id !== orderId) return order;
+        const updatedItems = order.items.map((i) => {
+          if (i.status !== 'cancelled') {
+            itemIdsToUpdate.push(i.id);
+            return { ...i, status: 'served' as const };
+          }
+          return i;
+        });
+        return {
+          ...order,
+          items: updatedItems,
+          status: 'completed' as const,
+        };
+      });
+      return { onlineOrders: updatedOnline };
+    });
+
+    itemIdsToUpdate.forEach((id) => {
+      ordersApi.updateOrderItemStatus(id, 'served');
+    });
   },
 
   voidOrderItem: async (itemId, staffId, reason, tableId, tabIndex) => {

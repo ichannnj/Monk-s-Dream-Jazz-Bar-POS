@@ -13,6 +13,7 @@ interface BaristaKanbanColumnProps {
   onStartTicket?: (ticket: BarTicket) => void;
   onReadyTicket?: (ticket: BarTicket) => void;
   onRecallTicket?: (ticket: BarTicket) => void;
+  onDismissTicket?: (ticket: BarTicket) => void;
   onViewFohStatus?: (ticket: BarTicket) => void;
   onReadyBlockedPress?: (ticket: BarTicket) => void;
   onToggleItem?: (ticketId: string, itemId: string) => void;
@@ -27,6 +28,7 @@ export const BaristaKanbanColumn: React.FC<BaristaKanbanColumnProps> = ({
   onStartTicket,
   onReadyTicket,
   onRecallTicket,
+  onDismissTicket,
   onViewFohStatus,
   onReadyBlockedPress,
   onToggleItem,
@@ -85,6 +87,7 @@ export const BaristaKanbanColumn: React.FC<BaristaKanbanColumnProps> = ({
                 onStart={onStartTicket}
                 onReady={onReadyTicket}
                 onRecall={onRecallTicket}
+                onDismiss={onDismissTicket}
                 onViewFohStatus={onViewFohStatus}
                 onReadyBlockedPress={onReadyBlockedPress}
                 onToggleItem={onToggleItem}

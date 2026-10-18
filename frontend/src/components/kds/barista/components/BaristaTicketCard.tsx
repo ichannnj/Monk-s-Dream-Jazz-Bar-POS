@@ -8,6 +8,7 @@ interface BaristaTicketCardProps {
   onStart?: (ticket: BarTicket) => void;
   onReady?: (ticket: BarTicket) => void;
   onRecall?: (ticket: BarTicket) => void;
+  onDismiss?: (ticket: BarTicket) => void;
   onViewFohStatus?: (ticket: BarTicket) => void;
   onReadyBlockedPress?: (ticket: BarTicket) => void;
   onToggleItem?: (ticketId: string, itemId: string) => void;
@@ -18,6 +19,7 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
   onStart,
   onReady,
   onRecall,
+  onDismiss,
   onViewFohStatus,
   onReadyBlockedPress,
   onToggleItem,
@@ -229,12 +231,18 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
 
         {stage === 'ready' ? (
           <View style={styles.readyFooterRow}>
-            <Text style={styles.waitingPickupText}>Waiting for pickup</Text>
             <Pressable
               onPress={() => onRecall?.(ticket)}
               style={({ pressed }) => [styles.recallButton, pressed && styles.buttonPressed]}
             >
               <Text style={styles.recallButtonText}>Recall</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => onDismiss?.(ticket)}
+              style={({ pressed }) => [styles.dismissButton, pressed && styles.buttonPressed]}
+            >
+              <Check size={14} color="#ffffff" strokeWidth={3} />
+              <Text style={styles.dismissButtonText}>Picked Up</Text>
             </Pressable>
           </View>
         ) : null}
@@ -571,6 +579,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   recallButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  dismissButton: {
+    backgroundColor: '#15803d',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  dismissButtonText: {
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '800',
