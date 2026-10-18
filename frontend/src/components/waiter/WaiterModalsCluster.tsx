@@ -16,7 +16,7 @@ export interface WaiterModalsClusterProps {
   selectedTable: TableItem | null;
   isActionModalOpen: boolean;
   onCloseActionModal: () => void;
-  onOpenOrderEntryFromModal: (table: TableItem, tabIndex: number) => void;
+  onOpenOrderEntryFromModal: (table: TableItem, tabIndex: number, roundNumber?: number) => void;
   onOpenNewSplitTab: (table: TableItem) => void;
   onCheckoutFromModal: (table: TableItem, tabIndex: number) => void;
   onTransferTableFromModal: (table: TableItem) => void;
@@ -57,6 +57,7 @@ export interface WaiterModalsClusterProps {
   isOrderEntryOpen: boolean;
   orderEntryContext: {
     title: string;
+    roundNumber?: number;
     initialItems?: OrderLineItem[];
     previousTabItems?: OrderLineItem[];
     hasExistingCorkage?: boolean;
@@ -165,6 +166,7 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
       <OrderEntryModal
         visible={isOrderEntryOpen}
         title={orderEntryContext?.title || 'Order Entry'}
+        roundNumber={orderEntryContext?.roundNumber}
         initialItems={orderEntryContext?.initialItems || []}
         previousTabItems={orderEntryContext?.previousTabItems || []}
         hasExistingCorkage={orderEntryContext?.hasExistingCorkage || false}

@@ -63,6 +63,18 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
 
   return (
     <View style={styles.cardContainer}>
+      {/* Prominent Sub-Order / Round Banner */}
+      {ticket.roundNumber && ticket.roundNumber > 1 ? (
+        <View style={styles.subOrderBanner}>
+          <Text style={styles.subOrderBannerTitle}>🔔 SUB-ORDER: ROUND {ticket.roundNumber}</Text>
+          <Text style={styles.subOrderBannerSub}>Independent Ticket · Prepare as New Order</Text>
+        </View>
+      ) : (
+        <View style={styles.initialOrderBanner}>
+          <Text style={styles.initialOrderBannerTitle}>ROUND 1 ORDER</Text>
+        </View>
+      )}
+
       {/* Top Header: Order Number + Table Name & Elapsed Time Pill */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
@@ -264,6 +276,47 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 3,
     elevation: 1,
+  },
+  subOrderBanner: {
+    backgroundColor: '#fff7ed',
+    borderWidth: 1,
+    borderColor: '#fed7aa',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  subOrderBannerTitle: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#c2410c',
+    letterSpacing: 0.3,
+  },
+  subOrderBannerSub: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#ea580c',
+  },
+  initialOrderBanner: {
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  initialOrderBannerTitle: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#475569',
+    letterSpacing: 0.4,
   },
   headerRow: {
     flexDirection: 'row',

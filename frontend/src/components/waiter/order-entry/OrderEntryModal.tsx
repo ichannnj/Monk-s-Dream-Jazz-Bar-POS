@@ -16,6 +16,7 @@ import { styles } from './OrderEntryModal.styles';
 export interface OrderEntryModalProps {
   visible: boolean;
   title: string; // e.g. "Table B1 • Tab: Miles" or "Takeout #T-105"
+  roundNumber?: number;
   initialItems?: OrderLineItem[];
   previousTabItems?: OrderLineItem[];
   hasExistingCorkage?: boolean;
@@ -26,6 +27,7 @@ export interface OrderEntryModalProps {
 export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   visible,
   title,
+  roundNumber,
   initialItems = [],
   previousTabItems = [],
   hasExistingCorkage = false,
@@ -277,6 +279,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
             <OrderCartSidebar
               cartItems={cartItems}
               previousTabItems={previousTabItems}
+              roundNumber={roundNumber}
               hasCorkage={hasCorkage}
               corkageAmount={corkageAmount}
               itemsSubtotal={itemsSubtotal}

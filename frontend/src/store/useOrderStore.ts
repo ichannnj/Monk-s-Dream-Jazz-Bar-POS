@@ -176,7 +176,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     const roundTaggedItems = items.map((i) => ({
       ...i,
-      roundNumber: currentRound,
+      roundNumber: i.roundNumber || currentRound,
       status: i.status || 'pending',
     }));
 

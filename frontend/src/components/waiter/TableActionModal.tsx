@@ -21,7 +21,7 @@ interface TableActionModalProps {
   table: TableItem | null;
   onClose: () => void;
   onTransferTable: (table: TableItem) => void;
-  onOpenOrderEntry: (table: TableItem, tabIndex: number) => void;
+  onOpenOrderEntry: (table: TableItem, tabIndex: number, roundNumber?: number) => void;
   onOpenNewTab: (table: TableItem) => void;
   onCheckout: (table: TableItem, tabIndex: number) => void;
 }
@@ -61,6 +61,72 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   const currentTab = (table.tabs || []).find((t) => t.tabIndex === selectedTabIndex);
 
   const tabTotal = currentTab?.totalAmount ?? (table.totalAmount || 0);
+
+  // Group active customer tab items by round
+  const rounds = React.useMemo(() => {
+    if (!currentTab || !currentTab.items || currentTab.items.length === 0) {
+      return [];
+    }
+    const map = new Map<number, OrderLineItem[]>();
+    currentTab.items.forEach((item) => {
+      const r = item.roundNumber || 1;
+      if (!map.has(r)) {
+        map.set(r, []);
+      }
+      map.get(r)!.push(item);
+    });
+
+    return Array.from(map.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([roundNum, items]) => {
+        const activeItems = items.filter((i) => i.status !== 'cancelled');
+        const allCancelled = items.length > 0 && activeItems.length === 0;
+        const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
+        const allServed = activeItems.length > 0 && activeItems.every((i) => i.status === 'served');
+        const hasPrep = activeItems.some((i) => i.status === 'preparing');
+
+        let statusText = 'NEW';
+        let statusBg = '#eff6ff';
+        let statusColor = '#1d4ed8';
+
+        if (allCancelled) {
+          statusText = 'VOIDED';
+          statusBg = '#fee2e2';
+          statusColor = '#b91c1c';
+        } else if (allServed) {
+          statusText = 'SERVED';
+          statusBg = '#f1f5f9';
+          statusColor = '#475569';
+        } else if (allReady) {
+          statusText = 'READY';
+          statusBg = '#dcfce7';
+          statusColor = '#15803d';
+        } else if (hasPrep) {
+          statusText = 'PREPARING';
+          statusBg = '#fef3c7';
+          statusColor = '#b45309';
+        }
+
+        const roundTotal = items
+          .filter((i) => i.status !== 'cancelled')
+          .reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+
+        return {
+          roundNum,
+          items,
+          statusText,
+          statusBg,
+          statusColor,
+          roundTotal,
+        };
+      });
+  }, [currentTab]);
+
+  const maxRound =
+    currentTab && currentTab.items.length > 0
+      ? Math.max(...currentTab.items.map((i) => i.roundNumber || 1))
+      : 0;
+  const nextRound = maxRound + 1;
 
   const handleOpenVoidModal = (item: OrderLineItem) => {
     setItemToVoid(item);
@@ -168,121 +234,149 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
               </View>
             ) : null}
 
-            {/* 3. Items on Tab Section */}
+            {/* 3. Items on Tab Section - Segmented per Round */}
             <ScrollView style={styles.contentScroll} showsVerticalScrollIndicator={false}>
               <View style={styles.itemsPreviewBox}>
                 <View style={styles.itemsHeaderRow}>
                   <Text style={styles.itemsPreviewTitle}>
-                    Items ({currentTab?.items.length || 0}) · {currentTab?.guestName || 'Guest Tab'}
+                    Tab #{selectedTabIndex}: {currentTab?.guestName || 'Guest Tab'} (
+                    {currentTab?.items.length || 0} items)
                   </Text>
                   <Text style={styles.itemsHeaderTotal}>${tabTotal.toFixed(2)}</Text>
                 </View>
 
-                {currentTab && currentTab.items.length > 0 ? (
-                  currentTab.items.map((item, idx) => {
-                    const isVoided = item.status === 'cancelled';
-                    return (
-                      <View key={item.id || idx} style={styles.itemRow}>
-                        <View style={styles.itemRowLeft}>
-                          {item.stationTarget === 'bar' ? (
-                            <Wine size={13} color={isVoided ? '#9ca3af' : '#0284c7'} />
-                          ) : (
-                            <ChefHat size={13} color={isVoided ? '#9ca3af' : '#ea580c'} />
-                          )}
-                          <Text
-                            style={[
-                              styles.itemName,
-                              isVoided && { textDecorationLine: 'line-through', color: '#9ca3af' },
-                            ]}
-                            numberOfLines={1}
-                          >
-                            {item.quantity}x {item.productName}
-                          </Text>
-
-                          {/* Round Badge */}
-                          {item.roundNumber ? (
-                            <View
-                              style={{
-                                backgroundColor: '#f1f5f9',
-                                paddingHorizontal: 5,
-                                paddingVertical: 1,
-                                borderRadius: 4,
-                              }}
-                            >
-                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#64748b' }}>
-                                R{item.roundNumber}
+                {rounds.length > 0 ? (
+                  <View style={styles.roundsListContainer}>
+                    {rounds.map((round) => (
+                      <View key={round.roundNum} style={styles.roundCard}>
+                        {/* Round Header */}
+                        <View style={styles.roundCardHeader}>
+                          <View style={styles.roundTitleGroup}>
+                            <View style={styles.roundNumberBadge}>
+                              <Text style={styles.roundNumberBadgeText}>R{round.roundNum}</Text>
+                            </View>
+                            <View>
+                              <Text style={styles.roundTitleText}>Round {round.roundNum}</Text>
+                              <Text style={styles.roundSubtitleText}>
+                                {round.items.length} item{round.items.length > 1 ? 's' : ''} · $
+                                {round.roundTotal.toFixed(2)}
                               </Text>
                             </View>
-                          ) : null}
+                          </View>
 
-                          {/* Item Status Badge */}
                           <View
-                            style={{
-                              backgroundColor:
-                                item.status === 'ready'
-                                  ? '#dcfce7'
-                                  : item.status === 'preparing'
-                                    ? '#fef3c7'
-                                    : item.status === 'served'
-                                      ? '#f1f5f9'
-                                      : isVoided
-                                        ? '#fee2e2'
-                                        : '#f3f4f6',
-                              paddingHorizontal: 5,
-                              paddingVertical: 1,
-                              borderRadius: 4,
-                            }}
+                            style={[styles.roundStatusBadge, { backgroundColor: round.statusBg }]}
                           >
                             <Text
-                              style={{
-                                fontSize: 10,
-                                fontWeight: '700',
-                                textTransform: 'uppercase',
-                                color:
-                                  item.status === 'ready'
-                                    ? '#15803d'
-                                    : item.status === 'preparing'
-                                      ? '#b45309'
-                                      : item.status === 'served'
-                                        ? '#475569'
-                                        : isVoided
-                                          ? '#b91c1c'
-                                          : '#6b7280',
-                              }}
+                              style={[styles.roundStatusBadgeText, { color: round.statusColor }]}
                             >
-                              {isVoided ? 'VOIDED' : item.status}
+                              {round.statusText}
                             </Text>
                           </View>
                         </View>
 
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Text
-                            style={[
-                              styles.itemPrice,
-                              isVoided && { textDecorationLine: 'line-through', color: '#9ca3af' },
-                            ]}
-                          >
-                            ${(item.unitPrice * item.quantity).toFixed(2)}
-                          </Text>
+                        {/* Round Items */}
+                        <View style={styles.roundItemsList}>
+                          {round.items.map((item, idx) => {
+                            const isVoided = item.status === 'cancelled';
+                            return (
+                              <View key={item.id || idx} style={styles.itemRow}>
+                                <View style={styles.itemRowLeft}>
+                                  {item.stationTarget === 'bar' ? (
+                                    <Wine size={13} color={isVoided ? '#9ca3af' : '#0284c7'} />
+                                  ) : (
+                                    <ChefHat size={13} color={isVoided ? '#9ca3af' : '#ea580c'} />
+                                  )}
+                                  <Text
+                                    style={[
+                                      styles.itemName,
+                                      isVoided && {
+                                        textDecorationLine: 'line-through',
+                                        color: '#9ca3af',
+                                      },
+                                    ]}
+                                    numberOfLines={1}
+                                  >
+                                    {item.quantity}x {item.productName}
+                                  </Text>
 
-                          {!isVoided ? (
-                            <Pressable
-                              onPress={() => handleOpenVoidModal(item)}
-                              style={{
-                                padding: 5,
-                                borderRadius: 6,
-                                backgroundColor: '#fef2f2',
-                              }}
-                              accessibilityRole="button"
-                              accessibilityLabel={`Void ${item.productName}`}
-                            >
-                              <Trash2 size={13} color="#ef4444" />
-                            </Pressable>
-                          ) : null}
+                                  {/* Item Status Badge */}
+                                  <View
+                                    style={{
+                                      backgroundColor:
+                                        item.status === 'ready'
+                                          ? '#dcfce7'
+                                          : item.status === 'preparing'
+                                            ? '#fef3c7'
+                                            : item.status === 'served'
+                                              ? '#f1f5f9'
+                                              : isVoided
+                                                ? '#fee2e2'
+                                                : '#f3f4f6',
+                                      paddingHorizontal: 5,
+                                      paddingVertical: 1,
+                                      borderRadius: 4,
+                                    }}
+                                  >
+                                    <Text
+                                      style={{
+                                        fontSize: 10,
+                                        fontWeight: '700',
+                                        textTransform: 'uppercase',
+                                        color:
+                                          item.status === 'ready'
+                                            ? '#15803d'
+                                            : item.status === 'preparing'
+                                              ? '#b45309'
+                                              : item.status === 'served'
+                                                ? '#475569'
+                                                : isVoided
+                                                  ? '#b91c1c'
+                                                  : '#6b7280',
+                                      }}
+                                    >
+                                      {isVoided ? 'VOIDED' : item.status}
+                                    </Text>
+                                  </View>
+                                </View>
+
+                                <View
+                                  style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.itemPrice,
+                                      isVoided && {
+                                        textDecorationLine: 'line-through',
+                                        color: '#9ca3af',
+                                      },
+                                    ]}
+                                  >
+                                    ${(item.unitPrice * item.quantity).toFixed(2)}
+                                  </Text>
+
+                                  {!isVoided ? (
+                                    <Pressable
+                                      onPress={() => handleOpenVoidModal(item)}
+                                      style={{
+                                        padding: 5,
+                                        borderRadius: 6,
+                                        backgroundColor: '#fef2f2',
+                                      }}
+                                      accessibilityRole="button"
+                                      accessibilityLabel={`Void ${item.productName}`}
+                                    >
+                                      <Trash2 size={13} color="#ef4444" />
+                                    </Pressable>
+                                  ) : null}
+                                </View>
+                              </View>
+                            );
+                          })}
                         </View>
                       </View>
-                    );
-                  })
+                    ))}
+                  </View>
                 ) : (
                   <Text style={styles.emptyItemsText}>No items added yet to this tab.</Text>
                 )}
@@ -295,12 +389,12 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                   <Pressable
                     onPress={() => {
                       onClose();
-                      onOpenOrderEntry(table, selectedTabIndex);
+                      onOpenOrderEntry(table, selectedTabIndex, nextRound);
                     }}
                     style={[styles.primaryActionBtn, styles.btnOrder]}
                   >
                     <UtensilsCrossed size={16} color="#ffffff" strokeWidth={2.3} />
-                    <Text style={styles.primaryActionBtnText}>+ Order Items</Text>
+                    <Text style={styles.primaryActionBtnText}>+ Start Round {nextRound} Order</Text>
                   </Pressable>
 
                   <Pressable
@@ -705,6 +799,67 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     fontStyle: 'italic',
     paddingVertical: 6,
+  },
+  roundsListContainer: {
+    gap: 10,
+    marginTop: 4,
+  },
+  roundCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 10,
+    gap: 8,
+  },
+  roundCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  roundTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  roundNumberBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roundNumberBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#475569',
+  },
+  roundTitleText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1e293b',
+  },
+  roundSubtitleText: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  roundStatusBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  roundStatusBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  roundItemsList: {
+    gap: 4,
   },
   actionsContainer: {
     gap: 10,

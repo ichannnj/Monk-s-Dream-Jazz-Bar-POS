@@ -7,6 +7,7 @@ import { styles } from './OrderEntryModal.styles';
 export interface OrderCartSidebarProps {
   cartItems: OrderLineItem[];
   previousTabItems?: OrderLineItem[];
+  roundNumber?: number;
   hasCorkage: boolean;
   corkageAmount: number;
   itemsSubtotal: number;
@@ -20,6 +21,7 @@ export interface OrderCartSidebarProps {
 export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
   cartItems,
   previousTabItems = [],
+  roundNumber,
   hasCorkage,
   corkageAmount,
   itemsSubtotal,
@@ -34,7 +36,16 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
   return (
     <View style={styles.cartPanel}>
       <View style={styles.cartHeader}>
-        <Text style={styles.cartHeaderTitle}>Current Order Basket</Text>
+        <View>
+          <Text style={styles.cartHeaderTitle}>
+            {roundNumber ? `Round ${roundNumber} Basket` : 'Current Order Basket'}
+          </Text>
+          {roundNumber && roundNumber > 1 ? (
+            <Text style={{ fontSize: 11, color: '#b45309', fontWeight: '700', marginTop: 2 }}>
+              Add-on Round · In-flight orders locked
+            </Text>
+          ) : null}
+        </View>
         <View style={styles.itemCountBadge}>
           <Text style={styles.itemCountText}>
             {cartItems.reduce((acc, i) => acc + i.quantity, 0)} items
@@ -69,9 +80,14 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <History size={14} color="#64748b" />
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#475569' }}>
-                Previous Tab Items ({previousTabItems.length})
-              </Text>
+              <View>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#475569' }}>
+                  Previous Rounds History ({previousTabItems.length})
+                </Text>
+                <Text style={{ fontSize: 10, color: '#94a3b8' }}>
+                  Already sent to KDS · Historical record
+                </Text>
+              </View>
             </View>
             {showHistory ? (
               <ChevronUp size={14} color="#64748b" />
@@ -256,7 +272,9 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
         style={[styles.sendOrderBtn, cartItems.length === 0 && styles.sendOrderBtnDisabled]}
       >
         <Send size={18} color="#ffffff" strokeWidth={2.4} />
-        <Text style={styles.sendOrderBtnText}>Send Order to Stations</Text>
+        <Text style={styles.sendOrderBtnText}>
+          {roundNumber ? `Send Round ${roundNumber} to Stations` : 'Send Order to Stations'}
+        </Text>
       </Pressable>
     </View>
   );

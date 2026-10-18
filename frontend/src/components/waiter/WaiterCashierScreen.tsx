@@ -76,6 +76,7 @@ export const WaiterCashierScreen: React.FC = () => {
     title: string;
     tableId?: string;
     tabIndex?: number;
+    roundNumber?: number;
     initialItems?: OrderLineItem[];
     previousTabItems?: OrderLineItem[];
     hasExistingCorkage?: boolean;
@@ -118,19 +119,23 @@ export const WaiterCashierScreen: React.FC = () => {
     }
   };
 
-  const handleOpenOrderEntryFromModal = (table: TableItem, tabIndex: number) => {
+  const handleOpenOrderEntryFromModal = (
+    table: TableItem,
+    tabIndex: number,
+    specificRound?: number
+  ) => {
     const tab = table.tabs?.find((t) => t.tabIndex === tabIndex);
     const existingItems = tab?.items || [];
     const maxRound =
       existingItems.length > 0 ? Math.max(1, ...existingItems.map((i) => i.roundNumber || 1)) : 0;
-    const nextRound = maxRound + 1;
-    const roundSuffix = existingItems.length > 0 ? ` (Round ${nextRound})` : '';
+    const nextRound = specificRound || maxRound + 1;
 
     setOrderEntryContext({
       type: 'dine_in',
-      title: `Table ${table.code} • Tab: "${tab?.guestName || `Tab #${tabIndex}`}"${roundSuffix}`,
+      title: `Table ${table.code} • Tab: "${tab?.guestName || `Tab #${tabIndex}`}" • Round ${nextRound}`,
       tableId: table.id,
       tabIndex: tabIndex,
+      roundNumber: nextRound,
       initialItems: [],
       previousTabItems: existingItems,
       hasExistingCorkage: tab?.hasCorkageFee || false,
@@ -230,16 +235,21 @@ export const WaiterCashierScreen: React.FC = () => {
 
     if (orderEntryContext.type === 'dine_in' && orderEntryContext.tableId) {
       const targetTable = tables.find((t) => t.id === orderEntryContext.tableId);
+      const roundNum = orderEntryContext.roundNumber || 1;
+      const itemsWithRound = items.map((item) => ({
+        ...item,
+        roundNumber: item.roundNumber || roundNum,
+      }));
       addItemsToTab(
         orderEntryContext.tableId,
         orderEntryContext.tabIndex || 1,
-        items,
+        itemsWithRound,
         hasCorkage,
         corkageAmount
       );
       toast.success(
-        `${items.length} item(s) dispatched to Bar & Kitchen for Table ${targetTable?.code || ''} (Chit printed)`,
-        { title: 'Order Sent to Stations' }
+        `${items.length} item(s) dispatched to Bar & Kitchen for Table ${targetTable?.code || ''} • Round ${roundNum} (Chit printed)`,
+        { title: `Round ${roundNum} Sent to Stations` }
       );
     } else if (orderEntryContext.type === 'takeout') {
       const newOrder = createTakeoutOrder(
