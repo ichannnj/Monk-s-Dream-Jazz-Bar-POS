@@ -129,7 +129,9 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
             onPress={() => onChannelChange('takeout')}
             style={[
               styles.areaPill,
-              selectedChannel === 'takeout' ? styles.areaPillEmeraldActive : styles.areaPillInactive,
+              selectedChannel === 'takeout'
+                ? styles.areaPillEmeraldActive
+                : styles.areaPillInactive,
             ]}
           >
             <ShoppingBag
@@ -179,10 +181,7 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
           {/* All */}
           <Pressable
             onPress={() => onStatusChange('all')}
-            style={[
-              styles.statusPill,
-              selectedStatus === 'all' && styles.statusPillAllActive,
-            ]}
+            style={[styles.statusPill, selectedStatus === 'all' && styles.statusPillAllActive]}
           >
             <Text
               style={[
@@ -195,12 +194,16 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
             <View
               style={[
                 styles.statusBadge,
-                selectedStatus === 'all' ? styles.statusBadgeWhiteOnWine : styles.statusBadgeDefault,
+                selectedStatus === 'all'
+                  ? styles.statusBadgeWhiteOnWine
+                  : styles.statusBadgeDefault,
               ]}
             >
               <Text
                 style={
-                  selectedStatus === 'all' ? styles.statusBadgeTextWhite : styles.statusBadgeTextDark
+                  selectedStatus === 'all'
+                    ? styles.statusBadgeTextWhite
+                    : styles.statusBadgeTextDark
                 }
               >
                 {statusCounts.all}

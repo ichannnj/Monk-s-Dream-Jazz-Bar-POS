@@ -47,15 +47,15 @@ export class UsbEscPosPrinter {
         cmd([0x1d, 0x21, 0x11]);
         push("MONK'S DREAM\nJAZZ BAR\n");
         cmd([0x1d, 0x21, 0x00]); // Normal text
-        push("Digital Operations Platform\n");
-        push("------------------------------------------------\n");
+        push('Digital Operations Platform\n');
+        push('------------------------------------------------\n');
         // Left alignment: ESC a 0
         cmd([0x1b, 0x61, 0x00]);
         push(`Receipt #: ${payload.receiptNumber}\n`);
         push(`Date:      ${payload.timestamp}\n`);
         push(`Table:     ${payload.tableNumber} (${payload.tabName || 'Main'})\n`);
         push(`Staff:     ${payload.waiterName}\n`);
-        push("------------------------------------------------\n");
+        push('------------------------------------------------\n');
         // Items list
         for (const item of payload.items) {
             const nameCol = `${item.quantity}x ${item.name}`.slice(0, 32).padEnd(34, ' ');
@@ -65,7 +65,7 @@ export class UsbEscPosPrinter {
                 push(`   [Corkage 20% Applied]\n`);
             }
         }
-        push("------------------------------------------------\n");
+        push('------------------------------------------------\n');
         push(`Subtotal:    ${(payload.subtotal / 100).toFixed(2).padStart(34, ' ')}\n`);
         if (payload.corkageFee > 0) {
             push(`Corkage Fee: ${(payload.corkageFee / 100).toFixed(2).padStart(34, ' ')}\n`);
@@ -77,10 +77,10 @@ export class UsbEscPosPrinter {
         push(`Tendered:    PHP ${(payload.tendered / 100).toFixed(2).padStart(30, ' ')}\n`);
         push(`Change:      PHP ${(payload.change / 100).toFixed(2).padStart(30, ' ')}\n`);
         push(`Payment:     ${payload.paymentMethod.padStart(34, ' ')}\n`);
-        push("------------------------------------------------\n");
+        push('------------------------------------------------\n');
         // Center alignment: ESC a 1
         cmd([0x1b, 0x61, 0x01]);
-        push("Thank you for listening!\nSee you at the next set.\n\n\n\n");
+        push('Thank you for listening!\nSee you at the next set.\n\n\n\n');
         // Cut paper: GS V 0 (full cut)
         cmd([0x1d, 0x56, 0x00]);
         return Buffer.concat(parts);

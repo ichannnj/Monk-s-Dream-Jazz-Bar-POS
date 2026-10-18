@@ -20,18 +20,10 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
   const isReady = order.status === 'ready';
 
   return (
-    <View
-      style={[
-        styles.cardContainer,
-        isGrab ? styles.cardGrab : styles.cardFoodpanda,
-      ]}
-    >
+    <View style={[styles.cardContainer, isGrab ? styles.cardGrab : styles.cardFoodpanda]}>
       <Pressable
         onPress={() => onPress(order)}
-        style={({ pressed }) => [
-          styles.mainPressableArea,
-          pressed && styles.cardPressed,
-        ]}
+        style={({ pressed }) => [styles.mainPressableArea, pressed && styles.cardPressed]}
         accessibilityRole="button"
         accessibilityLabel={`Online delivery ${order.platform} ${order.platformOrderRef}`}
       >
@@ -40,12 +32,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
           <View style={styles.codeCol}>
             <View style={styles.platformBadgeRow}>
               <Bike size={13} color={isGrab ? '#059669' : '#db2777'} strokeWidth={2.4} />
-              <Text
-                style={[
-                  styles.platformCodeText,
-                  { color: isGrab ? '#059669' : '#db2777' },
-                ]}
-              >
+              <Text style={[styles.platformCodeText, { color: isGrab ? '#059669' : '#db2777' }]}>
                 {isGrab ? 'Grab' : 'Panda'} #{order.platformOrderRef}
               </Text>
             </View>
@@ -55,31 +42,15 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
           </View>
 
           <View
-            style={[
-              styles.statusBadge,
-              isReady ? styles.statusBadgeReady : styles.statusBadgePrep,
-            ]}
+            style={[styles.statusBadge, isReady ? styles.statusBadgeReady : styles.statusBadgePrep]}
           >
             <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: isReady ? '#16a34a' : '#d97706' },
-              ]}
+              style={[styles.statusDot, { backgroundColor: isReady ? '#16a34a' : '#d97706' }]}
             />
-            <Text
-              style={[
-                styles.statusText,
-                { color: isReady ? '#15803d' : '#b45309' },
-              ]}
-            >
+            <Text style={[styles.statusText, { color: isReady ? '#15803d' : '#b45309' }]}>
               {isReady ? 'READY' : 'PREP'}
             </Text>
-            <Text
-              style={[
-                styles.timeText,
-                { color: isReady ? '#15803d' : '#b45309' },
-              ]}
-            >
+            <Text style={[styles.timeText, { color: isReady ? '#15803d' : '#b45309' }]}>
               · {order.elapsedTime}
             </Text>
           </View>

@@ -1,14 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
-import {
-  Settings,
-  User,
-  ShieldCheck,
-  Printer,
-  LogOut,
-  Sparkles,
-  Wifi,
-} from 'lucide-react-native';
+import { Settings, User, ShieldCheck, Printer, LogOut, Sparkles, Wifi } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { toast } from '../../store/useToastStore';
 
@@ -17,10 +9,7 @@ interface ShiftSettingsModalProps {
   onLogout?: () => void;
 }
 
-export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
-  onClose,
-  onLogout,
-}) => {
+export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({ onClose, onLogout }) => {
   const { currentUser, isTrainingMode, setIsTrainingMode } = useAuthStore();
 
   return (
@@ -63,9 +52,7 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
             </View>
 
             <View>
-              <Text style={styles.staffName}>
-                {currentUser?.displayName || 'Jess Santos'}
-              </Text>
+              <Text style={styles.staffName}>{currentUser?.displayName || 'Jess Santos'}</Text>
               <Text style={styles.staffRole}>
                 Role: {currentUser?.role || 'Waiter / Cashier'} • Floor Authenticated
               </Text>
@@ -88,8 +75,8 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
           </View>
 
           <Text style={styles.cardDesc}>
-            Practice ordering, tab splits, and settlements without sending tickets to
-            physical KDS stations or depleting active inventory.
+            Practice ordering, tab splits, and settlements without sending tickets to physical KDS
+            stations or depleting active inventory.
           </Text>
 
           <View style={styles.trainingToggleRow}>
@@ -101,9 +88,12 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
               onValueChange={(val) => {
                 setIsTrainingMode(val);
                 if (val) {
-                  toast.info('Training Sandbox Mode active — tickets won\'t route to live stations.', {
-                    title: 'Sandbox Mode ON',
-                  });
+                  toast.info(
+                    "Training Sandbox Mode active — tickets won't route to live stations.",
+                    {
+                      title: 'Sandbox Mode ON',
+                    }
+                  );
                 } else {
                   toast.info('Live Production Mode active.', {
                     title: 'Live Mode',
@@ -132,20 +122,25 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
           </View>
 
           <Text style={styles.cardDesc}>
-            Dedicated printer client is listening for `dispatch:print` (Runner Chits)
-            and `receipt:print` (Customer Receipts) via USB ESC/POS driver.
+            Dedicated printer client is listening for `dispatch:print` (Runner Chits) and
+            `receipt:print` (Customer Receipts) via USB ESC/POS driver.
           </Text>
 
           <Pressable
             onPress={() => {
-              toast.success('Thermal Printer test receipt dispatched: ESC/POS 80mm verified at 192.168.1.50:9100', {
-                title: 'Printer Online & Ready',
-              });
+              toast.success(
+                'Thermal Printer test receipt dispatched: ESC/POS 80mm verified at 192.168.1.50:9100',
+                {
+                  title: 'Printer Online & Ready',
+                }
+              );
             }}
             style={styles.switchStaffBtn}
           >
             <Printer size={14} color="#15803d" />
-            <Text style={[styles.switchStaffText, { color: '#15803d' }]}>Test Thermal Printer Ping</Text>
+            <Text style={[styles.switchStaffText, { color: '#15803d' }]}>
+              Test Thermal Printer Ping
+            </Text>
           </Pressable>
         </View>
       </View>

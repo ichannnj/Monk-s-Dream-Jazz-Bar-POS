@@ -758,9 +758,30 @@ export type Database = {
                 };
                 Returns: Json;
             };
+            cancel_order_item_with_restoral: {
+                Args: {
+                    p_order_item_id: string;
+                    p_staff_id: string;
+                    p_reason: string;
+                };
+                Returns: Json;
+            };
             dispatch_order_with_depletion: {
                 Args: {
                     p_order_id: string;
+                };
+                Returns: Json;
+            };
+            settle_tab_and_record_payment: {
+                Args: {
+                    p_tab_id: string;
+                    p_staff_id?: string | null;
+                    p_payment_method: Database["public"]["Enums"]["payment_method"];
+                    p_amount: number;
+                    p_corkage_amount?: number;
+                    p_discount_amount?: number;
+                    p_tip_amount?: number;
+                    p_notes?: string | null;
                 };
                 Returns: Json;
             };

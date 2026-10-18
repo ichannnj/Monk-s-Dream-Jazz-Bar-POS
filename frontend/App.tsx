@@ -2,7 +2,13 @@ import './src/global.css';
 import React, { useEffect } from 'react';
 import { SafeAreaView, StatusBar, View } from 'react-native';
 import { rem } from 'nativewind';
-import { WaiterCashierScreen, ToastContainer } from './src/components';
+import {
+  WaiterCashierScreen,
+  BaristaKdsScreen,
+  KitchenKdsScreen,
+  FohRunnerScreen,
+  ToastContainer,
+} from './src/components';
 import { LoginScreen } from './src/auth';
 import { useAuthStore } from './src/store/useAuthStore';
 
@@ -16,11 +22,36 @@ try {
 export default function App() {
   const { currentUser } = useAuthStore();
 
+  const renderScreen = () => {
+    if (!currentUser) {
+      return <LoginScreen />;
+    }
+
+    switch (currentUser.role) {
+      case 'station_bar':
+      case 'barista':
+      case 'bartender':
+        return <BaristaKdsScreen />;
+      case 'station_cafe':
+        return <BaristaKdsScreen />;
+      case 'station_food':
+      case 'kitchen':
+        return <KitchenKdsScreen />;
+      case 'foh_runner':
+        return <FohRunnerScreen />;
+      case 'admin':
+      case 'cashier':
+      case 'waiter':
+      default:
+        return <WaiterCashierScreen />;
+    }
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
       <StatusBar barStyle="dark-content" backgroundColor="#f6f0ed" />
       <View style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
-        {!currentUser ? <LoginScreen /> : <WaiterCashierScreen />}
+        {renderScreen()}
         <ToastContainer />
       </View>
     </SafeAreaView>

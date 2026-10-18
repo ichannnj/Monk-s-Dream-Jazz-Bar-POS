@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,8 +8,8 @@ import {
   ScrollView,
   ActivityIndicator,
   StyleSheet,
-} from "react-native";
-import { Image } from "expo-image";
+} from 'react-native';
+import { Image } from 'expo-image';
 import {
   X,
   Camera,
@@ -18,10 +18,10 @@ import {
   Sparkles,
   UtensilsCrossed,
   Image as ImageIcon,
-} from "lucide-react-native";
-import { MenuItem } from "../../../mockData";
-import { IMAGE_PRESETS } from "./presets";
-import { styles } from "./AdminItemImageModal.styles";
+} from 'lucide-react-native';
+import { MenuItem } from '../../../mockData';
+import { IMAGE_PRESETS } from './presets';
+import { styles } from './AdminItemImageModal.styles';
 
 export interface AdminItemImageModalProps {
   visible: boolean;
@@ -172,10 +172,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
                         setImageUrl(preset.url);
                         setHasImageLoadError(false);
                       }}
-                      style={[
-                        styles.presetCard,
-                        isSelected && styles.presetCardSelected,
-                      ]}
+                      style={[styles.presetCard, isSelected && styles.presetCardSelected]}
                     >
                       <Image
                         source={{ uri: preset.url }}
@@ -215,10 +212,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
             <Pressable
               onPress={handleSave}
               disabled={isSaving}
-              style={[
-                styles.saveBtn,
-                isSaving && styles.saveBtnDisabled,
-              ]}
+              style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
               accessibilityRole="button"
               accessibilityLabel="Save photo to database"
             >
@@ -237,4 +231,3 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
     </Modal>
   );
 };
-

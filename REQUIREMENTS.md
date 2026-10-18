@@ -2,15 +2,16 @@
 
 > **Document Type:** Explanation & Reference (Diátaxis Framework)  
 > **Target Audience:** Engineering Team, Backend/Frontend Developers, Product Owners  
-> **Status:** Active Reference Document  
+> **Status:** Active Reference Document
 
 ---
 
 ## 1. System Vision & Overview
 
 **Monk's Dream Jazz Bar** operates as an artisan cafe and kitchen by day, and an ambient jazz bar with optional live performances at night:
-* **Default Baseline (Day-to-Day Operations):** Full-service Cafe & Kitchen offering specialty coffee, breakfast/lunch mains, pasta, pizza, and artisan drinks across **Dine-In (Cafe & Bar areas)**, **Walk-In Takeout / To-Go**, and **Online Delivery Platforms (manual entry for GrabFood and Foodpanda)**.
-* **Optional Event Nights (On-Demand):** Live music gigs, ticketed performances, or private jazz showcases. Because events do not take place every day, the system does **not** enforce an automated evening event schedule; instead, the **Admin has an explicit on-demand toggle** (`Normal Cafe Mode` $\leftrightarrow$ `Event Mode`) to isolate event-tagged revenues and artist night metrics.
+
+- **Default Baseline (Day-to-Day Operations):** Full-service Cafe & Kitchen offering specialty coffee, breakfast/lunch mains, pasta, pizza, and artisan drinks across **Dine-In (Cafe & Bar areas)**, **Walk-In Takeout / To-Go**, and **Online Delivery Platforms (manual entry for GrabFood and Foodpanda)**.
+- **Optional Event Nights (On-Demand):** Live music gigs, ticketed performances, or private jazz showcases. Because events do not take place every day, the system does **not** enforce an automated evening event schedule; instead, the **Admin has an explicit on-demand toggle** (`Normal Cafe Mode` $\leftrightarrow$ `Event Mode`) to isolate event-tagged revenues and artist night metrics.
 
 The POS & Kitchen Display System (KDS) orchestrates real-time order intake across all dining channels, category-based station dispatch, recipe inventory depletion, table tracking, and thermal receipt printing without relying on paper kitchen chits.
 
@@ -19,7 +20,7 @@ flowchart TD
     subgraph IntakeChannels [Multi-Channel Order Intake & Billing]
         STAFF[Cashier / Waiter Tablet POS] -->|1. Dine-In Table Orders<br>2. Walk-in Takeout / To-Go<br>3. Online Delivery (Grab / Foodpanda)| B[NestJS Core API & WebSocket Gateway]
     end
-    
+
     subgraph RoutingEngine [Automatic Item Routing Engine]
         B -->|Drinks / Coffee / Cocktails| S_BAR[Barista & Bartender Tablet KDS]
         B -->|Food / Pasta / Pizza| S_KIT[Kitchen Tablet KDS]
@@ -30,9 +31,9 @@ flowchart TD
 
     S_BAR -->|Mark Item Done| FOH[FOH Buzzout Tablet Device]
     S_KIT -->|Mark Item Done| FOH
-    
+
     FOH -->|Matches Slip & Delivers| DEST[Table Seat / Takeout Counter / Delivery Rider]
-    
+
     STAFF -->|Bill Paid / Checkout Trigger| B
     B -->|Print Receipt Event| PRN
     PRN -->|USB ESC/POS| PAP[Customer Paper Receipt]
@@ -48,26 +49,28 @@ flowchart TD
 > **KDS Architectural Boundary: Role-Authenticated Tablets Only (No TVs / No Public Screens)**  
 > To preserve Monk's Dream's intimate, speakeasy-inspired jazz bar and artisan cafe atmosphere, **there are strictly NO overhead TVs, wall-mounted display monitors, or public-facing customer order status screens.**  
 > The Kitchen Display System (KDS) is **purely a role-authenticated touch interface running directly on each staff member's assigned tablet**:
-> * **Barista / Bartender Tablet (`station_bar`):** Counter-mounted tablet receiving only beverage and coffee tickets.
-> * **Kitchen Chef Tablet (`station_food`):** Kitchen prep-line tablet receiving only food, pasta, and pizza tickets.
-> * **FOH Runner / Buzzout Tablet (`foh_runner`):** Staging pass tablet receiving consolidated ready-for-service notifications.
-> 
+>
+> - **Barista / Bartender Tablet (`station_bar`):** Counter-mounted tablet receiving only beverage and coffee tickets.
+> - **Kitchen Chef Tablet (`station_food`):** Kitchen prep-line tablet receiving only food, pasta, and pizza tickets.
+> - **FOH Runner / Buzzout Tablet (`foh_runner`):** Staging pass tablet receiving consolidated ready-for-service notifications.
+>
 > Orders route strictly and privately to the relevant staff user's tablet session. Customers never see a public ticket display or order queue board.
 
-| Role | Interface / Device | Primary Responsibilities | Access Restrictions |
-|---|---|---|---|
-| **Admin** | Tablet / Desktop Web | • Venue Mode Toggle (`Cafe` vs `Event`)<br>• Menu & Inventory BOM Management<br>• Real-time & Historical Sales Analytics by Channel<br>• Staff PIN & User Management | Full system access |
-| **Cashier / Waiter** | Handheld Tablet | • Table Grid View (Cafe & Bar filters)<br>• Open Named Tabs per Table<br>• Seamless **Table & Tab Transfers** (move full table or individual customer tabs)<br>• Quick Walk-In **Takeout / To-Go** order creation<br>• Manual **Online Delivery** intake (GrabFood & Foodpanda tracking)<br>• Bill Settlement & Remote Print Triggering | Cannot alter global operating modes or financial reports |
-| **Barista / Bartender** | Counter-Mounted Tablet (KDS) | • Real-time queue for Coffee, Mocktails, Wine, Cocktails<br>• Displays Dine-In, Takeout, or Delivery Rider badges<br>• Tap **"Accept"** $\rightarrow$ moves ticket to **Preparing**<br>• Tap **"Done"** $\rightarrow$ marks drink **Ready** for buzzout | Station queue only; no billing or floor layout |
-| **Kitchen Chef** | Kitchen-Mounted Tablet (KDS) | • Real-time queue for Food (Pasta, Pizza, Sides)<br>• Displays Dine-In, Takeout, or Delivery Rider badges<br>• Tap **"Accept"** $\rightarrow$ moves ticket to **Preparing**<br>• Tap **"Done"** $\rightarrow$ marks food **Ready** for buzzout | Station queue only; no drink tickets or payment access |
-| **FOH Runner (Buzzout Device)** | Dedicated Expediter Tablet | • Consolidated view across Bar and Kitchen stations<br>• Buzzes/alerts when all items for a tab, takeout order, or delivery bag are marked **Done**<br>• Runner delivers to table, counter, or waiting rider and taps **"Mark Served"** | No billing or menu modification |
-| **Receipt Printer Station** | Dedicated PC with USB Thermal Printer | • Always-open Web Client listening to print dispatch events<br>• Renders formatted receipts, runner slips, and delivery bag chits via USB ESC/POS driver | Terminal client; automated background print listener |
+| Role                            | Interface / Device                    | Primary Responsibilities                                                                                                                                                                                                                                                                                                                | Access Restrictions                                      |
+| ------------------------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **Admin**                       | Tablet / Desktop Web                  | • Venue Mode Toggle (`Cafe` vs `Event`)<br>• Menu & Inventory BOM Management<br>• Real-time & Historical Sales Analytics by Channel<br>• Staff PIN & User Management                                                                                                                                                                    | Full system access                                       |
+| **Cashier / Waiter**            | Handheld Tablet                       | • Table Grid View (Cafe & Bar filters)<br>• Open Named Tabs per Table<br>• Seamless **Table & Tab Transfers** (move full table or individual customer tabs)<br>• Quick Walk-In **Takeout / To-Go** order creation<br>• Manual **Online Delivery** intake (GrabFood & Foodpanda tracking)<br>• Bill Settlement & Remote Print Triggering | Cannot alter global operating modes or financial reports |
+| **Barista / Bartender**         | Counter-Mounted Tablet (KDS)          | • Real-time queue for Coffee, Mocktails, Wine, Cocktails<br>• Displays Dine-In, Takeout, or Delivery Rider badges<br>• Tap **"Accept"** $\rightarrow$ moves ticket to **Preparing**<br>• Tap **"Done"** $\rightarrow$ marks drink **Ready** for buzzout                                                                                 | Station queue only; no billing or floor layout           |
+| **Kitchen Chef**                | Kitchen-Mounted Tablet (KDS)          | • Real-time queue for Food (Pasta, Pizza, Sides)<br>• Displays Dine-In, Takeout, or Delivery Rider badges<br>• Tap **"Accept"** $\rightarrow$ moves ticket to **Preparing**<br>• Tap **"Done"** $\rightarrow$ marks food **Ready** for buzzout                                                                                          | Station queue only; no drink tickets or payment access   |
+| **FOH Runner (Buzzout Device)** | Dedicated Expediter Tablet            | • Consolidated view across Bar and Kitchen stations<br>• Buzzes/alerts when all items for a tab, takeout order, or delivery bag are marked **Done**<br>• Runner delivers to table, counter, or waiting rider and taps **"Mark Served"**                                                                                                 | No billing or menu modification                          |
+| **Receipt Printer Station**     | Dedicated PC with USB Thermal Printer | • Always-open Web Client listening to print dispatch events<br>• Renders formatted receipts, runner slips, and delivery bag chits via USB ESC/POS driver                                                                                                                                                                                | Terminal client; automated background print listener     |
 
 ---
 
 ## 3. Order Routing & Lifecycle Engine
 
 ### 3.1. Table Tabs & Named Customer Sub-Orders
+
 Orders are structured with a **Table $\rightarrow$ Tab $\rightarrow$ Items** hierarchy to support split billing and shared tables:
 
 ```
@@ -77,19 +80,22 @@ Orders are structured with a **Table $\rightarrow$ Tab $\rightarrow$ Items** hie
 ```
 
 #### Why Tabs by Customer Name:
+
 1. **Effortless Split Billing:** Friends sitting together can order under their own name, track their personal total, and pay independently without staff having to manually calculate item splits at checkout.
 2. **Communal / Shared Seating Support:** In a jazz bar or counter setting, strangers frequently share large tables or the bar rail. Each party maintains their own isolated tab and payment lifecycle without blocking the table for others.
 3. **Flexible Checkout:**
-   * **Individual Tab Settle:** Cashier can check out and print a receipt for a single tab (e.g. Coltrane pays and leaves) while Miles' tab remains open at Table 4.
-   * **Table Group Settle:** Cashier can combine all open tabs on the table into a single unified bill if the group decides to pay together.
+   - **Individual Tab Settle:** Cashier can check out and print a receipt for a single tab (e.g. Coltrane pays and leaves) while Miles' tab remains open at Table 4.
+   - **Table Group Settle:** Cashier can combine all open tabs on the table into a single unified bill if the group decides to pay together.
 
 ### 3.2. Category-Based Routing (Independent of Seating)
+
 Orders are composed of line items belonging to product categories. **Station routing is determined solely by item category, NEVER by seating location or tab owner:**
 
-* **Beverages & Drinks Category** $\rightarrow$ Routes to **Barista / Bartender Tablet KDS**.
-* **Kitchen & Food Category** $\rightarrow$ Routes to **Kitchen Tablet KDS**.
+- **Beverages & Drinks Category** $\rightarrow$ Routes to **Barista / Bartender Tablet KDS**.
+- **Kitchen & Food Category** $\rightarrow$ Routes to **Kitchen Tablet KDS**.
 
-> **Important Rule (Routing & Privacy):**  
+> **Important Rule (Routing & Privacy):**
+>
 > 1. A customer seated at the Bar Counter who orders Pasta will have her food routed directly to the **Kitchen**. A customer in the Cafe Lounge who orders an Espresso Martini will have their drink routed to the **Bar**. The KDS ticket displays the Table Number/Channel and the Customer/Rider Name.
 > 2. **Zero Public / TV Display:** Orders are never broadcast on a public TV, ceiling screen, or communal queue monitor. Tickets route strictly to the role-authenticated tablet interface of the working staff member (`station_bar` or `station_food`).
 
@@ -99,13 +105,13 @@ Orders are composed of line items belonging to product categories. **Station rou
 stateDiagram-v2
     [*] --> Tab_Opened: Waiter opens Tab on Table with Customer Name
     Tab_Opened --> Items_Placed: Add Items & Send Order
-    
+
     state Station_KDS_Tablet {
         [*] --> Pending: Card appears on Tablet
         Pending --> Preparing: Cook/Barista taps "Accept"
         Preparing --> Done: Cook/Barista taps "Done"
     }
-    
+
     Items_Placed --> Station_KDS_Tablet: Dispatched to Bar & Kitchen
     Done --> Buzzout_Alert: All Station Items marked "Done"
     Buzzout_Alert --> Served: FOH delivers to Table & taps "Served"
@@ -114,30 +120,30 @@ stateDiagram-v2
 ```
 
 1. **Tab & Order Creation (Waiter Tablet):**
-   * Waiter selects Table $\rightarrow$ enters Customer Name (e.g., "John") $\rightarrow$ selects items $\rightarrow$ taps **Send Order**.
+   - Waiter selects Table $\rightarrow$ enters Customer Name (e.g., "John") $\rightarrow$ selects items $\rightarrow$ taps **Send Order**.
 2. **Atomic Dispatch & Automatic Dispatch Slip Print:**
-   * **Digital KDS:** Backend generates `OrderItem` tickets; WebSockets push live cards to Barista and Kitchen tablets simultaneously.
-   * **Real-Time Recipe Inventory Depletion:** As the order is dispatched (or when station preparation begins based on venue policy), the inventory engine automatically evaluates each item's Bill of Materials (BOM) recipe and decrements the exact measurement of each ingredient from active inventory, generating an immutable stock movement audit record.
-   * **Physical Slip (Auto-Print):** The backend simultaneously dispatches a `dispatch:print` event to the dedicated Printer PC, which automatically prints a physical **Order Dispatch Slip** with:
+   - **Digital KDS:** Backend generates `OrderItem` tickets; WebSockets push live cards to Barista and Kitchen tablets simultaneously.
+   - **Real-Time Recipe Inventory Depletion:** As the order is dispatched (or when station preparation begins based on venue policy), the inventory engine automatically evaluates each item's Bill of Materials (BOM) recipe and decrements the exact measurement of each ingredient from active inventory, generating an immutable stock movement audit record.
+   - **Physical Slip (Auto-Print):** The backend simultaneously dispatches a `dispatch:print` event to the dedicated Printer PC, which automatically prints a physical **Order Dispatch Slip** with:
      - Order Number (e.g., `#1042`)
      - Table Number (e.g., `Table 4`)
      - Customer Tab Name (e.g., `Guest: John`)
      - Item checklist (e.g., `[ ] 1x Truffle Pasta`, `[ ] 1x Flat White`)
-   * Staff places this physical slip at the staging pass/tray counter.
+   - Staff places this physical slip at the staging pass/tray counter.
 3. **Station Preparation on Tablets ("Accept" $\rightarrow$ "Done"):**
-   * **Step 1 (Pending):** New ticket card flashes on Barista/Kitchen tablet.
-   * **Step 2 (Accept $\rightarrow$ Preparing):** Staff taps **"Accept"** when starting prep; card highlights in yellow/orange. (If configured for prep-triggered depletion, raw stock is deducted here).
-   * **Step 3 (Done $\rightarrow$ Ready):** Staff taps **"Done"** when prep finishes; item transitions to completed state.
+   - **Step 1 (Pending):** New ticket card flashes on Barista/Kitchen tablet.
+   - **Step 2 (Accept $\rightarrow$ Preparing):** Staff taps **"Accept"** when starting prep; card highlights in yellow/orange. (If configured for prep-triggered depletion, raw stock is deducted here).
+   - **Step 3 (Done $\rightarrow$ Ready):** Staff taps **"Done"** when prep finishes; item transitions to completed state.
 4. **FOH Expediting & Slip Matching ("Buzzout Device" Tablet):**
-   * The dedicated FOH Expediter tablet acts as the **Buzzout Device**, monitoring all active table tabs across stations.
-   * When both drink items (Bar) and food items (Kitchen) for a tab are marked **Done**, the buzzout device triggers a visual & audio alert:  
-     🔔 *"Order #1042 ready for John (Table 4)"*
-   * Runner takes the physical slip `#1042` with the assembled tray, verifies the items against the checklist, and delivers directly to the customer at the table.
-   * Runner taps **"Mark Served"** on the buzzout tablet.
+   - The dedicated FOH Expediter tablet acts as the **Buzzout Device**, monitoring all active table tabs across stations.
+   - When both drink items (Bar) and food items (Kitchen) for a tab are marked **Done**, the buzzout device triggers a visual & audio alert:  
+     🔔 _"Order #1042 ready for John (Table 4)"_
+   - Runner takes the physical slip `#1042` with the assembled tray, verifies the items against the checklist, and delivers directly to the customer at the table.
+   - Runner taps **"Mark Served"** on the buzzout tablet.
 5. **Checkout & Customer Payment Receipt (Checkout Only):**
-   * Cashier views open tabs for Table 4 $\rightarrow$ selects "John" $\rightarrow$ processes payment $\rightarrow$ triggers **"Print Receipt"**.
-   * Dedicated Printer PC outputs the official thermal paper customer receipt (`Table 4 | Guest: John | Total Paid: $... | Payment Method`).
-   * Other tabs on Table 4 remain open until their respective checkout times.
+   - Cashier views open tabs for Table 4 $\rightarrow$ selects "John" $\rightarrow$ processes payment $\rightarrow$ triggers **"Print Receipt"**.
+   - Dedicated Printer PC outputs the official thermal paper customer receipt (`Table 4 | Guest: John | Total Paid: $... | Payment Method`).
+   - Other tabs on Table 4 remain open until their respective checkout times.
 
 ### 3.4. Multi-Channel Fulfillment: Dine-In, Walk-In Takeout & Manual Online Delivery (GrabFood & Foodpanda)
 
@@ -159,23 +165,27 @@ To reflect the venue's day-to-day cafe and kitchen operations, order intake acco
 ```
 
 #### 3.4.1. Walk-In Takeout / To-Go Workflow
+
 1. **Intake:** Customer walks up to the counter. Cashier taps **"🛍️ New Takeout Order"** (or hits shortcut key).
 2. **Identification:** System assigns an autoincrementing daily takeout ticket number (e.g. `Takeout #T-105`) and Cashier inputs customer name (e.g., "Sarah").
-3. **Dispatch & Packaging Flag:** 
+3. **Dispatch & Packaging Flag:**
    - KDS tickets flash on Barista/Kitchen tablets with an unmistakable **`[ 🛍️ TAKEOUT / TO-GO ]`** header badge so staff use disposable takeaway containers and to-go cups instead of ceramic mugs or plates.
    - Printed Runner Slip outputs: `*** TAKEOUT / TO-GO *** | ORDER #T-105 | GUEST: Sarah`.
 4. **Fulfillment:** When all items are marked "Done", FOH Buzzout Device chimes:  
-   🔔 *"Takeout #T-105 ready for Sarah at Counter"*. Runner packs items into paper takeout bag.
+   🔔 _"Takeout #T-105 ready for Sarah at Counter"_. Runner packs items into paper takeout bag.
 
 #### 3.4.2. Manual Online Delivery Intake (GrabFood & Foodpanda)
+
 > **Integration Architecture Note:** The POS does **not** require direct API webhook integration with Grab or Foodpanda. Instead, the Cashier operates the existing third-party merchant tablets provided by Grab/Foodpanda and **manually keys in the order details into the Monk's Dream POS**.
 
 ##### Why Manual POS Entry:
-* **Consolidated Station Routing:** Eliminates separate thermal printer chits or staff running between multiple proprietary platform printers. Drinks route automatically to the Barista tablet, and food routes to the Kitchen chef tablet.
-* **Unified Inventory & Recipe Depletion:** Prevents stockouts by ensuring online deliveries decrement real-time raw ingredients (coffee beans, oat milk, pasta, eggs) from the exact same inventory pool as dine-in orders.
-* **Comprehensive Multi-Channel Sales Accounting:** Enables management to audit delivery platform gross sales, channel volume, and station performance alongside dine-in revenue in a single consolidated report.
+
+- **Consolidated Station Routing:** Eliminates separate thermal printer chits or staff running between multiple proprietary platform printers. Drinks route automatically to the Barista tablet, and food routes to the Kitchen chef tablet.
+- **Unified Inventory & Recipe Depletion:** Prevents stockouts by ensuring online deliveries decrement real-time raw ingredients (coffee beans, oat milk, pasta, eggs) from the exact same inventory pool as dine-in orders.
+- **Comprehensive Multi-Channel Sales Accounting:** Enables management to audit delivery platform gross sales, channel volume, and station performance alongside dine-in revenue in a single consolidated report.
 
 ##### Operational Step-by-Step Flow:
+
 1. **Third-Party Alert:** Merchant tablet chimes with a new delivery order on GrabFood or Foodpanda.
 2. **Cashier Entry:**
    - Cashier taps **"🛵 Input Online Delivery"** on the POS tablet.
@@ -192,7 +202,7 @@ To reflect the venue's day-to-day cafe and kitchen operations, order intake acco
    - Thermal printer outputs a dedicated **Delivery Bag Chit** with the large platform order reference.
    - Staff packs the order in delivery bags and staples/tapes the chit to the outside.
    - FOH Buzzout Device alerts:  
-     🔔 *"GrabFood #GF-8842 ready for Rider Mike at Staging Counter"*.
+     🔔 _"GrabFood #GF-8842 ready for Rider Mike at Staging Counter"_.
 
 ### 3.5. Table & Tab Transfer Engine (Live Station & Runner Re-routing)
 
@@ -216,14 +226,16 @@ In dynamic cafe and jazz bar operations, parties frequently relocate—moving fr
 ```
 
 #### 3.5.1. Live WebSocket Station Re-Routing
+
 When a table transfer occurs, any pending or in-progress order items are **instantly updated across all staff tablets via WebSockets** without disrupting preparation:
-* **Barista & Kitchen KDS Tablets:** Active ticket cards flash an immediate visual update badge:  
+
+- **Barista & Kitchen KDS Tablets:** Active ticket cards flash an immediate visual update badge:  
   `🔁 RE-ROUTED: Table 2 ➔ Table 5 (Guest: Miles)`  
   Cooks and bartenders know immediately where the finished items belong.
-* **FOH Runner (Buzzout Device):** The expediter tablet sounds an alert chime and updates the delivery destination:  
-  🔔 *"Transfer Alert: Order #1042 now delivers to Table 5 (previously Table 2)"*.
-* **Physical Slip Reconciliation:** If the physical runner slip was already printed with the old table number, the runner simply pens the updated table number on the slip header or triggers a 1-tap reprint on the thermal printer PC.
-* **Audit Logging:** Every transfer event logs the origin table, target table, timestamp, and the staff user's PIN/ID to maintain operational accountability.
+- **FOH Runner (Buzzout Device):** The expediter tablet sounds an alert chime and updates the delivery destination:  
+  🔔 _"Transfer Alert: Order #1042 now delivers to Table 5 (previously Table 2)"_.
+- **Physical Slip Reconciliation:** If the physical runner slip was already printed with the old table number, the runner simply pens the updated table number on the slip header or triggers a 1-tap reprint on the thermal printer PC.
+- **Audit Logging:** Every transfer event logs the origin table, target table, timestamp, and the staff user's PIN/ID to maintain operational accountability.
 
 ---
 
@@ -236,11 +248,12 @@ The Admin can toggle the venue operating mode at any time from the administratio
 ```
 
 ### 4.1. Operational Purpose & Mode Definitions
-* **Normal Cafe Mode (Default Baseline):** Standard daily operations. All sales, orders, and average ticket metrics are recorded under regular cafe/bar business revenue. The POS operates in this mode unless an event is explicitly declared.
-* **Event Mode (Optional On-Demand):** Activated manually by the Admin **only** when a live jazz gig, ticketed show, or special event takes place.
-  * Not mandatory on a daily basis; enabled only during scheduled events.
-  * Every order created while Event Mode is active is tagged with `operating_mode: "event"`.
-  * Enables management to isolate and track **per-event gross sales, bar-to-kitchen sales ratios during shows, and artist night profitability** separately from everyday cafe trading.
+
+- **Normal Cafe Mode (Default Baseline):** Standard daily operations. All sales, orders, and average ticket metrics are recorded under regular cafe/bar business revenue. The POS operates in this mode unless an event is explicitly declared.
+- **Event Mode (Optional On-Demand):** Activated manually by the Admin **only** when a live jazz gig, ticketed show, or special event takes place.
+  - Not mandatory on a daily basis; enabled only during scheduled events.
+  - Every order created while Event Mode is active is tagged with `operating_mode: "event"`.
+  - Enables management to isolate and track **per-event gross sales, bar-to-kitchen sales ratios during shows, and artist night profitability** separately from everyday cafe trading.
 
 ### 4.2. Multi-Mode Sales Reporting & Analytics
 
@@ -256,19 +269,19 @@ The Admin Analytics view provides three operational mode lenses combined with **
 ```
 
 1. **☀️ Normal Cafe Sales Report:**
-   * Filtered strictly to orders tagged with `operating_mode: "cafe"`.
-   * **Metrics:** Gross daytime revenue, daytime average order size, peak coffee hours (8 AM - 12 PM), top-selling beverages and food.
+   - Filtered strictly to orders tagged with `operating_mode: "cafe"`.
+   - **Metrics:** Gross daytime revenue, daytime average order size, peak coffee hours (8 AM - 12 PM), top-selling beverages and food.
 2. **🎷 Event Sales Report:**
-   * Filtered strictly to orders tagged with `operating_mode: "event"`.
-   * **Metrics:** Per-event gross revenue, peak bar cocktail hours during performances, bar-to-kitchen sales ratio during shows (e.g. 70% alcohol vs. 30% snacks), cover charges/ticketed revenue (if applicable), and artist night sales comparison.
+   - Filtered strictly to orders tagged with `operating_mode: "event"`.
+   - **Metrics:** Per-event gross revenue, peak bar cocktail hours during performances, bar-to-kitchen sales ratio during shows (e.g. 70% alcohol vs. 30% snacks), cover charges/ticketed revenue (if applicable), and artist night sales comparison.
 3. **📊 Grand Total Consolidated Report (All Operations):**
-   * Combines all daytime cafe sales and evening event sales across the selected date range.
-   * **Key Performance Indicators (KPIs):**
-     * **Grand Total Revenue:** Combined gross & net sales.
-     * **Sales by Category / Station:** Total Beverage Revenue (Barista + Bar) vs. Total Kitchen Revenue.
-     * **Payment Method Breakdown:** Cash vs. Card vs. Digital Wallet vs. 3rd-Party Prepaid (Grab/Foodpanda).
-     * **Discounts & Comps Audit:** Total staff discounts, promotional deductions, or voided tabs.
-     * **Tax & Surcharge Summary:** Total VAT/GST collected.
+   - Combines all daytime cafe sales and evening event sales across the selected date range.
+   - **Key Performance Indicators (KPIs):**
+     - **Grand Total Revenue:** Combined gross & net sales.
+     - **Sales by Category / Station:** Total Beverage Revenue (Barista + Bar) vs. Total Kitchen Revenue.
+     - **Payment Method Breakdown:** Cash vs. Card vs. Digital Wallet vs. 3rd-Party Prepaid (Grab/Foodpanda).
+     - **Discounts & Comps Audit:** Total staff discounts, promotional deductions, or voided tabs.
+     - **Tax & Surcharge Summary:** Total VAT/GST collected.
 
 ### 4.3. Channel-Based Sales Tracking & Platform Auditing
 
@@ -290,8 +303,8 @@ Management can evaluate sales performance across dining and fulfillment categori
 └─────────────────────────┴──────────────┴──────────────┴─────────────┴──────────┴───────┘
 ```
 
-* **Channel Insights:** Allows the venue to identify daytime coffee takeout rushes vs. dinner kitchen delivery surges on GrabFood/Foodpanda.
-* **No Direct API Sync Required:** Because third-party platform commissions vary, tracking manual entry of Grab/Foodpanda orders gives the business accurate on-premise gross product volume for kitchen load forecasting without needing complex external cloud integrations.
+- **Channel Insights:** Allows the venue to identify daytime coffee takeout rushes vs. dinner kitchen delivery surges on GrabFood/Foodpanda.
+- **No Direct API Sync Required:** Because third-party platform commissions vary, tracking manual entry of Grab/Foodpanda orders gives the business accurate on-premise gross product volume for kitchen load forecasting without needing complex external cloud integrations.
 
 ---
 
@@ -313,26 +326,30 @@ Management can evaluate sales performance across dining and fulfillment categori
 ```
 
 ### 5.1. Area & Channel Filtering
-* Top tabs allow waitstaff and cashiers to filter the grid in one tap:
-  * **[Cafe Area]:** Physical dining tables, booths, and low seating.
-  * **[Bar Area]:** High-top bar stools and bar counter rail seats.
-  * **[Takeout Queue]:** Active walk-in customer takeout orders being prepared or awaiting customer collection at the counter.
-  * **[Online Delivery]:** Active GrabFood and Foodpanda orders awaiting rider collection.
-* **Routing Independence Reminder:** Area and channel tags are purely for server/staff navigation and packaging identification; they never restrict what items can be ordered or which prep station prepares them.
+
+- Top tabs allow waitstaff and cashiers to filter the grid in one tap:
+  - **[Cafe Area]:** Physical dining tables, booths, and low seating.
+  - **[Bar Area]:** High-top bar stools and bar counter rail seats.
+  - **[Takeout Queue]:** Active walk-in customer takeout orders being prepared or awaiting customer collection at the counter.
+  - **[Online Delivery]:** Active GrabFood and Foodpanda orders awaiting rider collection.
+- **Routing Independence Reminder:** Area and channel tags are purely for server/staff navigation and packaging identification; they never restrict what items can be ordered or which prep station prepares them.
 
 ### 5.2. Multi-Tab Grid Card States (Dine-In Tables)
-* **Communal & Split Occupancy:** A table card can host multiple independent **Customer Tabs** simultaneously.
-* **Grid Card Indicators:**
-  * **Green (Available):** 0 active tabs. Tapping opens modal to open the first customer tab.
-  * **Amber (Occupied):** 1 or more active open tabs. Shows badge with active tab count (e.g. `Table 4 (2 tabs)`) and elapsed duration. Tapping displays list of active tabs to view, add items, or add another new tab.
-  * **Blue (Bill Requested):** Guest requested bill for one or more tabs.
-* **Closing a Table:** A table card returns to "Available" (Green) only once **all** associated customer tabs on that table have been settled (`PAID`) and closed.
+
+- **Communal & Split Occupancy:** A table card can host multiple independent **Customer Tabs** simultaneously.
+- **Grid Card Indicators:**
+  - **Green (Available):** 0 active tabs. Tapping opens modal to open the first customer tab.
+  - **Amber (Occupied):** 1 or more active open tabs. Shows badge with active tab count (e.g. `Table 4 (2 tabs)`) and elapsed duration. Tapping displays list of active tabs to view, add items, or add another new tab.
+  - **Blue (Bill Requested):** Guest requested bill for one or more tabs.
+- **Closing a Table:** A table card returns to "Available" (Green) only once **all** associated customer tabs on that table have been settled (`PAID`) and closed.
 
 ### 5.3. Takeout & Online Delivery Queue Cards (Virtual Tableless Tabs)
+
 Takeout and online delivery orders do **not** lock a physical table on the floor plan:
-* **Takeout Card:** Displays `Takeout #T-105`, Customer Name, item count, and time elapsed. Tapping allows cashier to view order, process payment, or mark collected.
-* **Online Delivery Card:** Displays Platform (`GrabFood` / `Foodpanda`), External Order ID (e.g., `#GF-8842`), Rider Name, preparation status, and countdown timer. Tapping allows staff to verify rider pickup and close the ticket.
-* **Cashier Fast-Entry Modal (Grab / Foodpanda):**
+
+- **Takeout Card:** Displays `Takeout #T-105`, Customer Name, item count, and time elapsed. Tapping allows cashier to view order, process payment, or mark collected.
+- **Online Delivery Card:** Displays Platform (`GrabFood` / `Foodpanda`), External Order ID (e.g., `#GF-8842`), Rider Name, preparation status, and countdown timer. Tapping allows staff to verify rider pickup and close the ticket.
+- **Cashier Fast-Entry Modal (Grab / Foodpanda):**
   ```
   ┌────────────────────────────────────────────────────────┐
   │ 🛵 INPUT THIRD-PARTY ONLINE DELIVERY ORDER             │
@@ -380,8 +397,9 @@ Waiters and cashiers can execute table transfers in seconds directly from the ta
 ```
 
 #### Step-by-Step Touch Interaction:
+
 1. **Initiate:** Waiter taps an active table card on the grid (e.g. `Table 4`) $\rightarrow$ taps **"🔁 Transfer Table / Tab"** action button.
-2. **Select Scope:** 
+2. **Select Scope:**
    - Choose **Entire Table** (transfers Table 4 completely to Table 5).
    - Or choose **Specific Customer Tab** (selects "Miles" only, leaving "Coltrane" at Table 4).
 3. **Select Target:** Tap the destination table card on the responsive grid (e.g., `Bar Seat 1`).
@@ -400,18 +418,19 @@ Until wireless network/Bluetooth ESC/POS thermal printers are deployed, printing
 
 The printer handles two distinct print jobs during an order's lifecycle:
 
-| Print Job Type | Trigger | Destination / Recipient | Contents |
-|---|---|---|---|
-| **1. Order Dispatch Slip (Runner Chit)** | Automatic when Waiter taps **"Send Order"** | Placed on the runner pass / tray staging counter | • Large Order # (e.g., `#1042`)<br>• Table # & Guest Tab Name<br>• Timestamp<br>• Full item checklist for tray assembly |
-| **2. Customer Receipt** | Manual when Cashier settles payment at **Checkout** | Given to paying customer | • Venue branding & date/time<br>• Itemized prices & subtotal<br>• Discounts, tax, total paid<br>• Payment method & Table/Guest info |
+| Print Job Type                           | Trigger                                             | Destination / Recipient                          | Contents                                                                                                                            |
+| ---------------------------------------- | --------------------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **1. Order Dispatch Slip (Runner Chit)** | Automatic when Waiter taps **"Send Order"**         | Placed on the runner pass / tray staging counter | • Large Order # (e.g., `#1042`)<br>• Table # & Guest Tab Name<br>• Timestamp<br>• Full item checklist for tray assembly             |
+| **2. Customer Receipt**                  | Manual when Cashier settles payment at **Checkout** | Given to paying customer                         | • Venue branding & date/time<br>• Itemized prices & subtotal<br>• Discounts, tax, total paid<br>• Payment method & Table/Guest info |
 
 ### 6.2. Print Output Mockups
 
 #### (A) Order Dispatch Slip (Printed at Order Send)
+
 ```
 ================================
-     MONK'S DREAM JAZZ BAR      
-       *** RUNNER SLIP ***      
+     MONK'S DREAM JAZZ BAR
+       *** RUNNER SLIP ***
 ================================
 ORDER: #1042       TIME: 20:45
 TABLE: Table 4     AREA: Cafe
@@ -425,10 +444,11 @@ Notes: Extra hot oat milk
 ```
 
 #### (B) Customer Payment Receipt (Printed at Checkout)
+
 ```
 ================================
-     MONK'S DREAM JAZZ BAR      
-   Specialty Coffee & Jazz Bar  
+     MONK'S DREAM JAZZ BAR
+   Specialty Coffee & Jazz Bar
 ================================
 TABLE: Table 4     GUEST: John
 DATE: 2026-10-14   TIME: 21:15
@@ -442,14 +462,15 @@ TAX (10%):                 $2.25
 TOTAL PAID:               $24.75
 METHOD: Card (Visa ****1234)
 ================================
-     Thank you for jamming!     
+     Thank you for jamming!
 ```
 
 #### (C) Walk-In Takeout Slip (Printed at Order Send)
+
 ```
 ================================
-     MONK'S DREAM JAZZ BAR      
-    *** TAKEOUT / TO-GO ***     
+     MONK'S DREAM JAZZ BAR
+    *** TAKEOUT / TO-GO ***
 ================================
 ORDER: #T-105      TIME: 08:30
 CHANNEL: Walk-In Takeout Counter
@@ -465,10 +486,11 @@ STATUS: PREPAID (Counter Cashier)
 ```
 
 #### (D) Online Delivery Bag Tag (Printed for GrabFood / Foodpanda)
+
 ```
 ================================
-     MONK'S DREAM JAZZ BAR      
-  *** ONLINE DELIVERY BAG ***   
+     MONK'S DREAM JAZZ BAR
+  *** ONLINE DELIVERY BAG ***
 ================================
 PLATFORM: GRABFOOD
 PLATFORM REF: #GF-8842
@@ -485,13 +507,14 @@ SETTLEMENT: Paid Online (GrabPay)
 ```
 
 ### 6.3. Architecture Flow
+
 1. **Hardware Setup:** A desktop/laptop PC is physically connected via USB to an 80mm/58mm thermal paper printer (e.g., Epson, Xprinter, Rongta).
 2. **Web Client Listener:** The PC runs the Monk's Dream Web App logged in with the `printer_station` profile, subscribing to WebSocket events:
-   * `dispatch:print` $\rightarrow$ Triggers auto-printing of the Runner Slip.
-   * `receipt:print` $\rightarrow$ Triggers printing of the Customer Payment Receipt.
+   - `dispatch:print` $\rightarrow$ Triggers auto-printing of the Runner Slip.
+   - `receipt:print` $\rightarrow$ Triggers printing of the Customer Payment Receipt.
 3. **Print Execution:**
-   * **Direct WebUSB / Raw ESC/POS:** If using Chromium-based browsers, the web app interfaces with the USB device via WebUSB using `@monks/printing`.
-   * **Socket-Triggered Print Dialog:** Alternatively, the client executes a formatted `window.print()` using an optimized thermal CSS receipt template (`@media print { width: 80mm; }`).
+   - **Direct WebUSB / Raw ESC/POS:** If using Chromium-based browsers, the web app interfaces with the USB device via WebUSB using `@monks/printing`.
+   - **Socket-Triggered Print Dialog:** Alternatively, the client executes a formatted `window.print()` using an optimized thermal CSS receipt template (`@media print { width: 80mm; }`).
 4. **Remote Handheld Trigger:** Cashiers and waiters on mobile/tablet devices can trigger receipt and dispatch printing on the dedicated station from anywhere on the floor without physical cables.
 
 ## 7. Admin Back-Office: Menu Constraints, Inventory & Salary Auditing
@@ -549,24 +572,25 @@ The Menu Catalog allows the Admin to configure items with strict dietary constra
 ```
 
 #### Key Capabilities & Rules:
+
 1. **Station Assignment:** Every item must be explicitly linked to a target preparation station (`station_bar` or `station_food`).
 2. **Exact Recipe Bill of Materials (BOM):**
-   * Admin binds each menu product to one or more raw inventory items with **exact portion quantities and measurement units** (`g`, `kg`, `ml`, `L`, `pcs`, `shots`).
-   * The system automatically computes live **Cost of Goods Sold (COGS)** and gross margin percentage based on the inventory ingredient's latest purchase unit cost.
+   - Admin binds each menu product to one or more raw inventory items with **exact portion quantities and measurement units** (`g`, `kg`, `ml`, `L`, `pcs`, `shots`).
+   - The system automatically computes live **Cost of Goods Sold (COGS)** and gross margin percentage based on the inventory ingredient's latest purchase unit cost.
 3. **Preset Modifiers with Ingredient Deltas:**
-   * Modifiers (e.g., "Extra Shot", "Milk Substitute", "Gluten-Free Penne") carry explicit inventory delta rules that adjust raw stock depletion dynamically when ordered.
+   - Modifiers (e.g., "Extra Shot", "Milk Substitute", "Gluten-Free Penne") carry explicit inventory delta rules that adjust raw stock depletion dynamically when ordered.
 4. **Allergen Warnings & Dietary Flags:**
-   * Products inherit standard allergen tags: **Dairy, Gluten, Peanuts, Tree Nuts, Shellfish, Eggs, Soy, Fish, Sesame**.
-   * Waiters see distinct visual warnings when selecting items on the POS tablet.
-   * Order tickets and printed Runner Slips display bold allergy alert headers: `⚠️ ALLERGY ALERT: PEANUTS / NO DAIRY`.
+   - Products inherit standard allergen tags: **Dairy, Gluten, Peanuts, Tree Nuts, Shellfish, Eggs, Soy, Fish, Sesame**.
+   - Waiters see distinct visual warnings when selecting items on the POS tablet.
+   - Order tickets and printed Runner Slips display bold allergy alert headers: `⚠️ ALLERGY ALERT: PEANUTS / NO DAIRY`.
 5. **Resold Pre-Made Outside Foods (Fixed +20% Markup Constraint):**
-   * When an item is flagged as `is_resold_outside_food`, the Admin enters the `original_cost` (vendor purchase price), and the system automatically calculates and locks the selling price at exactly 20% higher:
+   - When an item is flagged as `is_resold_outside_food`, the Admin enters the `original_cost` (vendor purchase price), and the system automatically calculates and locks the selling price at exactly 20% higher:
      $$\text{Selling Price} = \text{Original Cost} \times 1.20$$
-   * Deducts 1 whole unit directly from inventory per sale without sub-recipes.
+   - Deducts 1 whole unit directly from inventory per sale without sub-recipes.
 6. **Fixed 20% Corkage Fee for Outside Food & Beverages:**
-   * Fixed 20% corkage fee applies when customers bring outside food or bottles into the venue via a single-tap button on the tab.
+   - Fixed 20% corkage fee applies when customers bring outside food or bottles into the venue via a single-tap button on the tab.
 7. **Instant 86 (Out-of-Stock) Toggle:**
-   * Admin or Chef can tap "86" on an item; it immediately greys out on all Waiter tablets in real time via WebSockets.
+   - Admin or Chef can tap "86" on an item; it immediately greys out on all Waiter tablets in real time via WebSockets.
 
 ---
 
@@ -629,34 +653,41 @@ For an order containing line items $k \in \text{Order}$, the net decrement for r
 $$\Delta \text{Stock}_i = - \sum_{k \in \text{Order}} \Bigg( q_k \times \Big( M_{i, k} + \sum_{m \in \text{Modifiers}_k} \Delta M_{i, m} \Big) \times C_i \Bigg)$$
 
 Where:
-* $q_k$: Ordered quantity of product $k$ (e.g., 2 servings).
-* $M_{i, k}$: Base recipe measurement of ingredient $i$ for product $k$ (e.g., 18 g).
-* $\Delta M_{i, m}$: Measurement adjustment introduced by modifier $m$ (e.g., +18 g for "Double Shot").
-* $C_i$: Unit conversion factor normalizing recipe measurement to bulk stocking unit (e.g., grams to kilograms: $C_i = 10^{-3}$; milliliters to liters: $C_i = 10^{-3}$; milliliters to 750ml bottles: $C_i = \frac{1}{750}$).
+
+- $q_k$: Ordered quantity of product $k$ (e.g., 2 servings).
+- $M_{i, k}$: Base recipe measurement of ingredient $i$ for product $k$ (e.g., 18 g).
+- $\Delta M_{i, m}$: Measurement adjustment introduced by modifier $m$ (e.g., +18 g for "Double Shot").
+- $C_i$: Unit conversion factor normalizing recipe measurement to bulk stocking unit (e.g., grams to kilograms: $C_i = 10^{-3}$; milliliters to liters: $C_i = 10^{-3}$; milliliters to 750ml bottles: $C_i = \frac{1}{750}$).
 
 #### 7.2.3. Operational Depletion Trigger Policies (Admin Selectable)
+
 The venue Admin can choose between two operational deduction trigger modes:
+
 1. **On Order Dispatch (Default):** Raw inventory is decremented the instant the Waiter taps **"Send Order"**. This guarantees that inventory immediately reflects committed orders and prevents overselling during high-volume jazz concert rushes.
 2. **On Station Preparation ("Accept"):** Raw inventory is decremented when the Barista or Chef taps **"Accept"** on their KDS tablet. If an order is voided while still pending in queue, no stock reconciliation is necessary.
 
 #### 7.2.4. Automatic 86 (Sold-Out) Safeguard
-* When an ingredient's on-hand stock falls below the threshold needed to produce **a single serving** of any linked menu item:
+
+- When an ingredient's on-hand stock falls below the threshold needed to produce **a single serving** of any linked menu item:
   $$\text{Available Stock}_i < \min_{k} \big( M_{i, k} \times C_i \big)$$
-* The system automatically flags that menu item with `auto_86: true` and broadcasts a WebSocket notification.
-* Waiter tablets instantly grey out the item, disabling ordering and displaying an indicator badge: `Sold Out (Low Espresso Bean)`.
+- The system automatically flags that menu item with `auto_86: true` and broadcasts a WebSocket notification.
+- Waiter tablets instantly grey out the item, disabling ordering and displaying an indicator badge: `Sold Out (Low Espresso Bean)`.
 
 #### 7.2.5. Order Voids, Cancellations & Waste Reconciliation
-* **Voided Before Preparation:** If an order is cancelled before station prep starts, the engine automatically issues a stock restoration credit (`MOVEMENT_TYPE: CANCEL_RESTORE`).
-* **Voided After Preparation or Dropped:** If an order is cancelled after prep has started, or if an item is dropped or ruined by kitchen staff, stock is **NOT** returned to active inventory. Instead, it is automatically posted to the **Waste & Spillage Log** with the item cost booked to venue overheads.
+
+- **Voided Before Preparation:** If an order is cancelled before station prep starts, the engine automatically issues a stock restoration credit (`MOVEMENT_TYPE: CANCEL_RESTORE`).
+- **Voided After Preparation or Dropped:** If an order is cancelled after prep has started, or if an item is dropped or ruined by kitchen staff, stock is **NOT** returned to active inventory. Instead, it is automatically posted to the **Waste & Spillage Log** with the item cost booked to venue overheads.
 
 #### 7.2.6. Restocking, Deliveries & Moving Average Unit Cost
-* Admin logs incoming supplier shipments (Purchase Orders / Goods Receipt):
+
+- Admin logs incoming supplier shipments (Purchase Orders / Goods Receipt):
   - Supplier name, invoice reference, quantity received, and purchase price.
   - On submission, active stock increases, and the ingredient's **Weighted Moving Average Cost (MAC)** is updated:
     $$\text{MAC}_{\text{new}} = \frac{(\text{Stock}_{\text{old}} \times \text{Cost}_{\text{old}}) + (\text{Qty}_{\text{received}} \times \text{Price}_{\text{invoice}})}{\text{Stock}_{\text{old}} + \text{Qty}_{\text{received}}}$$
   - Ensures accurate Cost of Goods Sold (COGS) reporting as market prices fluctuate.
 
 #### 7.2.7. Immutable Stock Movement Transaction Ledger
+
 Every single stock event creates an immutable audit row in the database:
 
 ```
@@ -681,6 +712,7 @@ Every single stock event creates an immutable audit row in the database:
 Instead of complex hourly rates or event formulas, staff compensation operates on a **daily salary model** with flexible Admin per-day add-ons, feeding directly into the venue's overall monthly business expense tracker:
 
 #### 1. Venue-Wide Monthly Staff Payroll Summary
+
 ```
 ┌────────────────────────────────────────────────────────────────────────────────────────┐
 │ Employee            Role / Category   Days Worked   Base Total   Add-ons Total  Pay Due│
@@ -696,6 +728,7 @@ Instead of complex hourly rates or event formulas, staff compensation operates o
 ```
 
 #### 2. Employee Day-by-Day Shift Breakdown (Admin Detail View)
+
 Clicking on any employee opens their monthly shift calendar table:
 
 ```
@@ -715,25 +748,26 @@ Clicking on any employee opens their monthly shift calendar table:
 ```
 
 #### Key Capabilities & Rules:
+
 1. **Minimum Wage Baseline with Flexible Discretionary Add-ons:**
-   * Every worked day automatically defaults to the employee's **base daily rate** (set to local daily minimum wage).
-   * **Arbitrary, Flexible Add-ons:** For hectic or high-stress shifts (e.g., packed live jazz events, holiday rushes, or being short-staffed), the Admin can edit that specific day's row to add an **arbitrary extra amount** (e.g. +$10, +$15, +$25—whatever amount the manager deems fair for that day's stress level).
-   * If there is no add-on, the day remains at standard minimum wage ($0 add-on).
+   - Every worked day automatically defaults to the employee's **base daily rate** (set to local daily minimum wage).
+   - **Arbitrary, Flexible Add-ons:** For hectic or high-stress shifts (e.g., packed live jazz events, holiday rushes, or being short-staffed), the Admin can edit that specific day's row to add an **arbitrary extra amount** (e.g. +$10, +$15, +$25—whatever amount the manager deems fair for that day's stress level).
+   - If there is no add-on, the day remains at standard minimum wage ($0 add-on).
 2. **Attendance Tracking for Full Staff Roster:**
-   * **Workflow Staff (POS / KDS):** Automatically recorded as present when signing in with their 4-digit PIN at the start of the day.
-   * **Non-Workflow Employees:** Staff who are not part of the active POS/KDS ordering system (e.g., dishwashers, cleaners, security guards, utility staff, sound & lighting technicians) are maintained in the roster and marked present by the Admin or via a dedicated PIN attendance kiosk.
+   - **Workflow Staff (POS / KDS):** Automatically recorded as present when signing in with their 4-digit PIN at the start of the day.
+   - **Non-Workflow Employees:** Staff who are not part of the active POS/KDS ordering system (e.g., dishwashers, cleaners, security guards, utility staff, sound & lighting technicians) are maintained in the roster and marked present by the Admin or via a dedicated PIN attendance kiosk.
 3. **Automatic Monthly Salary Calculation:**
-   * The system aggregates each day's actual compensation for the entire month:
+   - The system aggregates each day's actual compensation for the entire month:
      $$\text{Monthly Pay} = \sum_{d \in \text{Attended Days}} \Big(\text{Base Minimum Wage} + \text{Day Add-on}(d)\Big) + \text{Bonuses} - \text{Deductions}$$
 4. **Comprehensive Venue Expense Management Suite:**
-   * The total labor cost rolls up directly into the Admin's **Business Expenses Dashboard**:
+   - The total labor cost rolls up directly into the Admin's **Business Expenses Dashboard**:
      - **Staff Salaries:** Dynamic total calculated from base daily wages + all daily add-ons across the month.
      - **Ingredient & Beverage Deliveries:** Invoices from coffee bean roasters, dairy suppliers, liquor distributors.
      - **Outsourced Pre-Made Foods:** Invoices for outside food purchased for resale (+20% markup).
      - **Venue Overheads:** Rent, electricity, live jazz band / artist appearance fees.
-   * **Net Profit Dashboard:** Automatically computes real venue profit:
+   - **Net Profit Dashboard:** Automatically computes real venue profit:
      $$\text{Net Profit} = \text{Grand Total Sales} - \text{Total Operating Expenses (Labor + COGS + Overhead)}$$
-   * Exportable as CSV / PDF for monthly accounting and tax reporting.
+   - Exportable as CSV / PDF for monthly accounting and tax reporting.
 
 ---
 
@@ -883,7 +917,7 @@ model Product {
   isAvailable         Boolean             @default(true) @map("is_available")
   auto86              Boolean             @default(false) @map("auto_86") // Auto-set when ingredients run out
   allergens           Allergen[]
-  
+
   // Resold Pre-made Outside Food Constraints
   isResoldOutsideFood Boolean             @default(false) @map("is_resold_outside_food")
   originalCost        Decimal?            @map("original_cost") @db.Decimal(10, 2) // Wholesale vendor cost
@@ -906,11 +940,11 @@ model ProductIngredient {
   product         Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
   inventoryItemId String        @map("inventory_item_id") @db.Uuid
   inventoryItem   InventoryItem @relation(fields: [inventoryItemId], references: [id])
-  
+
   // Exact Recipe Measurement
   amount          Decimal       @db.Decimal(10, 4) // e.g. 18.0000 (g), 200.0000 (ml), 2.0000 (pcs)
   unit            String        // "g", "ml", "pcs", "shot", "oz"
-  conversionFactor Decimal      @default(1.0000) @map("conversion_factor") @db.Decimal(10, 6) 
+  conversionFactor Decimal      @default(1.0000) @map("conversion_factor") @db.Decimal(10, 6)
   // Multiplier to convert recipe unit into InventoryItem.unit (e.g. 18g to kg = 0.001)
 
   @@unique([productId, inventoryItemId])
@@ -1164,4 +1198,3 @@ model AttendanceRecord {
    - Inventory Hub: stock level overview, PO delivery intake, spillage/waste logger, and immutable stock movement audit ledger.
    - Employee attendance tracking and monthly daily-salary calculation with flexible discretionary shift add-ons.
    - Comprehensive venue net profit & operating expense management dashboard.
-

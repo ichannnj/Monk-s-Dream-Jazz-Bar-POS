@@ -34,10 +34,7 @@ export class UsbEscPosPrinter implements IPrinterService {
   private readonly devicePath: string;
   private readonly columns: number;
 
-  constructor(
-    devicePath: string = '/dev/usb/receipt-printer',
-    columns: number = 48
-  ) {
+  constructor(devicePath: string = '/dev/usb/receipt-printer', columns: number = 48) {
     this.devicePath = devicePath;
     this.columns = columns;
   }
@@ -84,8 +81,8 @@ export class UsbEscPosPrinter implements IPrinterService {
     cmd([0x1d, 0x21, 0x11]);
     push("MONK'S DREAM\nJAZZ BAR\n");
     cmd([0x1d, 0x21, 0x00]); // Normal text
-    push("Digital Operations Platform\n");
-    push("------------------------------------------------\n");
+    push('Digital Operations Platform\n');
+    push('------------------------------------------------\n');
 
     // Left alignment: ESC a 0
     cmd([0x1b, 0x61, 0x00]);
@@ -93,7 +90,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     push(`Date:      ${payload.timestamp}\n`);
     push(`Table:     ${payload.tableNumber} (${payload.tabName || 'Main'})\n`);
     push(`Staff:     ${payload.waiterName}\n`);
-    push("------------------------------------------------\n");
+    push('------------------------------------------------\n');
 
     // Items list
     for (const item of payload.items) {
@@ -105,7 +102,7 @@ export class UsbEscPosPrinter implements IPrinterService {
       }
     }
 
-    push("------------------------------------------------\n");
+    push('------------------------------------------------\n');
     push(`Subtotal:    ${(payload.subtotal / 100).toFixed(2).padStart(34, ' ')}\n`);
     if (payload.corkageFee > 0) {
       push(`Corkage Fee: ${(payload.corkageFee / 100).toFixed(2).padStart(34, ' ')}\n`);
@@ -119,11 +116,11 @@ export class UsbEscPosPrinter implements IPrinterService {
     push(`Tendered:    PHP ${(payload.tendered / 100).toFixed(2).padStart(30, ' ')}\n`);
     push(`Change:      PHP ${(payload.change / 100).toFixed(2).padStart(30, ' ')}\n`);
     push(`Payment:     ${payload.paymentMethod.padStart(34, ' ')}\n`);
-    push("------------------------------------------------\n");
+    push('------------------------------------------------\n');
 
     // Center alignment: ESC a 1
     cmd([0x1b, 0x61, 0x01]);
-    push("Thank you for listening!\nSee you at the next set.\n\n\n\n");
+    push('Thank you for listening!\nSee you at the next set.\n\n\n\n');
 
     // Cut paper: GS V 0 (full cut)
     cmd([0x1d, 0x56, 0x00]);

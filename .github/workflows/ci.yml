@@ -1,0 +1,49 @@
+name: Monk's Dream CI Guardrails
+
+on:
+  push:
+    branches: [main, develop, 'preview/**']
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  validate:
+    name: Monorepo Quality & Guardrails Verification
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ⚡ Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.11.2
+          run_install: false
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: 📦 Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: 🔍 ESLint Flat Config Verification
+        run: pnpm lint
+
+      - name: 📐 TypeScript Typecheck (Turbo)
+        run: pnpm typecheck
+
+      - name: 🏗️ Turbo Build Verification
+        run: pnpm build
+
+      - name: 🛡️ Supabase SQL Migration & RLS Linter
+        run: pnpm db:lint
+
+      - name: 🔗 Supabase Type Synchronization Check
+        run: pnpm db:types:check
+
+      - name: 🎨 Prettier Format Verification
+        run: pnpm format:check

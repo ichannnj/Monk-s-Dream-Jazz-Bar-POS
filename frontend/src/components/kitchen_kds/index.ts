@@ -1,0 +1,1 @@
+export { KitchenKdsScreen } from './KitchenKdsScreen';

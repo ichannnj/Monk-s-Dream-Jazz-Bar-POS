@@ -27,7 +27,9 @@ export const HomeScreen: React.FC = () => {
                 <Sparkles size={20} color="#f59e0b" />
               </View>
               <Text className="text-gray-400 text-xs mt-1">
-                Signed in as <Text className="text-jazz-gold font-bold uppercase">{currentUser?.role}</Text> • Monk's Dream Jazz Bar Platform
+                Signed in as{' '}
+                <Text className="text-jazz-gold font-bold uppercase">{currentUser?.role}</Text> •
+                Monk's Dream Jazz Bar Platform
               </Text>
             </View>
 
@@ -99,11 +101,10 @@ export const HomeScreen: React.FC = () => {
           <View className="w-14 h-14 rounded-2xl bg-jazz-gold/10 border border-jazz-gold/30 items-center justify-center mb-3">
             <PlusCircle size={28} color="#f59e0b" />
           </View>
-          <Text className="text-white font-bold text-base text-center">
-            Clean Canvas Ready
-          </Text>
+          <Text className="text-white font-bold text-base text-center">Clean Canvas Ready</Text>
           <Text className="text-gray-400 text-xs text-center max-w-md mt-1.5 leading-relaxed">
-            All previous workflows, station tickets, and order processors have been removed. This clean template is ready for your new business processes, controllers, and screens.
+            All previous workflows, station tickets, and order processors have been removed. This
+            clean template is ready for your new business processes, controllers, and screens.
           </Text>
         </View>
       </View>

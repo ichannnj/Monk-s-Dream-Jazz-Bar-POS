@@ -94,10 +94,7 @@ export const WaiterCashierScreen: React.FC = () => {
   } | null>(null);
 
   // Unread badge counts
-  const unreadAlerts = useMemo(
-    () => alerts.filter((a) => !a.isRead).length,
-    [alerts]
-  );
+  const unreadAlerts = useMemo(() => alerts.filter((a) => !a.isRead).length, [alerts]);
 
   // Floor filtering & category counts via custom hook
   const {
@@ -106,13 +103,7 @@ export const WaiterCashierScreen: React.FC = () => {
     filteredTables,
     filteredTakeoutOrders,
     filteredOnlineOrders,
-  } = useFloorFilters(
-    tables,
-    takeoutOrders,
-    onlineOrders,
-    selectedChannel,
-    selectedStatus
-  );
+  } = useFloorFilters(tables, takeoutOrders, onlineOrders, selectedChannel, selectedStatus);
 
   // Card click handlers
   const handleTablePress = (table: TableItem) => {
@@ -154,11 +145,7 @@ export const WaiterCashierScreen: React.FC = () => {
   };
 
   // Quick Action Flow: Open Tab
-  const handleConfirmOpenTab = (
-    tableId: string,
-    guestName: string,
-    guestCount: number
-  ) => {
+  const handleConfirmOpenTab = (tableId: string, guestName: string, guestCount: number) => {
     openTableTab(tableId, guestName, guestCount);
     const targetTable = tables.find((t) => t.id === tableId);
     const nextTabIndex =
@@ -184,11 +171,7 @@ export const WaiterCashierScreen: React.FC = () => {
   };
 
   // Quick Action Flow: New Takeout
-  const handleProceedTakeout = (
-    customerName: string,
-    isPrepaid: boolean,
-    notes: string
-  ) => {
+  const handleProceedTakeout = (customerName: string, isPrepaid: boolean, notes: string) => {
     const nextTicket = `T-${107 + takeoutOrders.length}`;
     toast.info(`Configuring Takeout #${nextTicket} for "${customerName}"`, {
       title: 'Takeout Intake',
@@ -293,10 +276,9 @@ export const WaiterCashierScreen: React.FC = () => {
     transferTableOrTab(originId, targetId, mode, tabIndex, reason);
 
     if (mode === 'entire') {
-      toast.success(
-        `Table ${origin?.code} transferred to Table ${target?.code} (All tabs moved)`,
-        { title: 'Table Relocated' }
-      );
+      toast.success(`Table ${origin?.code} transferred to Table ${target?.code} (All tabs moved)`, {
+        title: 'Table Relocated',
+      });
     } else {
       const originTab = origin?.tabs?.find((t) => t.tabIndex === tabIndex);
       toast.success(
@@ -541,4 +523,3 @@ export const WaiterCashierScreen: React.FC = () => {
     </View>
   );
 };
-

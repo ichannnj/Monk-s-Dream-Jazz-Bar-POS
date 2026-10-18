@@ -7,7 +7,8 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Flat White',
     category: 'coffee',
     price: 4.5,
-    imageUrl: 'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
     description: 'Double shot specialty espresso with microfoam steamed milk',
     allergens: ['Dairy'],
@@ -26,7 +27,8 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Iced Americano',
     category: 'coffee',
     price: 4.0,
-    imageUrl: 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
     description: 'Single origin espresso over iced filtered water',
     allergens: [],
@@ -43,23 +45,23 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Single Origin Cold Brew',
     category: 'coffee',
     price: 5.0,
-    imageUrl: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
     description: '18-hour cold steeped Ethiopian Yirgacheffe notes of jasmine & peach',
     allergens: [],
     dietary: ['Vegan', 'Gluten-Free'],
     isAvailable: true,
     auto86: false,
-    modifiers: [
-      { id: 'mod-oat-splash', name: 'Splash of Oat Milk', priceDelta: 0.3 },
-    ],
+    modifiers: [{ id: 'mod-oat-splash', name: 'Splash of Oat Milk', priceDelta: 0.3 }],
   },
   {
     id: 'm-matcha-latte',
     name: 'Ceremonial Matcha Latte',
     category: 'coffee',
     price: 5.5,
-    imageUrl: 'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
     description: 'Uji stone-ground ceremonial matcha whisked with fresh milk',
     allergens: ['Dairy'],
@@ -67,9 +69,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     isAvailable: false,
     auto86: true,
     outOfStockReason: 'Low Uji Matcha Powder',
-    modifiers: [
-      { id: 'mod-oat', name: 'Oat Milk Swap', priceDelta: 0.5 },
-    ],
+    modifiers: [{ id: 'mod-oat', name: 'Oat Milk Swap', priceDelta: 0.5 }],
   },
 
   // Cocktails & Wine (Bar / Bartender)
@@ -78,39 +78,38 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Monk’s Classic Negroni',
     category: 'cocktails_wine',
     price: 14.0,
-    imageUrl: 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
     description: 'London dry gin, Campari, Sweet vermouth, flamed orange peel',
     allergens: [],
     dietary: ['Vegan', 'Gluten-Free'],
     isAvailable: true,
     auto86: false,
-    modifiers: [
-      { id: 'mod-gin-sub', name: 'Monkey 47 Gin Upgrade', priceDelta: 3.5 },
-    ],
+    modifiers: [{ id: 'mod-gin-sub', name: 'Monkey 47 Gin Upgrade', priceDelta: 3.5 }],
   },
   {
     id: 'm-espresso-martini',
     name: 'Midnight Espresso Martini',
     category: 'cocktails_wine',
     price: 15.0,
-    imageUrl: 'https://images.unsplash.com/photo-1545438102-799c3991ffb2?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1545438102-799c3991ffb2?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
     description: 'Fresh pulled espresso, vodka, Kahlua, dark chocolate dust',
     allergens: [],
     dietary: ['Vegan', 'Gluten-Free'],
     isAvailable: true,
     auto86: false,
-    modifiers: [
-      { id: 'mod-grey-goose', name: 'Grey Goose Upgrade', priceDelta: 3.0 },
-    ],
+    modifiers: [{ id: 'mod-grey-goose', name: 'Grey Goose Upgrade', priceDelta: 3.0 }],
   },
   {
     id: 'm-pinot-noir',
     name: 'Willamette Valley Pinot Noir (Glass)',
     category: 'cocktails_wine',
     price: 13.0,
-    imageUrl: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
     description: 'Ripe red cherry, earthy forest floor, silky tannins',
     allergens: [],
@@ -126,9 +125,11 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Truffle Carbonara',
     category: 'mains_pasta',
     price: 18.0,
-    imageUrl: 'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
-    description: 'Artisan spaghetti, cured guanciale, farm fresh eggs, Parmigiano Reggiano, truffle oil',
+    description:
+      'Artisan spaghetti, cured guanciale, farm fresh eggs, Parmigiano Reggiano, truffle oil',
     allergens: ['Dairy', 'Gluten', 'Eggs'],
     dietary: [],
     isAvailable: true,
@@ -143,32 +144,30 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Wild Forest Mushroom Risotto',
     category: 'mains_pasta',
     price: 19.5,
-    imageUrl: 'https://images.unsplash.com/photo-1633964913295-ceb43826e7c9?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1633964913295-ceb43826e7c9?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
     description: 'Carnaroli rice, porcini, chanterelles, white wine, thyme, aged pecorino',
     allergens: ['Dairy'],
     dietary: ['Vegetarian', 'Gluten-Free'],
     isAvailable: true,
     auto86: false,
-    modifiers: [
-      { id: 'mod-vegan-pecorino', name: 'Vegan Cheese Option', priceDelta: 0.0 },
-    ],
+    modifiers: [{ id: 'mod-vegan-pecorino', name: 'Vegan Cheese Option', priceDelta: 0.0 }],
   },
   {
     id: 'm-margherita-pizza',
     name: 'Wood-Fired Margherita Pizza',
     category: 'mains_pasta',
     price: 16.0,
-    imageUrl: 'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
     description: 'San Marzano DOP tomatoes, buffalo mozzarella, fresh basil, EVOO',
     allergens: ['Dairy', 'Gluten'],
     dietary: ['Vegetarian'],
     isAvailable: true,
     auto86: false,
-    modifiers: [
-      { id: 'mod-spicy-honey', name: 'Calabrian Chili Hot Honey', priceDelta: 1.5 },
-    ],
+    modifiers: [{ id: 'mod-spicy-honey', name: 'Calabrian Chili Hot Honey', priceDelta: 1.5 }],
   },
 
   // Small Plates & Bites (Kitchen)
@@ -177,23 +176,23 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Parmesan Truffle Fries',
     category: 'small_plates',
     price: 9.0,
-    imageUrl: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
     description: 'Double cooked shoestring fries, white truffle oil, shaved parmesan, garlic aioli',
     allergens: ['Dairy', 'Eggs'],
     dietary: ['Vegetarian'],
     isAvailable: true,
     auto86: false,
-    modifiers: [
-      { id: 'mod-extra-aioli', name: 'Extra Truffle Aioli', priceDelta: 1.0 },
-    ],
+    modifiers: [{ id: 'mod-extra-aioli', name: 'Extra Truffle Aioli', priceDelta: 1.0 }],
   },
   {
     id: 'm-burrata-crostini',
     name: 'Artisan Burrata & Fig Crostini',
     category: 'small_plates',
     price: 12.5,
-    imageUrl: 'https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
     description: 'Creamy burrata, mission figs, aged balsamic glaze, toasted sourdough',
     allergens: ['Dairy', 'Gluten'],
@@ -207,7 +206,8 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Bakery Almond Croissant (Pre-made)',
     category: 'small_plates',
     price: 4.8, // 4.00 original cost * 1.20 fixed markup
-    imageUrl: 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
     description: 'Flaky French butter croissant filled with almond frangipane (resold +20% locked)',
     allergens: ['Dairy', 'Gluten', 'Tree Nuts', 'Eggs'],
@@ -225,7 +225,8 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     name: 'Monk’s Classic Tiramisu',
     category: 'desserts',
     price: 9.0,
-    imageUrl: 'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80',
+    imageUrl:
+      'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
     description: 'Savoiardi soaked in espresso & dark rum, mascarpone cream, Valrhona cocoa',
     allergens: ['Dairy', 'Gluten', 'Eggs'],

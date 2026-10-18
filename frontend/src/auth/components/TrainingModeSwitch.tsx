@@ -33,11 +33,7 @@ export const TrainingModeSwitch: React.FC<TrainingModeSwitchProps> = ({
   }, [value, progress]);
 
   const trackAnimatedStyle = useAnimatedStyle(() => {
-    const backgroundColor = interpolateColor(
-      progress.value,
-      [0, 1],
-      ['#d1d5db', '#641b2a']
-    );
+    const backgroundColor = interpolateColor(progress.value, [0, 1], ['#d1d5db', '#641b2a']);
     return { backgroundColor };
   });
 

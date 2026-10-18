@@ -3,7 +3,6 @@
  * Monk's Dream Jazz Bar POS (Supabase BaaS)
  */
 import { supabase } from './supabase';
-import { SEED_STAFF_USERS } from '../mockData';
 
 export interface AuthStaffUser {
   id: string;
@@ -64,23 +63,7 @@ export class AuthApi {
       console.warn('Supabase offline or unreachable, checking local fallback:', err);
     }
 
-    // Local Seed Fallback (Offline resilience only if network fetch threw)
-    const found = SEED_STAFF_USERS.find(
-      (u) => u.username.toLowerCase() === cleanUsername && u.pin === cleanPin
-    );
-    if (found) {
-      return {
-        success: true,
-        user: {
-          id: found.id,
-          username: found.username,
-          displayName: found.displayName,
-          role: found.role,
-        },
-      };
-    }
-
-    throw new Error('Invalid Staff ID or PIN. Access denied.');
+    throw new Error('Authentication failed. Please check network connection and credentials.');
   }
 
   /**
@@ -104,10 +87,10 @@ export class AuthApi {
         return data;
       }
     } catch (err) {
-      console.warn('Failed to fetch staff from Supabase, using fallback:', err);
+      console.warn('Failed to fetch staff from Supabase:', err);
     }
 
-    return SEED_STAFF_USERS;
+    return [];
   }
 }
 

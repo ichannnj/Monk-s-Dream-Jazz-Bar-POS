@@ -198,12 +198,7 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
                 >
                   {s.label}
                 </Text>
-                <Text
-                  style={[
-                    styles.statusCountText,
-                    isActive && styles.statusCountTextActive,
-                  ]}
-                >
+                <Text style={[styles.statusCountText, isActive && styles.statusCountTextActive]}>
                   {s.count}
                 </Text>
               </Pressable>

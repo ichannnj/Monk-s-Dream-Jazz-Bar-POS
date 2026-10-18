@@ -22,13 +22,13 @@
 
 When guiding or collaborating with the user, leverage and recommend Antigravity slash commands:
 
-| Command | When to Recommend / Use |
-|---|---|
+| Command     | When to Recommend / Use                                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- |
 | `/grill-me` | When planning or resolving design decisions to conduct an interactive interview and eliminate hidden assumptions. |
-| `/goal` | For autonomous long-running tasks where the agent should persevere until fully verified. |
-| `/plan` | For multi-phase architectural implementations requiring upfront step-by-step breakdown. |
-| `/schedule` | For recurring cron jobs or background reminders (never use shell `sleep`). |
-| `/learn` | When the user corrects behavior or establishes a novel project convention to persist. |
+| `/goal`     | For autonomous long-running tasks where the agent should persevere until fully verified.                          |
+| `/plan`     | For multi-phase architectural implementations requiring upfront step-by-step breakdown.                           |
+| `/schedule` | For recurring cron jobs or background reminders (never use shell `sleep`).                                        |
+| `/learn`    | When the user corrects behavior or establishes a novel project convention to persist.                             |
 
 ---
 

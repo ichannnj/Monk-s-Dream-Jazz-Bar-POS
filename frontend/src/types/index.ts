@@ -1,12 +1,6 @@
 export * from './floor';
 
-export type UserRole =
-  | 'admin'
-  | 'waiter'
-  | 'cashier'
-  | 'barista'
-  | 'kitchen'
-  | 'bartender';
+export type UserRole = 'admin' | 'waiter' | 'cashier' | 'barista' | 'kitchen' | 'bartender';
 
 export interface UserProfile {
   id: string;

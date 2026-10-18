@@ -1,12 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Modal, Pressable, StyleSheet } from 'react-native';
 import { X } from 'lucide-react-native';
-import {
-  MenuItem,
-  SEED_MENU_ITEMS,
-  MenuCategory,
-  OrderLineItem,
-} from '../../../mockData';
+import { MenuItem, SEED_MENU_ITEMS, MenuCategory, OrderLineItem } from '../../../mockData';
 
 import { toast } from '../../../store/useToastStore';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -24,11 +19,7 @@ export interface OrderEntryModalProps {
   initialItems?: OrderLineItem[];
   hasExistingCorkage?: boolean;
   onClose: () => void;
-  onSendOrder: (
-    items: OrderLineItem[],
-    hasCorkageFee: boolean,
-    corkageAmount: number
-  ) => void;
+  onSendOrder: (items: OrderLineItem[], hasCorkageFee: boolean, corkageAmount: number) => void;
 }
 
 export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
@@ -42,8 +33,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   const { currentUser } = useAuthStore();
   const isAdmin = currentUser?.role === 'admin';
 
-  const [selectedCategory, setSelectedCategory] =
-    useState<MenuCategory>('coffee');
+  const [selectedCategory, setSelectedCategory] = useState<MenuCategory>('coffee');
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItems, setCartItems] = useState<OrderLineItem[]>(initialItems);
   const [hasCorkage, setHasCorkage] = useState(hasExistingCorkage);
@@ -54,8 +44,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
 
   // Customizer sheet state
-  const [activeCustomizingItem, setActiveCustomizingItem] =
-    useState<MenuItem | null>(null);
+  const [activeCustomizingItem, setActiveCustomizingItem] = useState<MenuItem | null>(null);
   const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
   const [itemNotes, setItemNotes] = useState('');
 
@@ -69,8 +58,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
           setMenuItemsList((prev) =>
             prev.map((item) => {
               const matched = dbProducts.find(
-                (p) =>
-                  p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
+                (p) => p.name.toLowerCase().trim() === item.name.toLowerCase().trim()
               );
               if (matched && matched.image_url) {
                 return { ...item, imageUrl: matched.image_url };
@@ -103,9 +91,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   const filteredMenuItems = useMemo(() => {
     return menuItemsList.filter((item) => {
       if (searchQuery.trim().length > 0) {
-        return item.name
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase().trim());
+        return item.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
       }
       return item.category === selectedCategory;
     });
@@ -121,9 +107,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
       const res = await menuApi.updateProductImage(itemId, newImageUrl);
       if (res && res.success) {
         setMenuItemsList((prev) =>
-          prev.map((i) =>
-            i.id === itemId ? { ...i, imageUrl: newImageUrl } : i
-          )
+          prev.map((i) => (i.id === itemId ? { ...i, imageUrl: newImageUrl } : i))
         );
         toast.success(`Photo updated for item!`, { title: 'Product Updated' });
         return true;
@@ -139,10 +123,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
 
   // Pricing calculations
   const itemsSubtotal = useMemo(() => {
-    return cartItems.reduce(
-      (sum, item) => sum + item.unitPrice * item.quantity,
-      0
-    );
+    return cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }, [cartItems]);
 
   const corkageAmount = useMemo(() => {
@@ -168,11 +149,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     addToCartDirect(item, [], '');
   };
 
-  const addToCartDirect = (
-    item: MenuItem,
-    mods: string[],
-    notesStr: string
-  ) => {
+  const addToCartDirect = (item: MenuItem, mods: string[], notesStr: string) => {
     setCartItems((prev) => {
       let extraPrice = 0;
       mods.forEach((modName) => {
@@ -185,8 +162,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
         (i) =>
           i.productId === item.id &&
           (i.notes || '') === (notesStr || '') &&
-          JSON.stringify(i.modifiers?.sort() || []) ===
-            JSON.stringify(mods.sort())
+          JSON.stringify(i.modifiers?.sort() || []) === JSON.stringify(mods.sort())
       );
 
       if (existingIdx >= 0) {
@@ -222,9 +198,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
 
   const handleToggleModifier = (modName: string) => {
     setSelectedModifiers((prev) =>
-      prev.includes(modName)
-        ? prev.filter((m) => m !== modName)
-        : [...prev, modName]
+      prev.includes(modName) ? prev.filter((m) => m !== modName) : [...prev, modName]
     );
   };
 
@@ -278,9 +252,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
               <View style={styles.activeDestinationBadge}>
                 <Text style={styles.activeDestinationText}>{title}</Text>
               </View>
-              <Text style={styles.topBarSub}>
-                Monk’s Dream POS • Station Auto-Routing Active
-              </Text>
+              <Text style={styles.topBarSub}>Monk’s Dream POS • Station Auto-Routing Active</Text>
             </View>
 
             <Pressable

@@ -8,6 +8,7 @@ CREATE OR REPLACE FUNCTION public.update_product_image(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_product public.products%ROWTYPE;

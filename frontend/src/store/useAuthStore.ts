@@ -4,7 +4,18 @@ export interface User {
   id: string;
   username: string;
   displayName: string;
-  role: 'admin' | 'waiter' | 'cashier' | 'barista' | 'kitchen' | 'bartender';
+  role:
+    | 'admin'
+    | 'waiter'
+    | 'cashier'
+    | 'barista'
+    | 'kitchen'
+    | 'bartender'
+    | 'station_bar'
+    | 'station_cafe'
+    | 'station_food'
+    | 'foh_runner'
+    | 'printer_station';
   isActive?: boolean;
 }
 

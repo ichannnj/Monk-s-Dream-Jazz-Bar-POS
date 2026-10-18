@@ -1,10 +1,5 @@
 import { useMemo } from 'react';
-import {
-  TableItem,
-  ChannelCategory,
-  TakeoutOrder,
-  OnlineDeliveryOrder,
-} from '../../mockData';
+import { TableItem, ChannelCategory, TakeoutOrder, OnlineDeliveryOrder } from '../../mockData';
 import { StatusFilter } from './UnifiedCommandBar';
 
 export function useFloorFilters(

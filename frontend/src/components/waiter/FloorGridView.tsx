@@ -36,10 +36,7 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
   onLayoutGrid,
 }) => {
   return (
-    <View
-      style={styles.tablesGrid}
-      onLayout={(e) => onLayoutGrid(e.nativeEvent.layout.width)}
-    >
+    <View style={styles.tablesGrid} onLayout={(e) => onLayoutGrid(e.nativeEvent.layout.width)}>
       {/* Dine-In Physical Tables */}
       {filteredTables.map((table) => (
         <View key={table.id} style={[styles.cardCol, { width: cardWidth }]}>

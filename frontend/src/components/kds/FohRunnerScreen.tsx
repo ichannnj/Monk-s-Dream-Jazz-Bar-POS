@@ -1,0 +1,526 @@
+import React, { useMemo, useState } from 'react';
+import { View, ScrollView, Text, Pressable, StyleSheet } from 'react-native';
+import {
+  BellRing,
+  CheckCircle,
+  Clock,
+  Sparkles,
+  Utensils,
+  ShoppingBag,
+  Bike,
+  Coffee,
+  CheckCircle2,
+} from 'lucide-react-native';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useOrderStore } from '../../store/useOrderStore';
+import { toast } from '../../store/useToastStore';
+import { Sidebar, NavTabId } from '../navigation/Sidebar';
+import { SharedChatView, SharedAlertsView } from '../shared';
+import { StationHeader } from './StationHeader';
+import { OrderLineItem } from '../../types/floor';
+
+interface RunnerTicket {
+  id: string;
+  orderNumber: string;
+  sourceTitle: string; // e.g. "Table 4 · Tab 1"
+  guestName: string;
+  orderType: 'dine_in' | 'takeout' | 'online_delivery';
+  elapsedTime: string;
+  items: OrderLineItem[];
+  allDone: boolean;
+  readyItemsCount: number;
+  totalItemsCount: number;
+}
+
+export const FohRunnerScreen: React.FC = () => {
+  const { logout } = useAuthStore();
+  const {
+    tables,
+    takeoutOrders,
+    onlineOrders,
+    updateOrderItemStatus,
+    updateTakeoutStatus,
+    updateOnlineStatus,
+    alerts,
+  } = useOrderStore();
+  const [activeTab, setActiveTab] = useState<NavTabId>('board');
+
+  const handleLogout = () => {
+    toast.info('Runner expediter station locked.', { title: 'Clocked Out' });
+    logout();
+  };
+
+  // Compile full ticket status across both Bar and Kitchen
+  const runnerTickets: RunnerTicket[] = useMemo(() => {
+    const list: RunnerTicket[] = [];
+
+    // 1. Tables
+    tables.forEach((table) => {
+      (table.tabs || []).forEach((tab) => {
+        if (tab.items.length > 0 && tab.items.some((i) => i.status !== 'served')) {
+          const readyCount = tab.items.filter((i) => i.status === 'ready').length;
+          const totalCount = tab.items.length;
+          const allDone = readyCount === totalCount && totalCount > 0;
+
+          list.push({
+            id: `tbl-${table.id}-${tab.id}`,
+            orderNumber: `#${table.code.replace('Table ', 'T')}-${tab.tabIndex}`,
+            sourceTitle: `${table.code} (Tab ${tab.tabIndex})`,
+            guestName: tab.guestName,
+            orderType: 'dine_in',
+            elapsedTime: table.elapsedTime || '3m',
+            items: tab.items,
+            allDone,
+            readyItemsCount: readyCount,
+            totalItemsCount: totalCount,
+          });
+        }
+      });
+    });
+
+    // 2. Takeout
+    takeoutOrders.forEach((order) => {
+      if (order.status !== 'completed') {
+        const readyCount = order.items.filter((i) => i.status === 'ready').length;
+        const totalCount = order.items.length;
+        const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
+
+        list.push({
+          id: `takeout-${order.id}`,
+          orderNumber: order.ticketNumber,
+          sourceTitle: `Takeout ${order.ticketNumber}`,
+          guestName: order.customerName,
+          orderType: 'takeout',
+          elapsedTime: order.elapsedTime,
+          items: order.items,
+          allDone,
+          readyItemsCount: readyCount,
+          totalItemsCount: totalCount,
+        });
+      }
+    });
+
+    // 3. Online
+    onlineOrders.forEach((order) => {
+      if (order.status !== 'completed') {
+        const readyCount = order.items.filter((i) => i.status === 'ready').length;
+        const totalCount = order.items.length;
+        const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
+        const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
+
+        list.push({
+          id: `online-${order.id}`,
+          orderNumber: order.platformOrderRef,
+          sourceTitle: `${platformLabel} ${order.platformOrderRef}`,
+          guestName: `${order.customerName} · Rider: ${order.riderName}`,
+          orderType: 'online_delivery',
+          elapsedTime: order.elapsedTime,
+          items: order.items,
+          allDone,
+          readyItemsCount: readyCount,
+          totalItemsCount: totalCount,
+        });
+      }
+    });
+
+    // Sort ready-to-serve orders to the top, then by elapsed time
+    return list.sort((a, b) => {
+      if (a.allDone && !b.allDone) return -1;
+      if (!a.allDone && b.allDone) return 1;
+      return 0;
+    });
+  }, [tables, takeoutOrders, onlineOrders]);
+
+  const fullyReadyCount = runnerTickets.filter((t) => t.allDone).length;
+
+  const handleMarkServed = (ticket: RunnerTicket) => {
+    // Mark items as served
+    ticket.items.forEach((item) => {
+      updateOrderItemStatus(item.id, 'served');
+    });
+
+    if (ticket.orderType === 'takeout') {
+      const orderId = ticket.id.replace('takeout-', '');
+      updateTakeoutStatus(orderId, 'completed');
+    } else if (ticket.orderType === 'online_delivery') {
+      const orderId = ticket.id.replace('online-', '');
+      updateOnlineStatus(orderId, 'completed');
+    }
+
+    toast.success(`Handoff complete for ${ticket.sourceTitle}`);
+  };
+
+  const unreadAlertCount = alerts.filter((a) => !a.isRead).length;
+
+  return (
+    <View style={styles.screenContainer}>
+      <Sidebar
+        mode="kds"
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onLogout={handleLogout}
+        unreadChatCount={3}
+        alertCount={unreadAlertCount}
+      />
+
+      <View style={styles.mainContent}>
+        {activeTab === 'chat' ? (
+          <SharedChatView
+            senderName="FOH Expediter"
+            senderRole="FOH Runner"
+            defaultChannel="all"
+            onBack={() => setActiveTab('board')}
+          />
+        ) : activeTab === 'alerts' ? (
+          <SharedAlertsView onBack={() => setActiveTab('board')} />
+        ) : (
+          <>
+            <StationHeader
+              title="Pass Staging & Multi-Station Assembly"
+              stationType="runner"
+              activeTicketsCount={runnerTickets.length}
+              urgentTicketsCount={fullyReadyCount}
+              onLogout={handleLogout}
+            />
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.scrollContent}
+            >
+              {runnerTickets.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Text style={styles.emptyTitle}>Pass Staging Clear</Text>
+                  <Text style={styles.emptySubtitle}>
+                    Orders with prepared bar drinks or kitchen mains will trigger runner alerts
+                    here.
+                  </Text>
+                </View>
+              ) : (
+                <View style={styles.grid}>
+                  {runnerTickets.map((ticket) => {
+                    const progressPct =
+                      ticket.totalItemsCount > 0
+                        ? (ticket.readyItemsCount / ticket.totalItemsCount) * 100
+                        : 0;
+
+                    return (
+                      <View
+                        key={ticket.id}
+                        style={[styles.ticketCard, ticket.allDone && styles.ticketCardReady]}
+                      >
+                        {/* Buzzout Highlight Banner */}
+                        {ticket.allDone ? (
+                          <View style={styles.buzzoutBanner}>
+                            <BellRing size={16} color="#ffffff" />
+                            <Text style={styles.buzzoutBannerText}>
+                              🔔 BUZZOUT: FULL ORDER READY FOR DELIVERY
+                            </Text>
+                          </View>
+                        ) : null}
+
+                        {/* Header */}
+                        <View style={styles.ticketHeader}>
+                          <View style={styles.headerLeft}>
+                            <Text style={styles.sourceText}>{ticket.sourceTitle}</Text>
+                            <Text style={styles.guestText}>{ticket.guestName}</Text>
+                          </View>
+                          <View style={styles.timerPill}>
+                            <Clock size={12} color="#6b7280" />
+                            <Text style={styles.timerText}>{ticket.elapsedTime}</Text>
+                          </View>
+                        </View>
+
+                        {/* Assembly Progress Bar */}
+                        <View style={styles.progressContainer}>
+                          <View style={styles.progressBarBg}>
+                            <View
+                              style={[
+                                styles.progressBarFill,
+                                { width: `${progressPct}%` },
+                                ticket.allDone && { backgroundColor: '#15803d' },
+                              ]}
+                            />
+                          </View>
+                          <Text style={styles.progressText}>
+                            {ticket.readyItemsCount} of {ticket.totalItemsCount} items ready (
+                            {Math.round(progressPct)}%)
+                          </Text>
+                        </View>
+
+                        {/* Items List */}
+                        <View style={styles.itemsList}>
+                          {ticket.items.map((item) => {
+                            const isReady = item.status === 'ready' || item.status === 'served';
+                            const isBar = item.stationTarget === 'bar';
+
+                            return (
+                              <View key={item.id} style={styles.itemRow}>
+                                <View style={styles.itemLeft}>
+                                  <View
+                                    style={[
+                                      styles.stationBadge,
+                                      { backgroundColor: isBar ? '#e0f2fe' : '#fef3c7' },
+                                    ]}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.stationBadgeText,
+                                        { color: isBar ? '#0284c7' : '#d97706' },
+                                      ]}
+                                    >
+                                      {isBar ? 'BAR' : 'KITCHEN'}
+                                    </Text>
+                                  </View>
+                                  <Text style={[styles.itemName, isReady && styles.itemNameReady]}>
+                                    {item.quantity}x {item.productName}
+                                  </Text>
+                                </View>
+
+                                <View
+                                  style={[styles.statusChip, isReady && styles.statusChipReady]}
+                                >
+                                  <Text
+                                    style={[
+                                      styles.statusChipText,
+                                      isReady && styles.statusChipTextReady,
+                                    ]}
+                                  >
+                                    {isReady ? 'DONE' : 'PREP'}
+                                  </Text>
+                                </View>
+                              </View>
+                            );
+                          })}
+                        </View>
+
+                        {/* Handoff Button */}
+                        <Pressable
+                          onPress={() => handleMarkServed(ticket)}
+                          style={({ pressed }) => [
+                            styles.handoffBtn,
+                            ticket.allDone && styles.handoffBtnReady,
+                            pressed && styles.btnPressed,
+                          ]}
+                        >
+                          <CheckCircle2 size={18} color="#ffffff" />
+                          <Text style={styles.handoffBtnText}>
+                            {ticket.orderType === 'dine_in'
+                              ? 'Mark Served to Table'
+                              : 'Hand Off to Courier / Guest'}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </ScrollView>
+          </>
+        )}
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#f6f0ed',
+  },
+  mainContent: {
+    flex: 1,
+    padding: 16,
+  },
+  scrollContent: {
+    paddingBottom: 28,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  ticketCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#eee8e3',
+    padding: 16,
+    width: 350,
+    shadowColor: '#2b0f16',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+    justifyContent: 'space-between',
+  },
+  ticketCardReady: {
+    borderColor: '#16a34a',
+    backgroundColor: '#fbfdfc',
+  },
+  buzzoutBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#15803d',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  buzzoutBannerText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: 0.4,
+  },
+  ticketHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+  },
+  headerLeft: {
+    flex: 1,
+    gap: 2,
+  },
+  sourceText: {
+    fontSize: 17,
+    fontWeight: '900',
+    color: '#111827',
+  },
+  guestText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#4b5563',
+  },
+  timerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: '#f5f0ec',
+    borderRadius: 8,
+  },
+  timerText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: '#4b5563',
+    fontVariant: ['tabular-nums'],
+  },
+  progressContainer: {
+    marginBottom: 12,
+    gap: 4,
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: '#f3ece7',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#d97706',
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6b7280',
+  },
+  itemsList: {
+    gap: 8,
+    marginBottom: 14,
+  },
+  itemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f9f6f3',
+  },
+  itemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  stationBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 5,
+  },
+  stationBadgeText: {
+    fontSize: 9.5,
+    fontWeight: '800',
+  },
+  itemName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  itemNameReady: {
+    color: '#15803d',
+    fontWeight: '800',
+  },
+  statusChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    backgroundColor: '#fef3c7',
+  },
+  statusChipReady: {
+    backgroundColor: '#dcfce7',
+  },
+  statusChipText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#b45309',
+  },
+  statusChipTextReady: {
+    color: '#15803d',
+  },
+  handoffBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#832238',
+    paddingVertical: 11,
+    borderRadius: 14,
+  },
+  handoffBtnReady: {
+    backgroundColor: '#15803d',
+  },
+  handoffBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+  btnPressed: {
+    transform: [{ scale: 0.98 }],
+    opacity: 0.92,
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#eee8e3',
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+});

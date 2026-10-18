@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-} from 'react-native';
+import { View, Text, Modal, Pressable, StyleSheet, ScrollView, TextInput } from 'react-native';
 import {
   X,
   CreditCard,
@@ -43,12 +35,10 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   onClose,
   onConfirmPayment,
 }) => {
-  const [settlementMode, setSettlementMode] = useState<
-    'single_tab' | 'entire_table'
-  >('single_tab');
-  const [selectedMethod, setSelectedMethod] = useState<
-    'cash' | 'card' | 'digital_wallet' | 'comp'
-  >('cash');
+  const [settlementMode, setSettlementMode] = useState<'single_tab' | 'entire_table'>('single_tab');
+  const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'digital_wallet' | 'comp'>(
+    'cash'
+  );
   const [tenderedCash, setTenderedCash] = useState<string>('');
   const [shouldPrintReceipt, setShouldPrintReceipt] = useState(true);
 
@@ -56,9 +46,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 
   // Determine amount
   const subtotal =
-    settlementMode === 'single_tab' && activeTab
-      ? activeTab.totalAmount
-      : table.totalAmount || 0;
+    settlementMode === 'single_tab' && activeTab ? activeTab.totalAmount : table.totalAmount || 0;
 
   const tax = subtotal * 0.1;
   const grandTotal = subtotal + tax;
@@ -176,9 +164,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
               {/* Total Display Card */}
               <View style={styles.totalDisplayCard}>
                 <Text style={styles.totalCardLabel}>Balance Due</Text>
-                <Text style={styles.totalCardAmount}>
-                  ${grandTotal.toFixed(2)}
-                </Text>
+                <Text style={styles.totalCardAmount}>${grandTotal.toFixed(2)}</Text>
                 <Text style={styles.totalCardSub}>
                   Subtotal: ${subtotal.toFixed(2)} + VAT (10%): ${tax.toFixed(2)}
                 </Text>
@@ -190,15 +176,9 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 {/* Cash */}
                 <Pressable
                   onPress={() => setSelectedMethod('cash')}
-                  style={[
-                    styles.methodBtn,
-                    selectedMethod === 'cash' && styles.methodBtnActive,
-                  ]}
+                  style={[styles.methodBtn, selectedMethod === 'cash' && styles.methodBtnActive]}
                 >
-                  <Banknote
-                    size={18}
-                    color={selectedMethod === 'cash' ? '#ffffff' : '#15803d'}
-                  />
+                  <Banknote size={18} color={selectedMethod === 'cash' ? '#ffffff' : '#15803d'} />
                   <Text
                     style={[
                       styles.methodBtnText,
@@ -212,15 +192,9 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 {/* Card */}
                 <Pressable
                   onPress={() => setSelectedMethod('card')}
-                  style={[
-                    styles.methodBtn,
-                    selectedMethod === 'card' && styles.methodBtnActive,
-                  ]}
+                  style={[styles.methodBtn, selectedMethod === 'card' && styles.methodBtnActive]}
                 >
-                  <CreditCard
-                    size={18}
-                    color={selectedMethod === 'card' ? '#ffffff' : '#2563eb'}
-                  />
+                  <CreditCard size={18} color={selectedMethod === 'card' ? '#ffffff' : '#2563eb'} />
                   <Text
                     style={[
                       styles.methodBtnText,
@@ -246,8 +220,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                   <Text
                     style={[
                       styles.methodBtnText,
-                      selectedMethod === 'digital_wallet' &&
-                        styles.methodBtnTextActive,
+                      selectedMethod === 'digital_wallet' && styles.methodBtnTextActive,
                     ]}
                   >
                     QR Wallet
@@ -257,15 +230,9 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 {/* Comp */}
                 <Pressable
                   onPress={() => setSelectedMethod('comp')}
-                  style={[
-                    styles.methodBtn,
-                    selectedMethod === 'comp' && styles.methodBtnActive,
-                  ]}
+                  style={[styles.methodBtn, selectedMethod === 'comp' && styles.methodBtnActive]}
                 >
-                  <Gift
-                    size={18}
-                    color={selectedMethod === 'comp' ? '#ffffff' : '#d97706'}
-                  />
+                  <Gift size={18} color={selectedMethod === 'comp' ? '#ffffff' : '#d97706'} />
                   <Text
                     style={[
                       styles.methodBtnText,
@@ -318,9 +285,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                   {/* Change Due Banner */}
                   <View style={styles.changeDueBanner}>
                     <Text style={styles.changeDueLabel}>Change Due to Guest:</Text>
-                    <Text style={styles.changeDueAmount}>
-                      ${changeDue.toFixed(2)}
-                    </Text>
+                    <Text style={styles.changeDueAmount}>${changeDue.toFixed(2)}</Text>
                   </View>
                 </View>
               ) : null}
@@ -330,15 +295,8 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 onPress={() => setShouldPrintReceipt(!shouldPrintReceipt)}
                 style={styles.printCheckboxRow}
               >
-                <View
-                  style={[
-                    styles.checkboxBox,
-                    shouldPrintReceipt && styles.checkboxBoxActive,
-                  ]}
-                >
-                  {shouldPrintReceipt ? (
-                    <CheckCircle2 size={14} color="#ffffff" />
-                  ) : null}
+                <View style={[styles.checkboxBox, shouldPrintReceipt && styles.checkboxBoxActive]}>
+                  {shouldPrintReceipt ? <CheckCircle2 size={14} color="#ffffff" /> : null}
                 </View>
                 <Printer size={16} color="#4b5563" />
                 <Text style={styles.printCheckboxText}>
@@ -357,9 +315,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 
                 {/* Meta */}
                 <View style={styles.receiptRow}>
-                  <Text style={styles.receiptMeta}>
-                    TABLE: Table {table.code}
-                  </Text>
+                  <Text style={styles.receiptMeta}>TABLE: Table {table.code}</Text>
                   <Text style={styles.receiptMeta}>
                     GUEST: {activeTab?.guestName || 'Table Guest'}
                   </Text>
@@ -395,9 +351,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 </View>
                 <View style={styles.receiptRow}>
                   <Text style={styles.receiptBold}>TOTAL PAID:</Text>
-                  <Text style={styles.receiptBold}>
-                    ${grandTotal.toFixed(2)}
-                  </Text>
+                  <Text style={styles.receiptBold}>${grandTotal.toFixed(2)}</Text>
                 </View>
                 <Text style={styles.receiptDivider}>================================</Text>
                 <Text style={styles.receiptFooter}>Thank you for jamming with us!</Text>
@@ -423,4 +377,3 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
     </Modal>
   );
 };
-

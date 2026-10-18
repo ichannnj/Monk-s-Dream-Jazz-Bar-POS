@@ -9,16 +9,7 @@ interface TableCardProps {
 }
 
 export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress }) => {
-  const {
-    code,
-    seats,
-    guests,
-    status,
-    elapsedTime,
-    totalAmount,
-    hasOpenCheck,
-    activeTabs,
-  } = table;
+  const { code, seats, guests, status, elapsedTime, totalAmount, hasOpenCheck, activeTabs } = table;
 
   const isEmpty = status === 'empty';
   const isReady = status === 'ready';
@@ -27,9 +18,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
 
   // Derive accurate active tabs count
   const activeTabCount = useMemo(() => {
-    const fromTabs = (table.tabs || [])
-      .filter((t) => t.status !== 'closed')
-      .map((t) => t.tabIndex);
+    const fromTabs = (table.tabs || []).filter((t) => t.status !== 'closed').map((t) => t.tabIndex);
     const fromActiveTabs = activeTabs || [];
     return new Set([...fromActiveTabs, ...fromTabs]).size;
   }, [table.tabs, activeTabs]);
@@ -109,10 +98,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
     <View style={[styles.cardContainer, getCardVariantStyle()]}>
       <Pressable
         onPress={() => onPress(table)}
-        style={({ pressed }) => [
-          styles.mainPressableArea,
-          pressed && styles.cardPressed,
-        ]}
+        style={({ pressed }) => [styles.mainPressableArea, pressed && styles.cardPressed]}
         accessibilityRole="button"
         accessibilityLabel={
           isEmpty
@@ -130,8 +116,8 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
               {isEmpty
                 ? `${seats} seats`
                 : guests > 0
-                ? `${guests} / ${seats} seats`
-                : `${seats} seats`}
+                  ? `${guests} / ${seats} seats`
+                  : `${seats} seats`}
             </Text>
           </View>
 
@@ -141,9 +127,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
               {statusConfig.label}
             </Text>
             {!isEmpty && elapsedTime ? (
-              <Text style={[styles.timeText, { color: statusConfig.color }]}>
-                · {elapsedTime}
-              </Text>
+              <Text style={[styles.timeText, { color: statusConfig.color }]}>· {elapsedTime}</Text>
             ) : null}
           </View>
         </View>
@@ -176,10 +160,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
         {isEmpty ? (
           <Pressable
             onPress={() => onPress(table)}
-            style={({ pressed }) => [
-              styles.actionBtnOpenTab,
-              pressed && styles.cardPressed,
-            ]}
+            style={({ pressed }) => [styles.actionBtnOpenTab, pressed && styles.cardPressed]}
             accessibilityRole="button"
             accessibilityLabel={`Open Tab at Table ${code}`}
           >
@@ -189,10 +170,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
         ) : (
           <Pressable
             onPress={() => onPress(table)}
-            style={({ pressed }) => [
-              styles.actionBtnManage,
-              pressed && styles.cardPressed,
-            ]}
+            style={({ pressed }) => [styles.actionBtnManage, pressed && styles.cardPressed]}
             accessibilityRole="button"
             accessibilityLabel={`Manage Table ${code}`}
           >

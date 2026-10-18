@@ -1,14 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
-import {
-  Search,
-  X,
-  Coffee,
-  Wine,
-  Pizza,
-  UtensilsCrossed,
-  Cake,
-} from 'lucide-react-native';
+import { Search, X, Coffee, Wine, Pizza, UtensilsCrossed, Cake } from 'lucide-react-native';
 import { MenuCategory } from '../../../mockData';
 import { styles } from './OrderEntryModal.styles';
 
@@ -56,17 +48,8 @@ export const OrderCategoryBar: React.FC<OrderCategoryBarProps> = ({
               accessibilityState={{ selected: isActive }}
               accessibilityLabel={`${cat.label} category`}
             >
-              <Icon
-                size={16}
-                color={isActive ? '#ffffff' : '#4b5563'}
-                strokeWidth={2.2}
-              />
-              <Text
-                style={[
-                  styles.catPillText,
-                  isActive && styles.catPillTextActive,
-                ]}
-              >
+              <Icon size={16} color={isActive ? '#ffffff' : '#4b5563'} strokeWidth={2.2} />
+              <Text style={[styles.catPillText, isActive && styles.catPillTextActive]}>
                 {cat.label}
               </Text>
             </Pressable>

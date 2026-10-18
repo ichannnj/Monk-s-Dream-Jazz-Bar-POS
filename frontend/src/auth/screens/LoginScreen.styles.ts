@@ -277,4 +277,3 @@ export const styles = StyleSheet.create({
     color: '#641b2a',
   },
 });
-

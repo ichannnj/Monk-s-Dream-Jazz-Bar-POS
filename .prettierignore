@@ -1,0 +1,12 @@
+node_modules/
+dist/
+build/
+.expo/
+.turbo/
+.temp/
+pnpm-lock.yaml
+packages/shared/src/database.types.ts
+packages/*/src/**/*.d.ts
+packages/*/src/**/*.js
+*.sql
+supabase/

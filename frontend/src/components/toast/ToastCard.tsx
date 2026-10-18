@@ -1,19 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  Animated,
-  Platform,
-} from 'react-native';
-import {
-  CheckCircle2,
-  AlertCircle,
-  AlertTriangle,
-  Sparkles,
-  X,
-} from 'lucide-react-native';
+import { View, Text, Pressable, StyleSheet, Animated, Platform } from 'react-native';
+import { CheckCircle2, AlertCircle, AlertTriangle, Sparkles, X } from 'lucide-react-native';
 import { ToastItemData, useToastStore } from '../../store/useToastStore';
 
 interface ToastCardProps {
@@ -147,11 +134,7 @@ export const ToastCard: React.FC<ToastCardProps> = ({ toast }) => {
         },
       ]}
     >
-      <Pressable
-        onPress={handleDismiss}
-        style={styles.innerTouchable}
-        accessibilityRole="alert"
-      >
+      <Pressable onPress={handleDismiss} style={styles.innerTouchable} accessibilityRole="alert">
         {/* Left Icon Badge */}
         <View style={[styles.iconBadge, { backgroundColor: theme.bgColor }]}>
           <IconComponent size={18} color={theme.iconColor} strokeWidth={2.4} />

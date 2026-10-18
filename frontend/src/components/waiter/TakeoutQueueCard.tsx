@@ -19,18 +19,10 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
   const isReady = order.status === 'ready';
 
   return (
-    <View
-      style={[
-        styles.cardContainer,
-        isReady ? styles.cardReady : styles.cardPreparing,
-      ]}
-    >
+    <View style={[styles.cardContainer, isReady ? styles.cardReady : styles.cardPreparing]}>
       <Pressable
         onPress={() => onPress(order)}
-        style={({ pressed }) => [
-          styles.mainPressableArea,
-          pressed && styles.cardPressed,
-        ]}
+        style={({ pressed }) => [styles.mainPressableArea, pressed && styles.cardPressed]}
         accessibilityRole="button"
         accessibilityLabel={`Takeout ticket ${order.ticketNumber} for ${order.customerName}`}
       >
@@ -47,31 +39,15 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
           </View>
 
           <View
-            style={[
-              styles.statusBadge,
-              isReady ? styles.statusBadgeReady : styles.statusBadgePrep,
-            ]}
+            style={[styles.statusBadge, isReady ? styles.statusBadgeReady : styles.statusBadgePrep]}
           >
             <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: isReady ? '#16a34a' : '#d97706' },
-              ]}
+              style={[styles.statusDot, { backgroundColor: isReady ? '#16a34a' : '#d97706' }]}
             />
-            <Text
-              style={[
-                styles.statusText,
-                { color: isReady ? '#15803d' : '#b45309' },
-              ]}
-            >
+            <Text style={[styles.statusText, { color: isReady ? '#15803d' : '#b45309' }]}>
               {isReady ? 'READY' : 'PREP'}
             </Text>
-            <Text
-              style={[
-                styles.timeText,
-                { color: isReady ? '#15803d' : '#b45309' },
-              ]}
-            >
+            <Text style={[styles.timeText, { color: isReady ? '#15803d' : '#b45309' }]}>
               · {order.elapsedTime}
             </Text>
           </View>
@@ -84,12 +60,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
           </Text>
           <View style={styles.amountCol}>
             <Text style={styles.amountText}>${order.total.toFixed(2)}</Text>
-            <Text
-              style={[
-                styles.paidText,
-                { color: order.isPrepaid ? '#15803d' : '#b45309' },
-              ]}
-            >
+            <Text style={[styles.paidText, { color: order.isPrepaid ? '#15803d' : '#b45309' }]}>
               {order.isPrepaid ? 'PAID' : 'DUE'}
             </Text>
           </View>

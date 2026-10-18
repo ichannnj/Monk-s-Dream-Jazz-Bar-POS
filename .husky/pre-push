@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+echo "🛡️ Running Monk's Dream pre-push guardrails..."
+
+echo "1. Checking TypeScript types across monorepo..."
+pnpm typecheck
+
+echo "2. Validating builds..."
+pnpm build
+
+echo "3. Linting SQL migrations & RLS policies..."
+pnpm db:lint
+
+echo "✅ All pre-push checks passed successfully!"

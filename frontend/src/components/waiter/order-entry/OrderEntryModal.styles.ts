@@ -658,4 +658,3 @@ export const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
-

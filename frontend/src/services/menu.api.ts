@@ -12,7 +12,8 @@ export class MenuApi {
     try {
       let query = supabase
         .from('products')
-        .select(`
+        .select(
+          `
           id,
           name,
           category_id,
@@ -29,7 +30,8 @@ export class MenuApi {
             name,
             slug
           )
-        `)
+        `
+        )
         .eq('is_available', true);
 
       if (categoryId) {
@@ -108,25 +110,25 @@ export class MenuApi {
   /**
    * Upload an image file or blob to the 'menu-images' storage bucket.
    */
-  async uploadProductImage(productId: string, file: Blob | File | ArrayBuffer, fileExt: string = 'jpg') {
+  async uploadProductImage(
+    productId: string,
+    file: Blob | File | ArrayBuffer,
+    fileExt: string = 'jpg'
+  ) {
     try {
       const fileName = `${productId}-${Date.now()}.${fileExt}`;
       const filePath = `items/${fileName}`;
 
-      const { error } = await supabase.storage
-        .from('menu-images')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true,
-        });
+      const { error } = await supabase.storage.from('menu-images').upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
 
       if (error) {
         throw new Error(error.message);
       }
 
-      const { data: publicUrlData } = supabase.storage
-        .from('menu-images')
-        .getPublicUrl(filePath);
+      const { data: publicUrlData } = supabase.storage.from('menu-images').getPublicUrl(filePath);
 
       const publicUrl = publicUrlData.publicUrl;
 

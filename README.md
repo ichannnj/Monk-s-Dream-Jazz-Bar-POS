@@ -8,11 +8,11 @@
 
 Detailed architectural specifications, multi-channel intake rules, recipe BOM depletion mechanics, data models, and business logic are fully documented in:
 
-- 👉 **[CONTEXT.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/CONTEXT.md)** — *Authoritative venue operating modes, domain invariants, 4-digit PIN matrix, and system topology.*
-- 👉 **[PHASES.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/PHASES.md)** — *Step-by-step master progress board and phase execution runbooks.*
-- 👉 **[AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)** — *Task-to-File Fast Router, token-efficient slicing rules, and agent operating guidelines.*
-- 👉 **[CONTRIBUTING.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/CONTRIBUTING.md)** — *Developer setup, Supabase CLI workflows, and testing commands.*
-- 👉 **[REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)** — *Original comprehensive venue requirements and thermal printing specifications.*
+- 👉 **[CONTEXT.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/CONTEXT.md)** — _Authoritative venue operating modes, domain invariants, 4-digit PIN matrix, and system topology._
+- 👉 **[PHASES.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/PHASES.md)** — _Step-by-step master progress board and phase execution runbooks._
+- 👉 **[AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)** — _Task-to-File Fast Router, token-efficient slicing rules, and agent operating guidelines._
+- 👉 **[CONTRIBUTING.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/CONTRIBUTING.md)** — _Developer setup, Supabase CLI workflows, and testing commands._
+- 👉 **[REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)** — _Original comprehensive venue requirements and thermal printing specifications._
 
 ---
 
@@ -83,7 +83,7 @@ Bar Cocktails) │                                             │ Kitchen Bites
 4. **Category-Based Station Routing (Not Location-Based):**
    - **Drinks, Coffee & Cocktails** $\rightarrow$ Route directly to **Barista / Bartender Tablet KDS**.
    - **Food (Pizza, Pasta, Kitchen Items)** $\rightarrow$ Route directly to **Kitchen Station Tablet KDS**.
-   - *Table Grid Filters (Cafe Area vs. Bar Area) are strictly for table navigation and floor organization, never restricting station item routing.*
+   - _Table Grid Filters (Cafe Area vs. Bar Area) are strictly for table navigation and floor organization, never restricting station item routing._
 5. **Multi-Channel Fulfillment (Dine-In, Takeout & Third-Party Delivery):**
    - **Dine-In:** Assigned to physical tables with per-customer named tabs.
    - **Takeout / To-Go:** Virtual queue tabs (`#T-105`) with packaging tags and cup labels.
@@ -119,27 +119,29 @@ Bar Cocktails) │                                             │ Kitchen Bites
 
 Access control is strictly PIN-based across all shared floor and counter tablets. All PINs are **4 digits**:
 
-| Role | Username | Display Name | Station / Screen | 4-Digit PIN | Permissions |
-|---|---|---|---|---|---|
-| **Admin** | `admin` | Miles (Manager) | Admin Hub & Back-Office | `9999` | Full system control, mode toggle, recipe builder, inventory, salaries |
-| **Cashier** | `cashier1` | Coltrane (Cashier) | Handheld POS Tablet | `1111` | Table grid, takeout queue, Grab/Foodpanda intake, table transfers, billing |
-| **Floor Waiter** | `waiter1` | Ella (Floor Waiter) | Handheld POS Tablet | `2222` | Table ordering, customer named tabs, table moves & transfers, checkout |
-| **Bartender** | `bar1` | Thelonious (Bartender) | Bar Tablet KDS | `3333` | Cocktail & beverage prep queue |
-| **Barista** | `cafe1` | Bill (Barista) | Cafe Tablet KDS | `4444` | Espresso & tea prep queue |
-| **Kitchen Chef** | `kitchen1` | Chet (Chef) | Kitchen Tablet KDS | `5555` | Food & culinary prep queue |
-| **FOH Runner** | `runner1` | Sarah (Expediter) | Runner Tablet (Buzzout) | `6666` | Ready-to-serve dispatch & pickup handoff |
-| **Printer PC** | `printer1` | Receipt Terminal | Dedicated USB Web Print Station | `0000` | Automated runner slip & customer receipt printing |
+| Role             | Username   | Display Name           | Station / Screen                | 4-Digit PIN | Permissions                                                                |
+| ---------------- | ---------- | ---------------------- | ------------------------------- | ----------- | -------------------------------------------------------------------------- |
+| **Admin**        | `admin`    | Miles (Manager)        | Admin Hub & Back-Office         | `9999`      | Full system control, mode toggle, recipe builder, inventory, salaries      |
+| **Cashier**      | `cashier1` | Coltrane (Cashier)     | Handheld POS Tablet             | `1111`      | Table grid, takeout queue, Grab/Foodpanda intake, table transfers, billing |
+| **Floor Waiter** | `waiter1`  | Ella (Floor Waiter)    | Handheld POS Tablet             | `2222`      | Table ordering, customer named tabs, table moves & transfers, checkout     |
+| **Bartender**    | `bar1`     | Thelonious (Bartender) | Bar Tablet KDS                  | `3333`      | Cocktail & beverage prep queue                                             |
+| **Barista**      | `cafe1`    | Bill (Barista)         | Cafe Tablet KDS                 | `4444`      | Espresso & tea prep queue                                                  |
+| **Kitchen Chef** | `kitchen1` | Chet (Chef)            | Kitchen Tablet KDS              | `5555`      | Food & culinary prep queue                                                 |
+| **FOH Runner**   | `runner1`  | Sarah (Expediter)      | Runner Tablet (Buzzout)         | `6666`      | Ready-to-serve dispatch & pickup handoff                                   |
+| **Printer PC**   | `printer1` | Receipt Terminal       | Dedicated USB Web Print Station | `0000`      | Automated runner slip & customer receipt printing                          |
 
 ---
 
 ## ⚡ Quickstart
 
 ### Prerequisites
+
 - Node.js $\ge$ 20.x
 - **pnpm** $\ge$ 12.x (`corepack enable pnpm` or `npm install -g pnpm`)
-- **Docker** *(optional, only if running local Supabase CLI containers)*
+- **Docker** _(optional, only if running local Supabase CLI containers)_
 
 ### 1. Install & Build Monorepo
+
 ```bash
 # Install all monorepo dependencies
 pnpm install
@@ -149,13 +151,16 @@ pnpm run build
 ```
 
 ### 2. Environment Configuration
+
 Ensure `frontend/.env` contains your Supabase credentials:
+
 ```bash
 EXPO_PUBLIC_SUPABASE_URL=https://<your-project-id>.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 ```
 
 ### 3. Supabase Database Operations
+
 ```bash
 # Push declarative migrations to Supabase Cloud
 pnpm supabase:push
@@ -168,6 +173,7 @@ pnpm supabase:types
 ```
 
 ### 4. Run Development Server
+
 ```bash
 # Start Frontend (Expo Web & Tablet POS)
 pnpm --filter @monks/frontend run web

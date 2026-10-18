@@ -1,15 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, Modal, StyleSheet, ScrollView } from 'react-native';
-import {
-  Repeat,
-  X,
-  Check,
-  ArrowRight,
-  Coffee,
-  Wine,
-  User,
-  Sparkles,
-} from 'lucide-react-native';
+import { Repeat, X, Check, ArrowRight, Coffee, Wine, User, Sparkles } from 'lucide-react-native';
 import { TableItem, CustomerTab, TableArea } from '../../../mockData';
 import { styles } from './TableTransferModal.styles';
 
@@ -103,7 +94,8 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
               <View>
                 <Text style={styles.headerTitle}>Transfer Table / Tab</Text>
                 <Text style={styles.headerSubtitle}>
-                  Origin: Table {originTable.code} ({originTable.area === 'bar' ? 'Bar Area' : 'Cafe Area'})
+                  Origin: Table {originTable.code} (
+                  {originTable.area === 'bar' ? 'Bar Area' : 'Cafe Area'})
                 </Text>
               </View>
             </View>
@@ -127,13 +119,10 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                   onPress={() => setMode('entire')}
                   style={[styles.modeBtn, mode === 'entire' && styles.modeBtnActive]}
                 >
-                  <Text
-                    style={[
-                      styles.modeBtnText,
-                      mode === 'entire' && styles.modeBtnTextActive,
-                    ]}
-                  >
-                    Move Entire Table ({originTabs.length > 0 ? originTabs.length : originTable.activeTabs.length} tabs)
+                  <Text style={[styles.modeBtnText, mode === 'entire' && styles.modeBtnTextActive]}>
+                    Move Entire Table (
+                    {originTabs.length > 0 ? originTabs.length : originTable.activeTabs.length}{' '}
+                    tabs)
                   </Text>
                 </Pressable>
 
@@ -141,12 +130,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                   onPress={() => setMode('tab')}
                   style={[styles.modeBtn, mode === 'tab' && styles.modeBtnActive]}
                 >
-                  <Text
-                    style={[
-                      styles.modeBtnText,
-                      mode === 'tab' && styles.modeBtnTextActive,
-                    ]}
-                  >
+                  <Text style={[styles.modeBtnText, mode === 'tab' && styles.modeBtnTextActive]}>
                     Move Specific Customer Tab
                   </Text>
                 </Pressable>
@@ -172,17 +156,11 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                         <Pressable
                           key={tab.id}
                           onPress={() => setSelectedTabIndex(tab.tabIndex)}
-                          style={[
-                            styles.tabPickerCard,
-                            isSelected && styles.tabPickerCardSelected,
-                          ]}
+                          style={[styles.tabPickerCard, isSelected && styles.tabPickerCardSelected]}
                         >
                           <View style={styles.tabPickerLeft}>
                             <View
-                              style={[
-                                styles.radioCircle,
-                                isSelected && styles.radioCircleSelected,
-                              ]}
+                              style={[styles.radioCircle, isSelected && styles.radioCircleSelected]}
                             >
                               {isSelected ? <View style={styles.radioDot} /> : null}
                             </View>
@@ -192,15 +170,17 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                                 Guest: "{tab.guestName}" (Tab #{tab.tabIndex})
                               </Text>
                               <Text style={styles.tabItemsPreview}>
-                                {tab.items.length} items: {tab.items.map((i) => i.productName).slice(0, 2).join(', ')}
+                                {tab.items.length} items:{' '}
+                                {tab.items
+                                  .map((i) => i.productName)
+                                  .slice(0, 2)
+                                  .join(', ')}
                                 {tab.items.length > 2 ? '...' : ''}
                               </Text>
                             </View>
                           </View>
 
-                          <Text style={styles.tabAmount}>
-                            ${tab.totalAmount.toFixed(2)}
-                          </Text>
+                          <Text style={styles.tabAmount}>${tab.totalAmount.toFixed(2)}</Text>
                         </Pressable>
                       );
                     })}
@@ -225,16 +205,10 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                     <Pressable
                       key={idx}
                       onPress={() => setSelectedReason(reason)}
-                      style={[
-                        styles.reasonChip,
-                        isSelected && styles.reasonChipSelected,
-                      ]}
+                      style={[styles.reasonChip, isSelected && styles.reasonChipSelected]}
                     >
                       <Text
-                        style={[
-                          styles.reasonChipText,
-                          isSelected && styles.reasonChipTextSelected,
-                        ]}
+                        style={[styles.reasonChipText, isSelected && styles.reasonChipTextSelected]}
                       >
                         {reason}
                       </Text>
@@ -255,10 +229,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                 <View style={styles.areaFilterRow}>
                   <Pressable
                     onPress={() => setTargetAreaFilter('all')}
-                    style={[
-                      styles.areaPill,
-                      targetAreaFilter === 'all' && styles.areaPillActive,
-                    ]}
+                    style={[styles.areaPill, targetAreaFilter === 'all' && styles.areaPillActive]}
                   >
                     <Text
                       style={[
@@ -272,10 +243,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
 
                   <Pressable
                     onPress={() => setTargetAreaFilter('cafe')}
-                    style={[
-                      styles.areaPill,
-                      targetAreaFilter === 'cafe' && styles.areaPillActive,
-                    ]}
+                    style={[styles.areaPill, targetAreaFilter === 'cafe' && styles.areaPillActive]}
                   >
                     <Coffee size={11} color={targetAreaFilter === 'cafe' ? '#ffffff' : '#6b7280'} />
                     <Text
@@ -290,10 +258,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
 
                   <Pressable
                     onPress={() => setTargetAreaFilter('bar')}
-                    style={[
-                      styles.areaPill,
-                      targetAreaFilter === 'bar' && styles.areaPillActive,
-                    ]}
+                    style={[styles.areaPill, targetAreaFilter === 'bar' && styles.areaPillActive]}
                   >
                     <Wine size={11} color={targetAreaFilter === 'bar' ? '#ffffff' : '#6b7280'} />
                     <Text
@@ -324,17 +289,10 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                       style={[
                         styles.targetCard,
                         isSelected && styles.targetCardSelected,
-                        isTargetEmpty
-                          ? styles.targetCardEmpty
-                          : styles.targetCardOccupied,
+                        isTargetEmpty ? styles.targetCardEmpty : styles.targetCardOccupied,
                       ]}
                     >
-                      <Text
-                        style={[
-                          styles.targetCode,
-                          isSelected && styles.targetCodeSelected,
-                        ]}
-                      >
+                      <Text style={[styles.targetCode, isSelected && styles.targetCodeSelected]}>
                         {target.code}
                       </Text>
                       <Text style={styles.targetStatus}>
@@ -356,13 +314,12 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                 <Text style={styles.targetSummaryText}>
                   Target:{' '}
                   <Text style={styles.targetSummaryBold}>
-                    Table {selectedTargetTable.code} ({selectedTargetTable.area === 'bar' ? 'Bar Area' : 'Cafe Area'})
+                    Table {selectedTargetTable.code} (
+                    {selectedTargetTable.area === 'bar' ? 'Bar Area' : 'Cafe Area'})
                   </Text>
                 </Text>
               ) : (
-                <Text style={styles.targetSummaryTextMuted}>
-                  Select a destination table above
-                </Text>
+                <Text style={styles.targetSummaryTextMuted}>Select a destination table above</Text>
               )}
             </View>
 
@@ -374,10 +331,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
               <Pressable
                 onPress={handleConfirm}
                 disabled={!selectedTargetId}
-                style={[
-                  styles.confirmBtn,
-                  !selectedTargetId && styles.confirmBtnDisabled,
-                ]}
+                style={[styles.confirmBtn, !selectedTargetId && styles.confirmBtnDisabled]}
               >
                 <Text style={styles.confirmBtnText}>Confirm Transfer</Text>
                 <ArrowRight size={16} color="#ffffff" style={{ marginLeft: 6 }} />
@@ -389,4 +343,3 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
     </Modal>
   );
 };
-

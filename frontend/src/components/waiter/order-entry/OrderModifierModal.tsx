@@ -35,12 +35,8 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
       <View style={styles.customizerCard}>
         <View style={styles.customizerHeader}>
           <View>
-            <Text style={styles.customizerTitle}>
-              Customize {item.name}
-            </Text>
-            <Text style={styles.customizerSub}>
-              Base: ${item.price.toFixed(2)}
-            </Text>
+            <Text style={styles.customizerTitle}>Customize {item.name}</Text>
+            <Text style={styles.customizerSub}>Base: ${item.price.toFixed(2)}</Text>
           </View>
           <Pressable
             onPress={onClose}
@@ -53,9 +49,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
         </View>
 
         {/* Modifiers List */}
-        <Text style={styles.customizerSectionTitle}>
-          Available Recipe Modifiers:
-        </Text>
+        <Text style={styles.customizerSectionTitle}>Available Recipe Modifiers:</Text>
         <View style={styles.modList}>
           {item.modifiers.map((mod) => {
             const isSelected = selectedModifiers.includes(mod.name);
@@ -64,28 +58,13 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
               <Pressable
                 key={mod.id}
                 onPress={() => onToggleModifier(mod.name)}
-                style={[
-                  styles.modRow,
-                  isSelected && styles.modRowSelected,
-                ]}
+                style={[styles.modRow, isSelected && styles.modRowSelected]}
               >
-                <Text
-                  style={[
-                    styles.modName,
-                    isSelected && styles.modNameSelected,
-                  ]}
-                >
+                <Text style={[styles.modName, isSelected && styles.modNameSelected]}>
                   {mod.name}
                 </Text>
-                <Text
-                  style={[
-                    styles.modPrice,
-                    isSelected && styles.modPriceSelected,
-                  ]}
-                >
-                  {mod.priceDelta > 0
-                    ? `+$${mod.priceDelta.toFixed(2)}`
-                    : 'Free'}
+                <Text style={[styles.modPrice, isSelected && styles.modPriceSelected]}>
+                  {mod.priceDelta > 0 ? `+$${mod.priceDelta.toFixed(2)}` : 'Free'}
                 </Text>
               </Pressable>
             );
@@ -93,9 +72,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
         </View>
 
         {/* Special Prep Notes */}
-        <Text style={styles.customizerSectionTitle}>
-          Preparation Notes:
-        </Text>
+        <Text style={styles.customizerSectionTitle}>Preparation Notes:</Text>
         <TextInput
           style={styles.customizerInput}
           placeholder="e.g. Extra hot oat milk, no parmesan, light ice..."
@@ -104,14 +81,9 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           onChangeText={onChangeNotes}
         />
 
-        <Pressable
-          onPress={onConfirm}
-          style={styles.confirmCustomizeBtn}
-        >
+        <Pressable onPress={onConfirm} style={styles.confirmCustomizeBtn}>
           <CheckCircle2 size={16} color="#ffffff" strokeWidth={2.4} />
-          <Text style={styles.confirmCustomizeBtnText}>
-            Add to Cart
-          </Text>
+          <Text style={styles.confirmCustomizeBtnText}>Add to Cart</Text>
         </Pressable>
       </View>
     </View>

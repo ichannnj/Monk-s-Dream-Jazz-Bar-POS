@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  TextInput,
-  StyleSheet,
-  Switch,
-} from 'react-native';
+import { View, Text, Modal, Pressable, TextInput, StyleSheet, Switch } from 'react-native';
 import { X, ShoppingBag, ArrowRight } from 'lucide-react-native';
 
 interface NewTakeoutModalProps {

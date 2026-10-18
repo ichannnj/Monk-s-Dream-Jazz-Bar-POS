@@ -90,10 +90,10 @@ export const PinCodeInput: React.FC<PinCodeInputProps> = ({
           const cellBorderColor = isError
             ? '#e11d48'
             : isCurrent
-            ? '#641b2a'
-            : isFilled
-            ? '#4a121e'
-            : '#e2e4e8';
+              ? '#641b2a'
+              : isFilled
+                ? '#4a121e'
+                : '#e2e4e8';
 
           return (
             <PinCell
@@ -117,46 +117,48 @@ interface PinCellProps {
   isError: boolean;
 }
 
-const PinCell: React.FC<PinCellProps> = React.memo(({ isFilled, isCurrent, borderColor, isError }) => {
-  const dotScale = useSharedValue(isFilled ? 1 : 0);
+const PinCell: React.FC<PinCellProps> = React.memo(
+  ({ isFilled, isCurrent, borderColor, isError }) => {
+    const dotScale = useSharedValue(isFilled ? 1 : 0);
 
-  useEffect(() => {
-    if (isFilled) {
-      dotScale.value = withSpring(1, { damping: 12, stiffness: 220 });
-    } else {
-      dotScale.value = withTiming(0, { duration: 120, easing: Easing.out(Easing.ease) });
-    }
-  }, [isFilled, dotScale]);
+    useEffect(() => {
+      if (isFilled) {
+        dotScale.value = withSpring(1, { damping: 12, stiffness: 220 });
+      } else {
+        dotScale.value = withTiming(0, { duration: 120, easing: Easing.out(Easing.ease) });
+      }
+    }, [isFilled, dotScale]);
 
-  const dotAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: dotScale.value }],
-    opacity: dotScale.value,
-  }));
+    const dotAnimatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: dotScale.value }],
+      opacity: dotScale.value,
+    }));
 
-  return (
-    <View
-      style={[
-        styles.cell,
-        {
-          borderColor,
-          backgroundColor: isCurrent ? '#fdf8f9' : '#ffffff',
-          shadowColor: isCurrent ? '#641b2a' : 'transparent',
-          shadowOpacity: isCurrent ? 0.08 : 0,
-          shadowRadius: 4,
-          elevation: isCurrent ? 2 : 0,
-        },
-      ]}
-    >
-      <Animated.View
+    return (
+      <View
         style={[
-          styles.dot,
-          { backgroundColor: isError ? '#e11d48' : '#220810' },
-          dotAnimatedStyle,
+          styles.cell,
+          {
+            borderColor,
+            backgroundColor: isCurrent ? '#fdf8f9' : '#ffffff',
+            shadowColor: isCurrent ? '#641b2a' : 'transparent',
+            shadowOpacity: isCurrent ? 0.08 : 0,
+            shadowRadius: 4,
+            elevation: isCurrent ? 2 : 0,
+          },
         ]}
-      />
-    </View>
-  );
-});
+      >
+        <Animated.View
+          style={[
+            styles.dot,
+            { backgroundColor: isError ? '#e11d48' : '#220810' },
+            dotAnimatedStyle,
+          ]}
+        />
+      </View>
+    );
+  }
+);
 
 PinCell.displayName = 'PinCell';
 

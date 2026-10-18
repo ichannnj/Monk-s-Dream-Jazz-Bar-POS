@@ -1,10 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./App.{js,jsx,ts,tsx}",
-    "./src/**/*.{js,jsx,ts,tsx}"
-  ],
-  presets: [require("nativewind/preset")],
+  content: ['./App.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
+  presets: [require('nativewind/preset')],
   theme: {
     extend: {
       colors: {
@@ -24,7 +21,7 @@ module.exports = {
           velvet: '#831843',
           neon: '#06b6d4',
           emerald: '#10b981',
-          rose: '#f43f5e'
+          rose: '#f43f5e',
         },
         wine: {
           950: '#120609',
@@ -37,25 +34,47 @@ module.exports = {
           300: '#d87083',
           200: '#f0b6c1',
           100: '#f7e8eb',
-          50: '#fdf5f6'
+          50: '#fdf5f6',
         },
         stage: {
           dark: '#16080d',
           card: '#faf8f8',
           border: '#e2e4e8',
           input: '#fdfcfc',
-        }
+        },
       },
       screens: {
-        'mobile': '360px',
-        'tablet': '768px',
+        mobile: '360px',
+        tablet: '768px',
         'tablet-lg': '1024px',
-        'pos': '1180px',
+        pos: '1180px',
       },
       fontFamily: {
-        brand: ['"Raconteur NF"', 'RaconteurNF', 'Fraunces', 'Playfair Display', 'Georgia', 'serif'],
-        serif: ['"Raconteur NF"', 'RaconteurNF', 'Fraunces', 'Playfair Display', 'Georgia', 'serif'],
-        sans: ['Plus Jakarta Sans', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        brand: [
+          '"Raconteur NF"',
+          'RaconteurNF',
+          'Fraunces',
+          'Playfair Display',
+          'Georgia',
+          'serif',
+        ],
+        serif: [
+          '"Raconteur NF"',
+          'RaconteurNF',
+          'Fraunces',
+          'Playfair Display',
+          'Georgia',
+          'serif',
+        ],
+        sans: [
+          'Plus Jakarta Sans',
+          'Inter',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Segoe UI',
+          'Roboto',
+          'sans-serif',
+        ],
         mono: ['JetBrains Mono', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
       },
       fontSize: {
@@ -81,7 +100,7 @@ module.exports = {
         touch: '44px',
         'touch-md': '48px',
         'touch-lg': '56px',
-      }
+      },
     },
   },
   plugins: [],

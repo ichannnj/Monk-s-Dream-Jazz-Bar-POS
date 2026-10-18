@@ -43,6 +43,7 @@
 ## 📝 Step-by-Step Implementation Checklist
 
 ### Step 6.1: Venue Operating Mode Switcher
+
 - [ ] Target file: `frontend/src/components/admin/OperatingModeToggle.tsx`
 - [ ] Admin toggle: `[ ☀️ Normal Cafe Mode ]` $\longleftrightarrow$ `[ 🎷 Event Mode ]`.
 - [ ] Backend stores mode in application state or configuration table.
@@ -50,6 +51,7 @@
 - [ ] Allows management to isolate per-event gross revenue, artist night metrics, and bar-to-kitchen cocktail ratios.
 
 ### Step 6.2: Interactive Recipe BOM Builder
+
 - [ ] Target file: `frontend/src/components/admin/RecipeBuilderView.tsx`
 - [ ] Recipe Formulation Interface:
   - Select Menu Product $\to$ Add Raw Inventory Ingredients.
@@ -62,6 +64,7 @@
   - Enter vendor `originalCost` (e.g. $3.00) $\to$ system locks `basePrice = originalCost * 1.20` ($3.60).
 
 ### Step 6.2b: Menu Item Creation & Image Upload Pipeline (Supabase Storage)
+
 - [ ] Target frontend: `frontend/src/components/admin/MenuItemEditModal.tsx` & `frontend/src/components/admin/RecipeBuilderView.tsx`
 - [ ] Supabase Storage Infrastructure:
   - Bucket name: `menu-images` (public read access, authenticated write).
@@ -75,9 +78,9 @@
         contentType: file.type,
         upsert: true,
       });
-    const { data: { publicUrl } } = supabase.storage
-      .from('menu-images')
-      .getPublicUrl(data.path);
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from('menu-images').getPublicUrl(data.path);
     ```
 - [ ] Frontend Menu Item Form & Image Picker:
   - Dual intake: File upload button PLUS direct Image URL text field.
@@ -85,6 +88,7 @@
   - Persists `image_url` to database via `supabase.from('products').insert(...)` or `.update(...)`.
 
 ### Step 6.3: Inventory Management Hub & Stock Movement Ledger
+
 - [ ] Target file: `frontend/src/components/admin/InventoryHubView.tsx`
 - [ ] On-Hand Inventory Table:
   - Columns: SKU, Item Name, Category, Current Stock, Unit, Min Par, Cost/Unit, Status Badge (`🟢 Good`, `🔴 LOW`, `🟡 Reorder`).
@@ -99,6 +103,7 @@
   - Searchable transaction table of all stock movements with date filters and CSV export.
 
 ### Step 6.4: Staff Attendance & Daily Salary Expense Suite
+
 - [ ] Target file: `frontend/src/components/admin/StaffSalaryView.tsx`
 - [ ] Full Roster Support:
   - Workflow staff (Waiters, Cashiers, Baristas, Chefs) clocked via PIN.
@@ -111,6 +116,7 @@
   - Calculates total monthly wage due per employee and rolls into the venue's overall operating expense report.
 
 ### Step 6.5: Multi-Channel Sales Auditing & Net Profit Dashboard
+
 - [ ] Target file: `frontend/src/components/admin/SalesAnalyticsView.tsx`
 - [ ] Multi-Lens Filters:
   - `[ ☀️ Normal Cafe Mode ]`: Gross daytime coffee/mains sales, peak hours (8 AM - 12 PM).
@@ -120,17 +126,17 @@
   - Rows for `Cafe Area (Dine-In)`, `Bar Area (Dine-In)`, `Walk-In Takeout`, `GrabFood`, and `Foodpanda`.
   - Columns: Gross Sales, Order Count, Avg Ticket Size, Share of Volume.
 - [ ] Business Net Profit Calculation:
-  $$\text{Net Profit} = \text{Grand Total Sales} - (\text{Labor Expenses} + \text{COGS} + \text{Venue Overheads})$$
+      $$\text{Net Profit} = \text{Grand Total Sales} - (\text{Labor Expenses} + \text{COGS} + \text{Venue Overheads})$$
 - [ ] One-tap CSV and PDF Export.
 
 ---
 
 ## 🔬 Verification & Validation
 
-| Test Scenario | Action | Expected Result |
-|---|---|---|
-| Mode Toggle | Toggle from Cafe to Event Mode | New orders receive `operatingMode: "EVENT"` in database |
-| Outside Food Markup | Input outside cake vendor cost $10.00 | Selling price automatically locked at $12.00 (+20%) |
-| Restock Delivery MAC | Restock 10 bottles of Gin at $30/bottle | On-hand increases by 10 and Weighted MAC updates |
+| Test Scenario               | Action                                         | Expected Result                                                 |
+| --------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
+| Mode Toggle                 | Toggle from Cafe to Event Mode                 | New orders receive `operatingMode: "EVENT"` in database         |
+| Outside Food Markup         | Input outside cake vendor cost $10.00          | Selling price automatically locked at $12.00 (+20%)             |
+| Restock Delivery MAC        | Restock 10 bottles of Gin at $30/bottle        | On-hand increases by 10 and Weighted MAC updates                |
 | Discretionary Salary Add-on | Add +$20 add-on to Bill for Friday night shift | Bill's day total becomes $70 and monthly total increases by $20 |
-| Channel Auditing | Filter reports by GrabFood | Shows isolated delivery order volume and sales |
+| Channel Auditing            | Filter reports by GrabFood                     | Shows isolated delivery order volume and sales                  |

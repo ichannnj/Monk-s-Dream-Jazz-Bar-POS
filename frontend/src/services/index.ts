@@ -8,4 +8,5 @@ export * from './orders.api';
 export * from './tables.api';
 export * from './menu.api';
 export * from './system.api';
+export * from './realtime';
 export * from './api';

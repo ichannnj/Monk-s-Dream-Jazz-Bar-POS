@@ -62,9 +62,7 @@ export const PinPadModal: React.FC<PinPadModalProps> = ({
           </View>
 
           {userName && (
-            <Text className="text-jazz-gold font-bold text-xs mb-3">
-              Logging in as {userName}
-            </Text>
+            <Text className="text-jazz-gold font-bold text-xs mb-3">Logging in as {userName}</Text>
           )}
 
           {/* 4-digit indicators */}
@@ -73,9 +71,7 @@ export const PinPadModal: React.FC<PinPadModalProps> = ({
               <View
                 key={idx}
                 className={`w-3.5 h-3.5 rounded-full border ${
-                  pin.length > idx
-                    ? 'bg-jazz-gold border-jazz-gold'
-                    : 'bg-jazz-950 border-jazz-700'
+                  pin.length > idx ? 'bg-jazz-gold border-jazz-gold' : 'bg-jazz-950 border-jazz-700'
                 }`}
               />
             ))}
@@ -83,33 +79,31 @@ export const PinPadModal: React.FC<PinPadModalProps> = ({
 
           {/* Keypad */}
           <View className="w-full flex-row flex-wrap justify-between gap-y-3">
-            {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map(
-              (key, idx) => {
-                if (key === '') {
-                  return <View key={idx} className="w-20 h-14" />;
-                }
-                if (key === 'del') {
-                  return (
-                    <TouchableOpacity
-                      key={idx}
-                      onPress={handleDelete}
-                      className="w-20 h-14 rounded-2xl bg-jazz-850 border border-jazz-750 items-center justify-center"
-                    >
-                      <Delete size={20} color="#9ca3af" />
-                    </TouchableOpacity>
-                  );
-                }
+            {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'del'].map((key, idx) => {
+              if (key === '') {
+                return <View key={idx} className="w-20 h-14" />;
+              }
+              if (key === 'del') {
                 return (
                   <TouchableOpacity
                     key={idx}
-                    onPress={() => handleDigit(key)}
-                    className="w-20 h-14 rounded-2xl bg-jazz-850 border border-jazz-750 items-center justify-center active:bg-jazz-gold/20"
+                    onPress={handleDelete}
+                    className="w-20 h-14 rounded-2xl bg-jazz-850 border border-jazz-750 items-center justify-center"
                   >
-                    <Text className="text-white text-lg font-black">{key}</Text>
+                    <Delete size={20} color="#9ca3af" />
                   </TouchableOpacity>
                 );
               }
-            )}
+              return (
+                <TouchableOpacity
+                  key={idx}
+                  onPress={() => handleDigit(key)}
+                  className="w-20 h-14 rounded-2xl bg-jazz-850 border border-jazz-750 items-center justify-center active:bg-jazz-gold/20"
+                >
+                  <Text className="text-white text-lg font-black">{key}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </View>

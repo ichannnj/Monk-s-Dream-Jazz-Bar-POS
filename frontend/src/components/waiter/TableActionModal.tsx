@@ -30,9 +30,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   onOpenNewTab,
   onCheckout,
 }) => {
-  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(
-    table?.activeTabs?.[0] || 1
-  );
+  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(table?.activeTabs?.[0] || 1);
 
   React.useEffect(() => {
     if (table) {
@@ -47,9 +45,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   if (!table) return null;
 
   // Active customer tab data
-  const currentTab = (table.tabs || []).find(
-    (t) => t.tabIndex === selectedTabIndex
-  );
+  const currentTab = (table.tabs || []).find((t) => t.tabIndex === selectedTabIndex);
 
   const tabTotal = currentTab?.totalAmount ?? (table.totalAmount || 0);
 
@@ -74,7 +70,8 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                 </Text>
                 <Text style={styles.headerSubtitle}>
                   {table.guests > 0 ? `${table.guests} Guests · ` : ''}
-                  {table.seats} Seats · {table.assignedStaff ? table.assignedStaff.name : 'Unassigned'}
+                  {table.seats} Seats ·{' '}
+                  {table.assignedStaff ? table.assignedStaff.name : 'Unassigned'}
                 </Text>
               </View>
             </View>
@@ -104,16 +101,10 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     <Pressable
                       key={tab.id}
                       onPress={() => setSelectedTabIndex(tab.tabIndex)}
-                      style={[
-                        styles.tabSelectBtn,
-                        isActive && styles.tabSelectBtnActive,
-                      ]}
+                      style={[styles.tabSelectBtn, isActive && styles.tabSelectBtnActive]}
                     >
                       <Text
-                        style={[
-                          styles.tabSelectBtnText,
-                          isActive && styles.tabSelectBtnTextActive,
-                        ]}
+                        style={[styles.tabSelectBtnText, isActive && styles.tabSelectBtnTextActive]}
                       >
                         Tab #{tab.tabIndex}: {tab.guestName} (${tab.totalAmount.toFixed(2)})
                       </Text>
@@ -180,9 +171,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                   style={[styles.primaryActionBtn, styles.btnSettle]}
                 >
                   <CreditCard size={16} color="#ffffff" strokeWidth={2.3} />
-                  <Text style={styles.primaryActionBtnText}>
-                    Settle · ${tabTotal.toFixed(2)}
-                  </Text>
+                  <Text style={styles.primaryActionBtnText}>Settle · ${tabTotal.toFixed(2)}</Text>
                 </Pressable>
               </View>
 

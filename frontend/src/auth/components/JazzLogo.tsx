@@ -7,10 +7,7 @@ interface JazzLogoProps {
   color?: string;
 }
 
-export const JazzLogo: React.FC<JazzLogoProps> = ({
-  size = 80,
-  color = '#641b2a',
-}) => {
+export const JazzLogo: React.FC<JazzLogoProps> = ({ size = 80, color = '#641b2a' }) => {
   // Original aspect ratio is approx 90:80 (w:h)
   const width = size;
   const height = (size * 80) / 90;
@@ -21,8 +18,17 @@ export const JazzLogo: React.FC<JazzLogoProps> = ({
         <G fill={color}>
           {/* Left: Piano Keyboard Frame & Keys */}
           {/* Outer Piano border */}
-          <Rect x="4" y="6" width="36" height="78" rx="4" stroke={color} strokeWidth="3.5" fill="none" />
-          
+          <Rect
+            x="4"
+            y="6"
+            width="36"
+            height="78"
+            rx="4"
+            stroke={color}
+            strokeWidth="3.5"
+            fill="none"
+          />
+
           {/* Horizontal white key dividing lines */}
           <Rect x="6" y="21" width="32" height="2.5" fill={color} />
           <Rect x="6" y="37" width="32" height="2.5" fill={color} />
@@ -38,10 +44,7 @@ export const JazzLogo: React.FC<JazzLogoProps> = ({
 
           {/* Center-Right: Horn / Trumpet Valves & Bell Silhouette */}
           {/* Vertical main tube */}
-          <Path
-            d="M48 10 C48 8, 52 8, 52 10 L52 80 C52 82, 48 82, 48 80 Z"
-            fill={color}
-          />
+          <Path d="M48 10 C48 8, 52 8, 52 10 L52 80 C52 82, 48 82, 48 80 Z" fill={color} />
           {/* Trumpet Valve Pistons (3 horizontal piston caps) */}
           <Rect x="44" y="26" width="18" height="4" rx="2" fill={color} />
           <Rect x="44" y="36" width="18" height="4" rx="2" fill={color} />
@@ -54,10 +57,7 @@ export const JazzLogo: React.FC<JazzLogoProps> = ({
           />
 
           {/* Trumpet Bell Base flare */}
-          <Path
-            d="M52 70 L60 84 L44 84 Z"
-            fill={color}
-          />
+          <Path d="M52 70 L60 84 L44 84 Z" fill={color} />
         </G>
       </Svg>
     </View>

@@ -4,7 +4,9 @@
   "type": "module",
   "main": "./src/index.ts",
   "scripts": {
-    "build": "tsc -b"
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
   },
   "dependencies": {
     "@monks/shared": "workspace:*",

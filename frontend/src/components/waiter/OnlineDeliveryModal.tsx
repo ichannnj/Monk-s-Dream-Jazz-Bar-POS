@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  TextInput,
-  StyleSheet,
-} from 'react-native';
+import { View, Text, Modal, Pressable, TextInput, StyleSheet } from 'react-native';
 import { X, Bike, ArrowRight, CheckCircle2 } from 'lucide-react-native';
 
 interface OnlineDeliveryModalProps {
@@ -87,10 +80,7 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
           <View style={styles.platformRow}>
             <Pressable
               onPress={() => setPlatform('grabfood')}
-              style={[
-                styles.platformOption,
-                platform === 'grabfood' && styles.platformOptionGrab,
-              ]}
+              style={[styles.platformOption, platform === 'grabfood' && styles.platformOptionGrab]}
             >
               <Text
                 style={[
@@ -162,8 +152,8 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
           <View style={styles.prepaidBanner}>
             <CheckCircle2 size={16} color="#059669" />
             <Text style={styles.prepaidBannerText}>
-              Prepaid via {platform === 'grabfood' ? 'GrabPay' : 'Foodpanda in-app'}. No
-              counter payment required.
+              Prepaid via {platform === 'grabfood' ? 'GrabPay' : 'Foodpanda in-app'}. No counter
+              payment required.
             </Text>
           </View>
 

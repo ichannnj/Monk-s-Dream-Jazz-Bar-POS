@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  Pressable,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
+import { View, Text, Modal, Pressable, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { X, Users, Utensils, Check, Plus } from 'lucide-react-native';
 import { TableItem } from '../../mockData';
 
@@ -16,11 +8,7 @@ interface OpenTableTabModalProps {
   tables: TableItem[];
   preselectedTable?: TableItem | null;
   onClose: () => void;
-  onConfirmOpenTab: (
-    tableId: string,
-    guestName: string,
-    guestCount: number
-  ) => void;
+  onConfirmOpenTab: (tableId: string, guestName: string, guestCount: number) => void;
 }
 
 export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
@@ -64,9 +52,7 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
           <View style={styles.header}>
             <View>
               <Text style={styles.title}>Open Table Tab</Text>
-              <Text style={styles.subtitle}>
-                Start a new named guest tab for dine-in seating
-              </Text>
+              <Text style={styles.subtitle}>Start a new named guest tab for dine-in seating</Text>
             </View>
             <Pressable
               onPress={onClose}
@@ -104,18 +90,11 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                     isEmpty ? styles.tableChipEmpty : styles.tableChipOccupied,
                   ]}
                 >
-                  <Text
-                    style={[
-                      styles.tableChipText,
-                      isSelected && styles.tableChipTextSelected,
-                    ]}
-                  >
+                  <Text style={[styles.tableChipText, isSelected && styles.tableChipTextSelected]}>
                     {t.code}
                   </Text>
                   <Text style={styles.tableChipSub}>
-                    {isEmpty
-                      ? 'Available'
-                      : `${activeCount} ${activeCount === 1 ? 'tab' : 'tabs'}`}
+                    {isEmpty ? 'Available' : `${activeCount} ${activeCount === 1 ? 'tab' : 'tabs'}`}
                   </Text>
                 </Pressable>
               );
@@ -143,10 +122,7 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                 <Pressable
                   key={num}
                   onPress={() => setGuestCount(num)}
-                  style={[
-                    styles.guestCountBtn,
-                    guestCount === num && styles.guestCountBtnActive,
-                  ]}
+                  style={[styles.guestCountBtn, guestCount === num && styles.guestCountBtnActive]}
                 >
                   <Text
                     style={[
@@ -169,10 +145,7 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
 
             <Pressable
               onPress={handleConfirm}
-              style={[
-                styles.confirmBtn,
-                !selectedTableId && styles.confirmBtnDisabled,
-              ]}
+              style={[styles.confirmBtn, !selectedTableId && styles.confirmBtnDisabled]}
               disabled={!selectedTableId}
             >
               <Plus size={16} color="#ffffff" strokeWidth={2.4} />

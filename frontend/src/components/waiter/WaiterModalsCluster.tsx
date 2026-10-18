@@ -36,20 +36,12 @@ export interface WaiterModalsClusterProps {
   // Open Table Tab Modal
   isOpenTabModalOpen: boolean;
   onCloseOpenTabModal: () => void;
-  onConfirmOpenTab: (
-    tableId: string,
-    guestName: string,
-    guestCount: number
-  ) => void;
+  onConfirmOpenTab: (tableId: string, guestName: string, guestCount: number) => void;
 
   // Takeout Modal
   isTakeoutModalOpen: boolean;
   onCloseTakeoutModal: () => void;
-  onProceedTakeout: (
-    customerName: string,
-    isPrepaid: boolean,
-    notes: string
-  ) => void;
+  onProceedTakeout: (customerName: string, isPrepaid: boolean, notes: string) => void;
 
   // Online Modal
   isOnlineModalOpen: boolean;
@@ -69,11 +61,7 @@ export interface WaiterModalsClusterProps {
     hasExistingCorkage?: boolean;
   } | null;
   onCloseOrderEntry: () => void;
-  onSendOrder: (
-    items: OrderLineItem[],
-    hasCorkageFee: boolean,
-    corkageAmount: number
-  ) => void;
+  onSendOrder: (items: OrderLineItem[], hasCorkageFee: boolean, corkageAmount: number) => void;
 
   // Checkout Modal
   isCheckoutOpen: boolean;

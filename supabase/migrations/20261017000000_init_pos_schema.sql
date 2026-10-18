@@ -424,3 +424,41 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.print_jobs;
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('menu-images', 'menu-images', true)
 ON CONFLICT (id) DO NOTHING;
+
+-- 7. ROW LEVEL SECURITY (RLS) POLICIES
+-- POS operates via Staff PIN RPC and local tablet network
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.inventory_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_ingredients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.product_modifiers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.modifier_ingredient_deltas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stock_movements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.waste_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tables ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tabs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.table_transfer_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.attendance_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.print_jobs ENABLE ROW LEVEL SECURITY;
+
+-- Allow full read/write for anon and authenticated clients (internal POS tablets)
+DO $$
+DECLARE
+  tbl text;
+  tbls text[] := ARRAY[
+    'users', 'categories', 'products', 'inventory_items',
+    'product_ingredients', 'product_modifiers', 'modifier_ingredient_deltas',
+    'stock_movements', 'waste_logs', 'tables', 'tabs',
+    'orders', 'order_items', 'table_transfer_logs',
+    'attendance_records', 'print_jobs'
+  ];
+BEGIN
+  FOREACH tbl IN ARRAY tbls LOOP
+    EXECUTE format('DROP POLICY IF EXISTS "Allow POS operations for %I" ON public.%I', tbl, tbl);
+    EXECUTE format('CREATE POLICY "Allow POS operations for %I" ON public.%I FOR ALL TO anon, authenticated USING (true) WITH CHECK (true)', tbl, tbl);
+  END LOOP;
+END $$;
+

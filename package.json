@@ -6,13 +6,34 @@
   "scripts": {
     "dev": "turbo run dev",
     "build": "pnpm -r run build",
+    "typecheck": "pnpm -r run typecheck",
+    "lint": "eslint .",
+    "lint:quiet": "eslint . --quiet",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
+    "db:lint": "bash scripts/lint-migrations.sh",
+    "db:types:check": "bash scripts/check-supabase-types.sh",
     "test": "echo \"Error: no test specified\" && exit 1",
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "supabase:push": "npx supabase db push",
     "supabase:reset": "npx supabase db reset",
     "supabase:setup": "bash scripts/setup-supabase.sh",
-    "supabase:types": "npx supabase gen types typescript --linked > packages/shared/src/database.types.ts"
+    "supabase:setup:local": "bash scripts/setup-local-supabase.sh",
+    "supabase:types": "npx supabase gen types typescript --linked > packages/shared/src/database.types.ts",
+    "env:local": "cp frontend/.env.local frontend/.env && echo 'Switched frontend to Local Supabase environment'",
+    "env:cloud": "cp frontend/.env.cloud frontend/.env && echo 'Switched frontend to Cloud Supabase environment'",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "prettier --write",
+      "eslint --fix"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
   },
   "keywords": [],
   "author": "",
@@ -20,9 +41,19 @@
   "packageManager": "pnpm@12.11.2",
   "type": "module",
   "devDependencies": {
+    "@eslint/compat": "^2.1.1",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.6.5",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-native": "^5.0.0",
+    "eslint-plugin-tailwindcss": "^4.4.0",
+    "globals": "^17.13.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
     "prettier": "^3.9.10",
     "turbo": "^2.11.7",
-    "typescript": "^7.0.2"
+    "typescript": "~5.7.3",
+    "typescript-eslint": "^8.71.2"
   }
 }

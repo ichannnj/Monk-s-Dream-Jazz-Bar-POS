@@ -1,12 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-} from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, TextInput } from 'react-native';
 import {
   Receipt,
   Search,
@@ -29,9 +22,7 @@ export const ChecksHistoryView: React.FC = () => {
     'all' | 'dine_in' | 'takeout' | 'online_delivery'
   >('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCheck, setSelectedCheck] = useState<CheckItem>(
-    checks[0] || null
-  );
+  const [selectedCheck, setSelectedCheck] = useState<CheckItem>(checks[0] || null);
   const [reprintSuccess, setReprintSuccess] = useState(false);
 
   const filteredChecks = useMemo(() => {
@@ -95,10 +86,7 @@ export const ChecksHistoryView: React.FC = () => {
       <View style={styles.filterRow}>
         <Pressable
           onPress={() => setSelectedChannel('all')}
-          style={[
-            styles.filterPill,
-            selectedChannel === 'all' && styles.filterPillActive,
-          ]}
+          style={[styles.filterPill, selectedChannel === 'all' && styles.filterPillActive]}
         >
           <Text
             style={[
@@ -112,10 +100,7 @@ export const ChecksHistoryView: React.FC = () => {
 
         <Pressable
           onPress={() => setSelectedChannel('dine_in')}
-          style={[
-            styles.filterPill,
-            selectedChannel === 'dine_in' && styles.filterPillActive,
-          ]}
+          style={[styles.filterPill, selectedChannel === 'dine_in' && styles.filterPillActive]}
         >
           <Coffee size={13} color={selectedChannel === 'dine_in' ? '#ffffff' : '#4b5563'} />
           <Text
@@ -130,10 +115,7 @@ export const ChecksHistoryView: React.FC = () => {
 
         <Pressable
           onPress={() => setSelectedChannel('takeout')}
-          style={[
-            styles.filterPill,
-            selectedChannel === 'takeout' && styles.filterPillActive,
-          ]}
+          style={[styles.filterPill, selectedChannel === 'takeout' && styles.filterPillActive]}
         >
           <ShoppingBag size={13} color={selectedChannel === 'takeout' ? '#ffffff' : '#4b5563'} />
           <Text
@@ -185,10 +167,7 @@ export const ChecksHistoryView: React.FC = () => {
                 <Pressable
                   key={chk.id}
                   onPress={() => setSelectedCheck(chk)}
-                  style={[
-                    styles.checkRowCard,
-                    isSelected && styles.checkRowCardSelected,
-                  ]}
+                  style={[styles.checkRowCard, isSelected && styles.checkRowCardSelected]}
                 >
                   <View style={styles.checkRowLeft}>
                     <View style={styles.checkNumBadge}>
@@ -206,9 +185,7 @@ export const ChecksHistoryView: React.FC = () => {
                   <View style={styles.checkRowRight}>
                     <Text style={styles.checkTotal}>${chk.total.toFixed(2)}</Text>
                     <View style={styles.paidBadge}>
-                      <Text style={styles.paidBadgeText}>
-                        {chk.paymentMethod.toUpperCase()}
-                      </Text>
+                      <Text style={styles.paidBadgeText}>{chk.paymentMethod.toUpperCase()}</Text>
                     </View>
                   </View>
                 </Pressable>
@@ -222,9 +199,7 @@ export const ChecksHistoryView: React.FC = () => {
           <View style={styles.detailPane}>
             <View style={styles.detailHeader}>
               <View>
-                <Text style={styles.detailCheckNumber}>
-                  Check {selectedCheck.checkNumber}
-                </Text>
+                <Text style={styles.detailCheckNumber}>Check {selectedCheck.checkNumber}</Text>
                 <Text style={styles.detailSub}>
                   {selectedCheck.tableOrRef} · Settled at {selectedCheck.timestamp}
                 </Text>
@@ -271,21 +246,15 @@ export const ChecksHistoryView: React.FC = () => {
             <View style={styles.financeCard}>
               <View style={styles.financeLine}>
                 <Text style={styles.financeLabel}>Subtotal:</Text>
-                <Text style={styles.financeValue}>
-                  ${selectedCheck.subtotal.toFixed(2)}
-                </Text>
+                <Text style={styles.financeValue}>${selectedCheck.subtotal.toFixed(2)}</Text>
               </View>
               <View style={styles.financeLine}>
                 <Text style={styles.financeLabel}>Tax (10% VAT):</Text>
-                <Text style={styles.financeValue}>
-                  ${selectedCheck.tax.toFixed(2)}
-                </Text>
+                <Text style={styles.financeValue}>${selectedCheck.tax.toFixed(2)}</Text>
               </View>
               <View style={[styles.financeLine, styles.financeTotalLine]}>
                 <Text style={styles.financeTotalLabel}>Grand Total Settled:</Text>
-                <Text style={styles.financeTotalValue}>
-                  ${selectedCheck.total.toFixed(2)}
-                </Text>
+                <Text style={styles.financeTotalValue}>${selectedCheck.total.toFixed(2)}</Text>
               </View>
             </View>
           </View>

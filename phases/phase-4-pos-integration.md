@@ -34,6 +34,7 @@
 ## 📝 Step-by-Step Implementation Checklist
 
 ### Step 4.1: Synchronize `useOrderStore` with Supabase
+
 - [ ] Target file: [frontend/src/store/useOrderStore.ts](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/store/useOrderStore.ts)
 - [ ] On user login / app initialization:
   - Fetch tables with tabs: `supabase.from('tables').select('*, tabs(*)')`.
@@ -44,6 +45,7 @@
 - [ ] Maintain optimistic local state: UI updates immediately upon tap; reverts only if Supabase request fails.
 
 ### Step 4.2: Connect Table & Tab Transfer Modal to Supabase RPC
+
 - [ ] Target file: [frontend/src/components/waiter/TableTransferModal.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/components/waiter/TableTransferModal.tsx)
 - [ ] Connect **"Confirm Transfer"** action:
   ```ts
@@ -60,6 +62,7 @@
   - Target table turns amber (`Occupied`) with updated tab count.
 
 ### Step 4.3: Live Auto-86, Outside Food Markup & Visual Cards in Order Entry
+
 - [ ] Target file: [frontend/src/components/waiter/OrderEntryModal.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/components/waiter/OrderEntryModal.tsx)
 - [ ] Visual Menu Item Cards with Cover Image & Graceful Fallback:
   - If `item.imageUrl` is present, render top banner (`height: 110`, `borderTopLeftRadius: 10`, `borderTopRightRadius: 10`, `resizeMode: 'cover'`) using React Native `Image` with smooth fade-in and caching.
@@ -71,6 +74,7 @@
 - [ ] Corkage toggle: Add 20% surcharge dynamically to customer tab total.
 
 ### Step 4.4: Settle & Remote Print Trigger in Bill Settlement Modal
+
 - [ ] Target file: [frontend/src/components/waiter/BillSettlementModal.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/components/waiter/BillSettlementModal.tsx)
 - [ ] Wire payment execution to `supabase.rpc('settle_tab_and_record_payment')`:
   ```ts
@@ -92,6 +96,7 @@
 - [ ] Toast notification appears on Waiter tablet: `Receipt dispatched to printer station`.
 
 ### Step 4.5: Optimistic State & Offline Queue Resilience
+
 - [ ] Target file: [frontend/src/store/useOrderStore.ts](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/store/useOrderStore.ts)
 - [ ] Local Mutation Queue:
   - When connection is offline or degraded, queue order dispatches locally.
@@ -102,9 +107,9 @@
 
 ## 🔬 Verification & Validation
 
-| Test Scenario | Action | Expected Result |
-|---|---|---|
-| Open Table Tab | Waiter opens Tab for "Miles" on Table 4 | Table 4 turns Amber on all connected tablets simultaneously |
-| Multi-Channel Queue | Cashier inputs GrabFood order `#GF-8842` | Shows up in Online Delivery filter tab with rider name |
-| Real-Time Auto-86 | Deplete coffee beans in database | Flat White immediately greys out in Order Entry Modal on all tablets |
-| Remote Print Trigger | Cashier settles Table 4 bill | `settle_tab_and_record_payment` executes, drawer logs cash sale, and printer daemon receives print job |
+| Test Scenario        | Action                                   | Expected Result                                                                                        |
+| -------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Open Table Tab       | Waiter opens Tab for "Miles" on Table 4  | Table 4 turns Amber on all connected tablets simultaneously                                            |
+| Multi-Channel Queue  | Cashier inputs GrabFood order `#GF-8842` | Shows up in Online Delivery filter tab with rider name                                                 |
+| Real-Time Auto-86    | Deplete coffee beans in database         | Flat White immediately greys out in Order Entry Modal on all tablets                                   |
+| Remote Print Trigger | Cashier settles Table 4 bill             | `settle_tab_and_record_payment` executes, drawer logs cash sale, and printer daemon receives print job |

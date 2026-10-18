@@ -8,14 +8,14 @@
 
 ## 🗺️ Master Progress Board
 
-| Phase | Blueprint | Focus Area | Status |
-|:---:|:---|:---|:---:|
-| **01** | [Phase 1: Database Model Expansion & Seeding](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-1-data-models-and-seeding.md) | Full 18 models in Supabase SQL migrations, `seed.sql`, TypeScript generation | ⏳ Next Up |
-| **02** | [Phase 2: Real-Time Gateway, Transfers & Depletion](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-2-realtime-gateway-depletion.md) | Supabase Realtime, PL/pgSQL atomic depletion RPC, Auto-86, Table transfers | 📋 Planned |
-| **03** | [Phase 3: Station KDS & FOH Buzzout Device](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-3-station-kds-tablets.md) | Touch-first Barista KDS, Kitchen KDS, Runner Buzzout Screen via Realtime | 📋 Planned |
-| **04** | [Phase 4: Floor POS Full-Stack Integration](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-4-pos-integration.md) | Wire 20+ Waiter POS components directly to @supabase/supabase-js | 📋 Planned |
-| **05** | [Phase 5: Dedicated Thermal Printing Terminal](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-5-thermal-printing.md) | Linux USB PC daemon listening to `print_jobs` table via Realtime CDC | 📋 Planned |
-| **06** | [Phase 6: Admin Back-Office, Inventory & Payroll](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-6-admin-and-analytics.md) | Cafe/Event mode, Recipe builder, Supabase Storage image upload, SQL Analytics | 📋 Planned |
+| Phase  | Blueprint                                                                                                                                                              | Focus Area                                                                    |   Status   |
+| :----: | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- | :--------: |
+| **01** | [Phase 1: Database Model Expansion & Seeding](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-1-data-models-and-seeding.md)          | Full 18 models in Supabase SQL migrations, `seed.sql`, TypeScript generation  | ⏳ Next Up |
+| **02** | [Phase 2: Real-Time Gateway, Transfers & Depletion](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-2-realtime-gateway-depletion.md) | Supabase Realtime, PL/pgSQL atomic depletion RPC, Auto-86, Table transfers    | 📋 Planned |
+| **03** | [Phase 3: Station KDS & FOH Buzzout Device](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-3-station-kds-tablets.md)                | Touch-first Barista KDS, Kitchen KDS, Runner Buzzout Screen via Realtime      | 📋 Planned |
+| **04** | [Phase 4: Floor POS Full-Stack Integration](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-4-pos-integration.md)                    | Wire 20+ Waiter POS components directly to @supabase/supabase-js              | 📋 Planned |
+| **05** | [Phase 5: Dedicated Thermal Printing Terminal](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-5-thermal-printing.md)                | Linux USB PC daemon listening to `print_jobs` table via Realtime CDC          | 📋 Planned |
+| **06** | [Phase 6: Admin Back-Office, Inventory & Payroll](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-6-admin-and-analytics.md)          | Cafe/Event mode, Recipe builder, Supabase Storage image upload, SQL Analytics | 📋 Planned |
 
 ---
 
@@ -54,6 +54,7 @@
 ---
 
 ## 🧭 How to Work Through These Phases
+
 1. Open the designated phase document (e.g. [phase-1-data-models-and-seeding.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-1-data-models-and-seeding.md)).
 2. Review the prerequisites, target files, and step-by-step checkboxes.
 3. Implement and test each step against the provided verification commands.

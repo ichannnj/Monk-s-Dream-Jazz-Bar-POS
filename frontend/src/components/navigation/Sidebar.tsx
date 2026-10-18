@@ -13,14 +13,15 @@ import {
 
 const MONKS_DREAM_LOGO = require('../../../assets/Monks Dream Logo files-02.png');
 
-export type NavTabId = 'tables' | 'chat' | 'checks' | 'drawer' | 'alerts' | 'settings';
+export type NavTabId = 'tables' | 'board' | 'chat' | 'checks' | 'drawer' | 'alerts' | 'settings';
 
-interface SidebarProps {
+export interface SidebarProps {
   activeTab: NavTabId;
   onTabChange: (tab: NavTabId) => void;
   onLogout?: () => void;
   unreadChatCount?: number;
   alertCount?: number;
+  mode?: 'pos' | 'kds';
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -28,9 +29,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onTabChange,
   onLogout,
   unreadChatCount = 0,
-  alertCount = 1,
+  alertCount = 0,
+  mode = 'pos',
 }) => {
-  const navItems = [
+  const posNavItems = [
     {
       id: 'tables' as NavTabId,
       label: 'Tables',
@@ -60,6 +62,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
+  const kdsNavItems = [
+    {
+      id: 'board' as NavTabId,
+      label: 'Board',
+      Icon: LayoutGrid,
+    },
+    {
+      id: 'chat' as NavTabId,
+      label: 'Chat',
+      Icon: MessageSquare,
+      badge: unreadChatCount,
+    },
+    {
+      id: 'alerts' as NavTabId,
+      label: 'Alerts',
+      Icon: Bell,
+      hasDot: alertCount > 0,
+    },
+  ];
+
+  const navItems = mode === 'kds' ? kdsNavItems : posNavItems;
+
   return (
     <View style={styles.sidebarContainer}>
       {/* Top: Official Bar Logo */}
@@ -84,7 +108,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <Pressable
               key={item.id}
               onPress={() => onTabChange(item.id)}
-              style={[styles.navButton, isActive && styles.navButtonActive]}
+              style={({ pressed }) => [
+                styles.navButton,
+                isActive && styles.navButtonActive,
+                pressed && styles.navButtonPressed,
+              ]}
               accessibilityRole="tab"
               accessibilityState={{ selected: isActive }}
             >
@@ -96,9 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 />
                 {item.hasDot ? <View style={styles.notificationDot} /> : null}
               </View>
-              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
-                {item.label}
-              </Text>
+              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
             </Pressable>
           );
         })}
@@ -108,7 +134,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <View style={styles.bottomSection}>
         <Pressable
           onPress={() => onTabChange('settings')}
-          style={[styles.settingsBtn, activeTab === 'settings' && styles.settingsBtnActive]}
+          style={({ pressed }) => [
+            styles.settingsBtn,
+            activeTab === 'settings' && styles.settingsBtnActive,
+            pressed && styles.navButtonPressed,
+          ]}
           accessibilityRole="button"
           accessibilityLabel="Settings"
         >
@@ -118,7 +148,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {onLogout ? (
           <Pressable
             onPress={onLogout}
-            style={styles.logoutBtn}
+            style={({ pressed }) => [styles.logoutBtn, pressed && styles.navButtonPressed]}
             accessibilityRole="button"
             accessibilityLabel="Switch Staff User"
           >
@@ -132,13 +162,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
 const styles = StyleSheet.create({
   sidebarContainer: {
-    width: 84,
+    width: 78,
     backgroundColor: '#431621',
-    borderRadius: 26,
+    borderRadius: 24,
     paddingVertical: 18,
     paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginRight: 14,
     shadowColor: '#2b0f16',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.18,
@@ -185,6 +216,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  navButtonPressed: {
+    opacity: 0.85,
+  },
   iconWrapper: {
     position: 'relative',
     alignItems: 'center',
@@ -202,7 +236,7 @@ const styles = StyleSheet.create({
     borderColor: '#431621',
   },
   navLabel: {
-    fontSize: 11.5,
+    fontSize: 11,
     fontWeight: '600',
     color: '#d8b4bc',
     marginTop: 4,
@@ -218,8 +252,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   settingsBtn: {
-    width: 48,
-    height: 48,
+    width: 46,
+    height: 46,
     borderRadius: 14,
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderWidth: 1,

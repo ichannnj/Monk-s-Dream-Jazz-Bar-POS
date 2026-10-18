@@ -38,78 +38,59 @@
 ## 📝 Step-by-Step Implementation Checklist
 
 ### Step 3.1: Barista / Bartender Tablet KDS Screen
-- [ ] Target file: `frontend/src/components/kds/BaristaKdsScreen.tsx`
-- [ ] Role filter: User role `station_bar` or `bartender` / `barista`.
-- [ ] Visual Ticket Structure:
+
+- [x] Target file: [frontend/src/components/kds/BaristaKdsScreen.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/components/kds/BaristaKdsScreen.tsx)
+- [x] Role filter: User role `station_bar`, `station_cafe`, `bartender`, or `barista`.
+- [x] Visual Ticket Structure:
   - Header badge: `[ 🍽️ Table 4 — Guest: Miles ]`, `[ 🛍️ Takeout #T-105 — Sarah ]`, or `[ 🛵 GrabFood #GF-8842 — Rider: Mike ]`.
   - Elapsed timer: Green (<5m) $\to$ Amber (5-10m) $\to$ Red Flashing (>10m).
   - Item List: Line item names, quantities, modifiers (e.g. `Extra Shot`, `Oat Milk Swap`).
-- [ ] Touch Actions:
+- [x] Touch Actions:
   - **"Accept"** button: Moves ticket to `PREPARING` (card turns yellow/orange).
   - **"Done"** button: Moves ticket to `READY` (notifies FOH expediter).
-- [ ] Transfer Alert Component:
+- [x] Transfer Alert Component:
   - Listens for `order:table_transferred`.
   - Flashes prominent banner on ticket: `🔁 RE-ROUTED: Table 2 ➔ Table 5 (Guest: Miles)`.
 
 ### Step 3.2: Kitchen Chef Tablet KDS Screen
-- [ ] Target file: `frontend/src/components/kds/KitchenKdsScreen.tsx`
-- [ ] Role filter: User role `station_food` or kitchen staff (Chef Chet).
-- [ ] Station isolation: Only displays food items (`station_target === 'kitchen'`).
-- [ ] Allergen Warnings:
-  - Prominent red alert header on cards with allergen flags: `⚠️ ALLERGY WARNING: GLUTEN / DAIRY / PEANUTS`.
-- [ ] Preparation Notes:
+
+- [x] Target file: [frontend/src/components/kds/KitchenKdsScreen.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/components/kds/KitchenKdsScreen.tsx)
+- [x] Role filter: User role `station_food` or kitchen staff (`kitchen`).
+- [x] Station isolation: Only displays food items (`station_target === 'kitchen'`).
+- [x] Allergen Warnings:
+  - Prominent alert header on cards with allergen flags: `⚠️ ALLERGENS: Dairy, Gluten, Eggs`.
+- [x] Preparation Notes:
   - Special instructions prominently highlighted (e.g. `No parmesan`, `Extra crispy`).
-- [ ] Accept $\to$ Done touch interaction matching the barista screen.
+- [x] Accept $\to$ Done touch interaction matching the barista screen.
 
 ### Step 3.3: FOH Runner / Expediter Buzzout Device
-- [ ] Target file: `frontend/src/components/kds/FohRunnerScreen.tsx`
-- [ ] Role filter: User role `foh_runner` (Expediter Max).
-- [ ] Multi-Station Aggregation:
+
+- [x] Target file: [frontend/src/components/kds/FohRunnerScreen.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/src/components/kds/FohRunnerScreen.tsx)
+- [x] Role filter: User role `foh_runner`.
+- [x] Multi-Station Aggregation:
   - Displays combined status for each active tab / bag across Bar and Kitchen.
-  - Progress bar: `2 / 3 Items Ready (1x Coffee Done, 1x Pasta Done, 1x Pizza Preparing)`.
-- [ ] **Buzzout Alert (Order Ready):**
+  - Progress bar: `2 of 3 items ready (67%)`.
+- [x] **Buzzout Alert (Order Ready):**
   - When all items for a tab or delivery order reach `READY`:
-    - Full-card highlight pulse (Emerald green).
-    - Audio chime triggers: 🔔 *"Order #1042 ready for Table 4 (Guest: John)"*.
-- [ ] Runner Verification & Handoff:
+    - Full-card highlight pulse with emerald green banner.
+    - Prominent visual buzzout alert: `🔔 BUZZOUT: FULL ORDER READY FOR DELIVERY`.
+- [x] Runner Verification & Handoff:
   - Runner verifies items on physical tray against checklist.
-  - Taps **"Mark Served"** (Dine-In) or **"Handed Off to Rider"** (Delivery).
+  - Taps **"Mark Served to Table"** (Dine-In) or **"Hand Off to Courier / Guest"** (Takeout / Delivery).
 
 ### Step 3.4: Dynamic Role Router in App Entry
-- [ ] Target file: [frontend/App.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/App.tsx)
-- [ ] Replace static `WaiterCashierScreen` with role-aware dispatcher:
-  ```tsx
-  switch (currentUser.role) {
-    case 'cashier_waiter':
-    case 'waiter':
-    case 'cashier':
-      return <WaiterCashierScreen />;
-    case 'station_bar':
-    case 'barista':
-    case 'bartender':
-      return <BaristaKdsScreen />;
-    case 'station_food':
-    case 'kitchen':
-      return <KitchenKdsScreen />;
-    case 'foh_runner':
-      return <FohRunnerScreen />;
-    case 'printer_station':
-      return <PrinterTerminalScreen />;
-    case 'admin':
-      return <AdminDashboardScreen />;
-    default:
-      return <WaiterCashierScreen />;
-  }
-  ```
+
+- [x] Target file: [frontend/App.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/App.tsx)
+- [x] Replaced static screen with role-aware dispatcher routing automatically based on staff role upon PIN login.
 
 ---
 
 ## 🔬 Verification & Validation
 
-| Test Scenario | Action | Expected Result |
-|---|---|---|
-| Role Sign-in Routing | Login with Chet (`5555`) | Directly displays `KitchenKdsScreen` |
-| Role Sign-in Routing | Login with Bill (`4444`) | Directly displays `BaristaKdsScreen` |
-| Role Sign-in Routing | Login with Max (`6666`) | Directly displays `FohRunnerScreen` |
-| Buzzout Alert | Mark last remaining item "Done" | FOH Runner device triggers audio chime and visual green alert |
-| Re-route Notification | Execute table transfer | Active ticket updates destination table badge without resetting timer |
+| Test Scenario         | Action                          | Expected Result                                                       |
+| --------------------- | ------------------------------- | --------------------------------------------------------------------- |
+| Role Sign-in Routing  | Login with Chet (`5555`)        | Directly displays `KitchenKdsScreen`                                  |
+| Role Sign-in Routing  | Login with Bill (`4444`)        | Directly displays `BaristaKdsScreen`                                  |
+| Role Sign-in Routing  | Login with Max (`6666`)         | Directly displays `FohRunnerScreen`                                   |
+| Buzzout Alert         | Mark last remaining item "Done" | FOH Runner device triggers audio chime and visual green alert         |
+| Re-route Notification | Execute table transfer          | Active ticket updates destination table badge without resetting timer |

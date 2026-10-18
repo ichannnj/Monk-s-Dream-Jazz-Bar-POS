@@ -138,7 +138,8 @@ export const SEED_ALERTS: FloorAlert[] = [
   {
     id: 'alt-3',
     title: '⚠️ Auto-86 Alert: Matcha Latte',
-    description: 'Uji Matcha powder depleted below 1 serving recipe threshold. Item greyed out on catalog.',
+    description:
+      'Uji Matcha powder depleted below 1 serving recipe threshold. Item greyed out on catalog.',
     type: 'auto_86',
     time: '14 mins ago',
     isRead: true,

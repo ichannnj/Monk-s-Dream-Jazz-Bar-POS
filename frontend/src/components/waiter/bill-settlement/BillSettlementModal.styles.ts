@@ -378,4 +378,3 @@ export const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
 });
-

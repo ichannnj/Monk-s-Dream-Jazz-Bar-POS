@@ -12,11 +12,7 @@ import {
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
 import { useAuthStore } from '../../store/useAuthStore';
 import { toast } from '../../store/useToastStore';
 import { SEED_STAFF_USERS } from '../../mockData';
@@ -171,20 +167,12 @@ export const LoginScreen: React.FC = () => {
         {/* Ambient Outer Kiosk Canvas */}
         <View style={styles.outerCanvas}>
           {/* Main Rounded Split Card */}
-          <View
-            style={[
-              styles.cardContainer,
-              isTablet ? styles.cardTablet : styles.cardMobile,
-            ]}
-          >
+          <View style={[styles.cardContainer, isTablet ? styles.cardTablet : styles.cardMobile]}>
             {/* ========================================= */}
             {/* LEFT PANE: Jazz Club Hero & Ambiance     */}
             {/* ========================================= */}
             <View
-              style={[
-                styles.leftPane,
-                isTablet ? styles.leftPaneTablet : styles.leftPaneMobile,
-              ]}
+              style={[styles.leftPane, isTablet ? styles.leftPaneTablet : styles.leftPaneMobile]}
             >
               {/* Background Jazz Musician Stage Image */}
               <ExpoImage
@@ -214,8 +202,8 @@ export const LoginScreen: React.FC = () => {
                 <View style={styles.leftBottomBlock}>
                   <Text style={styles.welcomeHeading}>Welcome back to the club.</Text>
                   <Text style={styles.welcomeDescription}>
-                    Clock in, track your shift, and get back to what you do best. Built for
-                    every member of the team.
+                    Clock in, track your shift, and get back to what you do best. Built for every
+                    member of the team.
                   </Text>
 
                   {/* Thin Divider */}
@@ -236,10 +224,7 @@ export const LoginScreen: React.FC = () => {
             {/* RIGHT PANE: Staff Login & Attendance Form */}
             {/* ========================================= */}
             <View
-              style={[
-                styles.rightPane,
-                isTablet ? styles.rightPaneTablet : styles.rightPaneMobile,
-              ]}
+              style={[styles.rightPane, isTablet ? styles.rightPaneTablet : styles.rightPaneMobile]}
             >
               {/* Top Branding Section with Official Bar Logo */}
               <View style={styles.rightHeader}>
@@ -309,7 +294,8 @@ export const LoginScreen: React.FC = () => {
                     disabled={isSubmitting || !username.trim() || pin.length !== 4}
                     style={[
                       styles.clockInButton,
-                      (isSubmitting || !username.trim() || pin.length !== 4) && styles.clockInButtonDisabled,
+                      (isSubmitting || !username.trim() || pin.length !== 4) &&
+                        styles.clockInButtonDisabled,
                     ]}
                     accessibilityRole="button"
                     accessibilityLabel="Clock In"
@@ -329,9 +315,12 @@ export const LoginScreen: React.FC = () => {
                       onValueChange={(val) => {
                         setIsTraining(val);
                         if (val) {
-                          toast.info('Training Sandbox Mode active — tickets won\'t route to live stations.', {
-                            title: 'Sandbox Mode ON',
-                          });
+                          toast.info(
+                            "Training Sandbox Mode active — tickets won't route to live stations.",
+                            {
+                              title: 'Sandbox Mode ON',
+                            }
+                          );
                         } else {
                           toast.info('Live Production Mode active.', {
                             title: 'Live Mode',
@@ -355,12 +344,8 @@ export const LoginScreen: React.FC = () => {
         </View>
 
         {/* Forgot PIN Recovery Modal */}
-        <ForgotPinModal
-          visible={isForgotModalOpen}
-          onClose={() => setIsForgotModalOpen(false)}
-        />
+        <ForgotPinModal visible={isForgotModalOpen} onClose={() => setIsForgotModalOpen(false)} />
       </ScrollView>
     </KeyboardAvoidingView>
   );
 };
-

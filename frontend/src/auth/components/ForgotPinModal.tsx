@@ -37,12 +37,14 @@ export const ForgotPinModal: React.FC<ForgotPinModalProps> = ({ visible, onClose
           <View style={styles.noticeBox}>
             <ShieldAlert size={18} color="#991b1b" style={{ marginTop: 2, marginRight: 8 }} />
             <Text style={styles.noticeText}>
-              For audit security and shift fraud prevention, staff PINs are confidential and cannot be viewed on floor tablets.
+              For audit security and shift fraud prevention, staff PINs are confidential and cannot
+              be viewed on floor tablets.
             </Text>
           </View>
 
           <Text style={styles.instructionText}>
-            If you have forgotten your PIN or your account is locked, contact a Shift Administrator to verify your identity and reset your PIN in the Admin Accounts Dashboard.
+            If you have forgotten your PIN or your account is locked, contact a Shift Administrator
+            to verify your identity and reset your PIN in the Admin Accounts Dashboard.
           </Text>
 
           {/* Admin Contact Reference */}

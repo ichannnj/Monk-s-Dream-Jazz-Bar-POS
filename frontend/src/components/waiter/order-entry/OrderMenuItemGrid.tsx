@@ -1,13 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
-import {
-  UtensilsCrossed,
-  Camera,
-  Leaf,
-  AlertTriangle,
-  Ban,
-} from 'lucide-react-native';
+import { UtensilsCrossed, Camera, Leaf, AlertTriangle, Ban } from 'lucide-react-native';
 import { MenuItem } from '../../../mockData';
 import { styles } from './OrderEntryModal.styles';
 
@@ -63,17 +57,13 @@ export const OrderMenuItemGrid: React.FC<OrderMenuItemGridProps> = ({
               <View
                 style={[
                   styles.stationBadgeFloating,
-                  item.stationTarget === 'bar'
-                    ? styles.badgeBar
-                    : styles.badgeKitchen,
+                  item.stationTarget === 'bar' ? styles.badgeBar : styles.badgeKitchen,
                 ]}
               >
                 <Text
                   style={[
                     styles.stationBadgeText,
-                    item.stationTarget === 'bar'
-                      ? styles.textBar
-                      : styles.textKitchen,
+                    item.stationTarget === 'bar' ? styles.textBar : styles.textKitchen,
                   ]}
                 >
                   {item.stationTarget === 'bar' ? '☕ BAR' : '🍳 KITCHEN'}
@@ -102,9 +92,7 @@ export const OrderMenuItemGrid: React.FC<OrderMenuItemGridProps> = ({
                 <Text style={styles.productName} numberOfLines={1}>
                   {item.name}
                 </Text>
-                <Text style={styles.productPrice}>
-                  ${item.price.toFixed(2)}
-                </Text>
+                <Text style={styles.productPrice}>${item.price.toFixed(2)}</Text>
               </View>
 
               <Text style={styles.productDesc} numberOfLines={2}>

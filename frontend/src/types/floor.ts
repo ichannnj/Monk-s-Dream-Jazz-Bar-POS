@@ -6,7 +6,18 @@ export interface StaffUser {
   id: string;
   username: string;
   displayName: string;
-  role: 'admin' | 'waiter' | 'cashier' | 'barista' | 'kitchen' | 'bartender';
+  role:
+    | 'admin'
+    | 'waiter'
+    | 'cashier'
+    | 'barista'
+    | 'kitchen'
+    | 'bartender'
+    | 'station_bar'
+    | 'station_cafe'
+    | 'station_food'
+    | 'foh_runner'
+    | 'printer_station';
   pin: string;
 }
 
@@ -61,11 +72,7 @@ export interface TableItem {
 }
 
 export type MenuCategory =
-  | 'coffee'
-  | 'cocktails_wine'
-  | 'mains_pasta'
-  | 'small_plates'
-  | 'desserts';
+  'coffee' | 'cocktails_wine' | 'mains_pasta' | 'small_plates' | 'desserts';
 
 export interface MenuItem {
   id: string;

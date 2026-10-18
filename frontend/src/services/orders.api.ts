@@ -54,7 +54,8 @@ export class OrdersApi {
     try {
       let query = supabase
         .from('orders')
-        .select(`
+        .select(
+          `
           id,
           tab_id,
           order_number,
@@ -72,7 +73,8 @@ export class OrdersApi {
             notes,
             is_depleted
           )
-        `)
+        `
+        )
         .neq('status', 'CANCELLED');
 
       if (tabId) {
@@ -101,18 +103,17 @@ export class OrdersApi {
     reason: string
   ): Promise<CancelOrderItemResult> {
     try {
-      const { data, error } = await supabase
-        .from('order_items')
-        .update({ status: 'CANCELLED', notes: `Void reason: ${reason}` })
-        .eq('id', orderItemId)
-        .select()
-        .single();
+      const { data, error } = await supabase.rpc('cancel_order_item_with_restoral', {
+        p_order_item_id: orderItemId,
+        p_staff_id: staffId,
+        p_reason: reason,
+      });
 
       if (error) {
-        throw new Error(error.message);
+        throw new Error(error.message || 'Failed to cancel order item.');
       }
 
-      return { success: true, orderItemId: data.id };
+      return (data as any) || { success: true, orderItemId };
     } catch (err: any) {
       console.error('cancelOrderItem error:', err);
       throw err;

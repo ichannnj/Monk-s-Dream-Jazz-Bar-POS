@@ -1,13 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  Modal,
-} from 'react-native';
+import { View, Text, Pressable, StyleSheet, ScrollView, TextInput, Modal } from 'react-native';
 import {
   Coins,
   ArrowDownCircle,
@@ -52,8 +44,7 @@ export const CashDrawerModalView: React.FC = () => {
       else if (entry.type === 'drop') cashDrops += Math.abs(entry.amount);
     });
 
-    const expectedBalance =
-      startingFloat + cashSales + cashIn - cashOut - cashDrops;
+    const expectedBalance = startingFloat + cashSales + cashIn - cashOut - cashDrops;
 
     return {
       startingFloat,
@@ -76,34 +67,19 @@ export const CashDrawerModalView: React.FC = () => {
 
     if (activeModal === 'cash_in') {
       const reason = modalReason.trim() || 'Change restock';
-      addDrawerEntry(
-        'cash_in',
-        amt,
-        reason,
-        'Coltrane (Cashier)'
-      );
+      addDrawerEntry('cash_in', amt, reason, 'Coltrane (Cashier)');
       toast.success(`Cash In: $${amt.toFixed(2)} added to drawer (${reason})`, {
         title: 'Cash In Recorded',
       });
     } else if (activeModal === 'cash_out') {
       const reason = modalReason.trim() || 'Petty cash expense';
-      addDrawerEntry(
-        'cash_out',
-        -amt,
-        reason,
-        'Coltrane (Cashier)'
-      );
+      addDrawerEntry('cash_out', -amt, reason, 'Coltrane (Cashier)');
       toast.warning(`Petty Cash Out: $${amt.toFixed(2)} recorded (${reason})`, {
         title: 'Paid Out Recorded',
       });
     } else if (activeModal === 'drop') {
       const reason = modalReason.trim() || 'Mid-shift safe cash drop';
-      addDrawerEntry(
-        'drop',
-        -amt,
-        reason,
-        'Coltrane (Cashier)'
-      );
+      addDrawerEntry('drop', -amt, reason, 'Coltrane (Cashier)');
       toast.info(`Safe Drop: $${amt.toFixed(2)} transferred to floor safe`, {
         title: 'Safe Drop Confirmed',
       });
@@ -173,9 +149,7 @@ export const CashDrawerModalView: React.FC = () => {
       <View style={styles.kpiRow}>
         <View style={[styles.kpiCard, styles.kpiHighlight]}>
           <Text style={styles.kpiLabelHighlight}>Expected in Drawer</Text>
-          <Text style={styles.kpiAmountHighlight}>
-            ${metrics.expectedBalance.toFixed(2)}
-          </Text>
+          <Text style={styles.kpiAmountHighlight}>${metrics.expectedBalance.toFixed(2)}</Text>
           <Text style={styles.kpiSubHighlight}>Calculated physical cash balance</Text>
         </View>
 
@@ -223,10 +197,10 @@ export const CashDrawerModalView: React.FC = () => {
                       entry.type === 'sale'
                         ? styles.badgeSale
                         : entry.type === 'float'
-                        ? styles.badgeFloat
-                        : entry.type === 'cash_in'
-                        ? styles.badgeIn
-                        : styles.badgeOut,
+                          ? styles.badgeFloat
+                          : entry.type === 'cash_in'
+                            ? styles.badgeIn
+                            : styles.badgeOut,
                     ]}
                   >
                     <Text style={styles.typeBadgeText}>
@@ -257,11 +231,7 @@ export const CashDrawerModalView: React.FC = () => {
       </View>
 
       <Modal
-        visible={
-          activeModal === 'cash_in' ||
-          activeModal === 'cash_out' ||
-          activeModal === 'drop'
-        }
+        visible={activeModal === 'cash_in' || activeModal === 'cash_out' || activeModal === 'drop'}
         transparent
         animationType="fade"
         onRequestClose={() => setActiveModal('none')}
@@ -278,13 +248,10 @@ export const CashDrawerModalView: React.FC = () => {
                 {activeModal === 'cash_in'
                   ? 'Add Cash In (Restock Change)'
                   : activeModal === 'cash_out'
-                  ? 'Log Petty Cash Out (Paid-Out)'
-                  : 'Log Safe Cash Drop'}
+                    ? 'Log Petty Cash Out (Paid-Out)'
+                    : 'Log Safe Cash Drop'}
               </Text>
-              <Pressable
-                onPress={() => setActiveModal('none')}
-                style={styles.closeBtn}
-              >
+              <Pressable onPress={() => setActiveModal('none')} style={styles.closeBtn}>
                 <X size={18} color="#6b7280" />
               </Pressable>
             </View>
@@ -314,16 +281,10 @@ export const CashDrawerModalView: React.FC = () => {
             </View>
 
             <View style={styles.modalBtnRow}>
-              <Pressable
-                onPress={() => setActiveModal('none')}
-                style={styles.modalCancelBtn}
-              >
+              <Pressable onPress={() => setActiveModal('none')} style={styles.modalCancelBtn}>
                 <Text style={styles.modalCancelBtnText}>Cancel</Text>
               </Pressable>
-              <Pressable
-                onPress={handleConfirmAction}
-                style={styles.modalSubmitBtn}
-              >
+              <Pressable onPress={handleConfirmAction} style={styles.modalSubmitBtn}>
                 <Text style={styles.modalSubmitBtnText}>Record Transaction</Text>
               </Pressable>
             </View>
@@ -364,18 +325,12 @@ export const CashDrawerModalView: React.FC = () => {
             </View>
 
             <View style={styles.auditSummaryBox}>
-              <Text style={styles.auditSummaryLabel}>
-                Calculated System Cash Expected:
-              </Text>
-              <Text style={styles.auditSummaryAmount}>
-                ${metrics.expectedBalance.toFixed(2)}
-              </Text>
+              <Text style={styles.auditSummaryLabel}>Calculated System Cash Expected:</Text>
+              <Text style={styles.auditSummaryAmount}>${metrics.expectedBalance.toFixed(2)}</Text>
             </View>
 
             <View style={styles.formGroup}>
-              <Text style={styles.inputLabel}>
-                Actual Physical Cash Counted in Drawer ($):
-              </Text>
+              <Text style={styles.inputLabel}>Actual Physical Cash Counted in Drawer ($):</Text>
               <TextInput
                 style={styles.textInput}
                 keyboardType="numeric"
@@ -397,16 +352,16 @@ export const CashDrawerModalView: React.FC = () => {
                   variance === 0
                     ? styles.variancePerfect
                     : variance > 0
-                    ? styles.varianceOver
-                    : styles.varianceShort,
+                      ? styles.varianceOver
+                      : styles.varianceShort,
                 ]}
               >
                 <Text style={styles.varianceLabel}>
                   {variance === 0
                     ? '✓ PERFECT BALANCE'
                     : variance > 0
-                    ? '▲ OVER (SURPLUS)'
-                    : '▼ SHORT (DISCREPANCY)'}
+                      ? '▲ OVER (SURPLUS)'
+                      : '▼ SHORT (DISCREPANCY)'}
                 </Text>
                 <Text style={styles.varianceAmount}>
                   {variance > 0 ? '+' : ''}${variance.toFixed(2)}

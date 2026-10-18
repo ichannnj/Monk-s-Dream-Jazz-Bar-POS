@@ -71,20 +71,14 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
 
                 {/* Modifiers & Notes */}
                 {cartItem.modifiers && cartItem.modifiers.length > 0 ? (
-                  <Text style={styles.cartItemModText}>
-                    + {cartItem.modifiers.join(', ')}
-                  </Text>
+                  <Text style={styles.cartItemModText}>+ {cartItem.modifiers.join(', ')}</Text>
                 ) : null}
 
                 {cartItem.notes ? (
-                  <Text style={styles.cartItemNotesText}>
-                    Note: "{cartItem.notes}"
-                  </Text>
+                  <Text style={styles.cartItemNotesText}>Note: "{cartItem.notes}"</Text>
                 ) : null}
 
-                <Text style={styles.cartItemUnitPrice}>
-                  ${cartItem.unitPrice.toFixed(2)} each
-                </Text>
+                <Text style={styles.cartItemUnitPrice}>${cartItem.unitPrice.toFixed(2)} each</Text>
               </View>
 
               {/* Steppers & Line Total */}
@@ -107,9 +101,7 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
                     )}
                   </Pressable>
 
-                  <Text style={styles.stepperQuantity}>
-                    {cartItem.quantity}
-                  </Text>
+                  <Text style={styles.stepperQuantity}>{cartItem.quantity}</Text>
 
                   <Pressable
                     onPress={() => onUpdateQuantity(idx, 1)}
@@ -130,9 +122,7 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
       <View style={styles.corkageBox}>
         <View style={styles.corkageLabelGroup}>
           <Text style={styles.corkageTitle}>Fixed 20% Corkage Fee</Text>
-          <Text style={styles.corkageSub}>
-            Outside bottle or catered food brought by guest
-          </Text>
+          <Text style={styles.corkageSub}>Outside bottle or catered food brought by guest</Text>
         </View>
         <Switch
           value={hasCorkage}
@@ -146,16 +136,12 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
       <View style={styles.pricingSummary}>
         <View style={styles.summaryLine}>
           <Text style={styles.summaryLabel}>Items Subtotal:</Text>
-          <Text style={styles.summaryValue}>
-            ${itemsSubtotal.toFixed(2)}
-          </Text>
+          <Text style={styles.summaryValue}>${itemsSubtotal.toFixed(2)}</Text>
         </View>
 
         {hasCorkage ? (
           <View style={styles.summaryLine}>
-            <Text style={[styles.summaryLabel, { color: '#832238' }]}>
-              Outside Corkage (20%):
-            </Text>
+            <Text style={[styles.summaryLabel, { color: '#832238' }]}>Outside Corkage (20%):</Text>
             <Text style={[styles.summaryValue, { color: '#832238' }]}>
               +${corkageAmount.toFixed(2)}
             </Text>
@@ -169,9 +155,7 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
 
         <View style={[styles.summaryLine, styles.totalLine]}>
           <Text style={styles.grandTotalLabel}>Total Amount:</Text>
-          <Text style={styles.grandTotalValue}>
-            ${grandTotal.toFixed(2)}
-          </Text>
+          <Text style={styles.grandTotalValue}>${grandTotal.toFixed(2)}</Text>
         </View>
       </View>
 
@@ -179,15 +163,10 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
       <Pressable
         onPress={onSend}
         disabled={cartItems.length === 0}
-        style={[
-          styles.sendOrderBtn,
-          cartItems.length === 0 && styles.sendOrderBtnDisabled,
-        ]}
+        style={[styles.sendOrderBtn, cartItems.length === 0 && styles.sendOrderBtnDisabled]}
       >
         <Send size={18} color="#ffffff" strokeWidth={2.4} />
-        <Text style={styles.sendOrderBtnText}>
-          Send Order to Stations
-        </Text>
+        <Text style={styles.sendOrderBtnText}>Send Order to Stations</Text>
       </Pressable>
     </View>
   );
