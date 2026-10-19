@@ -20,22 +20,22 @@ ON CONFLICT (username) DO NOTHING;
 -- 2. PHYSICAL TABLES (15 Cafe Area + 10 Bar Area = 25 Tables)
 INSERT INTO public.tables (id, table_number, zone, capacity, is_occupied)
 VALUES
-  -- Cafe Area (Tables 1 - 15)
-  (gen_random_uuid(), 'Table 1', 'CAFE_AREA', 2, false),
-  (gen_random_uuid(), 'Table 2', 'CAFE_AREA', 2, false),
-  (gen_random_uuid(), 'Table 3', 'CAFE_AREA', 4, false),
-  (gen_random_uuid(), 'Table 4', 'CAFE_AREA', 4, false),
-  (gen_random_uuid(), 'Table 5', 'CAFE_AREA', 4, false),
-  (gen_random_uuid(), 'Table 6', 'CAFE_AREA', 6, false),
-  (gen_random_uuid(), 'Table 7', 'CAFE_AREA', 6, false),
-  (gen_random_uuid(), 'Table 8', 'CAFE_AREA', 2, false),
-  (gen_random_uuid(), 'Table 9', 'CAFE_AREA', 2, false),
-  (gen_random_uuid(), 'Table 10', 'CAFE_AREA', 4, false),
-  (gen_random_uuid(), 'Table 11', 'CAFE_AREA', 4, false),
-  (gen_random_uuid(), 'Table 12', 'CAFE_AREA', 4, false),
-  (gen_random_uuid(), 'Table 13', 'CAFE_AREA', 6, false),
-  (gen_random_uuid(), 'Table 14', 'CAFE_AREA', 2, false),
-  (gen_random_uuid(), 'Table 15', 'CAFE_AREA', 4, false),
+  -- Cafe Area (Cafe 1 - 15)
+  (gen_random_uuid(), 'Cafe 1', 'CAFE_AREA', 2, false),
+  (gen_random_uuid(), 'Cafe 2', 'CAFE_AREA', 2, false),
+  (gen_random_uuid(), 'Cafe 3', 'CAFE_AREA', 4, false),
+  (gen_random_uuid(), 'Cafe 4', 'CAFE_AREA', 4, false),
+  (gen_random_uuid(), 'Cafe 5', 'CAFE_AREA', 4, false),
+  (gen_random_uuid(), 'Cafe 6', 'CAFE_AREA', 6, false),
+  (gen_random_uuid(), 'Cafe 7', 'CAFE_AREA', 6, false),
+  (gen_random_uuid(), 'Cafe 8', 'CAFE_AREA', 2, false),
+  (gen_random_uuid(), 'Cafe 9', 'CAFE_AREA', 2, false),
+  (gen_random_uuid(), 'Cafe 10', 'CAFE_AREA', 4, false),
+  (gen_random_uuid(), 'Cafe 11', 'CAFE_AREA', 4, false),
+  (gen_random_uuid(), 'Cafe 12', 'CAFE_AREA', 4, false),
+  (gen_random_uuid(), 'Cafe 13', 'CAFE_AREA', 6, false),
+  (gen_random_uuid(), 'Cafe 14', 'CAFE_AREA', 2, false),
+  (gen_random_uuid(), 'Cafe 15', 'CAFE_AREA', 4, false),
   -- Bar Area (Bar 1 - 10)
   (gen_random_uuid(), 'Bar 1', 'BAR_AREA', 1, false),
   (gen_random_uuid(), 'Bar 2', 'BAR_AREA', 1, false),
@@ -93,23 +93,23 @@ ON CONFLICT (sku) DO NOTHING;
 INSERT INTO public.products (id, category_id, name, image_url, description, base_price, station_target, is_resold_outside_food, original_cost, auto_86, allergens, dietary, is_available)
 VALUES
   -- Specialty Coffee
-  ('e1111111-0000-0000-0000-000000000001', 'c1111111-1111-1111-1111-111111111111', 'Flat White', 'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?auto=format&fit=crop&w=600&q=80', 'Velvety microfoam over double ristretto espresso', 4.50, 'bar', false, NULL, false, ARRAY['DAIRY'], ARRAY['Vegetarian'], true),
-  ('e1111111-0000-0000-0000-000000000002', 'c1111111-1111-1111-1111-111111111111', 'V60 Pour Over', 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80', 'Single origin floral notes, brewed by hand', 5.50, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegan', 'Vegetarian'], true),
-  ('e1111111-0000-0000-0000-000000000003', 'c1111111-1111-1111-1111-111111111111', 'Cold Brew', 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80', 'Steeped 18 hours in cold filtered water, smooth chocolate body', 5.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegan', 'Vegetarian'], true),
+  ('e1111111-0000-0000-0000-000000000001', 'c1111111-1111-1111-1111-111111111111', 'Flat White', 'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?auto=format&fit=crop&w=600&q=80', 'Velvety microfoam over double ristretto espresso', 180.00, 'bar', false, NULL, false, ARRAY['DAIRY'], ARRAY['Vegetarian'], true),
+  ('e1111111-0000-0000-0000-000000000002', 'c1111111-1111-1111-1111-111111111111', 'V60 Pour Over', 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80', 'Single origin floral notes, brewed by hand', 220.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegan', 'Vegetarian'], true),
+  ('e1111111-0000-0000-0000-000000000003', 'c1111111-1111-1111-1111-111111111111', 'Cold Brew', 'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80', 'Steeped 18 hours in cold filtered water, smooth chocolate body', 200.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegan', 'Vegetarian'], true),
 
   -- Cocktails & Wine
-  ('e2222222-0000-0000-0000-000000000001', 'c2222222-2222-2222-2222-222222222222', 'Thelonious Monk Negroni', 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80', 'London Dry Gin, Campari, Sweet Vermouth, flame orange peel', 15.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegan'], true),
-  ('e2222222-0000-0000-0000-000000000002', 'c2222222-2222-2222-2222-222222222222', 'Blue Note Espresso Martini', 'https://images.unsplash.com/photo-1545438102-799c3991ffb2?auto=format&fit=crop&w=600&q=80', 'Vodka, Kahlua, fresh pulled double espresso, shaken hard', 16.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegetarian'], true),
-  ('e2222222-0000-0000-0000-000000000003', 'c2222222-2222-2222-2222-222222222222', 'Miles Davis Sazerac', 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80', 'Rye Whiskey, Absinthe rinse, Peychauds bitters, lemon twist', 16.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegan'], true),
+  ('e2222222-0000-0000-0000-000000000001', 'c2222222-2222-2222-2222-222222222222', 'Thelonious Monk Negroni', 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80', 'London Dry Gin, Campari, Sweet Vermouth, flame orange peel', 420.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegan'], true),
+  ('e2222222-0000-0000-0000-000000000002', 'c2222222-2222-2222-2222-222222222222', 'Blue Note Espresso Martini', 'https://images.unsplash.com/photo-1545438102-799c3991ffb2?auto=format&fit=crop&w=600&q=80', 'Vodka, Kahlua, fresh pulled double espresso, shaken hard', 450.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegetarian'], true),
+  ('e2222222-0000-0000-0000-000000000003', 'c2222222-2222-2222-2222-222222222222', 'Miles Davis Sazerac', 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?auto=format&fit=crop&w=600&q=80', 'Rye Whiskey, Absinthe rinse, Peychauds bitters, lemon twist', 450.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY['Vegan'], true),
 
   -- Kitchen Mains & Pasta
-  ('e3333333-0000-0000-0000-000000000001', 'c3333333-3333-3333-3333-333333333333', 'Truffle Carbonara', 'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=600&q=80', 'Artisan spaghetti, crisp guanciale, farm egg yolks, DOP pecorino, black truffle infusion', 18.00, 'kitchen', false, NULL, false, ARRAY['DAIRY', 'GLUTEN', 'EGGS'], ARRAY[]::text[], true),
-  ('e3333333-0000-0000-0000-000000000002', 'c3333333-3333-3333-3333-333333333333', 'Margherita Pizza', 'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=600&q=80', 'San Marzano sauce, fresh mozzarella di bufala, basil', 16.00, 'kitchen', false, NULL, false, ARRAY['DAIRY', 'GLUTEN'], ARRAY['Vegetarian'], true),
-  ('e3333333-0000-0000-0000-000000000003', 'c3333333-3333-3333-3333-333333333333', 'Guanciale Panini', 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=600&q=80', 'Warm ciabatta, cured guanciale, melted provolone, baby arugula', 14.00, 'kitchen', false, NULL, false, ARRAY['DAIRY', 'GLUTEN'], ARRAY[]::text[], true),
+  ('e3333333-0000-0000-0000-000000000001', 'c3333333-3333-3333-3333-333333333333', 'Truffle Carbonara', 'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=600&q=80', 'Artisan spaghetti, crisp guanciale, farm egg yolks, DOP pecorino, black truffle infusion', 520.00, 'kitchen', false, NULL, false, ARRAY['DAIRY', 'GLUTEN', 'EGGS'], ARRAY[]::text[], true),
+  ('e3333333-0000-0000-0000-000000000002', 'c3333333-3333-3333-3333-333333333333', 'Margherita Pizza', 'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=600&q=80', 'San Marzano sauce, fresh mozzarella di bufala, basil', 550.00, 'kitchen', false, NULL, false, ARRAY['DAIRY', 'GLUTEN'], ARRAY['Vegetarian'], true),
+  ('e3333333-0000-0000-0000-000000000003', 'c3333333-3333-3333-3333-333333333333', 'Guanciale Panini', 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&w=600&q=80', 'Warm ciabatta, cured guanciale, melted provolone, baby arugula', 420.00, 'kitchen', false, NULL, false, ARRAY['DAIRY', 'GLUTEN'], ARRAY[]::text[], true),
 
   -- Resold Outside Food (Fixed +20% Markup Constraint)
-  ('e5555555-0000-0000-0000-000000000001', 'c5555555-5555-5555-5555-555555555555', 'Artisan Butter Croissant', 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80', 'Flaky French butter croissant from partnering patisserie (+20% margin)', 3.60, 'bar', true, 3.00, false, ARRAY['DAIRY', 'GLUTEN'], ARRAY['Vegetarian'], true),
-  ('e5555555-0000-0000-0000-000000000002', 'c5555555-5555-5555-5555-555555555555', 'Basque Burnt Cheesecake Slice', 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80', 'Caramelized crust, creamy custard center (+20% margin)', 6.00, 'bar', true, 5.00, false, ARRAY['DAIRY', 'EGGS'], ARRAY['Vegetarian'], true)
+  ('e5555555-0000-0000-0000-000000000001', 'c5555555-5555-5555-5555-555555555555', 'Artisan Butter Croissant', 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80', 'Flaky French butter croissant from partnering patisserie (+20% margin)', 180.00, 'bar', true, 150.00, false, ARRAY['DAIRY', 'GLUTEN'], ARRAY['Vegetarian'], true),
+  ('e5555555-0000-0000-0000-000000000002', 'c5555555-5555-5555-5555-555555555555', 'Basque Burnt Cheesecake Slice', 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80', 'Caramelized crust, creamy custard center (+20% margin)', 280.00, 'bar', true, 233.33, false, ARRAY['DAIRY', 'EGGS'], ARRAY['Vegetarian'], true)
 ON CONFLICT (name) DO NOTHING;
 
 -- 6. RECIPE BILL OF MATERIALS (BOM)

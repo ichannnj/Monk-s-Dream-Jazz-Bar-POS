@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Modal } from 'react-native';
+import { View, StyleSheet, Modal, Pressable } from 'react-native';
 import { SharedAlertsView } from '../../../shared/SharedAlertsView';
 
 interface SharedAlertsDrawerProps {
@@ -11,6 +11,11 @@ export const SharedAlertsDrawer: React.FC<SharedAlertsDrawerProps> = ({ visible,
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close alerts"
+        />
         <View style={styles.modalCard}>
           <SharedAlertsView onBack={onClose} backLabel="Close Alerts" />
         </View>

@@ -17,8 +17,6 @@ export interface BarTicket {
   minutesElapsed: number;
   badges: string[];
   roundNumber?: number;
-  tableId?: string;
-  tabIndex?: number;
   multiStationTag?: string; // e.g. "Multi-Station · Cafe · Preparing"
   items: BarItemLine[];
   specialNote?: string; // e.g. "! Serve with lemon"
@@ -27,6 +25,10 @@ export interface BarTicket {
   hasFohStatusAlert?: boolean;
   fohStatusMessage?: string;
   serverName?: string;
+  tableId?: string;
+  tabIndex?: number;
+  takeoutId?: string;
+  onlineId?: string;
 }
 
 export interface StockInventoryItem {

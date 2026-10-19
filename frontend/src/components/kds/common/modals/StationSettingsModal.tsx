@@ -40,6 +40,11 @@ export const StationSettingsModal: React.FC<StationSettingsModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close settings"
+        />
         <View style={styles.modalCard}>
           {/* Header */}
           <View style={styles.headerRow}>

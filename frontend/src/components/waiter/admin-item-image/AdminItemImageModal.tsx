@@ -20,6 +20,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react-native';
 import { MenuItem } from '../../../mockData';
+import { formatCurrency } from '@monks/shared';
 import { IMAGE_PRESETS } from './presets';
 import { styles } from './AdminItemImageModal.styles';
 
@@ -74,7 +75,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
               <View>
                 <Text style={styles.headerTitle}>Update Menu Photo</Text>
                 <Text style={styles.headerSubtitle} numberOfLines={1}>
-                  {item.name} (${item.price.toFixed(2)})
+                  {item.name} ({formatCurrency(item.price)})
                 </Text>
               </View>
             </View>

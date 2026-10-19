@@ -34,8 +34,12 @@
 - **Preserve Documentation Integrity:** Maintain all existing comments, docstrings, and Diátaxis documentation structure intact.
 - **Frontend Architecture Invariants:**
   - Platform: React Native (Expo SDK 52+) targeting touchscreen tablets.
-  - Styling: NativeWind v4 (`tailwindcss` 3.4). Do NOT install Tailwind v4 or web CSS.
-  - Component Purity: Web DOM primitives (`<div>`, `<span>`, `<button>`, `<input>`) are strictly forbidden; use React Native primitives (`View`, `Text`, `Pressable`).
+  - Styling Mandate (NativeWind v4):
+    - New Views & Components: Must use 100% NativeWind v4 (`className="..."`). Do NOT create new `*.styles.ts` or new `StyleSheet.create` blocks.
+    - Preservation Rule (Zero Regressions): Never convert, refactor, or delete existing `StyleSheet.create` code in already-built views. For existing views, apply NativeWind `className` strictly to newly added elements/subcomponents (Isolated Hybrid). See **[.agents/rules/nativewind-tablet-standards.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/.agents/rules/nativewind-tablet-standards.md)**.
+  - Typography Standards (≥ 16px Floor): Every text element (body, buttons, inputs, status badges, chips, timestamps) must be at least 16px (`text-base` / `text-pos-base` or larger). Never use `text-xs`, `text-sm`, `text-pos-xs` (14px), or `text-pos-sm` (15px).
+  - Tablet Ergonomics & Touch Targets: Minimum 48px touch targets (`min-h-[48px] min-w-[48px]`) on all interactive controls with responsive layouts (`tablet:` ≥768px, `pos:` ≥1024px).
+  - Component Purity: Web DOM primitives (`<div>`, `<span>`, `<button>`, `<input>`) are strictly forbidden; use React Native primitives (`View`, `Text`, `Pressable`, `TextInput`, `ScrollView`).
   - Routing: Role-based conditional switching in [frontend/App.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/App.tsx). Never introduce Expo Router or `src/app/`.
   - State: Zustand stores in `src/store/`.
   - Domain Types: Strict TypeScript from `@monks/shared`, never from mock data.

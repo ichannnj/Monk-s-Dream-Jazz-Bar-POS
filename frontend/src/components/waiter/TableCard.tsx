@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Plus, Utensils, Receipt } from 'lucide-react-native';
 import { TableItem } from '../../mockData';
+import { formatCurrency } from '@monks/shared';
 
 interface TableCardProps {
   table: TableItem;
@@ -77,13 +78,9 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
 
   const statusConfig = getStatusBadge();
 
-  // Format amount with commas if >= 1000
+  // Format amount with Philippine Peso symbol and commas
   const formattedAmount =
-    totalAmount !== undefined && totalAmount > 0
-      ? totalAmount >= 1000
-        ? `$${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-        : `$${totalAmount.toFixed(2)}`
-      : null;
+    totalAmount !== undefined && totalAmount > 0 ? formatCurrency(totalAmount) : null;
 
   // Card border & background based on status
   const getCardVariantStyle = () => {
@@ -94,30 +91,39 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
     return styles.cardOccupied;
   };
 
+  // Derive formatted table name according to standard: Cafe N, Bar N
+  const displayName = useMemo(() => {
+    const trimmed = (code || '').trim();
+    if (trimmed.toLowerCase().startsWith('cafe') || trimmed.toLowerCase().startsWith('bar')) {
+      return trimmed;
+    }
+    if (trimmed.toLowerCase().startsWith('table')) {
+      const num = trimmed.replace(/[^0-9]/g, '');
+      return `${table.area === 'bar' ? 'Bar' : 'Cafe'} ${num || '1'}`;
+    }
+    if (/^[bc]\d+$/i.test(trimmed)) {
+      const num = trimmed.slice(1);
+      return `${trimmed.toUpperCase().startsWith('B') ? 'Bar' : 'Cafe'} ${num}`;
+    }
+    return `${table.area === 'bar' ? 'Bar' : 'Cafe'} ${trimmed}`;
+  }, [code, table.area]);
+
   return (
     <View style={[styles.cardContainer, getCardVariantStyle()]}>
       <Pressable
         onPress={() => onPress(table)}
         style={({ pressed }) => [styles.mainPressableArea, pressed && styles.cardPressed]}
-        accessibilityRole="button"
         accessibilityLabel={
           isEmpty
-            ? `Table ${code}, ${seats} seats, available. Tap to open tab.`
-            : `Table ${code}, ${guests} of ${seats} seats, ${status}, total ${formattedAmount || 'open check'}`
+            ? `${displayName}, available. Tap to open tab.`
+            : `${displayName}, ${status}, total ${formattedAmount || 'open check'}`
         }
       >
         {/* 1. Top Row: Table Identifier + Status Badge */}
         <View style={styles.cardHeader}>
           <View style={styles.codeCol}>
             <Text style={[styles.tableCodeText, isEmpty && styles.tableCodeTextEmpty]}>
-              Table {code}
-            </Text>
-            <Text style={[styles.seatsText, isEmpty && styles.seatsTextEmpty]}>
-              {isEmpty
-                ? `${seats} seats`
-                : guests > 0
-                  ? `${guests} / ${seats} seats`
-                  : `${seats} seats`}
+              {displayName}
             </Text>
           </View>
 
@@ -142,7 +148,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
           </Text>
           <View style={styles.amountCol}>
             <Text style={[styles.amountText, isEmpty && styles.amountTextEmpty]}>
-              {formattedAmount ? formattedAmount : isEmpty ? '$0.00' : '$0.00'}
+              {formattedAmount || '₱0.00'}
             </Text>
             {isEmpty ? (
               <Text style={styles.tagEmpty}>EMPTY</Text>
@@ -164,7 +170,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
             accessibilityRole="button"
             accessibilityLabel={`Open Tab at Table ${code}`}
           >
-            <Plus size={15} color="#ffffff" strokeWidth={2.5} />
+            <Plus size={18} color="#ffffff" strokeWidth={2.5} />
             <Text style={styles.actionBtnOpenTabText}>OPEN TABLE TAB</Text>
           </Pressable>
         ) : (
@@ -174,7 +180,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
             accessibilityRole="button"
             accessibilityLabel={`Manage Table ${code}`}
           >
-            <Utensils size={14} color="#832238" strokeWidth={2.3} />
+            <Utensils size={18} color="#832238" strokeWidth={2.3} />
             <Text style={styles.actionBtnManageText}>
               {status === 'served' ? 'SETTLE BILL / ORDER' : 'VIEW & ADD ORDERS'}
             </Text>
@@ -190,17 +196,17 @@ TableCard.displayName = 'TableCard';
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 20,
+    borderRadius: 22,
     borderWidth: 1.5,
     borderColor: '#eee8e3',
-    padding: 15,
+    padding: 20,
     shadowColor: '#2b0f16',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
     justifyContent: 'space-between',
-    minHeight: 156,
+    minHeight: 220,
   },
   cardOccupied: {
     backgroundColor: '#ffffff',
@@ -232,52 +238,42 @@ const styles = StyleSheet.create({
   },
   cardHeader: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    marginBottom: 12,
   },
   codeCol: {
     justifyContent: 'center',
   },
   tableCodeText: {
-    fontSize: 20,
+    fontSize: 26,
     fontWeight: '900',
     color: '#111827',
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
   },
   tableCodeTextEmpty: {
     color: '#374151',
   },
-  seatsText: {
-    fontSize: 12.5,
-    fontWeight: '600',
-    color: '#4b5563',
-    marginTop: 2,
-    fontVariant: ['tabular-nums'],
-  },
-  seatsTextEmpty: {
-    color: '#9ca3af',
-  },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 4.5,
-    borderRadius: 10,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   statusDot: {
-    width: 6.5,
-    height: 6.5,
-    borderRadius: 3.5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   statusText: {
-    fontSize: 11.5,
+    fontSize: 13,
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
   timeText: {
-    fontSize: 11.5,
+    fontSize: 13,
     fontWeight: '700',
     fontVariant: ['tabular-nums'],
   },
@@ -285,26 +281,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 7,
+    paddingVertical: 14,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-    gap: 8,
+    borderTopColor: 'rgba(0,0,0,0.06)',
+    gap: 12,
   },
   itemsSummaryText: {
     flex: 1,
-    fontSize: 13,
-    color: '#4b5563',
-    fontWeight: '500',
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#374151',
+    fontWeight: '600',
   },
   itemsSummaryTextEmpty: {
     color: '#9ca3af',
     fontStyle: 'italic',
+    fontWeight: '500',
   },
   amountCol: {
     alignItems: 'flex-end',
   },
   amountText: {
-    fontSize: 17,
+    fontSize: 22,
     fontWeight: '900',
     color: '#111827',
     fontVariant: ['tabular-nums'],
@@ -314,30 +312,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   tagWine: {
-    fontSize: 10.5,
+    fontSize: 12,
     fontWeight: '800',
     color: '#832238',
-    marginTop: 1,
+    marginTop: 2,
+    letterSpacing: 0.3,
   },
   tagEmpty: {
-    fontSize: 10.5,
+    fontSize: 12,
     fontWeight: '700',
     color: '#9ca3af',
-    marginTop: 1,
+    marginTop: 2,
+    letterSpacing: 0.3,
   },
   actionRow: {
-    paddingTop: 6,
+    paddingTop: 10,
   },
   actionBtnOpenTab: {
     backgroundColor: '#832238',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    minHeight: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    gap: 8,
+    minHeight: 52,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     shadowColor: '#832238',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
   },
   actionBtnOpenTabText: {
     color: '#ffffff',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.4,
   },
@@ -357,15 +357,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    minHeight: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    gap: 8,
+    minHeight: 52,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
   },
   actionBtnManageText: {
     color: '#832238',
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.2,
   },

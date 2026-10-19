@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, Modal, StyleSheet, ScrollView } from 'react-native';
-import { Repeat, X, Check, ArrowRight, Coffee, Wine, User, Sparkles } from 'lucide-react-native';
-import { TableItem, CustomerTab, TableArea } from '../../../mockData';
+import { Repeat, X, ArrowRight, Coffee, Wine } from 'lucide-react-native';
+import { TableItem, TableArea } from '../../../types/floor';
+import { formatCurrency } from '@monks/shared';
 import { styles } from './TableTransferModal.styles';
 
 interface TableTransferModalProps {
@@ -94,8 +95,12 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
               <View>
                 <Text style={styles.headerTitle}>Transfer Table / Tab</Text>
                 <Text style={styles.headerSubtitle}>
-                  Origin: Table {originTable.code} (
-                  {originTable.area === 'bar' ? 'Bar Area' : 'Cafe Area'})
+                  Origin:{' '}
+                  {originTable.code.toLowerCase().startsWith('cafe') ||
+                  originTable.code.toLowerCase().startsWith('bar')
+                    ? originTable.code
+                    : `${originTable.area === 'bar' ? 'Bar' : 'Cafe'} ${originTable.code}`}{' '}
+                  ({originTable.area === 'bar' ? 'Bar Area' : 'Cafe Area'})
                 </Text>
               </View>
             </View>
@@ -144,7 +149,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                 {originTabs.length === 0 ? (
                   <View style={styles.emptyTabsNote}>
                     <Text style={styles.emptyTabsText}>
-                      Default Tab #1 (${(originTable.totalAmount || 0).toFixed(2)})
+                      Default Tab #1 ({formatCurrency(originTable.totalAmount || 0)})
                     </Text>
                   </View>
                 ) : (
@@ -180,7 +185,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                             </View>
                           </View>
 
-                          <Text style={styles.tabAmount}>${tab.totalAmount.toFixed(2)}</Text>
+                          <Text style={styles.tabAmount}>{formatCurrency(tab.totalAmount)}</Text>
                         </Pressable>
                       );
                     })}
@@ -334,7 +339,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                 style={[styles.confirmBtn, !selectedTargetId && styles.confirmBtnDisabled]}
               >
                 <Text style={styles.confirmBtnText}>Confirm Transfer</Text>
-                <ArrowRight size={16} color="#ffffff" style={{ marginLeft: 6 }} />
+                <ArrowRight size={18} color="#ffffff" />
               </Pressable>
             </View>
           </View>

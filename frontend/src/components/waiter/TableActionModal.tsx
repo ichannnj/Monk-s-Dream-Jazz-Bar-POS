@@ -11,7 +11,8 @@ import {
   Trash2,
   AlertTriangle,
 } from 'lucide-react-native';
-import { TableItem, OrderLineItem } from '../../mockData';
+import { TableItem, OrderLineItem } from '../../types/floor';
+import { formatCurrency } from '@monks/shared';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useOrderStore } from '../../store/useOrderStore';
 import { toast } from '../../store/useToastStore';
@@ -182,11 +183,14 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                 </View>
                 <View>
                   <Text style={styles.headerTitle}>
-                    Table {table.code} · {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
+                    {table.code.toLowerCase().startsWith('cafe') ||
+                    table.code.toLowerCase().startsWith('bar')
+                      ? table.code
+                      : `${table.area === 'bar' ? 'Bar' : 'Cafe'} ${table.code}`}{' '}
+                    · {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
                   </Text>
                   <Text style={styles.headerSubtitle}>
                     {table.guests > 0 ? `${table.guests} Guests · ` : ''}
-                    {table.seats} Seats ·{' '}
                     {table.assignedStaff ? table.assignedStaff.name : 'Unassigned'}
                   </Text>
                 </View>
@@ -225,7 +229,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                             isActive && styles.tabSelectBtnTextActive,
                           ]}
                         >
-                          Tab #{tab.tabIndex}: {tab.guestName} (${tab.totalAmount.toFixed(2)})
+                          Tab #{tab.tabIndex}: {tab.guestName} ({formatCurrency(tab.totalAmount)})
                         </Text>
                       </Pressable>
                     );
@@ -242,7 +246,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     Tab #{selectedTabIndex}: {currentTab?.guestName || 'Guest Tab'} (
                     {currentTab?.items.length || 0} items)
                   </Text>
-                  <Text style={styles.itemsHeaderTotal}>${tabTotal.toFixed(2)}</Text>
+                  <Text style={styles.itemsHeaderTotal}>{formatCurrency(tabTotal)}</Text>
                 </View>
 
                 {rounds.length > 0 ? (
@@ -258,8 +262,8 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                             <View>
                               <Text style={styles.roundTitleText}>Round {round.roundNum}</Text>
                               <Text style={styles.roundSubtitleText}>
-                                {round.items.length} item{round.items.length > 1 ? 's' : ''} · $
-                                {round.roundTotal.toFixed(2)}
+                                {round.items.length} item{round.items.length > 1 ? 's' : ''} ·{' '}
+                                {formatCurrency(round.roundTotal)}
                               </Text>
                             </View>
                           </View>
@@ -313,14 +317,14 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                                               : isVoided
                                                 ? '#fee2e2'
                                                 : '#f3f4f6',
-                                      paddingHorizontal: 5,
-                                      paddingVertical: 1,
-                                      borderRadius: 4,
+                                      paddingHorizontal: 8,
+                                      paddingVertical: 4,
+                                      borderRadius: 6,
                                     }}
                                   >
                                     <Text
                                       style={{
-                                        fontSize: 10,
+                                        fontSize: 16,
                                         fontWeight: '700',
                                         textTransform: 'uppercase',
                                         color:
@@ -352,21 +356,24 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                                       },
                                     ]}
                                   >
-                                    ${(item.unitPrice * item.quantity).toFixed(2)}
+                                    {formatCurrency(item.unitPrice * item.quantity)}
                                   </Text>
 
                                   {!isVoided ? (
                                     <Pressable
                                       onPress={() => handleOpenVoidModal(item)}
                                       style={{
-                                        padding: 5,
-                                        borderRadius: 6,
+                                        minWidth: 48,
+                                        minHeight: 48,
+                                        borderRadius: 12,
                                         backgroundColor: '#fef2f2',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
                                       }}
                                       accessibilityRole="button"
                                       accessibilityLabel={`Void ${item.productName}`}
                                     >
-                                      <Trash2 size={13} color="#ef4444" />
+                                      <Trash2 size={18} color="#ef4444" />
                                     </Pressable>
                                   ) : null}
                                 </View>
@@ -393,7 +400,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     }}
                     style={[styles.primaryActionBtn, styles.btnOrder]}
                   >
-                    <UtensilsCrossed size={16} color="#ffffff" strokeWidth={2.3} />
+                    <UtensilsCrossed size={18} color="#ffffff" strokeWidth={2.3} />
                     <Text style={styles.primaryActionBtnText}>+ Start Round {nextRound} Order</Text>
                   </Pressable>
 
@@ -404,8 +411,10 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     }}
                     style={[styles.primaryActionBtn, styles.btnSettle]}
                   >
-                    <CreditCard size={16} color="#ffffff" strokeWidth={2.3} />
-                    <Text style={styles.primaryActionBtnText}>Settle · ${tabTotal.toFixed(2)}</Text>
+                    <CreditCard size={18} color="#ffffff" strokeWidth={2.3} />
+                    <Text style={styles.primaryActionBtnText}>
+                      Settle · {formatCurrency(tabTotal)}
+                    </Text>
                   </Pressable>
                 </View>
 
@@ -418,7 +427,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     }}
                     style={styles.secondaryActionBtn}
                   >
-                    <Repeat size={14} color="#641b2a" strokeWidth={2.2} />
+                    <Repeat size={18} color="#641b2a" strokeWidth={2.2} />
                     <Text style={styles.secondaryActionBtnText}>Transfer Tab/Table</Text>
                   </Pressable>
 
@@ -429,7 +438,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     }}
                     style={styles.secondaryActionBtn}
                   >
-                    <PlusCircle size={14} color="#15803d" strokeWidth={2.2} />
+                    <PlusCircle size={18} color="#15803d" strokeWidth={2.2} />
                     <Text style={styles.secondaryActionBtnTextGreen}>+ Open Split Tab</Text>
                   </Pressable>
                 </View>
@@ -448,13 +457,18 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
           onRequestClose={() => setIsVoidModalOpen(false)}
         >
           <View style={styles.backdrop}>
+            <Pressable
+              style={StyleSheet.absoluteFill}
+              onPress={() => setIsVoidModalOpen(false)}
+              accessibilityLabel="Close void modal"
+            />
             <View
               style={{
                 width: '90%',
-                maxWidth: 420,
+                maxWidth: 480,
                 backgroundColor: '#ffffff',
-                borderRadius: 18,
-                padding: 20,
+                borderRadius: 24,
+                padding: 24,
               }}
             >
               <View
@@ -462,34 +476,34 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                   flexDirection: 'row',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: 12,
+                  marginBottom: 16,
                 }}
               >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View
                     style={{
-                      width: 34,
-                      height: 34,
-                      borderRadius: 10,
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
                       backgroundColor: '#fee2e2',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
-                    <Trash2 size={18} color="#b91c1c" />
+                    <Trash2 size={22} color="#b91c1c" />
                   </View>
                   <View>
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>
+                    <Text style={{ fontSize: 18, fontWeight: '800', color: '#111827' }}>
                       Void Order Item
                     </Text>
-                    <Text style={{ fontSize: 12, color: '#6b7280' }}>
-                      {itemToVoid.quantity}x {itemToVoid.productName} ($
-                      {(itemToVoid.unitPrice * itemToVoid.quantity).toFixed(2)})
+                    <Text style={{ fontSize: 16, color: '#6b7280', marginTop: 2 }}>
+                      {itemToVoid.quantity}x {itemToVoid.productName} (
+                      {formatCurrency(itemToVoid.unitPrice * itemToVoid.quantity)})
                     </Text>
                   </View>
                 </View>
                 <Pressable onPress={() => setIsVoidModalOpen(false)} style={styles.closeBtn}>
-                  <X size={18} color="#6b7280" />
+                  <X size={20} color="#6b7280" />
                 </Pressable>
               </View>
 
@@ -500,15 +514,15 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     backgroundColor: '#fffbeb',
                     borderWidth: 1,
                     borderColor: '#fef3c7',
-                    borderRadius: 10,
-                    padding: 10,
-                    marginBottom: 14,
+                    borderRadius: 12,
+                    padding: 14,
+                    marginBottom: 16,
                   }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#92400e' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#92400e' }}>
                     ⚠️ Item already in {itemToVoid.status.toUpperCase()} stage!
                   </Text>
-                  <Text style={{ fontSize: 11, color: '#b45309', marginTop: 2 }}>
+                  <Text style={{ fontSize: 16, color: '#b45309', marginTop: 4, lineHeight: 22 }}>
                     Ingredients were used. Voiding will record a loss in waste logs and requires
                     Manager PIN (9999).
                   </Text>
@@ -519,25 +533,25 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     backgroundColor: '#f0fdf4',
                     borderWidth: 1,
                     borderColor: '#bbf7d0',
-                    borderRadius: 10,
-                    padding: 10,
-                    marginBottom: 14,
+                    borderRadius: 12,
+                    padding: 14,
+                    marginBottom: 16,
                   }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#166534' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#166534' }}>
                     Pre-Preparation Cancellation
                   </Text>
-                  <Text style={{ fontSize: 11, color: '#15803d', marginTop: 2 }}>
+                  <Text style={{ fontSize: 16, color: '#15803d', marginTop: 4, lineHeight: 22 }}>
                     Item is PENDING. Voiding will restore ingredient stocks to inventory.
                   </Text>
                 </View>
               )}
 
               {/* Reason Selector */}
-              <Text style={{ fontSize: 12, fontWeight: '700', color: '#374151', marginBottom: 6 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#374151', marginBottom: 8 }}>
                 Cancellation Reason:
               </Text>
-              <View style={{ gap: 6, marginBottom: 14 }}>
+              <View style={{ gap: 8, marginBottom: 16 }}>
                 {[
                   'Customer Changed Mind',
                   'Accidental Entry',
@@ -548,17 +562,19 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     key={r}
                     onPress={() => setVoidReason(r)}
                     style={{
-                      paddingVertical: 8,
-                      paddingHorizontal: 12,
-                      borderRadius: 8,
+                      minHeight: 48,
+                      paddingVertical: 12,
+                      paddingHorizontal: 16,
+                      borderRadius: 12,
                       borderWidth: 1.5,
                       borderColor: voidReason === r ? '#641b2a' : '#e5e7eb',
                       backgroundColor: voidReason === r ? '#fdf2f4' : '#ffffff',
+                      justifyContent: 'center',
                     }}
                   >
                     <Text
                       style={{
-                        fontSize: 12,
+                        fontSize: 16,
                         fontWeight: '600',
                         color: voidReason === r ? '#641b2a' : '#4b5563',
                       }}
@@ -571,9 +587,9 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
 
               {/* Manager PIN (if post-prep) */}
               {itemToVoid.status === 'preparing' || itemToVoid.status === 'ready' ? (
-                <View style={{ marginBottom: 14 }}>
+                <View style={{ marginBottom: 16 }}>
                   <Text
-                    style={{ fontSize: 12, fontWeight: '700', color: '#374151', marginBottom: 4 }}
+                    style={{ fontSize: 16, fontWeight: '700', color: '#374151', marginBottom: 6 }}
                   >
                     Manager 4-Digit PIN (9999):
                   </Text>
@@ -589,36 +605,39 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     placeholder="Enter 4-digit PIN"
                     placeholderTextColor="#9ca3af"
                     style={{
+                      minHeight: 48,
                       borderWidth: 1.5,
                       borderColor: pinError ? '#ef4444' : '#d1d5db',
-                      borderRadius: 10,
-                      paddingHorizontal: 12,
-                      paddingVertical: 10,
-                      fontSize: 16,
+                      borderRadius: 12,
+                      paddingHorizontal: 16,
+                      paddingVertical: 12,
+                      fontSize: 18,
                       fontWeight: '700',
                       letterSpacing: 4,
                       textAlign: 'center',
                     }}
                   />
                   {pinError ? (
-                    <Text style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{pinError}</Text>
+                    <Text style={{ fontSize: 16, color: '#ef4444', marginTop: 4 }}>{pinError}</Text>
                   ) : null}
                 </View>
               ) : null}
 
               {/* Actions */}
-              <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 12 }}>
                 <Pressable
                   onPress={() => setIsVoidModalOpen(false)}
                   style={{
                     flex: 1,
-                    paddingVertical: 12,
-                    borderRadius: 10,
+                    minHeight: 48,
+                    paddingVertical: 14,
+                    borderRadius: 12,
                     backgroundColor: '#f3f4f6',
                     alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#4b5563' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#4b5563' }}>
                     Keep Item
                   </Text>
                 </Pressable>
@@ -626,13 +645,15 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                   onPress={handleConfirmVoid}
                   style={{
                     flex: 1,
-                    paddingVertical: 12,
-                    borderRadius: 10,
+                    minHeight: 48,
+                    paddingVertical: 14,
+                    borderRadius: 12,
                     backgroundColor: '#b91c1c',
                     alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#ffffff' }}>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#ffffff' }}>
                     Confirm Void
                   </Text>
                 </Pressable>
@@ -696,14 +717,14 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: 16,
     color: '#6b7280',
     marginTop: 2,
   },
   closeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
@@ -716,10 +737,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   tabSelectBtn: {
-    minHeight: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    minHeight: 48,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
     backgroundColor: '#f3f4f6',
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
@@ -730,7 +751,7 @@ const styles = StyleSheet.create({
     borderColor: '#641b2a',
   },
   tabSelectBtnText: {
-    fontSize: 13.5,
+    fontSize: 16,
     fontWeight: '700',
     color: '#374151',
     fontVariant: ['tabular-nums'],
@@ -760,13 +781,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   itemsPreviewTitle: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '800',
     color: '#374151',
     textTransform: 'uppercase',
   },
   itemsHeaderTotal: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '900',
     color: '#641b2a',
     fontVariant: ['tabular-nums'],
@@ -775,27 +796,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 4,
+    paddingVertical: 6,
   },
   itemRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 8,
     flex: 1,
   },
   itemName: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1f2937',
   },
   itemPrice: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     color: '#4b5563',
     fontVariant: ['tabular-nums'],
   },
   emptyItemsText: {
-    fontSize: 13,
+    fontSize: 16,
     color: '#9ca3af',
     fontStyle: 'italic',
     paddingVertical: 6,
@@ -806,60 +827,60 @@ const styles = StyleSheet.create({
   },
   roundCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    padding: 10,
+    padding: 12,
     gap: 8,
   },
   roundCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingBottom: 6,
+    paddingBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
   roundTitleGroup: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   roundNumberBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     backgroundColor: '#f1f5f9',
     alignItems: 'center',
     justifyContent: 'center',
   },
   roundNumberBadgeText: {
-    fontSize: 11,
+    fontSize: 16,
     fontWeight: '800',
     color: '#475569',
   },
   roundTitleText: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '800',
     color: '#1e293b',
   },
   roundSubtitleText: {
-    fontSize: 11,
+    fontSize: 16,
     color: '#64748b',
     fontWeight: '500',
   },
   roundStatusBadge: {
-    paddingHorizontal: 7,
-    paddingVertical: 2,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 6,
   },
   roundStatusBadgeText: {
-    fontSize: 10,
+    fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   roundItemsList: {
-    gap: 4,
+    gap: 6,
   },
   actionsContainer: {
     gap: 10,
@@ -874,7 +895,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 7,
+    gap: 8,
     paddingVertical: 12,
     borderRadius: 14,
   },
@@ -886,7 +907,7 @@ const styles = StyleSheet.create({
   },
   primaryActionBtnText: {
     color: '#ffffff',
-    fontSize: 14.5,
+    fontSize: 16,
     fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
@@ -896,24 +917,24 @@ const styles = StyleSheet.create({
   },
   secondaryActionBtn: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 48,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 12,
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 14,
     backgroundColor: '#f3f4f6',
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   secondaryActionBtnText: {
-    fontSize: 13.5,
+    fontSize: 16,
     fontWeight: '700',
     color: '#641b2a',
   },
   secondaryActionBtnTextGreen: {
-    fontSize: 13.5,
+    fontSize: 16,
     fontWeight: '700',
     color: '#15803d',
   },

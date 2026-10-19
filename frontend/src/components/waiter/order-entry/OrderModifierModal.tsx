@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 import { X, CheckCircle2 } from 'lucide-react-native';
+import { formatCurrency } from '@monks/shared';
 import { MenuItem } from '../../../mockData';
 import { styles } from './OrderEntryModal.styles';
 
@@ -36,7 +37,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
         <View style={styles.customizerHeader}>
           <View>
             <Text style={styles.customizerTitle}>Customize {item.name}</Text>
-            <Text style={styles.customizerSub}>Base: ${item.price.toFixed(2)}</Text>
+            <Text style={styles.customizerSub}>Base: {formatCurrency(item.price)}</Text>
           </View>
           <Pressable
             onPress={onClose}
@@ -64,7 +65,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                   {mod.name}
                 </Text>
                 <Text style={[styles.modPrice, isSelected && styles.modPriceSelected]}>
-                  {mod.priceDelta > 0 ? `+$${mod.priceDelta.toFixed(2)}` : 'Free'}
+                  {mod.priceDelta > 0 ? `+${formatCurrency(mod.priceDelta)}` : 'Free'}
                 </Text>
               </Pressable>
             );

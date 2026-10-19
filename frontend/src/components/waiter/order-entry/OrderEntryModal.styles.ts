@@ -347,7 +347,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
   },
   itemCountText: {
-    fontSize: 12.5,
+    fontSize: 16,
     fontWeight: '800',
     color: '#832238',
     fontVariant: ['tabular-nums'],
@@ -365,12 +365,12 @@ export const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyCartTitle: {
-    fontSize: 15.5,
+    fontSize: 16,
     fontWeight: '700',
     color: '#6b7280',
   },
   emptyCartSub: {
-    fontSize: 13,
+    fontSize: 16,
     color: '#9ca3af',
     textAlign: 'center',
     marginTop: 4,
@@ -399,24 +399,24 @@ export const styles = StyleSheet.create({
     borderRadius: 3.5,
   },
   cartItemName: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
     color: '#1a1a1e',
   },
   cartItemModText: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#059669',
     fontWeight: '600',
     marginTop: 2,
   },
   cartItemNotesText: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#d97706',
     fontStyle: 'italic',
     marginTop: 1,
   },
   cartItemUnitPrice: {
-    fontSize: 12.5,
+    fontSize: 16,
     color: '#9ca3af',
     marginTop: 2,
     fontVariant: ['tabular-nums'],
@@ -426,7 +426,7 @@ export const styles = StyleSheet.create({
     gap: 6,
   },
   cartItemTotal: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     color: '#1a1a1e',
     fontVariant: ['tabular-nums'],
@@ -439,13 +439,13 @@ export const styles = StyleSheet.create({
     padding: 2,
   },
   stepperBtn: {
-    width: 38,
-    height: 38,
+    width: 48,
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
   },
   stepperQuantity: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '800',
     color: '#111827',
     paddingHorizontal: 8,
@@ -466,12 +466,12 @@ export const styles = StyleSheet.create({
     marginRight: 8,
   },
   corkageTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '800',
     color: '#832238',
   },
   corkageSub: {
-    fontSize: 12,
+    fontSize: 16,
     color: '#9f1239',
   },
   pricingSummary: {
@@ -487,12 +487,12 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   summaryLabel: {
-    fontSize: 13.5,
+    fontSize: 16,
     color: '#6b7280',
     fontWeight: '500',
   },
   summaryValue: {
-    fontSize: 14.5,
+    fontSize: 16,
     color: '#374151',
     fontWeight: '700',
     fontVariant: ['tabular-nums'],

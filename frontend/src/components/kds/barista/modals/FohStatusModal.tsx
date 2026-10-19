@@ -23,6 +23,11 @@ export const FohStatusModal: React.FC<FohStatusModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close FOH status modal"
+        />
         <View style={styles.modalCard}>
           {/* Header */}
           <View style={styles.headerRow}>

@@ -6,7 +6,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     id: 'm-flat-white',
     name: 'Flat White',
     category: 'coffee',
-    price: 4.5,
+    price: 180.0,
     imageUrl:
       'https://images.unsplash.com/photo-1577968897966-3d4325b36b61?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
@@ -16,9 +16,9 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     isAvailable: true,
     auto86: false,
     modifiers: [
-      { id: 'mod-oat', name: 'Oat Milk Swap', priceDelta: 0.5 },
-      { id: 'mod-almond', name: 'Almond Milk Swap', priceDelta: 0.5 },
-      { id: 'mod-extra-shot', name: 'Extra Shot', priceDelta: 1.0 },
+      { id: 'mod-oat', name: 'Oat Milk Swap', priceDelta: 25.0 },
+      { id: 'mod-almond', name: 'Almond Milk Swap', priceDelta: 25.0 },
+      { id: 'mod-extra-shot', name: 'Extra Shot', priceDelta: 40.0 },
       { id: 'mod-decaf', name: 'Decaf Swap', priceDelta: 0.0 },
     ],
   },
@@ -26,7 +26,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     id: 'm-iced-americano',
     name: 'Iced Americano',
     category: 'coffee',
-    price: 4.0,
+    price: 160.0,
     imageUrl:
       'https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
@@ -36,15 +36,15 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     isAvailable: true,
     auto86: false,
     modifiers: [
-      { id: 'mod-extra-shot', name: 'Extra Shot', priceDelta: 1.0 },
-      { id: 'mod-vanilla', name: 'Madagascar Vanilla Syrup', priceDelta: 0.75 },
+      { id: 'mod-extra-shot', name: 'Extra Shot', priceDelta: 40.0 },
+      { id: 'mod-vanilla', name: 'Madagascar Vanilla Syrup', priceDelta: 30.0 },
     ],
   },
   {
     id: 'm-cold-brew',
     name: 'Single Origin Cold Brew',
     category: 'coffee',
-    price: 5.0,
+    price: 200.0,
     imageUrl:
       'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
@@ -53,13 +53,13 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     dietary: ['Vegan', 'Gluten-Free'],
     isAvailable: true,
     auto86: false,
-    modifiers: [{ id: 'mod-oat-splash', name: 'Splash of Oat Milk', priceDelta: 0.3 }],
+    modifiers: [{ id: 'mod-oat-splash', name: 'Splash of Oat Milk', priceDelta: 20.0 }],
   },
   {
     id: 'm-matcha-latte',
     name: 'Ceremonial Matcha Latte',
     category: 'coffee',
-    price: 5.5,
+    price: 220.0,
     imageUrl:
       'https://images.unsplash.com/photo-1536256263959-770b48d82b0a?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
@@ -69,7 +69,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     isAvailable: false,
     auto86: true,
     outOfStockReason: 'Low Uji Matcha Powder',
-    modifiers: [{ id: 'mod-oat', name: 'Oat Milk Swap', priceDelta: 0.5 }],
+    modifiers: [{ id: 'mod-oat', name: 'Oat Milk Swap', priceDelta: 25.0 }],
   },
 
   // Cocktails & Wine (Bar / Bartender)
@@ -77,7 +77,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     id: 'm-classic-negroni',
     name: 'Monk’s Classic Negroni',
     category: 'cocktails_wine',
-    price: 14.0,
+    price: 420.0,
     imageUrl:
       'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
@@ -86,13 +86,13 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     dietary: ['Vegan', 'Gluten-Free'],
     isAvailable: true,
     auto86: false,
-    modifiers: [{ id: 'mod-gin-sub', name: 'Monkey 47 Gin Upgrade', priceDelta: 3.5 }],
+    modifiers: [{ id: 'mod-gin-sub', name: 'Monkey 47 Gin Upgrade', priceDelta: 120.0 }],
   },
   {
     id: 'm-espresso-martini',
     name: 'Midnight Espresso Martini',
     category: 'cocktails_wine',
-    price: 15.0,
+    price: 450.0,
     imageUrl:
       'https://images.unsplash.com/photo-1545438102-799c3991ffb2?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
@@ -101,13 +101,13 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     dietary: ['Vegan', 'Gluten-Free'],
     isAvailable: true,
     auto86: false,
-    modifiers: [{ id: 'mod-grey-goose', name: 'Grey Goose Upgrade', priceDelta: 3.0 }],
+    modifiers: [{ id: 'mod-grey-goose', name: 'Grey Goose Upgrade', priceDelta: 100.0 }],
   },
   {
     id: 'm-pinot-noir',
     name: 'Willamette Valley Pinot Noir (Glass)',
     category: 'cocktails_wine',
-    price: 13.0,
+    price: 480.0,
     imageUrl:
       'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'bar',
@@ -124,7 +124,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     id: 'm-truffle-carbonara',
     name: 'Truffle Carbonara',
     category: 'mains_pasta',
-    price: 18.0,
+    price: 520.0,
     imageUrl:
       'https://images.unsplash.com/photo-1612874742237-6526221588e3?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
@@ -135,15 +135,15 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     isAvailable: true,
     auto86: false,
     modifiers: [
-      { id: 'mod-extra-guanciale', name: 'Extra Guanciale', priceDelta: 3.0 },
-      { id: 'mod-gf-penne', name: 'Gluten-Free Penne Swap', priceDelta: 1.5 },
+      { id: 'mod-extra-guanciale', name: 'Extra Guanciale', priceDelta: 90.0 },
+      { id: 'mod-gf-penne', name: 'Gluten-Free Penne Swap', priceDelta: 50.0 },
     ],
   },
   {
     id: 'm-wild-mushroom-risotto',
     name: 'Wild Forest Mushroom Risotto',
     category: 'mains_pasta',
-    price: 19.5,
+    price: 490.0,
     imageUrl:
       'https://images.unsplash.com/photo-1633964913295-ceb43826e7c9?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
@@ -158,7 +158,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     id: 'm-margherita-pizza',
     name: 'Wood-Fired Margherita Pizza',
     category: 'mains_pasta',
-    price: 16.0,
+    price: 550.0,
     imageUrl:
       'https://images.unsplash.com/photo-1604382355076-af4b0eb60143?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
@@ -167,7 +167,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     dietary: ['Vegetarian'],
     isAvailable: true,
     auto86: false,
-    modifiers: [{ id: 'mod-spicy-honey', name: 'Calabrian Chili Hot Honey', priceDelta: 1.5 }],
+    modifiers: [{ id: 'mod-spicy-honey', name: 'Calabrian Chili Hot Honey', priceDelta: 50.0 }],
   },
 
   // Small Plates & Bites (Kitchen)
@@ -175,7 +175,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     id: 'm-truffle-fries',
     name: 'Parmesan Truffle Fries',
     category: 'small_plates',
-    price: 9.0,
+    price: 260.0,
     imageUrl:
       'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
@@ -184,13 +184,13 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     dietary: ['Vegetarian'],
     isAvailable: true,
     auto86: false,
-    modifiers: [{ id: 'mod-extra-aioli', name: 'Extra Truffle Aioli', priceDelta: 1.0 }],
+    modifiers: [{ id: 'mod-extra-aioli', name: 'Extra Truffle Aioli', priceDelta: 40.0 }],
   },
   {
     id: 'm-burrata-crostini',
     name: 'Artisan Burrata & Fig Crostini',
     category: 'small_plates',
-    price: 12.5,
+    price: 340.0,
     imageUrl:
       'https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
@@ -205,7 +205,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     id: 'm-resold-croissant',
     name: 'Bakery Almond Croissant (Pre-made)',
     category: 'small_plates',
-    price: 4.8, // 4.00 original cost * 1.20 fixed markup
+    price: 180.0, // 150.00 original cost * 1.20 fixed markup
     imageUrl:
       'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',
@@ -215,7 +215,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     isAvailable: true,
     auto86: false,
     isResoldOutsideFood: true,
-    originalCost: 4.0,
+    originalCost: 150.0,
     modifiers: [],
   },
 
@@ -224,7 +224,7 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     id: 'm-classic-tiramisu',
     name: 'Monk’s Classic Tiramisu',
     category: 'desserts',
-    price: 9.0,
+    price: 280.0,
     imageUrl:
       'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?auto=format&fit=crop&w=600&q=80',
     stationTarget: 'kitchen',

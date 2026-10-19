@@ -178,6 +178,69 @@ export class TablesApi {
       throw err;
     }
   }
+
+  /**
+   * Create and persist a new customer tab for a table.
+   */
+  async createTab(params: {
+    tableId?: string;
+    customerName: string;
+    orderType?: 'DINE_IN' | 'TAKEOUT' | 'ONLINE_DELIVERY';
+    orderChannel?:
+      'CAFE_AREA' | 'BAR_AREA' | 'TAKEOUT_COUNTER' | 'GRAB_FOOD' | 'FOODPANDA' | 'OTHER_ONLINE';
+    hasCorkageFee?: boolean;
+    corkageAmount?: number;
+  }): Promise<{ id: string } | null> {
+    try {
+      let validTableId: string | null = null;
+      if (params.tableId) {
+        const isTableUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          params.tableId
+        );
+        if (isTableUuid) {
+          validTableId = params.tableId;
+        } else {
+          const { data: tableData } = await supabase
+            .from('tables')
+            .select('id')
+            .or(`table_number.eq.${params.tableId},table_number.eq.Table ${params.tableId}`)
+            .limit(1);
+          validTableId = tableData?.[0]?.id || null;
+        }
+      }
+
+      const { data, error } = await supabase
+        .from('tabs')
+        .insert({
+          table_id: validTableId,
+          customer_name: params.customerName || 'Guest',
+          order_type: params.orderType || 'DINE_IN',
+          order_channel: (params.orderChannel || 'CAFE_AREA') as any,
+          has_corkage_fee: params.hasCorkageFee || false,
+          corkage_amount: params.corkageAmount || 0,
+          status: 'OPEN',
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.warn('createTab insert error:', error.message);
+        throw error;
+      }
+
+      if (validTableId) {
+        await supabase
+          .from('tables')
+          .update({ is_occupied: true, updated_at: new Date().toISOString() })
+          .eq('id', validTableId);
+      }
+
+      return data;
+    } catch (err) {
+      console.warn('createTab fallback:', err);
+      return null;
+    }
+  }
 }
 
 export const tablesApi = new TablesApi();

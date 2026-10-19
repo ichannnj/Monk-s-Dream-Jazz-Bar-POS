@@ -14,6 +14,7 @@ import {
 } from 'lucide-react-native';
 import { useOrderStore } from '../../store/useOrderStore';
 import { CheckItem } from '../../mockData';
+import { formatCurrency } from '@monks/shared';
 import { toast } from '../../store/useToastStore';
 
 export const ChecksHistoryView: React.FC = () => {
@@ -183,7 +184,7 @@ export const ChecksHistoryView: React.FC = () => {
                   </View>
 
                   <View style={styles.checkRowRight}>
-                    <Text style={styles.checkTotal}>${chk.total.toFixed(2)}</Text>
+                    <Text style={styles.checkTotal}>{formatCurrency(chk.total)}</Text>
                     <View style={styles.paidBadge}>
                       <Text style={styles.paidBadgeText}>{chk.paymentMethod.toUpperCase()}</Text>
                     </View>
@@ -246,15 +247,15 @@ export const ChecksHistoryView: React.FC = () => {
             <View style={styles.financeCard}>
               <View style={styles.financeLine}>
                 <Text style={styles.financeLabel}>Subtotal:</Text>
-                <Text style={styles.financeValue}>${selectedCheck.subtotal.toFixed(2)}</Text>
+                <Text style={styles.financeValue}>{formatCurrency(selectedCheck.subtotal)}</Text>
               </View>
               <View style={styles.financeLine}>
                 <Text style={styles.financeLabel}>Tax (10% VAT):</Text>
-                <Text style={styles.financeValue}>${selectedCheck.tax.toFixed(2)}</Text>
+                <Text style={styles.financeValue}>{formatCurrency(selectedCheck.tax)}</Text>
               </View>
               <View style={[styles.financeLine, styles.financeTotalLine]}>
                 <Text style={styles.financeTotalLabel}>Grand Total Settled:</Text>
-                <Text style={styles.financeTotalValue}>${selectedCheck.total.toFixed(2)}</Text>
+                <Text style={styles.financeTotalValue}>{formatCurrency(selectedCheck.total)}</Text>
               </View>
             </View>
           </View>

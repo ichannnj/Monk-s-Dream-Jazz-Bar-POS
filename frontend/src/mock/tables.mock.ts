@@ -3,7 +3,7 @@ import type { TableItem } from '../types/floor';
 export const SEED_TABLES: TableItem[] = [
   {
     id: 'tbl-b1',
-    code: 'B1',
+    code: 'Bar 1',
     area: 'bar',
     seats: 6,
     guests: 2,
@@ -14,20 +14,20 @@ export const SEED_TABLES: TableItem[] = [
     activeTabs: [1, 2],
     maxTabs: 6,
     isMyTable: true,
-    totalAmount: 46.0,
+    totalAmount: 1425.0,
     tabs: [
       {
         id: 'tab-b1-1',
         tabIndex: 1,
         guestName: 'Miles',
         status: 'open',
-        totalAmount: 32.0,
+        totalAmount: 940.0,
         items: [
           {
             id: 'item-1',
             productId: 'm-classic-negroni',
             productName: 'Monk’s Classic Negroni',
-            unitPrice: 14.0,
+            unitPrice: 420.0,
             quantity: 1,
             stationTarget: 'bar',
             status: 'served',
@@ -36,7 +36,7 @@ export const SEED_TABLES: TableItem[] = [
             id: 'item-2',
             productId: 'm-truffle-carbonara',
             productName: 'Truffle Carbonara',
-            unitPrice: 18.0,
+            unitPrice: 520.0,
             quantity: 1,
             stationTarget: 'kitchen',
             status: 'preparing',
@@ -49,13 +49,13 @@ export const SEED_TABLES: TableItem[] = [
         tabIndex: 2,
         guestName: 'Coltrane',
         status: 'open',
-        totalAmount: 14.0,
+        totalAmount: 485.0,
         items: [
           {
             id: 'item-3',
             productId: 'm-flat-white',
             productName: 'Flat White',
-            unitPrice: 5.0,
+            unitPrice: 205.0,
             quantity: 1,
             stationTarget: 'bar',
             modifiers: ['Oat Milk Swap'],
@@ -65,7 +65,7 @@ export const SEED_TABLES: TableItem[] = [
             id: 'item-4',
             productId: 'm-classic-tiramisu',
             productName: 'Monk’s Classic Tiramisu',
-            unitPrice: 9.0,
+            unitPrice: 280.0,
             quantity: 1,
             stationTarget: 'kitchen',
             status: 'ready',
@@ -76,14 +76,14 @@ export const SEED_TABLES: TableItem[] = [
   },
   {
     id: 'tbl-b2',
-    code: 'B2',
+    code: 'Bar 2',
     area: 'bar',
     seats: 4,
     guests: 1,
     status: 'ready',
     elapsedTime: '50m',
     assignedStaff: { initials: 'JS', name: 'Jess Santos' },
-    totalAmount: 23.5,
+    totalAmount: 740.0,
     hasOpenCheck: true,
     activeTabs: [1],
     maxTabs: 4,
@@ -94,13 +94,13 @@ export const SEED_TABLES: TableItem[] = [
         tabIndex: 1,
         guestName: 'Thelonious',
         status: 'open',
-        totalAmount: 23.5,
+        totalAmount: 740.0,
         items: [
           {
             id: 'item-5',
             productId: 'm-pinot-noir',
             productName: 'Willamette Valley Pinot Noir (Glass)',
-            unitPrice: 13.0,
+            unitPrice: 480.0,
             quantity: 1,
             stationTarget: 'bar',
             status: 'served',
@@ -109,7 +109,7 @@ export const SEED_TABLES: TableItem[] = [
             id: 'item-6',
             productId: 'm-truffle-fries',
             productName: 'Parmesan Truffle Fries',
-            unitPrice: 9.0,
+            unitPrice: 260.0,
             quantity: 1,
             stationTarget: 'kitchen',
             status: 'ready',
@@ -120,7 +120,7 @@ export const SEED_TABLES: TableItem[] = [
   },
   {
     id: 'tbl-b3',
-    code: 'B3',
+    code: 'Bar 3',
     area: 'bar',
     seats: 6,
     guests: 2,
@@ -192,7 +192,7 @@ export const SEED_TABLES: TableItem[] = [
   },
   {
     id: 'tbl-b4',
-    code: 'B4',
+    code: 'Bar 4',
     area: 'bar',
     seats: 6,
     guests: 4,
@@ -300,7 +300,7 @@ export const SEED_TABLES: TableItem[] = [
   },
   {
     id: 'tbl-b5',
-    code: 'B5',
+    code: 'Bar 5',
     area: 'bar',
     seats: 6,
     guests: 3,
@@ -373,7 +373,7 @@ export const SEED_TABLES: TableItem[] = [
   },
   {
     id: 'tbl-b6',
-    code: 'B6',
+    code: 'Bar 6',
     area: 'bar',
     seats: 4,
     guests: 0,
@@ -389,14 +389,14 @@ export const SEED_TABLES: TableItem[] = [
   // Cafe Area tables
   {
     id: 'tbl-c1',
-    code: 'C1',
+    code: 'Cafe 1',
     area: 'cafe',
     seats: 4,
     guests: 2,
     status: 'occupied',
     elapsedTime: '18m',
     assignedStaff: { initials: 'JS', name: 'Jess Santos' },
-    totalAmount: 64.0,
+    totalAmount: 1880.0,
     hasOpenCheck: true,
     activeTabs: [1],
     maxTabs: 4,
@@ -407,13 +407,13 @@ export const SEED_TABLES: TableItem[] = [
         tabIndex: 1,
         guestName: 'Chet Baker',
         status: 'open',
-        totalAmount: 64.0,
+        totalAmount: 1880.0,
         items: [
           {
             id: 'item-19',
             productId: 'm-truffle-carbonara',
             productName: 'Truffle Carbonara',
-            unitPrice: 18.0,
+            unitPrice: 520.0,
             quantity: 2,
             stationTarget: 'kitchen',
             status: 'preparing',
@@ -422,7 +422,7 @@ export const SEED_TABLES: TableItem[] = [
             id: 'item-20',
             productId: 'm-classic-negroni',
             productName: 'Monk’s Classic Negroni',
-            unitPrice: 14.0,
+            unitPrice: 420.0,
             quantity: 2,
             stationTarget: 'bar',
             status: 'served',
@@ -433,7 +433,7 @@ export const SEED_TABLES: TableItem[] = [
   },
   {
     id: 'tbl-c2',
-    code: 'C2',
+    code: 'Cafe 2',
     area: 'cafe',
     seats: 2,
     guests: 0,
@@ -447,7 +447,7 @@ export const SEED_TABLES: TableItem[] = [
   },
   {
     id: 'tbl-c3',
-    code: 'C3',
+    code: 'Cafe 3',
     area: 'cafe',
     seats: 6,
     guests: 4,
@@ -574,6 +574,42 @@ export const SEED_TABLES: TableItem[] = [
       },
     ],
   },
+  // Cafe Tables 4 to 15
+  ...Array.from({ length: 12 }, (_, i) => {
+    const num = i + 4;
+    return {
+      id: `tbl-c${num}`,
+      code: `Cafe ${num}`,
+      area: 'cafe' as const,
+      seats: num % 3 === 0 ? 6 : num % 2 === 0 ? 4 : 2,
+      guests: 0,
+      status: 'empty' as const,
+      elapsedTime: '0m',
+      hasOpenCheck: false,
+      activeTabs: [],
+      maxTabs: num % 3 === 0 ? 6 : num % 2 === 0 ? 4 : 2,
+      isMyTable: false,
+      tabs: [],
+    };
+  }),
+  // Bar Tables 7 to 10
+  ...Array.from({ length: 4 }, (_, i) => {
+    const num = i + 7;
+    return {
+      id: `tbl-b${num}`,
+      code: `Bar ${num}`,
+      area: 'bar' as const,
+      seats: 2,
+      guests: 0,
+      status: 'empty' as const,
+      elapsedTime: '0m',
+      hasOpenCheck: false,
+      activeTabs: [],
+      maxTabs: 2,
+      isMyTable: false,
+      tabs: [],
+    };
+  }),
 ];
 
 // -------------------------------------------------------------

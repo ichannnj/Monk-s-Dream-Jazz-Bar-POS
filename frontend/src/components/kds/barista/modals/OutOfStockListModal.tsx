@@ -21,6 +21,11 @@ export const OutOfStockListModal: React.FC<OutOfStockListModalProps> = ({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close out of stock list"
+        />
         <View style={styles.modalCard}>
           {/* Header */}
           <View style={styles.headerRow}>

@@ -10,6 +10,7 @@ import {
   OrderLineItem,
   CustomerTab,
 } from '../../mockData';
+import { formatCurrency } from '@monks/shared';
 import { toast } from '../../store/useToastStore';
 import { Sidebar, NavTabId } from '../navigation/Sidebar';
 import { UnifiedCommandBar, StatusFilter } from './UnifiedCommandBar';
@@ -166,12 +167,8 @@ export const WaiterCashierScreen: React.FC = () => {
 
   // Quick Action Flow: Open Tab
   const handleConfirmOpenTab = (tableId: string, guestName: string, guestCount: number) => {
-    openTableTab(tableId, guestName, guestCount);
+    const { tabIndex } = openTableTab(tableId, guestName, guestCount);
     const targetTable = tables.find((t) => t.id === tableId);
-    const nextTabIndex =
-      targetTable && targetTable.activeTabs.length > 0
-        ? Math.max(...targetTable.activeTabs) + 1
-        : 1;
 
     toast.success(
       `Tab opened for "${guestName}" (${guestCount} guests) at Table ${targetTable?.code}`,
@@ -187,7 +184,7 @@ export const WaiterCashierScreen: React.FC = () => {
       type: 'dine_in',
       title: `Table ${targetTable?.code || ''} • Tab: "${guestName}" • Round 1`,
       tableId: tableId,
-      tabIndex: nextTabIndex,
+      tabIndex: tabIndex,
       roundNumber: 1,
       initialItems: [],
       previousTabItems: [],
@@ -348,13 +345,13 @@ export const WaiterCashierScreen: React.FC = () => {
     if (mode === 'entire_table') {
       settleTableGroup(checkoutContext.table.id, method);
       toast.success(
-        `Table ${tableCode} settled in full via ${methodName} ($${totalWithTax.toFixed(2)}) • Receipt dispatched to printer station`,
+        `Table ${tableCode} settled in full via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt dispatched to printer station`,
         { title: 'Table Bill Settled' }
       );
     } else {
       settleTab(checkoutContext.table.id, tabIndex, method);
       toast.success(
-        `Tab "${tabName}" on Table ${tableCode} settled via ${methodName} ($${totalWithTax.toFixed(2)}) • Receipt dispatched to printer station`,
+        `Tab "${tabName}" on Table ${tableCode} settled via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt dispatched to printer station`,
         { title: 'Tab Payment Confirmed' }
       );
     }
@@ -436,6 +433,10 @@ export const WaiterCashierScreen: React.FC = () => {
               filteredTables={filteredTables}
               filteredTakeoutOrders={filteredTakeoutOrders}
               filteredOnlineOrders={filteredOnlineOrders}
+              onResetFilters={() => {
+                setSelectedChannel('all');
+                setSelectedStatus('all');
+              }}
               onTablePress={handleTablePress}
               onTakeoutPress={(o) => {
                 setOrderEntryContext({

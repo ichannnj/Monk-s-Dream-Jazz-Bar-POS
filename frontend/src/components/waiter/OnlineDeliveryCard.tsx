@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Bike, CheckCircle2, UserCheck } from 'lucide-react-native';
 import { OnlineDeliveryOrder } from '../../mockData';
+import { formatCurrency } from '@monks/shared';
 
 interface OnlineDeliveryCardProps {
   order: OnlineDeliveryOrder;
@@ -62,7 +63,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
             {order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
           </Text>
           <View style={styles.amountCol}>
-            <Text style={styles.amountText}>${order.total.toFixed(2)}</Text>
+            <Text style={styles.amountText}>{formatCurrency(order.total)}</Text>
             <Text style={styles.paidText}>PAID APP</Text>
           </View>
         </View>
@@ -99,16 +100,16 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 20,
-    borderWidth: 1,
-    padding: 16,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    padding: 20,
     shadowColor: '#2b0f16',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
     justifyContent: 'space-between',
-    minHeight: 156,
+    minHeight: 220,
   },
   mainPressableArea: {
     flex: 1,
@@ -218,16 +219,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    minHeight: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    gap: 8,
+    minHeight: 52,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
   },
   actionBtnText: {
     color: '#ffffff',
-    fontSize: 13.5,
+    fontSize: 15,
     fontWeight: '800',
+    letterSpacing: 0.3,
   },
   actionBtnReady: {
     backgroundColor: '#fef3c7',
@@ -236,15 +238,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 5,
-    minHeight: 44,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
+    gap: 8,
+    minHeight: 52,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
   },
   actionBtnReadyText: {
     color: '#92400e',
-    fontSize: 13.5,
+    fontSize: 15,
     fontWeight: '800',
+    letterSpacing: 0.3,
   },
 });

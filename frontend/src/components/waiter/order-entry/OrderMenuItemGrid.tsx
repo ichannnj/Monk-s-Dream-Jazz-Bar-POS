@@ -12,6 +12,7 @@ import {
   AlertTriangle,
   Ban,
 } from 'lucide-react-native';
+import { formatCurrency } from '@monks/shared';
 import { MenuItem } from '../../../mockData';
 import { styles } from './OrderEntryModal.styles';
 
@@ -119,7 +120,7 @@ const MenuItemCard: React.FC<{
           <Text style={styles.productName} numberOfLines={1}>
             {item.name}
           </Text>
-          <Text style={styles.productPrice}>${displayPrice.toFixed(2)}</Text>
+          <Text style={styles.productPrice}>{formatCurrency(displayPrice)}</Text>
         </View>
 
         <Text style={styles.productDesc} numberOfLines={2}>

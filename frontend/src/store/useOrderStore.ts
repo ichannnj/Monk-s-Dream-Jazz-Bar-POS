@@ -15,6 +15,8 @@ import { supabase } from '../services/supabase';
 import { ordersApi } from '../services/orders.api';
 import { tablesApi } from '../services/tables.api';
 import { realtimeGateway } from '../services/realtime';
+import { SEED_TABLES } from '../mock/tables.mock';
+import { SEED_TAKEOUT_ORDERS, SEED_ONLINE_ORDERS } from '../mock/orders.mock';
 
 export interface QueuedMutation {
   id: string;
@@ -25,6 +27,32 @@ export interface QueuedMutation {
 }
 
 const posHlc = new HybridLogicalClock(`pos-node-${Math.random().toString(36).substring(2, 7)}`);
+
+export function deriveTabTotal(tab: CustomerTab): number {
+  const itemsTotal = (tab.items || [])
+    .filter((i) => i.status !== 'cancelled')
+    .reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+  const corkage = tab.hasCorkageFee ? tab.corkageAmount || 0 : 0;
+  return itemsTotal + corkage;
+}
+
+export function deriveTableStatus(
+  hasOpenTabs: boolean,
+  tabs: CustomerTab[] = []
+): TableItem['status'] {
+  if (!hasOpenTabs || tabs.length === 0) return 'empty';
+
+  const allItems = tabs.flatMap((t) => t.items || []);
+  const activeItems = allItems.filter((i) => i.status !== 'cancelled');
+
+  if (activeItems.length === 0) return 'occupied';
+  if (activeItems.some((i) => i.status === 'ready')) return 'ready';
+  if (activeItems.some((i) => i.status === 'preparing' || i.status === 'pending'))
+    return 'preparing';
+  if (activeItems.every((i) => i.status === 'served')) return 'served';
+
+  return 'occupied';
+}
 
 interface OrderState {
   tables: TableItem[];
@@ -37,8 +65,11 @@ interface OrderState {
   isHydrated: boolean;
   offlineQueue: QueuedMutation[];
 
-  // Action methods
-  openTableTab: (tableId: string, guestName: string, guestCount?: number) => void;
+  openTableTab: (
+    tableId: string,
+    guestName: string,
+    guestCount?: number
+  ) => { tabIndex: number; tabId: string };
   addItemsToTab: (
     tableId: string,
     tabIndex: number,
@@ -119,9 +150,9 @@ interface OrderState {
 }
 
 export const useOrderStore = create<OrderState>((set, get) => ({
-  tables: [],
-  takeoutOrders: [],
-  onlineOrders: [],
+  tables: SEED_TABLES,
+  takeoutOrders: SEED_TAKEOUT_ORDERS,
+  onlineOrders: SEED_ONLINE_ORDERS,
   checks: [],
   drawerEntries: [],
   alerts: [],
@@ -130,30 +161,32 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   offlineQueue: [],
 
   openTableTab: (tableId, guestName, guestCount = 1) => {
-    const finalGuestName = guestName.trim() || 'Guest';
-    let assignedTabIndex = 1;
+    const targetTable = get().tables.find((t) => t.id === tableId);
+    const existingIndices = [
+      ...(targetTable?.activeTabs || []),
+      ...(targetTable?.tabs || []).map((tb) => tb.tabIndex),
+    ];
+    const nextTabIndex = existingIndices.length > 0 ? Math.max(...existingIndices) + 1 : 1;
+    const finalGuestName = guestName.trim() || `Guest ${nextTabIndex}`;
+    const localTabId = `tab-${tableId}-${nextTabIndex}`;
+
+    const newTab: CustomerTab = {
+      id: localTabId,
+      tabIndex: nextTabIndex,
+      guestName: finalGuestName,
+      status: 'open',
+      totalAmount: 0,
+      items: [],
+      openedAt: 'Just now',
+    };
 
     set((state) => {
       const updatedTables = state.tables.map((t) => {
         if (t.id !== tableId) return t;
 
-        const nextTabIndex = t.activeTabs.length > 0 ? Math.max(...t.activeTabs) + 1 : 1;
-        assignedTabIndex = nextTabIndex;
-        const newTab: CustomerTab = {
-          id: `tab-${tableId}-${nextTabIndex}`,
-          tabIndex: nextTabIndex,
-          guestName: finalGuestName.includes('Guest')
-            ? `${finalGuestName} ${nextTabIndex}`
-            : finalGuestName,
-          status: 'open',
-          totalAmount: 0,
-          items: [],
-          openedAt: 'Just now',
-        };
-
         const existingTabs = t.tabs || [];
         const nextTabs = [...existingTabs, newTab];
-        const nextActiveTabs = [...t.activeTabs, nextTabIndex];
+        const nextActiveTabs = Array.from(new Set([...t.activeTabs, nextTabIndex]));
 
         return {
           ...t,
@@ -161,7 +194,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           guests: t.guests > 0 ? t.guests + guestCount : guestCount,
           hasOpenCheck: true,
           activeTabs: nextActiveTabs,
-          maxTabs: Math.max(t.maxTabs || 1, nextTabIndex, nextActiveTabs.length, t.seats || 1),
+          maxTabs: Math.max(t.maxTabs || 1, nextTabIndex, nextActiveTabs.length, 99),
           tabs: nextTabs,
           elapsedTime: t.status === 'empty' ? '1m' : t.elapsedTime,
         };
@@ -170,22 +203,23 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       return { tables: updatedTables };
     });
 
-    // Immediately persist tab to Supabase public.tabs
+    // Asynchronously insert new tab into Supabase so it has a real DB UUID immediately
     tablesApi
-      .openTab({
-        tableId,
+      .createTab({
+        tableId: tableId,
         customerName: finalGuestName,
-        guestCount,
+        orderType: 'DINE_IN',
+        orderChannel: targetTable?.area === 'bar' ? 'BAR_AREA' : 'CAFE_AREA',
       })
       .then((res) => {
-        if (res && res.id) {
+        if (res?.id) {
           set((state) => ({
             tables: state.tables.map((t) => {
               if (t.id !== tableId) return t;
               return {
                 ...t,
                 tabs: (t.tabs || []).map((tb) =>
-                  tb.tabIndex === assignedTabIndex ? { ...tb, id: res.id } : tb
+                  tb.tabIndex === nextTabIndex ? { ...tb, id: res.id } : tb
                 ),
               };
             }),
@@ -193,32 +227,29 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         }
       })
       .catch((err) => {
-        console.warn('Background Supabase openTab failed:', err);
+        console.warn('Background tab persistence deferred:', err);
       });
+
+    return { tabIndex: nextTabIndex, tabId: localTabId };
   },
 
   addItemsToTab: (tableId, tabIndex, items, hasCorkageFee = false, corkageAmount = 0) => {
-    // 1. Calculate current round number
+    // 1. Calculate sequential per-tab round number
     const existingTable = get().tables.find((t) => t.id === tableId);
     const existingTab = existingTable?.tabs?.find((t) => t.tabIndex === tabIndex);
     const existingItems = existingTab?.items || [];
-    const maxRound =
-      existingItems.length > 0 ? Math.max(1, ...existingItems.map((i) => i.roundNumber || 1)) : 0;
-    const currentRound = maxRound + 1;
+    const maxExistingRound =
+      existingItems.length > 0 ? Math.max(0, ...existingItems.map((i) => i.roundNumber || 1)) : 0;
+    const targetRound = maxExistingRound + 1;
 
-    const roundTaggedItems = items.map((i) => ({
+    const roundTaggedItems = items.map((i, idx) => ({
       ...i,
-      roundNumber: i.roundNumber || currentRound,
-      status: i.status || 'pending',
+      id: i.id || `item-${tableId}-tab${tabIndex}-r${targetRound}-${Date.now()}-${idx}`,
+      roundNumber: targetRound,
+      status: i.status || ('pending' as const),
     }));
 
     set((state) => {
-      let itemsTotal = 0;
-      roundTaggedItems.forEach((item) => {
-        itemsTotal += item.unitPrice * item.quantity;
-      });
-      if (hasCorkageFee) itemsTotal += corkageAmount;
-
       const updatedTables = state.tables.map((table) => {
         if (table.id !== tableId) return table;
 
@@ -226,34 +257,38 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           if (tab.tabIndex !== tabIndex) return tab;
 
           const updatedItems = [...tab.items, ...roundTaggedItems];
-          const newTotal = (tab.totalAmount || 0) + itemsTotal;
+          const nextCorkageFee = hasCorkageFee || tab.hasCorkageFee;
+          const nextCorkageAmount = (tab.corkageAmount || 0) + (hasCorkageFee ? corkageAmount : 0);
 
-          return {
+          const updatedTab: CustomerTab = {
             ...tab,
             items: updatedItems,
-            totalAmount: newTotal,
-            hasCorkageFee: hasCorkageFee || tab.hasCorkageFee,
-            corkageAmount: (tab.corkageAmount || 0) + corkageAmount,
+            hasCorkageFee: nextCorkageFee,
+            corkageAmount: nextCorkageAmount,
+            totalAmount: 0,
           };
+          updatedTab.totalAmount = deriveTabTotal(updatedTab);
+          return updatedTab;
         });
 
-        // Compute total amount on table
+        // Compute total amount on table across all active non-cancelled items
         const tableTotal = updatedTabs.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
 
         return {
           ...table,
-          status: 'preparing' as const,
+          status: deriveTableStatus(table.activeTabs.length > 0, updatedTabs),
           totalAmount: tableTotal,
           tabs: updatedTabs,
         };
       });
 
-      // Add station notification
+      // Add station notification with explicit table and tab references
       const targetTable = state.tables.find((t) => t.id === tableId);
+      const guestDisplayName = existingTab?.guestName || `Tab #${tabIndex}`;
       const newAlert: FloorAlert = {
         id: `alt-${Date.now()}`,
-        title: `🚀 Order Sent for Table ${targetTable?.code || tableId} (Round ${currentRound})`,
-        description: `Round ${currentRound}: ${items.length} items dispatched to Bar/Kitchen stations. Chit printed.`,
+        title: `🚀 Order Sent: ${targetTable?.code || tableId} • ${guestDisplayName} • Round ${targetRound}`,
+        description: `Round ${targetRound}: ${items.length} item(s) dispatched to stations. Chit printed.`,
         type: 'station_ready',
         time: 'Just now',
         isRead: false,
@@ -277,11 +312,11 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         tabId: currentTab?.id || `tab-${tableId}-${tabIndex}`,
         tableId: tableId,
         customerName: currentTab?.guestName || `Guest ${tabIndex}`,
-        orderNumber: `#${currentTable?.code || 'T'}-${tabIndex}-R${currentRound}-${Date.now().toString().slice(-4)}`,
+        orderNumber: `#${currentTable?.code || 'T'}-${tabIndex}-R${targetRound}-${Date.now().toString().slice(-4)}`,
         orderType: 'DINE_IN',
         hasCorkageFee,
         corkageAmount,
-        roundNumber: currentRound,
+        roundNumber: targetRound,
         items: roundTaggedItems.map((i) => ({
           id: i.id,
           productId: i.productId,
@@ -295,6 +330,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       })
       .then((res) => {
         if (res.items && res.items.length > 0) {
+          // Map returned database item UUIDs cleanly onto newly added items
+          const newlyAddedMap = new Map<string, string>();
+          res.items.forEach((dbIt: any, idx: number) => {
+            const localItem = roundTaggedItems[idx];
+            if (localItem && dbIt.id) {
+              newlyAddedMap.set(localItem.id, dbIt.id);
+            }
+          });
+
           set((state) => ({
             tables: state.tables.map((t) => {
               if (t.id !== tableId) return t;
@@ -302,23 +346,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 ...t,
                 tabs: (t.tabs || []).map((tb) => {
                   if (tb.tabIndex !== tabIndex) return tb;
-                  // Map returned database item UUIDs onto the corresponding round line items
                   const updatedItems = tb.items.map((it) => {
-                    if (
-                      it.roundNumber === currentRound &&
-                      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(it.id)
-                    ) {
-                      const matched = res.items.find(
-                        (dbIt: any) =>
-                          dbIt.station_target === it.stationTarget && dbIt.quantity === it.quantity
-                      );
-                      if (matched) return { ...it, id: matched.id };
+                    if (newlyAddedMap.has(it.id)) {
+                      return { ...it, id: newlyAddedMap.get(it.id)! };
                     }
                     return it;
                   });
                   return {
                     ...tb,
-                    id: res.order.tab_id || tb.id,
+                    id: res.order?.tab_id || tb.id,
                     items: updatedItems,
                   };
                 }),
@@ -365,17 +401,28 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
       if (mode === 'entire') {
         const targetExistingTabs = target.tabs || [];
-        const targetExistingCount = targetExistingTabs.length;
+        const targetExistingMax =
+          targetExistingTabs.length > 0
+            ? Math.max(...targetExistingTabs.map((t) => t.tabIndex))
+            : 0;
 
-        const reindexedTransferredTabs = originTabs.map((t, idx) => ({
-          ...t,
-          id: `tab-${target.id}-${targetExistingCount + idx + 1}`,
-          tabIndex: targetExistingCount + idx + 1,
-        }));
+        const reindexedTransferredTabs = originTabs.map((t, idx) => {
+          const newTabIndex = targetExistingMax + idx + 1;
+          return {
+            ...t,
+            id: `tab-${target.id}-${newTabIndex}`,
+            tabIndex: newTabIndex,
+            items: (t.items || []).map((item) => ({
+              ...item,
+              tabIndex: newTabIndex,
+            })),
+          };
+        });
 
         const combinedTabs = [...targetExistingTabs, ...reindexedTransferredTabs];
         const combinedActiveTabs = combinedTabs.map((t) => t.tabIndex);
-        const combinedAmount = (target.totalAmount || 0) + (origin.totalAmount || 0);
+        const combinedAmount = combinedTabs.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
+        const nextTargetStatus = deriveTableStatus(combinedActiveTabs.length > 0, combinedTabs);
 
         const updatedTables = state.tables.map((t) => {
           if (t.id === originId) {
@@ -393,7 +440,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           if (t.id === targetId) {
             return {
               ...t,
-              status: target.status === 'empty' ? origin.status : target.status,
+              status: nextTargetStatus,
               guests: target.guests + origin.guests,
               hasOpenCheck: true,
               totalAmount: combinedAmount,
@@ -402,7 +449,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 target.maxTabs || 1,
                 combinedActiveTabs.length,
                 ...combinedActiveTabs,
-                target.seats || 1
+                99
               ),
               tabs: combinedTabs,
               assignedStaff: target.assignedStaff || origin.assignedStaff,
@@ -441,6 +488,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           (acc, cur) => acc + (cur.totalAmount || 0),
           0
         );
+        const nextOriginStatus = deriveTableStatus(
+          remainingOriginActiveTabs.length > 0,
+          remainingOriginTabs
+        );
 
         const targetExistingTabs = target.tabs || [];
         const nextTargetTabIndex =
@@ -452,18 +503,26 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           ...tabToMove,
           id: `tab-${target.id}-${nextTargetTabIndex}`,
           tabIndex: nextTargetTabIndex,
+          items: (tabToMove.items || []).map((item) => ({
+            ...item,
+            tabIndex: nextTargetTabIndex,
+          })),
         };
 
         const nextTargetTabs = [...targetExistingTabs, movedTabAdjusted];
         const nextTargetActiveTabs = nextTargetTabs.map((t) => t.tabIndex);
-        const nextTargetAmount = (target.totalAmount || 0) + tabToMove.totalAmount;
+        const nextTargetAmount = nextTargetTabs.reduce(
+          (acc, cur) => acc + (cur.totalAmount || 0),
+          0
+        );
+        const nextTargetStatus = deriveTableStatus(nextTargetActiveTabs.length > 0, nextTargetTabs);
 
         const updatedTables = state.tables.map((t) => {
           if (t.id === originId) {
             const isEmptyNow = remainingOriginTabs.length === 0;
             return {
               ...t,
-              status: isEmptyNow ? ('empty' as const) : t.status,
+              status: isEmptyNow ? ('empty' as const) : nextOriginStatus,
               guests: isEmptyNow ? 0 : Math.max(1, t.guests - 1),
               hasOpenCheck: !isEmptyNow,
               totalAmount: isEmptyNow ? undefined : remainingOriginAmount,
@@ -475,7 +534,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           if (t.id === targetId) {
             return {
               ...t,
-              status: target.status === 'empty' ? ('occupied' as const) : target.status,
+              status: nextTargetStatus,
               guests: target.status === 'empty' ? 1 : target.guests + 1,
               hasOpenCheck: true,
               totalAmount: nextTargetAmount,
@@ -484,7 +543,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
                 target.maxTabs || 1,
                 nextTargetTabIndex,
                 nextTargetActiveTabs.length,
-                target.seats || 1
+                99
               ),
               tabs: nextTargetTabs,
               assignedStaff: target.assignedStaff || origin.assignedStaff,
@@ -515,7 +574,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
     // Background asynchronous Supabase RPC execution
     const originTable = get().tables.find((t) => t.id === originId);
-    const targetTable = get().tables.find((t) => t.id === targetId);
     const tabToMove =
       originTable?.tabs?.find((t) => t.tabIndex === tabIndex) || originTable?.tabs?.[0];
 
@@ -597,18 +655,21 @@ export const useOrderStore = create<OrderState>((set, get) => ({
       const remainingTabs = (table.tabs || []).filter((t) => t.tabIndex !== tabIndex);
       const remainingActiveTabs = table.activeTabs.filter((num) => num !== tabIndex);
       const remainingAmount = remainingTabs.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
+      const nextTableStatus = deriveTableStatus(remainingActiveTabs.length > 0, remainingTabs);
 
       const updatedTables = state.tables.map((t) => {
         if (t.id !== tableId) return t;
 
+        const isTableEmpty = remainingActiveTabs.length === 0;
         return {
           ...t,
           activeTabs: remainingActiveTabs,
           tabs: remainingTabs,
-          status: remainingActiveTabs.length === 0 ? ('empty' as const) : ('occupied' as const),
-          hasOpenCheck: remainingActiveTabs.length > 0,
-          totalAmount: remainingActiveTabs.length === 0 ? undefined : remainingAmount,
-          guests: remainingActiveTabs.length === 0 ? 0 : Math.max(1, t.guests - 1),
+          status: isTableEmpty ? ('empty' as const) : nextTableStatus,
+          hasOpenCheck: !isTableEmpty,
+          totalAmount: isTableEmpty ? undefined : remainingAmount,
+          guests: isTableEmpty ? 0 : Math.max(1, t.guests - 1),
+          elapsedTime: isTableEmpty ? '0m' : t.elapsedTime,
         };
       });
 
@@ -864,25 +925,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
         if (!hasItem) return table;
 
-        // Check if all items in table are ready or served
-        const allItems = updatedTabs.flatMap((t) => t.items);
-        const hasPrep = allItems.some((i) => i.status === 'preparing');
-        const hasReady = allItems.some((i) => i.status === 'ready');
-        const allServed = allItems.length > 0 && allItems.every((i) => i.status === 'served');
-
-        let nextTableStatus = table.status;
-        if (hasReady) {
-          nextTableStatus = 'ready';
-        } else if (hasPrep) {
-          nextTableStatus = 'preparing';
-        } else if (allServed) {
-          nextTableStatus = 'served';
-        }
-
         return {
           ...table,
           tabs: updatedTabs,
-          status: nextTableStatus,
+          status: deriveTableStatus(table.activeTabs.length > 0, updatedTabs),
         };
       });
 
@@ -891,7 +937,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         const updatedItems = order.items.map((item) =>
           item.id === itemId ? { ...item, status: newStatus } : item
         );
-        const allReady = updatedItems.length > 0 && updatedItems.every((i) => i.status === 'ready');
+        const activeItems = updatedItems.filter((i) => i.status !== 'cancelled');
+        const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
         return {
           ...order,
           items: updatedItems,
@@ -904,7 +951,8 @@ export const useOrderStore = create<OrderState>((set, get) => ({
         const updatedItems = order.items.map((item) =>
           item.id === itemId ? { ...item, status: newStatus } : item
         );
-        const allReady = updatedItems.length > 0 && updatedItems.every((i) => i.status === 'ready');
+        const activeItems = updatedItems.filter((i) => i.status !== 'cancelled');
+        const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
         return {
           ...order,
           items: updatedItems,
@@ -951,24 +999,10 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           return { ...tab, items: updatedItems };
         });
 
-        const allItems = updatedTabs.flatMap((t) => t.items);
-        const hasPrep = allItems.some((i) => i.status === 'preparing');
-        const hasReady = allItems.some((i) => i.status === 'ready');
-        const allServed = allItems.length > 0 && allItems.every((i) => i.status === 'served');
-
-        let nextTableStatus = table.status;
-        if (hasReady) {
-          nextTableStatus = 'ready';
-        } else if (hasPrep) {
-          nextTableStatus = 'preparing';
-        } else if (allServed) {
-          nextTableStatus = 'served';
-        }
-
         return {
           ...table,
           tabs: updatedTabs,
-          status: nextTableStatus,
+          status: deriveTableStatus(table.activeTabs.length > 0, updatedTabs),
         };
       });
 
@@ -1036,7 +1070,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
   voidOrderItem: async (itemId, staffId, reason, tableId, tabIndex) => {
     let cancelledItemName = 'Item';
-    let cancelledPrice = 0;
 
     set((state) => {
       // 1. Update Tables
@@ -1051,7 +1084,6 @@ export const useOrderStore = create<OrderState>((set, get) => ({
             if (item.id === itemId) {
               found = true;
               cancelledItemName = item.productName;
-              cancelledPrice = item.unitPrice * item.quantity;
               return {
                 ...item,
                 status: 'cancelled' as const,
@@ -1063,12 +1095,12 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
           if (!found) return tab;
 
-          const newTotal = Math.max(0, (tab.totalAmount || 0) - cancelledPrice);
-          return {
+          const updatedTab: CustomerTab = {
             ...tab,
             items: updatedItems,
-            totalAmount: newTotal,
           };
+          updatedTab.totalAmount = deriveTabTotal(updatedTab);
+          return updatedTab;
         });
 
         if (!found) return table;
@@ -1078,31 +1110,56 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           ...table,
           tabs: updatedTabs,
           totalAmount: tableTotal,
+          status: deriveTableStatus(table.activeTabs.length > 0, updatedTabs),
         };
       });
 
       // 2. Update Takeout
       const updatedTakeout = state.takeoutOrders.map((order) => {
+        let found = false;
         const updatedItems = order.items.map((item) => {
           if (item.id === itemId) {
+            found = true;
             cancelledItemName = item.productName;
             return { ...item, status: 'cancelled' as const, voidReason: reason };
           }
           return item;
         });
-        return { ...order, items: updatedItems };
+        if (!found) return order;
+
+        const activeItems = updatedItems.filter((i) => i.status !== 'cancelled');
+        const newTotal = activeItems.reduce((acc, cur) => acc + cur.unitPrice * cur.quantity, 0);
+        const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
+        return {
+          ...order,
+          items: updatedItems,
+          total: newTotal,
+          status: allReady ? ('ready' as const) : order.status,
+        };
       });
 
       // 3. Update Online
       const updatedOnline = state.onlineOrders.map((order) => {
+        let found = false;
         const updatedItems = order.items.map((item) => {
           if (item.id === itemId) {
+            found = true;
             cancelledItemName = item.productName;
             return { ...item, status: 'cancelled' as const, voidReason: reason };
           }
           return item;
         });
-        return { ...order, items: updatedItems };
+        if (!found) return order;
+
+        const activeItems = updatedItems.filter((i) => i.status !== 'cancelled');
+        const newTotal = activeItems.reduce((acc, cur) => acc + cur.unitPrice * cur.quantity, 0);
+        const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
+        return {
+          ...order,
+          items: updatedItems,
+          total: newTotal,
+          status: allReady ? ('ready' as const) : order.status,
+        };
       });
 
       const newAlert: FloorAlert = {
@@ -1184,11 +1241,17 @@ export const useOrderStore = create<OrderState>((set, get) => ({
 
       const mappedTables: TableItem[] = dbTables.map((dbt: any) => {
         const rawTabs = dbt.tabs || [];
-        const openTabs = rawTabs.filter((tb: any) => tb.status === 'OPEN');
-        const activeTabsIndices = openTabs.map((_: any, idx: number) => idx + 1);
+        const openTabs = rawTabs
+          .filter((tb: any) => tb.status === 'OPEN')
+          .sort(
+            (a: any, b: any) =>
+              new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime()
+          );
 
         const customerTabs: CustomerTab[] = openTabs.map((tb: any, idx: number) => {
-          const rawOrders = tb.orders || [];
+          const rawOrders = (tb.orders || []).sort(
+            (a: any, b: any) => (a.round_number || 1) - (b.round_number || 1)
+          );
           const lineItems: OrderLineItem[] = rawOrders.flatMap((o: any) =>
             (o.order_items || []).map((oi: any) => ({
               id: oi.id,
@@ -1226,20 +1289,21 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           };
         });
 
-        const totalTableAmount = customerTabs.reduce((acc, cur) => acc + cur.totalAmount, 0);
+        // Preserve any optimistic local open tabs that are not yet in the DB response
+        const currentLocalTable = get().tables.find((t) => t.id === dbt.id);
+        const pendingLocalTabs = (currentLocalTable?.tabs || []).filter(
+          (lt) => lt.status === 'open' && !customerTabs.some((ct) => ct.id === lt.id)
+        );
+        const combinedTabs = [...customerTabs, ...pendingLocalTabs];
+        const activeTabsIndices = combinedTabs.map((tb, idx) => tb.tabIndex || idx + 1);
+
+        const totalTableAmount = combinedTabs.reduce((acc, cur) => acc + cur.totalAmount, 0);
 
         // Determine table preparation status
-        const allItems = customerTabs.flatMap((t) => t.items);
-        let tableStatus: TableItem['status'] = dbt.is_occupied ? 'occupied' : 'empty';
-        if (allItems.length > 0) {
-          if (allItems.every((i) => i.status === 'served')) {
-            tableStatus = 'served';
-          } else if (allItems.every((i) => i.status === 'ready')) {
-            tableStatus = 'ready';
-          } else if (allItems.some((i) => i.status === 'preparing')) {
-            tableStatus = 'preparing';
-          }
-        }
+        const tableStatus = deriveTableStatus(
+          dbt.is_occupied || combinedTabs.length > 0,
+          combinedTabs
+        );
 
         const isBar = dbt.zone === 'BAR_AREA' || dbt.table_number.toLowerCase().includes('bar');
 
@@ -1248,15 +1312,15 @@ export const useOrderStore = create<OrderState>((set, get) => ({
           code: dbt.table_number,
           area: isBar ? 'bar' : 'cafe',
           seats: dbt.capacity || 4,
-          guests: dbt.is_occupied ? Math.max(1, customerTabs.length) : 0,
+          guests: dbt.is_occupied ? Math.max(1, combinedTabs.length) : 0,
           status: tableStatus,
           elapsedTime: dbt.is_occupied ? '10m' : '0m',
-          hasOpenCheck: dbt.is_occupied,
+          hasOpenCheck: dbt.is_occupied || combinedTabs.length > 0,
           activeTabs: activeTabsIndices,
-          maxTabs: dbt.capacity || 4,
+          maxTabs: 99,
           isMyTable: false,
-          tabs: customerTabs,
-          totalAmount: dbt.is_occupied ? totalTableAmount : undefined,
+          tabs: combinedTabs,
+          totalAmount: dbt.is_occupied || combinedTabs.length > 0 ? totalTableAmount : undefined,
         };
       });
 

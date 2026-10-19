@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MessageSquare } from 'lucide-react-native';
 import { useAuthStore } from '../../../store/useAuthStore';
@@ -15,6 +15,31 @@ import { FohStatusModal } from '../barista/modals/FohStatusModal';
 import { SharedChatView, SharedAlertsView } from '../../shared';
 import { StationSettingsModal } from '../common/modals/StationSettingsModal';
 import { supabase } from '../../../services/supabase';
+
+// Native Web Audio chime for KDS ticket arrivals
+const playKdsChime = () => {
+  try {
+    const AudioCtx =
+      typeof window !== 'undefined'
+        ? window.AudioContext || (window as any).webkitAudioContext
+        : null;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(783.99, ctx.currentTime); // G5
+    osc.frequency.exponentialRampToValueAtTime(1046.5, ctx.currentTime + 0.12); // C6
+    gain.gain.setValueAtTime(0.18, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.35);
+  } catch {
+    // AudioContext blocked or unsupported in headless environment
+  }
+};
 
 export interface UnifiedKdsScreenProps {
   stationTarget: 'bar' | 'kitchen';
@@ -114,14 +139,16 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           roundsMap.get(r)!.push(item);
         });
 
-        roundsMap.forEach((roundItems, roundNum) => {
+        const sortedRoundNums = Array.from(roundsMap.keys()).sort((a, b) => a - b);
+        sortedRoundNums.forEach((roundNum) => {
+          const roundItems = roundsMap.get(roundNum)!;
           // Prune round if all active items are served or voided
           const activeRoundItems = roundItems.filter((i) => i.status !== 'cancelled');
           if (activeRoundItems.length === 0) return;
           const allServed = activeRoundItems.every((i) => i.status === 'served');
           if (allServed) return; // Immediately removed from active board!
 
-          const ticketId = `tbl-${table.id}-${tab.id || tab.tabIndex}-r${roundNum}`;
+          const ticketId = `tbl-${table.id}-tab${tab.tabIndex}-r${roundNum}-${stationTarget}`;
           const allReady = activeRoundItems.every((i) => i.status === 'ready');
           const hasPrep = activeRoundItems.some((i) => i.status === 'preparing');
           const hasCancelled = roundItems.some((i) => i.status === 'cancelled');
@@ -148,15 +175,20 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
               : undefined;
 
           const minutes = parseInt(table.elapsedTime || '1', 10) || 1;
+          const cleanCode = table.code
+            .replace('Table ', 'T')
+            .replace('Cafe ', 'C')
+            .replace('Bar ', 'B');
+          const guestStr = tab.guestName ? ` · "${tab.guestName}"` : '';
 
           list.push({
             id: ticketId,
-            tableId: table.id,
-            tabIndex: tab.tabIndex,
-            orderNumber: `#${table.code.replace('Table ', 'T')}-${tab.tabIndex}-R${roundNum}`,
-            tableOrSource: `${table.code} · Tab ${tab.tabIndex} (${tab.guestName || 'Guest'})`,
+            orderNumber: `#${cleanCode}-${tab.tabIndex}-R${roundNum}`,
+            tableOrSource: `${table.code} · Tab ${tab.tabIndex}${guestStr}`,
             stage,
             roundNumber: roundNum,
+            tableId: table.id,
+            tabIndex: tab.tabIndex,
             elapsedTime: table.elapsedTime || '1m',
             minutesElapsed: minutes,
             badges,
@@ -193,6 +225,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
 
       list.push({
         id: `takeout-${order.id}`,
+        takeoutId: order.id,
         orderNumber: order.ticketNumber,
         tableOrSource: `Takeout · ${order.customerName}`,
         stage,
@@ -224,6 +257,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
 
       list.push({
         id: `online-${order.id}`,
+        onlineId: order.id,
         orderNumber: order.platformOrderRef,
         tableOrSource: `${platformLabel} · ${order.riderName}`,
         stage,
@@ -266,6 +300,35 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   const activeTicketsCount = newTickets.length + preparingTickets.length;
   const unreadAlertCount = alerts.filter((a) => !a.isRead).length;
 
+  // Audio chime & notification on incoming new tickets
+  const prevNewTicketIdsRef = useRef<Set<string>>(new Set());
+  const isFirstRender = useRef(true);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      prevNewTicketIdsRef.current = new Set(newTickets.map((t) => t.id));
+      return;
+    }
+
+    const prevIds = prevNewTicketIdsRef.current;
+    const incomingNewTickets = newTickets.filter((t) => !prevIds.has(t.id));
+
+    if (incomingNewTickets.length > 0) {
+      if (audioChimes) {
+        playKdsChime();
+      }
+      incomingNewTickets.forEach((t) => {
+        const roundText = t.roundNumber && t.roundNumber > 1 ? ` (Round ${t.roundNumber})` : '';
+        toast.info(`🔔 New Order: ${t.orderNumber}${roundText} JUST IN`, {
+          title: `New Ticket at ${stationName}`,
+        });
+      });
+    }
+
+    prevNewTicketIdsRef.current = new Set(newTickets.map((t) => t.id));
+  }, [newTickets, audioChimes, stationName]);
+
   // Actions
   const handleStartTicket = (ticket: BarTicket) => {
     ticket.items
@@ -284,13 +347,10 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   const handleDismissReadyTicket = (ticket: BarTicket) => {
     if (ticket.tableId && ticket.tabIndex !== undefined) {
       markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber || 1, stationTarget);
-    } else if (ticket.id.startsWith('tbl-')) {
-      const parts = ticket.id.split('-');
-      const tableId = parts[1];
-      const roundNum = ticket.roundNumber || 1;
-      const targetTable = tables.find((t) => t.id === tableId);
-      const tabIndex = ticket.tabIndex || targetTable?.tabs?.[0]?.tabIndex || 1;
-      markRoundServed(tableId, tabIndex, roundNum, stationTarget);
+    } else if (ticket.takeoutId) {
+      markTakeoutServed(ticket.takeoutId);
+    } else if (ticket.onlineId) {
+      markOnlineServed(ticket.onlineId);
     } else if (ticket.id.startsWith('takeout-')) {
       const orderId = ticket.id.replace('takeout-', '');
       markTakeoutServed(orderId);

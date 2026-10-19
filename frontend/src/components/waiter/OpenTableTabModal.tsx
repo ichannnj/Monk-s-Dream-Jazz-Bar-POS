@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, Pressable, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { X, Users, Utensils, Check, Plus } from 'lucide-react-native';
-import { TableItem } from '../../mockData';
+import { TableItem } from '../../types/floor';
 
 interface OpenTableTabModalProps {
   visible: boolean;
@@ -31,8 +31,15 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
     }
   }, [preselectedTable]);
 
+  const currentTable = tables.find((t) => t.id === selectedTableId);
+  const activeTabsCount =
+    currentTable?.tabs && currentTable.tabs.length > 0
+      ? currentTable.tabs.filter((tab) => tab.status !== 'closed').length
+      : currentTable?.activeTabs.length || 0;
+  const isSplitTab = activeTabsCount > 0;
+
   const handleConfirm = () => {
-    const finalName = guestName.trim() || 'Guest';
+    const finalName = guestName.trim() || `Guest ${activeTabsCount + 1}`;
     onConfirmOpenTab(selectedTableId, finalName, guestCount);
     setGuestName('');
     setGuestCount(2);
@@ -51,8 +58,16 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.title}>Open Table Tab</Text>
-              <Text style={styles.subtitle}>Start a new named guest tab for dine-in seating</Text>
+              <Text style={styles.title}>
+                {isSplitTab
+                  ? `Open Split Tab · Table ${currentTable?.code || ''}`
+                  : 'Open Table Tab'}
+              </Text>
+              <Text style={styles.subtitle}>
+                {isSplitTab
+                  ? `Add another party tab to Table ${currentTable?.code || ''}`
+                  : 'Start a new named guest tab for dine-in seating'}
+              </Text>
             </View>
             <Pressable
               onPress={onClose}
@@ -118,7 +133,7 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
           <View style={styles.stepperSection}>
             <Text style={styles.sectionLabel}>Guests Seated:</Text>
             <View style={styles.stepperRow}>
-              {[1, 2, 3, 4, 5, 6].map((num) => (
+              {[1, 2, 3, 4, 5, 6, 8, 10].map((num) => (
                 <Pressable
                   key={num}
                   onPress={() => setGuestCount(num)}
@@ -148,8 +163,10 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
               style={[styles.confirmBtn, !selectedTableId && styles.confirmBtnDisabled]}
               disabled={!selectedTableId}
             >
-              <Plus size={16} color="#ffffff" strokeWidth={2.4} />
-              <Text style={styles.confirmBtnText}>Open Tab & Start Order</Text>
+              <Plus size={18} color="#ffffff" strokeWidth={2.4} />
+              <Text style={styles.confirmBtnText}>
+                {isSplitTab ? 'Open Split Tab & Order' : 'Open Tab & Start Order'}
+              </Text>
             </Pressable>
           </View>
         </View>
@@ -170,7 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 24,
     width: '100%',
-    maxWidth: 540,
+    maxWidth: 560,
     padding: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
@@ -182,48 +199,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 18,
   },
   title: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
     color: '#1a1a1e',
   },
   subtitle: {
-    fontSize: 13,
+    fontSize: 16,
     color: '#6b7280',
-    marginTop: 2,
+    marginTop: 3,
   },
   closeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   sectionLabel: {
-    fontSize: 13.5,
+    fontSize: 16,
     fontWeight: '700',
     color: '#374151',
     marginBottom: 8,
   },
   tableScroll: {
-    maxHeight: 74,
+    maxHeight: 84,
     marginBottom: 16,
   },
   tableScrollContent: {
-    gap: 8,
+    gap: 10,
     paddingRight: 10,
   },
   tableChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 14,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 76,
-    minHeight: 48,
+    minWidth: 84,
+    minHeight: 52,
     borderWidth: 1.5,
   },
   tableChipEmpty: {
@@ -239,7 +256,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#641b2a',
   },
   tableChipText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     color: '#1f2937',
   },
@@ -247,7 +264,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   tableChipSub: {
-    fontSize: 11,
+    fontSize: 16,
     fontWeight: '600',
     color: '#6b7280',
     marginTop: 2,
@@ -277,8 +294,8 @@ const styles = StyleSheet.create({
   guestCountBtn: {
     flex: 1,
     minHeight: 48,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 14,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
@@ -302,21 +319,21 @@ const styles = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     minHeight: 48,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 14,
     backgroundColor: '#f3f4f6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtnText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '700',
     color: '#4b5563',
   },
   confirmBtn: {
     flex: 2,
     minHeight: 48,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 14,
     backgroundColor: '#641b2a',
     flexDirection: 'row',
@@ -328,7 +345,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   confirmBtnText: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     color: '#ffffff',
   },

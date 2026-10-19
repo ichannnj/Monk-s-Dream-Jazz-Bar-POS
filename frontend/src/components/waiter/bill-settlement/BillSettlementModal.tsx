@@ -11,7 +11,8 @@ import {
   Receipt,
   Sparkles,
 } from 'lucide-react-native';
-import { TableItem, CustomerTab } from '../../../mockData';
+import { TableItem, CustomerTab } from '../../../types/floor';
+import { formatCurrency } from '@monks/shared';
 import { toast } from '../../../store/useToastStore';
 import { styles } from './BillSettlementModal.styles';
 
@@ -58,7 +59,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const handleConfirm = () => {
     if (selectedMethod === 'cash' && numericTendered > 0 && numericTendered < grandTotal) {
       toast.warning(
-        `Tendered amount ($${numericTendered.toFixed(2)}) is less than total due ($${grandTotal.toFixed(2)})`,
+        `Tendered amount (${formatCurrency(numericTendered)}) is less than total due (${formatCurrency(grandTotal)})`,
         { title: 'Insufficient Cash' }
       );
       return;
@@ -75,9 +76,9 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 
   const quickCashOptions = [
     grandTotal,
-    Math.ceil(grandTotal / 10) * 10,
-    Math.ceil(grandTotal / 50) * 50,
-    100,
+    Math.ceil(grandTotal / 100) * 100,
+    Math.ceil(grandTotal / 500) * 500,
+    Math.ceil(grandTotal / 1000) * 1000,
   ].filter((v, i, a) => a.indexOf(v) === i && v >= grandTotal);
 
   const activeTabsCount =
@@ -103,7 +104,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
               <View>
                 <Text style={styles.title}>Checkout & Bill Settlement</Text>
                 <Text style={styles.subtitle}>
-                  Table {table.code} • {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
+                  {table.code.toLowerCase().startsWith('cafe') ||
+                  table.code.toLowerCase().startsWith('bar')
+                    ? table.code
+                    : `${table.area === 'bar' ? 'Bar' : 'Cafe'} ${table.code}`}{' '}
+                  • {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
                 </Text>
               </View>
             </View>
@@ -164,9 +169,9 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
               {/* Total Display Card */}
               <View style={styles.totalDisplayCard}>
                 <Text style={styles.totalCardLabel}>Balance Due</Text>
-                <Text style={styles.totalCardAmount}>${grandTotal.toFixed(2)}</Text>
+                <Text style={styles.totalCardAmount}>{formatCurrency(grandTotal)}</Text>
                 <Text style={styles.totalCardSub}>
-                  Subtotal: ${subtotal.toFixed(2)} + VAT (10%): ${tax.toFixed(2)}
+                  Subtotal: {formatCurrency(subtotal)} + VAT (10%): {formatCurrency(tax)}
                 </Text>
               </View>
 
@@ -264,14 +269,14 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                             numericTendered === opt && styles.quickCashTextActive,
                           ]}
                         >
-                          ${opt.toFixed(2)}
+                          {formatCurrency(opt)}
                         </Text>
                       </Pressable>
                     ))}
                   </View>
 
                   <View style={styles.tenderedInputRow}>
-                    <Text style={styles.inputPrefix}>Tendered: $</Text>
+                    <Text style={styles.inputPrefix}>Tendered: ₱</Text>
                     <TextInput
                       style={styles.tenderedInput}
                       keyboardType="numeric"
@@ -285,7 +290,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                   {/* Change Due Banner */}
                   <View style={styles.changeDueBanner}>
                     <Text style={styles.changeDueLabel}>Change Due to Guest:</Text>
-                    <Text style={styles.changeDueAmount}>${changeDue.toFixed(2)}</Text>
+                    <Text style={styles.changeDueAmount}>{formatCurrency(changeDue)}</Text>
                   </View>
                 </View>
               ) : null}
@@ -334,7 +339,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                       {item.quantity}x {item.productName.slice(0, 18)}
                     </Text>
                     <Text style={styles.receiptItemPrice}>
-                      ${(item.unitPrice * item.quantity).toFixed(2)}
+                      {formatCurrency(item.unitPrice * item.quantity)}
                     </Text>
                   </View>
                 ))}
@@ -343,15 +348,15 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 {/* Totals */}
                 <View style={styles.receiptRow}>
                   <Text style={styles.receiptMeta}>SUBTOTAL:</Text>
-                  <Text style={styles.receiptMeta}>${subtotal.toFixed(2)}</Text>
+                  <Text style={styles.receiptMeta}>{formatCurrency(subtotal)}</Text>
                 </View>
                 <View style={styles.receiptRow}>
                   <Text style={styles.receiptMeta}>TAX (10%):</Text>
-                  <Text style={styles.receiptMeta}>${tax.toFixed(2)}</Text>
+                  <Text style={styles.receiptMeta}>{formatCurrency(tax)}</Text>
                 </View>
                 <View style={styles.receiptRow}>
                   <Text style={styles.receiptBold}>TOTAL PAID:</Text>
-                  <Text style={styles.receiptBold}>${grandTotal.toFixed(2)}</Text>
+                  <Text style={styles.receiptBold}>{formatCurrency(grandTotal)}</Text>
                 </View>
                 <Text style={styles.receiptDivider}>================================</Text>
                 <Text style={styles.receiptFooter}>Thank you for jamming with us!</Text>

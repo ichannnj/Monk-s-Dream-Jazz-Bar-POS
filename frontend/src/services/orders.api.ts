@@ -63,6 +63,7 @@ export class OrdersApi {
           order_channel,
           order_type,
           status,
+          round_number,
           created_at,
           order_items (
             id,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Modal } from 'react-native';
+import { View, StyleSheet, Modal, Pressable } from 'react-native';
 import { SharedChatView } from '../../../shared/SharedChatView';
 
 interface SharedChatDrawerProps {
@@ -20,6 +20,11 @@ export const SharedChatDrawer: React.FC<SharedChatDrawerProps> = ({
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close chat"
+        />
         <View style={styles.modalCard}>
           <SharedChatView
             senderName={staffName}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
+import { LayoutGrid } from 'lucide-react-native';
 import { TableItem, TakeoutOrder, OnlineDeliveryOrder } from '../../mockData';
 import { TableCard } from './TableCard';
 import { TakeoutQueueCard } from './TakeoutQueueCard';
@@ -19,6 +20,7 @@ export interface FloorGridViewProps {
   onOnlineReady: (id: string) => void;
   onOnlineHandToRider: (id: string) => void;
   onLayoutGrid: (width: number) => void;
+  onResetFilters?: () => void;
 }
 
 export const FloorGridView: React.FC<FloorGridViewProps> = ({
@@ -34,7 +36,44 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
   onOnlineReady,
   onOnlineHandToRider,
   onLayoutGrid,
+  onResetFilters,
 }) => {
+  const hasItems =
+    filteredTables.length > 0 ||
+    filteredTakeoutOrders.length > 0 ||
+    filteredOnlineOrders.length > 0;
+
+  if (!hasItems) {
+    return (
+      <View
+        onLayout={(e) => onLayoutGrid(e.nativeEvent.layout.width)}
+        className="w-full py-16 px-6 items-center justify-center bg-white/70 rounded-3xl border border-gray-200 my-4"
+      >
+        <View className="w-16 h-16 rounded-2xl bg-wine-50 items-center justify-center mb-4">
+          <LayoutGrid size={32} color="#7e2235" strokeWidth={2.2} />
+        </View>
+        <Text className="text-pos-lg font-bold text-gray-900 text-center mb-1">
+          No Tables or Orders Found
+        </Text>
+        <Text className="text-base text-gray-600 text-center max-w-md mb-6 leading-relaxed">
+          No dine-in tables, takeout orders, or delivery cards match the active filter criteria.
+        </Text>
+        {onResetFilters ? (
+          <Pressable
+            onPress={onResetFilters}
+            className="min-h-[48px] px-6 rounded-xl bg-wine-700 items-center justify-center active:opacity-90 shadow-sm"
+            accessibilityRole="button"
+            accessibilityLabel="Reset all filters"
+          >
+            <Text className="text-base font-bold text-white tracking-wide">
+              Reset Filters to All
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+    );
+  }
+
   return (
     <View style={styles.tablesGrid} onLayout={(e) => onLayoutGrid(e.nativeEvent.layout.width)}>
       {/* Dine-In Physical Tables */}

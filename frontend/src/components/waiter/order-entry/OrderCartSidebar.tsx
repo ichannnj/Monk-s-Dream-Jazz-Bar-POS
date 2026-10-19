@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView, Switch } from 'react-native';
 import { Send, Trash2, Minus, Plus, History, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { formatCurrency } from '@monks/shared';
 import { OrderLineItem } from '../../../mockData';
 import { styles } from './OrderEntryModal.styles';
 
@@ -41,7 +42,7 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
             {roundNumber ? `Round ${roundNumber} Basket` : 'Current Order Basket'}
           </Text>
           {roundNumber && roundNumber > 1 ? (
-            <Text style={{ fontSize: 11, color: '#b45309', fontWeight: '700', marginTop: 2 }}>
+            <Text style={{ fontSize: 16, color: '#b45309', fontWeight: '700', marginTop: 2 }}>
               Add-on Round · In-flight orders locked
             </Text>
           ) : null}
@@ -71,33 +72,34 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
               alignItems: 'center',
               justifyContent: 'space-between',
               backgroundColor: '#f8fafc',
-              paddingVertical: 8,
-              paddingHorizontal: 12,
-              borderRadius: 8,
+              paddingVertical: 12,
+              paddingHorizontal: 14,
+              borderRadius: 10,
               borderWidth: 1,
               borderColor: '#e2e8f0',
+              minHeight: 48,
             }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <History size={14} color="#64748b" />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <History size={18} color="#64748b" />
               <View>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: '#475569' }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#475569' }}>
                   Previous Rounds History ({previousTabItems.length})
                 </Text>
-                <Text style={{ fontSize: 10, color: '#94a3b8' }}>
+                <Text style={{ fontSize: 16, color: '#94a3b8' }}>
                   Already sent to KDS · Historical record
                 </Text>
               </View>
             </View>
             {showHistory ? (
-              <ChevronUp size={14} color="#64748b" />
+              <ChevronUp size={18} color="#64748b" />
             ) : (
-              <ChevronDown size={14} color="#64748b" />
+              <ChevronDown size={18} color="#64748b" />
             )}
           </Pressable>
 
           {showHistory ? (
-            <View style={{ marginTop: 6, gap: 4 }}>
+            <View style={{ marginTop: 8, gap: 6 }}>
               {previousTabItems.map((prevItem, pIdx) => (
                 <View
                   key={prevItem.id || pIdx}
@@ -105,15 +107,16 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
                     flexDirection: 'row',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    paddingVertical: 4,
-                    paddingHorizontal: 6,
-                    borderRadius: 4,
+                    paddingVertical: 8,
+                    paddingHorizontal: 10,
+                    borderRadius: 8,
                     backgroundColor: prevItem.status === 'cancelled' ? '#fef2f2' : '#f1f5f9',
+                    minHeight: 48,
                   }}
                 >
                   <Text
                     style={{
-                      fontSize: 12,
+                      fontSize: 16,
                       color: prevItem.status === 'cancelled' ? '#991b1b' : '#334155',
                       textDecorationLine: prevItem.status === 'cancelled' ? 'line-through' : 'none',
                     }}
@@ -122,7 +125,7 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
                   </Text>
                   <Text
                     style={{
-                      fontSize: 10,
+                      fontSize: 16,
                       fontWeight: '700',
                       textTransform: 'uppercase',
                       color:
@@ -184,13 +187,15 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
                   <Text style={styles.cartItemNotesText}>Note: "{cartItem.notes}"</Text>
                 ) : null}
 
-                <Text style={styles.cartItemUnitPrice}>${cartItem.unitPrice.toFixed(2)} each</Text>
+                <Text style={styles.cartItemUnitPrice}>
+                  {formatCurrency(cartItem.unitPrice)} each
+                </Text>
               </View>
 
               {/* Steppers & Line Total */}
               <View style={styles.cartItemControls}>
                 <Text style={styles.cartItemTotal}>
-                  ${(cartItem.unitPrice * cartItem.quantity).toFixed(2)}
+                  {formatCurrency(cartItem.unitPrice * cartItem.quantity)}
                 </Text>
 
                 <View style={styles.stepperBox}>
@@ -242,26 +247,26 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
       <View style={styles.pricingSummary}>
         <View style={styles.summaryLine}>
           <Text style={styles.summaryLabel}>Items Subtotal:</Text>
-          <Text style={styles.summaryValue}>${itemsSubtotal.toFixed(2)}</Text>
+          <Text style={styles.summaryValue}>{formatCurrency(itemsSubtotal)}</Text>
         </View>
 
         {hasCorkage ? (
           <View style={styles.summaryLine}>
             <Text style={[styles.summaryLabel, { color: '#832238' }]}>Outside Corkage (20%):</Text>
             <Text style={[styles.summaryValue, { color: '#832238' }]}>
-              +${corkageAmount.toFixed(2)}
+              +{formatCurrency(corkageAmount)}
             </Text>
           </View>
         ) : null}
 
         <View style={styles.summaryLine}>
           <Text style={styles.summaryLabel}>Tax (10% VAT):</Text>
-          <Text style={styles.summaryValue}>${taxAmount.toFixed(2)}</Text>
+          <Text style={styles.summaryValue}>{formatCurrency(taxAmount)}</Text>
         </View>
 
         <View style={[styles.summaryLine, styles.totalLine]}>
           <Text style={styles.grandTotalLabel}>Total Amount:</Text>
-          <Text style={styles.grandTotalValue}>${grandTotal.toFixed(2)}</Text>
+          <Text style={styles.grandTotalValue}>{formatCurrency(grandTotal)}</Text>
         </View>
       </View>
 

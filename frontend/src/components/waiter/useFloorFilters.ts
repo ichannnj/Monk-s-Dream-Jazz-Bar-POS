@@ -44,7 +44,7 @@ export function useFloorFilters(
     if (selectedChannel === 'takeout' || selectedChannel === 'online') {
       return [];
     }
-    return tables.filter((table) => {
+    const result = tables.filter((table) => {
       if (selectedChannel !== 'all' && table.area !== selectedChannel) {
         return false;
       }
@@ -52,6 +52,18 @@ export function useFloorFilters(
         return false;
       }
       return true;
+    });
+
+    const parseTableNum = (code: string): number => {
+      const match = code.match(/\d+/);
+      return match ? parseInt(match[0], 10) : 0;
+    };
+
+    return result.sort((a, b) => {
+      if (a.area !== b.area) {
+        return a.area === 'cafe' ? -1 : 1;
+      }
+      return parseTableNum(a.code) - parseTableNum(b.code);
     });
   }, [tables, selectedChannel, selectedStatus]);
 

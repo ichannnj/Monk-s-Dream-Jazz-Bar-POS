@@ -35,3 +35,17 @@ export const ProductSchema = z.object({
 });
 export * from './database.types.js';
 export * from './hlc.js';
+/**
+ * Format an amount in Philippine Peso (PHP) with symbol ₱ and tabular commas.
+ * Example: formatCurrency(1250) => "₱1,250.00"
+ */
+export function formatCurrency(amount) {
+    if (typeof amount !== 'number' || isNaN(amount)) {
+        return '₱0.00';
+    }
+    return `₱${amount.toLocaleString('en-PH', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })}`;
+}
+export const formatPHP = formatCurrency;
