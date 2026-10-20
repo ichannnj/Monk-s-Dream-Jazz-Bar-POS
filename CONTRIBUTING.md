@@ -143,6 +143,11 @@ pnpm build                   # Turbo cached build across all packages
    - **CI:** GitHub Actions validates all checks in parallel on PRs and pushes to `main`.
 6. **Preserve Documentation & Comments:**
    - Maintain all existing comments, docstrings, and Diátaxis documentation structure across all commits.
+7. **250–350 LOC Standard & Modular Slicing:**
+   - To prevent token bloat and maintain high agent navigation efficiency, all files in `frontend/src/` must strictly target **250–350 lines of code max**.
+   - Stores must use the **Zustand Slices pattern** (`frontend/src/store/order/slices/`) combined into a backward-compatible root store facade (`useOrderStore.ts`).
+   - Complex services must be organized into dedicated feature directories (`frontend/src/services/tables/`, `frontend/src/services/orders/`) with sub-modules under 325 LOC and clean facade re-exports (`tables.api.ts`, `orders.api.ts`).
+   - Refer to [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md) for the active Repository Architecture & Modular File Tree.
 
 ---
 

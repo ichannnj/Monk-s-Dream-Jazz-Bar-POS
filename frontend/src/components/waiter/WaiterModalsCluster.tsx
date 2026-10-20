@@ -3,6 +3,7 @@ import { TableItem, OrderLineItem, CustomerTab } from '../../mockData';
 import { TableActionModal } from './TableActionModal';
 import { TableTransferModal } from './TableTransferModal';
 import { OpenTableTabModal } from './OpenTableTabModal';
+import { OpenTableDirectModal } from './OpenTableDirectModal';
 import { NewTakeoutModal } from './NewTakeoutModal';
 import { OnlineDeliveryModal } from './OnlineDeliveryModal';
 import { OrderEntryModal } from './OrderEntryModal';
@@ -33,10 +34,15 @@ export interface WaiterModalsClusterProps {
     reason?: string
   ) => void;
 
-  // Open Table Tab Modal
+  // Open Table Tab Modal (Global + Tab from top bar)
   isOpenTabModalOpen: boolean;
   onCloseOpenTabModal: () => void;
   onConfirmOpenTab: (tableId: string, guestName: string, guestCount: number) => void;
+
+  // Open Table Direct Modal (Direct click on table or + Split Tab)
+  isOpenDirectModalOpen?: boolean;
+  onCloseOpenDirectModal?: () => void;
+  isSplitTabDirect?: boolean;
 
   // Takeout Modal
   isTakeoutModalOpen: boolean;
@@ -97,6 +103,9 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
   isOpenTabModalOpen,
   onCloseOpenTabModal,
   onConfirmOpenTab,
+  isOpenDirectModalOpen = false,
+  onCloseOpenDirectModal = () => {},
+  isSplitTabDirect = false,
   isTakeoutModalOpen,
   onCloseTakeoutModal,
   onProceedTakeout,
@@ -138,12 +147,21 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
         />
       )}
 
-      {/* MODAL 3: Open Table Tab Modal */}
+      {/* MODAL 3A: Open Table Tab Modal (Global + Tab from top command bar) */}
       <OpenTableTabModal
         visible={isOpenTabModalOpen}
         tables={tables}
         preselectedTable={selectedTable}
         onClose={onCloseOpenTabModal}
+        onConfirmOpenTab={onConfirmOpenTab}
+      />
+
+      {/* MODAL 3B: Open Table Direct Modal (Empty Table Tap or + Split Tab inside TableActionModal) */}
+      <OpenTableDirectModal
+        visible={isOpenDirectModalOpen}
+        table={selectedTable}
+        isSplitTab={isSplitTabDirect}
+        onClose={onCloseOpenDirectModal}
         onConfirmOpenTab={onConfirmOpenTab}
       />
 

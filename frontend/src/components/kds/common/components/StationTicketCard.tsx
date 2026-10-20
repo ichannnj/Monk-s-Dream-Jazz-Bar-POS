@@ -86,6 +86,7 @@ export const StationTicketCard: React.FC<StationTicketCardProps> = ({
     <View
       style={[
         styles.cardContainer,
+        Boolean(transferAlert) && styles.cardContainerRelocated,
         allReady && styles.cardReady,
         ticket.minutesElapsed >= 10 && styles.cardOverdue,
       ]}
@@ -102,18 +103,20 @@ export const StationTicketCard: React.FC<StationTicketCardProps> = ({
             </View>
             <Text style={styles.orderNumberText}>{ticket.orderNumber}</Text>
 
-            {/* Round Badge */}
+            {/* Clean Round Badge */}
             {ticket.roundNumber && ticket.roundNumber > 1 ? (
               <View
                 style={{
-                  backgroundColor: '#832238',
-                  paddingHorizontal: 6,
+                  backgroundColor: '#eff6ff',
+                  borderWidth: 1,
+                  borderColor: '#bfdbfe',
+                  paddingHorizontal: 7,
                   paddingVertical: 2,
                   borderRadius: 6,
                 }}
               >
-                <Text style={{ fontSize: 10, fontWeight: '800', color: '#ffffff' }}>
-                  ROUND {ticket.roundNumber}
+                <Text style={{ fontSize: 11, fontWeight: '800', color: '#1d4ed8' }}>
+                  Round {ticket.roundNumber}
                 </Text>
               </View>
             ) : null}
@@ -142,8 +145,10 @@ export const StationTicketCard: React.FC<StationTicketCardProps> = ({
       {/* 2. Transfer Re-Routing Banner (If applicable) */}
       {transferAlert ? (
         <View style={styles.transferAlertBanner}>
-          <Flame size={14} color="#b91c1c" />
-          <Text style={styles.transferAlertText}>🔁 RE-ROUTED: {transferAlert}</Text>
+          <Text style={styles.transferAlertTitle}>
+            🚨 TABLE RELOCATED: DELIVER TO {sourceTitle}
+          </Text>
+          <Text style={styles.transferAlertText}>Originally ordered at {transferAlert}</Text>
         </View>
       ) : null}
 
@@ -335,6 +340,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: 320,
   },
+  cardContainerRelocated: {
+    borderColor: '#f59e0b',
+    borderWidth: 2.5,
+    backgroundColor: '#fffdfa',
+  },
   cardReady: {
     borderColor: '#86efac',
     backgroundColor: '#fbfdfc',
@@ -404,21 +414,27 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   transferAlertBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#fee2e2',
-    borderWidth: 1,
-    borderColor: '#fca5a5',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    flexDirection: 'column',
+    gap: 4,
+    backgroundColor: '#fef3c7',
+    borderWidth: 1.5,
+    borderColor: '#f59e0b',
+    borderLeftWidth: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 10,
     marginBottom: 10,
   },
+  transferAlertTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#92400e',
+    letterSpacing: 0.2,
+  },
   transferAlertText: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#b91c1c',
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#b45309',
   },
   itemsList: {
     gap: 10,

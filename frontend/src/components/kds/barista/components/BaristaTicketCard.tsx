@@ -62,23 +62,39 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
   const timePill = getTimePillStyle();
 
   return (
-    <View style={styles.cardContainer}>
-      {/* Prominent Sub-Order / Round Banner */}
-      {ticket.roundNumber && ticket.roundNumber > 1 ? (
-        <View style={styles.subOrderBanner}>
-          <Text style={styles.subOrderBannerTitle}>🔔 SUB-ORDER: ROUND {ticket.roundNumber}</Text>
-          <Text style={styles.subOrderBannerSub}>Independent Ticket · Prepare as New Order</Text>
+    <View
+      style={[
+        styles.cardContainer,
+        Boolean(ticket.transferredFrom) && styles.cardContainerRelocated,
+      ]}
+    >
+      {/* Prominent Table Relocation Alert Banner */}
+      {ticket.transferredFrom ? (
+        <View style={styles.relocationAlertBanner}>
+          <View style={styles.relocationAlertHeader}>
+            <Text style={styles.relocationAlertTitle}>
+              🚨 TABLE RELOCATED: DELIVER TO{' '}
+              {ticket.tableOrSource.split(' · ')[0] || ticket.tableOrSource}
+            </Text>
+          </View>
+          <Text style={styles.relocationAlertSubtitle}>
+            Originally ordered at {ticket.transferredFrom.tableCode}
+            {ticket.transferredFrom.transferredAt
+              ? ` • Moved at ${ticket.transferredFrom.transferredAt}`
+              : ''}
+          </Text>
         </View>
-      ) : (
-        <View style={styles.initialOrderBanner}>
-          <Text style={styles.initialOrderBannerTitle}>ROUND 1 ORDER</Text>
-        </View>
-      )}
+      ) : null}
 
-      {/* Top Header: Order Number + Table Name & Elapsed Time Pill */}
+      {/* Top Header: Order Number + Round Chip + Table Name & Elapsed Time Pill */}
       <View style={styles.headerRow}>
         <View style={styles.titleGroup}>
           <Text style={styles.orderNumber}>{orderNumber}</Text>
+          {ticket.roundNumber && ticket.roundNumber > 1 ? (
+            <View style={styles.cleanRoundPill}>
+              <Text style={styles.cleanRoundPillText}>Round {ticket.roundNumber}</Text>
+            </View>
+          ) : null}
           <Text style={styles.tableText}>{tableOrSource}</Text>
         </View>
         <View style={[styles.timePill, { backgroundColor: timePill.bg }]}>
@@ -86,63 +102,58 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
         </View>
       </View>
 
-      {/* Badges Row */}
+      {/* Badges Row - Clean and Non-redundant */}
       <View style={styles.badgeRow}>
-        {badges.map((badge, idx) => {
-          if (badge === 'NEW') {
-            return (
-              <View key={idx} style={styles.badgeNew}>
-                <View style={styles.badgeNewDot} />
-                <Text style={styles.badgeNewText}>NEW</Text>
-              </View>
-            );
-          }
-          if (badge === 'RUSH') {
-            return (
-              <View key={idx} style={styles.badgeRush}>
-                <Text style={styles.badgeRushText}>RUSH</Text>
-              </View>
-            );
-          }
-          if (badge === 'JUST IN') {
-            return (
-              <View key={idx} style={styles.badgeJustIn}>
-                <Text style={styles.badgeJustInText}>JUST IN</Text>
-              </View>
-            );
-          }
-          if (badge === 'PREPARING') {
-            return (
-              <View key={idx} style={styles.badgePrep}>
-                <View style={styles.badgePrepDot} />
-                <Text style={styles.badgePrepText}>PREPARING</Text>
-              </View>
-            );
-          }
-          if (badge === 'ITEM VOIDED') {
-            return (
-              <View key={idx} style={styles.badgeVoided}>
-                <Text style={styles.badgeVoidedText}>ITEM VOIDED</Text>
-              </View>
-            );
-          }
-          if (badge === 'READY') {
-            return (
-              <View key={idx} style={styles.badgeReady}>
-                <View style={styles.badgeReadyDot} />
-                <Text style={styles.badgeReadyText}>READY</Text>
-              </View>
-            );
-          }
-          if (badge.startsWith('ROUND')) {
-            return (
-              <View key={idx} style={styles.badgeRound}>
-                <Text style={styles.badgeRoundText}>{badge}</Text>
-              </View>
-            );
-          }
-          return null;
-        })}
+        {badges
+          .filter((badge) => !badge.startsWith('ROUND') && badge !== 'JUST IN')
+          .map((badge, idx) => {
+            if (badge === 'NEW') {
+              return (
+                <View key={idx} style={styles.badgeNew}>
+                  <View style={styles.badgeNewDot} />
+                  <Text style={styles.badgeNewText}>NEW</Text>
+                </View>
+              );
+            }
+            if (badge === 'RUSH') {
+              return (
+                <View key={idx} style={styles.badgeRush}>
+                  <Text style={styles.badgeRushText}>RUSH</Text>
+                </View>
+              );
+            }
+            if (badge === 'PREPARING') {
+              return (
+                <View key={idx} style={styles.badgePrep}>
+                  <View style={styles.badgePrepDot} />
+                  <Text style={styles.badgePrepText}>PREPARING</Text>
+                </View>
+              );
+            }
+            if (badge === 'ITEM VOIDED') {
+              return (
+                <View key={idx} style={styles.badgeVoided}>
+                  <Text style={styles.badgeVoidedText}>ITEM VOIDED</Text>
+                </View>
+              );
+            }
+            if (badge === 'READY') {
+              return (
+                <View key={idx} style={styles.badgeReady}>
+                  <View style={styles.badgeReadyDot} />
+                  <Text style={styles.badgeReadyText}>READY</Text>
+                </View>
+              );
+            }
+            if (badge.startsWith('MOVED:')) {
+              return (
+                <View key={idx} style={styles.badgeMoved}>
+                  <Text style={styles.badgeMovedText}>🔁 {badge}</Text>
+                </View>
+              );
+            }
+            return null;
+          })}
       </View>
 
       {/* Multi-Station Awareness Tag */}
@@ -277,46 +288,51 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 1,
   },
-  subOrderBanner: {
-    backgroundColor: '#fff7ed',
-    borderWidth: 1,
-    borderColor: '#fed7aa',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    marginBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  cardContainerRelocated: {
+    borderColor: '#f59e0b',
+    borderWidth: 2.5,
+    backgroundColor: '#fffdfa',
   },
-  subOrderBannerTitle: {
-    fontSize: 11,
+  relocationAlertBanner: {
+    backgroundColor: '#fef3c7',
+    borderWidth: 1.5,
+    borderColor: '#f59e0b',
+    borderLeftWidth: 6,
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    marginBottom: 10,
+  },
+  relocationAlertHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  relocationAlertTitle: {
+    fontSize: 16,
     fontWeight: '900',
-    color: '#c2410c',
-    letterSpacing: 0.3,
+    color: '#92400e',
+    letterSpacing: 0.2,
   },
-  subOrderBannerSub: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#ea580c',
+  relocationAlertSubtitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#b45309',
   },
-  initialOrderBanner: {
-    backgroundColor: '#f8fafc',
+  cleanRoundPill: {
+    backgroundColor: '#eff6ff',
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    marginBottom: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderColor: '#bfdbfe',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
-  initialOrderBannerTitle: {
-    fontSize: 10.5,
+  cleanRoundPillText: {
+    fontSize: 11,
     fontWeight: '800',
-    color: '#475569',
-    letterSpacing: 0.4,
+    color: '#1d4ed8',
+    letterSpacing: 0.3,
   },
   headerRow: {
     flexDirection: 'row',
@@ -470,6 +486,22 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1d4ed8',
     letterSpacing: 0.4,
+  },
+  badgeMoved: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef3c7',
+    borderWidth: 1.5,
+    borderColor: '#f59e0b',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  badgeMovedText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#b45309',
+    letterSpacing: 0.3,
   },
   multiStationRow: {
     marginBottom: 10,

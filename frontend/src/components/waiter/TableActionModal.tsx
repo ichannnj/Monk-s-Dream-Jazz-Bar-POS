@@ -16,6 +16,7 @@ import { formatCurrency } from '@monks/shared';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useOrderStore } from '../../store/useOrderStore';
 import { toast } from '../../store/useToastStore';
+import { ConfirmationModal } from '../shared/ConfirmationModal';
 
 interface TableActionModalProps {
   visible: boolean;
@@ -37,7 +38,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   onCheckout,
 }) => {
   const { currentUser } = useAuthStore();
-  const { voidOrderItem } = useOrderStore();
+  const { voidOrderItem, closeEmptyTab } = useOrderStore();
 
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(table?.activeTabs?.[0] || 1);
   const [itemToVoid, setItemToVoid] = useState<OrderLineItem | null>(null);
@@ -45,6 +46,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   const [managerPin, setManagerPin] = useState<string>('');
   const [pinError, setPinError] = useState<string>('');
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
+  const [isConfirmCloseEmptyOpen, setIsConfirmCloseEmptyOpen] = useState(false);
 
   React.useEffect(() => {
     if (table) {
@@ -164,6 +166,23 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     setIsVoidModalOpen(false);
     setItemToVoid(null);
   };
+
+  const handleExecuteCloseEmptyTab = () => {
+    try {
+      closeEmptyTab(table.id, selectedTabIndex);
+      toast.info(`Tab #${selectedTabIndex} closed and released.`, {
+        title: 'Empty Tab Closed',
+      });
+      setIsConfirmCloseEmptyOpen(false);
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to close empty tab.', {
+        title: 'Tab Error',
+      });
+    }
+  };
+
+  const hasZeroItems = (currentTab?.items.length || 0) === 0;
 
   return (
     <>
@@ -389,59 +408,83 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                 )}
               </View>
 
-              {/* 4. Streamlined Actions */}
+              {/* 4. Natural Service Progression Actions */}
               <View style={styles.actionsContainer}>
-                {/* Primary Actions */}
-                <View style={styles.primaryActionsRow}>
-                  <Pressable
-                    onPress={() => {
-                      onClose();
-                      onOpenOrderEntry(table, selectedTabIndex, nextRound);
-                    }}
-                    style={[styles.primaryActionBtn, styles.btnOrder]}
-                  >
-                    <UtensilsCrossed size={18} color="#ffffff" strokeWidth={2.3} />
-                    <Text style={styles.primaryActionBtnText}>+ Start Round {nextRound} Order</Text>
-                  </Pressable>
+                {/* 1. ORDERING: Start Order / Next Round */}
+                <Pressable
+                  onPress={() => {
+                    onClose();
+                    onOpenOrderEntry(table, selectedTabIndex, nextRound);
+                  }}
+                  style={[styles.primaryActionBtn, styles.btnOrder]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Start Round ${nextRound} Order`}
+                >
+                  <UtensilsCrossed size={18} color="#ffffff" strokeWidth={2.3} />
+                  <Text style={styles.primaryActionBtnText}>+ Start Round {nextRound} Order</Text>
+                </Pressable>
 
-                  <Pressable
-                    onPress={() => {
-                      onClose();
-                      onCheckout(table, selectedTabIndex);
-                    }}
-                    style={[styles.primaryActionBtn, styles.btnSettle]}
-                  >
-                    <CreditCard size={18} color="#ffffff" strokeWidth={2.3} />
-                    <Text style={styles.primaryActionBtnText}>
-                      Settle · {formatCurrency(tabTotal)}
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {/* Secondary Actions */}
+                {/* 2 & 3. TAB MANAGEMENT: Split Tab & Transfer */}
                 <View style={styles.secondaryActionsRow}>
-                  <Pressable
-                    onPress={() => {
-                      onClose();
-                      onTransferTable(table);
-                    }}
-                    style={styles.secondaryActionBtn}
-                  >
-                    <Repeat size={18} color="#641b2a" strokeWidth={2.2} />
-                    <Text style={styles.secondaryActionBtnText}>Transfer Tab/Table</Text>
-                  </Pressable>
-
+                  {/* Step 2: Split Tab */}
                   <Pressable
                     onPress={() => {
                       onClose();
                       onOpenNewTab(table);
                     }}
                     style={styles.secondaryActionBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Open Split Tab"
                   >
                     <PlusCircle size={18} color="#15803d" strokeWidth={2.2} />
                     <Text style={styles.secondaryActionBtnTextGreen}>+ Open Split Tab</Text>
                   </Pressable>
+
+                  {/* Step 3: Transfer Table / Tab */}
+                  <Pressable
+                    onPress={() => {
+                      onClose();
+                      onTransferTable(table);
+                    }}
+                    style={styles.secondaryActionBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Transfer Tab or Table"
+                  >
+                    <Repeat size={18} color="#641b2a" strokeWidth={2.2} />
+                    <Text style={styles.secondaryActionBtnText}>Transfer Tab/Table</Text>
+                  </Pressable>
                 </View>
+
+                {/* 4. BILLING: Settle Tab */}
+                <Pressable
+                  onPress={() => {
+                    onClose();
+                    onCheckout(table, selectedTabIndex);
+                  }}
+                  style={[styles.primaryActionBtn, styles.btnSettle]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Settle Tab for ${formatCurrency(tabTotal)}`}
+                >
+                  <CreditCard size={18} color="#ffffff" strokeWidth={2.3} />
+                  <Text style={styles.primaryActionBtnText}>
+                    Settle Tab · {formatCurrency(tabTotal)}
+                  </Text>
+                </Pressable>
+
+                {/* 5. CLEANUP: Close Empty Tab (if 0 items on tab) */}
+                {hasZeroItems ? (
+                  <Pressable
+                    onPress={() => setIsConfirmCloseEmptyOpen(true)}
+                    style={styles.closeEmptyTabBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Close empty tab"
+                  >
+                    <Trash2 size={16} color="#b45309" strokeWidth={2.2} />
+                    <Text style={styles.closeEmptyTabBtnText}>
+                      Close / Clean Empty Tab #{selectedTabIndex}
+                    </Text>
+                  </Pressable>
+                ) : null}
               </View>
             </ScrollView>
           </View>
@@ -662,6 +705,18 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
           </View>
         </Modal>
       ) : null}
+
+      {/* Confirmation Modal: Close / Release Empty Tab */}
+      <ConfirmationModal
+        visible={isConfirmCloseEmptyOpen}
+        title="Close Empty Tab"
+        message={`Are you sure you want to close Tab #${selectedTabIndex} ("${currentTab?.guestName || 'Guest'}")? If this is the only active tab, Table ${table.code} will be released back to empty.`}
+        confirmText="Yes, Close Tab"
+        cancelText="Keep Tab"
+        variant="warning"
+        onConfirm={handleExecuteCloseEmptyTab}
+        onCancel={() => setIsConfirmCloseEmptyOpen(false)}
+      />
     </>
   );
 };
@@ -937,5 +992,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#15803d',
+  },
+  closeEmptyTabBtn: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: '#fffbeb',
+    borderWidth: 1.5,
+    borderColor: '#fde68a',
+    marginTop: 4,
+  },
+  closeEmptyTabBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#b45309',
   },
 });

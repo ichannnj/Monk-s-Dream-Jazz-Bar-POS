@@ -163,6 +163,9 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           else if (stage === 'preparing') badges.push('PREPARING');
           else badges.push('READY');
           if (hasCancelled) badges.push('ITEM VOIDED');
+          if (tab.transferredFrom) {
+            badges.push(`MOVED: ${tab.transferredFrom.tableCode} ➔ ${table.code}`);
+          }
 
           const otherStationItems = (tab.items || []).filter(
             (i) => (i.roundNumber || 1) === roundNum && i.stationTarget !== stationTarget
@@ -193,6 +196,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
             minutesElapsed: minutes,
             badges,
             multiStationTag,
+            transferredFrom: tab.transferredFrom,
             items: roundItems.map((bi) => ({
               ...bi,
               isVoided: bi.status === 'cancelled',
@@ -329,52 +333,82 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
     prevNewTicketIdsRef.current = new Set(newTickets.map((t) => t.id));
   }, [newTickets, audioChimes, stationName]);
 
-  // Actions
+  // Actions with robust error handling
   const handleStartTicket = (ticket: BarTicket) => {
-    ticket.items
-      .filter((i) => i.status === 'pending')
-      .forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
-    toast.success(`Preparing ${ticket.orderNumber} (${ticket.tableOrSource})`);
+    try {
+      ticket.items
+        .filter((i) => i.status === 'pending')
+        .forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
+      toast.success(`Preparing ${ticket.orderNumber} (${ticket.tableOrSource})`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update ticket status.', {
+        title: 'KDS Action Error',
+      });
+    }
   };
 
   const handleReadyTicket = (ticket: BarTicket) => {
-    ticket.items
-      .filter((i) => i.status === 'preparing' || i.status === 'pending')
-      .forEach((item) => updateOrderItemStatus(item.id, 'ready'));
-    toast.success(`Order Ready: ${ticket.orderNumber} for pickup`);
+    try {
+      ticket.items
+        .filter((i) => i.status === 'preparing' || i.status === 'pending')
+        .forEach((item) => updateOrderItemStatus(item.id, 'ready'));
+      toast.success(`Order Ready: ${ticket.orderNumber} for pickup`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to mark ticket ready.', {
+        title: 'KDS Action Error',
+      });
+    }
   };
 
   const handleDismissReadyTicket = (ticket: BarTicket) => {
-    if (ticket.tableId && ticket.tabIndex !== undefined) {
-      markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber || 1, stationTarget);
-    } else if (ticket.takeoutId) {
-      markTakeoutServed(ticket.takeoutId);
-    } else if (ticket.onlineId) {
-      markOnlineServed(ticket.onlineId);
-    } else if (ticket.id.startsWith('takeout-')) {
-      const orderId = ticket.id.replace('takeout-', '');
-      markTakeoutServed(orderId);
-    } else if (ticket.id.startsWith('online-')) {
-      const orderId = ticket.id.replace('online-', '');
-      markOnlineServed(orderId);
-    } else {
-      ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'served'));
+    try {
+      if (ticket.tableId && ticket.tabIndex !== undefined) {
+        markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber || 1, stationTarget);
+      } else if (ticket.takeoutId) {
+        markTakeoutServed(ticket.takeoutId);
+      } else if (ticket.onlineId) {
+        markOnlineServed(ticket.onlineId);
+      } else if (ticket.id.startsWith('takeout-')) {
+        const orderId = ticket.id.replace('takeout-', '');
+        markTakeoutServed(orderId);
+      } else if (ticket.id.startsWith('online-')) {
+        const orderId = ticket.id.replace('online-', '');
+        markOnlineServed(orderId);
+      } else {
+        ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'served'));
+      }
+      toast.success(`Picked up: ${ticket.orderNumber}`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to dismiss ticket.', {
+        title: 'KDS Action Error',
+      });
     }
-    toast.success(`Picked up: ${ticket.orderNumber}`);
   };
 
   const handleRecallTicket = (ticket: BarTicket) => {
-    ticket.items
-      .filter((i) => i.status !== 'cancelled')
-      .forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
-    toast.info(`Recalled ${ticket.orderNumber} to Preparing`);
+    try {
+      ticket.items
+        .filter((i) => i.status !== 'cancelled')
+        .forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
+      toast.info(`Recalled ${ticket.orderNumber} to Preparing`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to recall ticket.', {
+        title: 'KDS Action Error',
+      });
+    }
   };
 
   const handleToggleItem = (_ticketId: string, itemId: string) => {
-    const item = allTickets.flatMap((t) => t.items).find((i) => i.id === itemId);
-    if (!item) return;
-    const nextStatus = item.status === 'ready' ? 'preparing' : 'ready';
-    updateOrderItemStatus(itemId, nextStatus);
+    try {
+      const item = allTickets.flatMap((t) => t.items).find((i) => i.id === itemId);
+      if (!item) return;
+      const nextStatus = item.status === 'ready' ? 'preparing' : 'ready';
+      updateOrderItemStatus(itemId, nextStatus);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to toggle item status.', {
+        title: 'KDS Item Error',
+      });
+    }
   };
 
   // Toggle item availability

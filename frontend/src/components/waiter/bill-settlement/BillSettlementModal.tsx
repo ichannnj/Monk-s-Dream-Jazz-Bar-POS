@@ -14,6 +14,7 @@ import {
 import { TableItem, CustomerTab } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '../../../store/useToastStore';
+import { ConfirmationModal } from '../../shared/ConfirmationModal';
 import { styles } from './BillSettlementModal.styles';
 
 interface BillSettlementModalProps {
@@ -42,6 +43,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   );
   const [tenderedCash, setTenderedCash] = useState<string>('');
   const [shouldPrintReceipt, setShouldPrintReceipt] = useState(true);
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
   if (!table) return null;
 
@@ -56,22 +58,43 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const numericTendered = parseFloat(tenderedCash) || 0;
   const changeDue = Math.max(0, numericTendered - grandTotal);
 
-  const handleConfirm = () => {
-    if (selectedMethod === 'cash' && numericTendered > 0 && numericTendered < grandTotal) {
-      toast.warning(
-        `Tendered amount (${formatCurrency(numericTendered)}) is less than total due (${formatCurrency(grandTotal)})`,
-        { title: 'Insufficient Cash' }
-      );
+  // Strict payment validation guard
+  const isPaymentValid =
+    selectedMethod === 'cash' ? numericTendered >= grandTotal && numericTendered > 0 : true;
+
+  const handleOpenConfirm = () => {
+    if (!isPaymentValid) {
+      if (selectedMethod === 'cash') {
+        toast.warning(
+          numericTendered === 0
+            ? `Please enter cash tendered (min. ${formatCurrency(grandTotal)})`
+            : `Tendered amount (${formatCurrency(numericTendered)}) is less than total due (${formatCurrency(grandTotal)})`,
+          { title: 'Invalid Cash Input' }
+        );
+      }
       return;
     }
+    setIsConfirmModalOpen(true);
+  };
 
-    onConfirmPayment(
-      settlementMode,
-      activeTab?.tabIndex || 1,
-      selectedMethod,
-      selectedMethod === 'cash' ? numericTendered : undefined
-    );
-    onClose();
+  const handleFinalizePayment = () => {
+    try {
+      onConfirmPayment(
+        settlementMode,
+        activeTab?.tabIndex || 1,
+        selectedMethod,
+        selectedMethod === 'cash' ? numericTendered : undefined
+      );
+      setIsConfirmModalOpen(false);
+      onClose();
+    } catch (err: any) {
+      toast.error(
+        err?.message || 'Payment processing failed. Please check cash drawer or printer.',
+        {
+          title: 'Payment Error',
+        }
+      );
+    }
   };
 
   const quickCashOptions = [
@@ -287,6 +310,27 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                     />
                   </View>
 
+                  {/* Cash Validation Warning */}
+                  {!isPaymentValid ? (
+                    <View
+                      style={{
+                        backgroundColor: '#fef2f2',
+                        borderWidth: 1,
+                        borderColor: '#fecdd3',
+                        borderRadius: 10,
+                        paddingVertical: 8,
+                        paddingHorizontal: 12,
+                        marginBottom: 10,
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#dc2626' }}>
+                        {numericTendered === 0
+                          ? `⚠️ Cash tendered required (min. ${formatCurrency(grandTotal)})`
+                          : `⚠️ Tendered amount is less than total due (${formatCurrency(grandTotal)})`}
+                      </Text>
+                    </View>
+                  ) : null}
+
                   {/* Change Due Banner */}
                   <View style={styles.changeDueBanner}>
                     <Text style={styles.changeDueLabel}>Change Due to Guest:</Text>
@@ -370,15 +414,39 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
               <Text style={styles.cancelBtnText}>Back</Text>
             </Pressable>
 
-            <Pressable onPress={handleConfirm} style={styles.confirmPayBtn}>
+            <Pressable
+              onPress={handleOpenConfirm}
+              disabled={!isPaymentValid}
+              style={[
+                styles.confirmPayBtn,
+                !isPaymentValid && { opacity: 0.5, backgroundColor: '#9ca3af' },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel={`Confirm payment of ${formatCurrency(grandTotal)}`}
+            >
               <CheckCircle2 size={18} color="#ffffff" strokeWidth={2.4} />
               <Text style={styles.confirmPayBtnText}>
-                Confirm Payment & Print Receipt (${grandTotal.toFixed(2)})
+                Confirm Payment & Print Receipt ({formatCurrency(grandTotal)})
               </Text>
             </Pressable>
           </View>
         </View>
       </View>
+
+      <ConfirmationModal
+        visible={isConfirmModalOpen}
+        title={`Confirm Payment of ${formatCurrency(grandTotal)}?`}
+        message={`Table ${table.code} • ${
+          settlementMode === 'single_tab'
+            ? activeTab?.guestName || `Tab #${activeTab?.tabIndex || 1}`
+            : 'Entire Table'
+        } via ${selectedMethod.toUpperCase().replace('_', ' ')}. This will finalize the tab and send the receipt to the printer.`}
+        confirmText="Complete Settlement"
+        cancelText="Back"
+        variant="success"
+        onConfirm={handleFinalizePayment}
+        onCancel={() => setIsConfirmModalOpen(false)}
+      />
     </Modal>
   );
 };

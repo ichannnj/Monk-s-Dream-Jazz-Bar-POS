@@ -608,6 +608,8 @@ export type Database = {
                     rider_name: string | null;
                     status: Database["public"]["Enums"]["tab_status"];
                     table_id: string | null;
+                    transferred_at: string | null;
+                    transferred_from_table_code: string | null;
                     updated_at: string;
                 };
                 Insert: {
@@ -624,6 +626,8 @@ export type Database = {
                     rider_name?: string | null;
                     status?: Database["public"]["Enums"]["tab_status"];
                     table_id?: string | null;
+                    transferred_at?: string | null;
+                    transferred_from_table_code?: string | null;
                     updated_at?: string;
                 };
                 Update: {
@@ -640,6 +644,8 @@ export type Database = {
                     rider_name?: string | null;
                     status?: Database["public"]["Enums"]["tab_status"];
                     table_id?: string | null;
+                    transferred_at?: string | null;
+                    transferred_from_table_code?: string | null;
                     updated_at?: string;
                 };
                 Relationships: [
@@ -791,9 +797,9 @@ export type Database = {
             transfer_table_tab: {
                 Args: {
                     p_origin_table_id: string;
-                    p_reason: string;
-                    p_staff_id: string;
-                    p_tab_id: string;
+                    p_reason?: string | null;
+                    p_staff_id?: string | null;
+                    p_tab_id?: string | null;
                     p_target_table_id: string;
                 };
                 Returns: Json;

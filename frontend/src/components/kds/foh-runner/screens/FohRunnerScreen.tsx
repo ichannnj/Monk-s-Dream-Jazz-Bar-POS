@@ -10,12 +10,13 @@ import {
   Bike,
   Coffee,
   CheckCircle2,
+  Repeat,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../../../store/useAuthStore';
 import { useOrderStore } from '../../../../store/useOrderStore';
 import { toast } from '../../../../store/useToastStore';
 import { Sidebar, NavTabId } from '../../../navigation/Sidebar';
-import { SharedChatView, SharedAlertsView } from '../../../shared';
+import { SharedChatView, SharedAlertsView, ConfirmationModal } from '../../../shared';
 import { StationHeader } from '../../common/components/StationHeader';
 import { OrderLineItem } from '../../../../types/floor';
 
@@ -34,6 +35,10 @@ interface RunnerTicket {
   roundNumber?: number;
   tableId?: string;
   tabIndex?: number;
+  transferredFrom?: {
+    tableCode: string;
+    transferredAt?: string;
+  };
 }
 
 export const FohRunnerScreen: React.FC = () => {
@@ -49,6 +54,10 @@ export const FohRunnerScreen: React.FC = () => {
     alerts,
   } = useOrderStore();
   const [activeTab, setActiveTab] = useState<NavTabId>('board');
+  const [confirmHandoff, setConfirmHandoff] = useState<{
+    ticket: RunnerTicket;
+    target?: 'bar' | 'kitchen';
+  } | null>(null);
 
   const handleLogout = () => {
     toast.info('Runner expediter station locked.', { title: 'Clocked Out' });
@@ -98,6 +107,7 @@ export const FohRunnerScreen: React.FC = () => {
             allDone,
             readyItemsCount: readyCount,
             totalItemsCount: totalCount,
+            transferredFrom: tab.transferredFrom,
           });
         });
       });
@@ -170,38 +180,63 @@ export const FohRunnerScreen: React.FC = () => {
 
   const fullyReadyCount = runnerTickets.filter((t) => t.allDone).length;
 
-  const handleMarkServed = (ticket: RunnerTicket) => {
-    if (ticket.orderType === 'dine_in' && ticket.tableId && ticket.tabIndex && ticket.roundNumber) {
-      markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber);
-    } else {
-      ticket.items.forEach((item) => {
-        if (item.status !== 'cancelled') {
-          updateOrderItemStatus(item.id, 'served');
+  const handleExecuteHandoff = () => {
+    if (!confirmHandoff) return;
+    const { ticket, target } = confirmHandoff;
+
+    try {
+      if (target) {
+        if (
+          ticket.orderType === 'dine_in' &&
+          ticket.tableId &&
+          ticket.tabIndex &&
+          ticket.roundNumber
+        ) {
+          markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber, target);
+        } else {
+          ticket.items
+            .filter((i) => i.stationTarget === target && i.status === 'ready')
+            .forEach((item) => {
+              updateOrderItemStatus(item.id, 'served');
+            });
         }
-      });
-      if (ticket.orderType === 'takeout') {
-        const orderId = ticket.id.replace('takeout-', '');
-        markTakeoutServed(orderId);
-      } else if (ticket.orderType === 'online_delivery') {
-        const orderId = ticket.id.replace('online-', '');
-        markOnlineServed(orderId);
+        toast.success(
+          `Dispatched ${target === 'bar' ? 'Drinks' : 'Food'} for ${ticket.sourceTitle}`
+        );
+      } else {
+        if (
+          ticket.orderType === 'dine_in' &&
+          ticket.tableId &&
+          ticket.tabIndex &&
+          ticket.roundNumber
+        ) {
+          markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber);
+        } else {
+          ticket.items.forEach((item) => {
+            if (item.status !== 'cancelled') {
+              updateOrderItemStatus(item.id, 'served');
+            }
+          });
+          if (ticket.orderType === 'takeout') {
+            const orderId = ticket.id.replace('takeout-', '');
+            markTakeoutServed(orderId);
+          } else if (ticket.orderType === 'online_delivery') {
+            const orderId = ticket.id.replace('online-', '');
+            markOnlineServed(orderId);
+          }
+        }
+        toast.success(`Handoff complete for ${ticket.sourceTitle}`);
       }
+    } catch (err: any) {
+      toast.error(
+        err?.message || 'Failed to update order status. Please check network connection.',
+        {
+          title: 'Handoff Error',
+        }
+      );
+    } finally {
+      setConfirmHandoff(null);
     }
-
-    toast.success(`Handoff complete for ${ticket.sourceTitle}`);
-  };
-
-  const handleMarkPartialServed = (ticket: RunnerTicket, target: 'bar' | 'kitchen') => {
-    if (ticket.orderType === 'dine_in' && ticket.tableId && ticket.tabIndex && ticket.roundNumber) {
-      markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber, target);
-    } else {
-      ticket.items
-        .filter((i) => i.stationTarget === target && i.status === 'ready')
-        .forEach((item) => {
-          updateOrderItemStatus(item.id, 'served');
-        });
-    }
-    toast.success(`Dispatched ${target === 'bar' ? 'Drinks' : 'Food'} for ${ticket.sourceTitle}`);
   };
 
   const unreadAlertCount = alerts.filter((a) => !a.isRead).length;
@@ -268,6 +303,17 @@ export const FohRunnerScreen: React.FC = () => {
                             <BellRing size={16} color="#ffffff" />
                             <Text style={styles.buzzoutBannerText}>
                               🔔 BUZZOUT: FULL ORDER READY FOR DELIVERY
+                            </Text>
+                          </View>
+                        ) : null}
+
+                        {/* Table Relocation Warning Banner */}
+                        {ticket.transferredFrom ? (
+                          <View style={styles.relocatedBanner}>
+                            <Repeat size={14} color="#b45309" />
+                            <Text style={styles.relocatedBannerText}>
+                              MOVED: {ticket.transferredFrom.tableCode} ➔{' '}
+                              {ticket.sourceTitle.split(' · ')[0]}
                             </Text>
                           </View>
                         ) : null}
@@ -363,7 +409,7 @@ export const FohRunnerScreen: React.FC = () => {
                                 i.status !== 'cancelled'
                             ) ? (
                               <Pressable
-                                onPress={() => handleMarkPartialServed(ticket, 'bar')}
+                                onPress={() => setConfirmHandoff({ ticket, target: 'bar' })}
                                 style={{
                                   flex: 1,
                                   paddingVertical: 8,
@@ -377,6 +423,8 @@ export const FohRunnerScreen: React.FC = () => {
                                   justifyContent: 'center',
                                   gap: 4,
                                 }}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Deliver drinks for ${ticket.sourceTitle}`}
                               >
                                 <Coffee size={13} color="#0284c7" />
                                 <Text style={{ fontSize: 11, fontWeight: '700', color: '#0284c7' }}>
@@ -396,7 +444,7 @@ export const FohRunnerScreen: React.FC = () => {
                                 i.status !== 'cancelled'
                             ) ? (
                               <Pressable
-                                onPress={() => handleMarkPartialServed(ticket, 'kitchen')}
+                                onPress={() => setConfirmHandoff({ ticket, target: 'kitchen' })}
                                 style={{
                                   flex: 1,
                                   paddingVertical: 8,
@@ -410,6 +458,8 @@ export const FohRunnerScreen: React.FC = () => {
                                   justifyContent: 'center',
                                   gap: 4,
                                 }}
+                                accessibilityRole="button"
+                                accessibilityLabel={`Deliver food for ${ticket.sourceTitle}`}
                               >
                                 <Utensils size={13} color="#d97706" />
                                 <Text style={{ fontSize: 11, fontWeight: '700', color: '#d97706' }}>
@@ -422,12 +472,18 @@ export const FohRunnerScreen: React.FC = () => {
 
                         {/* Handoff Button */}
                         <Pressable
-                          onPress={() => handleMarkServed(ticket)}
+                          onPress={() => setConfirmHandoff({ ticket })}
                           style={({ pressed }) => [
                             styles.handoffBtn,
                             ticket.allDone && styles.handoffBtnReady,
                             pressed && styles.btnPressed,
                           ]}
+                          accessibilityRole="button"
+                          accessibilityLabel={
+                            ticket.orderType === 'dine_in'
+                              ? `Deliver Round ${ticket.roundNumber || 1} to Table`
+                              : 'Hand Off to Courier or Guest'
+                          }
                         >
                           <CheckCircle2 size={18} color="#ffffff" />
                           <Text style={styles.handoffBtnText}>
@@ -445,6 +501,32 @@ export const FohRunnerScreen: React.FC = () => {
           </>
         )}
       </View>
+
+      {/* Confirmation Modal for Deliveries & Handoffs */}
+      <ConfirmationModal
+        visible={!!confirmHandoff}
+        title={
+          confirmHandoff?.target
+            ? `Deliver ${confirmHandoff.target === 'bar' ? 'Drinks' : 'Food'} to Table?`
+            : confirmHandoff?.ticket.orderType === 'dine_in'
+              ? `Deliver Round ${confirmHandoff?.ticket.roundNumber || 1} to Table?`
+              : 'Confirm Hand-off?'
+        }
+        message={
+          confirmHandoff?.target
+            ? `Mark ready ${confirmHandoff.target === 'bar' ? 'drinks' : 'food items'} for ${confirmHandoff?.ticket.sourceTitle} as delivered to guest.`
+            : confirmHandoff?.ticket.orderType === 'dine_in'
+              ? `Mark all items in Round ${confirmHandoff?.ticket.roundNumber || 1} for ${confirmHandoff?.ticket.sourceTitle} as delivered to guest.`
+              : `Confirm hand-off of ${confirmHandoff?.ticket.orderNumber} (${confirmHandoff?.ticket.sourceTitle}) to courier/guest.`
+        }
+        confirmText={
+          confirmHandoff?.ticket.orderType === 'dine_in' ? 'Confirm Delivery' : 'Confirm Hand-off'
+        }
+        cancelText="Cancel"
+        variant="success"
+        onConfirm={handleExecuteHandoff}
+        onCancel={() => setConfirmHandoff(null)}
+      />
     </View>
   );
 };
@@ -500,6 +582,24 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#ffffff',
     letterSpacing: 0.4,
+  },
+  relocatedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#fef3c7',
+    borderWidth: 1.5,
+    borderColor: '#f59e0b',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  relocatedBannerText: {
+    fontSize: 11.5,
+    fontWeight: '900',
+    color: '#b45309',
+    letterSpacing: 0.3,
   },
   ticketHeader: {
     flexDirection: 'row',

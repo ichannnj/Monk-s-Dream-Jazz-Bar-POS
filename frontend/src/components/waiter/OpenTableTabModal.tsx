@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Modal, Pressable, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { X, Users, Utensils, Check, Plus } from 'lucide-react-native';
 import { TableItem } from '../../types/floor';
+import { toast } from '../../store/useToastStore';
 
 interface OpenTableTabModalProps {
   visible: boolean;
@@ -18,32 +19,47 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
   onClose,
   onConfirmOpenTab,
 }) => {
-  const [selectedTableId, setSelectedTableId] = useState<string>(
-    preselectedTable?.id || (tables[0]?.id ?? '')
-  );
+  const [selectedTableId, setSelectedTableId] = useState<string>('');
   const [guestName, setGuestName] = useState('');
   const [guestCount, setGuestCount] = useState(2);
 
-  // Sync if preselectedTable changes
+  // Clean initialization whenever modal opens
   React.useEffect(() => {
-    if (preselectedTable) {
-      setSelectedTableId(preselectedTable.id);
+    if (visible) {
+      setSelectedTableId('');
+      setGuestName('');
+      setGuestCount(2);
     }
-  }, [preselectedTable]);
+  }, [visible]);
 
   const currentTable = tables.find((t) => t.id === selectedTableId);
-  const activeTabsCount =
-    currentTable?.tabs && currentTable.tabs.length > 0
+  const isCurrentEmpty = !currentTable || currentTable.status === 'empty';
+  const activeTabsCount = isCurrentEmpty
+    ? 0
+    : currentTable?.tabs && currentTable.tabs.length > 0
       ? currentTable.tabs.filter((tab) => tab.status !== 'closed').length
       : currentTable?.activeTabs.length || 0;
-  const isSplitTab = activeTabsCount > 0;
+  const isSplitTab = !isCurrentEmpty && activeTabsCount > 0;
 
   const handleConfirm = () => {
-    const finalName = guestName.trim() || `Guest ${activeTabsCount + 1}`;
-    onConfirmOpenTab(selectedTableId, finalName, guestCount);
-    setGuestName('');
-    setGuestCount(2);
-    onClose();
+    if (!selectedTableId) {
+      toast.warning('Please select an available table before opening a tab.', {
+        title: 'Table Required',
+      });
+      return;
+    }
+
+    try {
+      const finalName = guestName.trim() || `Guest ${activeTabsCount + 1}`;
+      onConfirmOpenTab(selectedTableId, finalName, guestCount);
+      setGuestName('');
+      setGuestCount(2);
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to open table tab.', {
+        title: 'Table Error',
+      });
+    }
   };
 
   return (
@@ -59,14 +75,14 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
           <View style={styles.header}>
             <View>
               <Text style={styles.title}>
-                {isSplitTab
-                  ? `Open Split Tab · Table ${currentTable?.code || ''}`
-                  : 'Open Table Tab'}
+                {currentTable ? `Open Table Tab · ${currentTable.code}` : 'Open Table Tab'}
               </Text>
               <Text style={styles.subtitle}>
-                {isSplitTab
-                  ? `Add another party tab to Table ${currentTable?.code || ''}`
-                  : 'Start a new named guest tab for dine-in seating'}
+                {currentTable
+                  ? isSplitTab
+                    ? `Add another party tab to Table ${currentTable.code}`
+                    : `Start a new named guest tab at Table ${currentTable.code}`
+                  : 'Choose an available table and start a guest tab for dine-in seating'}
               </Text>
             </View>
             <Pressable

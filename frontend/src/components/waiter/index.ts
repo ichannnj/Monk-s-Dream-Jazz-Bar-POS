@@ -8,6 +8,7 @@ export * from './OnlineDeliveryCard';
 export * from './TableActionModal';
 export * from './TableTransferModal';
 export * from './OpenTableTabModal';
+export * from './OpenTableDirectModal';
 export * from './NewTakeoutModal';
 export * from './OnlineDeliveryModal';
 export * from './OrderEntryModal';

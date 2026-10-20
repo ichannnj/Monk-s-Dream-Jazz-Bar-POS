@@ -2,11 +2,13 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Modal, Pressable, StyleSheet } from 'react-native';
 import { X } from 'lucide-react-native';
 import { MenuItem, MenuCategory, OrderLineItem } from '../../../types/floor';
+import { formatCurrency } from '@monks/shared';
 
 import { toast } from '../../../store/useToastStore';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { menuApi } from '../../../services/menu.api';
 import { AdminItemImageModal } from '../AdminItemImageModal';
+import { ConfirmationModal } from '../../shared/ConfirmationModal';
 import { OrderCategoryBar } from './OrderCategoryBar';
 import { OrderMenuItemGrid } from './OrderMenuItemGrid';
 import { OrderCartSidebar } from './OrderCartSidebar';
@@ -46,6 +48,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   // Admin image upload state
   const [editingImageItem, setEditingImageItem] = useState<MenuItem | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
+  const [isConfirmDispatchOpen, setIsConfirmDispatchOpen] = useState<boolean>(false);
 
   // Customizer sheet state
   const [activeCustomizingItem, setActiveCustomizingItem] = useState<MenuItem | null>(null);
@@ -220,15 +223,26 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     }
   };
 
-  const handleSend = () => {
+  const handleOpenConfirm = () => {
     if (cartItems.length === 0) {
       toast.warning('Cart is empty. Please select menu items to dispatch.', {
         title: 'Empty Order',
       });
       return;
     }
-    onSendOrder(cartItems, hasCorkage, corkageAmount);
-    onClose();
+    setIsConfirmDispatchOpen(true);
+  };
+
+  const handleExecuteDispatch = () => {
+    try {
+      onSendOrder(cartItems, hasCorkage, corkageAmount);
+      setIsConfirmDispatchOpen(false);
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to dispatch order. Check station connectivity.', {
+        title: 'Dispatch Error',
+      });
+    }
   };
 
   return (
@@ -287,7 +301,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
               grandTotal={grandTotal}
               onUpdateQuantity={updateQuantity}
               onToggleCorkage={handleToggleCorkage}
-              onSend={handleSend}
+              onSend={handleOpenConfirm}
             />
           </View>
 
@@ -311,6 +325,23 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
               setEditingImageItem(null);
             }}
             onSaveImage={handleSaveProductImage}
+          />
+
+          {/* CONFIRMATION MODAL FOR ORDER DISPATCH */}
+          <ConfirmationModal
+            visible={isConfirmDispatchOpen}
+            title="Dispatch Order to Stations?"
+            message={`${title}: ${cartItems.reduce(
+              (acc, i) => acc + i.quantity,
+              0
+            )} item(s) totalling ${formatCurrency(
+              grandTotal
+            )} will be sent to Bar & Kitchen station chits.`}
+            confirmText="Send Order"
+            cancelText="Back to Cart"
+            variant="primary"
+            onConfirm={handleExecuteDispatch}
+            onCancel={() => setIsConfirmDispatchOpen(false)}
           />
         </View>
       </View>

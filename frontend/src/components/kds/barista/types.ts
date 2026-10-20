@@ -29,6 +29,10 @@ export interface BarTicket {
   tabIndex?: number;
   takeoutId?: string;
   onlineId?: string;
+  transferredFrom?: {
+    tableCode: string;
+    transferredAt?: string;
+  };
 }
 
 export interface StockInventoryItem {

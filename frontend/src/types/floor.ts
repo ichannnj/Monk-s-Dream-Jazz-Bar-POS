@@ -51,6 +51,10 @@ export interface CustomerTab {
   items: OrderLineItem[];
   totalAmount: number;
   openedAt?: string;
+  transferredFrom?: {
+    tableCode: string;
+    transferredAt?: string;
+  };
 }
 
 export interface TableItem {
