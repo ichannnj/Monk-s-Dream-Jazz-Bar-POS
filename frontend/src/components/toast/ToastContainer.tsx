@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { createPortal } from 'react-dom';
-import { useToastStore } from '../../store/useToastStore';
+import { useToastStore } from '../../features/shared/toast/useToastStore';
 import { ToastCard } from './ToastCard';
 
 export const ToastContainer: React.FC = () => {

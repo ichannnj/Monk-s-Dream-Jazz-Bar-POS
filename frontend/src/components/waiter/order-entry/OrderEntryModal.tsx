@@ -4,9 +4,9 @@ import { X } from 'lucide-react-native';
 import { MenuItem, MenuCategory, OrderLineItem } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
 
-import { toast } from '../../../store/useToastStore';
-import { useAuthStore } from '../../../store/useAuthStore';
-import { menuApi } from '../../../services/menu.api';
+import { toast } from '../../../features/shared/toast/useToastStore';
+import { useAuthStore } from '../../../features/auth/application/useAuthStore';
+import { menuApi } from '../../../features/menu/data/menu.api';
 import { AdminItemImageModal } from '../AdminItemImageModal';
 import { ConfirmationModal } from '../../shared/ConfirmationModal';
 import { OrderCategoryBar } from './OrderCategoryBar';

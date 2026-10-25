@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { Coffee, UtensilsCrossed, BellRing, LogOut } from 'lucide-react-native';
-import { useAuthStore } from '../../../../store/useAuthStore';
+import { useAuthStore } from '../../../../features/auth/application/useAuthStore';
 import { StationType } from '../../types';
 
 const MONKS_DREAM_LOGO = require('../../../../../assets/Monks Dream Logo files-02.png');

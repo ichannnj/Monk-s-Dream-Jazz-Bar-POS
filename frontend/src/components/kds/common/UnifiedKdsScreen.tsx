@@ -1,9 +1,9 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MessageSquare } from 'lucide-react-native';
-import { useAuthStore } from '../../../store/useAuthStore';
-import { useOrderStore } from '../../../store/useOrderStore';
-import { toast } from '../../../store/useToastStore';
+import { useAuthStore } from '../../../features/auth/application/useAuthStore';
+import { useOrderStore } from '../../../features/orders/application/useOrderStore';
+import { toast } from '../../../features/shared/toast/useToastStore';
 import { Sidebar, NavTabId } from '../../navigation/Sidebar';
 import { BaristaKdsHeader } from '../barista/components/BaristaKdsHeader';
 import { BaristaKanbanColumn } from '../barista/components/BaristaKanbanColumn';
@@ -14,7 +14,7 @@ import { AdjustStockModal } from '../barista/modals/AdjustStockModal';
 import { FohStatusModal } from '../barista/modals/FohStatusModal';
 import { SharedChatView, SharedAlertsView } from '../../shared';
 import { StationSettingsModal } from '../common/modals/StationSettingsModal';
-import { supabase } from '../../../services/supabase';
+import { supabase } from '../../../features/shared/infrastructure/supabase';
 
 // Native Web Audio chime for KDS ticket arrivals
 const playKdsChime = () => {

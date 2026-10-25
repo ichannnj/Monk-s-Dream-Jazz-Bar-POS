@@ -59,7 +59,7 @@ export const CashDrawerActionModal: React.FC<CashDrawerActionModalProps> = ({
           {/* Form */}
           <View className="my-4 gap-4">
             <View>
-              <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <Text className="text-base font-bold text-gray-500 uppercase tracking-wider">
                 Amount (₱):
               </Text>
               <TextInput
@@ -74,11 +74,11 @@ export const CashDrawerActionModal: React.FC<CashDrawerActionModalProps> = ({
             </View>
 
             <View>
-              <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <Text className="text-base font-bold text-gray-500 uppercase tracking-wider">
                 Reason / Expense Description:
               </Text>
               <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm text-jazz-text mt-1.5"
+                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-jazz-text mt-1.5"
                 placeholder="e.g. Ice bag from store, ₱100 change restock..."
                 placeholderTextColor="#9ca3af"
                 value={reason}
@@ -91,15 +91,15 @@ export const CashDrawerActionModal: React.FC<CashDrawerActionModalProps> = ({
           <View className="flex-row gap-3 pt-2">
             <Pressable
               onPress={onClose}
-              className="flex-1 py-3 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200 min-h-[44px]"
+              className="flex-1 py-3.5 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200 min-h-[48px]"
             >
-              <Text className="text-sm font-bold text-gray-700">Cancel</Text>
+              <Text className="text-base font-bold text-gray-700">Cancel</Text>
             </Pressable>
             <Pressable
               onPress={onConfirm}
-              className="flex-1 py-3 rounded-xl bg-wine-700 items-center justify-center active:opacity-90 min-h-[44px]"
+              className="flex-1 py-3.5 rounded-xl bg-wine-700 items-center justify-center active:opacity-90 min-h-[48px]"
             >
-              <Text className="text-sm font-extrabold text-white">Record Transaction</Text>
+              <Text className="text-base font-extrabold text-white">Record Transaction</Text>
             </Pressable>
           </View>
         </View>

@@ -1,7 +1,1 @@
-/**
- * AdminItemImageModal Re-export
- * Monk's Dream Jazz Bar POS
- *
- * Modular implementation moved to ./admin-item-image/
- */
-export * from './admin-item-image';
+export * from '../../features/orders/presentation/admin-item-image';

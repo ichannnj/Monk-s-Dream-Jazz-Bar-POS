@@ -12,9 +12,9 @@ import {
   CheckCircle2,
   Repeat,
 } from 'lucide-react-native';
-import { useAuthStore } from '../../../../store/useAuthStore';
-import { useOrderStore } from '../../../../store/useOrderStore';
-import { toast } from '../../../../store/useToastStore';
+import { useAuthStore } from '../../../../features/auth/application/useAuthStore';
+import { useOrderStore } from '../../../../features/orders/application/useOrderStore';
+import { toast } from '../../../../features/shared/toast/useToastStore';
 import { Sidebar, NavTabId } from '../../../navigation/Sidebar';
 import { SharedChatView, SharedAlertsView, ConfirmationModal } from '../../../shared';
 import { StationHeader } from '../../common/components/StationHeader';

@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
 import { Settings, User, ShieldCheck, Printer, LogOut, Sparkles, Wifi } from 'lucide-react-native';
-import { useAuthStore } from '../../store/useAuthStore';
-import { toast } from '../../store/useToastStore';
+import { useAuthStore } from '../../features/auth/application/useAuthStore';
+import { toast } from '../../features/shared/toast/useToastStore';
 
 interface ShiftSettingsModalProps {
   onClose?: () => void;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { useAuthStore } from '../store/useAuthStore';
+import { useAuthStore } from '../features/auth/application/useAuthStore';
 import {
   Sparkles,
   Server,

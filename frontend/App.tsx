@@ -2,16 +2,11 @@ import './src/global.css';
 import React, { useEffect } from 'react';
 import { SafeAreaView, StatusBar, View } from 'react-native';
 import { rem } from 'nativewind';
-import {
-  WaiterCashierScreen,
-  BaristaKdsScreen,
-  KitchenKdsScreen,
-  FohRunnerScreen,
-  ToastContainer,
-} from './src/components';
-import { LoginScreen } from './src/auth';
-import { useAuthStore } from './src/store/useAuthStore';
-import { useOrderStore } from './src/store/useOrderStore';
+import { WaiterCashierScreen } from './src/components';
+import { BaristaKdsScreen, KitchenKdsScreen, FohRunnerScreen } from './src/features/kds';
+import { ToastContainer } from './src/features/shared';
+import { LoginScreen, useAuthStore } from './src/features/auth';
+import { useOrderStore } from './src/features/orders';
 
 // Ensure 1rem = 16px root scale for tablet typography
 try {

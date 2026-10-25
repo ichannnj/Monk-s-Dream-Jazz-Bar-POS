@@ -60,7 +60,7 @@ export const CashDrawerAuditModal: React.FC<CashDrawerAuditModalProps> = ({
 
           {/* Calculated System Balance */}
           <View className="bg-slate-50 border border-slate-200 rounded-2xl p-4 my-3 items-center">
-            <Text className="text-xs text-gray-500 font-bold uppercase tracking-wider">
+            <Text className="text-base text-gray-500 font-bold uppercase tracking-wider">
               Calculated System Cash Expected:
             </Text>
             <Text className="text-2xl font-black text-jazz-text tabular-nums mt-1">
@@ -70,7 +70,7 @@ export const CashDrawerAuditModal: React.FC<CashDrawerAuditModalProps> = ({
 
           {/* Counted Physical Cash Input */}
           <View className="my-2">
-            <Text className="text-xs font-bold text-gray-500 uppercase tracking-wider">
+            <Text className="text-base text-gray-500 font-bold uppercase tracking-wider">
               Actual Physical Cash Counted in Drawer (₱):
             </Text>
             <TextInput
@@ -99,7 +99,7 @@ export const CashDrawerAuditModal: React.FC<CashDrawerAuditModalProps> = ({
               }`}
             >
               <Text
-                className={`text-xs font-black ${
+                className={`text-base font-black ${
                   variance === 0
                     ? 'text-emerald-700'
                     : variance > 0
@@ -114,7 +114,7 @@ export const CashDrawerAuditModal: React.FC<CashDrawerAuditModalProps> = ({
                     : '▼ SHORT (DISCREPANCY)'}
               </Text>
               <Text
-                className={`text-lg font-black tabular-nums mt-0.5 ${
+                className={`text-xl font-black tabular-nums mt-0.5 ${
                   variance === 0
                     ? 'text-emerald-700'
                     : variance > 0
@@ -132,15 +132,15 @@ export const CashDrawerAuditModal: React.FC<CashDrawerAuditModalProps> = ({
           <View className="flex-row gap-3 pt-4">
             <Pressable
               onPress={handleClose}
-              className="flex-1 py-3 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200 min-h-[44px]"
+              className="flex-1 py-3.5 rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200 min-h-[48px]"
             >
-              <Text className="text-sm font-bold text-gray-700">Close</Text>
+              <Text className="text-base font-bold text-gray-700">Close</Text>
             </Pressable>
             <Pressable
               onPress={handlePrint}
-              className="flex-1 py-3 rounded-xl bg-slate-900 items-center justify-center active:opacity-90 min-h-[44px]"
+              className="flex-1 py-3.5 rounded-xl bg-slate-900 items-center justify-center active:opacity-90 min-h-[48px]"
             >
-              <Text className="text-sm font-extrabold text-white">Print Shift Z-Report</Text>
+              <Text className="text-base font-extrabold text-white">Print Shift Z-Report</Text>
             </Pressable>
           </View>
         </View>

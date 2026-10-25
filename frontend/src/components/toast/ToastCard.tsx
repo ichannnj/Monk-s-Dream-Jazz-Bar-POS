@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet, Animated, Platform } from 'react-native';
 import { CheckCircle2, AlertCircle, AlertTriangle, Sparkles, X } from 'lucide-react-native';
-import { ToastItemData, useToastStore } from '../../store/useToastStore';
+import { ToastItemData, useToastStore } from '../../features/shared/toast/useToastStore';
 
 interface ToastCardProps {
   toast: ToastItemData;

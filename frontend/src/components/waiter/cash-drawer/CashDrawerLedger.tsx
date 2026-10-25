@@ -40,7 +40,7 @@ export const CashDrawerLedger: React.FC<CashDrawerLedgerProps> = ({ entries }) =
                   }`}
                 >
                   <Text
-                    className={`text-[10px] font-extrabold ${
+                    className={`text-base font-extrabold ${
                       entry.type === 'sale'
                         ? 'text-emerald-700'
                         : entry.type === 'float'
@@ -55,17 +55,17 @@ export const CashDrawerLedger: React.FC<CashDrawerLedgerProps> = ({ entries }) =
                 </View>
 
                 <View className="flex-1">
-                  <Text className="text-sm font-bold text-jazz-text" numberOfLines={1}>
+                  <Text className="text-base font-bold text-jazz-text" numberOfLines={1}>
                     {entry.reason}
                   </Text>
-                  <Text className="text-xs text-gray-400 mt-0.5">
+                  <Text className="text-base text-gray-400 mt-0.5">
                     {entry.performedBy} • {entry.timestamp}
                   </Text>
                 </View>
               </View>
 
               <Text
-                className={`text-sm font-extrabold tabular-nums ${
+                className={`text-base font-extrabold tabular-nums ${
                   isPositive ? 'text-emerald-600' : 'text-red-600'
                 }`}
               >

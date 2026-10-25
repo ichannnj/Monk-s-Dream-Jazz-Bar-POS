@@ -3,7 +3,7 @@ import { View, Text, Pressable, Modal, TextInput, StyleSheet } from 'react-nativ
 import { AlertTriangle, Trash2, X } from 'lucide-react-native';
 import { OrderLineItem } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
-import { toast } from '../../../store/useToastStore';
+import { toast } from '../../../features/shared/toast/useToastStore';
 
 interface TableActionVoidModalProps {
   visible: boolean;

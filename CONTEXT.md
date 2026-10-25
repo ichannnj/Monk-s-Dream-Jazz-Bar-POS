@@ -74,13 +74,13 @@ Printing is handled via a dedicated Linux PC running ESC/POS USB drivers:
 
 ---
 
-### 7. Modular State & Services Architecture (250–350 LOC Invariant)
+### 7. Feature-First Modular Architecture (250–350 LOC Invariant)
 
 To ensure token efficiency and prevent maintenance degradation:
 
-- **Zustand Slices Core:** The floor state engine is modularized inside `frontend/src/store/order/slices/` (`tableTab`, `transfer`, `settlement`, `itemStatus`, `channels`, `hydration`, `realtime`), composed into a backward-compatible root store facade (`useOrderStore.ts`).
-- **Modular Services:** High-complexity APIs are partitioned into domain directories (`services/tables/`, `services/orders/`) with focused sub-modules (< 325 LOC each) and facade entrypoints (`tables.api.ts`, `orders.api.ts`).
-- **250–350 LOC Hard Ceiling:** No file in `frontend/src/` may exceed 350 lines of code. Complex components or services must be split into modular slices or dedicated sub-components.
+- **Feature-First Organization:** Capabilities are organized under `frontend/src/features/<capability>/` with explicit folder responsibilities (`presentation/`, `application/`, `domain/`, `data/`).
+- **Feature-Owned Application Stores:** State stores and API clients are directly owned and exported by their respective feature modules (e.g., `frontend/src/features/orders/application/useOrderStore.ts`), eliminating redundant facade layers.
+- **250–350 LOC Standard:** Maintain a target ceiling of 250–350 physical lines per file, separating views, state, and domain logic cleanly.
 
 ---
 
@@ -111,6 +111,7 @@ To ensure token efficiency and prevent maintenance degradation:
                                 ┌──────────────────────┐
                                 │  FOH Runner / Buzzout │
                                 │   Tablet Expediter   │
+                                │   (station:foh_runner)
                                 └───────────┬──────────┘
                                             │ Auto-print dispatch
                                             ▼
@@ -127,4 +128,3 @@ To ensure token efficiency and prevent maintenance degradation:
 - Architecture & File Tree Map: [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)
 - Implementation Roadmap: [PHASES.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/PHASES.md)
 - Developer Onboarding & Commands: [CONTRIBUTING.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/CONTRIBUTING.md)
-- Antigravity / Gemini Instructions: [GEMINI.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/GEMINI.md)

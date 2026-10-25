@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { useAuthStore } from '../store/useAuthStore';
+import { useAuthStore } from '../features/auth/application/useAuthStore';
 import { Flame, Cloud, LogOut } from 'lucide-react-native';
 
 export const Header: React.FC = () => {

@@ -1,4 +1,9 @@
-import { toast, useToastStore, ToastOptions, ToastItemData } from '../../store/useToastStore';
+import {
+  toast,
+  useToastStore,
+  ToastOptions,
+  ToastItemData,
+} from '../../features/shared/toast/useToastStore';
 
 export const useToast = () => {
   const toasts = useToastStore((state) => state.toasts);

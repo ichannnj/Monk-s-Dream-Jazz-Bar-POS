@@ -13,9 +13,9 @@ import {
 import { Image as ExpoImage } from 'expo-image';
 
 import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
-import { useAuthStore } from '../../store/useAuthStore';
-import { toast } from '../../store/useToastStore';
-import { posApi } from '../../services/api';
+import { useAuthStore } from '../../features/auth/application/useAuthStore';
+import { toast } from '../../features/shared/toast/useToastStore';
+import { posApi } from '../../features/shared/infrastructure/api';
 import { PinCodeInput } from '../components/PinCodeInput';
 import { TrainingModeSwitch } from '../components/TrainingModeSwitch';
 import { ForgotPinModal } from '../components/ForgotPinModal';
