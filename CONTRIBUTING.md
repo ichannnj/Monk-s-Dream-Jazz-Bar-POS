@@ -25,16 +25,25 @@ Monk-s-Dream-Jazz-Bar-POS/
 ├── frontend/                       # React Native (Expo SDK 52) Tablet Application
 │   ├── App.tsx                     # Entry point & role-based screen switcher
 │   └── src/
-│       ├── auth/                   # 4-digit PIN login screen & keypad
-│       ├── components/waiter/      # Floor POS modals, table grid cards, cart
-│       ├── components/kds/         # Barista & Kitchen station tablet screens
-│       ├── components/printer/     # USB thermal print listener & testing
-│       ├── components/admin/       # Recipe BOM editor, stock ledger & shift payroll
-│       ├── store/                  # Zustand stores (useOrderStore, useAuthStore)
-│       └── services/               # Supabase client & API services
+│       ├── features/               # Feature-first domain modules (4 layers each)
+│       │   ├── auth/               # screens/LoginScreen, application/useAuthStore, data/auth.api
+│       │   ├── floor/              # FloorGridView, TableCard, TableFilterBar, data/resolver
+│       │   ├── table-service/      # TableActionModal, TableTransferModal, OpenTabModal
+│       │   ├── orders/             # OrderEntryModal, useOrderStore, data/orders.api
+│       │   ├── checkout/           # BillSettlementModal, application/settlement.slice
+│       │   ├── check-history/      # ChecksHistoryView, check inspection
+│       │   ├── takeout/            # NewTakeoutModal, TakeoutQueueCard
+│       │   ├── delivery/           # OnlineDeliveryModal, OnlineDeliveryCard
+│       │   ├── cash-drawer/        # CashDrawerModalView, ledger, drawer metrics
+│       │   ├── menu/               # data/menu.api, domain/menu.types, data/menu.mock
+│       │   ├── kds/                # UnifiedKdsScreen, barista/, kitchen/, foh-runner/
+│       │   ├── alerts/             # SharedAlertsView, station notification bells
+│       │   ├── chat/               # SharedChatView, inter-station messaging
+│       │   └── shared/             # ui/ConfirmationModal, navigation/Sidebar, toast/, infrastructure/
+│       └── types/                  # Shared floor domain contracts & legacy type aliases
 │
 └── packages/                       # Shared Monorepo Packages
-    ├── shared/src/index.ts         # Zod schemas, DB types, Staff User types
+    ├── shared/src/index.ts         # Zod schemas, DB types (database.types.ts), HLC clocks
     └── printing/src/index.ts       # Linux USB ESC/POS driver & receipt byte generator
 ```
 
@@ -123,31 +132,34 @@ pnpm build                   # Turbo cached build across all packages
 
 ## 📐 Architecture Invariants & Standards
 
-1. **Strict TypeScript Types:**
-   - Always import domain models and schemas from `@monks/shared` or `packages/shared/src/index.ts`.
-   - Never import types or seed data into production services (`frontend/src/services/*`).
-2. **React Native & NativeWind v4:**
-   - The frontend is built for touchscreen tablets using React Native primitives (`View`, `Text`, `Pressable`).
+1. **Strict TypeScript Types & Feature-First Imports:**
+   - Always import domain models and schemas directly from canonical `features/<domain>` or `@monks/shared`.
+   - Never re-create barrel facade layers outside of `src/features/`.
+2. **React Native & NativeWind v4 Mandate:**
+   - The frontend is built for touchscreen tablets using React Native primitives (`View`, `Text`, `Pressable`, `TextInput`, `ScrollView`).
    - Web DOM elements (`<div>`, `<span>`, `<button>`, `<input>`) are **strictly prohibited** and blocked by ESLint.
-   - Styling uses NativeWind v4 (Tailwind 3.4). **Do NOT** install Tailwind v4 or web CSS frameworks.
+   - Styling uses NativeWind v4 (`className="..."`). Typography floor: all text must be $\ge$ 16px (`text-base` or larger). Touch targets must be min 48px (`min-h-[48px] min-w-[48px]`).
 3. **Role-Based Conditional Navigation:**
    - Navigation is handled through role-based conditional switching inside [frontend/App.tsx](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/App.tsx) based on `currentUser.role` in `useAuthStore`.
    - **DO NOT** introduce Expo Router or create a `src/app/` directory.
 4. **Supabase BaaS & Database Guardrails:**
    - Every `CREATE TABLE` migration must have `ENABLE ROW LEVEL SECURITY;`.
    - Every `SECURITY DEFINER` function must explicitly set `SET search_path = public;`.
-   - Client credentials in `frontend/src/services/supabase.ts` are validated at startup with Zod.
+   - Client credentials in `frontend/src/features/shared/infrastructure/supabase.ts` are validated at startup with Zod.
 5. **Git Hooks & CI Automation:**
    - **Pre-commit:** Husky runs `lint-staged` (Prettier + ESLint fix on staged files).
    - **Pre-push:** Runs `pnpm typecheck`, `pnpm build`, and `pnpm db:lint`.
    - **CI:** GitHub Actions validates all checks in parallel on PRs and pushes to `main`.
 6. **Preserve Documentation & Comments:**
    - Maintain all existing comments, docstrings, and Diátaxis documentation structure across all commits.
-7. **250–350 LOC Standard & Modular Slicing:**
-   - To prevent token bloat and maintain high agent navigation efficiency, all files in `frontend/src/` must strictly target **250–350 lines of code max**.
-   - Stores must use the **Zustand Slices pattern** (`frontend/src/store/order/slices/`) combined into a backward-compatible root store facade (`useOrderStore.ts`).
-   - Complex services must be organized into dedicated feature directories (`frontend/src/services/tables/`, `frontend/src/services/orders/`) with sub-modules under 325 LOC and clean facade re-exports (`tables.api.ts`, `orders.api.ts`).
-   - Refer to [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md) for the active Repository Architecture & Modular File Tree.
+7. **Feature-First 4-Layer Taxonomy & 250–350 LOC Standard:**
+   - To preserve token efficiency and ensure clean separation of concerns, all logic under `frontend/src/features/<domain>/` is organized into 4 explicit layers:
+     - `presentation/`: React Native screens, modals, components, and local UI state hooks.
+     - `application/`: Workflow coordinators, Zustand store slices (`*.slice.ts`), and optimistic updates.
+     - `domain/`: Business rules, formulas, calculations, and local domain types.
+     - `data/`: Supabase queries/RPCs (`*.api.ts`), database resolvers, and realtime handlers.
+   - All source files strictly target **250–350 lines of code max**.
+   - Refer to [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md) for the active Repository Architecture & Task-to-File Fast Router.
 
 ---
 
@@ -158,18 +170,18 @@ pnpm build                   # Turbo cached build across all packages
   - `feat(kds): add station buzzout timer badge`
   - `fix(depletion): prevent double decrement on order update`
   - `docs(context): document corkage fee calculation`
-- **Pre-PR Checklist:**
-  - [ ] `pnpm typecheck` passes with zero errors.
-  - [ ] `pnpm lint` passes with zero errors.
+- **Pre-PR / Pre-Commit Verification Steps:**
+  - [ ] `pnpm typecheck` passes with zero errors across all workspaces.
+  - [ ] `pnpm lint:quiet` passes with zero errors.
   - [ ] `pnpm db:lint` passes all migration security checks.
-  - [ ] `pnpm format:check` reports all files formatted.
   - [ ] `pnpm build` completes successfully.
+  - [ ] `pnpm format:check` reports all files formatted.
 
 ---
 
 ## 📚 Cross References
 
 - Business Domain & Venue Rules: [CONTEXT.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/CONTEXT.md)
-- Agent Operating Guidelines: [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)
-- Gemini & Antigravity Workflow: [GEMINI.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/GEMINI.md)
+- Agent Operating Guidelines & Router: [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)
 - Phased Implementation Blueprint: [PHASES.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/PHASES.md)
+- Master Venue Requirements: [REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)
