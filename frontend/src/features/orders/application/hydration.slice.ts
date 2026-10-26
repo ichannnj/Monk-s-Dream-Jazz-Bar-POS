@@ -65,6 +65,14 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
         return;
       }
 
+      // Index all open DB tab IDs to prevent ghost retention on origin tables when tabs transfer
+      const allOpenDbTabIds = new Set<string>();
+      dbTables.forEach((dt: any) => {
+        (dt.tabs || []).forEach((tb: any) => {
+          if (tb.id) allOpenDbTabIds.add(tb.id);
+        });
+      });
+
       const mappedTables: TableItem[] = dbTables.map((dbt: any) => {
         const rawTabs = dbt.tabs || [];
         const openTabs = rawTabs
@@ -132,12 +140,15 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
           };
         });
 
-        // Preserve any optimistic local open tabs that are not yet in the DB response
+        // Preserve only truly pending optimistic local tabs not yet written to DB or transferred
         const currentLocalTable = get().tables.find(
           (t) => t.id === dbt.id || t.code === dbt.table_number
         );
         const pendingLocalTabs = (currentLocalTable?.tabs || []).filter(
-          (lt) => lt.status === 'open' && !customerTabs.some((ct) => ct.id === lt.id)
+          (lt) =>
+            lt.status === 'open' &&
+            !customerTabs.some((ct) => ct.id === lt.id) &&
+            !allOpenDbTabIds.has(lt.id)
         );
         const combinedTabs = [...customerTabs, ...pendingLocalTabs];
         const activeTabsIndices = combinedTabs.map((tb, idx) => tb.tabIndex || idx + 1);

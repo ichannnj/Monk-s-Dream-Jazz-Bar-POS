@@ -2,6 +2,7 @@ import { CustomerTab, FloorAlert } from '../../../types/floor';
 import { tablesApi } from '../data/tables.api';
 import { deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
+import { realtimeGateway } from '../../shared/infrastructure/realtime';
 
 export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   transferTableOrTab: (
@@ -12,8 +13,8 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     reason?: string
   ) => {
     // 1. Capture origin, target, and tab references BEFORE state mutation for async RPC
-    const initialOriginTable = get().tables.find((t) => t.id === originId);
-    const initialTargetTable = get().tables.find((t) => t.id === targetId);
+    const initialOriginTable = get().tables.find((t) => t.id === originId || t.code === originId);
+    const initialTargetTable = get().tables.find((t) => t.id === targetId || t.code === targetId);
     const initialTabToMove =
       initialOriginTable?.tabs?.find((t) => t.tabIndex === tabIndex) ||
       initialOriginTable?.tabs?.[0];
@@ -23,9 +24,23 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     );
     const tabUuidForRpc = isTabUuid ? initialTabToMove?.id : undefined;
 
+    const transferredTabs =
+      mode === 'entire'
+        ? initialOriginTable?.tabs || []
+        : initialTabToMove
+          ? [initialTabToMove]
+          : [];
+    const prepItemsCount = transferredTabs.reduce(
+      (count, tab) =>
+        count + (tab.items || []).filter((item) => item.status === 'preparing').length,
+      0
+    );
+    const effectiveGuestName =
+      mode === 'entire' ? initialOriginTable?.tabs?.[0]?.guestName : initialTabToMove?.guestName;
+
     set((state) => {
-      const origin = state.tables.find((t) => t.id === originId);
-      const target = state.tables.find((t) => t.id === targetId);
+      const origin = state.tables.find((t) => t.id === originId || t.code === originId);
+      const target = state.tables.find((t) => t.id === targetId || t.code === targetId);
       if (!origin || !target) return state;
 
       // Ensure origin has populated tabs array
@@ -78,7 +93,7 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         const nextTargetStatus = deriveTableStatus(combinedActiveTabs.length > 0, combinedTabs);
 
         const updatedTables = state.tables.map((t) => {
-          if (t.id === originId) {
+          if (t.id === origin.id || t.code === origin.code) {
             return {
               ...t,
               status: 'empty' as const,
@@ -90,7 +105,7 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
               elapsedTime: '0m',
             };
           }
-          if (t.id === targetId) {
+          if (t.id === target.id || t.code === target.code) {
             return {
               ...t,
               status: nextTargetStatus,
@@ -184,7 +199,7 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         const nextTargetStatus = deriveTableStatus(nextTargetActiveTabs.length > 0, nextTargetTabs);
 
         const updatedTables = state.tables.map((t) => {
-          if (t.id === originId) {
+          if (t.id === origin.id || t.code === origin.code) {
             const isEmptyNow =
               remainingOriginTabs.length === 0 || remainingOriginActiveTabs.length === 0;
             return {
@@ -198,7 +213,7 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
               elapsedTime: isEmptyNow ? '0m' : t.elapsedTime,
             };
           }
-          if (t.id === targetId) {
+          if (t.id === target.id || t.code === target.code) {
             return {
               ...t,
               status: nextTargetStatus,
@@ -239,6 +254,24 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       }
     });
 
+    // Broadcast instant real-time table relocation alert to all stations (KDS & Runners)
+    realtimeGateway
+      .broadcastTableTransfer({
+        originTableId: originId,
+        originTableCode: initialOriginTable?.code || 'Table',
+        targetTableId: targetId,
+        targetTableCode: initialTargetTable?.code || 'Table',
+        mode,
+        tabIndex: mode === 'tab' ? (tabIndex ?? initialTabToMove?.tabIndex ?? 1) : undefined,
+        guestName: effectiveGuestName,
+        prepItemsCount,
+        reason: reason || 'Guest relocation request',
+        timestamp: new Date().toISOString(),
+      })
+      .catch((err) => {
+        console.warn('Background broadcastTableTransfer offline notice:', err);
+      });
+
     // Background asynchronous Supabase RPC execution
     tablesApi
       .transferTableTab({
@@ -247,7 +280,7 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         tabId: mode === 'entire' ? undefined : tabUuidForRpc,
         originTableCode: initialOriginTable?.code,
         targetTableCode: initialTargetTable?.code,
-        staffId: '00000000-0000-0000-0000-000000000001',
+        staffId: '11111111-1111-1111-1111-111111111111',
         reason: reason || 'Guest relocation request',
       })
       .catch((err) => {

@@ -1,5 +1,7 @@
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
+import { toast } from '../../shared/toast/useToastStore';
+import { playTransferAlertSound } from '../../shared/infrastructure/audio';
 
 export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   initRealtimeSync: () => {
@@ -138,6 +140,92 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         // If item was an INSERT from another tablet, re-hydrate to retrieve complete order data
         if (payload.eventType === 'INSERT') {
           get().hydrateFromSupabase();
+        }
+      },
+
+      onTableTransfer: (payload) => {
+        playTransferAlertSound();
+        const guestSuffix = payload.guestName ? ` · "${payload.guestName}"` : '';
+        const prepSuffix =
+          payload.prepItemsCount > 0
+            ? ` (${payload.prepItemsCount} item${payload.prepItemsCount === 1 ? '' : 's'} in prep)`
+            : '';
+        toast.info(
+          `🔁 ${payload.originTableCode} ➔ ${payload.targetTableCode}${guestSuffix}${prepSuffix}`,
+          {
+            title: 'Table Relocated',
+            duration: 7000,
+          }
+        );
+        get().addAlert({
+          title: `🔁 Table Transferred: ${payload.originTableCode} ➔ ${payload.targetTableCode}`,
+          description: `Customer relocated to ${payload.targetTableCode}. Reason: ${
+            payload.reason || 'Guest relocation request'
+          }`,
+          type: 'transfer',
+          targetRef: payload.targetTableCode,
+        });
+
+        // Apply transfer to local state if not already updated on this station
+        const currentTables = get().tables;
+        const originTbl = currentTables.find(
+          (t) => t.id === payload.originTableId || t.code === payload.originTableCode
+        );
+        const targetTbl = currentTables.find(
+          (t) => t.id === payload.targetTableId || t.code === payload.targetTableCode
+        );
+
+        if (originTbl && targetTbl && (originTbl.tabs || []).length > 0) {
+          const tabsToMove =
+            payload.mode === 'tab' && payload.tabIndex
+              ? (originTbl.tabs || []).filter((tb) => tb.tabIndex === payload.tabIndex)
+              : originTbl.tabs || [];
+
+          if (tabsToMove.length > 0) {
+            const nowTime = new Date(payload.timestamp || Date.now()).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+
+            const adjustedTabs = tabsToMove.map((tb) => ({
+              ...tb,
+              transferredFrom: {
+                tableCode: originTbl.code,
+                transferredAt: nowTime,
+              },
+            }));
+
+            const remainingOriginTabs = (originTbl.tabs || []).filter(
+              (tb) => !tabsToMove.some((mt) => mt.id === tb.id)
+            );
+
+            set((state) => ({
+              tables: state.tables.map((t) => {
+                if (t.id === originTbl.id || t.code === originTbl.code) {
+                  const isEmptyNow = remainingOriginTabs.length === 0;
+                  return {
+                    ...t,
+                    status: isEmptyNow ? ('empty' as const) : t.status,
+                    guests: isEmptyNow ? 0 : t.guests,
+                    hasOpenCheck: !isEmptyNow,
+                    activeTabs: remainingOriginTabs.map((tb) => tb.tabIndex),
+                    tabs: remainingOriginTabs,
+                    elapsedTime: isEmptyNow ? '0m' : t.elapsedTime,
+                  };
+                }
+                if (t.id === targetTbl.id || t.code === targetTbl.code) {
+                  return {
+                    ...t,
+                    status: 'occupied' as const,
+                    hasOpenCheck: true,
+                    tabs: [...(t.tabs || []), ...adjustedTabs],
+                    activeTabs: [...t.activeTabs, ...adjustedTabs.map((tb) => tb.tabIndex)],
+                  };
+                }
+                return t;
+              }),
+            }));
+          }
         }
       },
 

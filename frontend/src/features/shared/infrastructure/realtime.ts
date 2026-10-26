@@ -44,6 +44,19 @@ export interface BuzzoutPayload {
   totalItemsCount: number;
 }
 
+export interface TableTransferPayload {
+  originTableId: string;
+  originTableCode: string;
+  targetTableId: string;
+  targetTableCode: string;
+  mode: 'entire' | 'tab';
+  tabIndex?: number;
+  guestName?: string;
+  prepItemsCount: number;
+  reason?: string;
+  timestamp: string;
+}
+
 export interface GlobalRealtimeCallbacks {
   onTableChange?: (payload: any) => void;
   onTabChange?: (payload: any) => void;
@@ -51,6 +64,7 @@ export interface GlobalRealtimeCallbacks {
   onOrderChange?: (payload: any) => void;
   onProductChange?: (payload: any) => void;
   onTransferLog?: (payload: any) => void;
+  onTableTransfer?: (payload: TableTransferPayload) => void;
   onBuzzout?: (payload: any) => void;
   onCashDrawerChange?: (payload: any) => void;
 }
@@ -253,6 +267,9 @@ export class RealtimeGateway {
       .on('broadcast', { event: 'foh:buzzout' }, (event) => {
         callbacks.onBuzzout?.(event.payload);
       })
+      .on('broadcast', { event: 'station:table_transferred' }, (event) => {
+        callbacks.onTableTransfer?.(event.payload);
+      })
       .subscribe();
 
     this.channels.set(channelName, channel);
@@ -261,6 +278,18 @@ export class RealtimeGateway {
       channel.unsubscribe();
       this.channels.delete(channelName);
     };
+  }
+
+  /**
+   * Broadcast a table relocation event across all stations (KDS, Runner, Floor).
+   */
+  async broadcastTableTransfer(payload: TableTransferPayload): Promise<void> {
+    const channel = supabase.channel('pos_global_sync');
+    await channel.send({
+      type: 'broadcast',
+      event: 'station:table_transferred',
+      payload,
+    });
   }
 
   /**

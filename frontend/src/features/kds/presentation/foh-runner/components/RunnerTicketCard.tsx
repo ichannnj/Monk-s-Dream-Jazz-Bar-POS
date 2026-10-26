@@ -132,14 +132,14 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
         accessibilityRole="button"
         accessibilityLabel={
           ticket.orderType === 'dine_in'
-            ? `Deliver Round ${ticket.roundNumber || 1} to Table`
+            ? `Deliver Round ${ticket.roundNumber || 1} to ${ticket.sourceTitle.split(' · ')[0] || 'Table'}`
             : 'Hand Off to Courier or Guest'
         }
       >
         <CheckCircle2 size={20} color="#ffffff" />
         <Text style={styles.handoffBtnText}>
           {ticket.orderType === 'dine_in'
-            ? `Deliver Round ${ticket.roundNumber || 1} to Table`
+            ? `Deliver Round ${ticket.roundNumber || 1} to ${ticket.sourceTitle.split(' · ')[0] || 'Table'}`
             : 'Hand Off to Courier / Guest'}
         </Text>
       </Pressable>
