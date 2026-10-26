@@ -1,14 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Modal, Pressable, StyleSheet } from 'react-native';
 import { X } from 'lucide-react-native';
-import { MenuItem, MenuCategory, OrderLineItem } from '../../../../types/floor';
+import { MenuItem, MenuCategory, OrderLineItem } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 
-import { toast } from '../../../shared/toast/useToastStore';
-import { useAuthStore } from '../../../auth/application/useAuthStore';
-import { menuApi } from '../../../menu/data/menu.api';
+import { toast } from '@/features/shared/toast/useToastStore';
+import { useAuthStore } from '@/features/auth';
+import { menuApi } from '@/features/menu/data/menu.api';
 import { AdminItemImageModal } from '../admin-item-image/AdminItemImageModal';
-import { ConfirmationModal } from '../../../../components/shared/ConfirmationModal';
+import { ConfirmationModal } from '@/features/shared';
 import { OrderCategoryBar } from './OrderCategoryBar';
 import { OrderMenuItemGrid } from './OrderMenuItemGrid';
 import { OrderCartSidebar } from './OrderCartSidebar';

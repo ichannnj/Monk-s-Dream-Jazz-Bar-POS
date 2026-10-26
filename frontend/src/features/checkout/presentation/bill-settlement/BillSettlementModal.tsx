@@ -11,10 +11,10 @@ import {
   Receipt,
   Sparkles,
 } from 'lucide-react-native';
-import { TableItem, CustomerTab } from '../../../../types/floor';
+import { TableItem, CustomerTab } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
-import { toast } from '../../../shared/toast/useToastStore';
-import { ConfirmationModal } from '../../../../components/shared/ConfirmationModal';
+import { toast } from '@/features/shared/toast/useToastStore';
+import { ConfirmationModal } from '@/features/shared';
 import { styles } from './BillSettlementModal.styles';
 
 interface BillSettlementModalProps {

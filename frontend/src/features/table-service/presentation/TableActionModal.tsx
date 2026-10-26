@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, Modal, StyleSheet, ScrollView } from 'react-native';
 import { PlusCircle, Repeat, CreditCard, UtensilsCrossed, Trash2 } from 'lucide-react-native';
-import { TableItem, OrderLineItem } from '../../../types/floor';
+import { TableItem, OrderLineItem } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
-import { useAuthStore } from '../../auth/application/useAuthStore';
-import { useOrderStore } from '../../orders/application/useOrderStore';
-import { toast } from '../../shared/toast/useToastStore';
-import { ConfirmationModal } from '../../../components/shared/ConfirmationModal';
+import { useAuthStore } from '@/features/auth';
+import { useOrderStore } from '@/features/orders';
+import { toast } from '@/features/shared/toast/useToastStore';
+import { ConfirmationModal } from '@/features/shared';
 import { TableActionHeader } from './table-action/TableActionHeader';
 import { TableActionTabSelector } from './table-action/TableActionTabSelector';
 import { TableActionRoundList, RoundGroup } from './table-action/TableActionRoundList';

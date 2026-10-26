@@ -39,7 +39,7 @@ Monk-s-Dream-Jazz-Bar-POS/
 ├── frontend/src/
 │   ├── features/
 │   │   ├── auth/            # screens/LoginScreen, application/useAuthStore, data/auth.api
-│   │   ├── floor/           # FloorGridView, TableCard, TableFilterBar, data/resolver, tables.mock
+│   │   ├── floor/           # WaiterCashierScreen, FloorGridView, TableCard, TableFilterBar, useWaiterWorkflows, tables.mock
 │   │   ├── table-service/   # TableActionModal, TableTransferModal, OpenTabModal, data/tables.api
 │   │   ├── orders/          # order-entry/OrderEntryModal, application/useOrderStore, data/orders.api
 │   │   ├── checkout/        # bill-settlement/BillSettlementModal, application/settlement.slice
@@ -65,6 +65,8 @@ Monk-s-Dream-Jazz-Bar-POS/
 
 | If your task is...            | Read THIS file first                                                                     | DO NOT read in full         |
 | :---------------------------- | :--------------------------------------------------------------------------------------- | :-------------------------- |
+| **Floor POS Main Screen**     | `frontend/src/features/floor/presentation/WaiterCashierScreen.tsx`                       | Full screen files           |
+| **Floor & Waiter Workflows**  | `frontend/src/features/floor/application/useWaiterWorkflows.ts`                          | Monolithic stores           |
 | **Floor Grid & Tables**       | `frontend/src/features/floor/presentation/FloorGridView.tsx`                             | `WaiterCashierScreen.tsx`   |
 | **Table Actions & Tabs**      | `frontend/src/features/table-service/presentation/TableActionModal.tsx`                  | Monolithic modals           |
 | **Table Transfer / Move**     | `frontend/src/features/table-service/presentation/table-transfer/TableTransferModal.tsx` | `REQUIREMENTS.md`           |

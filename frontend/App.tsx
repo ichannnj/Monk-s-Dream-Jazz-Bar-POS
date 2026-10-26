@@ -2,7 +2,7 @@ import './src/global.css';
 import React, { useEffect } from 'react';
 import { SafeAreaView, StatusBar, View } from 'react-native';
 import { rem } from 'nativewind';
-import { WaiterCashierScreen } from './src/components';
+import { WaiterCashierScreen } from './src/features/floor';
 import { BaristaKdsScreen, KitchenKdsScreen, FohRunnerScreen } from './src/features/kds';
 import { ToastContainer } from './src/features/shared';
 import { LoginScreen, useAuthStore } from './src/features/auth';

@@ -1,11 +1,11 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { LayoutGrid } from 'lucide-react-native';
-import { TableItem, TakeoutOrder, OnlineDeliveryOrder } from '../../../types/floor';
+import { TableItem, TakeoutOrder, OnlineDeliveryOrder } from '@/types/floor';
 import { TableCard } from './TableCard';
-import { TakeoutQueueCard } from '../../../components/waiter/TakeoutQueueCard';
-import { OnlineDeliveryCard } from '../../../components/waiter/OnlineDeliveryCard';
-import { styles } from '../../../components/waiter/WaiterCashierScreen.styles';
+import { TakeoutQueueCard } from '@/features/takeout';
+import { OnlineDeliveryCard } from '@/features/delivery';
+import { styles } from './WaiterCashierScreen.styles';
 
 export interface FloorGridViewProps {
   cardWidth: any;
