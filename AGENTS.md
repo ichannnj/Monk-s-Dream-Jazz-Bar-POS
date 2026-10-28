@@ -72,7 +72,8 @@ All frontend business logic, views, stores, and API clients live strictly under 
 | **Staff Auth & PINs**            | `frontend/src/features/auth/application/useAuthStore.ts`                                 | Full login views            |
 | **Shared Infrastructure**        | `frontend/src/features/shared/infrastructure/api.ts`                                     | Full client trees           |
 | **Toast Notifications**          | `frontend/src/features/shared/toast/useToastStore.ts`                                    | Toast container trees       |
-| **Thermal Printing**             | `packages/printing/src/index.ts`                                                         | `REQUIREMENTS.md` Section 6 |
+| **Thermal Printing Daemon**      | `packages/printing/src/daemon.ts`                                                        | `REQUIREMENTS.md` Section 6 |
+| **Thermal Printing Monitor UI**  | `frontend/src/features/printer/presentation/PrinterTerminalScreen.tsx`                   | Full screen files           |
 | **Database Migrations**          | `supabase/migrations/` (check latest migration)                                          | Full `database.types.ts`    |
 
 ---

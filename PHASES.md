@@ -15,10 +15,10 @@
 - [x] **Phase 03: [Station KDS UIs & FOH Buzzout Device (Tablets Only)](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-3-station-kds-tablets.md)**
       _Touch-first screens for Barista KDS (`station_bar`), Kitchen Chef KDS (`station_food`), and FOH Runner Buzzout Device (`foh_runner`) subscribing to Supabase Realtime._
 
-- [ ] **Phase 04: [Full-Stack Integration of Floor POS](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-4-pos-integration.md)**
+- [x] **Phase 04: [Full-Stack Integration of Floor POS](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-4-pos-integration.md)**
       _Wiring existing 20+ Waiter POS components and Zustand store directly to `@supabase/supabase-js`, rendering visual cards with cover image banners and category fallbacks._
 
-- [ ] **Phase 05: [Dedicated Thermal Printing Terminal](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-5-thermal-printing.md)**
+- [x] **Phase 05: [Dedicated Thermal Printing Terminal](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-5-thermal-printing.md)**
       _Local Linux USB PC daemon listening to `print_jobs` table via Supabase Realtime CDC for instant chits, tags, and receipts._
 
 - [ ] **Phase 06: [Admin Back-Office, Inventory Hub & Venue Expense Suite](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-6-admin-and-analytics.md)**

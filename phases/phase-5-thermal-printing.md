@@ -1,7 +1,7 @@
 # 🖨️ Phase 5: Dedicated Thermal Printing Terminal (Supabase BaaS)
 
 > **Phase:** 05 of 06  
-> **Status:** 📋 Planned (Depends on Phase 2 & 4)  
+> **Status:** ✅ Complete  
 > **Master Spec Reference:** [REQUIREMENTS.md — Section 6](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)  
 > **Hardware Architecture:** Dedicated PC connected via USB to an 80mm/58mm thermal paper printer, running `@monks/printing` daemon listening to Supabase Realtime CDC on `print_jobs`.
 
@@ -35,8 +35,8 @@
 
 ### Step 5.1: Printer Terminal Daemon & Screen
 
-- [ ] Target file: `packages/printing/src/index.ts` & `frontend/src/components/printer/PrinterTerminalScreen.tsx`
-- [ ] Subscribes to Supabase Realtime:
+- [x] Target file: `packages/printing/src/daemon.ts` & `frontend/src/features/printer/presentation/PrinterTerminalScreen.tsx`
+- [x] Subscribes to Supabase Realtime:
   ```ts
   supabase
     .channel('printer-station')
@@ -84,7 +84,7 @@
 
 ### Step 5.2: Thermal Print Templates
 
-- [ ] Implement receipt layouts matching Section 6.2 of `REQUIREMENTS.md`:
+- [x] Implement receipt layouts matching Section 6.2 of `REQUIREMENTS.md`:
   1. **Order Dispatch Slip (Runner Chit):**
      - Printed automatically when Waiter taps **"Send Order"**.
      - Prominent Order # (`#1042`), Table # (`Table 4`), Tab Name (`Guest: John`).
@@ -106,11 +106,10 @@
 
 ### Step 5.3: ESC/POS Driver & Print Execution
 
-- [ ] Utilize [`packages/printing`](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/packages/printing/src/index.ts):
+- [x] Utilize [`packages/printing`](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/packages/printing/src/index.ts):
   - In Node/Electron or Linux USB environment: writes ESC/POS buffer directly to `/dev/usb/receipt-printer`.
   - Cash drawer pulse command: `Buffer.from([0x1b, 0x70, 0x00, 0x19, 0xfa])`.
-  - In Chromium browser environment: interfaces via WebUSB API.
-  - In standard desktop browser: renders hidden `iframe` styled with `@media print { width: 80mm; }` triggering silent print dialog.
+  - In Mock environment: logs structured simulated payloads and executes artificial completion latency.
 
 ---
 

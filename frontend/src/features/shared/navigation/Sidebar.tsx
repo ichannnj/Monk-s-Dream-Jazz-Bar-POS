@@ -10,11 +10,13 @@ import {
   Bell,
   Settings,
   LogOut,
+  Printer,
 } from 'lucide-react-native';
 
 const MONKS_DREAM_LOGO = require('../../../../assets/Monks Dream Logo files-02.png');
 
-export type NavTabId = 'tables' | 'board' | 'chat' | 'checks' | 'drawer' | 'alerts' | 'settings';
+export type NavTabId =
+  'tables' | 'board' | 'chat' | 'checks' | 'drawer' | 'printer' | 'alerts' | 'settings';
 
 export interface SidebarProps {
   activeTab: NavTabId;
@@ -56,6 +58,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'drawer' as NavTabId,
       label: 'Drawer',
       Icon: Coins,
+    },
+    {
+      id: 'printer' as NavTabId,
+      label: 'Printer',
+      Icon: Printer,
     },
     {
       id: 'alerts' as NavTabId,

@@ -10,6 +10,7 @@ import { ChecksHistoryView } from '@/features/check-history';
 import { CashDrawerModalView } from '@/features/cash-drawer';
 import { FloorAlertsView } from '@/features/alerts';
 import { FloorChatView } from '@/features/chat';
+import { PrinterTerminalScreen } from '@/features/printer';
 import { ShiftSettingsModal } from './ShiftSettingsModal';
 
 export const WaiterCashierScreen: React.FC = () => {
@@ -46,6 +47,8 @@ export const WaiterCashierScreen: React.FC = () => {
           <ChecksHistoryView />
         ) : activeNavTab === 'drawer' ? (
           <CashDrawerModalView initialDrawer="main" />
+        ) : activeNavTab === 'printer' ? (
+          <PrinterTerminalScreen />
         ) : activeNavTab === 'alerts' ? (
           <FloorAlertsView />
         ) : activeNavTab === 'chat' ? (
