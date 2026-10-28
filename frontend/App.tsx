@@ -30,12 +30,27 @@ export default function App() {
     };
   }, [initRealtimeSync]);
 
+  // ALWAYS reset admin view to 'admin' whenever currentUser logs in or changes
+  useEffect(() => {
+    setAdminView('admin');
+  }, [currentUser]);
+
   const renderScreen = () => {
     if (!currentUser) {
       return <LoginScreen />;
     }
 
-    switch (currentUser.role) {
+    const role = (currentUser.role || '').toLowerCase();
+
+    // Admin & Manager roles: always land on Admin Console Dashboard upon login
+    if (role === 'admin' || role === 'manager' || role === 'administrator') {
+      if (adminView === 'admin') {
+        return <AdminBackOfficeScreen onSwitchToFloor={() => setAdminView('floor')} />;
+      }
+      return <WaiterCashierScreen onSwitchToAdmin={() => setAdminView('admin')} />;
+    }
+
+    switch (role) {
       case 'station_bar':
       case 'barista':
       case 'bartender':
@@ -47,11 +62,6 @@ export default function App() {
         return <KitchenKdsScreen />;
       case 'foh_runner':
         return <FohRunnerScreen />;
-      case 'admin':
-        if (adminView === 'admin') {
-          return <AdminBackOfficeScreen onSwitchToFloor={() => setAdminView('floor')} />;
-        }
-        return <WaiterCashierScreen />;
       case 'cashier':
       case 'waiter':
       default:

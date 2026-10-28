@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { View } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
+import { LayoutDashboard } from 'lucide-react-native';
 import { useAuthStore } from '@/features/auth';
 import { useOrderStore } from '@/features/orders';
 import { toast } from '@/features/shared/toast/useToastStore';
@@ -13,7 +14,11 @@ import { FloorChatView } from '@/features/chat';
 import { PrinterTerminalScreen } from '@/features/printer';
 import { ShiftSettingsModal } from './ShiftSettingsModal';
 
-export const WaiterCashierScreen: React.FC = () => {
+interface WaiterCashierScreenProps {
+  onSwitchToAdmin?: () => void;
+}
+
+export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwitchToAdmin }) => {
   const { currentUser, logout } = useAuthStore();
   const alerts = useOrderStore((state) => state.alerts);
 
@@ -30,6 +35,19 @@ export const WaiterCashierScreen: React.FC = () => {
 
   return (
     <View style={styles.screenContainer}>
+      {/* Return to Admin Dashboard Button for Managers */}
+      {onSwitchToAdmin && (
+        <View className="absolute top-3 right-5 z-50">
+          <Pressable
+            onPress={onSwitchToAdmin}
+            className="flex-row items-center rounded-xl bg-[#800020] px-3.5 py-2 shadow-lg active:opacity-90"
+          >
+            <LayoutDashboard size={15} color="#ffffff" />
+            <Text className="ml-2 text-xs font-bold text-white">Back to Admin Dashboard</Text>
+          </Pressable>
+        </View>
+      )}
+
       {/* 1. Dedicated Left Navigation Sidebar */}
       <Sidebar
         activeTab={activeNavTab}

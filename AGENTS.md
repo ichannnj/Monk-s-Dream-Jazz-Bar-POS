@@ -69,12 +69,15 @@ All frontend business logic, views, stores, and API clients live strictly under 
 | **FOH Runner Expediter**         | `frontend/src/features/kds/presentation/foh-runner/screens/FohRunnerScreen.tsx`          | Full runner views           |
 | **Alerts & Call Bells**          | `frontend/src/features/alerts/presentation/SharedAlertsView.tsx`                         | Large modal trees           |
 | **Inter-station Chat**           | `frontend/src/features/chat/presentation/SharedChatView.tsx`                             | Full chat view              |
+| **Team Chat State / Store**      | `frontend/src/features/chat/application/useChatStore.ts`                                 | Monolithic store files      |
 | **Staff Auth & PINs**            | `frontend/src/features/auth/application/useAuthStore.ts`                                 | Full login views            |
 | **Shared Infrastructure**        | `frontend/src/features/shared/infrastructure/api.ts`                                     | Full client trees           |
 | **Toast Notifications**          | `frontend/src/features/shared/toast/useToastStore.ts`                                    | Toast container trees       |
 | **Thermal Printing Daemon**      | `packages/printing/src/daemon.ts`                                                        | `REQUIREMENTS.md` Section 6 |
 | **Thermal Printing Monitor UI**  | `frontend/src/features/printer/presentation/PrinterTerminalScreen.tsx`                   | Full screen files           |
-| **Admin Back-Office Hub**        | `frontend/src/features/admin/presentation/AdminBackOfficeScreen.tsx`                     | Full screen files           |
+| **Admin Console & Dashboard**    | `frontend/src/features/admin/presentation/views/AdminDashboardView.tsx`                  | Full screen files           |
+| **Admin Back-Office Hub**        | `frontend/src/features/admin/presentation/AdminBackOfficeScreen.tsx`                     | Monolithic views            |
+| **Admin Telemetry & Fallbacks**  | `frontend/src/features/admin/data/adminTelemetry.ts`                                     | Monolithic mock files       |
 | **Database Migrations**          | `supabase/migrations/` (check latest migration)                                          | Full `database.types.ts`    |
 
 ---

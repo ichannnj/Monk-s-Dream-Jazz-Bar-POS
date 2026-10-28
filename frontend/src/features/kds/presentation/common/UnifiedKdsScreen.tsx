@@ -139,7 +139,12 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
       />
 
       {/* 2. Main Content Container */}
-      <View style={styles.mainContent}>
+      <View
+        style={[
+          styles.mainContent,
+          (activeSidebarTab === 'chat' || activeSidebarTab === 'tables') && styles.mainContentFlush,
+        ]}
+      >
         {activeSidebarTab === 'tables' && stationTarget !== 'kitchen' ? (
           <FloorWorkspaceView
             autoStartStation={stationTarget}
@@ -273,13 +278,21 @@ const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
     flexDirection: 'row',
-    backgroundColor: '#fbf9f6',
+    backgroundColor: '#f6f0ed',
+    paddingVertical: 14,
+    paddingLeft: 14,
+    paddingRight: 18,
   },
   mainContent: {
     flex: 1,
-    paddingHorizontal: 28,
-    paddingTop: 20,
-    paddingBottom: 24,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  mainContentFlush: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
 
   kanbanBoard: {

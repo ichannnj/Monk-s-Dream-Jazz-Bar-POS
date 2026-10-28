@@ -82,6 +82,8 @@ To ensure token efficiency and prevent maintenance degradation:
 - **Feature-First Organization:** Capabilities are organized under `frontend/src/features/<capability>/` with explicit folder responsibilities (`presentation/`, `application/`, `domain/`, `data/`).
 - **Feature-Owned Application Stores:** State stores and API clients are directly owned and exported by their respective feature modules (e.g., `frontend/src/features/orders/application/useOrderStore.ts`), eliminating redundant facade layers.
 - **250–350 LOC Standard:** Maintain a target ceiling of 250–350 physical lines per file, separating views, state, and domain logic cleanly.
+- **Admin Console & Operations Command Center:** Manager console (`role: 'admin'`, PIN `9999`) provides real-time telemetry (sales in ₱, hourly curve, best sellers, station ticket turnarounds, and needs-attention alerts) with full sidebar access to Inventory MAC Hub & restock intake, Recipe BOM (+20% outside food rule), Staff attendance & bonuses, Station KDS monitoring, Checks history, and interactive slide-over Team Chat.
+- **Tablet Team Chats & Inter-Station Comms:** Unified 2-column communication workspace (`features/chat`) supporting Station Channels (Front of House, Bar Station, Cafe/Kitchen Station), 1-on-1 staff Direct Messages, pinned shift announcements (allergies/briefings), and POS system alert card streaming across Floor POS, KDS tablets, and Admin.
 
 ---
 
