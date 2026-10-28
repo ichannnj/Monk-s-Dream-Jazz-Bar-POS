@@ -48,9 +48,15 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
           targetTab?.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ') || 'Table Bill',
       };
 
-      // If payment is cash, log to drawer
+      // If payment is cash, log to drawer (scoped to Bar Till or Main Floor Till)
       let nextDrawer = state.drawerEntries;
       if (paymentMethod === 'cash') {
+        const isBar =
+          cashierName.toLowerCase().includes('bar') ||
+          cashierName.toLowerCase().includes('thelonious') ||
+          cashierName.toLowerCase().includes('bill');
+        const drawerTarget: 'main' | 'bar' = isBar ? 'bar' : 'main';
+
         const cashDrawerEntry: DrawerEntry = {
           id: `drw-${Date.now()}`,
           type: 'sale',
@@ -61,6 +67,7 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
             hour: '2-digit',
             minute: '2-digit',
           }),
+          drawerTarget,
         };
         nextDrawer = [cashDrawerEntry, ...state.drawerEntries];
       }
@@ -155,6 +162,12 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
 
       let nextDrawer = state.drawerEntries;
       if (paymentMethod === 'cash') {
+        const isBar =
+          cashierName.toLowerCase().includes('bar') ||
+          cashierName.toLowerCase().includes('thelonious') ||
+          cashierName.toLowerCase().includes('bill');
+        const drawerTarget: 'main' | 'bar' = isBar ? 'bar' : 'main';
+
         const cashDrawerEntry: DrawerEntry = {
           id: `drw-${Date.now()}`,
           type: 'sale',
@@ -165,6 +178,7 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
             hour: '2-digit',
             minute: '2-digit',
           }),
+          drawerTarget,
         };
         nextDrawer = [cashDrawerEntry, ...state.drawerEntries];
       }

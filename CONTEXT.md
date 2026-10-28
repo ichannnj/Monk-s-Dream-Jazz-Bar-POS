@@ -34,7 +34,7 @@ Access control is PIN-based across all shared floor and counter tablets. PINs ar
 | **Kitchen Chef**    | `5555`      | Kitchen KDS tablet (`station_kitchen`): hot food, pasta, pizza, prep        |
 | **FOH Runner**      | `6666`      | Expediter Buzzout tablet (`foh_runner`): tray dispatch & delivery packaging |
 
-> **Unified Floor Role:** Floor staff perform both table ordering and checkout/billing on handheld tablets without needing role-switching or manager overrides.
+> **Unified Floor & Counter Intake Role:** Floor staff perform both table ordering and checkout/billing on handheld tablets without needing role-switching or manager overrides. Counter staff (Baristas/Bartenders on `station_bar`) also have access to the full shared Floor POS (`FloorWorkspaceView`), Checks History, and Cash Drawer directly from their KDS tablet for customers ordering walk-up at the bar.
 
 ### 2. Category-Based Station Routing (Not Location-Based)
 
@@ -42,6 +42,7 @@ Item preparation destination is determined solely by product category, **never**
 
 - **Beverages & Bar:** Coffee, tea, soft drinks, cocktails, beer, wine $\rightarrow$ routes to **Bar Tablet KDS** (`station:bar`).
 - **Food & Kitchen:** Pasta, pizza, appetizers, desserts $\rightarrow$ routes to **Kitchen Tablet KDS** (`station:kitchen`).
+- **Station Auto-Start Invariant:** When an order is entered and dispatched directly from the Bar KDS (`station:bar`), the barista's own drink items automatically start in `preparing` status on the Bar KDS board, while food items route to Kitchen KDS in `new` (`pending`) status.
 - _Note:_ Table Grid Filters (e.g., "Cafe Area" vs. "Bar Area") organize physical floor tables and never alter kitchen/bar station routing.
 
 ### 3. KDS Hardware Constraint (Strict Architectural Rule)

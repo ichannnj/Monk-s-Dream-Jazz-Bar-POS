@@ -5,6 +5,7 @@ import { OrderEntryContext } from '../domain/workflow.types';
 interface UseOrderEntryFlowProps {
   tables: TableItem[];
   takeoutOrdersCount: number;
+  autoStartStation?: 'bar' | 'kitchen';
   openTableTab: (tableId: string, guestName: string, guestCount: number) => { tabIndex: number };
   addItemsToTab: (
     tableId: string,
@@ -34,6 +35,7 @@ interface UseOrderEntryFlowProps {
 export function useOrderEntryFlow({
   tables,
   takeoutOrdersCount,
+  autoStartStation,
   openTableTab,
   addItemsToTab,
   createTakeoutOrder,
@@ -139,10 +141,18 @@ export function useOrderEntryFlow({
     if (!orderEntryContext) return;
 
     try {
+      const processedItems: OrderLineItem[] = items.map((item) => {
+        const isAutoStart = autoStartStation && item.stationTarget === autoStartStation;
+        return {
+          ...item,
+          status: isAutoStart ? ('preparing' as const) : item.status || ('pending' as const),
+        };
+      });
+
       if (orderEntryContext.type === 'dine_in' && orderEntryContext.tableId) {
         const targetTable = tables.find((t) => t.id === orderEntryContext.tableId);
         const roundNum = orderEntryContext.roundNumber || 1;
-        const itemsWithRound = items.map((item) => ({
+        const itemsWithRound = processedItems.map((item) => ({
           ...item,
           roundNumber: item.roundNumber || roundNum,
         }));
@@ -160,7 +170,7 @@ export function useOrderEntryFlow({
       } else if (orderEntryContext.type === 'takeout') {
         const newOrder = createTakeoutOrder(
           orderEntryContext.takeoutCustomer || 'Walk-in Guest',
-          items,
+          processedItems,
           orderEntryContext.takeoutPrepaid ?? true,
           orderEntryContext.takeoutNotes
         );
@@ -176,7 +186,7 @@ export function useOrderEntryFlow({
           orderEntryContext.onlineRef || 'GF-8842',
           orderEntryContext.onlineRider || 'Rider Assigned',
           orderEntryContext.onlineCustomer || 'Customer',
-          items
+          processedItems
         );
         toast.success(
           `${platformLabel} #${newOrder.platformOrderRef} logged (${items.length} items) • Rider: ${newOrder.riderName}`,

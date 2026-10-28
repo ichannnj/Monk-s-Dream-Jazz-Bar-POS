@@ -5,7 +5,6 @@ export { FohRunnerScreen } from './presentation/foh-runner/screens/FohRunnerScre
 
 // Common components & modals
 export { StationHeader } from './presentation/common/components/StationHeader';
-export { StationTicketCard } from './presentation/common/components/StationTicketCard';
 export { StationSettingsModal } from './presentation/common/modals/StationSettingsModal';
 export { SharedAlertsDrawer } from './presentation/common/modals/SharedAlertsDrawer';
 export { SharedChatDrawer } from './presentation/common/modals/SharedChatDrawer';

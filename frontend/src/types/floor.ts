@@ -151,6 +151,7 @@ export interface DrawerEntry {
   reason: string;
   performedBy: string;
   timestamp: string;
+  drawerTarget?: 'main' | 'bar';
 }
 
 export interface FloorAlert {

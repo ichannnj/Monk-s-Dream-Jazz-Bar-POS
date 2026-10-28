@@ -80,7 +80,8 @@ export interface OrderState {
     type: 'float' | 'cash_in' | 'cash_out' | 'drop' | 'sale',
     amount: number,
     reason: string,
-    performedBy: string
+    performedBy: string,
+    drawerTarget?: 'main' | 'bar'
   ) => void;
   addChatMessage: (
     channel: 'all' | 'bar' | 'kitchen',

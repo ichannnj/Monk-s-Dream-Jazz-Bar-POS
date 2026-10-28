@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Coins, ArrowDownCircle, ArrowUpCircle, Vault, Calculator } from 'lucide-react-native';
 import { useOrderStore } from '../../orders/application/useOrderStore';
+import { useAuthStore } from '../../auth/application/useAuthStore';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '../../shared/toast/useToastStore';
 import { CashDrawerMetricsGrid } from './cash-drawer/CashDrawerMetricsGrid';
@@ -9,8 +10,17 @@ import { CashDrawerLedger } from './cash-drawer/CashDrawerLedger';
 import { CashDrawerActionModal, CashActionType } from './cash-drawer/CashDrawerActionModal';
 import { CashDrawerAuditModal } from './cash-drawer/CashDrawerAuditModal';
 
-export const CashDrawerModalView: React.FC = () => {
+export interface CashDrawerModalViewProps {
+  initialDrawer?: 'main' | 'bar';
+}
+
+export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
+  initialDrawer = 'main',
+}) => {
   const { drawerEntries, addDrawerEntry } = useOrderStore();
+  const { currentUser } = useAuthStore();
+
+  const [activeDrawer, setActiveDrawer] = useState<'main' | 'bar'>(initialDrawer);
 
   // Dialog State
   const [activeModal, setActiveModal] = useState<
@@ -20,15 +30,27 @@ export const CashDrawerModalView: React.FC = () => {
   const [modalReason, setModalReason] = useState('');
   const [countedCash, setCountedCash] = useState('');
 
-  // Compute live drawer balance
+  const staffDisplayName =
+    currentUser?.displayName ||
+    (activeDrawer === 'bar' ? 'Thelonious (Bartender)' : 'Coltrane (Cashier)');
+
+  // Filter ledger entries by selected drawer till
+  const activeEntries = useMemo(() => {
+    return drawerEntries.filter((entry) => {
+      const target = entry.drawerTarget || 'main';
+      return target === activeDrawer;
+    });
+  }, [drawerEntries, activeDrawer]);
+
+  // Compute live drawer balance for the active drawer
   const metrics = useMemo(() => {
-    let startingFloat = 200.0;
+    let startingFloat = activeDrawer === 'bar' ? 150.0 : 200.0;
     let cashSales = 0;
     let cashIn = 0;
     let cashOut = 0;
     let cashDrops = 0;
 
-    drawerEntries.forEach((entry) => {
+    activeEntries.forEach((entry) => {
       if (entry.type === 'float') startingFloat = entry.amount;
       else if (entry.type === 'sale') cashSales += entry.amount;
       else if (entry.type === 'cash_in') cashIn += entry.amount;
@@ -46,7 +68,9 @@ export const CashDrawerModalView: React.FC = () => {
       cashDrops,
       expectedBalance,
     };
-  }, [drawerEntries]);
+  }, [activeEntries, activeDrawer]);
+
+  const drawerLabel = activeDrawer === 'bar' ? 'Bar Station Till' : 'Main Floor Till';
 
   const handleConfirmAction = () => {
     const amt = parseFloat(modalAmount) || 0;
@@ -59,22 +83,24 @@ export const CashDrawerModalView: React.FC = () => {
 
     if (activeModal === 'cash_in') {
       const reason = modalReason.trim() || 'Change restock';
-      addDrawerEntry('cash_in', amt, reason, 'Coltrane (Cashier)');
-      toast.success(`Cash In: ${formatCurrency(amt)} added to drawer (${reason})`, {
+      addDrawerEntry('cash_in', amt, reason, staffDisplayName, activeDrawer);
+      toast.success(`Cash In: ${formatCurrency(amt)} added to ${drawerLabel} (${reason})`, {
         title: 'Cash In Recorded',
       });
     } else if (activeModal === 'cash_out') {
       const reason = modalReason.trim() || 'Petty cash expense';
-      addDrawerEntry('cash_out', -amt, reason, 'Coltrane (Cashier)');
-      toast.warning(`Petty Cash Out: ${formatCurrency(amt)} recorded (${reason})`, {
-        title: 'Paid Out Recorded',
-      });
+      addDrawerEntry('cash_out', -amt, reason, staffDisplayName, activeDrawer);
+      toast.warning(
+        `Petty Cash Out: ${formatCurrency(amt)} recorded from ${drawerLabel} (${reason})`,
+        { title: 'Paid Out Recorded' }
+      );
     } else if (activeModal === 'drop') {
       const reason = modalReason.trim() || 'Mid-shift safe cash drop';
-      addDrawerEntry('drop', -amt, reason, 'Coltrane (Cashier)');
-      toast.info(`Safe Drop: ${formatCurrency(amt)} transferred to floor safe`, {
-        title: 'Safe Drop Confirmed',
-      });
+      addDrawerEntry('drop', -amt, reason, staffDisplayName, activeDrawer);
+      toast.info(
+        `Safe Drop: ${formatCurrency(amt)} transferred from ${drawerLabel} to floor safe`,
+        { title: 'Safe Drop Confirmed' }
+      );
     }
 
     setModalAmount('');
@@ -84,10 +110,8 @@ export const CashDrawerModalView: React.FC = () => {
 
   const handlePrintZReport = (numericCounted: number, variance: number) => {
     toast.success(
-      `Shift Z-Report printed: Counted ${formatCurrency(numericCounted)} (Variance: ${formatCurrency(variance)})`,
-      {
-        title: 'Z-Report Printed',
-      }
+      `${drawerLabel} Shift Z-Report printed: Counted ${formatCurrency(numericCounted)} (Variance: ${formatCurrency(variance)})`,
+      { title: 'Z-Report Printed' }
     );
     setCountedCash('');
     setActiveModal('none');
@@ -147,11 +171,50 @@ export const CashDrawerModalView: React.FC = () => {
         </View>
       </View>
 
+      {/* Drawer Scope Selector */}
+      <View className="flex-row items-center gap-3 mb-4">
+        <Pressable
+          onPress={() => setActiveDrawer('main')}
+          className={`flex-1 flex-row items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl border min-h-[48px] ${
+            activeDrawer === 'main'
+              ? 'bg-wine-800 border-wine-900 shadow-sm'
+              : 'bg-white border-gray-200 active:bg-gray-50'
+          }`}
+        >
+          <Vault size={18} color={activeDrawer === 'main' ? '#ffffff' : '#6b7280'} />
+          <Text
+            className={`text-base font-bold ${
+              activeDrawer === 'main' ? 'text-white' : 'text-gray-700'
+            }`}
+          >
+            Main Floor Till (Waiter & Cashier)
+          </Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => setActiveDrawer('bar')}
+          className={`flex-1 flex-row items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl border min-h-[48px] ${
+            activeDrawer === 'bar'
+              ? 'bg-wine-800 border-wine-900 shadow-sm'
+              : 'bg-white border-gray-200 active:bg-gray-50'
+          }`}
+        >
+          <Coins size={18} color={activeDrawer === 'bar' ? '#ffffff' : '#6b7280'} />
+          <Text
+            className={`text-base font-bold ${
+              activeDrawer === 'bar' ? 'text-white' : 'text-gray-700'
+            }`}
+          >
+            Bar Station Till (Barista & Bartender)
+          </Text>
+        </Pressable>
+      </View>
+
       {/* KPI Metrics Grid */}
       <CashDrawerMetricsGrid metrics={metrics} />
 
-      {/* Ledger */}
-      <CashDrawerLedger entries={drawerEntries} />
+      {/* Ledger for the active drawer */}
+      <CashDrawerLedger entries={activeEntries} />
 
       {/* Action Modals */}
       <CashDrawerActionModal

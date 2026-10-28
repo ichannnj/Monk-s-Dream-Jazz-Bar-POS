@@ -106,7 +106,8 @@ export const createChannelsSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     type: 'float' | 'cash_in' | 'cash_out' | 'drop' | 'sale',
     amount: number,
     reason: string,
-    performedBy: string
+    performedBy: string,
+    drawerTarget: 'main' | 'bar' = 'main'
   ) => {
     const newEntry: DrawerEntry = {
       id: `drw-${Date.now()}`,
@@ -118,6 +119,7 @@ export const createChannelsSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         hour: '2-digit',
         minute: '2-digit',
       }),
+      drawerTarget,
     };
 
     set((state) => ({

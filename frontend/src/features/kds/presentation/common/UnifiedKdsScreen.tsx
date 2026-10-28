@@ -12,6 +12,9 @@ import { KdsModals } from './components/KdsModals';
 import { KdsToolbar } from './components/KdsToolbar';
 import { SharedChatView } from '../../../chat/presentation/SharedChatView';
 import { SharedAlertsView } from '../../../alerts/presentation/SharedAlertsView';
+import { FloorWorkspaceView } from '../../../floor';
+import { ChecksHistoryView } from '../../../check-history';
+import { CashDrawerModalView } from '../../../cash-drawer';
 import { useKdsStock } from './hooks/useKdsStock';
 import { useKdsTickets } from './hooks/useKdsTickets';
 import { useKdsArrivals } from './hooks/useKdsArrivals';
@@ -84,8 +87,9 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
     const ticket = allTickets.find((t) => t.id === ticketId);
     if (!ticket) return;
 
+    const icon = stationTarget === 'kitchen' ? '🍳' : '🍸';
     addAlert({
-      title: `🍸 ${stationName} Substitution Needed: ${ticket.tableOrSource}`,
+      title: `${icon} ${stationName} Substitution Needed: ${ticket.tableOrSource}`,
       description: `Ticket ${ticket.orderNumber}: ${suggestion}. Waiter alerted.`,
       type: 'station_ready',
       targetRef: ticket.tableOrSource,
@@ -101,6 +105,8 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   const handleSelectSidebarTab = (tab: NavTabId) => {
     if (tab === 'settings') {
       setIsSettingsModalOpen(true);
+    } else if (stationTarget === 'kitchen' && (tab === 'tables' || tab === 'drawer')) {
+      setActiveSidebarTab('board');
     } else {
       setActiveSidebarTab(tab);
     }
@@ -129,11 +135,22 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
         }}
         unreadChatCount={3}
         alertCount={unreadAlertCount}
+        hiddenTabs={stationTarget === 'kitchen' ? ['tables', 'drawer'] : []}
       />
 
       {/* 2. Main Content Container */}
       <View style={styles.mainContent}>
-        {activeSidebarTab === 'chat' ? (
+        {activeSidebarTab === 'tables' && stationTarget !== 'kitchen' ? (
+          <FloorWorkspaceView
+            autoStartStation={stationTarget}
+            staffName={staffDisplayName}
+            staffInitials={staffInitials}
+          />
+        ) : activeSidebarTab === 'checks' ? (
+          <ChecksHistoryView />
+        ) : activeSidebarTab === 'drawer' && stationTarget !== 'kitchen' ? (
+          <CashDrawerModalView initialDrawer="bar" />
+        ) : activeSidebarTab === 'chat' ? (
           <SharedChatView
             senderName={staffDisplayName}
             senderRole={chatSenderRole}
@@ -246,6 +263,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           toast.info(`${stationName} locked.`, { title: 'Clocked Out' });
           logout();
         }}
+        stationTarget={stationTarget}
       />
     </View>
   );

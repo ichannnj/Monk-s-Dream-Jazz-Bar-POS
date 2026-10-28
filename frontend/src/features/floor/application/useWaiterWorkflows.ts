@@ -10,7 +10,11 @@ import {
 } from '../domain/workflow.types';
 import { useOrderEntryFlow } from './useOrderEntryFlow';
 
-export function useWaiterWorkflows() {
+export interface UseWaiterWorkflowsOptions {
+  autoStartStation?: 'bar' | 'kitchen';
+}
+
+export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
   const {
     tables,
     takeoutOrders,
@@ -143,6 +147,7 @@ export function useWaiterWorkflows() {
   } = useOrderEntryFlow({
     tables,
     takeoutOrdersCount: takeoutOrders.length,
+    autoStartStation: options?.autoStartStation,
     openTableTab,
     addItemsToTab,
     createTakeoutOrder,

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, StyleSheet, Modal } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, TextInput, ScrollView, StyleSheet, Modal } from 'react-native';
 import { X, AlertTriangle, Send, CheckCircle2, User } from 'lucide-react-native';
 import { BarTicket } from '../types';
 
@@ -9,7 +9,22 @@ interface FohStatusModalProps {
   ticket: BarTicket | null;
   onSendSubstitutionRequest: (ticketId: string, suggestion: string) => void;
   onForceUnblock?: (ticketId: string) => void;
+  stationTarget?: 'bar' | 'kitchen';
 }
+
+const KITCHEN_PRESETS = [
+  'Swap for seasonal pasta',
+  'Substitute with Margherita Pizza',
+  'Offer artisan side dish',
+  'Void & refund item',
+];
+
+const BAR_PRESETS = [
+  'House Red Wine or Asahi Super Dry',
+  'Single Origin Pour Over',
+  'Monk’s Mocktail',
+  'Void & refund drink',
+];
 
 export const FohStatusModal: React.FC<FohStatusModalProps> = ({
   visible,
@@ -17,8 +32,25 @@ export const FohStatusModal: React.FC<FohStatusModalProps> = ({
   ticket,
   onSendSubstitutionRequest,
   onForceUnblock,
+  stationTarget = 'bar',
 }) => {
+  const isKitchen = stationTarget === 'kitchen';
+  const presets = isKitchen ? KITCHEN_PRESETS : BAR_PRESETS;
+  const [suggestion, setSuggestion] = useState(presets[0]);
+
   if (!ticket) return null;
+
+  const defaultStatusMessage = isKitchen
+    ? 'Kitchen item is out of stock. Floor waiter has been alerted to consult the guest for a chef substitution or refund.'
+    : 'Craft beverage is out of stock. Waiter has been notified to consult the table for a drink swap or refund.';
+
+  const handleSendPrompt = () => {
+    onSendSubstitutionRequest(
+      ticket.id,
+      `Suggested alternative: ${suggestion.trim() || presets[0]}`
+    );
+    onClose();
+  };
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -32,7 +64,9 @@ export const FohStatusModal: React.FC<FohStatusModalProps> = ({
           {/* Header */}
           <View style={styles.headerRow}>
             <View>
-              <Text style={styles.modalTitle}>FOH Coordination Status</Text>
+              <Text style={styles.modalTitle}>
+                {isKitchen ? 'Chef FOH Coordination' : 'FOH Coordination Status'}
+              </Text>
               <Text style={styles.modalSubtitle}>
                 {ticket.orderNumber} · {ticket.tableOrSource}
               </Text>
@@ -46,10 +80,11 @@ export const FohStatusModal: React.FC<FohStatusModalProps> = ({
           <View style={styles.issueBanner}>
             <AlertTriangle size={20} color="#991b1b" />
             <View style={styles.issueTextCol}>
-              <Text style={styles.issueTitle}>Action Required: Out of Stock Item Ordered</Text>
+              <Text style={styles.issueTitle}>
+                Action Required: 86'd {isKitchen ? 'Dish' : 'Item'} Ordered
+              </Text>
               <Text style={styles.issueDescription}>
-                {ticket.fohStatusMessage ||
-                  'Craft IPA is out of stock. Waiter has been notified to consult the table for a drink swap or refund.'}
+                {ticket.fohStatusMessage || defaultStatusMessage}
               </Text>
             </View>
           </View>
@@ -61,7 +96,7 @@ export const FohStatusModal: React.FC<FohStatusModalProps> = ({
             </View>
             <View style={styles.waiterCol}>
               <Text style={styles.waiterName}>
-                Assigned Floor Server: {ticket.serverName || 'Jess Santos (FOH Waiter)'}
+                Assigned Floor Server: {ticket.serverName || 'Floor Waiter'}
               </Text>
               <Text style={styles.waiterStatus}>
                 Status: Tablet notified · Awaiting guest preference
@@ -84,22 +119,54 @@ export const FohStatusModal: React.FC<FohStatusModalProps> = ({
             ))}
           </View>
 
+          {/* Chef / Bartender Suggestion Section */}
+          <View style={styles.suggestionSection}>
+            <Text style={styles.suggestionLabel}>
+              {isKitchen ? "CHEF'S SUGGESTED SWAP" : 'STATION SUGGESTED ALTERNATIVE'}
+            </Text>
+            <TextInput
+              value={suggestion}
+              onChangeText={setSuggestion}
+              placeholder={
+                isKitchen ? 'Type custom dish substitution...' : 'Type custom drink swap...'
+              }
+              placeholderTextColor="#9ca3af"
+              style={styles.suggestionInput}
+            />
+
+            {/* Quick Preset Pills */}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.presetsRow}
+            >
+              {presets.map((preset) => (
+                <Pressable
+                  key={preset}
+                  onPress={() => setSuggestion(preset)}
+                  style={[styles.presetPill, suggestion === preset && styles.presetPillActive]}
+                >
+                  <Text
+                    style={[
+                      styles.presetPillText,
+                      suggestion === preset && styles.presetPillTextActive,
+                    ]}
+                  >
+                    {preset}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+
           {/* Action Buttons */}
           <View style={styles.actionCol}>
             <Pressable
-              onPress={() => {
-                onSendSubstitutionRequest(
-                  ticket.id,
-                  'Suggested alternative: House Red Wine or Asahi Super Dry'
-                );
-                onClose();
-              }}
+              onPress={handleSendPrompt}
               style={({ pressed }) => [styles.primaryWineBtn, pressed && styles.btnPressed]}
             >
-              <Send size={16} color="#ffffff" />
-              <Text style={styles.primaryWineBtnText}>
-                Prompt Waiter for Swap (Asahi or Red Wine)
-              </Text>
+              <Send size={18} color="#ffffff" />
+              <Text style={styles.primaryWineBtnText}>Prompt Floor Waiter with Suggestion</Text>
             </Pressable>
 
             {onForceUnblock ? (
@@ -110,7 +177,7 @@ export const FohStatusModal: React.FC<FohStatusModalProps> = ({
                 }}
                 style={({ pressed }) => [styles.unblockBtn, pressed && styles.btnPressed]}
               >
-                <CheckCircle2 size={16} color="#15803d" />
+                <CheckCircle2 size={18} color="#15803d" />
                 <Text style={styles.unblockBtnText}>
                   Guest Accepted Alternative · Unblock Order
                 </Text>
@@ -258,6 +325,54 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     textDecorationLine: 'line-through',
   },
+  suggestionSection: {
+    marginBottom: 18,
+    gap: 8,
+  },
+  suggestionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#6b7280',
+    letterSpacing: 0.5,
+  },
+  suggestionInput: {
+    minHeight: 48,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    fontSize: 16,
+    color: '#111827',
+  },
+  presetsRow: {
+    gap: 8,
+    paddingVertical: 4,
+  },
+  presetPill: {
+    minHeight: 38,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  presetPillActive: {
+    backgroundColor: '#fde8ec',
+    borderColor: '#f43f5e',
+  },
+  presetPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#4b5563',
+  },
+  presetPillTextActive: {
+    color: '#832238',
+    fontWeight: '700',
+  },
   actionCol: {
     gap: 10,
   },
@@ -266,13 +381,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#701a31',
+    minHeight: 48,
     paddingVertical: 12,
     borderRadius: 12,
     gap: 8,
   },
   primaryWineBtnText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '800',
   },
   unblockBtn: {
@@ -282,13 +398,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#dcfce7',
     borderWidth: 1,
     borderColor: '#86efac',
+    minHeight: 48,
     paddingVertical: 12,
     borderRadius: 12,
     gap: 8,
   },
   unblockBtnText: {
     color: '#15803d',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '800',
   },
   btnPressed: {

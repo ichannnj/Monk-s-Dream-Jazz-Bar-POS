@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import {
   LayoutGrid,
+  Kanban,
   MessageSquare,
   Receipt,
   Coins,
@@ -22,6 +23,7 @@ export interface SidebarProps {
   unreadChatCount?: number;
   alertCount?: number;
   mode?: 'pos' | 'kds';
+  hiddenTabs?: NavTabId[];
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -31,6 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   unreadChatCount = 0,
   alertCount = 0,
   mode = 'pos',
+  hiddenTabs = [],
 }) => {
   const posNavItems = [
     {
@@ -66,7 +69,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
     {
       id: 'board' as NavTabId,
       label: 'Board',
+      Icon: Kanban,
+    },
+    {
+      id: 'tables' as NavTabId,
+      label: 'Tables',
       Icon: LayoutGrid,
+    },
+    {
+      id: 'checks' as NavTabId,
+      label: 'Checks',
+      Icon: Receipt,
+    },
+    {
+      id: 'drawer' as NavTabId,
+      label: 'Drawer',
+      Icon: Coins,
     },
     {
       id: 'chat' as NavTabId,
@@ -82,7 +100,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
   ];
 
-  const navItems = mode === 'kds' ? kdsNavItems : posNavItems;
+  const rawNavItems = mode === 'kds' ? kdsNavItems : posNavItems;
+  const navItems = rawNavItems.filter((item) => !hiddenTabs.includes(item.id));
 
   return (
     <View style={styles.sidebarContainer}>

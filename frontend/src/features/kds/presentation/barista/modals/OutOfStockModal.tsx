@@ -15,23 +15,39 @@ export interface OutOfStockModalProps {
   onClose: () => void;
   products: BarProductStock[];
   onToggleAvailability: (productId: string, isUnavailable: boolean, reason?: string) => void;
+  stationTarget?: 'bar' | 'kitchen';
 }
+
+const KITCHEN_REASONS = [
+  'Depleted / Zero Stock',
+  '86 / Sold Out',
+  'Missing Ingredient / Produce',
+  'Equipment Breakdown (Oven/Grill)',
+  'Prep Issue / Quality Hold',
+];
+
+const BAR_REASONS = [
+  'Depleted / Zero Stock',
+  'Keg Empty / Tap Closed',
+  'Missing Garnish / Mixers',
+  'Quality Hold / Batch Issue',
+];
 
 export const OutOfStockModal: React.FC<OutOfStockModalProps> = ({
   visible,
   onClose,
   products,
   onToggleAvailability,
+  stationTarget = 'bar',
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedReason, setSelectedReason] = useState('Depleted / Zero Stock');
+  const reasons = stationTarget === 'kitchen' ? KITCHEN_REASONS : BAR_REASONS;
+  const [selectedReason, setSelectedReason] = useState(reasons[0]);
 
-  const reasons = [
-    'Depleted / Zero Stock',
-    'Keg Empty / Tap Closed',
-    'Missing Garnish / Mixers',
-    'Quality Hold / Batch Issue',
-  ];
+  const searchPlaceholder =
+    stationTarget === 'kitchen'
+      ? 'Search kitchen dish, pasta, pizza, or ingredient...'
+      : 'Search beverage, cocktail, or bar item...';
 
   const filtered = products.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -63,7 +79,7 @@ export const OutOfStockModal: React.FC<OutOfStockModalProps> = ({
             <TextInput
               value={searchQuery}
               onChangeText={setSearchQuery}
-              placeholder="Search beverage or bar item..."
+              placeholder={searchPlaceholder}
               placeholderTextColor="#9ca3af"
               style={styles.searchInput}
             />

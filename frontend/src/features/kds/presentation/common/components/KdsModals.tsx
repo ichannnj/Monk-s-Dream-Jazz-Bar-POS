@@ -37,6 +37,7 @@ export interface KdsModalsProps {
   stationFilter: boolean;
   onToggleBarFilter: (filter: boolean) => void;
   onClockOut: () => void;
+  stationTarget?: 'bar' | 'kitchen';
 }
 
 export const KdsModals: React.FC<KdsModalsProps> = ({
@@ -65,6 +66,7 @@ export const KdsModals: React.FC<KdsModalsProps> = ({
   stationFilter,
   onToggleBarFilter,
   onClockOut,
+  stationTarget = 'bar',
 }) => {
   return (
     <>
@@ -73,6 +75,7 @@ export const KdsModals: React.FC<KdsModalsProps> = ({
         onClose={onCloseAvailability}
         products={stationProducts}
         onToggleAvailability={onToggleAvailability}
+        stationTarget={stationTarget}
       />
 
       <OutOfStockListModal
@@ -96,6 +99,7 @@ export const KdsModals: React.FC<KdsModalsProps> = ({
         onClose={onCloseFohModal}
         onSendSubstitutionRequest={onSendSubstitutionRequest}
         onForceUnblock={onForceUnblock}
+        stationTarget={stationTarget}
       />
 
       <StationSettingsModal
