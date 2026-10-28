@@ -117,6 +117,7 @@ export const chatApi = {
             unreadCount: 0,
             lastMessage: latest ? `${latest.sender_name}: ${latest.message}` : undefined,
             lastTimestamp: latest ? formatFriendlyTimestamp(latest.created_at) : undefined,
+            lastActivityAt: latest?.created_at || raw.created_at || undefined,
             memberCount: raw.type === 'channel' ? 6 : 2,
             pinnedMessage:
               raw.pinned_text && raw.pinned_author
@@ -129,6 +130,13 @@ export const chatApi = {
           };
         })
       );
+
+      // Sort conversations so that the ones with the latest activity appear at the top
+      conversations.sort((a, b) => {
+        const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+        const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+        return timeB - timeA;
+      });
 
       return conversations;
     } catch (err) {

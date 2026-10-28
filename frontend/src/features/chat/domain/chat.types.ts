@@ -34,6 +34,7 @@ export interface ChatConversation {
   unreadCount: number;
   lastMessage?: string;
   lastTimestamp?: string;
+  lastActivityAt?: string;
   memberCount?: number;
   pinnedMessage?: PinnedAnnouncement;
   participantIds?: string[];

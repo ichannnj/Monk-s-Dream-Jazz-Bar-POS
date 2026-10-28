@@ -183,15 +183,26 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
     return messages[activeConversation?.id] || [];
   }, [messages, activeConversation]);
 
-  // Separate channels vs direct messages
-  const channels = useMemo(
-    () => conversations.filter((c) => c.type === 'channel'),
-    [conversations]
-  );
-  const directMessages = useMemo(
-    () => conversations.filter((c) => c.type === 'dm'),
-    [conversations]
-  );
+  // Separate channels vs direct messages sorted by latest activity (newest at top)
+  const channels = useMemo(() => {
+    return conversations
+      .filter((c) => c.type === 'channel')
+      .sort((a, b) => {
+        const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+        const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+        return timeB - timeA;
+      });
+  }, [conversations]);
+
+  const directMessages = useMemo(() => {
+    return conversations
+      .filter((c) => c.type === 'dm')
+      .sort((a, b) => {
+        const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+        const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+        return timeB - timeA;
+      });
+  }, [conversations]);
 
   // Available staff colleagues for initiating 1-on-1 DMs
   const availableColleagues = useMemo(() => {

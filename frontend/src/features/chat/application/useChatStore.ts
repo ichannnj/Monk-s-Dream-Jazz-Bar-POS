@@ -191,15 +191,22 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
 
     set((state) => {
       const currentList = state.messages[conversationId] || [];
-      const updatedConvs = state.conversations.map((c) =>
-        c.id === conversationId
-          ? {
-              ...c,
-              lastMessage: `${senderName}: ${message}`,
-              lastTimestamp: 'Just now',
-            }
-          : c
-      );
+      const updatedConvs = state.conversations
+        .map((c) =>
+          c.id === conversationId
+            ? {
+                ...c,
+                lastMessage: `${senderName}: ${message}`,
+                lastTimestamp: 'Just now',
+                lastActivityAt: new Date().toISOString(),
+              }
+            : c
+        )
+        .sort((a, b) => {
+          const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+          const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+          return timeB - timeA;
+        });
 
       return {
         messages: {
@@ -418,15 +425,22 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
               ...state.messages,
               [convId]: nextList,
             },
-            conversations: state.conversations.map((c) =>
-              c.id === convId
-                ? {
-                    ...c,
-                    lastMessage: `${formattedMsg.senderName}: ${formattedMsg.message}`,
-                    lastTimestamp: 'Just now',
-                  }
-                : c
-            ),
+            conversations: state.conversations
+              .map((c) =>
+                c.id === convId
+                  ? {
+                      ...c,
+                      lastMessage: `${formattedMsg.senderName}: ${formattedMsg.message}`,
+                      lastTimestamp: 'Just now',
+                      lastActivityAt: formattedMsg.createdAt || new Date().toISOString(),
+                    }
+                  : c
+              )
+              .sort((a, b) => {
+                const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+                const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+                return timeB - timeA;
+              }),
           });
         } else {
           // Inbound message from colleague
@@ -465,16 +479,23 @@ export const useChatStore = create<ChatStoreState>((set, get) => ({
               ...state.messages,
               [convId]: nextList,
             },
-            conversations: state.conversations.map((c) =>
-              c.id === convId
-                ? {
-                    ...c,
-                    lastMessage: `${formattedMsg.senderName}: ${formattedMsg.message}`,
-                    lastTimestamp: 'Just now',
-                    unreadCount: isActivelyViewing ? 0 : c.unreadCount + 1,
-                  }
-                : c
-            ),
+            conversations: state.conversations
+              .map((c) =>
+                c.id === convId
+                  ? {
+                      ...c,
+                      lastMessage: `${formattedMsg.senderName}: ${formattedMsg.message}`,
+                      lastTimestamp: 'Just now',
+                      lastActivityAt: formattedMsg.createdAt || new Date().toISOString(),
+                      unreadCount: isActivelyViewing ? 0 : c.unreadCount + 1,
+                    }
+                  : c
+              )
+              .sort((a, b) => {
+                const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+                const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+                return timeB - timeA;
+              }),
           });
         }
       },
