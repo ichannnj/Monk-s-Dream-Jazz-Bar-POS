@@ -11,6 +11,7 @@ import { BarTicket } from '../barista/types';
 import { KdsModals } from './components/KdsModals';
 import { KdsToolbar } from './components/KdsToolbar';
 import { SharedChatView } from '../../../chat/presentation/SharedChatView';
+import { useChatStore } from '../../../chat';
 import { SharedAlertsView } from '../../../alerts/presentation/SharedAlertsView';
 import { FloorWorkspaceView } from '../../../floor';
 import { ChecksHistoryView } from '../../../check-history';
@@ -82,6 +83,9 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   useKdsArrivals({ newTickets, audioChimes, stationName });
 
   const unreadAlertCount = alerts.filter((a) => !a.isRead).length;
+  const unreadChatCount = useChatStore((state) =>
+    state.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+  );
 
   const handleSendSubstitutionRequest = (ticketId: string, suggestion: string) => {
     const ticket = allTickets.find((t) => t.id === ticketId);
@@ -133,7 +137,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           toast.info(`${stationName} locked.`, { title: 'Clocked Out' });
           logout();
         }}
-        unreadChatCount={3}
+        unreadChatCount={unreadChatCount}
         alertCount={unreadAlertCount}
         hiddenTabs={stationTarget === 'kitchen' ? ['tables', 'drawer'] : []}
       />
@@ -232,9 +236,11 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           style={({ pressed }) => [styles.floatingChatBtn, pressed && styles.floatingChatPressed]}
         >
           <MessageSquare size={24} color="#ffffff" strokeWidth={2.2} />
-          <View style={styles.floatingChatBadge}>
-            <Text style={styles.floatingChatBadgeText}>3</Text>
-          </View>
+          {unreadChatCount > 0 && (
+            <View style={styles.floatingChatBadge}>
+              <Text style={styles.floatingChatBadgeText}>{unreadChatCount}</Text>
+            </View>
+          )}
         </Pressable>
       ) : null}
 

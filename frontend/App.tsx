@@ -7,6 +7,7 @@ import { BaristaKdsScreen, KitchenKdsScreen, FohRunnerScreen } from './src/featu
 import { ToastContainer } from './src/features/shared';
 import { LoginScreen, useAuthStore } from './src/features/auth';
 import { useOrderStore } from './src/features/orders';
+import { useChatStore } from './src/features/chat';
 
 import { AdminBackOfficeScreen } from './src/features/admin';
 
@@ -22,13 +23,17 @@ export default function App() {
   const { initRealtimeSync } = useOrderStore();
   const [adminView, setAdminView] = React.useState<'admin' | 'floor'>('admin');
 
-  // Keep all stations (Waiter, Barista, Kitchen, Runner) synchronized in real-time
+  // Keep all stations synchronized with POS orders and Team Chat in real-time
   useEffect(() => {
-    const unsub = initRealtimeSync();
+    const unsubOrders = initRealtimeSync();
+    const unsubChat = useChatStore.getState().setupRealtimeSubscription();
+    useChatStore.getState().loadInitialData(currentUser?.id);
+
     return () => {
-      unsub();
+      unsubOrders();
+      unsubChat();
     };
-  }, [initRealtimeSync]);
+  }, [initRealtimeSync, currentUser?.id]);
 
   // ALWAYS reset admin view to 'admin' whenever currentUser logs in or changes
   useEffect(() => {

@@ -70,6 +70,7 @@ All frontend business logic, views, stores, and API clients live strictly under 
 | **Alerts & Call Bells**           | `frontend/src/features/alerts/presentation/SharedAlertsView.tsx`                         | Large modal trees           |
 | **Inter-station Chat**            | `frontend/src/features/chat/presentation/SharedChatView.tsx`                             | Full chat view              |
 | **Team Chat State / Store**       | `frontend/src/features/chat/application/useChatStore.ts`                                 | Monolithic store files      |
+| **Team Chat API & Database**      | `frontend/src/features/chat/data/chat.api.ts`                                            | Monolithic mock files       |
 | **Staff Auth & PINs**             | `frontend/src/features/auth/application/useAuthStore.ts`                                 | Full login views            |
 | **Staff Identity & Name Helpers** | `frontend/src/features/shared/utils/staffHelpers.ts`                                     | Monolithic utils            |
 | **Shared Infrastructure**         | `frontend/src/features/shared/infrastructure/api.ts`                                     | Full client trees           |

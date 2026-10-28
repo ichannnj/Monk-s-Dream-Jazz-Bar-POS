@@ -1,4 +1,5 @@
 export type ChatConversationType = 'channel' | 'dm';
+export type MessageDeliveryStatus = 'sending' | 'sent' | 'delivered' | 'seen' | 'error';
 
 export interface ChatMessage {
   id: string;
@@ -8,8 +9,13 @@ export interface ChatMessage {
   senderRole: string;
   message: string;
   timestamp: string;
+  createdAt?: string;
   isSystem?: boolean;
   isPinned?: boolean;
+  isRead?: boolean;
+  readAt?: string;
+  deliveryStatus?: MessageDeliveryStatus;
+  clientTempId?: string;
 }
 
 export interface PinnedAnnouncement {
@@ -20,6 +26,7 @@ export interface PinnedAnnouncement {
 
 export interface ChatConversation {
   id: string;
+  slug?: string;
   title: string;
   subtitle?: string;
   type: ChatConversationType;
@@ -29,4 +36,5 @@ export interface ChatConversation {
   lastTimestamp?: string;
   memberCount?: number;
   pinnedMessage?: PinnedAnnouncement;
+  participantIds?: string[];
 }

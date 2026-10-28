@@ -4,6 +4,7 @@ import { useAuthStore } from '../../../../auth/application/useAuthStore';
 import { toast } from '../../../../shared/toast/useToastStore';
 import { Sidebar, NavTabId } from '../../../../shared/navigation/Sidebar';
 import { SharedChatView } from '../../../../chat/presentation/SharedChatView';
+import { useChatStore } from '../../../../chat';
 import { SharedAlertsView } from '../../../../alerts/presentation/SharedAlertsView';
 import { ConfirmationModal } from '../../../../shared/ui/ConfirmationModal';
 import { StationHeader } from '../../common/components/StationHeader';
@@ -17,6 +18,9 @@ export const FohRunnerScreen: React.FC = () => {
   const [confirmHandoff, setConfirmHandoff] = useState<ConfirmHandoffState | null>(null);
 
   const { runnerTickets, fullyReadyCount, unreadAlertCount, executeHandoff } = useRunnerTickets();
+  const unreadChatCount = useChatStore((state) =>
+    state.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+  );
 
   const handleLogout = () => {
     toast.info('Runner expediter station locked.', { title: 'Clocked Out' });
@@ -36,7 +40,7 @@ export const FohRunnerScreen: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onLogout={handleLogout}
-        unreadChatCount={3}
+        unreadChatCount={unreadChatCount}
         alertCount={unreadAlertCount}
       />
 

@@ -10,7 +10,7 @@ import { FloorWorkspaceView } from './FloorWorkspaceView';
 import { ChecksHistoryView } from '@/features/check-history';
 import { CashDrawerModalView } from '@/features/cash-drawer';
 import { FloorAlertsView } from '@/features/alerts';
-import { FloorChatView } from '@/features/chat';
+import { FloorChatView, useChatStore } from '@/features/chat';
 import { PrinterTerminalScreen } from '@/features/printer';
 import { ShiftSettingsModal } from './ShiftSettingsModal';
 
@@ -21,6 +21,9 @@ interface WaiterCashierScreenProps {
 export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwitchToAdmin }) => {
   const { currentUser, logout } = useAuthStore();
   const alerts = useOrderStore((state) => state.alerts);
+  const unreadChatCount = useChatStore((state) =>
+    state.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+  );
 
   const handleLogout = () => {
     toast.info('Terminal locked. Staff session ended.', { title: 'Clocked Out' });
@@ -54,7 +57,7 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
         onTabChange={setActiveNavTab}
         onLogout={handleLogout}
         alertCount={unreadAlerts}
-        unreadChatCount={0}
+        unreadChatCount={unreadChatCount}
       />
 
       {/* 2. Main Viewport */}

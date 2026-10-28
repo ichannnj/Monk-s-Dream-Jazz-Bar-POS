@@ -115,13 +115,13 @@ export async function settleTabAndRecordPayment(params: {
   try {
     const { data, error } = await supabase.rpc('settle_tab_and_record_payment', {
       p_tab_id: params.tabId,
-      p_staff_id: params.staffId || null,
+      p_staff_id: (params.staffId || null) as any,
       p_payment_method: params.paymentMethod,
       p_amount: params.amount,
       p_corkage_amount: params.corkageAmount || 0,
       p_discount_amount: params.discountAmount || 0,
       p_tip_amount: params.tipAmount || 0,
-      p_notes: params.notes || null,
+      p_notes: (params.notes || null) as any,
     });
 
     if (error) {

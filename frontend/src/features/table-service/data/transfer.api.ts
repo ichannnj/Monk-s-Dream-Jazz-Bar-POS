@@ -95,7 +95,7 @@ export async function transferTableTab(params: TransferTabParams): Promise<Trans
     const { data, error } = await supabase.rpc('transfer_table_tab', {
       p_origin_table_id: originTableUuid,
       p_target_table_id: targetTableUuid,
-      p_tab_id: tabUuidToTransfer,
+      p_tab_id: tabUuidToTransfer as any,
       p_staff_id: staffUuid,
       p_reason: params.reason || 'Guest relocation request',
     });

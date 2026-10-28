@@ -69,6 +69,13 @@ export interface GlobalRealtimeCallbacks {
   onCashDrawerChange?: (payload: any) => void;
 }
 
+export interface ChatRealtimeCallbacks {
+  onInsert: (msg: any) => void;
+  onUpdate: (msg: any) => void;
+  onConversationUpdate?: (conv: any) => void;
+  onStatusChange?: (status: string) => void;
+}
+
 export class RealtimeGateway {
   private channels: Map<string, RealtimeChannel> = new Map();
 
@@ -305,11 +312,83 @@ export class RealtimeGateway {
   }
 
   /**
+   * Subscribe to realtime chat messages across all POS and KDS stations.
+   */
+  subscribeChatMessages(callbacks: ChatRealtimeCallbacks): () => void {
+    const channelName = 'pos_chat_sync';
+    const existing = this.channels.get(channelName);
+    if (existing) {
+      existing.unsubscribe();
+      supabase.removeChannel(existing);
+      this.channels.delete(channelName);
+    }
+    // Also remove any existing channel with the same name from supabase client cache
+    const matched = supabase
+      .getChannels()
+      .find((c) => c.topic === `realtime:${channelName}` || c.topic === channelName);
+    if (matched) {
+      matched.unsubscribe();
+      supabase.removeChannel(matched);
+    }
+
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+        },
+        (payload) => {
+          callbacks.onInsert(payload.new);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_messages',
+        },
+        (payload) => {
+          callbacks.onUpdate(payload.new);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_conversations',
+        },
+        (payload) => {
+          callbacks.onConversationUpdate?.(payload.new);
+        }
+      )
+      .subscribe((status, err) => {
+        if (err) {
+          console.warn('[RealtimeGateway] pos_chat_sync error:', err);
+        }
+        callbacks.onStatusChange?.(status);
+      });
+
+    this.channels.set(channelName, channel);
+
+    return () => {
+      channel.unsubscribe();
+      supabase.removeChannel(channel);
+      this.channels.delete(channelName);
+    };
+  }
+
+  /**
    * Unsubscribe from all active channels.
    */
   unsubscribeAll(): void {
     this.channels.forEach((channel) => {
       channel.unsubscribe();
+      supabase.removeChannel(channel);
     });
     this.channels.clear();
   }
