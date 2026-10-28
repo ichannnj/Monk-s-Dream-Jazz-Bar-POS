@@ -24,6 +24,7 @@
     "supabase:types": "npx supabase gen types typescript --linked > packages/shared/src/database.types.ts",
     "env:local": "cp frontend/.env.local frontend/.env && echo 'Switched frontend to Local Supabase environment'",
     "env:cloud": "cp frontend/.env.cloud frontend/.env && echo 'Switched frontend to Cloud Supabase environment'",
+    "sync:knowledge": "bash scripts/sync-knowledge.sh",
     "prepare": "husky"
   },
   "lint-staged": {

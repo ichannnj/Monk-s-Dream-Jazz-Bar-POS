@@ -25,7 +25,7 @@
 
 ---
 
-## 🗺️ Feature-First Repository Architecture
+## 🗺️ Feature-First Repository Architecture & File Tree
 
 All frontend business logic, views, stores, and API clients live strictly under `frontend/src/features/<domain>/` across four explicit layers:
 
@@ -34,30 +34,13 @@ All frontend business logic, views, stores, and API clients live strictly under 
 - `domain/`: Business rules, formulas, calculations, and local domain types.
 - `data/`: Supabase queries/RPCs, database mapping, and realtime event handlers.
 
-```text
-Monk-s-Dream-Jazz-Bar-POS/
-├── frontend/src/
-│   ├── features/
-│   │   ├── auth/            # screens/LoginScreen, application/useAuthStore, data/auth.api
-│   │   ├── floor/           # WaiterCashierScreen, FloorGridView, TableCard, TableFilterBar, useWaiterWorkflows, tables.mock
-│   │   ├── table-service/   # TableActionModal, TableTransferModal, OpenTabModal, data/tables.api
-│   │   ├── orders/          # order-entry/OrderEntryModal, application/useOrderStore, data/orders.api
-│   │   ├── checkout/        # bill-settlement/BillSettlementModal, application/settlement.slice
-│   │   ├── check-history/   # ChecksHistoryView, check inspection
-│   │   ├── takeout/         # NewTakeoutModal, TakeoutQueueCard
-│   │   ├── delivery/        # OnlineDeliveryModal, OnlineDeliveryCard
-│   │   ├── cash-drawer/     # CashDrawerModalView, drawer actions, application/drawer.slice
-│   │   ├── menu/            # data/menu.api, domain/menu.types, data/menu.mock
-│   │   ├── kds/             # UnifiedKdsScreen, barista/, kitchen/, foh-runner/FohRunnerScreen
-│   │   ├── alerts/          # SharedAlertsView, kitchen/bar audio & visual bell events
-│   │   ├── chat/            # SharedChatView, domain/chatPresets, inter-station messaging
-│   │   └── shared/          # ui/ConfirmationModal, navigation/Sidebar, toast/useToastStore, infrastructure/{api, supabase, realtime, system.api}
-│   └── types/floor.ts       # Shared floor domain contracts & legacy type aliases
-├── packages/
-│   ├── shared/src/          # database.types.ts, hlc.ts, formatting, contracts
-│   └── printing/src/        # ESC/POS USB thermal print engine & receipt templates
-└── supabase/migrations/     # RLS-enforced PostgreSQL schemas & stored functions
-```
+> **Graphify Navigation:**  
+> The file tree and symbol dependency graph are managed dynamically by **Graphify**.
+>
+> - Visual hierarchy & interactive tree: [GRAPH_TREE.html](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/graphify-out/GRAPH_TREE.html)
+> - Knowledge graph visualization: [graph.html](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/graphify-out/graph.html)
+> - Full query graph model: [graph.json](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/graphify-out/graph.json)
+> - Query CLI: `graphify query "<question>"` or `graphify path "<A>" "<B>"`
 
 ---
 
@@ -117,4 +100,6 @@ Monk-s-Dream-Jazz-Bar-POS/
   1. `pnpm typecheck`
   2. `pnpm lint:quiet`
   3. `pnpm db:lint`
-  4. `pnpm build`
+  4. `pnpm sync:knowledge` (auto-syncs `graph.json` & `GRAPH_TREE.html`)
+  5. Proactively verify and keep `AGENTS.md` and `CONTEXT.md` up-to-date with any new domain models, routes, or workflows
+  6. `pnpm build`
