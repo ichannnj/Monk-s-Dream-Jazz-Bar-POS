@@ -98,12 +98,25 @@ export const chatApi = {
       // 3. For each conversation, query the latest message to show last message and timestamp
       const conversations: ChatConversation[] = await Promise.all(
         allRaw.map(async (raw: any) => {
-          const { data: latestMsgs } = await supabase
+          let unreadQuery = supabase
             .from('chat_messages')
-            .select('message, sender_name, created_at')
+            .select('*', { count: 'exact', head: true })
             .eq('conversation_id', raw.id)
-            .order('created_at', { ascending: false })
-            .limit(1);
+            .eq('is_read', false);
+
+          if (currentUserId) {
+            unreadQuery = unreadQuery.neq('sender_id', currentUserId);
+          }
+
+          const [{ data: latestMsgs }, { count: unreadCountResult }] = await Promise.all([
+            supabase
+              .from('chat_messages')
+              .select('message, sender_name, created_at')
+              .eq('conversation_id', raw.id)
+              .order('created_at', { ascending: false })
+              .limit(1),
+            unreadQuery,
+          ]);
 
           const latest = latestMsgs && latestMsgs.length > 0 ? latestMsgs[0] : null;
 
@@ -114,7 +127,7 @@ export const chatApi = {
             subtitle: raw.subtitle || undefined,
             type: raw.type as 'channel' | 'dm',
             avatarText: raw.avatar_text,
-            unreadCount: 0,
+            unreadCount: unreadCountResult || 0,
             lastMessage: latest ? `${latest.sender_name}: ${latest.message}` : undefined,
             lastTimestamp: latest ? formatFriendlyTimestamp(latest.created_at) : undefined,
             lastActivityAt: latest?.created_at || raw.created_at || undefined,

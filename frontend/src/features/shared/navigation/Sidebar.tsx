@@ -148,7 +148,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   color={isActive ? '#ffffff' : '#d8b4bc'}
                   strokeWidth={isActive ? 2.3 : 1.8}
                 />
-                {item.hasDot ? <View style={styles.notificationDot} /> : null}
+                {typeof item.badge === 'number' && item.badge > 0 ? (
+                  <View style={styles.badgePill}>
+                    <Text style={styles.badgePillText}>{item.badge > 99 ? '99+' : item.badge}</Text>
+                  </View>
+                ) : item.hasDot ? (
+                  <View style={styles.notificationDot} />
+                ) : null}
               </View>
               <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>{item.label}</Text>
             </Pressable>
@@ -260,6 +266,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#f43f5e',
     borderWidth: 1,
     borderColor: '#431621',
+  },
+  badgePill: {
+    position: 'absolute',
+    top: -6,
+    right: -10,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#e11d48',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+    borderWidth: 1.5,
+    borderColor: '#431621',
+  },
+  badgePillText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '800',
+    lineHeight: 12,
+    textAlign: 'center',
   },
   navLabel: {
     fontSize: 11,
