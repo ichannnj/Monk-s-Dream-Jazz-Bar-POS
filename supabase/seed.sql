@@ -4,18 +4,21 @@
 -- ==============================================================================
 
 -- 1. STAFF USERS ROSTER (Standardized 4-digit PINs)
-INSERT INTO public.users (id, username, display_name, role, pin, is_workflow_staff, base_daily_rate, is_active)
+INSERT INTO public.users (id, username, display_name, role, pin, is_workflow_staff, base_daily_rate, email, phone, avatar_url, is_active)
 VALUES 
-  ('11111111-1111-1111-1111-111111111111', 'miles_manager', 'Miles (Manager)', 'admin', '9999', true, 100.00, true),
-  ('22222222-2222-2222-2222-222222222222', 'coltrane_cashier', 'Coltrane (Cashier)', 'cashier', '1111', true, 60.00, true),
-  ('33333333-3333-3333-3333-333333333333', 'ella_waiter', 'Ella (Floor Waiter)', 'waiter', '2222', true, 55.00, true),
-  ('44444444-4444-4444-4444-444444444444', 'monk_bar', 'Thelonious (Bartender)', 'station_bar', '3333', true, 65.00, true),
-  ('55555555-5555-5555-5555-555555555555', 'bill_cafe', 'Bill (Barista)', 'station_cafe', '4444', true, 55.00, true),
-  ('66666666-6666-6666-6666-666666666666', 'chet_kitchen', 'Chet (Head Chef)', 'station_food', '5555', true, 75.00, true),
-  ('77777777-7777-7777-7777-777777777777', 'max_runner', 'Max (FOH Runner)', 'foh_runner', '6666', true, 50.00, true),
-  ('88888888-8888-8888-8888-888888888888', 'rosa_dish', 'Rosa (Dishwasher)', 'waiter', '7777', false, 45.00, true),
-  ('99999999-9999-9999-9999-999999999999', 'marcus_sound', 'Marcus (Sound Tech)', 'admin', '8888', false, 70.00, true)
-ON CONFLICT (username) DO NOTHING;
+  ('11111111-1111-1111-1111-111111111111', 'miles_manager', 'Miles (Manager)', 'admin', '9999', true, 100.00, 'miles@monksdream.com', '+63 917 111 9999', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', true),
+  ('22222222-2222-2222-2222-222222222222', 'coltrane_cashier', 'Coltrane (Cashier)', 'cashier', '1111', true, 60.00, 'coltrane@monksdream.com', '+63 917 222 1111', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', true),
+  ('33333333-3333-3333-3333-333333333333', 'ella_waiter', 'Ella (Floor Waiter)', 'waiter', '2222', true, 55.00, 'ella@monksdream.com', '+63 917 333 2222', 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150', true),
+  ('44444444-4444-4444-4444-444444444444', 'monk_bar', 'Thelonious (Bartender)', 'station_bar', '3333', true, 65.00, 'thelonious@monksdream.com', '+63 917 444 3333', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', true),
+  ('55555555-5555-5555-5555-555555555555', 'bill_cafe', 'Bill (Barista)', 'station_cafe', '4444', true, 55.00, 'bill@monksdream.com', '+63 917 555 4444', 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150', true),
+  ('66666666-6666-6666-6666-666666666666', 'chet_kitchen', 'Chet (Head Chef)', 'station_food', '5555', true, 75.00, 'chet@monksdream.com', '+63 917 666 5555', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150', true),
+  ('77777777-7777-7777-7777-777777777777', 'max_runner', 'Max (FOH Runner)', 'foh_runner', '6666', true, 50.00, 'max@monksdream.com', '+63 917 777 6666', 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150', true),
+  ('88888888-8888-8888-8888-888888888888', 'rosa_dish', 'Rosa (Dishwasher)', 'waiter', '7777', false, 45.00, 'rosa@monksdream.com', '+63 917 888 7777', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150', true),
+  ('99999999-9999-9999-9999-999999999999', 'marcus_sound', 'Marcus (Sound Tech)', 'admin', '8888', false, 70.00, 'marcus@monksdream.com', '+63 917 999 8888', 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150', true)
+ON CONFLICT (username) DO UPDATE SET
+  email = EXCLUDED.email,
+  phone = EXCLUDED.phone,
+  avatar_url = EXCLUDED.avatar_url;
 
 -- 2. PHYSICAL TABLES (15 Cafe Area + 10 Bar Area = 25 Tables)
 INSERT INTO public.tables (id, table_number, zone, capacity, is_occupied)

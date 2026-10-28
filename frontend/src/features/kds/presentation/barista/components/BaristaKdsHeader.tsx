@@ -13,9 +13,9 @@ interface BaristaKdsHeaderProps {
 export const BaristaKdsHeader: React.FC<BaristaKdsHeaderProps> = ({
   stationName = 'Bar Station',
   isOnline = true,
-  staffName = 'Ana Reyes',
-  staffRole = 'Bar Staff',
-  staffInitials = 'AR',
+  staffName = 'Thelonious (Bartender)',
+  staffRole = 'Bartender',
+  staffInitials = 'TM',
   onStaffPress,
 }) => {
   const [currentTimeStr, setCurrentTimeStr] = useState<string>('');

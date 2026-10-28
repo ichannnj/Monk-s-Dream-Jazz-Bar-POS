@@ -130,7 +130,10 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     if (!itemToVoid || !table) return;
 
     const isPostPrep = itemToVoid.status === 'preparing' || itemToVoid.status === 'ready';
-    const staffId = currentUser?.id || '00000000-0000-0000-0000-000000000001';
+    const staffId =
+      currentUser?.id ||
+      useAuthStore.getState().currentUser?.id ||
+      '11111111-1111-1111-1111-111111111111';
     await voidOrderItem(itemToVoid.id, staffId, reason, table.id, selectedTabIndex);
 
     toast.success(

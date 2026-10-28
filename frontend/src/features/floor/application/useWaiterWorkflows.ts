@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useOrderStore } from '@/features/orders';
+import { useAuthStore } from '@/features/auth';
 import { TableItem, OrderLineItem } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
@@ -29,6 +30,7 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
     createOnlineOrder,
     updateOnlineStatus,
   } = useOrderStore();
+  const { currentUser } = useAuthStore();
 
   // Modal Visibility States
   const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
@@ -224,13 +226,25 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
       const methodName = methodLabels[method] || method.toUpperCase();
 
       if (mode === 'entire_table') {
-        settleTableGroup(checkoutContext.table.id, method);
+        settleTableGroup(
+          checkoutContext.table.id,
+          method,
+          currentUser?.displayName,
+          currentUser?.id
+        );
         toast.success(
           `Table ${tableCode} settled in full via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt dispatched to printer station`,
           { title: 'Table Bill Settled' }
         );
       } else {
-        settleTab(checkoutContext.table.id, tabIndex, method);
+        settleTab(
+          checkoutContext.table.id,
+          tabIndex,
+          method,
+          currentUser?.displayName,
+          0,
+          currentUser?.id
+        );
         toast.success(
           `Tab "${tabName}" on Table ${tableCode} settled via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt dispatched to printer station`,
           { title: 'Tab Payment Confirmed' }

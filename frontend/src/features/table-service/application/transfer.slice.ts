@@ -3,6 +3,7 @@ import { tablesApi } from '../data/tables.api';
 import { deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
+import { useAuthStore } from '../../auth/application/useAuthStore';
 
 export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   transferTableOrTab: (
@@ -280,7 +281,7 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         tabId: mode === 'entire' ? undefined : tabUuidForRpc,
         originTableCode: initialOriginTable?.code,
         targetTableCode: initialTargetTable?.code,
-        staffId: '11111111-1111-1111-1111-111111111111',
+        staffId: useAuthStore.getState().currentUser?.id || '11111111-1111-1111-1111-111111111111',
         reason: reason || 'Guest relocation request',
       })
       .catch((err) => {

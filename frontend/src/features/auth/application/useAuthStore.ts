@@ -17,6 +17,10 @@ export interface User {
     | 'foh_runner'
     | 'printer_station';
   isActive?: boolean;
+  email?: string;
+  phone?: string;
+  avatarUrl?: string;
+  baseDailyRate?: number;
 }
 
 interface AuthState {

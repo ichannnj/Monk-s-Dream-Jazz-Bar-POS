@@ -674,36 +674,45 @@ export type Database = {
       }
       users: {
         Row: {
+          avatar_url: string | null
           base_daily_rate: number
           created_at: string
           display_name: string
+          email: string | null
           id: string
           is_active: boolean
           is_workflow_staff: boolean
+          phone: string | null
           pin: string
           role: Database["public"]["Enums"]["role"]
           updated_at: string
           username: string
         }
         Insert: {
+          avatar_url?: string | null
           base_daily_rate?: number
           created_at?: string
           display_name: string
+          email?: string | null
           id?: string
           is_active?: boolean
           is_workflow_staff?: boolean
+          phone?: string | null
           pin: string
           role?: Database["public"]["Enums"]["role"]
           updated_at?: string
           username: string
         }
         Update: {
+          avatar_url?: string | null
           base_daily_rate?: number
           created_at?: string
           display_name?: string
+          email?: string | null
           id?: string
           is_active?: boolean
           is_workflow_staff?: boolean
+          phone?: string | null
           pin?: string
           role?: Database["public"]["Enums"]["role"]
           updated_at?: string

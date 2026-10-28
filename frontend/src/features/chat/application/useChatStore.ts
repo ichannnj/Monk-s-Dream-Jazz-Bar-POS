@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { ChatConversation, ChatMessage, PinnedAnnouncement } from '../domain/chat.types';
 import { SEED_CONVERSATIONS, SEED_MESSAGES } from '../data/chat.mock';
+import { chatApi } from '../data/chat.api';
+import { getStaffInitials } from '@/features/shared/utils/staffHelpers';
 
 interface ChatStoreState {
   conversations: ChatConversation[];
@@ -8,6 +10,7 @@ interface ChatStoreState {
   activeConversationId: string;
 
   setActiveConversation: (id: string) => void;
+  initStaffDms: (currentUserId?: string) => Promise<void>;
   sendMessage: (
     conversationId: string,
     message: string,
@@ -41,6 +44,42 @@ export const useChatStore = create<ChatStoreState>((set) => ({
         conversations: updatedConversations,
       };
     });
+  },
+
+  initStaffDms: async (currentUserId?: string) => {
+    try {
+      const roster = await chatApi.getActiveStaffRoster();
+      if (!roster || roster.length === 0) return;
+
+      set((state) => {
+        // Keep channels
+        const channels = state.conversations.filter((c) => c.type === 'channel');
+        // Generate DMs for active staff colleagues (excluding current user)
+        const staffDms: ChatConversation[] = roster
+          .filter((u) => u.id !== currentUserId)
+          .map((u) => {
+            const conversationId = `dm-${u.username}`;
+            const existing = state.conversations.find((c) => c.id === conversationId);
+            return (
+              existing || {
+                id: conversationId,
+                title: u.displayName,
+                type: 'dm',
+                avatarText: getStaffInitials(u.displayName),
+                unreadCount: 0,
+                lastMessage: 'Active staff member',
+                lastTimestamp: 'Now',
+              }
+            );
+          });
+
+        return {
+          conversations: [...channels, ...staffDms],
+        };
+      });
+    } catch (err) {
+      console.warn('initStaffDms error:', err);
+    }
   },
 
   sendMessage: (

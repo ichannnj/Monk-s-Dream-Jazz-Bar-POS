@@ -9,6 +9,10 @@ export interface AuthStaffUser {
   username: string;
   displayName: string;
   role: string;
+  email?: string;
+  phone?: string;
+  avatarUrl?: string;
+  baseDailyRate?: number;
 }
 
 export interface AuthResponse {

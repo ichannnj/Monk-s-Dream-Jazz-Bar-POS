@@ -20,53 +20,50 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
     setIsLoading(true);
     try {
       const records = await adminApi.getAttendanceRecords(todayStr);
-      setAttendance(records);
+      if (records && records.length > 0) {
+        setAttendance(records);
+      } else {
+        const staff = await adminApi.getStaffRoster();
+        const liveRecords: AttendanceRecordAdmin[] = staff.map((s) => ({
+          id: `att-staff-${s.id}`,
+          user_id: s.id,
+          date: todayStr,
+          is_present: s.is_active,
+          base_daily_pay: parseFloat(s.base_daily_rate) || 50.0,
+          addon_pay: 0.0,
+          total_day_pay: parseFloat(s.base_daily_rate) || 50.0,
+          user: {
+            display_name: s.display_name,
+            role: s.role,
+            is_workflow_staff: s.is_workflow_staff,
+          },
+        }));
+        setAttendance(liveRecords);
+      }
     } catch {
-      // Mock fallback if table empty
-      setAttendance([
-        {
-          id: 'att-1',
-          user_id: 'user-waiter-1',
-          date: todayStr,
-          is_present: true,
-          base_daily_pay: 50.0,
-          addon_pay: 15.0,
-          total_day_pay: 65.0,
-          user: {
-            display_name: 'John S. (Floor Waiter)',
-            role: 'waiter',
-            is_workflow_staff: true,
-          },
-        },
-        {
-          id: 'att-2',
-          user_id: 'user-bar-1',
-          date: todayStr,
-          is_present: true,
-          base_daily_pay: 50.0,
-          addon_pay: 20.0,
-          total_day_pay: 70.0,
-          user: {
-            display_name: 'Sarah K. (Head Bartender)',
-            role: 'bartender',
-            is_workflow_staff: true,
-          },
-        },
-        {
-          id: 'att-3',
-          user_id: 'user-kitchen-1',
-          date: todayStr,
-          is_present: true,
-          base_daily_pay: 50.0,
-          addon_pay: 10.0,
-          total_day_pay: 60.0,
-          user: {
-            display_name: 'Chef Marco (Kitchen Lead)',
-            role: 'kitchen',
-            is_workflow_staff: true,
-          },
-        },
-      ]);
+      try {
+        const staff = await adminApi.getStaffRoster();
+        if (staff.length > 0) {
+          setAttendance(
+            staff.map((s) => ({
+              id: `att-${s.id}`,
+              user_id: s.id,
+              date: todayStr,
+              is_present: s.is_active,
+              base_daily_pay: parseFloat(s.base_daily_rate) || 50.0,
+              addon_pay: 0.0,
+              total_day_pay: parseFloat(s.base_daily_rate) || 50.0,
+              user: {
+                display_name: s.display_name,
+                role: s.role,
+                is_workflow_staff: s.is_workflow_staff,
+              },
+            }))
+          );
+        }
+      } catch (e) {
+        console.warn('Failed to load live staff roster:', e);
+      }
     } finally {
       setIsLoading(false);
     }

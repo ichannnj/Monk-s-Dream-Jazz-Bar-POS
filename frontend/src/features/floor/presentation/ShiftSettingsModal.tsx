@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
 import { Settings, User, Printer, LogOut, Sparkles, Wifi } from 'lucide-react-native';
 import { useAuthStore } from '@/features/auth';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { getStaffInitials, getStaffRoleLabel } from '@/features/shared/utils/staffHelpers';
 
 interface ShiftSettingsModalProps {
   onClose?: () => void;
@@ -40,22 +41,21 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({ onClose,
           <View style={styles.profileRow}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {currentUser?.displayName
-                  ? currentUser.displayName
-                      .split(' ')
-                      .map((s) => s[0])
-                      .join('')
-                      .slice(0, 2)
-                      .toUpperCase()
-                  : 'JS'}
+                {getStaffInitials(currentUser?.displayName || 'Floor Staff')}
               </Text>
             </View>
 
             <View>
-              <Text style={styles.staffName}>{currentUser?.displayName || 'Jess Santos'}</Text>
+              <Text style={styles.staffName}>{currentUser?.displayName || 'Floor Staff'}</Text>
               <Text style={styles.staffRole}>
-                Role: {currentUser?.role || 'Waiter / Cashier'} • Floor Authenticated
+                Role: {getStaffRoleLabel(currentUser?.role)} •{' '}
+                {currentUser?.username ? `@${currentUser.username}` : 'Floor Authenticated'}
               </Text>
+              {currentUser?.email ? (
+                <Text style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>
+                  {currentUser.email}
+                </Text>
+              ) : null}
             </View>
           </View>
 

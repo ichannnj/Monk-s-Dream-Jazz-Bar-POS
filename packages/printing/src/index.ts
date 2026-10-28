@@ -1,5 +1,16 @@
 import * as fs from 'node:fs/promises';
 
+function cleanStaffName(name?: string): string {
+  if (!name || !name.trim()) return 'Staff';
+  const clean = name.trim();
+  const parenthesisIndex = clean.indexOf('(');
+  if (parenthesisIndex > 0) {
+    const namePart = clean.substring(0, parenthesisIndex).trim();
+    return namePart.split(' ')[0] || namePart;
+  }
+  return clean.split(' ')[0] || clean;
+}
+
 export interface CustomerReceiptPayload {
   receiptNumber: string;
   tableNumber?: number;
@@ -174,7 +185,7 @@ export class UsbEscPosPrinter implements IPrinterService {
       push(`Tab:       ${payload.tabName}\n`);
     }
     if (payload.waiterName) {
-      push(`Staff:     ${payload.waiterName}\n`);
+      push(`Staff:     ${cleanStaffName(payload.waiterName)}\n`);
     }
     push('------------------------------------------------\n');
 
@@ -249,7 +260,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     } else {
       push(`Tab:         ${payload.tabName || 'Walk-in'}\n`);
     }
-    push(`Server:      ${payload.waiterName || 'Staff'}\n`);
+    push(`Server:      ${cleanStaffName(payload.waiterName)}\n`);
     push(`Sent At:     ${payload.timestamp}\n`);
     push('------------------------------------------------\n');
 

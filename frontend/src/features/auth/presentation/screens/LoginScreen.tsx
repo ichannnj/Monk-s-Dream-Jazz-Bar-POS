@@ -108,6 +108,10 @@ export const LoginScreen: React.FC = () => {
             displayName: result.user.displayName,
             role: result.user.role as any,
             isActive: true,
+            email: result.user.email,
+            phone: result.user.phone,
+            avatarUrl: result.user.avatarUrl,
+            baseDailyRate: result.user.baseDailyRate,
           });
 
           toast.success(

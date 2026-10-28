@@ -29,9 +29,15 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
   const setActiveConversation = useChatStore((s) => s.setActiveConversation);
   const sendMessage = useChatStore((s) => s.sendMessage);
   const unpinAnnouncement = useChatStore((s) => s.unpinAnnouncement);
+  const initStaffDms = useChatStore((s) => s.initStaffDms);
 
   const [inputText, setInputText] = useState('');
   const [currentDateTime, setCurrentDateTime] = useState('');
+
+  // Initialize staff DMs dynamically from database public.users
+  useEffect(() => {
+    initStaffDms(currentUser?.id);
+  }, [currentUser?.id, initStaffDms]);
 
   // Set default channel if provided on mount or when defaultChannel prop changes
   useEffect(() => {
@@ -68,7 +74,7 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
   const currentSenderName = useMemo(() => {
     if (propSenderName) return propSenderName;
     if (currentUser?.displayName) return currentUser.displayName;
-    return 'Jess Santos';
+    return 'Staff';
   }, [propSenderName, currentUser]);
 
   // Determine current user role label

@@ -54,6 +54,7 @@ export async function createTab(params: {
     'CAFE_AREA' | 'BAR_AREA' | 'TAKEOUT_COUNTER' | 'GRAB_FOOD' | 'FOODPANDA' | 'OTHER_ONLINE';
   hasCorkageFee?: boolean;
   corkageAmount?: number;
+  openedById?: string;
 }): Promise<{ id: string } | null> {
   try {
     const validTableId = params.tableId ? await resolveTableUuid(params.tableId) : null;
@@ -67,6 +68,7 @@ export async function createTab(params: {
         order_channel: (params.orderChannel || 'CAFE_AREA') as any,
         has_corkage_fee: params.hasCorkageFee || false,
         corkage_amount: params.corkageAmount || 0,
+        opened_by_id: params.openedById || null,
         status: 'OPEN',
       })
       .select('id')

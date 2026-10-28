@@ -51,8 +51,8 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
   onOpenTableTab,
   onNewTakeout,
   onInputOnlineOrder,
-  staffName = 'Jess Santos',
-  staffInitials = 'JS',
+  staffName = 'Floor Staff',
+  staffInitials = 'MD',
 }) => {
   const channelItems: { id: ChannelCategory; label: string; count: number; Icon: any }[] = [
     { id: 'all', label: 'All', count: channelCounts.all, Icon: Sparkles },

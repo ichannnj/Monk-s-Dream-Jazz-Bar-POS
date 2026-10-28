@@ -89,7 +89,7 @@ export async function transferTableTab(params: TransferTabParams): Promise<Trans
 
     const staffUuid = isUuid(params.staffId)
       ? params.staffId!
-      : '00000000-0000-0000-0000-000000000001';
+      : '11111111-1111-1111-1111-111111111111';
 
     // 1. Invoke enhanced PostgreSQL procedure
     const { data, error } = await supabase.rpc('transfer_table_tab', {

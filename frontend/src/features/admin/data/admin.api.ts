@@ -245,6 +245,20 @@ export const adminApi = {
   },
 
   /**
+   * Venue Staff Profiles Roster
+   */
+  async getStaffRoster(): Promise<any[]> {
+    const { data, error } = await supabase
+      .from('users')
+      .select(
+        'id, username, display_name, role, is_workflow_staff, base_daily_rate, email, phone, avatar_url, is_active'
+      )
+      .order('role', { ascending: true });
+    if (error) throw error;
+    return data || [];
+  },
+
+  /**
    * Sales Analytics
    */
   async getSalesOverview(filterMode?: OperatingMode): Promise<SalesAnalyticsOverview> {

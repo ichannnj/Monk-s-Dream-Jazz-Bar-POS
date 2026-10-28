@@ -12,9 +12,9 @@ interface TableOverviewHeaderProps {
 }
 
 export const TableOverviewHeader: React.FC<TableOverviewHeaderProps> = ({
-  staffName = 'Jess Santos',
-  staffRole = 'Waiter / Cashier',
-  staffInitials = 'JS',
+  staffName = 'Floor Staff',
+  staffRole = 'Staff',
+  staffInitials = 'MD',
   onOpenTableTab,
   onNewTakeout,
   onInputOnlineOrder,

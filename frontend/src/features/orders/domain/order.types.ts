@@ -54,12 +54,14 @@ export interface OrderState {
     tabIndex: number,
     paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     cashierName?: string,
-    discountAmount?: number
+    discountAmount?: number,
+    staffId?: string
   ) => void;
   settleTableGroup: (
     tableId: string,
     paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
-    cashierName?: string
+    cashierName?: string,
+    staffId?: string
   ) => void;
   createTakeoutOrder: (
     customerName: string,

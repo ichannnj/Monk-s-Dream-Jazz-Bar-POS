@@ -9,6 +9,7 @@ import { FloorGridView } from './FloorGridView';
 import { useFloorFilters } from './useFloorFilters';
 import { useWaiterWorkflows } from '../application/useWaiterWorkflows';
 import { WaiterModalsCluster } from './WaiterModalsCluster';
+import { getStaffFirstName, getStaffInitials } from '@/features/shared/utils/staffHelpers';
 
 export interface FloorWorkspaceViewProps {
   autoStartStation?: 'bar' | 'kitchen';
@@ -65,17 +66,9 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
     return `${fallbackPercent}%` as any;
   }, [gridWidth, numColumns]);
 
-  const activeStaffName = propStaffName || currentUser?.displayName || 'Jess Santos';
+  const activeStaffName = propStaffName || currentUser?.displayName || 'Floor Staff';
   const activeStaffInitials =
-    propStaffInitials ||
-    (currentUser?.displayName
-      ? currentUser.displayName
-          .split(' ')
-          .map((s) => s[0])
-          .join('')
-          .slice(0, 2)
-          .toUpperCase()
-      : 'JS');
+    propStaffInitials || getStaffInitials(currentUser?.displayName || 'Floor Staff');
 
   return (
     <View className="flex-1">

@@ -3,6 +3,7 @@ import { tablesApi } from '../data/tables.api';
 import { ordersApi } from '../../orders/data/orders.api';
 import { posHlc, deriveTabTotal, deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
+import { useAuthStore } from '../../auth/application/useAuthStore';
 
 export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   openTableTab: (tableId: string, guestName: string, guestCount = 1) => {
@@ -53,12 +54,14 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     });
 
     // Asynchronously insert new tab into Supabase so it has a real DB UUID immediately
+    const currentUserId = useAuthStore.getState().currentUser?.id;
     tablesApi
       .createTab({
         tableId: tableId,
         customerName: finalGuestName,
         orderType: 'DINE_IN',
         orderChannel: targetTable?.area === 'bar' ? 'BAR_AREA' : 'CAFE_AREA',
+        openedById: currentUserId,
       })
       .then((res) => {
         if (res?.id) {

@@ -2,17 +2,22 @@ import { CustomerTab, CheckItem, DrawerEntry, OrderLineItem } from '../../../typ
 import { tablesApi } from '../../table-service/data/tables.api';
 import { deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
+import { useAuthStore } from '../../auth/application/useAuthStore';
 
 export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) => ({
   settleTab: (
     tableId: string,
     tabIndex: number,
     paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
-    cashierName = 'Coltrane (Cashier)',
-    discountAmount = 0
+    cashierName?: string,
+    discountAmount = 0,
+    staffId?: string
   ) => {
     let grandTotalPaid = 0;
     let targetTabRef: CustomerTab | undefined;
+    const effectiveCashierName =
+      cashierName || useAuthStore.getState().currentUser?.displayName || 'Coltrane (Cashier)';
+    const effectiveStaffId = staffId || useAuthStore.getState().currentUser?.id;
 
     set((state) => {
       const table = state.tables.find((t) => t.id === tableId);
@@ -43,7 +48,7 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
           hour: '2-digit',
           minute: '2-digit',
         }),
-        cashierName: cashierName,
+        cashierName: effectiveCashierName,
         itemsSummary:
           targetTab?.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ') || 'Table Bill',
       };
@@ -52,9 +57,9 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
       let nextDrawer = state.drawerEntries;
       if (paymentMethod === 'cash') {
         const isBar =
-          cashierName.toLowerCase().includes('bar') ||
-          cashierName.toLowerCase().includes('thelonious') ||
-          cashierName.toLowerCase().includes('bill');
+          effectiveCashierName.toLowerCase().includes('bar') ||
+          effectiveCashierName.toLowerCase().includes('thelonious') ||
+          effectiveCashierName.toLowerCase().includes('bill');
         const drawerTarget: 'main' | 'bar' = isBar ? 'bar' : 'main';
 
         const cashDrawerEntry: DrawerEntry = {
@@ -62,7 +67,7 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
           type: 'sale',
           amount: grandTotal,
           reason: `Table ${table.code} (${targetTab?.guestName}) Cash Settle`,
-          performedBy: cashierName,
+          performedBy: effectiveCashierName,
           timestamp: new Date().toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
@@ -115,7 +120,8 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
         paymentMethod: dbMethod,
         amount: grandTotalPaid,
         discountAmount,
-        notes: `Settled by ${cashierName}`,
+        staffId: effectiveStaffId,
+        notes: `Settled by ${effectiveCashierName}`,
       })
       .catch((err) => {
         console.warn('Background settleTab offline notice:', err);
@@ -125,8 +131,12 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
   settleTableGroup: (
     tableId: string,
     paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
-    cashierName = 'Coltrane (Cashier)'
+    cashierName?: string,
+    staffId?: string
   ) => {
+    const effectiveCashierName =
+      cashierName || useAuthStore.getState().currentUser?.displayName || 'Coltrane (Cashier)';
+    const effectiveStaffId = staffId || useAuthStore.getState().currentUser?.id;
     set((state) => {
       const table = state.tables.find((t) => t.id === tableId);
       if (!table) return state;
@@ -154,7 +164,7 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
           hour: '2-digit',
           minute: '2-digit',
         }),
-        cashierName: cashierName,
+        cashierName: effectiveCashierName,
         itemsSummary:
           allItems.map((i) => `${i.quantity}x ${i.productName}`).join(', ') ||
           'Combined Table Bill',
@@ -163,9 +173,9 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
       let nextDrawer = state.drawerEntries;
       if (paymentMethod === 'cash') {
         const isBar =
-          cashierName.toLowerCase().includes('bar') ||
-          cashierName.toLowerCase().includes('thelonious') ||
-          cashierName.toLowerCase().includes('bill');
+          effectiveCashierName.toLowerCase().includes('bar') ||
+          effectiveCashierName.toLowerCase().includes('thelonious') ||
+          effectiveCashierName.toLowerCase().includes('bill');
         const drawerTarget: 'main' | 'bar' = isBar ? 'bar' : 'main';
 
         const cashDrawerEntry: DrawerEntry = {
@@ -173,7 +183,7 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
           type: 'sale',
           amount: grandTotal,
           reason: `Table ${table.code} Combined Group Cash Settle`,
-          performedBy: cashierName,
+          performedBy: effectiveCashierName,
           timestamp: new Date().toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
