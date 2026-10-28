@@ -8,6 +8,8 @@ import { ToastContainer } from './src/features/shared';
 import { LoginScreen, useAuthStore } from './src/features/auth';
 import { useOrderStore } from './src/features/orders';
 
+import { AdminBackOfficeScreen } from './src/features/admin';
+
 // Ensure 1rem = 16px root scale for tablet typography
 try {
   rem.set(16);
@@ -18,6 +20,7 @@ try {
 export default function App() {
   const { currentUser } = useAuthStore();
   const { initRealtimeSync } = useOrderStore();
+  const [adminView, setAdminView] = React.useState<'admin' | 'floor'>('admin');
 
   // Keep all stations (Waiter, Barista, Kitchen, Runner) synchronized in real-time
   useEffect(() => {
@@ -45,6 +48,10 @@ export default function App() {
       case 'foh_runner':
         return <FohRunnerScreen />;
       case 'admin':
+        if (adminView === 'admin') {
+          return <AdminBackOfficeScreen onSwitchToFloor={() => setAdminView('floor')} />;
+        }
+        return <WaiterCashierScreen />;
       case 'cashier':
       case 'waiter':
       default:

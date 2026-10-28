@@ -74,6 +74,7 @@ All frontend business logic, views, stores, and API clients live strictly under 
 | **Toast Notifications**          | `frontend/src/features/shared/toast/useToastStore.ts`                                    | Toast container trees       |
 | **Thermal Printing Daemon**      | `packages/printing/src/daemon.ts`                                                        | `REQUIREMENTS.md` Section 6 |
 | **Thermal Printing Monitor UI**  | `frontend/src/features/printer/presentation/PrinterTerminalScreen.tsx`                   | Full screen files           |
+| **Admin Back-Office Hub**        | `frontend/src/features/admin/presentation/AdminBackOfficeScreen.tsx`                     | Full screen files           |
 | **Database Migrations**          | `supabase/migrations/` (check latest migration)                                          | Full `database.types.ts`    |
 
 ---

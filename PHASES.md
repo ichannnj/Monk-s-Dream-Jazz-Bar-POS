@@ -21,7 +21,7 @@
 - [x] **Phase 05: [Dedicated Thermal Printing Terminal](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-5-thermal-printing.md)**
       _Local Linux USB PC daemon listening to `print_jobs` table via Supabase Realtime CDC for instant chits, tags, and receipts._
 
-- [ ] **Phase 06: [Admin Back-Office, Inventory Hub & Venue Expense Suite](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-6-admin-and-analytics.md)**
+- [x] **Phase 06: [Admin Back-Office, Inventory Hub & Venue Expense Suite](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-6-admin-and-analytics.md)**
       _Operating mode switcher (`Cafe` vs `Event`), recipe BOM builder with Supabase Storage image upload (`menu-images`), inventory hub with restock MAC calculation, staff daily salary suite, and SQL sales analytics._
 
 ---
