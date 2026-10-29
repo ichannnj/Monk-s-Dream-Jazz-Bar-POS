@@ -3,6 +3,11 @@
 -- Migration: 20261029000001_chat_system_production.sql
 -- ==============================================================================
 
+-- 0. SAFE USERS ATTRIBUTES
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+
 -- 1. CHAT CONVERSATIONS TABLE
 CREATE TABLE IF NOT EXISTS public.chat_conversations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

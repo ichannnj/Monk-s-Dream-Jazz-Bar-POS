@@ -28,6 +28,9 @@ export default function App() {
     const unsubOrders = initRealtimeSync();
     const unsubChat = useChatStore.getState().setupRealtimeSubscription();
     useChatStore.getState().loadInitialData(currentUser?.id);
+    if (currentUser?.id) {
+      useChatStore.getState().trackCurrentPresence();
+    }
 
     return () => {
       unsubOrders();

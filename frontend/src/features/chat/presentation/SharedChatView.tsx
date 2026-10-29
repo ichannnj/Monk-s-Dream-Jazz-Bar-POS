@@ -23,7 +23,7 @@ import {
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { toast } from '../../shared/toast/useToastStore';
 import { useChatStore } from '../application/useChatStore';
-import { StaffChatUser } from '../data/chat.api';
+import { StaffChatUser, formatRelativeElapsed } from '../data/chat.api';
 
 export interface SharedChatViewProps {
   senderName?: string;
@@ -47,17 +47,20 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
   const messages = useChatStore((s) => s.messages);
   const activeConversationId = useChatStore((s) => s.activeConversationId);
   const activeStaffRoster = useChatStore((s) => s.activeStaffRoster);
+  const onlineUserIds = useChatStore((s) => s.onlineUserIds);
   const setActiveConversation = useChatStore((s) => s.setActiveConversation);
   const sendMessage = useChatStore((s) => s.sendMessage);
   const unpinAnnouncement = useChatStore((s) => s.unpinAnnouncement);
   const loadInitialData = useChatStore((s) => s.loadInitialData);
   const setChatViewActive = useChatStore((s) => s.setChatViewActive);
   const openDirectMessageWithColleague = useChatStore((s) => s.openDirectMessageWithColleague);
+  const trackCurrentPresence = useChatStore((s) => s.trackCurrentPresence);
 
   const [inputText, setInputText] = useState('');
   const [currentDateTime, setCurrentDateTime] = useState('');
   const [showScrollBottomPill, setShowScrollBottomPill] = useState(false);
   const [unseenMessagesCount, setUnseenMessagesCount] = useState(0);
+  const [, setElapsedTicker] = useState<number>(Date.now());
 
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
@@ -81,26 +84,67 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
     return () => clearTimeout(timer);
   }, [activeConversationId]);
 
-  // Load initial data from Supabase DB on mount or user change
+  // Determine user's assigned station channel slug
+  // If an explicit defaultChannel is passed from terminal station (e.g. 'bar', 'kitchen', 'foh'),
+  // that terminal station takes absolute precedence so only that station channel appears.
+  const userStationChannelSlug = useMemo(() => {
+    // 1. Explicit defaultChannel passed as prop has strict precedence on terminal screens
+    if (defaultChannel && defaultChannel !== 'all') {
+      return defaultChannel;
+    }
+    // 2. Role-based fallback
+    const role = currentUser?.role;
+    switch (role) {
+      case 'barista':
+      case 'station_cafe':
+        return 'cafe';
+      case 'bartender':
+      case 'station_bar':
+        return 'bar';
+      case 'kitchen':
+      case 'station_food':
+        return 'kitchen';
+      case 'foh_runner':
+      case 'waiter':
+      case 'cashier':
+        return 'foh';
+      case 'admin':
+        return null; // Admin screen (with no defaultChannel) sees all channels
+      default:
+        return 'foh';
+    }
+  }, [defaultChannel, currentUser?.role]);
+
+  // Load initial data from Supabase DB on mount or user change and track presence
   useEffect(() => {
     loadInitialData(currentUser?.id);
-  }, [currentUser?.id, loadInitialData]);
+    trackCurrentPresence();
+  }, [currentUser?.id, loadInitialData, trackCurrentPresence]);
 
   // Set default channel once when available without resetting upon new incoming messages
   useEffect(() => {
-    if (
-      defaultChannel &&
-      conversations.length > 0 &&
-      defaultChannelSetRef.current !== defaultChannel
-    ) {
-      defaultChannelSetRef.current = defaultChannel;
-      const targetSlug = defaultChannel === 'all' ? 'foh' : defaultChannel;
-      const matched = conversations.find((c) => c.slug === targetSlug || c.id === targetSlug);
-      if (matched && activeConversationId !== matched.id) {
-        setActiveConversation(matched.id, currentUser?.id);
+    if (conversations.length > 0) {
+      const targetSlug =
+        defaultChannel && defaultChannel !== 'all'
+          ? defaultChannel
+          : userStationChannelSlug || (defaultChannel === 'all' ? 'foh' : null);
+
+      if (targetSlug && defaultChannelSetRef.current !== targetSlug) {
+        defaultChannelSetRef.current = targetSlug;
+        const matched = conversations.find((c) => c.slug === targetSlug || c.id === targetSlug);
+        if (matched && activeConversationId !== matched.id) {
+          setActiveConversation(matched.id, currentUser?.id);
+        }
       }
     }
-  }, [defaultChannel, conversations, activeConversationId, setActiveConversation, currentUser?.id]);
+  }, [
+    defaultChannel,
+    userStationChannelSlug,
+    conversations,
+    activeConversationId,
+    setActiveConversation,
+    currentUser?.id,
+  ]);
 
   // Live time ticker
   useEffect(() => {
@@ -123,36 +167,51 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  // Determine current user display name
+  // Live 5-second elapsed time ticker for fine-grained real-time message and conversation updates
+  useEffect(() => {
+    const ticker = setInterval(() => {
+      setElapsedTicker(Date.now());
+    }, 5000);
+    return () => clearInterval(ticker);
+  }, []);
+
+  // Determine current user display name - Authenticated user strictly takes precedence over static props!
   const currentSenderName = useMemo(() => {
-    if (propSenderName) return propSenderName;
     if (currentUser?.displayName) return currentUser.displayName;
-    return 'Staff';
+    if (propSenderName && propSenderName !== 'Dana Cruz' && propSenderName !== 'FOH Expediter') {
+      return propSenderName;
+    }
+    return 'Miles (Manager)';
   }, [propSenderName, currentUser]);
 
   // Determine current user role label
   const currentSenderRole = useMemo(() => {
-    if (propSenderRole) return propSenderRole;
-    if (!currentUser) return 'Waiter / Cashier';
-    switch (currentUser.role) {
-      case 'barista':
-        return 'Barista';
-      case 'bartender':
-        return 'Bartender';
-      case 'kitchen':
-      case 'station_food':
-        return 'Kitchen Chef';
-      case 'foh_runner':
-        return 'FOH Runner';
-      case 'waiter':
-        return 'Waiter';
-      case 'cashier':
-        return 'Cashier';
-      case 'admin':
-        return 'Manager';
-      default:
-        return 'Waiter / Cashier';
+    const role = currentUser?.role;
+    if (role) {
+      switch (role) {
+        case 'barista':
+        case 'station_cafe':
+          return 'Barista';
+        case 'bartender':
+        case 'station_bar':
+          return 'Bartender';
+        case 'kitchen':
+        case 'station_food':
+          return 'Kitchen Chef';
+        case 'foh_runner':
+          return 'FOH Runner';
+        case 'waiter':
+          return 'Waiter';
+        case 'cashier':
+          return 'Cashier';
+        case 'admin':
+          return 'Manager';
+        default:
+          return 'Staff';
+      }
     }
+    if (propSenderRole) return propSenderRole;
+    return 'Waiter / Cashier';
   }, [propSenderRole, currentUser]);
 
   // Initials for avatar badge
@@ -164,11 +223,83 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
     return currentSenderName.slice(0, 2).toUpperCase();
   }, [currentSenderName]);
 
-  // Active conversation object
+  // Separate channels vs direct messages sorted by latest activity (newest at top)
+  // When on a designated station (e.g. Bar KDS, Kitchen KDS, Floor), ONLY that station channel is visible.
+  // Admins can only see all channels when on the Admin screen (where userStationChannelSlug is null).
+  const channels = useMemo(() => {
+    return conversations
+      .filter((c) => {
+        if (c.type !== 'channel') return false;
+        // If station channel is specified (or staff role resolved), strictly lock to that station
+        if (userStationChannelSlug) {
+          return c.slug === userStationChannelSlug || c.id === userStationChannelSlug;
+        }
+        // Admin Back Office without specific station terminal sees all channels
+        return currentUser?.role === 'admin';
+      })
+      .sort((a, b) => {
+        const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+        const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+        return timeB - timeA;
+      });
+  }, [conversations, userStationChannelSlug, currentUser?.role]);
+
+  const directMessages = useMemo(() => {
+    return conversations
+      .filter((c) => {
+        if (c.type !== 'dm') return false;
+        // Strictly filter out self-DMs
+        if (c.counterpartId && currentUser?.id && c.counterpartId === currentUser.id) return false;
+        return true;
+      })
+      .sort((a, b) => {
+        const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
+        const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+        return timeB - timeA;
+      });
+  }, [conversations, currentUser?.id]);
+
+  // Colleagues without an existing DM conversation yet (strictly excluding the current user)
+  const availableColleagues = useMemo(() => {
+    const myId = currentUser?.id;
+    const myName = currentSenderName.trim().toLowerCase();
+    const myUsername = currentUser?.username?.trim().toLowerCase();
+    const isAdmin = currentUser?.role === 'admin' || currentSenderRole === 'Manager';
+
+    const colleagues = activeStaffRoster.filter((u) => {
+      if (myId && u.id === myId) return false;
+      if (u.displayName.trim().toLowerCase() === myName) return false;
+      if (myUsername && u.username.trim().toLowerCase() === myUsername) return false;
+      // Extra guard: If logged in as Admin, never show Miles in the colleague list
+      if (
+        isAdmin &&
+        (u.displayName.toLowerCase().includes('miles') || u.username === 'miles_manager')
+      ) {
+        return false;
+      }
+      return true;
+    });
+
+    return colleagues.filter((colleague) => {
+      // Check if already represented in directMessages
+      return !directMessages.some(
+        (dm) =>
+          dm.counterpartId === colleague.id ||
+          dm.title.toLowerCase().includes(colleague.displayName.toLowerCase()) ||
+          colleague.displayName.toLowerCase().includes(dm.title.toLowerCase())
+      );
+    });
+  }, [activeStaffRoster, currentUser, currentSenderName, currentSenderRole, directMessages]);
+
+  // Active conversation object (scoped to visible conversations)
+  const visibleConversations = useMemo(() => {
+    return [...channels, ...directMessages];
+  }, [channels, directMessages]);
+
   const activeConversation = useMemo(() => {
     return (
-      conversations.find((c) => c.id === activeConversationId) ||
-      conversations[0] || {
+      visibleConversations.find((c) => c.id === activeConversationId) ||
+      visibleConversations[0] || {
         id: '',
         title: 'Team Chat',
         type: 'channel' as const,
@@ -176,38 +307,12 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
         unreadCount: 0,
       }
     );
-  }, [conversations, activeConversationId]);
+  }, [visibleConversations, activeConversationId]);
 
   // Messages for active conversation
   const currentMessages = useMemo(() => {
     return messages[activeConversation?.id] || [];
   }, [messages, activeConversation]);
-
-  // Separate channels vs direct messages sorted by latest activity (newest at top)
-  const channels = useMemo(() => {
-    return conversations
-      .filter((c) => c.type === 'channel')
-      .sort((a, b) => {
-        const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
-        const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
-        return timeB - timeA;
-      });
-  }, [conversations]);
-
-  const directMessages = useMemo(() => {
-    return conversations
-      .filter((c) => c.type === 'dm')
-      .sort((a, b) => {
-        const timeA = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
-        const timeB = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
-        return timeB - timeA;
-      });
-  }, [conversations]);
-
-  // Available staff colleagues for initiating 1-on-1 DMs
-  const availableColleagues = useMemo(() => {
-    return activeStaffRoster.filter((u) => u.id !== currentUser?.id);
-  }, [activeStaffRoster, currentUser?.id]);
 
   // Scroll to bottom helper
   const scrollToBottom = useCallback((animated: boolean = true) => {
@@ -320,13 +425,25 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
   };
 
   const handleStartDmWithColleague = async (colleague: StaffChatUser) => {
-    if (!currentUser?.id) {
-      toast.info('Please log in with staff PIN to start direct messages.', {
-        title: 'Staff Identity Required',
-      });
+    const isAdmin = currentUser?.role === 'admin' || currentSenderRole === 'Manager';
+    if (
+      colleague.id === currentUser?.id ||
+      colleague.displayName.trim().toLowerCase() === currentSenderName.trim().toLowerCase() ||
+      (isAdmin &&
+        (colleague.displayName.toLowerCase().includes('miles') ||
+          colleague.username === 'miles_manager'))
+    ) {
+      toast.warning('You cannot message yourself.', { title: 'Self Messaging' });
       return;
     }
-    await openDirectMessageWithColleague(currentUser.id, colleague);
+
+    // If no currentUser ID (e.g. anonymous or terminal mode), fall back to active staff or default caller
+    const effectiveUserId =
+      currentUser?.id ||
+      activeStaffRoster.find((u) => u.displayName === currentSenderName)?.id ||
+      '11111111-1111-1111-1111-111111111111'; // Miles (Manager) default fallback
+
+    await openDirectMessageWithColleague(effectiveUserId, colleague);
   };
 
   return (
@@ -386,6 +503,7 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
             </Text>
             {channels.map((chan) => {
               const isActive = chan.id === activeConversation.id;
+              const elapsedLabel = formatRelativeElapsed(chan.lastActivityAt);
               return (
                 <Pressable
                   key={chan.id}
@@ -410,9 +528,9 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
                   </View>
 
                   <View className="items-end justify-center">
-                    {chan.lastTimestamp && (
+                    {elapsedLabel && (
                       <Text className="text-sm font-medium text-neutral-400 mb-0.5">
-                        {chan.lastTimestamp}
+                        {elapsedLabel}
                       </Text>
                     )}
                     {chan.unreadCount > 0 && (
@@ -425,73 +543,84 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
               );
             })}
 
-            {/* DIRECT MESSAGES Section */}
+            {/* DIRECT MESSAGES Section (All Venue Staff: Active Threads + Available Colleagues) */}
             <Text className="text-sm font-bold tracking-wider text-neutral-400 uppercase mt-4 mb-2 px-2">
               Direct Messages
             </Text>
-            {directMessages.length > 0 ? (
-              directMessages.map((dm) => {
-                const isActive = dm.id === activeConversation.id;
-                return (
-                  <Pressable
-                    key={dm.id}
-                    onPress={() => setActiveConversation(dm.id, currentUser?.id)}
-                    className={`flex-row items-center p-3 mb-1.5 rounded-2xl transition-all min-h-[56px] ${
-                      isActive
-                        ? 'bg-[#FBF0F3] border border-[#F5D9E0]'
-                        : 'bg-transparent border border-transparent active:bg-neutral-50'
-                    }`}
-                  >
-                    <View className="w-11 h-11 rounded-full bg-[#800020] items-center justify-center mr-3">
+
+            {/* 1. Active Direct Message Conversations */}
+            {directMessages.map((dm) => {
+              const isActive = dm.id === activeConversation.id;
+              const elapsedLabel = formatRelativeElapsed(dm.lastActivityAt);
+              // Resolve counterpart colleague (strictly excluding current user)
+              const counterpartId =
+                dm.counterpartId ||
+                activeStaffRoster.find(
+                  (u) =>
+                    u.id !== currentUser?.id &&
+                    (u.displayName.toLowerCase() === dm.title.toLowerCase() ||
+                      dm.title.toLowerCase().includes(u.displayName.toLowerCase()))
+                )?.id;
+              const isColleagueOnline = counterpartId
+                ? onlineUserIds.includes(counterpartId)
+                : false;
+
+              return (
+                <Pressable
+                  key={dm.id}
+                  onPress={() => setActiveConversation(dm.id, currentUser?.id)}
+                  className={`flex-row items-center p-3 mb-1.5 rounded-2xl transition-all min-h-[56px] ${
+                    isActive
+                      ? 'bg-[#FBF0F3] border border-[#F5D9E0]'
+                      : 'bg-transparent border border-transparent active:bg-neutral-50'
+                  }`}
+                >
+                  <View className="relative mr-3">
+                    <View className="w-11 h-11 rounded-full bg-[#800020] items-center justify-center">
                       <Text className="text-base font-bold text-white">{dm.avatarText}</Text>
                     </View>
+                    {isColleagueOnline && (
+                      <View className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+                    )}
+                  </View>
 
-                    <View className="flex-1 mr-2">
-                      <Text className="text-base font-bold text-neutral-900" numberOfLines={1}>
-                        {dm.title}
+                  <View className="flex-1 mr-2">
+                    <Text className="text-base font-bold text-neutral-900" numberOfLines={1}>
+                      {dm.title}
+                    </Text>
+                    <Text className="text-base text-neutral-500" numberOfLines={1}>
+                      {dm.lastMessage || (dm.isDraft ? 'Draft message' : 'No messages yet')}
+                    </Text>
+                  </View>
+
+                  <View className="items-end justify-center">
+                    {elapsedLabel && (
+                      <Text className="text-sm font-medium text-neutral-400 mb-0.5">
+                        {elapsedLabel}
                       </Text>
-                      <Text className="text-base text-neutral-500" numberOfLines={1}>
-                        {dm.lastMessage || 'Direct message'}
-                      </Text>
-                    </View>
+                    )}
+                    {dm.unreadCount > 0 && (
+                      <View className="w-6 h-6 rounded-full bg-[#6B1D2F] items-center justify-center">
+                        <Text className="text-xs font-bold text-white">{dm.unreadCount}</Text>
+                      </View>
+                    )}
+                  </View>
+                </Pressable>
+              );
+            })}
 
-                    <View className="items-end justify-center">
-                      {dm.lastTimestamp && (
-                        <Text className="text-sm font-medium text-neutral-400 mb-0.5">
-                          {dm.lastTimestamp}
-                        </Text>
-                      )}
-                      {dm.unreadCount > 0 && (
-                        <View className="w-6 h-6 rounded-full bg-[#6B1D2F] items-center justify-center">
-                          <Text className="text-xs font-bold text-white">{dm.unreadCount}</Text>
-                        </View>
-                      )}
-                    </View>
-                  </Pressable>
-                );
-              })
-            ) : (
-              <View className="px-2 py-3 bg-neutral-50 rounded-xl mb-2">
-                <Text className="text-sm text-neutral-500">
-                  No active DMs yet. Tap a colleague below to start chatting.
-                </Text>
-              </View>
-            )}
-
-            {/* STAFF ROSTER TO START NEW DM */}
-            {availableColleagues.length > 0 && (
-              <>
-                <Text className="text-sm font-bold tracking-wider text-neutral-400 uppercase mt-3 mb-2 px-2">
-                  Staff Colleagues
-                </Text>
-                {availableColleagues.map((colleague) => (
-                  <Pressable
-                    key={colleague.id}
-                    onPress={() => handleStartDmWithColleague(colleague)}
-                    className="flex-row items-center p-2.5 mb-1 rounded-xl active:bg-neutral-100 min-h-[48px]"
-                  >
-                    <View className="w-8 h-8 rounded-full bg-neutral-200 items-center justify-center mr-2.5">
-                      <Text className="text-xs font-bold text-neutral-700">
+            {/* 2. All Remaining Venue Staff (Floor, KDS, Admin) ready for 1-on-1 DM */}
+            {availableColleagues.map((colleague) => {
+              const isColleagueOnline = onlineUserIds.includes(colleague.id);
+              return (
+                <Pressable
+                  key={colleague.id}
+                  onPress={() => handleStartDmWithColleague(colleague)}
+                  className="flex-row items-center p-3 mb-1.5 rounded-2xl bg-transparent border border-transparent active:bg-neutral-50 min-h-[56px]"
+                >
+                  <View className="relative mr-3">
+                    <View className="w-11 h-11 rounded-full bg-neutral-200 items-center justify-center">
+                      <Text className="text-sm font-bold text-neutral-700">
                         {colleague.displayName
                           .split(' ')
                           .map((n) => n[0])
@@ -500,16 +629,30 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
                           .toUpperCase()}
                       </Text>
                     </View>
-                    <View className="flex-1">
-                      <Text className="text-base font-medium text-neutral-800" numberOfLines={1}>
-                        {colleague.displayName}
-                      </Text>
-                      <Text className="text-xs text-neutral-400">{colleague.role}</Text>
-                    </View>
-                    <MessageSquare size={16} color="#800020" />
-                  </Pressable>
-                ))}
-              </>
+                    {isColleagueOnline && (
+                      <View className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white" />
+                    )}
+                  </View>
+                  <View className="flex-1 mr-2">
+                    <Text className="text-base font-bold text-neutral-900" numberOfLines={1}>
+                      {colleague.displayName}
+                    </Text>
+                    <Text className="text-sm text-neutral-400 capitalize">
+                      {isColleagueOnline ? (
+                        <Text className="text-emerald-600 font-semibold">Online · </Text>
+                      ) : null}
+                      {colleague.role.replace('_', ' ')} · Tap to chat
+                    </Text>
+                  </View>
+                  <MessageSquare size={18} color="#800020" />
+                </Pressable>
+              );
+            })}
+
+            {directMessages.length === 0 && availableColleagues.length === 0 && (
+              <View className="px-2 py-3 bg-neutral-50 rounded-xl mb-2">
+                <Text className="text-sm text-neutral-500">No other active staff found.</Text>
+              </View>
             )}
           </ScrollView>
         </View>
@@ -522,12 +665,48 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
               <Text className="text-2xl font-bold text-neutral-900 tracking-tight">
                 {activeConversation.title}
               </Text>
-              <Text className="text-base font-medium text-neutral-500 mt-0.5">
-                {activeConversation.subtitle ||
-                  (activeConversation.type === 'channel'
-                    ? `${activeConversation.title} · Staff Channel`
-                    : 'Direct conversation')}
-              </Text>
+              <View className="flex-row items-center mt-0.5">
+                {activeConversation.type === 'dm' &&
+                  (() => {
+                    const counterpartId =
+                      activeConversation.counterpartId ||
+                      activeStaffRoster.find(
+                        (u) =>
+                          u.id !== currentUser?.id &&
+                          (u.displayName.toLowerCase() === activeConversation.title.toLowerCase() ||
+                            activeConversation.title
+                              .toLowerCase()
+                              .includes(u.displayName.toLowerCase()))
+                      )?.id;
+                    const isOnlineNow = counterpartId
+                      ? onlineUserIds.includes(counterpartId)
+                      : false;
+
+                    return (
+                      <View className="flex-row items-center mr-2">
+                        <View
+                          className={`w-2.5 h-2.5 rounded-full mr-1.5 ${
+                            isOnlineNow ? 'bg-emerald-500' : 'bg-neutral-300'
+                          }`}
+                        />
+                        <Text
+                          className={`text-sm font-semibold ${
+                            isOnlineNow ? 'text-emerald-700' : 'text-neutral-500'
+                          }`}
+                        >
+                          {isOnlineNow ? 'Active now' : 'Offline'}
+                        </Text>
+                        <Text className="text-neutral-300 mx-1.5">·</Text>
+                      </View>
+                    );
+                  })()}
+                <Text className="text-base font-medium text-neutral-500">
+                  {activeConversation.subtitle ||
+                    (activeConversation.type === 'channel'
+                      ? `${activeConversation.title} · Staff Channel`
+                      : 'Direct conversation')}
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -573,11 +752,102 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
             </View>
 
             {currentMessages.length === 0 ? (
-              <View className="items-center justify-center py-12">
-                <Text className="text-base text-neutral-400">
-                  No messages yet. Send a message to start the conversation!
-                </Text>
-              </View>
+              activeConversation.type === 'dm' ? (
+                (() => {
+                  const counterpartId =
+                    activeConversation.counterpartId ||
+                    activeStaffRoster.find(
+                      (u) =>
+                        u.id !== currentUser?.id &&
+                        (u.displayName.toLowerCase() === activeConversation.title.toLowerCase() ||
+                          activeConversation.title
+                            .toLowerCase()
+                            .includes(u.displayName.toLowerCase()))
+                    )?.id;
+                  const matchedColleague = activeStaffRoster.find((u) => u.id === counterpartId);
+                  const isOnlineNow = counterpartId ? onlineUserIds.includes(counterpartId) : false;
+
+                  return (
+                    <View className="items-center justify-center py-10 px-6">
+                      {/* Large Messenger Profile Avatar */}
+                      <View className="relative mb-4">
+                        <View className="w-20 h-20 rounded-full bg-[#800020] items-center justify-center shadow-md">
+                          <Text className="text-2xl font-bold text-white">
+                            {activeConversation.avatarText || 'DM'}
+                          </Text>
+                        </View>
+                        <View
+                          className={`absolute bottom-0 right-0 w-5 h-5 rounded-full border-2 border-white ${
+                            isOnlineNow ? 'bg-emerald-500' : 'bg-neutral-300'
+                          }`}
+                        />
+                      </View>
+
+                      {/* Colleague Identity & Role */}
+                      <Text className="text-2xl font-bold text-neutral-900 mb-1 text-center">
+                        {activeConversation.title}
+                      </Text>
+                      <Text className="text-base font-medium text-neutral-500 mb-2 capitalize text-center">
+                        {matchedColleague?.role
+                          ? `Monk's Dream · ${matchedColleague.role.replace('_', ' ')}`
+                          : activeConversation.subtitle || 'Direct Message'}
+                      </Text>
+
+                      {/* Online Status Badge */}
+                      <View
+                        className={`flex-row items-center px-3 py-1 rounded-full mb-6 ${
+                          isOnlineNow
+                            ? 'bg-emerald-50 border border-emerald-200'
+                            : 'bg-neutral-100 border border-neutral-200'
+                        }`}
+                      >
+                        <View
+                          className={`w-2 h-2 rounded-full mr-2 ${
+                            isOnlineNow ? 'bg-emerald-500' : 'bg-neutral-400'
+                          }`}
+                        />
+                        <Text
+                          className={`text-sm font-semibold ${
+                            isOnlineNow ? 'text-emerald-800' : 'text-neutral-500'
+                          }`}
+                        >
+                          {isOnlineNow
+                            ? 'Active now on POS'
+                            : 'Offline · Messages delivered on return'}
+                        </Text>
+                      </View>
+
+                      {/* Messenger Encouragement Text */}
+                      <Text className="text-base text-neutral-500 text-center max-w-sm mb-6">
+                        You're connected on Monk's Dream POS. Say hello to start the conversation!
+                      </Text>
+
+                      {/* Facebook Messenger Wave Quick-Action Button */}
+                      <Pressable
+                        onPress={() => handleSend('👋')}
+                        className="flex-row items-center bg-[#FBF0F3] border border-[#F5D9E0] px-6 py-3 rounded-full active:opacity-75 min-h-[48px]"
+                      >
+                        <Text className="text-xl mr-2">👋</Text>
+                        <Text className="text-base font-bold text-[#800020]">
+                          Wave to {activeConversation.title.split(' ')[0]}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  );
+                })()
+              ) : (
+                <View className="items-center justify-center py-16 px-4">
+                  <View className="w-16 h-16 rounded-full bg-[#FAF5F5] items-center justify-center mb-3">
+                    <MessageSquare size={28} color="#800020" />
+                  </View>
+                  <Text className="text-lg font-bold text-neutral-800 mb-1">
+                    No messages yet in #{activeConversation.title}
+                  </Text>
+                  <Text className="text-base text-neutral-400 text-center max-w-md">
+                    Send a message to update your station team in real time!
+                  </Text>
+                </View>
+              )
             ) : (
               currentMessages.map((msg) => {
                 // 1. System Alert Card
@@ -602,6 +872,10 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
                   msg.senderName.trim().toLowerCase() === currentSenderName.trim().toLowerCase() ||
                   (currentUser?.id && msg.senderId === currentUser.id);
 
+                const messageElapsed = msg.createdAt
+                  ? formatRelativeElapsed(msg.createdAt)
+                  : msg.timestamp;
+
                 if (isMe) {
                   return (
                     <View key={msg.id} className="self-end max-w-[75%] mb-3 items-end">
@@ -612,7 +886,7 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
                       </View>
                       <View className="flex-row items-center mt-1 mr-1">
                         <Text className="text-xs font-medium text-neutral-400 mr-1.5">
-                          {msg.timestamp}
+                          {messageElapsed}
                         </Text>
                         {msg.deliveryStatus === 'sending' && <Clock size={13} color="#9CA3AF" />}
                         {msg.deliveryStatus === 'sent' && (
@@ -644,7 +918,7 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
                       </Text>
                     </View>
                     <Text className="text-xs font-medium text-neutral-400 mt-1 ml-1.5">
-                      {msg.timestamp}
+                      {messageElapsed}
                     </Text>
                   </View>
                 );

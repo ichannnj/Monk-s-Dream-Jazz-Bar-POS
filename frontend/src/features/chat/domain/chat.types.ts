@@ -38,4 +38,6 @@ export interface ChatConversation {
   memberCount?: number;
   pinnedMessage?: PinnedAnnouncement;
   participantIds?: string[];
+  counterpartId?: string;
+  isDraft?: boolean;
 }

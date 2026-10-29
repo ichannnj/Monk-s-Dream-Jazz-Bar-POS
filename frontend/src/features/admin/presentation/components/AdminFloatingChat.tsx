@@ -62,7 +62,6 @@ export const AdminFloatingChat: React.FC<AdminFloatingChatProps> = ({ unreadCoun
             <View className="flex-1">
               <SharedChatView
                 senderRole="Manager"
-                senderName="Dana Cruz"
                 onBack={() => setIsOpen(false)}
                 backLabel="Close Chat"
               />

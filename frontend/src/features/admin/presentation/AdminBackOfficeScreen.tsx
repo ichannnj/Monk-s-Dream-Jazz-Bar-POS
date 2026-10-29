@@ -111,11 +111,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       case 'chats':
         return (
           <View className="flex-1">
-            <SharedChatView
-              senderRole="Manager"
-              senderName="Dana Cruz"
-              title="Central Team & Station Chat"
-            />
+            <SharedChatView senderRole="Manager" title="Central Team & Station Chat" />
           </View>
         );
       default:

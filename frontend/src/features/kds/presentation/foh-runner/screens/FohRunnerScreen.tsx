@@ -47,9 +47,8 @@ export const FohRunnerScreen: React.FC = () => {
       <View style={styles.mainContent}>
         {activeTab === 'chat' ? (
           <SharedChatView
-            senderName="FOH Expediter"
             senderRole="FOH Runner"
-            defaultChannel="all"
+            defaultChannel="foh"
             onBack={() => setActiveTab('board')}
           />
         ) : activeTab === 'alerts' ? (

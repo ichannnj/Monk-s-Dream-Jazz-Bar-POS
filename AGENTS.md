@@ -18,6 +18,7 @@
 | **FOH Runner**      | `6666` | Expediter Buzzout tablet, tray dispatch & packaging       | `station:foh_runner` |
 
 - **Station KDS POS Ordering:** Barista KDS (`UnifiedKdsScreen.tsx`) includes the full shared Floor POS (`FloorWorkspaceView`), Checks History, and the dedicated Bar Cash Drawer. Kitchen KDS strictly omits cash drawer and floor ordering operations (kitchen is KDS, food prep, and checks audit only: Board, Checks, Chat, Alerts). When orders are dispatched from Bar KDS, bar beverages auto-start with `status: 'preparing'`.
+- **Station-Isolated Chat & Universal DMs:** Each operational role sees only their respective station channel (`#foh` for Waiter/Cashier/Runner, `#bar` for Bartender, `#cafe` for Barista, `#kitchen` for Kitchen Chef). Admin/Managers (`PIN: 9999`) have oversight across all station channels. All active staff members have universal 1-on-1 direct messaging (DM) with all colleagues regardless of role or station.
 - **Dual Cash Drawer Architecture:** Two distinct tills: **Main Floor Till** (Waiter & Cashier floor settlements) and **Bar Station Till** (Barista & Bartender bar orders), each maintaining independent starting floats, cash sales, paid-outs, safe drops, and shift Z-reports.
 - **KDS Hardware Constraint:** Zero public/overhead customer displays. Tablets mounted or handheld only.
 - **Thermal Printing Workflow:** 1. Order Dispatch Slip (chit) auto-prints upon "Send Order". 2. Customer Receipt prints upon tab settlement.

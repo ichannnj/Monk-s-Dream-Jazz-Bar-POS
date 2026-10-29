@@ -73,6 +73,9 @@ export interface ChatRealtimeCallbacks {
   onInsert: (msg: any) => void;
   onUpdate: (msg: any) => void;
   onConversationUpdate?: (conv: any) => void;
+  onParticipantInsert?: (participant: any) => void;
+  onUserUpdate?: (user: any) => void;
+  onPresenceSync?: (onlineUserIds: string[]) => void;
   onStatusChange?: (status: string) => void;
 }
 
@@ -333,6 +336,11 @@ export class RealtimeGateway {
 
     const channel = supabase
       .channel(channelName)
+      .on('broadcast', { event: 'chat:new_message' }, (event) => {
+        if (event.payload) {
+          callbacks.onInsert(event.payload);
+        }
+      })
       .on(
         'postgres_changes',
         {
@@ -366,6 +374,40 @@ export class RealtimeGateway {
           callbacks.onConversationUpdate?.(payload.new);
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_participants',
+        },
+        (payload) => {
+          callbacks.onParticipantInsert?.(payload.new);
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'users',
+        },
+        (payload) => {
+          callbacks.onUserUpdate?.(payload.new);
+        }
+      )
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState();
+        const ids: string[] = [];
+        Object.values(state).forEach((presences: any) => {
+          if (Array.isArray(presences)) {
+            presences.forEach((p) => {
+              if (p?.user_id) ids.push(p.user_id);
+            });
+          }
+        });
+        callbacks.onPresenceSync?.(Array.from(new Set(ids)));
+      })
       .subscribe((status, err) => {
         if (err) {
           console.warn('[RealtimeGateway] pos_chat_sync error:', err);
@@ -380,6 +422,51 @@ export class RealtimeGateway {
       supabase.removeChannel(channel);
       this.channels.delete(channelName);
     };
+  }
+
+  /**
+   * Track staff online presence across connected terminals
+   */
+  async trackChatPresence(user: {
+    id: string;
+    displayName?: string;
+    role?: string;
+  }): Promise<void> {
+    const channelName = 'pos_chat_sync';
+    const channel = this.channels.get(channelName);
+    if (channel && user?.id) {
+      try {
+        await channel.track({
+          user_id: user.id,
+          display_name: user.displayName || 'Staff',
+          role: user.role || 'Staff',
+          online_at: new Date().toISOString(),
+        });
+      } catch (err) {
+        console.warn('[RealtimeGateway] trackChatPresence exception:', err);
+      }
+    }
+  }
+
+  /**
+   * Broadcast a chat message directly to all connected terminals for 0ms latency delivery
+   */
+  async broadcastChatMessage(payload: any): Promise<void> {
+    const channelName = 'pos_chat_sync';
+    let channel = this.channels.get(channelName);
+    if (!channel) {
+      channel = supabase.channel(channelName);
+      this.channels.set(channelName, channel);
+    }
+    try {
+      await channel.send({
+        type: 'broadcast',
+        event: 'chat:new_message',
+        payload,
+      });
+    } catch (err) {
+      console.warn('[RealtimeGateway] broadcastChatMessage exception:', err);
+    }
   }
 
   /**
