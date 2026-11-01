@@ -84,7 +84,7 @@ All frontend business logic, views, stores, and API clients live strictly under 
 | **Admin Inventory Hub & Ledger**   | `frontend/src/features/admin/presentation/views/AdminInventoryView.tsx`                  | Monolithic views            |
 | **Admin Venue Settings & Routing** | `frontend/src/features/admin/presentation/views/AdminSettingsView.tsx`                   | Full screen files           |
 | **Admin Table Layout Config**      | `frontend/src/features/admin/presentation/views/AdminTableLayoutView.tsx`                | Full screen files           |
-| **Admin Telemetry & Fallbacks**    | `frontend/src/features/admin/data/adminTelemetry.ts`                                     | Monolithic mock files       |
+| **Admin Telemetry & Live DB Data** | `frontend/src/features/admin/data/adminTelemetry.ts`                                     | Monolithic files            |
 | **Database Migrations**            | `supabase/migrations/` (check latest migration)                                          | Full `database.types.ts`    |
 
 ---

@@ -10,52 +10,70 @@ import {
   Check,
   Calendar,
   Layers,
+  Clock,
+  Sparkles,
+  AlertTriangle,
+  LayoutGrid,
+  CreditCard,
+  Banknote,
+  Smartphone,
 } from 'lucide-react-native';
-import type { DashboardTelemetry, AdminRoute } from '../../domain/admin.types';
-import type { ComparisonPeriod } from '../../data/adminTelemetry';
+import type { DashboardTelemetry, AdminRoute, TimeframeFilter } from '../../domain/admin.types';
 
-interface AdminDashboardViewProps {
+export interface AdminDashboardViewProps {
   telemetry: DashboardTelemetry;
   onRefresh: () => void;
   onNavigateRoute: (route: AdminRoute) => void;
   isLoading?: boolean;
-  comparisonPeriod?: ComparisonPeriod;
-  onChangeComparisonPeriod?: (period: ComparisonPeriod) => void;
+  timeframe?: TimeframeFilter;
+  onChangeTimeframe?: (timeframe: TimeframeFilter) => void;
 }
 
 type BestSellerFilter = 'top3' | 'top5' | 'top10' | 'all';
 
-interface ComparisonOption {
-  key: ComparisonPeriod;
+interface TimeframeOption {
+  key: TimeframeFilter;
   label: string;
   shortLabel: string;
+  benchmarkLabel: string;
   description: string;
 }
 
-const COMPARISON_OPTIONS: ComparisonOption[] = [
+const TIMEFRAME_OPTIONS: TimeframeOption[] = [
   {
-    key: 'last_week',
-    label: 'Last Tuesday (Same Day Last Week)',
-    shortLabel: 'Last Tuesday',
-    description: 'Benchmark against the identical operating day of previous week',
+    key: 'today',
+    label: 'Today (Live Shift)',
+    shortLabel: 'Today',
+    benchmarkLabel: 'vs Same Day Last Week',
+    description: 'Real-time sales and floor activity for current operating day',
   },
   {
     key: 'yesterday',
     label: 'Yesterday',
     shortLabel: 'Yesterday',
-    description: 'Immediate preceding business day performance',
+    benchmarkLabel: 'vs Day Before Yesterday',
+    description: 'Completed revenue and checks from preceding business day',
   },
   {
-    key: 'week_avg',
-    label: 'Last Week Average',
-    shortLabel: '7-Day Average',
-    description: '7-day rolling daily revenue average',
+    key: 'week',
+    label: 'This Week (WTD)',
+    shortLabel: 'This Week',
+    benchmarkLabel: 'vs Prior Week',
+    description: 'Aggregated week-to-date sales starting from Monday',
   },
   {
-    key: 'none',
-    label: 'None (Today Only)',
-    shortLabel: 'Today Only',
-    description: 'Raw performance numbers without comparison delta',
+    key: 'month',
+    label: 'This Month (MTD)',
+    shortLabel: 'This Month',
+    benchmarkLabel: 'vs Prior Month',
+    description: 'Month-to-date volume and revenue performance',
+  },
+  {
+    key: 'all',
+    label: 'All-Time History',
+    shortLabel: 'All-Time',
+    benchmarkLabel: 'Lifetime Aggregate',
+    description: 'All recorded payments and checks directly in database',
   },
 ];
 
@@ -64,18 +82,18 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   onRefresh,
   onNavigateRoute,
   isLoading = false,
-  comparisonPeriod = 'last_week',
-  onChangeComparisonPeriod,
+  timeframe = 'today',
+  onChangeTimeframe,
 }) => {
-  const [bestSellerFilter, setBestSellerFilter] = useState<BestSellerFilter>('top3');
+  const [bestSellerFilter, setBestSellerFilter] = useState<BestSellerFilter>('top5');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
-  const [alerts, setAlerts] = useState(telemetry.alerts);
-  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
+  const [alerts, setAlerts] = useState(telemetry.alerts || []);
+  const [isTimeframeModalOpen, setIsTimeframeModalOpen] = useState(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
-  // Sync alerts whenever telemetry updates from background refresh
+  // Sync alerts whenever telemetry updates from refresh
   useEffect(() => {
-    setAlerts(telemetry.alerts);
+    setAlerts(telemetry.alerts || []);
   }, [telemetry.alerts]);
 
   // Extract unique active categories dynamically from telemetry
@@ -90,8 +108,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     return ['All Categories', ...Array.from(set)];
   }, [telemetry.bestSellers, telemetry.categorySales]);
 
-  const activeComparisonOption =
-    COMPARISON_OPTIONS.find((opt) => opt.key === comparisonPeriod) || COMPARISON_OPTIONS[0];
+  const activeTimeframeOption =
+    TIMEFRAME_OPTIONS.find((opt) => opt.key === timeframe) || TIMEFRAME_OPTIONS[0];
 
   const getFilteredBestSellers = () => {
     let items = telemetry.bestSellers || [];
@@ -117,9 +135,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     setAlerts([]);
   };
 
-  const handleSelectComparison = (period: ComparisonPeriod) => {
-    setIsCompareModalOpen(false);
-    onChangeComparisonPeriod?.(period);
+  const handleSelectTimeframe = (selectedKey: TimeframeFilter) => {
+    setIsTimeframeModalOpen(false);
+    onChangeTimeframe?.(selectedKey);
   };
 
   const handleSelectCategory = (category: string) => {
@@ -127,29 +145,37 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     setIsCategoryModalOpen(false);
   };
 
+  const hasZeroOrders = (telemetry.orderCount || 0) === 0;
+
   return (
     <ScrollView className="flex-1 bg-[#fcf9f9]" showsVerticalScrollIndicator={false}>
       <View className="w-full max-w-7xl mx-auto p-6 md:p-8 space-y-6">
-        {/* Today's Overview Header */}
-        <View className="flex-row items-center justify-between pb-1">
+        {/* Header: Title, Timeframe Selector, and Refresh */}
+        <View className="flex-row items-center justify-between pb-1 flex-wrap gap-4">
           <View>
-            <Text className="text-3xl font-extrabold tracking-tight text-stone-900">
-              Today's Overview
-            </Text>
+            <View className="flex-row items-center space-x-2">
+              <Text className="text-3xl font-extrabold tracking-tight text-stone-900">
+                Performance Overview
+              </Text>
+              <View className="ml-2 rounded-full bg-stone-100 border border-stone-200 px-3 py-1">
+                <Text className="text-base font-bold text-stone-700">100% Live DB</Text>
+              </View>
+            </View>
             <Text className="mt-1 text-base font-medium text-stone-500">
-              Bar and Cafe · all stations · {telemetry.lastUpdated}
+              Bar & Cafe · all stations · Updated {telemetry.lastUpdated}
             </Text>
           </View>
 
           <View className="flex-row items-center gap-3">
-            {/* Interactive Comparison Filter Picker */}
+            {/* Primary Timeframe Selector Trigger */}
             <Pressable
-              onPress={() => setIsCompareModalOpen(true)}
-              className="min-h-[48px] flex-row items-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 shadow-xs active:bg-stone-50"
+              onPress={() => setIsTimeframeModalOpen(true)}
+              className="min-h-[48px] flex-row items-center rounded-xl border border-stone-300 bg-white px-4 py-2.5 shadow-xs active:bg-stone-50"
             >
-              <Text className="text-base text-stone-500 mr-2">Compare With:</Text>
-              <Text className="text-base font-bold text-stone-800 mr-2">
-                {activeComparisonOption.shortLabel}
+              <Calendar size={18} color="#800020" />
+              <Text className="text-base text-stone-500 ml-2 mr-1.5">Period:</Text>
+              <Text className="text-base font-bold text-stone-900 mr-2">
+                {activeTimeframeOption.label}
               </Text>
               <ChevronDown size={18} color="#78716c" />
             </Pressable>
@@ -162,169 +188,250 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             >
               <RefreshCw size={18} color="#44403c" className={isLoading ? 'animate-spin' : ''} />
               <Text className="ml-2 text-base font-bold text-stone-800">
-                {isLoading ? 'Updating...' : 'Refresh'}
+                {isLoading ? 'Refreshing...' : 'Refresh'}
               </Text>
             </Pressable>
           </View>
         </View>
 
-        {/* KPI Cards Row (4 Columns with clean gutters) */}
-        <View className="flex-row gap-5">
-          {/* Card 1: Live Sales Total (Burgundy #800020) */}
-          <View className="flex-[1.35] rounded-2xl bg-[#800020] p-6 shadow-sm justify-between min-h-[180px]">
-            <View className="flex-row items-start justify-between">
-              <View>
-                <View className="flex-row items-center space-x-2">
-                  <Text className="text-base font-semibold text-white/90">Live Sales Total</Text>
-                  <View className="ml-2 flex-row items-center rounded-full bg-white/20 border border-white/25 px-2.5 py-0.5">
+        {/* 4 KPI Cards: Operational Floor Mix */}
+        <View className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+          {/* Card 1: Net Sales Revenue (Burgundy #800020) */}
+          <View className="rounded-2xl bg-[#800020] p-6 shadow-sm justify-between min-h-[190px]">
+            <View>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-base font-semibold text-white/90">Net Sales Revenue</Text>
+                {timeframe === 'today' ? (
+                  <View className="flex-row items-center rounded-full bg-white/20 border border-white/25 px-2.5 py-0.5">
                     <View className="h-2 w-2 rounded-full bg-emerald-400 mr-1.5" />
-                    <Text className="text-base font-bold text-white">Live</Text>
+                    <Text className="text-base font-bold text-white">Live Shift</Text>
                   </View>
-                </View>
-
-                <Text className="mt-2 text-3xl font-black tracking-tight text-white">
-                  ₱
-                  {Number(telemetry.liveSalesTotal || 0).toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
-                </Text>
-
-                {comparisonPeriod !== 'none' && (
-                  <View className="mt-2 flex-row items-center">
-                    <View className="flex-row items-center rounded-md bg-white/20 px-2.5 py-0.5">
-                      <TrendingUp size={16} color="#ffffff" />
-                      <Text className="ml-1.5 text-base font-bold text-white">
-                        {telemetry.salesGrowthPercent}%
-                      </Text>
-                    </View>
-                    <Text className="ml-2 text-base text-white/80">
-                      vs {activeComparisonOption.shortLabel}
+                ) : (
+                  <View className="flex-row items-center rounded-full bg-white/20 border border-white/25 px-2.5 py-0.5">
+                    <Text className="text-base font-bold text-white">
+                      {activeTimeframeOption.shortLabel}
                     </Text>
                   </View>
                 )}
-
-                <Text className="mt-3 text-base font-medium text-white/90">
-                  {telemetry.orderCount} orders · {telemetry.guestCount} guests
-                </Text>
               </View>
 
-              {/* Mini Hourly Bar Chart (7 AM to Now, Peak at 1 PM) */}
-              <View className="items-end pl-3">
-                <Text className="text-base font-semibold text-white/90 mb-1">
-                  {telemetry.peakHourLabel}
+              <Text className="mt-3 text-3xl font-black tracking-tight text-white">
+                ₱
+                {Number(telemetry.liveSalesTotal || 0).toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
+
+              {/* Benchmark delta badge */}
+              <View className="mt-2 flex-row items-center flex-wrap gap-2">
+                <View className="flex-row items-center rounded-md bg-white/20 px-2.5 py-0.5">
+                  <TrendingUp size={16} color="#ffffff" />
+                  <Text className="ml-1.5 text-base font-bold text-white">
+                    {telemetry.salesGrowthPercent >= 0 ? '+' : ''}
+                    {telemetry.salesGrowthPercent}%
+                  </Text>
+                </View>
+                <Text className="text-base text-white/80">
+                  {telemetry.benchmarkLabel || activeTimeframeOption.benchmarkLabel}
                 </Text>
-                <View className="flex-row items-end h-16 space-x-1.5 py-1">
-                  {telemetry.hourlySales.map((h, idx) => {
-                    const maxSales = 840;
-                    const barHeight = Math.max(10, Math.round((h.sales / maxSales) * 52));
-                    const isPeak = h.isPeak;
-                    return (
-                      <View key={idx} className="items-center">
-                        <View
-                          style={{ height: barHeight }}
-                          className={`w-2 rounded-t-sm ${isPeak ? 'bg-white' : 'bg-white/40'}`}
-                        />
-                      </View>
-                    );
-                  })}
-                </View>
-                <View className="flex-row justify-between w-32 mt-1">
-                  <Text className="text-base text-white/70">7 AM</Text>
-                  <Text className="text-base text-white/70">Now</Text>
-                </View>
               </View>
             </View>
-          </View>
 
-          {/* Card 2: Orders */}
-          <View className="flex-1 rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[180px]">
-            <Text className="text-base font-semibold text-stone-500">Orders</Text>
-            <View className="my-1">
-              <Text className="text-3xl font-black text-stone-900 tracking-tight">
-                {telemetry.orderCount}
+            {/* Bottom details & hourly chart */}
+            <View className="mt-4 pt-3 border-t border-white/20 flex-row items-end justify-between">
+              <Text className="text-base font-medium text-white/90">
+                {telemetry.orderCount} checks · {telemetry.guestCount} guests
               </Text>
-              {comparisonPeriod !== 'none' && (
-                <View className="mt-2 flex-row items-center">
-                  <View className="flex-row items-center rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
-                    <TrendingUp size={16} color="#059669" />
-                    <Text className="ml-1 text-base font-bold text-emerald-700">
-                      {telemetry.ordersGrowthPercent}%
-                    </Text>
+
+              {/* Mini Hourly Bar Chart */}
+              {telemetry.hourlySales && telemetry.hourlySales.length > 0 && (
+                <View className="items-end">
+                  <View className="flex-row items-end h-8 space-x-1">
+                    {telemetry.hourlySales.map((h, idx) => {
+                      const maxSales = Math.max(...telemetry.hourlySales.map((s) => s.sales), 100);
+                      const barHeight = Math.max(6, Math.round((h.sales / maxSales) * 28));
+                      return (
+                        <View
+                          key={idx}
+                          style={{ height: barHeight }}
+                          className={`w-1.5 rounded-t-xs ${h.isPeak ? 'bg-white' : 'bg-white/40'}`}
+                        />
+                      );
+                    })}
                   </View>
-                  <Text className="ml-2 text-base text-stone-500">
-                    vs {activeComparisonOption.shortLabel}
-                  </Text>
+                  <Text className="text-base text-white/70 mt-1">{telemetry.peakHourLabel}</Text>
                 </View>
               )}
             </View>
-            <Text className="text-base text-stone-500">
-              about {telemetry.ordersPerHour} per hour
-            </Text>
           </View>
 
-          {/* Card 3: Average Check */}
-          <View className="flex-1 rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[180px]">
-            <Text className="text-base font-semibold text-stone-500">Average Check</Text>
-            <View className="my-1">
-              <Text className="text-3xl font-black text-stone-900 tracking-tight">
+          {/* Card 2: Average Ticket / Check */}
+          <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[190px]">
+            <View>
+              <Text className="text-base font-semibold text-stone-500">Avg Ticket / Check</Text>
+              <Text className="mt-2 text-3xl font-black text-stone-900 tracking-tight">
                 ₱{Number(telemetry.averageCheck || 0).toFixed(2)}
               </Text>
-              {comparisonPeriod !== 'none' && (
-                <View className="mt-2 flex-row items-center">
-                  <View className="flex-row items-center rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
-                    <TrendingUp size={16} color="#059669" />
-                    <Text className="ml-1 text-base font-bold text-emerald-700">
-                      {telemetry.averageCheckGrowthPercent}%
-                    </Text>
-                  </View>
-                  <Text className="ml-2 text-base text-stone-500">
-                    vs {activeComparisonOption.shortLabel}
+
+              <View className="mt-2 flex-row items-center flex-wrap gap-2">
+                <View className="flex-row items-center rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
+                  <TrendingUp size={16} color="#059669" />
+                  <Text className="ml-1 text-base font-bold text-emerald-700">
+                    {telemetry.averageCheckGrowthPercent >= 0 ? '+' : ''}
+                    {telemetry.averageCheckGrowthPercent}%
                   </Text>
                 </View>
-              )}
+                <Text className="text-base text-stone-500">per settled order</Text>
+              </View>
             </View>
-            <Text className="text-base text-stone-500">per settled order</Text>
+
+            <View className="mt-4 pt-3 border-t border-stone-100 flex-row items-center justify-between">
+              <Text className="text-base text-stone-500">Spend Per Guest</Text>
+              <Text className="text-base font-bold text-stone-800">
+                ₱{Number(telemetry.spendPerGuest || 0).toFixed(2)}
+              </Text>
+            </View>
           </View>
 
-          {/* Card 4: Guests */}
-          <View className="flex-1 rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[180px]">
-            <Text className="text-base font-semibold text-stone-500">Guests</Text>
-            <View className="my-1">
-              <Text className="text-3xl font-black text-stone-900 tracking-tight">
-                {telemetry.guestCount}
+          {/* Card 3: Settled Orders & Payment Mix */}
+          <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[190px]">
+            <View>
+              <Text className="text-base font-semibold text-stone-500">Settled Orders & Mix</Text>
+              <Text className="mt-2 text-3xl font-black text-stone-900 tracking-tight">
+                {telemetry.orderCount}
               </Text>
-              {comparisonPeriod !== 'none' && (
-                <View className="mt-2 flex-row items-center">
-                  <View className="flex-row items-center rounded-md bg-rose-50 border border-rose-200 px-2.5 py-0.5">
-                    <TrendingDown size={16} color="#e11d48" />
-                    <Text className="ml-1 text-base font-bold text-rose-700">
-                      {Math.abs(telemetry.guestGrowthPercent)}%
-                    </Text>
-                  </View>
-                  <Text className="ml-2 text-base text-stone-500">
-                    vs {activeComparisonOption.shortLabel}
+
+              <View className="mt-2 flex-row items-center flex-wrap gap-2">
+                <View className="flex-row items-center rounded-md bg-stone-100 border border-stone-200 px-2.5 py-0.5">
+                  <Text className="text-base font-bold text-stone-700">
+                    {telemetry.ordersPerHour} / hr
                   </Text>
                 </View>
-              )}
+                <Text className="text-base text-stone-500">
+                  {telemetry.benchmarkLabel || activeTimeframeOption.benchmarkLabel}
+                </Text>
+              </View>
             </View>
-            <Text className="text-base text-stone-500">
-              ₱{Number(telemetry.spendPerGuest || 0).toFixed(2)} per guest
-            </Text>
+
+            {/* Payment Method Breakdown */}
+            <View className="mt-4 pt-3 border-t border-stone-100 space-y-1.5">
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <Banknote size={16} color="#059669" />
+                  <Text className="ml-1.5 text-base text-stone-600">Cash</Text>
+                </View>
+                <Text className="text-base font-bold text-stone-900">
+                  ₱{Number(telemetry.cashSales || 0).toLocaleString()}
+                </Text>
+              </View>
+
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <Smartphone size={16} color="#2563eb" />
+                  <Text className="ml-1.5 text-base text-stone-600">Digital / GCash</Text>
+                </View>
+                <Text className="text-base font-bold text-stone-900">
+                  ₱{Number(telemetry.digitalSales || 0).toLocaleString()}
+                </Text>
+              </View>
+
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <CreditCard size={16} color="#7c3aed" />
+                  <Text className="ml-1.5 text-base text-stone-600">Card</Text>
+                </View>
+                <Text className="text-base font-bold text-stone-900">
+                  ₱{Number(telemetry.cardSales || 0).toLocaleString()}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Card 4: Live Table & Floor Occupancy */}
+          <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[190px]">
+            <View>
+              <View className="flex-row items-center justify-between">
+                <Text className="text-base font-semibold text-stone-500">Floor & Tables</Text>
+                <View className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
+                  <Text className="text-base font-bold text-emerald-700">
+                    {telemetry.occupancyPercent}% Busy
+                  </Text>
+                </View>
+              </View>
+
+              <Text className="mt-2 text-3xl font-black text-stone-900 tracking-tight">
+                {telemetry.occupiedTables} / {telemetry.totalTables}{' '}
+                <Text className="text-xl font-normal text-stone-500">Tables</Text>
+              </Text>
+
+              {/* Occupancy progress bar */}
+              <View className="mt-3 h-2 w-full rounded-full bg-stone-100">
+                <View
+                  style={{ width: `${Math.min(100, Math.max(5, telemetry.occupancyPercent))}%` }}
+                  className="h-2 rounded-full bg-[#800020]"
+                />
+              </View>
+            </View>
+
+            <View className="mt-4 pt-3 border-t border-stone-100 flex-row items-center justify-between">
+              <View className="flex-row items-center">
+                <LayoutGrid size={16} color="#800020" />
+                <Text className="ml-1.5 text-base font-medium text-stone-700">
+                  {telemetry.activeOpenTabs} open tab{telemetry.activeOpenTabs === 1 ? '' : 's'}
+                </Text>
+              </View>
+
+              <Pressable
+                onPress={() => onNavigateRoute('tables')}
+                className="min-h-[48px] px-3 flex-row items-center rounded-xl bg-stone-50 active:bg-stone-100"
+              >
+                <Text className="text-base font-bold text-[#800020]">Floor View</Text>
+                <ArrowRight size={16} color="#800020" className="ml-1" />
+              </Pressable>
+            </View>
           </View>
         </View>
 
+        {/* Informative Zero-State Callout (if 0 orders in selected timeframe) */}
+        {hasZeroOrders && (
+          <View className="rounded-2xl border border-stone-200 bg-stone-50 p-6 flex-row items-center justify-between flex-wrap gap-4">
+            <View className="flex-row items-center space-x-3 flex-1 min-w-[280px]">
+              <View className="h-10 w-10 rounded-full bg-stone-200 items-center justify-center mr-3">
+                <Clock size={20} color="#78716c" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-lg font-bold text-stone-900">
+                  No settled orders recorded for {activeTimeframeOption.label}
+                </Text>
+                <Text className="text-base text-stone-500 mt-0.5">
+                  The database currently has 0 settled payments matching this time filter. You can
+                  switch to All-Time History to inspect lifetime records.
+                </Text>
+              </View>
+            </View>
+
+            <Pressable
+              onPress={() => handleSelectTimeframe('all')}
+              className="min-h-[48px] px-5 items-center justify-center rounded-xl bg-[#800020] active:bg-[#600018]"
+            >
+              <Text className="text-base font-bold text-white">View All-Time History</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Middle Section: Best Sellers (Left) & Right Column (Stations + Category Sales) */}
-        <View className="flex-row gap-6">
+        <View className="flex-row gap-6 flex-wrap lg:flex-nowrap">
           {/* Left: Best Sellers Card */}
-          <View className="flex-[1.35] rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
-            <View className="flex-row items-center justify-between mb-4">
+          <View className="flex-[1.35] min-w-[340px] rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
+            <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
               <View>
                 <Text className="text-xl font-bold tracking-tight text-stone-900">
                   Best Sellers
                 </Text>
                 <Text className="text-base font-medium text-stone-500 mt-1">
-                  Today · {selectedCategory} · Top {visibleBestSellers.length} items
+                  {activeTimeframeOption.label} · {selectedCategory} · Top{' '}
+                  {visibleBestSellers.length} items
                 </Text>
               </View>
 
@@ -334,7 +441,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </View>
 
             {/* Filter Controls Row (Range Pills + Interactive Category Selector) */}
-            <View className="flex-row items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-3">
+            <View className="flex-row items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-3 flex-wrap">
               {/* Range Pills with >= 48px touch targets */}
               <View className="flex-row items-center rounded-xl bg-stone-100/90 p-1 space-x-1">
                 {(['top3', 'top5', 'top10', 'all'] as BestSellerFilter[]).map((tab) => {
@@ -381,9 +488,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             {/* Ranked List Items with Progress Bar */}
             <View className="space-y-4">
               {visibleBestSellers.length === 0 ? (
-                <View className="py-8 items-center justify-center">
-                  <Text className="text-base text-stone-500">
-                    No items found for "{selectedCategory}".
+                <View className="py-10 items-center justify-center">
+                  <Text className="text-base text-stone-500 font-medium">
+                    No items sold for "{selectedCategory}" in {activeTimeframeOption.label}.
                   </Text>
                 </View>
               ) : (
@@ -430,18 +537,19 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </View>
 
             {/* Footer Note */}
-            <View className="mt-6 flex-row items-center justify-between border-t border-stone-100 pt-4">
+            <View className="mt-6 flex-row items-center justify-between border-t border-stone-100 pt-4 flex-wrap gap-2">
               <Text className="text-base text-stone-500">
-                Displaying top {visibleBestSellers.length} items
+                Displaying {visibleBestSellers.length} ranked item
+                {visibleBestSellers.length === 1 ? '' : 's'}
               </Text>
               <Text className="text-base font-medium text-stone-600">
-                Tap Category to filter by menu section
+                100% direct database order item aggregations
               </Text>
             </View>
           </View>
 
           {/* Right Column: Live Stations + Sales By Category */}
-          <View className="flex-1 space-y-6">
+          <View className="flex-1 min-w-[320px] space-y-6">
             {/* Live Stations Card */}
             <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
               <View className="flex-row items-center justify-between mb-4">
@@ -517,28 +625,38 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
               <Text className="text-xl font-bold text-stone-900">Sales By Category</Text>
               <Text className="text-base text-stone-500 mb-4">
-                Today · Net sales · scaled to top category
+                {activeTimeframeOption.label} · Scaled to top category
               </Text>
 
               <View className="space-y-3.5">
-                {(telemetry.categorySales || []).map((cat) => (
-                  <View key={cat.category} className="flex-row items-center justify-between">
-                    <View className="w-28">
-                      <Text className="text-base font-semibold text-stone-800">{cat.category}</Text>
-                    </View>
-
-                    <View className="flex-1 mx-3 h-2.5 rounded-full bg-stone-100">
-                      <View
-                        style={{ width: `${Math.min(100, Math.max(8, cat.percentage))}%` }}
-                        className="h-2.5 rounded-full bg-[#800020]"
-                      />
-                    </View>
-
-                    <Text className="w-24 text-right text-base font-bold text-stone-900">
-                      ₱{Number(cat.amount || 0).toFixed(2)}
+                {(telemetry.categorySales || []).length === 0 ? (
+                  <View className="py-6 items-center">
+                    <Text className="text-base text-stone-500 font-medium">
+                      No category sales recorded for this period.
                     </Text>
                   </View>
-                ))}
+                ) : (
+                  (telemetry.categorySales || []).map((cat) => (
+                    <View key={cat.category} className="flex-row items-center justify-between">
+                      <View className="w-28">
+                        <Text className="text-base font-semibold text-stone-800">
+                          {cat.category}
+                        </Text>
+                      </View>
+
+                      <View className="flex-1 mx-3 h-2.5 rounded-full bg-stone-100">
+                        <View
+                          style={{ width: `${Math.min(100, Math.max(8, cat.percentage))}%` }}
+                          className="h-2.5 rounded-full bg-[#800020]"
+                        />
+                      </View>
+
+                      <Text className="w-24 text-right text-base font-bold text-stone-900">
+                        ₱{Number(cat.amount || 0).toFixed(2)}
+                      </Text>
+                    </View>
+                  ))
+                )}
               </View>
             </View>
           </View>
@@ -569,7 +687,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           {alerts.length === 0 ? (
             <View className="py-6 items-center">
               <Text className="text-base font-medium text-stone-500">
-                All station alerts and audit reviews are resolved.
+                All station alerts and inventory items are at healthy levels.
               </Text>
             </View>
           ) : (
@@ -622,22 +740,22 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </View>
       </View>
 
-      {/* COMPARISON BENCHMARK MODAL */}
+      {/* TIMEFRAME SELECTOR MODAL */}
       <Modal
-        visible={isCompareModalOpen}
+        visible={isTimeframeModalOpen}
         transparent
         animationType="fade"
-        onRequestClose={() => setIsCompareModalOpen(false)}
+        onRequestClose={() => setIsTimeframeModalOpen(false)}
       >
         <View className="flex-1 items-center justify-center bg-black/60 p-6">
-          <View className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+          <View className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
             <View className="flex-row items-center justify-between border-b border-stone-200 pb-3 mb-4">
               <View className="flex-row items-center space-x-2">
                 <Calendar size={22} color="#800020" />
-                <Text className="text-xl font-bold text-stone-900">Compare Sales With</Text>
+                <Text className="text-xl font-bold text-stone-900 ml-2">Select Timeframe</Text>
               </View>
               <Pressable
-                onPress={() => setIsCompareModalOpen(false)}
+                onPress={() => setIsTimeframeModalOpen(false)}
                 className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-100"
               >
                 <X size={22} color="#57534e" />
@@ -645,12 +763,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </View>
 
             <View className="space-y-3">
-              {COMPARISON_OPTIONS.map((opt) => {
-                const isSelected = opt.key === comparisonPeriod;
+              {TIMEFRAME_OPTIONS.map((opt) => {
+                const isSelected = opt.key === timeframe;
                 return (
                   <Pressable
                     key={opt.key}
-                    onPress={() => handleSelectComparison(opt.key)}
+                    onPress={() => handleSelectTimeframe(opt.key)}
                     className={`min-h-[48px] p-4 rounded-xl border flex-row items-center justify-between transition-all ${
                       isSelected
                         ? 'bg-[#800020]/10 border-[#800020]'
@@ -658,14 +776,19 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     }`}
                   >
                     <View className="flex-1 pr-3">
-                      <Text
-                        className={`text-base font-bold ${
-                          isSelected ? 'text-[#800020]' : 'text-stone-900'
-                        }`}
-                      >
-                        {opt.label}
-                      </Text>
-                      <Text className="text-base text-stone-500 mt-0.5">{opt.description}</Text>
+                      <View className="flex-row items-center space-x-2">
+                        <Text
+                          className={`text-base font-bold ${
+                            isSelected ? 'text-[#800020]' : 'text-stone-900'
+                          }`}
+                        >
+                          {opt.label}
+                        </Text>
+                        <Text className="text-base text-stone-500 ml-2">
+                          ({opt.benchmarkLabel})
+                        </Text>
+                      </View>
+                      <Text className="text-base text-stone-500 mt-1">{opt.description}</Text>
                     </View>
                     <View
                       className={`h-6 w-6 rounded-full items-center justify-center border ${
@@ -694,7 +817,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             <View className="flex-row items-center justify-between border-b border-stone-200 pb-3 mb-4">
               <View className="flex-row items-center space-x-2">
                 <Layers size={22} color="#800020" />
-                <Text className="text-xl font-bold text-stone-900">Filter Best Sellers</Text>
+                <Text className="text-xl font-bold text-stone-900 ml-2">Filter Best Sellers</Text>
               </View>
               <Pressable
                 onPress={() => setIsCategoryModalOpen(false)}

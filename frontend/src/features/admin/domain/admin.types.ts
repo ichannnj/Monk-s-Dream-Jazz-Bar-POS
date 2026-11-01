@@ -53,6 +53,8 @@ export interface HourlySalesPoint {
   isPeak?: boolean;
 }
 
+export type TimeframeFilter = 'today' | 'yesterday' | 'week' | 'month' | 'all';
+
 export interface DashboardTelemetry {
   liveSalesTotal: number;
   salesGrowthPercent: number;
@@ -64,6 +66,19 @@ export interface DashboardTelemetry {
   guestCount: number;
   guestGrowthPercent: number;
   spendPerGuest: number;
+
+  // Operational Floor & Payment Mix (Direct from DB)
+  cashSales: number;
+  digitalSales: number;
+  cardSales: number;
+  totalTables: number;
+  occupiedTables: number;
+  activeOpenTabs: number;
+  occupancyPercent: number;
+  timeframe: TimeframeFilter;
+  timeframeLabel: string;
+  benchmarkLabel: string;
+
   hourlySales: HourlySalesPoint[];
   peakHourLabel: string;
   bestSellers: BestSellerItem[];

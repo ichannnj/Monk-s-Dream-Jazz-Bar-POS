@@ -6,375 +6,485 @@ import type {
   CategorySalesItem,
   AttentionAlert,
   HourlySalesPoint,
+  TimeframeFilter,
 } from '../domain/admin.types';
 
-// Design-matched fallback baseline telemetry for Monk's Dream Jazz Bar
-const BASELINE_HOURLY: HourlySalesPoint[] = [
-  { hourLabel: '7 AM', sales: 120 },
-  { hourLabel: '8 AM', sales: 240 },
-  { hourLabel: '9 AM', sales: 380 },
-  { hourLabel: '10 AM', sales: 310 },
-  { hourLabel: '11 AM', sales: 520 },
-  { hourLabel: '12 PM', sales: 680 },
-  { hourLabel: '1 PM', sales: 840, isPeak: true },
-  { hourLabel: '2 PM', sales: 490 },
-  { hourLabel: '3 PM', sales: 380 },
-  { hourLabel: '4 PM', sales: 220 },
-  { hourLabel: '5 PM', sales: 180 },
-  { hourLabel: 'Now', sales: 90 },
-];
+export function getTimeframeBounds(timeframe: TimeframeFilter): {
+  startDate?: string;
+  endDate?: string;
+  benchmarkStart?: string;
+  benchmarkEnd?: string;
+  label: string;
+  benchmarkLabel: string;
+} {
+  const now = new Date();
 
-const BASELINE_BEST_SELLERS: BestSellerItem[] = [
-  {
-    id: 'bs-1',
-    rank: 1,
-    name: 'Craft IPA',
-    category: 'Beer',
-    soldCount: 64,
-    salesAmount: 448.0,
-    progressPercent: 90,
-  },
-  {
-    id: 'bs-2',
-    rank: 2,
-    name: 'House Red Wine',
-    category: 'Wine',
-    soldCount: 52,
-    salesAmount: 468.0,
-    progressPercent: 74,
-  },
-  {
-    id: 'bs-3',
-    rank: 3,
-    name: 'Classic Burger',
-    category: 'Food',
-    soldCount: 41,
-    salesAmount: 574.0,
-    progressPercent: 58,
-  },
-  {
-    id: 'bs-4',
-    rank: 4,
-    name: 'Espresso Martini',
-    category: 'Cocktails',
-    soldCount: 38,
-    salesAmount: 456.0,
-    progressPercent: 52,
-  },
-  {
-    id: 'bs-5',
-    rank: 5,
-    name: 'Truffle Fries',
-    category: 'Food',
-    soldCount: 35,
-    salesAmount: 315.0,
-    progressPercent: 46,
-  },
-  {
-    id: 'bs-6',
-    rank: 6,
-    name: 'Cold Brew Reserve',
-    category: 'Coffee',
-    soldCount: 29,
-    salesAmount: 174.0,
-    progressPercent: 38,
-  },
-  {
-    id: 'bs-7',
-    rank: 7,
-    name: 'Smoked Old Fashioned',
-    category: 'Cocktails',
-    soldCount: 26,
-    salesAmount: 390.0,
-    progressPercent: 34,
-  },
-  {
-    id: 'bs-8',
-    rank: 8,
-    name: 'Artisan Sourdough Toast',
-    category: 'Food',
-    soldCount: 24,
-    salesAmount: 192.0,
-    progressPercent: 30,
-  },
-  {
-    id: 'bs-9',
-    rank: 9,
-    name: 'Chardonnay Reserve',
-    category: 'Wine',
-    soldCount: 22,
-    salesAmount: 264.0,
-    progressPercent: 28,
-  },
-  {
-    id: 'bs-10',
-    rank: 10,
-    name: 'Sparkling Tonic Water',
-    category: 'Soft Drinks',
-    soldCount: 19,
-    salesAmount: 114.0,
-    progressPercent: 24,
-  },
-];
+  if (timeframe === 'today') {
+    const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const startBenchmark = new Date(startToday);
+    startBenchmark.setDate(startBenchmark.getDate() - 7);
+    const endBenchmark = new Date(startBenchmark);
+    endBenchmark.setDate(endBenchmark.getDate() + 1);
 
-const BASELINE_STATIONS: StationTelemetry[] = [
-  {
-    stationKey: 'bar',
-    name: 'Bar',
-    isOnline: true,
-    targetTicketTime: '10:00',
-    activeTickets: 6,
-    avgTicketTime: '06:40',
-    lateTickets: 1,
-    stockoutCount: 1,
-  },
-  {
-    stationKey: 'cafe',
-    name: 'Cafe',
-    isOnline: true,
-    targetTicketTime: '10:00',
-    activeTickets: 7,
-    avgTicketTime: '05:55',
-    lateTickets: 0,
-    stockoutCount: 1,
-  },
-];
+    return {
+      startDate: startToday.toISOString(),
+      benchmarkStart: startBenchmark.toISOString(),
+      benchmarkEnd: endBenchmark.toISOString(),
+      label: 'Today (Live Shift)',
+      benchmarkLabel: 'vs Same Day Last Week',
+    };
+  }
 
-const BASELINE_CATEGORY_SALES: CategorySalesItem[] = [
-  { category: 'Food', amount: 1492.25, percentage: 100 },
-  { category: 'Beer', amount: 1395.0, percentage: 93 },
-  { category: 'Cocktails', amount: 858.0, percentage: 57 },
-  { category: 'Wine', amount: 576.0, percentage: 38 },
-  { category: 'Coffee', amount: 298.0, percentage: 20 },
-  { category: 'Soft Drinks', amount: 207.0, percentage: 14 },
-];
+  if (timeframe === 'yesterday') {
+    const startYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0);
+    const endYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    const startBenchmark = new Date(startYesterday);
+    startBenchmark.setDate(startBenchmark.getDate() - 7);
+    const endBenchmark = new Date(startBenchmark);
+    endBenchmark.setDate(endBenchmark.getDate() + 1);
 
-const BASELINE_ALERTS: AttentionAlert[] = [
-  {
-    id: 'alert-1',
-    type: 'void',
-    badgeLabel: 'Void',
-    title: 'Void approved · Table B2 · Waiter JS',
-    description: 'Review the approved void and audit details',
-    targetRoute: 'sales',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'alert-2',
-    type: 'low_stock',
-    badgeLabel: 'Low Stock',
-    title: 'Lime and Milk are below par',
-    description: 'Check Inventory and plan replenishment',
-    targetRoute: 'inventory',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'alert-3',
-    type: 'clock_out',
-    badgeLabel: 'Clock-out',
-    title: 'Missed clock-out · Marco D. · Mon',
-    description: 'Check the staff attendance record',
-    targetRoute: 'attendance',
-    createdAt: new Date().toISOString(),
-  },
-];
+    return {
+      startDate: startYesterday.toISOString(),
+      endDate: endYesterday.toISOString(),
+      benchmarkStart: startBenchmark.toISOString(),
+      benchmarkEnd: endBenchmark.toISOString(),
+      label: 'Yesterday',
+      benchmarkLabel: 'vs Prior Week Same Day',
+    };
+  }
 
-export type ComparisonPeriod = 'last_week' | 'yesterday' | 'week_avg' | 'none';
+  if (timeframe === 'week') {
+    const currentDay = now.getDay();
+    const distanceToMonday = (currentDay + 6) % 7;
+    const startWeek = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - distanceToMonday,
+      0,
+      0,
+      0
+    );
+
+    const startBenchmark = new Date(startWeek);
+    startBenchmark.setDate(startBenchmark.getDate() - 7);
+    const endBenchmark = new Date(startWeek);
+
+    return {
+      startDate: startWeek.toISOString(),
+      benchmarkStart: startBenchmark.toISOString(),
+      benchmarkEnd: endBenchmark.toISOString(),
+      label: 'This Week (WTD)',
+      benchmarkLabel: 'vs Prior Week',
+    };
+  }
+
+  if (timeframe === 'month') {
+    const startMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+    const startBenchmark = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
+    const endBenchmark = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
+
+    return {
+      startDate: startMonth.toISOString(),
+      benchmarkStart: startBenchmark.toISOString(),
+      benchmarkEnd: endBenchmark.toISOString(),
+      label: 'This Month (MTD)',
+      benchmarkLabel: 'vs Prior Month',
+    };
+  }
+
+  // 'all'
+  return {
+    label: 'All-Time History',
+    benchmarkLabel: 'Lifetime Aggregate',
+  };
+}
+
+function formatHour(hour: number): string {
+  if (hour === 0) return '12 AM';
+  if (hour < 12) return `${hour} AM`;
+  if (hour === 12) return '12 PM';
+  return `${hour - 12} PM`;
+}
 
 export const adminTelemetryService = {
-  async fetchDashboardTelemetry(
-    comparisonPeriod: ComparisonPeriod = 'last_week'
-  ): Promise<DashboardTelemetry> {
+  async fetchDashboardTelemetry(timeframe: TimeframeFilter = 'today'): Promise<DashboardTelemetry> {
+    const bounds = getTimeframeBounds(timeframe);
+
     try {
-      // 1. Query live payments from Supabase
-      const { data: payments } = await (supabase.from as any)('payments')
-        .select('amount, created_at, tabs(order_channel, operating_mode)')
-        .limit(200);
-
-      const liveSalesSum = (payments || []).reduce(
-        (acc: number, p: any) => acc + (Number(p.amount) || 0),
-        0
+      // 1. QUERY PAYMENTS (Strictly from DB)
+      let paymentsQuery = (supabase.from as any)('payments').select(
+        'id, amount, payment_method, created_at, tab_id, tabs(order_channel, operating_mode)'
       );
-      const liveOrderCount = payments ? payments.length : 0;
 
-      // 2. Query live order items for ranked best sellers & category sales
-      let dynamicBestSellers = BASELINE_BEST_SELLERS;
-      let dynamicCategorySales = BASELINE_CATEGORY_SALES;
+      if (bounds.startDate) paymentsQuery = paymentsQuery.gte('created_at', bounds.startDate);
+      if (bounds.endDate) paymentsQuery = paymentsQuery.lt('created_at', bounds.endDate);
 
-      try {
-        const { data: orderItems } = await (supabase.from as any)('order_items')
-          .select(
-            'product_id, quantity, unit_price, status, products(name, category_id, categories(name))'
-          )
-          .neq('status', 'CANCELLED')
-          .limit(500);
+      // Query Benchmark Payments for comparative percentage
+      let benchmarkQuery = (supabase.from as any)('payments').select('amount');
+      if (bounds.benchmarkStart)
+        benchmarkQuery = benchmarkQuery.gte('created_at', bounds.benchmarkStart);
+      if (bounds.benchmarkEnd)
+        benchmarkQuery = benchmarkQuery.lt('created_at', bounds.benchmarkEnd);
 
-        if (orderItems && orderItems.length > 0) {
-          // Aggregate by product
-          const productMap = new Map<
-            string,
-            { name: string; category: string; count: number; sales: number }
-          >();
-          const catSalesMap = new Map<string, number>();
+      const [paymentsRes, benchmarkRes] = await Promise.all([
+        paymentsQuery,
+        bounds.benchmarkStart ? benchmarkQuery : Promise.resolve({ data: [] }),
+      ]);
 
-          for (const item of orderItems) {
-            const pid = item.product_id;
-            const name = item.products?.name || 'Menu Item';
-            const cat = item.products?.categories?.name || 'General';
-            const qty = Number(item.quantity) || 1;
-            const price = Number(item.unit_price) || 0;
-            const total = qty * price;
+      const payments = (paymentsRes.data || []) as any[];
+      const benchmarkPayments = (benchmarkRes.data || []) as any[];
 
-            // Product aggregation
-            const existing = productMap.get(pid) || { name, category: cat, count: 0, sales: 0 };
-            existing.count += qty;
-            existing.sales += total;
-            productMap.set(pid, existing);
+      // Compute Revenue & Payment Methods Split
+      let liveSalesTotal = 0;
+      let cashSales = 0;
+      let digitalSales = 0;
+      let cardSales = 0;
+      const hourlyBucket = new Map<number, number>();
 
-            // Category aggregation
-            catSalesMap.set(cat, (catSalesMap.get(cat) || 0) + total);
-          }
+      for (const p of payments) {
+        const amt = Number(p.amount) || 0;
+        liveSalesTotal += amt;
 
-          // Build ranked best sellers list
-          const sortedProducts = Array.from(productMap.entries()).sort(
-            (a, b) => b[1].count - a[1].count
-          );
-          const topCount = sortedProducts.length > 0 ? sortedProducts[0][1].count : 1;
+        if (p.payment_method === 'CASH') cashSales += amt;
+        else if (p.payment_method === 'DIGITAL_WALLET') digitalSales += amt;
+        else if (p.payment_method === 'CARD') cardSales += amt;
 
-          if (sortedProducts.length > 0) {
-            dynamicBestSellers = sortedProducts.map(([id, data], idx) => ({
-              id: `live-bs-${id}`,
-              rank: idx + 1,
-              name: data.name,
-              category: data.category,
-              soldCount: data.count,
-              salesAmount: data.sales,
-              progressPercent: Math.min(
-                100,
-                Math.max(10, Math.round((data.count / (topCount || 1)) * 100))
-              ),
-            }));
-          }
-
-          // Build category sales list
-          const sortedCats = Array.from(catSalesMap.entries()).sort((a, b) => b[1] - a[1]);
-          const topCatAmount = sortedCats.length > 0 ? sortedCats[0][1] : 1;
-
-          if (sortedCats.length > 0) {
-            dynamicCategorySales = sortedCats.map(([cat, amt]) => ({
-              category: cat,
-              amount: amt,
-              percentage: Math.min(
-                100,
-                Math.max(10, Math.round((amt / (topCatAmount || 1)) * 100))
-              ),
-            }));
-          }
-        }
-      } catch (e) {
-        console.warn('[adminTelemetry] Order items aggregation fallback to baseline:', e);
+        const h = new Date(p.created_at).getHours();
+        hourlyBucket.set(h, (hourlyBucket.get(h) || 0) + amt);
       }
 
-      // 3. Query low-stock inventory items for alerts
-      const dynamicAlerts = [...BASELINE_ALERTS];
-      try {
-        const { data: allInventory } = await supabase
-          .from('inventory_items')
-          .select('name, current_stock, min_alert_level')
-          .limit(100);
+      const orderCount = payments.length;
+      const averageCheck = orderCount > 0 ? liveSalesTotal / orderCount : 0;
+      const guestCount = Math.round(orderCount * 1.5);
+      const spendPerGuest = guestCount > 0 ? liveSalesTotal / guestCount : 0;
 
-        const lowStockItems = (allInventory || []).filter(
-          (i) => Number(i.current_stock) <= Number(i.min_alert_level)
+      // Comparative Growth Delta
+      let salesGrowthPercent = 0;
+      let ordersGrowthPercent = 0;
+      if (benchmarkPayments.length > 0) {
+        const benchmarkSales = benchmarkPayments.reduce(
+          (acc, p) => acc + (Number(p.amount) || 0),
+          0
         );
-
-        if (lowStockItems.length > 0) {
-          const itemNames = lowStockItems
-            .slice(0, 3)
-            .map((i) => i.name)
-            .join(' and ');
-          dynamicAlerts[1] = {
-            id: 'live-alert-stock',
-            type: 'low_stock',
-            badgeLabel: 'Low Stock',
-            title: `${itemNames} below par`,
-            description: 'Check Inventory and plan replenishment',
-            targetRoute: 'inventory',
-            createdAt: new Date().toISOString(),
-          };
+        if (benchmarkSales > 0) {
+          salesGrowthPercent = Number(
+            (((liveSalesTotal - benchmarkSales) / benchmarkSales) * 100).toFixed(1)
+          );
         }
-      } catch (e) {
-        console.warn('[adminTelemetry] Inventory stock alert query fallback:', e);
+        ordersGrowthPercent = Number(
+          (((orderCount - benchmarkPayments.length) / benchmarkPayments.length) * 100).toFixed(1)
+        );
       }
 
-      // 4. Hybrid calculation: use live data if active, otherwise baseline values
-      const liveSalesTotal = liveSalesSum > 100 ? liveSalesSum : 4826.25;
-      const orderCount = liveOrderCount > 5 ? liveOrderCount : 143;
-      const averageCheck = liveSalesTotal / (orderCount || 1);
-      const guestCount = Math.round(orderCount * 1.45);
-      const spendPerGuest = liveSalesTotal / (guestCount || 1);
+      // Build Hourly Sales distribution (Standard venue operating hours: 8 AM to 11 PM)
+      const hoursToDisplay = [8, 10, 12, 13, 14, 16, 18, 20, 22];
+      let maxHourSales = 1;
+      let peakHour = 13;
 
-      // 5. Growth rates based on selected comparison period
-      let salesGrowthPercent = 12.4;
-      let ordersGrowthPercent = 6.2;
-      let averageCheckGrowthPercent = 3.1;
-      let guestGrowthPercent = -2.0;
-
-      if (comparisonPeriod === 'yesterday') {
-        salesGrowthPercent = 8.7;
-        ordersGrowthPercent = 4.1;
-        averageCheckGrowthPercent = 4.4;
-        guestGrowthPercent = 1.5;
-      } else if (comparisonPeriod === 'week_avg') {
-        salesGrowthPercent = 15.2;
-        ordersGrowthPercent = 9.8;
-        averageCheckGrowthPercent = 5.0;
-        guestGrowthPercent = 3.2;
-      } else if (comparisonPeriod === 'none') {
-        salesGrowthPercent = 0;
-        ordersGrowthPercent = 0;
-        averageCheckGrowthPercent = 0;
-        guestGrowthPercent = 0;
+      for (const h of hoursToDisplay) {
+        const s = hourlyBucket.get(h) || 0;
+        if (s > maxHourSales) {
+          maxHourSales = s;
+          peakHour = h;
+        }
       }
+
+      const hourlySales: HourlySalesPoint[] = hoursToDisplay.map((h) => ({
+        hourLabel: formatHour(h),
+        sales: hourlyBucket.get(h) || 0,
+        isPeak: h === peakHour && (hourlyBucket.get(h) || 0) > 0,
+      }));
+
+      // 2. QUERY LIVE FLOOR OCCUPANCY & TABLES (Strictly from DB)
+      const [tablesRes, openTabsRes] = await Promise.all([
+        supabase.from('tables').select('id, table_number, zone, capacity, is_occupied'),
+        supabase
+          .from('tabs')
+          .select('id, status, customer_name, table_id, order_channel')
+          .eq('status', 'OPEN'),
+      ]);
+
+      const allTables = tablesRes.data || [];
+      const openTabs = openTabsRes.data || [];
+      const totalTables = allTables.length;
+      const occupiedTables = allTables.filter((t) => t.is_occupied).length;
+      const activeOpenTabs = openTabs.length;
+      const occupancyPercent =
+        totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
+
+      // 3. QUERY BEST SELLERS & CATEGORY REVENUE (Strictly from order_items in DB)
+      let orderItemsQuery = (supabase.from as any)('order_items')
+        .select(
+          'product_id, quantity, unit_price, status, created_at, products(name, category_id, categories(name))'
+        )
+        .neq('status', 'CANCELLED');
+
+      if (bounds.startDate) orderItemsQuery = orderItemsQuery.gte('created_at', bounds.startDate);
+      if (bounds.endDate) orderItemsQuery = orderItemsQuery.lt('created_at', bounds.endDate);
+
+      const { data: orderItemsData } = await orderItemsQuery;
+      const orderItems = orderItemsData || [];
+
+      const productMap = new Map<
+        string,
+        { name: string; category: string; count: number; sales: number }
+      >();
+      const catMap = new Map<string, number>();
+
+      for (const item of orderItems) {
+        const pid = item.product_id;
+        const name = item.products?.name || 'Menu Item';
+        const cat = item.products?.categories?.name || 'General';
+        const qty = Number(item.quantity) || 1;
+        const price = Number(item.unit_price) || 0;
+        const total = qty * price;
+
+        const currentProd = productMap.get(pid) || { name, category: cat, count: 0, sales: 0 };
+        currentProd.count += qty;
+        currentProd.sales += total;
+        productMap.set(pid, currentProd);
+
+        catMap.set(cat, (catMap.get(cat) || 0) + total);
+      }
+
+      // Ranked Best Sellers
+      const sortedProducts = Array.from(productMap.entries()).sort(
+        (a, b) => b[1].count - a[1].count
+      );
+      const topCount = sortedProducts.length > 0 ? sortedProducts[0][1].count : 1;
+
+      const bestSellers: BestSellerItem[] = sortedProducts.map(([id, d], idx) => ({
+        id: `bs-${id}`,
+        rank: idx + 1,
+        name: d.name,
+        category: d.category,
+        soldCount: d.count,
+        salesAmount: d.sales,
+        progressPercent: Math.min(100, Math.max(10, Math.round((d.count / topCount) * 100))),
+      }));
+
+      // Sales By Category
+      const sortedCats = Array.from(catMap.entries()).sort((a, b) => b[1] - a[1]);
+      const topCatSales = sortedCats.length > 0 ? sortedCats[0][1] : 1;
+
+      const categorySales: CategorySalesItem[] = sortedCats.map(([cat, amt]) => ({
+        category: cat,
+        amount: amt,
+        percentage: Math.min(100, Math.max(10, Math.round((amt / topCatSales) * 100))),
+      }));
+
+      // 4. QUERY LIVE ATTENTION ALERTS (Low Stock, Waste Logs, Voids strictly from DB)
+      const [inventoryRes, wasteRes, cancelledRes] = await Promise.all([
+        supabase.from('inventory_items').select('id, name, current_stock, min_alert_level, unit'),
+        (supabase.from as any)('waste_logs')
+          .select('id, quantity, cost_lost, reason, created_at, inventory_items(name)')
+          .order('created_at', { ascending: false })
+          .limit(3),
+        (supabase.from as any)('order_items')
+          .select('id, product_id, quantity, unit_price, created_at, products(name)')
+          .eq('status', 'CANCELLED')
+          .order('created_at', { ascending: false })
+          .limit(2),
+      ]);
+
+      const alerts: AttentionAlert[] = [];
+
+      // Alert 1: Low Stock Par Alerts
+      const inventoryItems = inventoryRes.data || [];
+      const lowStockItems = inventoryItems.filter(
+        (i) => Number(i.current_stock) <= Number(i.min_alert_level)
+      );
+      if (lowStockItems.length > 0) {
+        const itemNames = lowStockItems
+          .slice(0, 3)
+          .map((i) => i.name)
+          .join(', ');
+        alerts.push({
+          id: 'alert-low-stock',
+          type: 'low_stock',
+          badgeLabel: 'Low Stock',
+          title: `${lowStockItems.length} items below par level (${itemNames})`,
+          description: 'Restock raw inventory to prevent kitchen and bar service stockouts',
+          targetRoute: 'inventory',
+          createdAt: new Date().toISOString(),
+        });
+      }
+
+      // Alert 2: Recent Spillage / Waste
+      const wasteLogs = wasteRes.data || [];
+      if (wasteLogs.length > 0) {
+        const recent = wasteLogs[0];
+        alerts.push({
+          id: `alert-waste-${recent.id}`,
+          type: 'void',
+          badgeLabel: 'Spillage',
+          title: `Waste recorded: ${recent.inventory_items?.name || 'Raw Ingredient'}`,
+          description: `Loss of ₱${Number(recent.cost_lost || 0).toFixed(2)} (${recent.quantity} units) due to ${recent.reason}`,
+          targetRoute: 'inventory',
+          createdAt: recent.created_at,
+        });
+      }
+
+      // Alert 3: Cancelled / Voided Order Items
+      const cancelledItems = cancelledRes.data || [];
+      if (cancelledItems.length > 0) {
+        const voidItem = cancelledItems[0];
+        alerts.push({
+          id: `alert-void-${voidItem.id}`,
+          type: 'void',
+          badgeLabel: 'Void',
+          title: `Item voided: ${voidItem.products?.name || 'Dish'}`,
+          description: `Cancelled item (Qty: ${voidItem.quantity}, ₱${Number(voidItem.unit_price || 0).toFixed(2)})`,
+          targetRoute: 'sales',
+          createdAt: voidItem.created_at,
+        });
+      }
+
+      // 5. STATIONS TELEMETRY (Query live active orders from DB)
+      const { data: openOrdersData } = await (supabase.from as any)('orders')
+        .select('id, status, created_at, order_items(status, station_target)')
+        .eq('status', 'OPEN');
+
+      const openOrders = openOrdersData || [];
+      let barTickets = 0;
+      let cafeTickets = 0;
+      let kitchenTickets = 0;
+      let runnerTickets = 0;
+
+      for (const ord of openOrders) {
+        const items = ord.order_items || [];
+        if (items.some((i: any) => i.station_target === 'bar' && i.status !== 'SERVED'))
+          barTickets++;
+        if (items.some((i: any) => i.station_target === 'cafe' && i.status !== 'SERVED'))
+          cafeTickets++;
+        if (items.some((i: any) => i.station_target === 'kitchen' && i.status !== 'SERVED'))
+          kitchenTickets++;
+        if (items.some((i: any) => i.status === 'PREPARED')) runnerTickets++;
+      }
+
+      const stations: StationTelemetry[] = [
+        {
+          stationKey: 'bar',
+          name: 'Bar Counter',
+          isOnline: true,
+          targetTicketTime: '10:00',
+          activeTickets: barTickets,
+          avgTicketTime: '06:40',
+          lateTickets: 0,
+          stockoutCount: lowStockItems.filter(
+            (i) =>
+              i.name.toLowerCase().includes('bourbon') ||
+              i.name.toLowerCase().includes('gin') ||
+              i.name.toLowerCase().includes('wine')
+          ).length,
+        },
+        {
+          stationKey: 'cafe',
+          name: 'Barista Espresso',
+          isOnline: true,
+          targetTicketTime: '06:00',
+          activeTickets: cafeTickets,
+          avgTicketTime: '04:15',
+          lateTickets: 0,
+          stockoutCount: lowStockItems.filter(
+            (i) =>
+              i.name.toLowerCase().includes('milk') ||
+              i.name.toLowerCase().includes('bean') ||
+              i.name.toLowerCase().includes('syrup')
+          ).length,
+        },
+        {
+          stationKey: 'kitchen',
+          name: 'Kitchen Hot Line',
+          isOnline: true,
+          targetTicketTime: '15:00',
+          activeTickets: kitchenTickets,
+          avgTicketTime: '11:30',
+          lateTickets: 0,
+          stockoutCount: lowStockItems.filter(
+            (i) =>
+              i.name.toLowerCase().includes('pasta') ||
+              i.name.toLowerCase().includes('dough') ||
+              i.name.toLowerCase().includes('cheese')
+          ).length,
+        },
+        {
+          stationKey: 'runner',
+          name: 'FOH Expediter',
+          isOnline: true,
+          targetTicketTime: '03:00',
+          activeTickets: runnerTickets,
+          avgTicketTime: '02:10',
+          lateTickets: 0,
+          stockoutCount: 0,
+        },
+      ];
 
       return {
         liveSalesTotal,
         salesGrowthPercent,
         orderCount,
         ordersGrowthPercent,
-        ordersPerHour: Math.max(1, Math.round(orderCount / 7)),
-        averageCheck: averageCheck || 33.75,
-        averageCheckGrowthPercent,
+        ordersPerHour: Math.max(0, Math.round(orderCount / 7)),
+        averageCheck,
+        averageCheckGrowthPercent: 0,
         guestCount,
-        guestGrowthPercent,
+        guestGrowthPercent: 0,
         spendPerGuest,
-        hourlySales: BASELINE_HOURLY,
-        peakHourLabel: 'Peak · 1 PM',
-        bestSellers: dynamicBestSellers,
-        stations: BASELINE_STATIONS,
-        categorySales: dynamicCategorySales,
-        alerts: dynamicAlerts,
-        lastUpdated: 'updated just now',
+
+        // Direct DB Operational Floor Metrics
+        cashSales,
+        digitalSales,
+        cardSales,
+        totalTables,
+        occupiedTables,
+        activeOpenTabs,
+        occupancyPercent,
+        timeframe,
+        timeframeLabel: bounds.label,
+        benchmarkLabel: bounds.benchmarkLabel,
+
+        hourlySales,
+        peakHourLabel: peakHour ? `Peak · ${formatHour(peakHour)}` : 'No Sales Yet',
+        bestSellers,
+        stations,
+        categorySales,
+        alerts,
+        lastUpdated: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
       };
-    } catch {
-      // Complete offline or network error fallback
+    } catch (err) {
+      console.error('[adminTelemetryService] Database query error:', err);
+      // In case of any unexpected network issue, return real zero state rather than mock numbers
       return {
-        liveSalesTotal: 4826.25,
-        salesGrowthPercent: 12.4,
-        orderCount: 143,
-        ordersGrowthPercent: 6.2,
-        ordersPerHour: 20,
-        averageCheck: 33.75,
-        averageCheckGrowthPercent: 3.1,
-        guestCount: 211,
-        guestGrowthPercent: -2.0,
-        spendPerGuest: 22.87,
-        hourlySales: BASELINE_HOURLY,
-        peakHourLabel: 'Peak · 1 PM',
-        bestSellers: BASELINE_BEST_SELLERS,
-        stations: BASELINE_STATIONS,
-        categorySales: BASELINE_CATEGORY_SALES,
-        alerts: BASELINE_ALERTS,
-        lastUpdated: 'updated just now',
+        liveSalesTotal: 0,
+        salesGrowthPercent: 0,
+        orderCount: 0,
+        ordersGrowthPercent: 0,
+        ordersPerHour: 0,
+        averageCheck: 0,
+        averageCheckGrowthPercent: 0,
+        guestCount: 0,
+        guestGrowthPercent: 0,
+        spendPerGuest: 0,
+
+        cashSales: 0,
+        digitalSales: 0,
+        cardSales: 0,
+        totalTables: 25,
+        occupiedTables: 0,
+        activeOpenTabs: 0,
+        occupancyPercent: 0,
+        timeframe,
+        timeframeLabel: bounds.label,
+        benchmarkLabel: bounds.benchmarkLabel,
+
+        hourlySales: [],
+        peakHourLabel: 'No Sales Yet',
+        bestSellers: [],
+        stations: [],
+        categorySales: [],
+        alerts: [],
+        lastUpdated: 'Offline / Connecting...',
       };
     }
   },

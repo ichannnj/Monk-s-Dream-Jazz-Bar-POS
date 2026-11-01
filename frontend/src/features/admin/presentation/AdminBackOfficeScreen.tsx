@@ -2,14 +2,14 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { SharedChatView } from '@/features/chat/presentation/SharedChatView';
-import type { AdminRoute, DashboardTelemetry } from '../domain/admin.types';
+import type { AdminRoute, DashboardTelemetry, TimeframeFilter } from '../domain/admin.types';
 import {
   adminApi,
   type InventoryItemAdmin,
   type ProductAdmin,
   type SalesAnalyticsOverview,
 } from '../data/admin.api';
-import { adminTelemetryService, type ComparisonPeriod } from '../data/adminTelemetry';
+import { adminTelemetryService } from '../data/adminTelemetry';
 import { AdminSidebar } from './components/AdminSidebar';
 import { AdminHeader } from './components/AdminHeader';
 import { AdminFloatingChat } from './components/AdminFloatingChat';
@@ -27,7 +27,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
 }) => {
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>('dashboard');
   const [operatingMode, setOperatingMode] = useState<'CAFE' | 'EVENT'>('CAFE');
-  const [comparisonPeriod, setComparisonPeriod] = useState<ComparisonPeriod>('last_week');
+  const [timeframe, setTimeframe] = useState<TimeframeFilter>('today');
   const [isLoading, setIsLoading] = useState(true);
 
   // Telemetry & back-office data state
@@ -36,16 +36,16 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   const [products, setProducts] = useState<ProductAdmin[]>([]);
   const [analytics, setAnalytics] = useState<SalesAnalyticsOverview | null>(null);
 
-  const loadData = useCallback(async (period?: ComparisonPeriod) => {
+  const loadData = useCallback(async (tf?: TimeframeFilter) => {
     setIsLoading(true);
-    const activePeriod = period ?? comparisonPeriod;
+    const activeTimeframe = tf ?? timeframe;
     try {
       const [settingsRes, invRes, prodRes, analRes, telemRes] = await Promise.allSettled([
         adminApi.getVenueSettings(),
         adminApi.getInventoryItems(),
         adminApi.getProductsWithBOM(),
         adminApi.getSalesOverview(),
-        adminTelemetryService.fetchDashboardTelemetry(activePeriod),
+        adminTelemetryService.fetchDashboardTelemetry(activeTimeframe),
       ]);
 
       if (settingsRes.status === 'fulfilled') {
@@ -114,13 +114,13 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         return telemetry ? (
           <AdminDashboardView
             telemetry={telemetry}
-            onRefresh={() => loadData(comparisonPeriod)}
+            onRefresh={() => loadData(timeframe)}
             onNavigateRoute={setCurrentRoute}
             isLoading={isLoading}
-            comparisonPeriod={comparisonPeriod}
-            onChangeComparisonPeriod={(period) => {
-              setComparisonPeriod(period);
-              loadData(period);
+            timeframe={timeframe}
+            onChangeTimeframe={(tf) => {
+              setTimeframe(tf);
+              loadData(tf);
             }}
           />
         ) : (
