@@ -6,23 +6,36 @@ import {
   Download,
   RefreshCw,
   Coins,
-  CreditCard,
-  Smartphone,
   Receipt,
   Layers,
   ArrowUpRight,
+  ArrowRightLeft,
+  Calendar,
+  History,
 } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { readingsApi, type ReadingData, type ZReadingRecord } from '../../../data/readings.api';
+import {
+  readingsApi,
+  type ReadingData,
+  type ZReadingRecord,
+  type YReadingRecord,
+  type ShiftVariancePoint,
+} from '../../../data/readings.api';
 import { ReadingReportModal } from './ReadingReportModal';
 import { ZCloseShiftModal } from './ZCloseShiftModal';
+import { YCloseShiftModal } from './YCloseShiftModal';
 import { ZReadingsHistoryTable } from './ZReadingsHistoryTable';
+import { CashDrawerWaterfallCard } from '../analytics/CashDrawerWaterfallCard';
+import { ShiftVarianceTrendChart } from '../analytics/ShiftVarianceTrendChart';
 
 export const AdminReadingsView: React.FC = () => {
   const [drawerScope, setDrawerScope] = useState<'consolidated' | 'main' | 'bar'>('consolidated');
   const [activeReading, setActiveReading] = useState<ReadingData | null>(null);
   const [zHistory, setZHistory] = useState<ZReadingRecord[]>([]);
+  const [yHistory, setYHistory] = useState<YReadingRecord[]>([]);
+  const [varianceTrend, setVarianceTrend] = useState<ShiftVariancePoint[]>([]);
+  const [historyTab, setHistoryTab] = useState<'z_readings' | 'y_handovers'>('z_readings');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -30,15 +43,20 @@ export const AdminReadingsView: React.FC = () => {
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [selectedReport, setSelectedReport] = useState<ReadingData | null>(null);
   const [zCloseModalVisible, setZCloseModalVisible] = useState(false);
+  const [yCloseModalVisible, setYCloseModalVisible] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
-      const [reading, history] = await Promise.all([
+      const [reading, zList, yList, variancePoints] = await Promise.all([
         readingsApi.fetchCurrentXReading(drawerScope),
         readingsApi.fetchZReadingHistory(),
+        readingsApi.fetchYReadingHistory(),
+        readingsApi.fetchShiftVarianceHistory(),
       ]);
       setActiveReading(reading);
-      setZHistory(history);
+      setZHistory(zList);
+      setYHistory(yList);
+      setVarianceTrend(variancePoints);
     } catch (err: any) {
       console.error('[AdminReadingsView] Error loading readings data:', err);
       toast.error('Failed to load readings data from database', { title: 'Fetch Error' });
@@ -64,13 +82,17 @@ export const AdminReadingsView: React.FC = () => {
     setReportModalVisible(true);
   };
 
+  const handleOpenYClose = () => {
+    if (!activeReading) return;
+    setYCloseModalVisible(true);
+  };
+
   const handleOpenZClose = () => {
     if (!activeReading) return;
     setZCloseModalVisible(true);
   };
 
   const handleZSuccess = (zRecord: ZReadingRecord) => {
-    // Reload data and display report modal for newly generated Z-reading
     loadData();
     const readingData: ReadingData = {
       reading_type: 'Z_READING',
@@ -102,6 +124,45 @@ export const AdminReadingsView: React.FC = () => {
       first_receipt_no: zRecord.first_receipt_no || 'N/A',
       last_receipt_no: zRecord.last_receipt_no || 'N/A',
       notes: zRecord.notes || undefined,
+    };
+    setSelectedReport(readingData);
+    setReportModalVisible(true);
+  };
+
+  const handleYSuccess = (yRecord: YReadingRecord) => {
+    loadData();
+    const readingData: ReadingData = {
+      reading_type: 'Y_READING',
+      y_number: yRecord.y_number,
+      drawer_target: yRecord.drawer_target,
+      opened_at: yRecord.opened_at,
+      closed_at: yRecord.closed_at,
+      outgoing_staff_name: yRecord.outgoing_staff_name,
+      incoming_staff_name: yRecord.incoming_staff_name,
+      performed_by_name: yRecord.outgoing_staff_name,
+      gross_sales: yRecord.gross_sales,
+      discount_total: yRecord.discount_total,
+      net_sales: yRecord.net_sales,
+      vatable_sales: yRecord.vatable_sales,
+      vat_amount: yRecord.vat_amount,
+      vat_exempt_sales: 0,
+      service_charge: yRecord.service_charge,
+      tender_cash: yRecord.tender_cash,
+      tender_card: yRecord.tender_card,
+      tender_digital: yRecord.tender_digital,
+      tender_delivery: yRecord.tender_delivery,
+      total_tender: yRecord.total_tender,
+      opening_float: yRecord.opening_float,
+      cash_in: yRecord.cash_in,
+      cash_out: yRecord.cash_out,
+      safe_drops: yRecord.safe_drops,
+      expected_cash: yRecord.expected_cash,
+      counted_cash: yRecord.counted_cash,
+      variance: yRecord.variance,
+      transaction_count: yRecord.transaction_count,
+      first_receipt_no: yRecord.first_receipt_no || 'N/A',
+      last_receipt_no: yRecord.last_receipt_no || 'N/A',
+      notes: yRecord.notes || undefined,
     };
     setSelectedReport(readingData);
     setReportModalVisible(true);
@@ -231,8 +292,8 @@ export const AdminReadingsView: React.FC = () => {
           </Pressable>
         </View>
 
-        {/* Action Buttons */}
-        <View className="flex-row items-center gap-3">
+        {/* 3-Way Action Toolbar: X-Reading, Y-Reading, Z-Reading */}
+        <View className="flex-row items-center gap-3 flex-wrap">
           <Pressable
             onPress={handleRefresh}
             className="w-12 h-12 rounded-xl bg-white border border-stone-200 items-center justify-center active:bg-stone-100 shadow-xs"
@@ -248,20 +309,31 @@ export const AdminReadingsView: React.FC = () => {
             <Text className="text-base font-bold text-stone-800">Export CSV</Text>
           </Pressable>
 
+          {/* X-Reading Trigger */}
           <Pressable
             onPress={handleOpenXReading}
-            className="flex-row items-center gap-2 px-5 py-3 rounded-xl bg-[#800020] active:bg-[#600018] min-h-[48px] shadow-xs"
+            className="flex-row items-center gap-2 px-4 py-3 rounded-xl bg-[#800020] active:bg-[#600018] min-h-[48px] shadow-xs"
           >
             <FileText size={18} color="#ffffff" />
             <Text className="text-base font-extrabold text-white">Preview X-Reading</Text>
           </Pressable>
 
+          {/* Y-Reading Handover Trigger */}
+          <Pressable
+            onPress={handleOpenYClose}
+            className="flex-row items-center gap-2 px-4 py-3 rounded-xl bg-amber-600 active:bg-amber-700 min-h-[48px] shadow-xs"
+          >
+            <ArrowRightLeft size={18} color="#ffffff" />
+            <Text className="text-base font-extrabold text-white">Handover Y-Reading</Text>
+          </Pressable>
+
+          {/* Z-Reading End-of-Day Close Trigger */}
           <Pressable
             onPress={handleOpenZClose}
-            className="flex-row items-center gap-2 px-5 py-3 rounded-xl bg-stone-900 active:bg-black min-h-[48px] shadow-xs"
+            className="flex-row items-center gap-2 px-4 py-3 rounded-xl bg-stone-900 active:bg-black min-h-[48px] shadow-xs"
           >
             <Lock size={18} color="#ffffff" />
-            <Text className="text-base font-extrabold text-white">Close Shift & Z-Reading</Text>
+            <Text className="text-base font-extrabold text-white">Close Day Z-Reading</Text>
           </Pressable>
         </View>
       </View>
@@ -323,40 +395,244 @@ export const AdminReadingsView: React.FC = () => {
         </View>
       </View>
 
-      {/* Shift Details Quick Banner */}
-      <View className="bg-white rounded-2xl border border-stone-200 p-6 mb-8 shadow-xs flex-row items-center justify-between flex-wrap gap-4">
-        <View>
-          <Text className="text-lg font-extrabold text-stone-900">Active Shift Information</Text>
-          <Text className="text-base text-stone-500">
-            Target: <Text className="font-bold text-stone-800">{drawerLabel}</Text> • Shift Started:{' '}
-            <Text className="font-bold text-stone-800">
-              {activeReading ? new Date(activeReading.opened_at).toLocaleString() : 'N/A'}
-            </Text>
-          </Text>
-        </View>
+      {/* Visual Analytics Suite: Cash Drawer Flow Waterfall */}
+      <View className="mb-8">
+        <CashDrawerWaterfallCard
+          openingFloat={activeReading?.opening_float || 0}
+          cashSales={activeReading?.tender_cash || 0}
+          cashIn={activeReading?.cash_in || 0}
+          cashOut={activeReading?.cash_out || 0}
+          safeDrops={activeReading?.safe_drops || 0}
+          expectedCash={activeReading?.expected_cash || 0}
+          drawerLabel={drawerLabel}
+        />
+      </View>
 
-        <View className="flex-row items-center gap-3">
-          <View className="px-3.5 py-1.5 rounded-xl bg-stone-100 border border-stone-200">
-            <Text className="text-base text-stone-600 font-bold">
-              12% VAT: {formatCurrency(activeReading?.vat_amount || 0)}
+      {/* Shift Variance Trend Graph */}
+      <View className="mb-8">
+        <ShiftVarianceTrendChart data={varianceTrend} />
+      </View>
+
+      {/* Historical Readings Archive Switcher */}
+      <View className="flex-row items-center justify-between mb-4">
+        <View className="flex-row bg-stone-200/80 p-1 rounded-2xl">
+          <Pressable
+            onPress={() => setHistoryTab('z_readings')}
+            className={`px-4 py-2 rounded-xl min-h-[44px] flex-row items-center ${
+              historyTab === 'z_readings' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
+            }`}
+          >
+            <Lock size={16} color={historyTab === 'z_readings' ? '#1c1917' : '#57534e'} />
+            <Text
+              className={`ml-2 text-base font-bold ${
+                historyTab === 'z_readings' ? 'text-stone-900' : 'text-stone-600'
+              }`}
+            >
+              Daily Z-Readings Archive ({zHistory.length})
             </Text>
-          </View>
-          <View className="px-3.5 py-1.5 rounded-xl bg-stone-100 border border-stone-200">
-            <Text className="text-base text-stone-600 font-bold">
-              10% SC: {formatCurrency(activeReading?.service_charge || 0)}
+          </Pressable>
+
+          <Pressable
+            onPress={() => setHistoryTab('y_handovers')}
+            className={`px-4 py-2 rounded-xl min-h-[44px] flex-row items-center ${
+              historyTab === 'y_handovers' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
+            }`}
+          >
+            <ArrowRightLeft
+              size={16}
+              color={historyTab === 'y_handovers' ? '#d97706' : '#57534e'}
+            />
+            <Text
+              className={`ml-2 text-base font-bold ${
+                historyTab === 'y_handovers' ? 'text-stone-900' : 'text-stone-600'
+              }`}
+            >
+              Shift Handover Y-Reports ({yHistory.length})
             </Text>
-          </View>
+          </Pressable>
         </View>
       </View>
 
-      {/* Historical Z-Readings Archive */}
-      <ZReadingsHistoryTable
-        history={zHistory}
-        onViewRecord={(record) => {
-          setSelectedReport(record);
-          setReportModalVisible(true);
-        }}
-      />
+      {/* History Table */}
+      {historyTab === 'z_readings' ? (
+        <ZReadingsHistoryTable
+          history={zHistory}
+          onViewRecord={(record) => {
+            setSelectedReport(record);
+            setReportModalVisible(true);
+          }}
+        />
+      ) : (
+        /* Y-Reading Handover Records Table */
+        <View className="rounded-2xl border border-stone-200/80 bg-white overflow-hidden shadow-xs">
+          <View className="px-6 py-4 border-b border-stone-200 flex-row items-center justify-between bg-stone-50/50">
+            <View>
+              <Text className="text-lg font-extrabold text-stone-900">
+                Shift Handover Y-Reports
+              </Text>
+              <Text className="text-base text-stone-500 font-medium">
+                Audited cashier shift handovers and rotation drawer reconciliations
+              </Text>
+            </View>
+            <Text className="text-base font-bold text-stone-600">{yHistory.length} Handovers</Text>
+          </View>
+
+          {yHistory.length === 0 ? (
+            <View className="p-8 items-center justify-center">
+              <ArrowRightLeft size={36} color="#a8a29e" />
+              <Text className="text-lg font-bold text-stone-700 mt-2">
+                No Shift Handovers Recorded
+              </Text>
+              <Text className="text-base text-stone-500 mt-1 text-center">
+                When staff hand over the till, Y-Reports will appear here for audit and reprint.
+              </Text>
+            </View>
+          ) : (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View className="min-w-[800px] divide-y divide-stone-100">
+                <View className="flex-row items-center px-6 py-3 bg-stone-100/70">
+                  <Text className="w-24 text-base font-bold text-stone-700">Y-Number</Text>
+                  <Text className="w-40 text-base font-bold text-stone-700">Date & Time</Text>
+                  <Text className="w-32 text-base font-bold text-stone-700">Till</Text>
+                  <Text className="w-44 text-base font-bold text-stone-700">Outgoing Cashier</Text>
+                  <Text className="w-44 text-base font-bold text-stone-700">Incoming Cashier</Text>
+                  <Text className="w-32 text-base font-bold text-stone-700 text-right">
+                    Net Sales
+                  </Text>
+                  <Text className="w-32 text-base font-bold text-stone-700 text-center">
+                    Variance
+                  </Text>
+                  <Text className="w-28 text-base font-bold text-stone-700 text-right">
+                    Actions
+                  </Text>
+                </View>
+
+                {yHistory.map((rec) => (
+                  <View
+                    key={rec.id}
+                    className="flex-row items-center px-6 py-3.5 hover:bg-stone-50/70"
+                  >
+                    <View className="w-24 flex-row items-center gap-1.5">
+                      <View className="w-2 h-2 rounded-full bg-amber-500" />
+                      <Text className="text-base font-black text-stone-900">
+                        Y-{String(rec.y_number).padStart(4, '0')}
+                      </Text>
+                    </View>
+                    <View className="w-40">
+                      <Text className="text-base font-bold text-stone-900">
+                        {new Date(rec.closed_at).toLocaleDateString([], {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </Text>
+                      <Text className="text-xs text-stone-500">
+                        {new Date(rec.closed_at).toLocaleTimeString([], {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Text>
+                    </View>
+                    <View className="w-32">
+                      <Text className="text-base font-semibold text-stone-700">
+                        {rec.drawer_target === 'bar'
+                          ? 'Bar Till'
+                          : rec.drawer_target === 'main'
+                            ? 'Main Till'
+                            : 'Consolidated'}
+                      </Text>
+                    </View>
+                    <View className="w-44">
+                      <Text className="text-base font-medium text-stone-800">
+                        {rec.outgoing_staff_name}
+                      </Text>
+                    </View>
+                    <View className="w-44">
+                      <Text className="text-base font-medium text-stone-800">
+                        {rec.incoming_staff_name}
+                      </Text>
+                    </View>
+                    <View className="w-32 items-end">
+                      <Text className="text-base font-black text-stone-900">
+                        {formatCurrency(rec.net_sales)}
+                      </Text>
+                    </View>
+                    <View className="w-32 items-center">
+                      <View
+                        className={`px-3 py-1 rounded-lg ${
+                          rec.variance === 0
+                            ? 'bg-emerald-50 border border-emerald-200'
+                            : rec.variance > 0
+                              ? 'bg-amber-50 border border-amber-200'
+                              : 'bg-red-50 border border-red-200'
+                        }`}
+                      >
+                        <Text
+                          className={`text-base font-extrabold ${
+                            rec.variance === 0
+                              ? 'text-emerald-700'
+                              : rec.variance > 0
+                                ? 'text-amber-700'
+                                : 'text-red-700'
+                          }`}
+                        >
+                          {rec.variance === 0
+                            ? 'Balanced'
+                            : `${rec.variance > 0 ? '+' : ''}${formatCurrency(rec.variance)}`}
+                        </Text>
+                      </View>
+                    </View>
+                    <View className="w-28 items-end">
+                      <Pressable
+                        onPress={() => {
+                          const readingData: ReadingData = {
+                            reading_type: 'Y_READING',
+                            y_number: rec.y_number,
+                            drawer_target: rec.drawer_target,
+                            opened_at: rec.opened_at,
+                            closed_at: rec.closed_at,
+                            outgoing_staff_name: rec.outgoing_staff_name,
+                            incoming_staff_name: rec.incoming_staff_name,
+                            performed_by_name: rec.outgoing_staff_name,
+                            gross_sales: rec.gross_sales,
+                            discount_total: rec.discount_total,
+                            net_sales: rec.net_sales,
+                            vatable_sales: rec.vatable_sales,
+                            vat_amount: rec.vat_amount,
+                            vat_exempt_sales: 0,
+                            service_charge: rec.service_charge,
+                            tender_cash: rec.tender_cash,
+                            tender_card: rec.tender_card,
+                            tender_digital: rec.tender_digital,
+                            tender_delivery: rec.tender_delivery,
+                            total_tender: rec.total_tender,
+                            opening_float: rec.opening_float,
+                            cash_in: rec.cash_in,
+                            cash_out: rec.cash_out,
+                            safe_drops: rec.safe_drops,
+                            expected_cash: rec.expected_cash,
+                            counted_cash: rec.counted_cash,
+                            variance: rec.variance,
+                            transaction_count: rec.transaction_count,
+                            first_receipt_no: rec.first_receipt_no || 'N/A',
+                            last_receipt_no: rec.last_receipt_no || 'N/A',
+                            notes: rec.notes || undefined,
+                          };
+                          setSelectedReport(readingData);
+                          setReportModalVisible(true);
+                        }}
+                        className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 min-h-[40px]"
+                      >
+                        <Receipt size={16} color="#44403c" />
+                        <Text className="text-base font-bold text-stone-800">Reprint</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          )}
+        </View>
+      )}
 
       {/* Reading Preview & Print Modal */}
       <ReadingReportModal
@@ -366,6 +642,15 @@ export const AdminReadingsView: React.FC = () => {
           setReportModalVisible(false);
           setSelectedReport(null);
         }}
+      />
+
+      {/* Y-Close Handover Modal */}
+      <YCloseShiftModal
+        visible={yCloseModalVisible}
+        activeReading={activeReading}
+        drawerScope={drawerScope}
+        onClose={() => setYCloseModalVisible(false)}
+        onYReadingSuccess={handleYSuccess}
       />
 
       {/* Z-Close Shift Modal */}

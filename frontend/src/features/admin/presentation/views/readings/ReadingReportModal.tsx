@@ -22,9 +22,12 @@ export const ReadingReportModal: React.FC<ReadingReportModalProps> = ({
   if (!reading) return null;
 
   const isZReading = reading.reading_type === 'Z_READING';
+  const isYReading = reading.reading_type === 'Y_READING';
   const title = isZReading
     ? `Shift Z-Reading #${reading.z_number || 1}`
-    : 'Mid-Shift X-Reading (Interim)';
+    : isYReading
+      ? `Shift Handover Y-Reading #${reading.y_number || 1}`
+      : 'Mid-Shift X-Reading (Interim)';
 
   const drawerLabel =
     reading.drawer_target === 'bar'
@@ -426,6 +429,45 @@ Official POS Audit Document
                     </Text>
                   </View>
                 </View>
+
+                {/* Handover Signatures for Y-Reading */}
+                {isYReading && (
+                  <View className="mt-6 p-5 rounded-xl border border-stone-200 bg-stone-50">
+                    <Text className="text-base font-extrabold uppercase tracking-wider text-[#800020] mb-3">
+                      Staff Handover Acknowledgment
+                    </Text>
+                    <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <View className="p-3 bg-white rounded-lg border border-stone-200">
+                        <Text className="text-sm font-semibold text-stone-500">
+                          Handed Over By (Outgoing Cashier):
+                        </Text>
+                        <Text className="text-base font-bold text-stone-900 mt-1">
+                          {reading.outgoing_staff_name ||
+                            reading.performed_by_name ||
+                            'Outgoing Staff'}
+                        </Text>
+                        <View className="mt-6 pt-1 border-t border-stone-300">
+                          <Text className="text-xs text-stone-400">
+                            Signature: __________________________
+                          </Text>
+                        </View>
+                      </View>
+                      <View className="p-3 bg-white rounded-lg border border-stone-200">
+                        <Text className="text-sm font-semibold text-stone-500">
+                          Received By (Incoming Cashier):
+                        </Text>
+                        <Text className="text-base font-bold text-stone-900 mt-1">
+                          {reading.incoming_staff_name || 'Incoming Staff'}
+                        </Text>
+                        <View className="mt-6 pt-1 border-t border-stone-300">
+                          <Text className="text-xs text-stone-400">
+                            Signature: __________________________
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                )}
               </View>
             ) : (
               /* 80mm Thermal Monospace View */
@@ -536,6 +578,20 @@ Official POS Audit Document
                     </>
                   )}
                 </View>
+
+                {isYReading && (
+                  <View className="border-t border-dashed border-stone-400 pt-3 pb-2 text-xs space-y-2">
+                    <Text className="text-xs font-mono font-bold">STAFF HANDOVER</Text>
+                    <Text className="text-[10px] font-mono">
+                      OUT: {reading.outgoing_staff_name || reading.performed_by_name || 'Staff'}
+                    </Text>
+                    <Text className="text-[10px] font-mono">SIG: _____________________</Text>
+                    <Text className="text-[10px] font-mono">
+                      IN: {reading.incoming_staff_name || 'Incoming Staff'}
+                    </Text>
+                    <Text className="text-[10px] font-mono">SIG: _____________________</Text>
+                  </View>
+                )}
 
                 <View className="items-center border-t border-dashed border-stone-400 pt-3 mt-2">
                   <Text className="text-[10px] text-stone-500 uppercase tracking-widest text-center">

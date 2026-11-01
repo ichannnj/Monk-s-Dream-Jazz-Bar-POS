@@ -170,6 +170,7 @@ export class PrinterStationDaemon {
         }
 
         case 'X_READING':
+        case 'Y_READING':
         case 'Z_READING': {
           console.log(`[PrinterStationDaemon] PRINT ${jobType} RECEIVED:`, rawData);
           if (

@@ -19,6 +19,9 @@ import {
   Smartphone,
 } from 'lucide-react-native';
 import type { DashboardTelemetry, AdminRoute, TimeframeFilter } from '../../domain/admin.types';
+import { HourlySalesVelocityChart } from './analytics/HourlySalesVelocityChart';
+import { PaymentTenderMixBar } from './analytics/PaymentTenderMixBar';
+import { DepartmentSalesBreakdown, DepartmentShare } from './analytics/DepartmentSalesBreakdown';
 
 export interface AdminDashboardViewProps {
   telemetry: DashboardTelemetry;
@@ -146,6 +149,35 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   };
 
   const hasZeroOrders = (telemetry.orderCount || 0) === 0;
+
+  const departmentShares: DepartmentShare[] = useMemo(() => {
+    return (telemetry.categorySales || []).map((cat) => {
+      const lower = cat.category.toLowerCase();
+      let categoryType: DepartmentShare['category'] = 'kitchen';
+      if (
+        lower.includes('coffee') ||
+        lower.includes('espresso') ||
+        lower.includes('tea') ||
+        lower.includes('cafe')
+      ) {
+        categoryType = 'coffee';
+      } else if (
+        lower.includes('cocktail') ||
+        lower.includes('spirit') ||
+        lower.includes('liquor')
+      ) {
+        categoryType = 'cocktails';
+      } else if (lower.includes('wine') || lower.includes('beer')) {
+        categoryType = 'wine_beer';
+      }
+      return {
+        name: cat.category,
+        category: categoryType,
+        sales: cat.amount,
+        itemCount: Math.round(cat.amount / 150) || 1,
+      };
+    });
+  }, [telemetry.categorySales]);
 
   return (
     <ScrollView className="flex-1 bg-[#fcf9f9]" showsVerticalScrollIndicator={false}>
@@ -419,6 +451,37 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </Pressable>
           </View>
         )}
+
+        {/* Executive Visual Analytics Trio: Hourly Velocity + Tender Mix + Department Split */}
+        <View className="space-y-6">
+          {/* 1. Hourly Sales Velocity & Peak Pacing Curve */}
+          <HourlySalesVelocityChart
+            data={(telemetry.hourlySales || []).map((pt) => ({
+              hour: pt.hourLabel,
+              sales: pt.sales,
+            }))}
+            peakHourLabel={telemetry.peakHourLabel}
+            totalSales={telemetry.liveSalesTotal}
+          />
+
+          {/* 2 & 3: Tender Mix & Department Breakdown Grid */}
+          <View className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <PaymentTenderMixBar
+              data={{
+                cash: telemetry.cashSales || 0,
+                card: telemetry.cardSales || 0,
+                digital: telemetry.digitalSales || 0,
+                delivery: 0,
+                total: telemetry.liveSalesTotal || 0,
+              }}
+            />
+
+            <DepartmentSalesBreakdown
+              departments={departmentShares}
+              totalSales={telemetry.liveSalesTotal}
+            />
+          </View>
+        </View>
 
         {/* Middle Section: Best Sellers (Left) & Right Column (Stations + Category Sales) */}
         <View className="flex-row gap-6 flex-wrap lg:flex-nowrap">
