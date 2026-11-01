@@ -88,34 +88,34 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = () => {
                   </View>
                   <View className="ml-3">
                     <Text className="text-lg font-bold text-stone-900">{st.name}</Text>
-                    <Text className="text-xs text-stone-500">{st.role}</Text>
+                    <Text className="text-base text-stone-500">{st.role}</Text>
                   </View>
                 </View>
 
-                <View className="flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1">
-                  <View className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
-                  <Text className="text-xs font-semibold text-emerald-700">{st.status}</Text>
+                <View className="flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5">
+                  <View className="h-2.5 w-2.5 rounded-full bg-emerald-500 mr-2" />
+                  <Text className="text-base font-semibold text-emerald-700">{st.status}</Text>
                 </View>
               </View>
 
               <View className="flex-row items-center justify-between rounded-xl bg-stone-50 p-4 mb-4">
                 <View>
-                  <Text className="text-xs text-stone-400">Active Queue</Text>
+                  <Text className="text-base text-stone-500">Active Queue</Text>
                   <Text className="text-2xl font-black text-stone-900">{st.activeTickets}</Text>
                 </View>
 
                 <View>
-                  <Text className="text-xs text-stone-400">Avg Turnaround</Text>
+                  <Text className="text-base text-stone-500">Avg Turnaround</Text>
                   <Text className="text-2xl font-black text-stone-900">{st.avgTime}</Text>
                 </View>
 
                 <View>
-                  <Text className="text-xs text-stone-400">Target Time</Text>
+                  <Text className="text-base text-stone-500">Target Time</Text>
                   <Text className="text-2xl font-black text-stone-500">{st.targetTime}</Text>
                 </View>
 
                 <View>
-                  <Text className="text-xs text-stone-400">Overdue / Late</Text>
+                  <Text className="text-base text-stone-500">Overdue / Late</Text>
                   <Text
                     className={`text-2xl font-black ${
                       st.lateCount > 0 ? 'text-rose-600' : 'text-stone-900'
@@ -127,14 +127,14 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = () => {
               </View>
 
               {st.stockouts.length > 0 ? (
-                <View className="flex-row items-center rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
-                  <Text className="text-xs font-semibold text-amber-900">
-                    Station 86'd Items: {st.stockouts.join(', ')}
+                <View className="flex-row items-center rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5">
+                  <Text className="text-base font-semibold text-amber-900">
+                    Out-of-Stock Items: {st.stockouts.join(', ')}
                   </Text>
                 </View>
               ) : (
-                <View className="flex-row items-center rounded-lg bg-emerald-50 border border-emerald-100 px-3 py-2">
-                  <Text className="text-xs font-medium text-emerald-800">
+                <View className="flex-row items-center rounded-xl bg-emerald-50 border border-emerald-100 px-3.5 py-2.5">
+                  <Text className="text-base font-medium text-emerald-800">
                     All station ingredients in stock
                   </Text>
                 </View>

@@ -10,6 +10,7 @@ import {
   Receipt,
   Clock,
   Music,
+  Settings,
 } from 'lucide-react-native';
 import type { AdminRoute } from '../../domain/admin.types';
 
@@ -38,14 +39,16 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   ];
 
   const manageItems: NavItem[] = [
-    { id: 'menu', label: 'Menu', icon: Utensils },
-    { id: 'inventory', label: 'Inventory', icon: Package },
-    { id: 'staff', label: 'Staff', icon: Users },
+    { id: 'menu', label: 'Menu Catalog', icon: Utensils },
+    { id: 'inventory', label: 'Inventory Hub', icon: Package },
+    { id: 'tables', label: 'Table Layout', icon: LayoutGrid },
+    { id: 'staff', label: 'Staff Roster', icon: Users },
   ];
 
   const reportItems: NavItem[] = [
     { id: 'sales', label: 'Sales & Transactions', icon: Receipt },
     { id: 'attendance', label: 'Attendance', icon: Clock },
+    { id: 'settings', label: 'Venue Settings', icon: Settings },
   ];
 
   const renderNavGroup = (title: string, items: NavItem[]) => (

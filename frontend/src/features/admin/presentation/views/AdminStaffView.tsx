@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
-import { Users, Award, Calendar } from 'lucide-react-native';
+import { View, Text, Pressable, ScrollView, TextInput, Modal } from 'react-native';
+import { Users, Award, Calendar, X } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type AttendanceRecordAdmin } from '../../data/admin.api';
 
@@ -107,9 +107,9 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
           </Text>
         </View>
 
-        <View className="flex-row items-center rounded-xl border border-stone-200 bg-white px-3.5 py-2 shadow-xs">
-          <Calendar size={15} color="#78716c" />
-          <Text className="ml-2 text-sm font-bold text-stone-800">{todayStr}</Text>
+        <View className="flex-row items-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 shadow-xs">
+          <Calendar size={18} color="#78716c" />
+          <Text className="ml-2 text-base font-bold text-stone-800">{todayStr}</Text>
         </View>
       </View>
 
@@ -118,7 +118,7 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
         <Text className="text-base font-bold text-amber-900">
           Daily Minimum Shift Rate: ₱50.00 / shift
         </Text>
-        <Text className="mt-1 text-sm text-amber-800">
+        <Text className="mt-1 text-base text-amber-800">
           Discretionary jazz night bonuses can be granted by Dana Cruz / Managers at end of shift
           for stellar table turnovers and bar speed.
         </Text>
@@ -130,17 +130,17 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
           {attendance.map((rec) => (
             <View
               key={rec.id}
-              className="flex-row items-center justify-between border-b border-stone-100 py-3.5"
+              className="flex-row items-center justify-between border-b border-stone-100 py-4"
             >
               <View className="flex-row items-center space-x-3">
-                <View className="h-10 w-10 items-center justify-center rounded-full bg-stone-100 border border-stone-200">
-                  <Users size={18} color="#44403c" />
+                <View className="h-12 w-12 items-center justify-center rounded-full bg-stone-100 border border-stone-200">
+                  <Users size={20} color="#44403c" />
                 </View>
                 <View className="ml-3">
-                  <Text className="text-base font-bold text-stone-900">
+                  <Text className="text-lg font-bold text-stone-900">
                     {rec.user?.display_name || 'Staff Member'}
                   </Text>
-                  <Text className="text-xs text-stone-500">
+                  <Text className="text-base text-stone-500">
                     Role: {rec.user?.role} • Status: {rec.is_present ? 'Present' : 'Absent'}
                   </Text>
                 </View>
@@ -148,23 +148,23 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
 
               <View className="flex-row items-center space-x-6">
                 <View className="items-end mr-4">
-                  <Text className="text-xs text-stone-400">Base Shift Pay</Text>
-                  <Text className="text-sm font-semibold text-stone-800">
-                    ₱{rec.base_daily_pay.toFixed(2)}
+                  <Text className="text-base text-stone-400">Base Shift Pay</Text>
+                  <Text className="text-base font-semibold text-stone-800">
+                    ₱{Number(rec.base_daily_pay || 0).toFixed(2)}
                   </Text>
                 </View>
 
                 <View className="items-end mr-4">
-                  <Text className="text-xs text-stone-400">Bonus Add-on</Text>
-                  <Text className="text-sm font-bold text-emerald-700">
-                    +₱{rec.addon_pay.toFixed(2)}
+                  <Text className="text-base text-stone-400">Bonus Add-on</Text>
+                  <Text className="text-base font-bold text-emerald-700">
+                    +₱{Number(rec.addon_pay || 0).toFixed(2)}
                   </Text>
                 </View>
 
                 <View className="items-end mr-4">
-                  <Text className="text-xs text-stone-400">Total Shift Pay</Text>
-                  <Text className="text-base font-black text-stone-900">
-                    ₱{rec.total_day_pay.toFixed(2)}
+                  <Text className="text-base text-stone-400">Total Shift Pay</Text>
+                  <Text className="text-lg font-black text-stone-900">
+                    ₱{Number(rec.total_day_pay || 0).toFixed(2)}
                   </Text>
                 </View>
 
@@ -173,10 +173,10 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
                     setSelectedRecord(rec);
                     setAddonPayInput(rec.addon_pay.toString());
                   }}
-                  className="flex-row items-center rounded-xl bg-stone-100 px-3 py-2 active:bg-stone-200"
+                  className="min-h-[48px] px-4 flex-row items-center rounded-xl bg-stone-100 active:bg-stone-200"
                 >
-                  <Award size={14} color="#800020" />
-                  <Text className="ml-1.5 text-xs font-bold text-[#800020]">Adjust Bonus</Text>
+                  <Award size={18} color="#800020" />
+                  <Text className="ml-2 text-base font-bold text-[#800020]">Adjust Bonus</Text>
                 </Pressable>
               </View>
             </View>
@@ -185,45 +185,62 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
       </View>
 
       {/* Bonus Modal */}
-      {selectedRecord && (
-        <View className="absolute inset-0 items-center justify-center bg-black/50 p-6 z-50">
+      <Modal
+        visible={!!selectedRecord}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedRecord(null)}
+      >
+        <View className="flex-1 items-center justify-center bg-black/50 p-6">
           <View className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <Text className="text-xl font-bold text-stone-900">
-              Shift Bonus: {selectedRecord.user?.display_name}
-            </Text>
-            <Text className="mt-1 text-sm text-stone-500">
-              Base Daily Rate: ₱{selectedRecord.base_daily_pay.toFixed(2)}
-            </Text>
+            <View className="flex-row items-center justify-between border-b border-stone-100 pb-3 mb-2">
+              <View className="flex-1 pr-3">
+                <Text className="text-xl font-bold text-stone-900">
+                  Shift Bonus: {selectedRecord?.user?.display_name}
+                </Text>
+                <Text className="mt-1 text-base text-stone-500">
+                  Base Daily Rate: ₱{Number(selectedRecord?.base_daily_pay || 0).toFixed(2)}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => setSelectedRecord(null)}
+                className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-100"
+              >
+                <X size={22} color="#57534e" />
+              </Pressable>
+            </View>
 
             <View className="mt-4">
-              <Text className="text-sm font-medium text-stone-700">Discretionary Add-on (₱):</Text>
+              <Text className="text-base font-medium text-stone-700">
+                Discretionary Add-on (₱):
+              </Text>
               <TextInput
                 value={addonPayInput}
                 onChangeText={setAddonPayInput}
                 keyboardType="numeric"
                 placeholder="e.g. 20.00"
-                className="mt-1 rounded-xl border border-stone-300 p-3 text-base"
+                className="mt-1 min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
               />
             </View>
 
             <View className="mt-6 flex-row justify-end space-x-3">
               <Pressable
                 onPress={() => setSelectedRecord(null)}
-                className="rounded-xl bg-stone-100 px-4 py-2 active:bg-stone-200"
+                className="min-h-[48px] px-5 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
               >
-                <Text className="text-sm font-semibold text-stone-700">Cancel</Text>
+                <Text className="text-base font-semibold text-stone-700">Cancel</Text>
               </Pressable>
 
               <Pressable
                 onPress={handleUpdateAddon}
-                className="rounded-xl bg-[#800020] px-5 py-2 active:opacity-90"
+                className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
               >
-                <Text className="text-sm font-bold text-white">Save Bonus</Text>
+                <Text className="text-base font-bold text-white">Save Bonus</Text>
               </Pressable>
             </View>
           </View>
         </View>
-      )}
+      </Modal>
     </ScrollView>
   );
 };

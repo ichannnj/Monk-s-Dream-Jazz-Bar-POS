@@ -1,5 +1,14 @@
 export type AdminRoute =
-  'dashboard' | 'stations' | 'chats' | 'menu' | 'inventory' | 'staff' | 'sales' | 'attendance';
+  | 'dashboard'
+  | 'stations'
+  | 'chats'
+  | 'menu'
+  | 'inventory'
+  | 'staff'
+  | 'sales'
+  | 'attendance'
+  | 'tables'
+  | 'settings';
 
 export interface BestSellerItem {
   id: string;

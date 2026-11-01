@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS public.chat_conversations (
 
 ALTER TABLE public.chat_conversations ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow POS operations for chat_conversations" ON public.chat_conversations;
 CREATE POLICY "Allow POS operations for chat_conversations"
   ON public.chat_conversations
   FOR ALL
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS public.chat_participants (
 
 ALTER TABLE public.chat_participants ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow POS operations for chat_participants" ON public.chat_participants;
 CREATE POLICY "Allow POS operations for chat_participants"
   ON public.chat_participants
   FOR ALL
@@ -67,6 +69,7 @@ CREATE TABLE IF NOT EXISTS public.chat_messages (
 
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow POS operations for chat_messages" ON public.chat_messages;
 CREATE POLICY "Allow POS operations for chat_messages"
   ON public.chat_messages
   FOR ALL

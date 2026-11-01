@@ -9,7 +9,7 @@ import {
   type ProductAdmin,
   type SalesAnalyticsOverview,
 } from '../data/admin.api';
-import { adminTelemetryService } from '../data/adminTelemetry';
+import { adminTelemetryService, type ComparisonPeriod } from '../data/adminTelemetry';
 import { AdminSidebar } from './components/AdminSidebar';
 import { AdminHeader } from './components/AdminHeader';
 import { AdminFloatingChat } from './components/AdminFloatingChat';
@@ -19,12 +19,15 @@ import { AdminRecipesView } from './views/AdminRecipesView';
 import { AdminStaffView } from './views/AdminStaffView';
 import { AdminStationsView } from './views/AdminStationsView';
 import { AdminTransactionsView } from './views/AdminTransactionsView';
+import { AdminSettingsView } from './views/AdminSettingsView';
+import { AdminTableLayoutView } from './views/AdminTableLayoutView';
 
 export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> = ({
   onSwitchToFloor,
 }) => {
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>('dashboard');
   const [operatingMode, setOperatingMode] = useState<'CAFE' | 'EVENT'>('CAFE');
+  const [comparisonPeriod, setComparisonPeriod] = useState<ComparisonPeriod>('last_week');
   const [isLoading, setIsLoading] = useState(true);
 
   // Telemetry & back-office data state
@@ -33,23 +36,42 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   const [products, setProducts] = useState<ProductAdmin[]>([]);
   const [analytics, setAnalytics] = useState<SalesAnalyticsOverview | null>(null);
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (period?: ComparisonPeriod) => {
     setIsLoading(true);
+    const activePeriod = period ?? comparisonPeriod;
     try {
-      const [settings, inv, prod, anal, telem] = await Promise.all([
+      const [settingsRes, invRes, prodRes, analRes, telemRes] = await Promise.allSettled([
         adminApi.getVenueSettings(),
         adminApi.getInventoryItems(),
         adminApi.getProductsWithBOM(),
         adminApi.getSalesOverview(),
-        adminTelemetryService.fetchDashboardTelemetry(),
+        adminTelemetryService.fetchDashboardTelemetry(activePeriod),
       ]);
-      setOperatingMode(settings.operating_mode);
-      setInventory(inv);
-      setProducts(prod);
-      setAnalytics(anal);
-      setTelemetry(telem);
-    } catch {
-      toast.error('Failed to load administrative telemetry suite', { title: 'Admin Error' });
+
+      if (settingsRes.status === 'fulfilled') {
+        setOperatingMode(settingsRes.value.operating_mode);
+      }
+      if (invRes.status === 'fulfilled') {
+        setInventory(invRes.value);
+      } else {
+        console.warn('[AdminBackOfficeScreen] Failed to load inventory:', invRes.reason);
+      }
+      if (prodRes.status === 'fulfilled') {
+        setProducts(prodRes.value);
+      } else {
+        console.warn('[AdminBackOfficeScreen] Failed to load products:', prodRes.reason);
+      }
+      if (analRes.status === 'fulfilled') {
+        setAnalytics(analRes.value);
+      }
+      if (telemRes.status === 'fulfilled') {
+        setTelemetry(telemRes.value);
+      } else {
+        console.warn('[AdminBackOfficeScreen] Failed to load telemetry:', telemRes.reason);
+      }
+    } catch (err) {
+      console.error('[AdminBackOfficeScreen] Unexpected error in loadData:', err);
+      toast.error('Failed to refresh administrative data', { title: 'Admin Notice' });
     } finally {
       setIsLoading(false);
     }
@@ -76,7 +98,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   };
 
   const renderActiveView = () => {
-    if (isLoading && !telemetry) {
+    if (isLoading && !telemetry && currentRoute === 'dashboard') {
       return (
         <View className="flex-1 items-center justify-center bg-[#fcf9f9]">
           <ActivityIndicator size="large" color="#800020" />
@@ -92,11 +114,23 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         return telemetry ? (
           <AdminDashboardView
             telemetry={telemetry}
-            onRefresh={loadData}
+            onRefresh={() => loadData(comparisonPeriod)}
             onNavigateRoute={setCurrentRoute}
             isLoading={isLoading}
+            comparisonPeriod={comparisonPeriod}
+            onChangeComparisonPeriod={(period) => {
+              setComparisonPeriod(period);
+              loadData(period);
+            }}
           />
-        ) : null;
+        ) : (
+          <View className="flex-1 items-center justify-center bg-[#fcf9f9]">
+            <ActivityIndicator size="large" color="#800020" />
+            <Text className="mt-4 text-base font-medium text-stone-600">
+              Initializing live analytics...
+            </Text>
+          </View>
+        );
       case 'inventory':
         return <AdminInventoryView inventory={inventory} onRefresh={loadData} />;
       case 'menu':
@@ -108,6 +142,10 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         return <AdminStationsView />;
       case 'sales':
         return <AdminTransactionsView analytics={analytics} onRefresh={loadData} />;
+      case 'tables':
+        return <AdminTableLayoutView />;
+      case 'settings':
+        return <AdminSettingsView onRefresh={loadData} />;
       case 'chats':
         return (
           <View className="flex-1">

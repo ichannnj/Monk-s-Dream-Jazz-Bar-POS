@@ -59,12 +59,17 @@ Item preparation destination is determined solely by product category, **never**
 - **Split Billing by Customer Name:**  
   Tables support multiple independent customer tabs (e.g., Table 4 $\rightarrow$ `Tab: Alice`, `Tab: Bob`). Guests can transfer or settle their own tabs independently.
 
-### 5. Inventory Depletion & Recipe BOM Engine
+### 5. Inventory Depletion, Supply Chain & Recipe BOM Engine
 
 - **Trigger Point:** Depletion occurs at **Order Dispatch** (when staff taps "Send Order").
-- **Cancellation Restoral:** If an order item is cancelled before preparation starts, depleted stock is automatically restored to the active inventory ledger.
+- **Cancellation Restoral:** If an order item is cancelled before preparation starts, depleted stock is automatically restored to the active inventory ledger (`CANCEL_RESTORE`).
 - **Auto-86 Safeguard:** POS menu items automatically grey out when required raw ingredient stocks breach critical minimum thresholds.
-- **Recipe BOM Units:** Precise measurements (`g`, `ml`, `pcs`) defined per menu item in `recipe_items`.
+- **Recipe BOM Units:** Precise measurements (`g`, `ml`, `pcs`, `shots`) defined per menu item in `product_ingredients` with conversion factors to stocking units.
+- **Hierarchical Modifier Groups:** Reusable and product-level modifier groups enforce `min_selections`, `max_selections`, and `is_required` constraints. Modifiers declare explicit inventory deltas (e.g., Oat Milk Swap deducts +200ml oat milk).
+- **Dual Packaging Depletion:** Packaging goods (`PACKAGING` inventory category) can be bound to item recipes or automatically decremented on Takeout/Online Delivery orders.
+- **Suppliers & Moving Average Cost (MAC):** Shipments update item stock and recalculate unit cost via the Weighted Moving Average Cost formula.
+- **Physical Stocktake & Variance Auditing:** Cycle counts record Expected vs Actual quantities, calculate financial loss, and post atomic adjustments (`STOCKTAKE_ADJUST`) to the immutable ledger.
+- **Waste & Spillage Logging:** Losses due to drops, expired ingredients, prep errors, or customer returns are logged to overhead expenses with standard reason codes.
 
 ### 6. Two-Print Thermal Printing Workflow
 
