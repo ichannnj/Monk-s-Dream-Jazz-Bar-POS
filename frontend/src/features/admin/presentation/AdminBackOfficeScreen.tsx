@@ -139,7 +139,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       case 'attendance':
         return <AdminStaffView onRefresh={loadData} />;
       case 'stations':
-        return <AdminStationsView />;
+        return <AdminStationsView telemetry={telemetry} onRefresh={() => loadData(timeframe)} />;
       case 'sales':
         return <AdminTransactionsView analytics={analytics} onRefresh={loadData} />;
       case 'tables':

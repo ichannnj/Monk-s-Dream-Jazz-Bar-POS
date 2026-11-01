@@ -26,6 +26,7 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
     // 1. Dine-in tables (Grouped by Sub-Order Round)
     tables.forEach((table) => {
       (table.tabs || []).forEach((tab) => {
+        if (tab.status === 'billed' || (tab as any).status === 'closed') return;
         const stationItems = (tab.items || []).filter(
           (item) => item.stationTarget === stationTarget
         );

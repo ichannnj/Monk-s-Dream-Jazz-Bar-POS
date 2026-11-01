@@ -92,6 +92,16 @@ To ensure token efficiency and prevent maintenance degradation:
 
 ---
 
+### 8. Zero-Contradiction SSOT Architecture & Atomic Settlement Cascade
+
+To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboard never show contradictory states or ghost tickets:
+
+- **Single Source of Truth (SSOT):** PostgreSQL is the authoritative record. Active tickets across KDS boards and Admin Telemetry strictly require `tabs.status = 'OPEN'` and `orders.status IN ('OPEN', 'IN_PREPARATION')`.
+- **Atomic Settlement Cascade:** In PostgreSQL RPC `settle_tab_and_record_payment`, settling a customer tab atomically sets `tabs.status = 'BILLED'`, cascades `orders.status = 'COMPLETED'`, and sets un-served `order_items.status = 'SERVED'`.
+- **Station Telemetry Metrics:** When a station's active preparation queue is 0, speed strictly displays `'Idle'` instead of synthetic placeholder strings. Station ticket times are dynamically computed from elapsed timestamps (`orders.created_at`).
+
+---
+
 ## 🗺️ System Topology
 
 ```

@@ -218,7 +218,8 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
           )
         `
         )
-        .in('order_type', ['TAKEOUT', 'ONLINE_DELIVERY']);
+        .in('order_type', ['TAKEOUT', 'ONLINE_DELIVERY'])
+        .eq('status', 'OPEN');
 
       const dbTakeout: TakeoutOrder[] = [];
       const dbOnline: OnlineDeliveryOrder[] = [];

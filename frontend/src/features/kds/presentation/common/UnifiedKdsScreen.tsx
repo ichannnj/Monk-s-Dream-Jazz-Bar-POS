@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MessageSquare } from 'lucide-react-native';
+import { supabase } from '../../../shared/infrastructure/supabase';
 import { useAuthStore } from '../../../auth/application/useAuthStore';
 import { useOrderStore } from '../../../orders/application/useOrderStore';
 import { toast } from '../../../shared/toast/useToastStore';
@@ -81,6 +82,40 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
 
   // Audio chimes & arrival notifications
   useKdsArrivals({ newTickets, audioChimes, stationName });
+
+  // Heartbeat tracking to report real station online status to PostgreSQL
+  useEffect(() => {
+    const stationKey =
+      stationTarget === 'kitchen'
+        ? 'kitchen'
+        : (currentUser?.role || '').toLowerCase().includes('cafe') ||
+            (currentUser?.role || '').toLowerCase().includes('barista')
+          ? 'cafe'
+          : 'bar';
+
+    const sendHeartbeat = async (online: boolean) => {
+      try {
+        await (supabase.rpc as any)('report_station_heartbeat', {
+          p_station_key: stationKey,
+          p_user_id: (currentUser?.id || null) as any,
+          p_is_online: online,
+        });
+      } catch (e) {
+        console.warn('Failed to report station heartbeat:', e);
+      }
+    };
+
+    if (isOnline) {
+      sendHeartbeat(true);
+      const timer = setInterval(() => sendHeartbeat(true), 60000);
+      return () => {
+        clearInterval(timer);
+        sendHeartbeat(false);
+      };
+    } else {
+      sendHeartbeat(false);
+    }
+  }, [stationTarget, currentUser?.role, currentUser?.id, isOnline]);
 
   const unreadAlertCount = alerts.filter((a) => !a.isRead).length;
   const unreadChatCount = useChatStore((state) =>

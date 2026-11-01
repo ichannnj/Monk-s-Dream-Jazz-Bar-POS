@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Text, StyleSheet } from 'react-native';
+import { supabase } from '../../../../shared/infrastructure/supabase';
 import { useAuthStore } from '../../../../auth/application/useAuthStore';
 import { toast } from '../../../../shared/toast/useToastStore';
 import { Sidebar, NavTabId } from '../../../../shared/navigation/Sidebar';
@@ -13,9 +14,31 @@ import { useRunnerTickets } from '../hooks/useRunnerTickets';
 import { RunnerTicketCard } from '../components/RunnerTicketCard';
 
 export const FohRunnerScreen: React.FC = () => {
-  const { logout } = useAuthStore();
+  const { currentUser, logout } = useAuthStore();
   const [activeTab, setActiveTab] = useState<NavTabId>('board');
   const [confirmHandoff, setConfirmHandoff] = useState<ConfirmHandoffState | null>(null);
+
+  // Heartbeat tracking to report runner station online status to PostgreSQL
+  useEffect(() => {
+    const sendHeartbeat = async (online: boolean) => {
+      try {
+        await (supabase.rpc as any)('report_station_heartbeat', {
+          p_station_key: 'runner',
+          p_user_id: (currentUser?.id || null) as any,
+          p_is_online: online,
+        });
+      } catch (e) {
+        console.warn('Failed to report runner heartbeat:', e);
+      }
+    };
+
+    sendHeartbeat(true);
+    const timer = setInterval(() => sendHeartbeat(true), 60000);
+    return () => {
+      clearInterval(timer);
+      sendHeartbeat(false);
+    };
+  }, [currentUser?.id]);
 
   const { runnerTickets, fullyReadyCount, unreadAlertCount, executeHandoff } = useRunnerTickets();
   const unreadChatCount = useChatStore((state) =>

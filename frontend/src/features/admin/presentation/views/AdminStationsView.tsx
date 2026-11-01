@@ -1,66 +1,121 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { Wine, Coffee, UtensilsCrossed, PackageCheck } from 'lucide-react-native';
+import type { DashboardTelemetry } from '../../domain/admin.types';
 
 interface AdminStationsViewProps {
-  onLaunchStation?: (station: string) => void;
+  telemetry?: DashboardTelemetry | null;
+  onRefresh?: () => void;
 }
 
-export const AdminStationsView: React.FC<AdminStationsViewProps> = () => {
-  const stations = [
-    {
-      id: 'bar',
-      name: 'Bar Station KDS',
+export const AdminStationsView: React.FC<AdminStationsViewProps> = ({ telemetry }) => {
+  const stationMeta: Record<
+    string,
+    { role: string; icon: any; color: string; defaultTarget: string }
+  > = {
+    bar: {
       role: 'Bartender & Cocktail Mixology',
       icon: Wine,
       color: 'bg-amber-600',
-      activeTickets: 6,
-      avgTime: '06:40',
-      targetTime: '10:00',
-      status: 'Online',
-      lateCount: 1,
-      stockouts: ['House Bourbon'],
+      defaultTarget: '10:00',
     },
-    {
-      id: 'cafe',
-      name: 'Cafe & Barista KDS',
+    cafe: {
       role: 'Espresso Bar & Teas',
       icon: Coffee,
       color: 'bg-stone-700',
-      activeTickets: 7,
-      avgTime: '05:55',
-      targetTime: '10:00',
-      status: 'Online',
-      lateCount: 0,
-      stockouts: ['Oat Milk'],
+      defaultTarget: '06:00',
     },
-    {
-      id: 'kitchen',
-      name: 'Kitchen Hot Food KDS',
+    kitchen: {
       role: 'Main Line Chef & Appetizers',
       icon: UtensilsCrossed,
       color: 'bg-rose-700',
-      activeTickets: 4,
-      avgTime: '12:15',
-      targetTime: '15:00',
-      status: 'Online',
-      lateCount: 0,
-      stockouts: [],
+      defaultTarget: '15:00',
     },
-    {
-      id: 'runner',
-      name: 'FOH Runner Expediter',
+    runner: {
       role: 'Tablet Buzzout & Tray Dispatch',
       icon: PackageCheck,
       color: 'bg-emerald-700',
-      activeTickets: 2,
-      avgTime: '02:10',
-      targetTime: '03:00',
-      status: 'Online',
-      lateCount: 0,
-      stockouts: [],
+      defaultTarget: '03:00',
     },
-  ];
+  };
+
+  const stationData =
+    (telemetry?.stations || []).length > 0
+      ? telemetry!.stations.map((st) => {
+          const meta = stationMeta[st.stationKey] || {
+            role: 'Station Workstation',
+            icon: UtensilsCrossed,
+            color: 'bg-stone-600',
+            defaultTarget: '10:00',
+          };
+          return {
+            id: st.stationKey,
+            name: st.name,
+            role: meta.role,
+            icon: meta.icon,
+            color: meta.color,
+            activeTickets: st.activeTickets,
+            avgTime: st.avgTicketTime,
+            targetTime: st.targetTicketTime || meta.defaultTarget,
+            isOnline: st.isOnline,
+            lateCount: st.lateTickets,
+            stockoutCount: st.stockoutCount,
+          };
+        })
+      : [
+          {
+            id: 'bar',
+            name: 'Bar Counter',
+            role: 'Bartender & Cocktail Mixology',
+            icon: Wine,
+            color: 'bg-amber-600',
+            activeTickets: 0,
+            avgTime: 'Idle',
+            targetTime: '10:00',
+            isOnline: false,
+            lateCount: 0,
+            stockoutCount: 0,
+          },
+          {
+            id: 'cafe',
+            name: 'Barista Espresso',
+            role: 'Espresso Bar & Teas',
+            icon: Coffee,
+            color: 'bg-stone-700',
+            activeTickets: 0,
+            avgTime: 'Idle',
+            targetTime: '06:00',
+            isOnline: false,
+            lateCount: 0,
+            stockoutCount: 0,
+          },
+          {
+            id: 'kitchen',
+            name: 'Kitchen Hot Line',
+            role: 'Main Line Chef & Appetizers',
+            icon: UtensilsCrossed,
+            color: 'bg-rose-700',
+            activeTickets: 0,
+            avgTime: 'Idle',
+            targetTime: '15:00',
+            isOnline: false,
+            lateCount: 0,
+            stockoutCount: 0,
+          },
+          {
+            id: 'runner',
+            name: 'FOH Expediter',
+            role: 'Tablet Buzzout & Tray Dispatch',
+            icon: PackageCheck,
+            color: 'bg-emerald-700',
+            activeTickets: 0,
+            avgTime: 'Idle',
+            targetTime: '03:00',
+            isOnline: false,
+            lateCount: 0,
+            stockoutCount: 0,
+          },
+        ];
 
   return (
     <ScrollView className="flex-1 bg-[#fcf9f9] p-8" showsVerticalScrollIndicator={false}>
@@ -74,7 +129,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = () => {
       </View>
 
       <View className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {stations.map((st) => {
+        {stationData.map((st) => {
           const IconComp = st.icon;
           return (
             <View
@@ -92,10 +147,17 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = () => {
                   </View>
                 </View>
 
-                <View className="flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5">
-                  <View className="h-2.5 w-2.5 rounded-full bg-emerald-500 mr-2" />
-                  <Text className="text-base font-semibold text-emerald-700">{st.status}</Text>
-                </View>
+                {st.isOnline ? (
+                  <View className="flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5">
+                    <View className="h-2.5 w-2.5 rounded-full bg-emerald-500 mr-2" />
+                    <Text className="text-base font-semibold text-emerald-700">Online</Text>
+                  </View>
+                ) : (
+                  <View className="flex-row items-center rounded-full bg-stone-100 border border-stone-300 px-3 py-1.5">
+                    <View className="h-2.5 w-2.5 rounded-full bg-stone-400 mr-2" />
+                    <Text className="text-base font-semibold text-stone-600">Offline</Text>
+                  </View>
+                )}
               </View>
 
               <View className="flex-row items-center justify-between rounded-xl bg-stone-50 p-4 mb-4">
@@ -126,16 +188,16 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = () => {
                 </View>
               </View>
 
-              {st.stockouts.length > 0 ? (
+              {st.stockoutCount > 0 ? (
                 <View className="flex-row items-center rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5">
                   <Text className="text-base font-semibold text-amber-900">
-                    Out-of-Stock Items: {st.stockouts.join(', ')}
+                    Low stock or out-of-stock items: {st.stockoutCount}
                   </Text>
                 </View>
               ) : (
                 <View className="flex-row items-center rounded-xl bg-emerald-50 border border-emerald-100 px-3.5 py-2.5">
                   <Text className="text-base font-medium text-emerald-800">
-                    All station ingredients in stock
+                    All station ingredients at healthy levels
                   </Text>
                 </View>
               )}

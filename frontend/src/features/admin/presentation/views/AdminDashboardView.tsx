@@ -573,10 +573,17 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     <View className="flex-row items-center justify-between mb-2.5">
                       <View className="flex-row items-center space-x-2">
                         <Text className="text-lg font-bold text-stone-900">{station.name}</Text>
-                        <View className="ml-2 flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
-                          <View className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
-                          <Text className="text-base font-bold text-emerald-700">Online</Text>
-                        </View>
+                        {station.isOnline ? (
+                          <View className="ml-2 flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
+                            <View className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
+                            <Text className="text-base font-bold text-emerald-700">Online</Text>
+                          </View>
+                        ) : (
+                          <View className="ml-2 flex-row items-center rounded-full bg-stone-100 border border-stone-300 px-2.5 py-0.5">
+                            <View className="h-2 w-2 rounded-full bg-stone-400 mr-1.5" />
+                            <Text className="text-base font-bold text-stone-600">Offline</Text>
+                          </View>
+                        )}
                       </View>
                       <Text className="text-base text-stone-500">
                         Target {station.targetTicketTime}

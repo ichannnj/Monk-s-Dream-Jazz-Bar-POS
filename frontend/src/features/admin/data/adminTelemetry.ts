@@ -340,37 +340,130 @@ export const adminTelemetryService = {
         });
       }
 
-      // 5. STATIONS TELEMETRY (Query live active orders from DB)
+      // 5. STATIONS TELEMETRY (Query live active orders strictly from open tabs in DB)
+      const formatDuration = (totalSec: number): string => {
+        const m = Math.floor(totalSec / 60);
+        const s = Math.floor(totalSec % 60);
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      };
+
       const { data: openOrdersData } = await (supabase.from as any)('orders')
-        .select('id, status, created_at, order_items(status, station_target)')
-        .eq('status', 'OPEN');
+        .select(
+          `
+          id, status, created_at,
+          tabs!inner(id, status, customer_name),
+          order_items(
+            id, status, station_target, created_at,
+            products(name, category_id, categories(name))
+          )
+        `
+        )
+        .in('status', ['OPEN', 'IN_PREPARATION'])
+        .eq('tabs.status', 'OPEN');
 
       const openOrders = openOrdersData || [];
+      const nowMs = Date.now();
+
       let barTickets = 0;
+      let barElapsedSum = 0;
+      let barLate = 0;
+
       let cafeTickets = 0;
+      let cafeElapsedSum = 0;
+      let cafeLate = 0;
+
       let kitchenTickets = 0;
+      let kitchenElapsedSum = 0;
+      let kitchenLate = 0;
+
       let runnerTickets = 0;
+      let runnerElapsedSum = 0;
+      let runnerLate = 0;
 
       for (const ord of openOrders) {
+        const orderTime = new Date(ord.created_at || nowMs).getTime();
+        const elapsedSec = Math.max(0, Math.floor((nowMs - orderTime) / 1000));
         const items = ord.order_items || [];
-        if (items.some((i: any) => i.station_target === 'bar' && i.status !== 'SERVED'))
+        const activeItems = items.filter(
+          (i: any) => i.status !== 'SERVED' && i.status !== 'CANCELLED'
+        );
+
+        const hasBar = activeItems.some((i: any) => {
+          const cat = (i.products?.categories?.name || '').toLowerCase();
+          const target = i.station_target || '';
+          return (
+            target === 'bar' &&
+            !cat.includes('coffee') &&
+            !cat.includes('espresso') &&
+            !cat.includes('tea')
+          );
+        });
+
+        const hasCafe = activeItems.some((i: any) => {
+          const cat = (i.products?.categories?.name || '').toLowerCase();
+          const target = i.station_target || '';
+          return (
+            target === 'cafe' ||
+            (target === 'bar' &&
+              (cat.includes('coffee') || cat.includes('espresso') || cat.includes('tea')))
+          );
+        });
+
+        const hasKitchen = activeItems.some((i: any) => i.station_target === 'kitchen');
+        const hasRunner = activeItems.some((i: any) => i.status === 'READY');
+
+        if (hasBar) {
           barTickets++;
-        if (items.some((i: any) => i.station_target === 'cafe' && i.status !== 'SERVED'))
+          barElapsedSum += elapsedSec;
+          if (elapsedSec > 600) barLate++; // Target 10:00
+        }
+        if (hasCafe) {
           cafeTickets++;
-        if (items.some((i: any) => i.station_target === 'kitchen' && i.status !== 'SERVED'))
+          cafeElapsedSum += elapsedSec;
+          if (elapsedSec > 360) cafeLate++; // Target 06:00
+        }
+        if (hasKitchen) {
           kitchenTickets++;
-        if (items.some((i: any) => i.status === 'PREPARED')) runnerTickets++;
+          kitchenElapsedSum += elapsedSec;
+          if (elapsedSec > 900) kitchenLate++; // Target 15:00
+        }
+        if (hasRunner) {
+          runnerTickets++;
+          runnerElapsedSum += elapsedSec;
+          if (elapsedSec > 180) runnerLate++; // Target 03:00
+        }
       }
+
+      // 5b. Query live station online/heartbeat status from DB
+      const { data: stationStatusRows } = await (supabase.from as any)('station_status').select(
+        '*'
+      );
+      const statusMap = new Map<string, { is_online: boolean; last_heartbeat: string | null }>();
+      (stationStatusRows || []).forEach((r: any) => {
+        statusMap.set(r.station_key, {
+          is_online: Boolean(r.is_online),
+          last_heartbeat: r.last_heartbeat || null,
+        });
+      });
+
+      const isStationReallyOnline = (stationKey: string): boolean => {
+        const info = statusMap.get(stationKey);
+        if (!info || !info.is_online) return false;
+        if (!info.last_heartbeat) return false;
+        // Require a live heartbeat within the last 5 minutes (300,000 ms)
+        const elapsed = nowMs - new Date(info.last_heartbeat).getTime();
+        return elapsed < 300000;
+      };
 
       const stations: StationTelemetry[] = [
         {
           stationKey: 'bar',
           name: 'Bar Counter',
-          isOnline: true,
+          isOnline: isStationReallyOnline('bar'),
           targetTicketTime: '10:00',
           activeTickets: barTickets,
-          avgTicketTime: '06:40',
-          lateTickets: 0,
+          avgTicketTime: barTickets > 0 ? formatDuration(barElapsedSum / barTickets) : 'Idle',
+          lateTickets: barLate,
           stockoutCount: lowStockItems.filter(
             (i) =>
               i.name.toLowerCase().includes('bourbon') ||
@@ -381,11 +474,11 @@ export const adminTelemetryService = {
         {
           stationKey: 'cafe',
           name: 'Barista Espresso',
-          isOnline: true,
+          isOnline: isStationReallyOnline('cafe'),
           targetTicketTime: '06:00',
           activeTickets: cafeTickets,
-          avgTicketTime: '04:15',
-          lateTickets: 0,
+          avgTicketTime: cafeTickets > 0 ? formatDuration(cafeElapsedSum / cafeTickets) : 'Idle',
+          lateTickets: cafeLate,
           stockoutCount: lowStockItems.filter(
             (i) =>
               i.name.toLowerCase().includes('milk') ||
@@ -396,11 +489,12 @@ export const adminTelemetryService = {
         {
           stationKey: 'kitchen',
           name: 'Kitchen Hot Line',
-          isOnline: true,
+          isOnline: isStationReallyOnline('kitchen'),
           targetTicketTime: '15:00',
           activeTickets: kitchenTickets,
-          avgTicketTime: '11:30',
-          lateTickets: 0,
+          avgTicketTime:
+            kitchenTickets > 0 ? formatDuration(kitchenElapsedSum / kitchenTickets) : 'Idle',
+          lateTickets: kitchenLate,
           stockoutCount: lowStockItems.filter(
             (i) =>
               i.name.toLowerCase().includes('pasta') ||
@@ -411,11 +505,12 @@ export const adminTelemetryService = {
         {
           stationKey: 'runner',
           name: 'FOH Expediter',
-          isOnline: true,
+          isOnline: isStationReallyOnline('runner'),
           targetTicketTime: '03:00',
           activeTickets: runnerTickets,
-          avgTicketTime: '02:10',
-          lateTickets: 0,
+          avgTicketTime:
+            runnerTickets > 0 ? formatDuration(runnerElapsedSum / runnerTickets) : 'Idle',
+          lateTickets: runnerLate,
           stockoutCount: 0,
         },
       ];
