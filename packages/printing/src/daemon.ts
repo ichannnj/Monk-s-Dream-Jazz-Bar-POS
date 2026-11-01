@@ -169,6 +169,18 @@ export class PrinterStationDaemon {
           break;
         }
 
+        case 'X_READING':
+        case 'Z_READING': {
+          console.log(`[PrinterStationDaemon] PRINT ${jobType} RECEIVED:`, rawData);
+          if (
+            'printReadingSlip' in this.printer &&
+            typeof (this.printer as any).printReadingSlip === 'function'
+          ) {
+            await (this.printer as any).printReadingSlip(rawData);
+          }
+          break;
+        }
+
         default:
           throw new Error(`Unsupported print job type: ${job.job_type}`);
       }

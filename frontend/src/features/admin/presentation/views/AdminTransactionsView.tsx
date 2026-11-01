@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import { BarChart3, Receipt } from 'lucide-react-native';
+import { BarChart3, Receipt, FileText } from 'lucide-react-native';
 import { ChecksHistoryView } from '@/features/check-history/presentation/ChecksHistoryView';
+import { AdminReadingsView } from './readings/AdminReadingsView';
 import type { SalesAnalyticsOverview } from '../../data/admin.api';
 
 interface AdminTransactionsViewProps {
@@ -10,7 +11,7 @@ interface AdminTransactionsViewProps {
 }
 
 export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ analytics }) => {
-  const [subTab, setSubTab] = useState<'analytics' | 'checks'>('analytics');
+  const [subTab, setSubTab] = useState<'analytics' | 'checks' | 'readings'>('analytics');
 
   return (
     <View className="flex-1 bg-[#fcf9f9]">
@@ -34,7 +35,7 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ an
 
         <Pressable
           onPress={() => setSubTab('checks')}
-          className={`min-h-[48px] flex-row items-center rounded-xl px-5 ${
+          className={`mr-4 min-h-[48px] flex-row items-center rounded-xl px-5 ${
             subTab === 'checks' ? 'bg-[#800020]' : 'bg-stone-100 active:bg-stone-200'
           }`}
         >
@@ -47,9 +48,29 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ an
             Customer Checks & Thermal Reprint
           </Text>
         </Pressable>
+
+        <Pressable
+          onPress={() => setSubTab('readings')}
+          className={`min-h-[48px] flex-row items-center rounded-xl px-5 ${
+            subTab === 'readings' ? 'bg-[#800020]' : 'bg-stone-100 active:bg-stone-200'
+          }`}
+        >
+          <FileText size={20} color={subTab === 'readings' ? '#ffffff' : '#44403c'} />
+          <Text
+            className={`ml-2 text-base font-bold ${
+              subTab === 'readings' ? 'text-white' : 'text-stone-700'
+            }`}
+          >
+            X & Z Shift Readings
+          </Text>
+        </Pressable>
       </View>
 
-      {subTab === 'checks' ? (
+      {subTab === 'readings' ? (
+        <View className="flex-1">
+          <AdminReadingsView />
+        </View>
+      ) : subTab === 'checks' ? (
         <View className="flex-1">
           <ChecksHistoryView />
         </View>

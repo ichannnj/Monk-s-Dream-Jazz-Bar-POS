@@ -77,6 +77,7 @@ Printing is handled via a dedicated Linux PC running ESC/POS USB drivers:
 
 1. **Order Dispatch Slip (Runner Chit):** Auto-prints upon tapping "Send Order" (checklist, customer name, destination table/tag) to clip to the serving tray.
 2. **Customer Payment Receipt:** Prints upon payment settlement (itemized breakdown, taxes, payment method).
+3. **X & Z Shift Readings:** Interim mid-shift non-destructive audit (X-Reading) and official end-of-shift cash drawer settlement (Z-Reading) in Admin Back-Office (`PIN: 9999`), supporting 80mm ESC/POS thermal printing, styled A4 PDF/document export, and CSV accounting downloads.
 
 ---
 
