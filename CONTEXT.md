@@ -77,7 +77,10 @@ Printing is handled via a dedicated Linux PC running ESC/POS USB drivers:
 
 1. **Order Dispatch Slip (Runner Chit):** Auto-prints upon tapping "Send Order" (checklist, customer name, destination table/tag) to clip to the serving tray.
 2. **Customer Payment Receipt:** Prints upon payment settlement (itemized breakdown, taxes, payment method).
-3. **X-Y-Z Shift Readings & Visual Analytics:** Interim mid-shift non-destructive audit (X-Reading), cashier shift handover with signatures (Y-Reading), and official end-of-day fiscal settlement (Z-Reading) in Admin Back-Office (`PIN: 9999`), supported by hourly pacing curves, payment tender mix bars, department revenue splits, cash drawer waterfalls, variance trend graphs, 80mm ESC/POS thermal printing, and A4/CSV downloads.
+3. **Sales & Transactions Executive Reporting Suite:**
+   - **Tab 1 (Financial Overview):** Real database analytics filtered by dynamic timeframe (Daily/Today, WTD, MTD, YTD, Specific Day) and fulfillment station (`ALL`, `CAFE_AREA`, `BAR_AREA`, `TAKEOUT_COUNTER`, `GRAB_FOOD`), powered by live `HourlySalesVelocityChart` (day-part revenue pacing & peak hour tracking), `PaymentTenderMixBar` (Cash, Card, Digital Wallet, Delivery mix), multi-channel revenue distribution, and 1-click executive Excel workbook generation (`exportFinancialOverviewToExcel`) & publication-grade A4 document printing.
+   - **Tab 2 (Checks & Reprints):** Live database audit trail (`checksApi.fetchSettledChecks`) joining `payments`, `tabs`, `tables`, and `order_items`, with channel filter pills (All, Dine-In, Takeout, Online Delivery), instant search query, itemized check inspector with full line-item tax/service charge breakdown, dual-mode reprint (ESC/POS thermal print queue + browser print/PDF receipt), and full checks register spreadsheet export (`exportChecksRegisterToExcel`).
+   - **Tab 3 (X-Y-Z Shift Readings):** Interim mid-shift non-destructive audit (X-Reading), cashier shift handover with denomination counter & staff signature blocks (Y-Reading), and official end-of-day fiscal settlement with sequential Z-number counter (Z-Reading) in Admin Back-Office (`PIN: 9999`), supported by drawer waterfall, variance trend graphs, searchable & till-filtered historical archives, 80mm ESC/POS thermal printing, and publication-ready A4 document layout.
 
 ---
 

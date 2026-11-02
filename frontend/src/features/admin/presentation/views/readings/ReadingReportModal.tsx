@@ -52,39 +52,44 @@ export const ReadingReportModal: React.FC<ReadingReportModalProps> = ({
       if (!styleEl) {
         styleEl = document.createElement('style');
         styleEl.id = printStyleId;
-        styleEl.innerHTML = `
-          @media print {
-            body * {
-              visibility: hidden !important;
-            }
-            #monks-reading-print-area, #monks-reading-print-area * {
-              visibility: visible !important;
-            }
-            #monks-reading-print-area {
-              position: absolute !important;
-              left: 0 !important;
-              top: 0 !important;
-              width: 100% !important;
-              max-width: 100% !important;
-              margin: 0 !important;
-              padding: 24px !important;
-              background: #ffffff !important;
-              box-shadow: none !important;
-              border: none !important;
-              color: #000000 !important;
-            }
-            .print-avoid-break {
-              page-break-inside: avoid !important;
-              break-inside: avoid !important;
-            }
-            @page {
-              size: A4 portrait;
-              margin: 15mm;
-            }
-          }
-        `;
         document.head.appendChild(styleEl);
       }
+      const targetId =
+        viewMode === 'thermal' ? 'monks-reading-thermal-area' : 'monks-reading-print-area';
+      const pageSize = viewMode === 'thermal' ? '80mm auto' : 'A4 portrait';
+      const targetWidth = viewMode === 'thermal' ? '80mm' : '100%';
+
+      styleEl.innerHTML = `
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #${targetId}, #${targetId} * {
+            visibility: visible !important;
+          }
+          #${targetId} {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: ${targetWidth} !important;
+            max-width: ${targetWidth} !important;
+            margin: 0 auto !important;
+            padding: ${viewMode === 'thermal' ? '12px' : '24px'} !important;
+            background: #ffffff !important;
+            box-shadow: none !important;
+            border: none !important;
+            color: #000000 !important;
+          }
+          .print-avoid-break {
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          @page {
+            size: ${pageSize};
+            margin: ${viewMode === 'thermal' ? '3mm' : '12mm'};
+          }
+        }
+      `;
       window.print();
     } else {
       toast.info('Printing is supported in web desktop view.');
@@ -543,7 +548,11 @@ Official POS Audit Document
               </View>
             ) : (
               /* 80mm Thermal Monospace View */
-              <View className="bg-white rounded-2xl border border-stone-300 p-6 shadow-md max-w-sm mx-auto w-full font-mono">
+              <View
+                nativeID="monks-reading-thermal-area"
+                {...({ id: 'monks-reading-thermal-area' } as any)}
+                className="bg-white rounded-2xl border border-stone-300 p-6 shadow-md max-w-sm mx-auto w-full font-mono"
+              >
                 <View className="items-center border-b border-dashed border-stone-400 pb-4 mb-4">
                   <Text className="text-base font-black tracking-widest text-center">
                     MONK'S DREAM JAZZ BAR

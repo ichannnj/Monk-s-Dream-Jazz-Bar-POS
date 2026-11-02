@@ -1,5 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, Platform, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  Platform,
+  ActivityIndicator,
+  TextInput,
+} from 'react-native';
 import {
   FileText,
   Lock,
@@ -12,6 +20,8 @@ import {
   ArrowRightLeft,
   Calendar,
   History,
+  Search,
+  X,
 } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
@@ -43,6 +53,12 @@ export const AdminReadingsView: React.FC = () => {
   const [historyTab, setHistoryTab] = useState<'z_readings' | 'y_handovers'>('z_readings');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Archive search and till filter
+  const [archiveSearch, setArchiveSearch] = useState('');
+  const [archiveDrawer, setArchiveDrawer] = useState<'all' | 'consolidated' | 'main' | 'bar'>(
+    'all'
+  );
 
   // Modals state
   const [reportModalVisible, setReportModalVisible] = useState(false);
@@ -189,16 +205,49 @@ export const AdminReadingsView: React.FC = () => {
     }
   };
 
+  const filteredZHistory = useMemo(() => {
+    return zHistory.filter((rec) => {
+      if (archiveDrawer !== 'all' && rec.drawer_target !== archiveDrawer) return false;
+      if (archiveSearch.trim()) {
+        const q = archiveSearch.toLowerCase().trim();
+        const matchNum =
+          `z-${rec.z_number}`.toLowerCase().includes(q) || String(rec.z_number).includes(q);
+        const matchStaff = (rec.performed_by_name || '').toLowerCase().includes(q);
+        const matchNotes = (rec.notes || '').toLowerCase().includes(q);
+        const matchDate = new Date(rec.closed_at).toLocaleDateString().includes(q);
+        return matchNum || matchStaff || matchNotes || matchDate;
+      }
+      return true;
+    });
+  }, [zHistory, archiveDrawer, archiveSearch]);
+
+  const filteredYHistory = useMemo(() => {
+    return yHistory.filter((rec) => {
+      if (archiveDrawer !== 'all' && rec.drawer_target !== archiveDrawer) return false;
+      if (archiveSearch.trim()) {
+        const q = archiveSearch.toLowerCase().trim();
+        const matchNum =
+          `y-${rec.y_number}`.toLowerCase().includes(q) || String(rec.y_number).includes(q);
+        const matchOut = (rec.outgoing_staff_name || '').toLowerCase().includes(q);
+        const matchIn = (rec.incoming_staff_name || '').toLowerCase().includes(q);
+        const matchNotes = (rec.notes || '').toLowerCase().includes(q);
+        const matchDate = new Date(rec.closed_at).toLocaleDateString().includes(q);
+        return matchNum || matchOut || matchIn || matchNotes || matchDate;
+      }
+      return true;
+    });
+  }, [yHistory, archiveDrawer, archiveSearch]);
+
   const handleExportArchive = () => {
     try {
       if (historyTab === 'z_readings') {
-        exportReadingsArchiveToExcel('Z_READING', zHistory);
-        toast.success(`Exported ${zHistory.length} Z-Readings to Excel`, {
+        exportReadingsArchiveToExcel('Z_READING', filteredZHistory);
+        toast.success(`Exported ${filteredZHistory.length} Z-Readings to Excel`, {
           title: 'Archive Exported',
         });
       } else {
-        exportReadingsArchiveToExcel('Y_READING', yHistory);
-        toast.success(`Exported ${yHistory.length} Y-Handovers to Excel`, {
+        exportReadingsArchiveToExcel('Y_READING', filteredYHistory);
+        toast.success(`Exported ${filteredYHistory.length} Y-Handovers to Excel`, {
           title: 'Archive Exported',
         });
       }
@@ -405,7 +454,7 @@ export const AdminReadingsView: React.FC = () => {
         <ShiftVarianceTrendChart data={varianceTrend} />
       </View>
 
-      {/* Historical Readings Archive Switcher */}
+      {/* Historical Readings Archive Switcher & Filter Toolbar */}
       <View className="flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full sm:w-auto">
           <View className="flex-row bg-stone-200/80 p-1 rounded-2xl">
@@ -421,7 +470,7 @@ export const AdminReadingsView: React.FC = () => {
                   historyTab === 'z_readings' ? 'text-stone-900' : 'text-stone-600'
                 }`}
               >
-                Daily Z-Readings Archive ({zHistory.length})
+                Daily Z-Readings Archive ({filteredZHistory.length})
               </Text>
             </Pressable>
 
@@ -440,7 +489,7 @@ export const AdminReadingsView: React.FC = () => {
                   historyTab === 'y_handovers' ? 'text-stone-900' : 'text-stone-600'
                 }`}
               >
-                Shift Handover Y-Reports ({yHistory.length})
+                Shift Handover Y-Reports ({filteredYHistory.length})
               </Text>
             </Pressable>
           </View>
@@ -458,10 +507,60 @@ export const AdminReadingsView: React.FC = () => {
         </Pressable>
       </View>
 
+      {/* Archive Search & Till Filter Strip */}
+      <View className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4 bg-white p-3 rounded-2xl border border-stone-200/80">
+        <View className="flex-row items-center bg-stone-100 border border-stone-300 rounded-xl px-3 py-2 flex-1 min-h-[44px]">
+          <Search size={16} color="#78716c" />
+          <TextInput
+            className="flex-1 ml-2 text-base text-stone-900"
+            placeholder="Search reading #, staff, notes..."
+            placeholderTextColor="#a8a29e"
+            value={archiveSearch}
+            onChangeText={setArchiveSearch}
+          />
+          {archiveSearch.length > 0 && (
+            <Pressable onPress={() => setArchiveSearch('')} className="p-1">
+              <X size={16} color="#78716c" />
+            </Pressable>
+          )}
+        </View>
+
+        <View className="flex-row items-center gap-1.5 flex-wrap">
+          {(['all', 'consolidated', 'main', 'bar'] as const).map((till) => {
+            const isSelected = archiveDrawer === till;
+            const label =
+              till === 'all'
+                ? 'All Tills'
+                : till === 'consolidated'
+                  ? 'Consolidated'
+                  : till === 'main'
+                    ? 'Main Floor'
+                    : 'Bar Station';
+            return (
+              <Pressable
+                key={till}
+                onPress={() => setArchiveDrawer(till)}
+                className={`px-3 py-1.5 rounded-lg border min-h-[40px] items-center justify-center ${
+                  isSelected
+                    ? 'bg-[#800020] border-[#800020]'
+                    : 'bg-white border-stone-300 active:bg-stone-50'
+                }`}
+              >
+                <Text
+                  className={`text-base font-bold ${isSelected ? 'text-white' : 'text-stone-700'}`}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
       {/* History Table */}
       {historyTab === 'z_readings' ? (
         <ZReadingsHistoryTable
-          history={zHistory}
+          history={filteredZHistory}
           onViewRecord={(record) => {
             setSelectedReport(record);
             setReportModalVisible(true);
@@ -479,17 +578,19 @@ export const AdminReadingsView: React.FC = () => {
                 Audited cashier shift handovers and rotation drawer reconciliations
               </Text>
             </View>
-            <Text className="text-base font-bold text-stone-600">{yHistory.length} Handovers</Text>
+            <Text className="text-base font-bold text-stone-600">
+              {filteredYHistory.length} Handovers
+            </Text>
           </View>
 
-          {yHistory.length === 0 ? (
+          {filteredYHistory.length === 0 ? (
             <View className="p-8 items-center justify-center">
               <ArrowRightLeft size={36} color="#a8a29e" />
               <Text className="text-lg font-bold text-stone-700 mt-2">
-                No Shift Handovers Recorded
+                No Shift Handovers Found
               </Text>
               <Text className="text-base text-stone-500 mt-1 text-center">
-                When staff hand over the till, Y-Reports will appear here for audit and reprint.
+                No shift handover records match the search or till filter.
               </Text>
             </View>
           ) : (
@@ -497,7 +598,7 @@ export const AdminReadingsView: React.FC = () => {
               <View className="min-w-[800px] divide-y divide-stone-100">
                 <View className="flex-row items-center px-6 py-3 bg-stone-100/70">
                   <Text className="w-24 text-base font-bold text-stone-700">Y-Number</Text>
-                  <Text className="w-40 text-base font-bold text-stone-700">Date & Time</Text>
+                  <Text className="w-40 text-base font-bold text-stone-700">Date &amp; Time</Text>
                   <Text className="w-32 text-base font-bold text-stone-700">Till</Text>
                   <Text className="w-44 text-base font-bold text-stone-700">Outgoing Cashier</Text>
                   <Text className="w-44 text-base font-bold text-stone-700">Incoming Cashier</Text>
@@ -512,7 +613,7 @@ export const AdminReadingsView: React.FC = () => {
                   </Text>
                 </View>
 
-                {yHistory.map((rec) => (
+                {filteredYHistory.map((rec) => (
                   <View
                     key={rec.id}
                     className="flex-row items-center px-6 py-3.5 hover:bg-stone-50/70"

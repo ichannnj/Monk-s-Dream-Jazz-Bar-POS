@@ -166,6 +166,26 @@ export interface SalesAnalyticsOverview {
   totalCogs: number;
   estimatedNetProfit: number;
   channelBreakdown: Record<string, { sales: number; count: number }>;
+  tenderBreakdown: {
+    cash: number;
+    card: number;
+    digital: number;
+    delivery: number;
+    total: number;
+  };
+  hourlySales: {
+    hour: string;
+    sales: number;
+    orderCount?: number;
+  }[];
+  peakHourLabel?: string;
+}
+
+export interface SalesOverviewFilterParams {
+  filterMode?: OperatingMode;
+  startDate?: string;
+  endDate?: string;
+  station?: string;
 }
 
 export const adminApi = {
@@ -744,11 +764,31 @@ export const adminApi = {
   /**
    * Sales Analytics
    */
-  async getSalesOverview(filterMode?: OperatingMode): Promise<SalesAnalyticsOverview> {
-    const { data: payments, error } = await (supabase.from as any)('payments').select(
-      '*, tabs(order_channel, operating_mode)'
+  /**
+   * Sales Analytics with timeframe boundaries, station filtering, hourly velocity, and tender mix
+   */
+  async getSalesOverview(
+    params?: SalesOverviewFilterParams | OperatingMode
+  ): Promise<SalesAnalyticsOverview> {
+    const filterOptions: SalesOverviewFilterParams =
+      typeof params === 'string' ? { filterMode: params } : params || {};
+
+    let query = (supabase.from as any)('payments').select(
+      'id, amount, payment_method, created_at, drawer_target, tab_id, tabs(order_channel, operating_mode)'
     );
-    if (error) throw error;
+
+    if (filterOptions.startDate) {
+      query = query.gte('created_at', filterOptions.startDate);
+    }
+    if (filterOptions.endDate) {
+      query = query.lt('created_at', filterOptions.endDate);
+    }
+
+    const { data: payments, error } = await query;
+    if (error) {
+      console.error('[adminApi.getSalesOverview] DB query error:', error);
+      throw error;
+    }
 
     let grossSales = 0;
     const channelBreakdown: Record<string, { sales: number; count: number }> = {
@@ -759,9 +799,33 @@ export const adminApi = {
       FOODPANDA: { sales: 0, count: 0 },
     };
 
+    const tenderBreakdown = {
+      cash: 0,
+      card: 0,
+      digital: 0,
+      delivery: 0,
+      total: 0,
+    };
+
+    const hourlyBucket = new Map<number, { sales: number; count: number }>();
+    for (let h = 8; h <= 23; h++) {
+      hourlyBucket.set(h, { sales: 0, count: 0 });
+    }
+
     const filtered = (payments || []).filter((p: any) => {
-      if (!filterMode) return true;
-      return p.tabs?.operating_mode === filterMode;
+      if (filterOptions.filterMode && p.tabs?.operating_mode !== filterOptions.filterMode) {
+        return false;
+      }
+      if (filterOptions.station && filterOptions.station !== 'ALL') {
+        const st = filterOptions.station.toUpperCase();
+        const ch = (p.tabs?.order_channel || '').toUpperCase();
+        if (st === 'CAFE_AREA' && !ch.includes('CAFE') && p.drawer_target !== 'main') return false;
+        if (st === 'BAR_AREA' && !ch.includes('BAR') && p.drawer_target !== 'bar') return false;
+        if (st === 'TAKEOUT_COUNTER' && !ch.includes('TAKEOUT') && !ch.includes('COUNTER'))
+          return false;
+        if (st === 'GRAB_FOOD' && !ch.includes('GRAB') && !ch.includes('DELIVERY')) return false;
+      }
+      return true;
     });
 
     for (const p of filtered) {
@@ -773,13 +837,60 @@ export const adminApi = {
       }
       channelBreakdown[channel].sales += amt;
       channelBreakdown[channel].count += 1;
+
+      // Tender breakdown
+      const method = (p.payment_method || '').toUpperCase();
+      if (method === 'CASH') {
+        tenderBreakdown.cash += amt;
+      } else if (method === 'CARD') {
+        tenderBreakdown.card += amt;
+      } else if (method === 'DIGITAL_WALLET') {
+        tenderBreakdown.digital += amt;
+      } else if (
+        method.includes('GRAB') ||
+        method.includes('PANDA') ||
+        method.includes('DELIVERY')
+      ) {
+        tenderBreakdown.delivery += amt;
+      } else {
+        tenderBreakdown.cash += amt;
+      }
+
+      // Hourly grouping
+      const date = new Date(p.created_at);
+      const hour = date.getHours();
+      const currentH = hourlyBucket.get(hour) || { sales: 0, count: 0 };
+      hourlyBucket.set(hour, { sales: currentH.sales + amt, count: currentH.count + 1 });
     }
+
+    tenderBreakdown.total = grossSales;
 
     const orderCount = filtered.length;
     const averageTicket = orderCount > 0 ? grossSales / orderCount : 0;
-    const totalLaborExpense = 450;
+    // Labor: benchmark ₱450 per station shift, scaled with active volume
+    const totalLaborExpense = orderCount > 0 ? Math.min(grossSales * 0.18, 600) : 0;
+    // COGS: 28% of gross
     const totalCogs = grossSales * 0.28;
-    const estimatedNetProfit = grossSales - (totalLaborExpense + totalCogs + 150);
+    const estimatedNetProfit =
+      grossSales > 0 ? Math.max(0, grossSales - (totalLaborExpense + totalCogs)) : 0;
+
+    // Build hourly sales points (08:00 - 23:00)
+    let maxHourSales = 0;
+    let peakHourStr = '20:00';
+    const hourlySales = Array.from({ length: 16 }, (_, i) => {
+      const hourNum = i + 8;
+      const label = `${hourNum.toString().padStart(2, '0')}:00`;
+      const bucket = hourlyBucket.get(hourNum) || { sales: 0, count: 0 };
+      if (bucket.sales > maxHourSales) {
+        maxHourSales = bucket.sales;
+        peakHourStr = label;
+      }
+      return {
+        hour: label,
+        sales: bucket.sales,
+        orderCount: bucket.count,
+      };
+    });
 
     return {
       grossSales,
@@ -789,6 +900,9 @@ export const adminApi = {
       totalCogs,
       estimatedNetProfit,
       channelBreakdown,
+      tenderBreakdown,
+      hourlySales,
+      peakHourLabel: maxHourSales > 0 ? peakHourStr : undefined,
     };
   },
 

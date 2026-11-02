@@ -66,6 +66,8 @@ All frontend business logic, views, stores, and API clients live strictly under 
 | **Tables API & Tabs API**          | `frontend/src/features/table-service/data/tables.api.ts`                                 | Monolithic files            |
 | **Checkout & Settlement**          | `frontend/src/features/checkout/presentation/bill-settlement/BillSettlementModal.tsx`    | Monolithic store            |
 | **Check History / Audit**          | `frontend/src/features/check-history/presentation/ChecksHistoryView.tsx`                 | Full history view           |
+| **Checks API & Database**          | `frontend/src/features/check-history/data/checks.api.ts`                                 | Monolithic files            |
+| **Checks Domain Types**            | `frontend/src/features/check-history/domain/check.types.ts`                              | Full types files            |
 | **Takeout Orders**                 | `frontend/src/features/takeout/presentation/NewTakeoutModal.tsx`                         | Monolithic waiter view      |
 | **Delivery Orders**                | `frontend/src/features/delivery/presentation/OnlineDeliveryModal.tsx`                    | Full screen files           |
 | **Cash Drawer Operations**         | `frontend/src/features/cash-drawer/presentation/CashDrawerModalView.tsx`                 | Monolithic views            |
@@ -92,6 +94,7 @@ All frontend business logic, views, stores, and API clients live strictly under 
 | **Admin Inventory Hub & Ledger**   | `frontend/src/features/admin/presentation/views/AdminInventoryView.tsx`                  | Monolithic views            |
 | **Admin Venue Settings & Routing** | `frontend/src/features/admin/presentation/views/AdminSettingsView.tsx`                   | Full screen files           |
 | **Admin Table Layout Config**      | `frontend/src/features/admin/presentation/views/AdminTableLayoutView.tsx`                | Full screen files           |
+| **Sales & Transactions View**      | `frontend/src/features/admin/presentation/views/AdminTransactionsView.tsx`               | Monolithic views            |
 | **Admin Telemetry & Live DB Data** | `frontend/src/features/admin/data/adminTelemetry.ts`                                     | Monolithic files            |
 | **X-Y-Z Shift Readings**           | `frontend/src/features/admin/presentation/views/readings/AdminReadingsView.tsx`          | Monolithic files            |
 | **Cash Denomination Counter**      | `frontend/src/features/admin/presentation/views/readings/CashDenominationCounter.tsx`    | Monolithic views            |

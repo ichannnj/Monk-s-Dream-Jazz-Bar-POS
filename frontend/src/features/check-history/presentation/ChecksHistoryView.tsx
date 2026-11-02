@@ -1,5 +1,13 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, TextInput } from 'react-native';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  TextInput,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
 import {
   Receipt,
   Search,
@@ -8,539 +16,626 @@ import {
   CheckCircle2,
   Clock,
   Coffee,
-  Wine,
   ShoppingBag,
   Bike,
+  RefreshCw,
+  FileSpreadsheet,
+  Layers,
+  ChevronRight,
+  User,
+  CreditCard,
+  DollarSign,
+  X,
 } from 'lucide-react-native';
-import { useOrderStore } from '../../orders/application/useOrderStore';
-import { CheckItem } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
-import { toast } from '../../shared/toast/useToastStore';
+import { toast } from '@/features/shared/toast/useToastStore';
+import { checksApi } from '../data/checks.api';
+import type { SettledCheckItem, CheckOrderType } from '../domain/check.types';
+import { exportChecksRegisterToExcel } from '@/features/admin/utils/readingExcelExport';
 
-export const ChecksHistoryView: React.FC = () => {
-  const { checks } = useOrderStore();
-  const [selectedChannel, setSelectedChannel] = useState<
-    'all' | 'dine_in' | 'takeout' | 'online_delivery'
-  >('all');
+export interface ChecksHistoryViewProps {
+  startDate?: string;
+  endDate?: string;
+  station?: string;
+  timeframeLabel?: string;
+}
+
+export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
+  startDate,
+  endDate,
+  station = 'ALL',
+  timeframeLabel,
+}) => {
+  const [checks, setChecks] = useState<SettledCheckItem[]>([]);
+  const [selectedChannel, setSelectedChannel] = useState<'all' | CheckOrderType>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCheck, setSelectedCheck] = useState<CheckItem>(checks[0] || null);
+  const [selectedCheck, setSelectedCheck] = useState<SettledCheckItem | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isReprinting, setIsReprinting] = useState(false);
   const [reprintSuccess, setReprintSuccess] = useState(false);
+  const [mobileDetailVisible, setMobileDetailVisible] = useState(false);
 
-  const filteredChecks = useMemo(() => {
-    return checks.filter((chk) => {
-      if (selectedChannel !== 'all' && chk.orderType !== selectedChannel) {
-        return false;
+  const loadChecks = useCallback(async () => {
+    try {
+      const data = await checksApi.fetchSettledChecks({
+        startDate,
+        endDate,
+        station,
+        channel: selectedChannel,
+        searchQuery,
+      });
+      setChecks(data);
+      if (data.length > 0) {
+        setSelectedCheck((prev) => {
+          if (!prev) return data[0];
+          const exists = data.find((c) => c.id === prev.id);
+          return exists || data[0];
+        });
+      } else {
+        setSelectedCheck(null);
       }
-      if (searchQuery.trim().length > 0) {
-        const query = searchQuery.toLowerCase().trim();
-        return (
-          chk.checkNumber.toLowerCase().includes(query) ||
-          chk.guestName.toLowerCase().includes(query) ||
-          chk.tableOrRef.toLowerCase().includes(query)
-        );
-      }
-      return true;
-    });
-  }, [checks, selectedChannel, searchQuery]);
-
-  const handleReprint = () => {
-    setReprintSuccess(true);
-    if (selectedCheck) {
-      toast.success(
-        `Check ${selectedCheck.checkNumber} (${selectedCheck.guestName}) re-sent to thermal printer!`,
-        { title: 'Receipt Reprinted' }
-      );
+    } catch (err: any) {
+      console.error('[ChecksHistoryView] Error fetching settled checks:', err);
+      toast.error('Failed to load checks from database', { title: 'Network Notice' });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-    setTimeout(() => setReprintSuccess(false), 2500);
+  }, [startDate, endDate, station, selectedChannel, searchQuery]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    loadChecks();
+  }, [loadChecks]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    loadChecks();
+  };
+
+  const handleReprintThermal = async () => {
+    if (!selectedCheck) return;
+    setIsReprinting(true);
+    try {
+      await checksApi.reprintReceipt(selectedCheck);
+      setReprintSuccess(true);
+      toast.success(
+        `Check ${selectedCheck.checkNumber} (${selectedCheck.guestName}) sent to thermal printer!`,
+        { title: 'Receipt Dispatched' }
+      );
+      setTimeout(() => setReprintSuccess(false), 3000);
+    } catch {
+      toast.error('Could not dispatch print job to thermal queue', { title: 'Printer Error' });
+    } finally {
+      setIsReprinting(false);
+    }
+  };
+
+  const handleBrowserPrintReceipt = () => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') {
+      toast.info('Browser receipt printing is supported on web desktop view.');
+      return;
+    }
+
+    const printStyleId = 'monks-check-receipt-print-styles';
+    let styleEl = document.getElementById(printStyleId);
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = printStyleId;
+      styleEl.innerHTML = `
+        @media print {
+          body * {
+            visibility: hidden !important;
+          }
+          #monks-check-receipt-printable, #monks-check-receipt-printable * {
+            visibility: visible !important;
+          }
+          #monks-check-receipt-printable {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 80mm !important;
+            max-width: 80mm !important;
+            margin: 0 auto !important;
+            padding: 16px !important;
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-family: monospace !important;
+            font-size: 13px !important;
+            line-height: 1.4 !important;
+            border: none !important;
+            box-shadow: none !important;
+          }
+          @page {
+            size: 80mm auto;
+            margin: 4mm;
+          }
+        }
+      `;
+      document.head.appendChild(styleEl);
+    }
+    window.print();
+  };
+
+  const handleExportChecksExcel = () => {
+    try {
+      const label = timeframeLabel ? `${timeframeLabel} · ${station}` : station;
+      exportChecksRegisterToExcel(checks, label);
+      toast.success(`Exported ${checks.length} checks to Excel (.xls)`, {
+        title: 'Export Ready',
+      });
+    } catch (err: any) {
+      console.error('[ChecksHistoryView] Excel export error:', err);
+      toast.error('Failed to export checks register', { title: 'Export Error' });
+    }
   };
 
   return (
-    <View style={styles.container}>
-      {/* Top Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.badge}>
-            <Receipt size={18} color="#ffffff" strokeWidth={2.4} />
-          </View>
-          <View>
-            <Text style={styles.title}>Shift Checks & Settlement History</Text>
-            <Text style={styles.subtitle}>
-              Audit closed guest tabs, takeout tickets, and delivery slips
-            </Text>
-          </View>
-        </View>
-
-        {/* Search Input */}
-        <View style={styles.searchBox}>
-          <Search size={16} color="#9ca3af" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by check #, guest, or table..."
-            placeholderTextColor="#9ca3af"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-      </View>
-
-      {/* Filter Tabs */}
-      <View style={styles.filterRow}>
-        <Pressable
-          onPress={() => setSelectedChannel('all')}
-          style={[styles.filterPill, selectedChannel === 'all' && styles.filterPillActive]}
-        >
-          <Text
-            style={[
-              styles.filterPillText,
-              selectedChannel === 'all' && styles.filterPillTextActive,
-            ]}
-          >
-            All Checks ({checks.length})
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setSelectedChannel('dine_in')}
-          style={[styles.filterPill, selectedChannel === 'dine_in' && styles.filterPillActive]}
-        >
-          <Coffee size={13} color={selectedChannel === 'dine_in' ? '#ffffff' : '#4b5563'} />
-          <Text
-            style={[
-              styles.filterPillText,
-              selectedChannel === 'dine_in' && styles.filterPillTextActive,
-            ]}
-          >
-            Dine-In
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setSelectedChannel('takeout')}
-          style={[styles.filterPill, selectedChannel === 'takeout' && styles.filterPillActive]}
-        >
-          <ShoppingBag size={13} color={selectedChannel === 'takeout' ? '#ffffff' : '#4b5563'} />
-          <Text
-            style={[
-              styles.filterPillText,
-              selectedChannel === 'takeout' && styles.filterPillTextActive,
-            ]}
-          >
-            Takeout
-          </Text>
-        </Pressable>
-
-        <Pressable
-          onPress={() => setSelectedChannel('online_delivery')}
-          style={[
-            styles.filterPill,
-            selectedChannel === 'online_delivery' && styles.filterPillActive,
-          ]}
-        >
-          <Bike size={13} color={selectedChannel === 'online_delivery' ? '#ffffff' : '#4b5563'} />
-          <Text
-            style={[
-              styles.filterPillText,
-              selectedChannel === 'online_delivery' && styles.filterPillTextActive,
-            ]}
-          >
-            Online Delivery
-          </Text>
-        </Pressable>
-      </View>
-
-      {/* Split Main View: Left Check List, Right Check Inspector */}
-      <View style={styles.splitArea}>
-        {/* Left List */}
-        <ScrollView
-          style={styles.checksList}
-          contentContainerStyle={styles.checksListContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {filteredChecks.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>No checks found matching filter</Text>
+    <View className="flex-1 bg-[#fcf9f9]">
+      {/* Top Header & Search Bar */}
+      <View className="bg-white border-b border-stone-200/80 p-4 sm:p-6">
+        <View className="flex-col md:flex-row md:items-center justify-between gap-4">
+          <View className="flex-row items-center gap-3">
+            <View className="w-12 h-12 rounded-2xl bg-[#800020] items-center justify-center shadow-xs">
+              <Receipt size={22} color="#ffffff" strokeWidth={2.4} />
             </View>
-          ) : (
-            filteredChecks.map((chk) => {
-              const isSelected = selectedCheck?.id === chk.id;
+            <View>
+              <Text className="text-xl font-black text-stone-900 tracking-tight">
+                Checks &amp; Settlement History
+              </Text>
+              <Text className="text-base text-stone-500 font-medium">
+                Live audit trail of settled guest tabs, takeout orders, and delivery slips
+              </Text>
+            </View>
+          </View>
 
-              return (
-                <Pressable
-                  key={chk.id}
-                  onPress={() => setSelectedCheck(chk)}
-                  style={[styles.checkRowCard, isSelected && styles.checkRowCardSelected]}
+          {/* Action Tools: Search, Refresh, Export */}
+          <View className="flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            {/* Search Input */}
+            <View className="flex-row items-center bg-stone-100 border border-stone-300 rounded-xl px-3.5 py-2 min-h-[48px] w-full sm:w-72">
+              <Search size={18} color="#78716c" />
+              <TextInput
+                className="flex-1 ml-2.5 text-base text-stone-900"
+                placeholder="Search check #, guest, or table..."
+                placeholderTextColor="#a8a29e"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              {searchQuery.length > 0 && (
+                <Pressable onPress={() => setSearchQuery('')} className="p-1">
+                  <X size={16} color="#78716c" />
+                </Pressable>
+              )}
+            </View>
+
+            <View className="flex-row items-center gap-2">
+              <Pressable
+                onPress={handleRefresh}
+                className="w-12 h-12 rounded-xl bg-white border border-stone-300 items-center justify-center active:bg-stone-100 shadow-xs"
+              >
+                <RefreshCw
+                  size={18}
+                  color="#57534e"
+                  className={isRefreshing ? 'animate-spin' : ''}
+                />
+              </Pressable>
+
+              <Pressable
+                onPress={handleExportChecksExcel}
+                className="min-h-[48px] px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-300 active:bg-emerald-100 flex-row items-center gap-2 shadow-xs"
+              >
+                <FileSpreadsheet size={18} color="#047857" />
+                <Text className="text-base font-bold text-emerald-800">Export Ledger</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
+        {/* Channel Filter Pills */}
+        <View className="flex-row items-center gap-2 mt-4 flex-wrap">
+          <Pressable
+            onPress={() => setSelectedChannel('all')}
+            className={`min-h-[48px] px-4 py-2 rounded-xl border flex-row items-center gap-2 ${
+              selectedChannel === 'all'
+                ? 'bg-[#800020] border-[#800020] shadow-xs'
+                : 'bg-white border-stone-300 active:bg-stone-50'
+            }`}
+          >
+            <Layers size={16} color={selectedChannel === 'all' ? '#ffffff' : '#57534e'} />
+            <Text
+              className={`text-base font-bold ${
+                selectedChannel === 'all' ? 'text-white' : 'text-stone-700'
+              }`}
+            >
+              All Channels ({checks.length})
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setSelectedChannel('dine_in')}
+            className={`min-h-[48px] px-4 py-2 rounded-xl border flex-row items-center gap-2 ${
+              selectedChannel === 'dine_in'
+                ? 'bg-[#800020] border-[#800020] shadow-xs'
+                : 'bg-white border-stone-300 active:bg-stone-50'
+            }`}
+          >
+            <Coffee size={16} color={selectedChannel === 'dine_in' ? '#ffffff' : '#57534e'} />
+            <Text
+              className={`text-base font-bold ${
+                selectedChannel === 'dine_in' ? 'text-white' : 'text-stone-700'
+              }`}
+            >
+              Dine-In
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setSelectedChannel('takeout')}
+            className={`min-h-[48px] px-4 py-2 rounded-xl border flex-row items-center gap-2 ${
+              selectedChannel === 'takeout'
+                ? 'bg-[#800020] border-[#800020] shadow-xs'
+                : 'bg-white border-stone-300 active:bg-stone-50'
+            }`}
+          >
+            <ShoppingBag size={16} color={selectedChannel === 'takeout' ? '#ffffff' : '#57534e'} />
+            <Text
+              className={`text-base font-bold ${
+                selectedChannel === 'takeout' ? 'text-white' : 'text-stone-700'
+              }`}
+            >
+              Takeout Counter
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setSelectedChannel('online_delivery')}
+            className={`min-h-[48px] px-4 py-2 rounded-xl border flex-row items-center gap-2 ${
+              selectedChannel === 'online_delivery'
+                ? 'bg-[#800020] border-[#800020] shadow-xs'
+                : 'bg-white border-stone-300 active:bg-stone-50'
+            }`}
+          >
+            <Bike size={16} color={selectedChannel === 'online_delivery' ? '#ffffff' : '#57534e'} />
+            <Text
+              className={`text-base font-bold ${
+                selectedChannel === 'online_delivery' ? 'text-white' : 'text-stone-700'
+              }`}
+            >
+              Online Delivery
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* Main Content Area */}
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center p-12">
+          <ActivityIndicator size="large" color="#800020" />
+          <Text className="text-base font-bold text-stone-600 mt-3">
+            Loading Checks from PostgreSQL...
+          </Text>
+        </View>
+      ) : (
+        <View className="flex-1 flex-col md:flex-row">
+          {/* Left Column: Checks List */}
+          <View className="w-full md:w-5/12 lg:w-4/12 border-r border-stone-200/80 bg-white">
+            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+              {checks.length === 0 ? (
+                <View className="p-8 items-center justify-center">
+                  <Receipt size={36} color="#a8a29e" />
+                  <Text className="text-lg font-bold text-stone-700 mt-2">No Checks Found</Text>
+                  <Text className="text-base text-stone-500 text-center mt-1">
+                    No settled checks match the selected timeframe or search criteria.
+                  </Text>
+                </View>
+              ) : (
+                <View className="divide-y divide-stone-100">
+                  {checks.map((chk) => {
+                    const isSelected = selectedCheck?.id === chk.id;
+
+                    return (
+                      <Pressable
+                        key={chk.id}
+                        onPress={() => {
+                          setSelectedCheck(chk);
+                          setMobileDetailVisible(true);
+                        }}
+                        className={`p-4 transition-colors min-h-[64px] flex-row items-center justify-between ${
+                          isSelected
+                            ? 'bg-[#800020]/10 border-l-4 border-[#800020]'
+                            : 'hover:bg-stone-50 active:bg-stone-100'
+                        }`}
+                      >
+                        <View className="flex-row items-center gap-3 flex-1 pr-3">
+                          <View
+                            className={`w-10 h-10 rounded-xl items-center justify-center ${
+                              chk.orderType === 'dine_in'
+                                ? 'bg-amber-100 text-amber-800'
+                                : chk.orderType === 'takeout'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-emerald-100 text-emerald-800'
+                            }`}
+                          >
+                            {chk.orderType === 'dine_in' ? (
+                              <Coffee size={18} color="#b45309" />
+                            ) : chk.orderType === 'takeout' ? (
+                              <ShoppingBag size={18} color="#1d4ed8" />
+                            ) : (
+                              <Bike size={18} color="#047857" />
+                            )}
+                          </View>
+                          <View className="flex-1">
+                            <View className="flex-row items-center gap-2">
+                              <Text className="text-base font-bold text-stone-900">
+                                {chk.checkNumber}
+                              </Text>
+                              <Text className="text-base text-stone-400 font-normal">·</Text>
+                              <Text className="text-base font-semibold text-stone-600 truncate">
+                                {chk.guestName}
+                              </Text>
+                            </View>
+                            <Text className="text-base text-stone-500 font-medium mt-0.5">
+                              {chk.tableOrRef} · {chk.timestamp}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View className="items-end shrink-0">
+                          <Text className="text-base font-black text-stone-900">
+                            {formatCurrency(chk.total)}
+                          </Text>
+                          <View className="mt-1 bg-stone-100 px-2 py-0.5 rounded-md">
+                            <Text className="text-base font-bold text-stone-600 uppercase">
+                              {chk.paymentMethod.replace('_', ' ')}
+                            </Text>
+                          </View>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+            </ScrollView>
+          </View>
+
+          {/* Right Column: Check Detail Inspector (Desktop) */}
+          <View className="hidden md:flex flex-1 p-6 bg-[#fcf9f9]">
+            {selectedCheck ? (
+              <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+                {/* Printable Customer Receipt Container */}
+                <View
+                  {...({ id: 'monks-check-receipt-printable' } as any)}
+                  className="rounded-3xl border border-stone-200/90 bg-white p-6 sm:p-8 shadow-xs max-w-2xl mx-auto w-full"
                 >
-                  <View style={styles.checkRowLeft}>
-                    <View style={styles.checkNumBadge}>
-                      <Text style={styles.checkNumText}>{chk.checkNumber}</Text>
+                  {/* Top Bar with Reprint & PDF Actions */}
+                  <View className="flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-stone-200 gap-4 print:hidden">
+                    <View>
+                      <View className="flex-row items-center gap-2">
+                        <Text className="text-2xl font-black text-stone-900 tracking-tight">
+                          Check {selectedCheck.checkNumber}
+                        </Text>
+                        <View className="bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                          <Text className="text-base font-bold text-emerald-800">SETTLED</Text>
+                        </View>
+                      </View>
+                      <Text className="text-base text-stone-500 mt-1">
+                        Settled on {new Date(selectedCheck.settledAt).toLocaleDateString()} at{' '}
+                        {selectedCheck.timestamp}
+                      </Text>
                     </View>
 
+                    <View className="flex-row items-center gap-2.5">
+                      <Pressable
+                        onPress={handleBrowserPrintReceipt}
+                        className="min-h-[48px] px-4 py-2.5 rounded-xl border border-stone-300 bg-white active:bg-stone-50 flex-row items-center gap-2 shadow-xs"
+                      >
+                        <Printer size={18} color="#44403c" />
+                        <Text className="text-base font-bold text-stone-800">Print / PDF</Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={handleReprintThermal}
+                        disabled={isReprinting}
+                        className="min-h-[48px] px-4 py-2.5 rounded-xl bg-[#800020] active:bg-[#600018] flex-row items-center gap-2 shadow-xs"
+                      >
+                        <Printer size={18} color="#ffffff" />
+                        <Text className="text-base font-bold text-white">
+                          {isReprinting ? 'Sending...' : 'Thermal Reprint'}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+
+                  {/* Print-only Official Header */}
+                  <View className="hidden print:block text-center pb-4 mb-4 border-b border-dashed border-stone-400">
+                    <Text className="text-xl font-bold text-center">MONK'S DREAM JAZZ BAR</Text>
+                    <Text className="text-sm text-center">Official Customer Receipt</Text>
+                    <Text className="text-xs text-center mt-1">
+                      Check: {selectedCheck.checkNumber} · Date:{' '}
+                      {new Date(selectedCheck.settledAt).toLocaleString()}
+                    </Text>
+                  </View>
+
+                  {/* Notice banner on thermal dispatch */}
+                  {reprintSuccess && (
+                    <View className="mt-4 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex-row items-center gap-2 print:hidden">
+                      <CheckCircle2 size={18} color="#059669" />
+                      <Text className="text-base font-bold text-emerald-800">
+                        Signal sent! Receipt enqueued to 80mm POS Thermal Printer queue.
+                      </Text>
+                    </View>
+                  )}
+
+                  {/* Transaction Metadata Grid */}
+                  <View className="grid grid-cols-2 gap-4 my-6 p-4 rounded-2xl bg-stone-50/80 border border-stone-200/80">
                     <View>
-                      <Text style={styles.checkGuestName}>{chk.guestName}</Text>
-                      <Text style={styles.checkRefText}>
-                        {chk.tableOrRef} • {chk.timestamp}
+                      <Text className="text-base font-semibold text-stone-500">
+                        Guest / Customer
+                      </Text>
+                      <Text className="text-base font-bold text-stone-900 mt-0.5">
+                        {selectedCheck.guestName}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text className="text-base font-semibold text-stone-500">Destination</Text>
+                      <Text className="text-base font-bold text-stone-900 mt-0.5">
+                        {selectedCheck.tableOrRef}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text className="text-base font-semibold text-stone-500">
+                        Cashier in Charge
+                      </Text>
+                      <Text className="text-base font-bold text-stone-900 mt-0.5">
+                        {selectedCheck.cashierName}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text className="text-base font-semibold text-stone-500">
+                        Tender Captured
+                      </Text>
+                      <Text className="text-base font-bold text-[#800020] mt-0.5">
+                        {selectedCheck.paymentMethod.replace('_', ' ').toUpperCase()}
                       </Text>
                     </View>
                   </View>
 
-                  <View style={styles.checkRowRight}>
-                    <Text style={styles.checkTotal}>{formatCurrency(chk.total)}</Text>
-                    <View style={styles.paidBadge}>
-                      <Text style={styles.paidBadgeText}>{chk.paymentMethod.toUpperCase()}</Text>
+                  {/* Itemized Line Items Table */}
+                  <View className="mb-6">
+                    <Text className="text-base font-extrabold text-stone-900 mb-3 uppercase tracking-wider">
+                      Ordered Items &amp; Servings ({selectedCheck.itemsCount})
+                    </Text>
+                    {selectedCheck.items.length === 0 ? (
+                      <View className="py-4 border-y border-stone-100 flex-row justify-between items-center">
+                        <Text className="text-base font-medium text-stone-700">
+                          Settled Customer Bill
+                        </Text>
+                        <Text className="text-base font-bold text-stone-900">
+                          {formatCurrency(selectedCheck.subtotal)}
+                        </Text>
+                      </View>
+                    ) : (
+                      <View className="divide-y divide-stone-100 border-y border-stone-200">
+                        {selectedCheck.items.map((it, idx) => (
+                          <View
+                            key={it.id || idx}
+                            className="py-3 flex-row items-center justify-between"
+                          >
+                            <View className="flex-row items-center gap-3">
+                              <View className="w-7 h-7 rounded-lg bg-stone-100 items-center justify-center">
+                                <Text className="text-base font-bold text-stone-800">
+                                  {it.quantity}x
+                                </Text>
+                              </View>
+                              <View>
+                                <Text className="text-base font-bold text-stone-900">
+                                  {it.name}
+                                </Text>
+                                {it.notes && (
+                                  <Text className="text-base text-amber-800 italic">
+                                    {it.notes}
+                                  </Text>
+                                )}
+                              </View>
+                            </View>
+                            <Text className="text-base font-black text-stone-900">
+                              {formatCurrency(it.subtotal)}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Financial Breakdown (Official Fiscal & Tax) */}
+                  <View className="space-y-2.5 pt-4 border-t-2 border-stone-900">
+                    <View className="flex-row justify-between items-center">
+                      <Text className="text-base font-semibold text-stone-600">Items Subtotal</Text>
+                      <Text className="text-base font-bold text-stone-900">
+                        {formatCurrency(selectedCheck.subtotal)}
+                      </Text>
+                    </View>
+
+                    {selectedCheck.discountAmount > 0 && (
+                      <View className="flex-row justify-between items-center">
+                        <Text className="text-base font-semibold text-rose-600">
+                          Discounts &amp; Promos
+                        </Text>
+                        <Text className="text-base font-bold text-rose-600">
+                          -{formatCurrency(selectedCheck.discountAmount)}
+                        </Text>
+                      </View>
+                    )}
+
+                    {selectedCheck.corkageFee > 0 && (
+                      <View className="flex-row justify-between items-center">
+                        <Text className="text-base font-semibold text-stone-600">Corkage Fee</Text>
+                        <Text className="text-base font-bold text-stone-900">
+                          {formatCurrency(selectedCheck.corkageFee)}
+                        </Text>
+                      </View>
+                    )}
+
+                    {selectedCheck.serviceCharge > 0 && (
+                      <View className="flex-row justify-between items-center">
+                        <Text className="text-base font-semibold text-stone-600">
+                          10% Service Charge
+                        </Text>
+                        <Text className="text-base font-bold text-stone-900">
+                          {formatCurrency(selectedCheck.serviceCharge)}
+                        </Text>
+                      </View>
+                    )}
+
+                    <View className="flex-row justify-between items-center">
+                      <Text className="text-base font-semibold text-stone-500">
+                        VATable Sales (Net)
+                      </Text>
+                      <Text className="text-base font-medium text-stone-600">
+                        {formatCurrency(selectedCheck.vatableSales)}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row justify-between items-center">
+                      <Text className="text-base font-semibold text-stone-500">
+                        12% VAT Included
+                      </Text>
+                      <Text className="text-base font-medium text-stone-600">
+                        {formatCurrency(selectedCheck.vatAmount)}
+                      </Text>
+                    </View>
+
+                    <View className="flex-row justify-between items-center pt-3 border-t border-stone-200">
+                      <Text className="text-xl font-black text-stone-900">Grand Total Settled</Text>
+                      <Text className="text-2xl font-black text-[#800020]">
+                        {formatCurrency(selectedCheck.total)}
+                      </Text>
                     </View>
                   </View>
-                </Pressable>
-              );
-            })
-          )}
-        </ScrollView>
 
-        {/* Right Detail Inspector */}
-        {selectedCheck ? (
-          <View style={styles.detailPane}>
-            <View style={styles.detailHeader}>
-              <View>
-                <Text style={styles.detailCheckNumber}>Check {selectedCheck.checkNumber}</Text>
-                <Text style={styles.detailSub}>
-                  {selectedCheck.tableOrRef} · Settled at {selectedCheck.timestamp}
+                  {/* Print Footer */}
+                  <View className="hidden print:block text-center pt-6 mt-6 border-t border-dashed border-stone-400">
+                    <Text className="text-sm font-bold text-center">
+                      THANK YOU FOR JOINING US AT MONK'S DREAM!
+                    </Text>
+                    <Text className="text-xs text-center text-stone-600 mt-1">
+                      This serves as an Official Settlement Copy
+                    </Text>
+                  </View>
+                </View>
+              </ScrollView>
+            ) : (
+              <View className="flex-1 items-center justify-center p-8">
+                <Receipt size={40} color="#a8a29e" />
+                <Text className="text-lg font-bold text-stone-600 mt-2">
+                  Select a Check to Inspect
                 </Text>
               </View>
-
-              <Pressable onPress={handleReprint} style={styles.reprintBtn}>
-                <Printer size={15} color="#ffffff" strokeWidth={2.2} />
-                <Text style={styles.reprintBtnText}>Reprint Receipt</Text>
-              </Pressable>
-            </View>
-
-            {reprintSuccess ? (
-              <View style={styles.reprintSuccessBanner}>
-                <CheckCircle2 size={15} color="#15803d" />
-                <Text style={styles.reprintSuccessText}>
-                  Signal sent! ESC/POS print job dispatched to Printer Station PC.
-                </Text>
-              </View>
-            ) : null}
-
-            {/* Check Details Box */}
-            <View style={styles.infoCard}>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Guest / Customer:</Text>
-                <Text style={styles.infoValue}>{selectedCheck.guestName}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Cashier in Charge:</Text>
-                <Text style={styles.infoValue}>{selectedCheck.cashierName}</Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Payment Captured:</Text>
-                <Text style={styles.infoValue}>
-                  {selectedCheck.paymentMethod.replace('_', ' ').toUpperCase()}
-                </Text>
-              </View>
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Items Summary:</Text>
-                <Text style={styles.infoValue}>{selectedCheck.itemsSummary}</Text>
-              </View>
-            </View>
-
-            {/* Financial Breakdown */}
-            <View style={styles.financeCard}>
-              <View style={styles.financeLine}>
-                <Text style={styles.financeLabel}>Subtotal:</Text>
-                <Text style={styles.financeValue}>{formatCurrency(selectedCheck.subtotal)}</Text>
-              </View>
-              <View style={styles.financeLine}>
-                <Text style={styles.financeLabel}>Tax (10% VAT):</Text>
-                <Text style={styles.financeValue}>{formatCurrency(selectedCheck.tax)}</Text>
-              </View>
-              <View style={[styles.financeLine, styles.financeTotalLine]}>
-                <Text style={styles.financeTotalLabel}>Grand Total Settled:</Text>
-                <Text style={styles.financeTotalValue}>{formatCurrency(selectedCheck.total)}</Text>
-              </View>
-            </View>
+            )}
           </View>
-        ) : null}
-      </View>
+        </View>
+      )}
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    backgroundColor: '#ffffff',
-    borderRadius: 22,
-    paddingHorizontal: 22,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 14,
-    gap: 12,
-    flexWrap: 'wrap',
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  badge: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: '#641b2a',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  subtitle: {
-    fontSize: 12.5,
-    color: '#6b7280',
-    marginTop: 1,
-  },
-  searchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#f9fafb',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    minWidth: 260,
-  },
-  searchInput: {
-    fontSize: 13,
-    color: '#111827',
-    fontWeight: '500',
-    flex: 1,
-  },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 14,
-  },
-  filterPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  filterPillActive: {
-    backgroundColor: '#641b2a',
-    borderColor: '#641b2a',
-  },
-  filterPillText: {
-    fontSize: 12.5,
-    fontWeight: '700',
-    color: '#4b5563',
-  },
-  filterPillTextActive: {
-    color: '#ffffff',
-  },
-  splitArea: {
-    flex: 1,
-    flexDirection: 'row',
-    gap: 16,
-  },
-  checksList: {
-    flex: 1.2,
-  },
-  checksListContent: {
-    gap: 10,
-  },
-  emptyState: {
-    padding: 30,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: '#6b7280',
-    fontSize: 13,
-  },
-  checkRowCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1.5,
-    borderColor: '#e5e7eb',
-  },
-  checkRowCardSelected: {
-    borderColor: '#641b2a',
-    backgroundColor: '#fffdfd',
-  },
-  checkRowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  checkNumBadge: {
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  checkNumText: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#111827',
-  },
-  checkGuestName: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  checkRefText: {
-    fontSize: 11.5,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  checkRowRight: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  checkTotal: {
-    fontSize: 15,
-    fontWeight: '900',
-    color: '#1a1a1e',
-  },
-  paidBadge: {
-    backgroundColor: '#f0fdf4',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  paidBadgeText: {
-    fontSize: 9.5,
-    fontWeight: '800',
-    color: '#15803d',
-  },
-  detailPane: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 22,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  detailHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  detailCheckNumber: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  detailSub: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  reprintBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#641b2a',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  reprintBtnText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  reprintSuccessBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#f0fdf4',
-    padding: 10,
-    borderRadius: 10,
-    marginBottom: 14,
-  },
-  reprintSuccessText: {
-    fontSize: 12,
-    color: '#15803d',
-    fontWeight: '600',
-  },
-  infoCard: {
-    backgroundColor: '#f9fafb',
-    borderRadius: 14,
-    padding: 14,
-    gap: 10,
-    marginBottom: 14,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  infoLabel: {
-    fontSize: 12.5,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  infoValue: {
-    fontSize: 13,
-    color: '#111827',
-    fontWeight: '700',
-    maxWidth: '65%',
-    textAlign: 'right',
-  },
-  financeCard: {
-    backgroundColor: '#fceeed',
-    borderRadius: 14,
-    padding: 14,
-    gap: 8,
-  },
-  financeLine: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  financeLabel: {
-    fontSize: 12.5,
-    color: '#832238',
-    fontWeight: '500',
-  },
-  financeValue: {
-    fontSize: 13,
-    color: '#832238',
-    fontWeight: '700',
-  },
-  financeTotalLine: {
-    borderTopWidth: 1,
-    borderTopColor: '#fad4db',
-    paddingTop: 8,
-    marginTop: 4,
-  },
-  financeTotalLabel: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#641b2a',
-  },
-  financeTotalValue: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#641b2a',
-  },
-});
