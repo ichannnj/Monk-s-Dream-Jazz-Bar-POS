@@ -118,9 +118,12 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({ telemetry 
         ];
 
   return (
-    <ScrollView className="flex-1 bg-[#fcf9f9] p-8" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      showsVerticalScrollIndicator={false}
+    >
       <View className="mb-6">
-        <Text className="text-3xl font-extrabold tracking-tight text-stone-900">
+        <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
           Live Stations Operations & Turnaround Hub
         </Text>
         <Text className="mt-1 text-base text-stone-500">
@@ -128,15 +131,15 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({ telemetry 
         </Text>
       </View>
 
-      <View className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <View className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         {stationData.map((st) => {
           const IconComp = st.icon;
           return (
             <View
               key={st.id}
-              className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs"
+              className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs"
             >
-              <View className="flex-row items-center justify-between mb-4">
+              <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
                 <View className="flex-row items-center space-x-3">
                   <View className={`h-11 w-11 items-center justify-center rounded-xl ${st.color}`}>
                     <IconComp size={22} color="#ffffff" />
@@ -160,7 +163,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({ telemetry 
                 )}
               </View>
 
-              <View className="flex-row items-center justify-between rounded-xl bg-stone-50 p-4 mb-4">
+              <View className="grid grid-cols-2 sm:flex sm:flex-row sm:items-center justify-between rounded-xl bg-stone-50 p-4 mb-4 gap-3 sm:gap-2">
                 <View>
                   <Text className="text-base text-stone-500">Active Queue</Text>
                   <Text className="text-2xl font-black text-stone-900">{st.activeTickets}</Text>

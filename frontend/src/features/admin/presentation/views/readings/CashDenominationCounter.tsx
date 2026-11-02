@@ -67,7 +67,7 @@ export const CashDenominationCounter: React.FC<CashDenominationCounterProps> = (
       </View>
 
       {/* Grid of Denominations */}
-      <View className="grid grid-cols-3 gap-2 mt-3">
+      <View className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-3">
         {denominations.map((item, idx) => (
           <View
             key={item.label}
@@ -84,7 +84,7 @@ export const CashDenominationCounter: React.FC<CashDenominationCounterProps> = (
               <Pressable
                 onPress={() => handleIncrement(idx, -1)}
                 disabled={item.count <= 0}
-                className="w-9 h-9 rounded-lg bg-stone-100 items-center justify-center active:bg-stone-200 disabled:opacity-30"
+                className="w-10 h-10 rounded-lg bg-stone-100 items-center justify-center active:bg-stone-200 disabled:opacity-30"
               >
                 <Minus size={16} color="#57534e" />
               </Pressable>
@@ -95,7 +95,7 @@ export const CashDenominationCounter: React.FC<CashDenominationCounterProps> = (
 
               <Pressable
                 onPress={() => handleIncrement(idx, 1)}
-                className="w-9 h-9 rounded-lg bg-stone-900 items-center justify-center active:bg-black"
+                className="w-10 h-10 rounded-lg bg-stone-900 items-center justify-center active:bg-black"
               >
                 <Plus size={16} color="#ffffff" />
               </Pressable>
@@ -105,7 +105,7 @@ export const CashDenominationCounter: React.FC<CashDenominationCounterProps> = (
       </View>
 
       {/* Footer Total & Apply */}
-      <View className="flex-row items-center justify-between mt-4 pt-3 border-t border-stone-200">
+      <View className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mt-4 pt-3 border-t border-stone-200">
         <View>
           <Text className="text-sm font-bold text-stone-500 uppercase">Calculated Total:</Text>
           <Text className="text-xl font-black text-stone-900">
@@ -115,7 +115,7 @@ export const CashDenominationCounter: React.FC<CashDenominationCounterProps> = (
 
         <Pressable
           onPress={handleApply}
-          className="flex-row items-center gap-2 px-5 py-2.5 rounded-xl bg-[#800020] active:bg-[#600018] shadow-xs min-h-[48px]"
+          className="flex-row items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#800020] active:bg-[#600018] shadow-xs min-h-[48px]"
         >
           <Check size={18} color="#ffffff" />
           <Text className="text-base font-extrabold text-white">Apply Count</Text>

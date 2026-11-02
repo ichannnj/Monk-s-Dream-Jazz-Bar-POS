@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Modal, Pressable } from 'react-native';
+import { View, Modal, Pressable } from 'react-native';
 import { SharedChatView } from '../../../../chat/presentation/SharedChatView';
 
 interface SharedChatDrawerProps {
@@ -19,13 +19,9 @@ export const SharedChatDrawer: React.FC<SharedChatDrawerProps> = ({
 }) => {
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
-          accessibilityLabel="Close chat"
-        />
-        <View style={styles.modalCard}>
+      <View className="flex-1 bg-black/50 justify-center items-center p-0 sm:p-4 md:p-6">
+        <Pressable className="absolute inset-0" onPress={onClose} accessibilityLabel="Close chat" />
+        <View className="w-full max-w-5xl h-full sm:h-[94%] bg-[#f6f0ed] rounded-none sm:rounded-3xl overflow-hidden shadow-2xl">
           <SharedChatView
             senderName={staffName}
             senderRole={staffRole}
@@ -38,27 +34,3 @@ export const SharedChatDrawer: React.FC<SharedChatDrawerProps> = ({
     </Modal>
   );
 };
-
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 980,
-    height: '92%',
-    backgroundColor: '#f6f0ed',
-    borderRadius: 24,
-    padding: 0,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 24,
-    elevation: 10,
-  },
-});

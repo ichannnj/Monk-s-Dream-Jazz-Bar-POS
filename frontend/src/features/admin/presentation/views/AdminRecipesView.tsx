@@ -177,11 +177,14 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
   });
 
   return (
-    <ScrollView className="flex-1 bg-[#fcf9f9] p-8" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      showsVerticalScrollIndicator={false}
+    >
       {/* Page Header */}
-      <View className="mb-6 flex-row items-center justify-between">
-        <View>
-          <Text className="text-3xl font-extrabold tracking-tight text-stone-900">
+      <View className="mb-6 flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <View className="flex-1 min-w-[260px]">
+          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
             Menu Catalog & Recipe Engineering
           </Text>
           <Text className="mt-1 text-base text-stone-500">
@@ -191,14 +194,14 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
         </View>
 
         {/* Global Action Buttons based on tab */}
-        <View className="flex-row items-center space-x-3">
+        <View className="flex-row items-center gap-3 flex-wrap">
           {activeTab === 'items' && (
             <Pressable
               onPress={() => {
                 setEditingProduct(null);
                 setIsProductModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Plus size={20} color="#ffffff" />
               <Text className="ml-2 text-base font-bold text-white">Add Menu Item</Text>
@@ -211,7 +214,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingCategory(null);
                 setIsCategoryModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <FolderPlus size={20} color="#ffffff" />
               <Text className="ml-2 text-base font-bold text-white">Add Category</Text>
@@ -224,7 +227,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingModifierGroup(null);
                 setIsModifierModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Sliders size={20} color="#ffffff" />
               <Text className="ml-2 text-base font-bold text-white">New Modifier Group</Text>
@@ -233,38 +236,48 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
         </View>
       </View>
 
-      {/* Sub-Navigation Tabs */}
-      <View className="mb-6 flex-row border-b border-stone-200">
-        {[
-          { key: 'items', label: `Menu Items (${displayProducts.length})`, icon: Utensils },
-          { key: 'categories', label: `Categories (${categories.length})`, icon: FolderPlus },
-          { key: 'modifiers', label: `Modifier Groups (${modifierGroups.length})`, icon: Sliders },
-          { key: 'bom', label: 'Recipe BOM & Costing', icon: Layers },
-        ].map((tab) => {
-          const isActive = activeTab === tab.key;
-          const IconComp = tab.icon;
-          return (
-            <Pressable
-              key={tab.key}
-              onPress={() => setActiveTab(tab.key as MenuTab)}
-              className={`min-h-[48px] flex-row items-center px-6 border-b-2 transition-all ${
-                isActive
-                  ? 'border-[#800020] bg-[#800020]/5'
-                  : 'border-transparent active:bg-stone-100'
-              }`}
-            >
-              <IconComp size={18} color={isActive ? '#800020' : '#78716c'} />
-              <Text
-                className={`ml-2 text-base ${
-                  isActive ? 'font-bold text-[#800020]' : 'font-medium text-stone-600'
+      {/* Sub-Navigation Tabs with horizontal scrolling */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="mb-6 border-b border-stone-200"
+      >
+        <View className="flex-row">
+          {[
+            { key: 'items', label: `Menu Items (${displayProducts.length})`, icon: Utensils },
+            { key: 'categories', label: `Categories (${categories.length})`, icon: FolderPlus },
+            {
+              key: 'modifiers',
+              label: `Modifier Groups (${modifierGroups.length})`,
+              icon: Sliders,
+            },
+            { key: 'bom', label: 'Recipe BOM & Costing', icon: Layers },
+          ].map((tab) => {
+            const isActive = activeTab === tab.key;
+            const IconComp = tab.icon;
+            return (
+              <Pressable
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key as MenuTab)}
+                className={`min-h-[48px] flex-row items-center px-4 sm:px-6 border-b-2 transition-all ${
+                  isActive
+                    ? 'border-[#800020] bg-[#800020]/5'
+                    : 'border-transparent active:bg-stone-100'
                 }`}
               >
-                {tab.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+                <IconComp size={18} color={isActive ? '#800020' : '#78716c'} />
+                <Text
+                  className={`ml-2 text-base whitespace-nowrap ${
+                    isActive ? 'font-bold text-[#800020]' : 'font-medium text-stone-600'
+                  }`}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
 
       {/* TAB 1: MENU ITEMS */}
       {activeTab === 'items' && (
@@ -335,11 +348,11 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 {filteredProducts.map((prod) => (
                   <View
                     key={prod.id}
-                    className="flex-row items-center justify-between rounded-xl border border-stone-200 bg-white p-4 transition-all"
+                    className="flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-stone-200 bg-white p-4 gap-3.5 transition-all"
                   >
                     {/* Left Side: Product Info */}
-                    <View className="flex-1 pr-4">
-                      <View className="flex-row items-center space-x-2.5">
+                    <View className="flex-1 sm:pr-4">
+                      <View className="flex-row items-center space-x-2.5 flex-wrap gap-1.5">
                         <Text className="text-lg font-bold text-stone-900">{prod.name}</Text>
                         <View
                           className={`rounded-md px-2.5 py-0.5 border ${
@@ -377,11 +390,11 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                     </View>
 
                     {/* Right Side: Availability Pill & Action Icons */}
-                    <View className="flex-row items-center space-x-3">
+                    <View className="flex-row items-center gap-2 flex-wrap pt-2 sm:pt-0 border-t border-stone-100 sm:border-t-0">
                       {/* Availability Status Toggle Pill */}
                       <Pressable
                         onPress={() => handleToggleAuto86(prod)}
-                        className={`min-h-[48px] px-4 flex-row items-center justify-center rounded-xl border transition-all ${
+                        className={`min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border transition-all ${
                           prod.auto_86
                             ? 'bg-rose-50 border-rose-300 active:bg-rose-100'
                             : 'bg-emerald-50 border-emerald-300 active:bg-emerald-100'
@@ -420,6 +433,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                           setIsProductModalOpen(true);
                         }}
                         className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-stone-300 bg-white active:bg-stone-100"
+                        accessibilityLabel="Edit product"
                       >
                         <Edit size={18} color="#44403c" />
                       </Pressable>
@@ -428,6 +442,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                       <Pressable
                         onPress={() => handleDeleteProduct(prod)}
                         className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-rose-200 bg-rose-50 active:bg-rose-100"
+                        accessibilityLabel="Delete product"
                       >
                         <Trash2 size={18} color="#e11d48" />
                       </Pressable>

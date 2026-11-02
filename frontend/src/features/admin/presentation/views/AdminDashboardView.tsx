@@ -182,12 +182,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
   return (
     <ScrollView className="flex-1 bg-[#fcf9f9]" showsVerticalScrollIndicator={false}>
-      <View className="w-full max-w-7xl mx-auto p-6 md:p-8 space-y-6">
+      <View className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Header: Title, Timeframe Selector, and Refresh */}
-        <View className="flex-row items-center justify-between pb-1 flex-wrap gap-4">
-          <View>
+        <View className="flex-col sm:flex-row sm:items-center justify-between pb-1 gap-4">
+          <View className="flex-1 min-w-[260px]">
             <View className="flex-row items-center space-x-2">
-              <Text className="text-3xl font-extrabold tracking-tight text-stone-900">
+              <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
                 Performance Overview
               </Text>
               <View className="ml-2 rounded-full bg-stone-100 border border-stone-200 px-3 py-1">
@@ -199,7 +199,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </Text>
           </View>
 
-          <View className="flex-row items-center gap-3">
+          <View className="flex-row items-center gap-3 flex-wrap">
             {/* Primary Timeframe Selector Trigger */}
             <Pressable
               onPress={() => setIsTimeframeModalOpen(true)}
@@ -228,9 +228,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </View>
 
         {/* 4 KPI Cards: Operational Floor Mix */}
-        <View className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+        <View className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
           {/* Card 1: Net Sales Revenue (Burgundy #800020) */}
-          <View className="rounded-2xl bg-[#800020] p-6 shadow-sm justify-between min-h-[190px]">
+          <View className="rounded-2xl bg-[#800020] p-5 sm:p-6 shadow-sm justify-between min-h-[190px]">
             <View>
               <View className="flex-row items-center justify-between">
                 <Text className="text-base font-semibold text-white/90">Net Sales Revenue</Text>
@@ -485,9 +485,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </View>
 
         {/* Middle Section: Best Sellers (Left) & Right Column (Stations + Category Sales) */}
-        <View className="flex-row gap-6 flex-wrap lg:flex-nowrap">
+        <View className="flex-col lg:flex-row gap-6">
           {/* Left: Best Sellers Card */}
-          <View className="flex-[1.35] min-w-[340px] rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
+          <View className="w-full lg:flex-[1.35] rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
             <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
               <View>
                 <Text className="text-xl font-bold tracking-tight text-stone-900">
@@ -505,38 +505,40 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </View>
 
             {/* Filter Controls Row (Range Pills + Interactive Category Selector) */}
-            <View className="flex-row items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-3 flex-wrap">
+            <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-3">
               {/* Range Pills with >= 48px touch targets */}
-              <View className="flex-row items-center rounded-xl bg-stone-100/90 p-1 space-x-1">
-                {(['top3', 'top5', 'top10', 'all'] as BestSellerFilter[]).map((tab) => {
-                  const label =
-                    tab === 'top3'
-                      ? 'Top 3'
-                      : tab === 'top5'
-                        ? 'Top 5'
-                        : tab === 'top10'
-                          ? 'Top 10'
-                          : 'All';
-                  const isActive = bestSellerFilter === tab;
-                  return (
-                    <Pressable
-                      key={tab}
-                      onPress={() => setBestSellerFilter(tab)}
-                      className={`min-h-[48px] px-4 items-center justify-center rounded-lg transition-all ${
-                        isActive ? 'bg-white shadow-xs' : 'active:bg-stone-200/60'
-                      }`}
-                    >
-                      <Text
-                        className={`text-base font-bold ${
-                          isActive ? 'text-stone-900' : 'text-stone-600'
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+                <View className="flex-row items-center rounded-xl bg-stone-100/90 p-1 space-x-1">
+                  {(['top3', 'top5', 'top10', 'all'] as BestSellerFilter[]).map((tab) => {
+                    const label =
+                      tab === 'top3'
+                        ? 'Top 3'
+                        : tab === 'top5'
+                          ? 'Top 5'
+                          : tab === 'top10'
+                            ? 'Top 10'
+                            : 'All';
+                    const isActive = bestSellerFilter === tab;
+                    return (
+                      <Pressable
+                        key={tab}
+                        onPress={() => setBestSellerFilter(tab)}
+                        className={`min-h-[48px] px-3.5 sm:px-4 items-center justify-center rounded-lg transition-all ${
+                          isActive ? 'bg-white shadow-xs' : 'active:bg-stone-200/60'
                         }`}
                       >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+                        <Text
+                          className={`text-base font-bold ${
+                            isActive ? 'text-stone-900' : 'text-stone-600'
+                          }`}
+                        >
+                          {label}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </ScrollView>
 
               {/* Interactive Category Selector Modal Trigger */}
               <Pressable
@@ -622,9 +624,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           </View>
 
           {/* Right Column: Live Stations + Sales By Category */}
-          <View className="flex-1 min-w-[320px] space-y-6">
+          <View className="w-full lg:flex-1 space-y-6">
             {/* Live Stations Card */}
-            <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
+            <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
               <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
                 <Text className="text-xl font-bold text-stone-900">Live Stations</Text>
                 <Pressable

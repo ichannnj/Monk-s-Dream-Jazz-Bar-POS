@@ -187,15 +187,15 @@ Official POS Audit Document
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 bg-black/75 justify-center items-center p-4">
+      <View className="flex-1 bg-black/75 justify-center items-center p-2 sm:p-4">
         <Pressable className="absolute inset-0" onPress={onClose} />
 
         <View
           onStartShouldSetResponder={() => true}
-          className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] shadow-2xl overflow-hidden flex-col border border-stone-200"
+          className="bg-white rounded-3xl w-full max-w-4xl max-h-[94vh] shadow-2xl overflow-hidden flex-col border border-stone-200"
         >
           {/* Header */}
-          <View className="flex-row items-center justify-between px-6 py-4 border-b border-stone-200 bg-stone-50">
+          <View className="flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-stone-200 bg-stone-50">
             <View className="flex-row items-center gap-3">
               <View className="w-11 h-11 rounded-xl bg-[#800020] items-center justify-center">
                 {isZReading ? (
@@ -212,9 +212,9 @@ Official POS Audit Document
               </View>
             </View>
 
-            <View className="flex-row items-center gap-2">
+            <View className="flex-row items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
               {/* Format Toggle */}
-              <View className="flex-row bg-stone-200/80 p-1 rounded-xl mr-2">
+              <View className="flex-row bg-stone-200/80 p-1 rounded-xl">
                 <Pressable
                   onPress={() => setViewMode('document')}
                   className={`px-3.5 py-1.5 rounded-lg min-h-[48px] flex-row items-center ${
@@ -257,13 +257,16 @@ Official POS Audit Document
           </View>
 
           {/* Report Body */}
-          <ScrollView className="flex-1 p-6 bg-[#fcf9f9]" showsVerticalScrollIndicator={false}>
+          <ScrollView
+            className="flex-1 p-3 sm:p-6 bg-[#fcf9f9]"
+            showsVerticalScrollIndicator={false}
+          >
             {viewMode === 'document' ? (
               /* Minimalist Document Sheet View - Printable Area */
               <View
                 nativeID="monks-reading-print-area"
                 {...({ id: 'monks-reading-print-area' } as any)}
-                className="bg-white rounded-2xl border border-stone-200 p-8 shadow-xs max-w-2xl mx-auto w-full"
+                className="bg-white rounded-2xl border border-stone-200 p-4 sm:p-8 shadow-xs max-w-2xl mx-auto w-full"
               >
                 {/* Brand Header */}
                 <View className="items-center pb-6 border-b border-stone-200 mb-6 print-avoid-break">
@@ -674,43 +677,43 @@ Official POS Audit Document
           </ScrollView>
 
           {/* Action Footer */}
-          <View className="flex-row items-center justify-between px-6 py-4 border-t border-stone-200 bg-white flex-wrap gap-3">
-            <View className="flex-row items-center gap-2">
+          <View className="flex-col md:flex-row items-stretch md:items-center justify-between px-4 sm:px-6 py-4 border-t border-stone-200 bg-white gap-3">
+            <View className="flex-row items-center gap-2 flex-wrap">
               <Pressable
                 onPress={handleBrowserPrint}
-                className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 min-h-[48px]"
+                className="flex-1 sm:flex-initial flex-row items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 min-h-[48px]"
               >
                 <Printer size={18} color="#44403c" />
-                <Text className="text-base font-bold text-stone-800">Print A4 Document</Text>
+                <Text className="text-base font-bold text-stone-800">Print A4</Text>
               </Pressable>
 
               <Pressable
                 onPress={handleSendToThermal}
                 disabled={isSendingToThermal}
-                className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-[#800020] active:bg-[#600018] min-h-[48px]"
+                className="flex-1 sm:flex-initial flex-row items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#800020] active:bg-[#600018] min-h-[48px]"
               >
                 <Receipt size={18} color="#ffffff" />
                 <Text className="text-base font-bold text-white">
-                  {isSendingToThermal ? 'Sending...' : 'Thermal 80mm Print'}
+                  {isSendingToThermal ? 'Sending...' : 'Thermal 80mm'}
                 </Text>
               </Pressable>
             </View>
 
-            <View className="flex-row items-center gap-2">
+            <View className="flex-row items-center gap-2 flex-wrap">
               <Pressable
                 onPress={handleExportExcel}
-                className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-300 active:bg-emerald-100 min-h-[48px]"
+                className="flex-1 sm:flex-initial flex-row items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-300 active:bg-emerald-100 min-h-[48px]"
               >
                 <FileSpreadsheet size={18} color="#047857" />
-                <Text className="text-base font-bold text-emerald-800">Export Excel (.xls)</Text>
+                <Text className="text-base font-bold text-emerald-800">Excel (.xls)</Text>
               </Pressable>
 
               <Pressable
                 onPress={handleDownloadText}
-                className="flex-row items-center gap-2 px-3 py-2.5 rounded-xl border border-stone-300 active:bg-stone-50 min-h-[48px]"
+                className="flex-row items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-stone-300 active:bg-stone-50 min-h-[48px]"
               >
                 <Download size={18} color="#44403c" />
-                <Text className="text-base font-bold text-stone-700">Text File</Text>
+                <Text className="text-base font-bold text-stone-700">Text</Text>
               </Pressable>
 
               <Pressable

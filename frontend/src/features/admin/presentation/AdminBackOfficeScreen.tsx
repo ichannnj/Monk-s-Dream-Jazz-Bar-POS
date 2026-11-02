@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { SharedChatView } from '@/features/chat/presentation/SharedChatView';
+import { useResponsive } from '@/features/shared/hooks/useResponsive';
 import type { AdminRoute, DashboardTelemetry, TimeframeFilter } from '../domain/admin.types';
 import {
   adminApi,
@@ -13,6 +14,8 @@ import { adminTelemetryService } from '../data/adminTelemetry';
 import { AdminSidebar } from './components/AdminSidebar';
 import { AdminHeader } from './components/AdminHeader';
 import { AdminFloatingChat } from './components/AdminFloatingChat';
+import { AdminBottomNav } from './components/AdminBottomNav';
+import { AdminMobileDrawer } from './components/AdminMobileDrawer';
 import { AdminDashboardView } from './views/AdminDashboardView';
 import { AdminInventoryView } from './views/AdminInventoryView';
 import { AdminRecipesView } from './views/AdminRecipesView';
@@ -25,10 +28,12 @@ import { AdminTableLayoutView } from './views/AdminTableLayoutView';
 export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> = ({
   onSwitchToFloor,
 }) => {
+  const { isMobile, isTablet } = useResponsive();
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>('dashboard');
   const [operatingMode, setOperatingMode] = useState<'CAFE' | 'EVENT'>('CAFE');
   const [timeframe, setTimeframe] = useState<TimeframeFilter>('today');
   const [isLoading, setIsLoading] = useState(true);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // Telemetry & back-office data state
   const [telemetry, setTelemetry] = useState<DashboardTelemetry | null>(null);
@@ -159,7 +164,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
 
   return (
     <View className="flex-1 flex-row" style={{ backgroundColor: '#4A1020E0' }}>
-      {/* Pinned Wine Burgundy Sidebar */}
+      {/* Pinned Wine Burgundy Sidebar (Visible on Desktop >= 1024px) */}
       <AdminSidebar
         currentRoute={currentRoute}
         onRouteChange={setCurrentRoute}
@@ -174,14 +179,37 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
           operatingMode={operatingMode}
           onToggleOperatingMode={handleToggleMode}
           onSwitchToFloor={onSwitchToFloor}
+          onOpenDrawer={() => setIsDrawerOpen(true)}
         />
 
         {/* Dynamic Route Body */}
         <View className="flex-1">{renderActiveView()}</View>
+
+        {/* Mobile / Tablet Bottom Navigation Bar (< 1024px) */}
+        {(isMobile || isTablet) && (
+          <AdminBottomNav
+            currentRoute={currentRoute}
+            onRouteChange={setCurrentRoute}
+            onOpenDrawer={() => setIsDrawerOpen(true)}
+            unreadChatCount={3}
+          />
+        )}
       </View>
 
-      {/* Slide-over Team Chat Trigger Button & Drawer (hidden when on Team Chats view) */}
-      {currentRoute !== 'chats' && <AdminFloatingChat unreadCount={3} />}
+      {/* Slide-over Full Navigation Drawer for Mobile/Tablet (< 1024px) */}
+      <AdminMobileDrawer
+        visible={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        currentRoute={currentRoute}
+        onRouteChange={setCurrentRoute}
+        unreadChatCount={3}
+        operatingMode={operatingMode}
+        onToggleOperatingMode={handleToggleMode}
+        onSwitchToFloor={onSwitchToFloor}
+      />
+
+      {/* Slide-over Team Chat Trigger Button (Desktop only; on mobile, Chat is in bottom bar) */}
+      {!isMobile && currentRoute !== 'chats' && <AdminFloatingChat unreadCount={3} />}
     </View>
   );
 };

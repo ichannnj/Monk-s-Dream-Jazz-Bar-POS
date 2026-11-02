@@ -238,7 +238,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
         {/* Station Target */}
         <View>
           <Text className="text-base font-semibold text-stone-800 mb-2">Target Station</Text>
-          <View className="flex-row space-x-3">
+          <View className="flex-col sm:flex-row gap-3">
             <Pressable
               onPress={() => setStationTarget('bar')}
               className={`min-h-[48px] flex-1 items-center justify-center rounded-xl border transition-all ${
@@ -301,7 +301,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
 
         {/* Pricing Input Fields */}
         {isResoldOutsideFood ? (
-          <View className="flex-row space-x-3">
+          <View className="flex-col sm:flex-row gap-3">
             <View className="flex-1">
               <AdminNumberInput
                 label="Vendor Cost (₱)"

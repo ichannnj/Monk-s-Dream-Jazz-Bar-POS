@@ -165,11 +165,14 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
   });
 
   return (
-    <ScrollView className="flex-1 bg-[#fcf9f9] p-8" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      showsVerticalScrollIndicator={false}
+    >
       {/* Page Header */}
-      <View className="mb-6 flex-row items-center justify-between">
-        <View>
-          <Text className="text-3xl font-extrabold tracking-tight text-stone-900">
+      <View className="mb-6 flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <View className="flex-1 min-w-[260px]">
+          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
             Inventory Hub & Moving Average Cost (MAC)
           </Text>
           <Text className="mt-1 text-base text-stone-500">
@@ -179,14 +182,14 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         </View>
 
         {/* Global Action Buttons based on active tab */}
-        <View className="flex-row items-center space-x-3">
+        <View className="flex-row items-center gap-3 flex-wrap">
           {activeTab === 'stock' && (
             <Pressable
               onPress={() => {
                 setEditingItem(null);
                 setIsItemModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Plus size={20} color="#ffffff" />
               <Text className="ml-2 text-base font-bold text-white">Add Inventory Item</Text>
@@ -199,7 +202,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
                 setEditingSupplier(null);
                 setIsSupplierModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Building2 size={20} color="#ffffff" />
               <Text className="ml-2 text-base font-bold text-white">Add Supplier</Text>
@@ -209,7 +212,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
           {activeTab === 'stocktake' && (
             <Pressable
               onPress={() => setIsStocktakeModalOpen(true)}
-              className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <ClipboardCheck size={20} color="#ffffff" />
               <Text className="ml-2 text-base font-bold text-white">Run Physical Stocktake</Text>
@@ -219,7 +222,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
           {activeTab === 'waste' && (
             <Pressable
               onPress={() => setIsWasteModalOpen(true)}
-              className="min-h-[48px] flex-row items-center rounded-xl bg-rose-700 px-5 active:opacity-90 shadow-sm"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-rose-700 px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Trash2 size={20} color="#ffffff" />
               <Text className="ml-2 text-base font-bold text-white">Log Spillage / Waste</Text>
@@ -228,39 +231,45 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         </View>
       </View>
 
-      {/* Sub-Navigation Tabs */}
-      <View className="mb-6 flex-row border-b border-stone-200">
-        {[
-          { key: 'stock', label: `Stock On-Hand (${inventory.length})`, icon: Package },
-          { key: 'suppliers', label: `Suppliers (${suppliers.length})`, icon: Building2 },
-          { key: 'ledger', label: `Movement Ledger (${movements.length})`, icon: FileText },
-          { key: 'stocktake', label: 'Physical Stocktake', icon: ClipboardCheck },
-          { key: 'waste', label: 'Waste & Spillage', icon: Trash2 },
-        ].map((tab) => {
-          const isActive = activeTab === tab.key;
-          const IconComp = tab.icon;
-          return (
-            <Pressable
-              key={tab.key}
-              onPress={() => setActiveTab(tab.key as InventoryTab)}
-              className={`min-h-[48px] flex-row items-center px-6 border-b-2 transition-all ${
-                isActive
-                  ? 'border-[#800020] bg-[#800020]/5'
-                  : 'border-transparent active:bg-stone-100'
-              }`}
-            >
-              <IconComp size={18} color={isActive ? '#800020' : '#78716c'} />
-              <Text
-                className={`ml-2 text-base ${
-                  isActive ? 'font-bold text-[#800020]' : 'font-medium text-stone-600'
+      {/* Sub-Navigation Tabs with horizontal scrolling */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="mb-6 border-b border-stone-200"
+      >
+        <View className="flex-row">
+          {[
+            { key: 'stock', label: `Stock On-Hand (${inventory.length})`, icon: Package },
+            { key: 'suppliers', label: `Suppliers (${suppliers.length})`, icon: Building2 },
+            { key: 'ledger', label: `Movement Ledger (${movements.length})`, icon: FileText },
+            { key: 'stocktake', label: 'Physical Stocktake', icon: ClipboardCheck },
+            { key: 'waste', label: 'Waste & Spillage', icon: Trash2 },
+          ].map((tab) => {
+            const isActive = activeTab === tab.key;
+            const IconComp = tab.icon;
+            return (
+              <Pressable
+                key={tab.key}
+                onPress={() => setActiveTab(tab.key as InventoryTab)}
+                className={`min-h-[48px] flex-row items-center px-4 sm:px-6 border-b-2 transition-all ${
+                  isActive
+                    ? 'border-[#800020] bg-[#800020]/5'
+                    : 'border-transparent active:bg-stone-100'
                 }`}
               >
-                {tab.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+                <IconComp size={18} color={isActive ? '#800020' : '#78716c'} />
+                <Text
+                  className={`ml-2 text-base whitespace-nowrap ${
+                    isActive ? 'font-bold text-[#800020]' : 'font-medium text-stone-600'
+                  }`}
+                >
+                  {tab.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </ScrollView>
 
       {/* TAB 1: STOCK ON-HAND */}
       {activeTab === 'stock' && (
@@ -317,10 +326,10 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
                   return (
                     <View
                       key={item.id}
-                      className="flex-row items-center justify-between border-b border-stone-100 pb-4"
+                      className="flex-col md:flex-row md:items-center justify-between border-b border-stone-100 pb-4 gap-4"
                     >
-                      <View className="flex-1 pr-4">
-                        <View className="flex-row items-center space-x-2">
+                      <View className="flex-1 md:pr-4">
+                        <View className="flex-row items-center space-x-2 flex-wrap gap-1.5">
                           <Text className="text-lg font-bold text-stone-900">{item.name}</Text>
                           {isCritical ? (
                             <View className="rounded-md bg-rose-100 border border-rose-300 px-2 py-0.5">
@@ -360,9 +369,9 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
                         </Text>
                       </View>
 
-                      {/* Stock on Hand & Cost */}
-                      <View className="flex-row items-center space-x-4">
-                        <View className="items-end mr-3">
+                      {/* Stock on Hand & Cost & Actions */}
+                      <View className="flex-col sm:flex-row sm:items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t border-stone-100/70 md:border-t-0">
+                        <View className="flex-row sm:flex-col items-baseline sm:items-end justify-between sm:mr-3">
                           <Text
                             className={`text-lg font-extrabold ${
                               isCritical
@@ -379,30 +388,34 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
                           </Text>
                         </View>
 
-                        <Pressable
-                          onPress={() => setSelectedRestockItem(item)}
-                          className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-xs"
-                        >
-                          <Plus size={18} color="#ffffff" />
-                          <Text className="ml-1 text-base font-bold text-white">Restock</Text>
-                        </Pressable>
+                        <View className="flex-row items-center gap-2">
+                          <Pressable
+                            onPress={() => setSelectedRestockItem(item)}
+                            className="flex-1 sm:flex-initial min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-xs"
+                          >
+                            <Plus size={18} color="#ffffff" />
+                            <Text className="ml-1 text-base font-bold text-white">Restock</Text>
+                          </Pressable>
 
-                        <Pressable
-                          onPress={() => {
-                            setEditingItem(item);
-                            setIsItemModalOpen(true);
-                          }}
-                          className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
-                        >
-                          <Edit size={18} color="#44403c" />
-                        </Pressable>
+                          <Pressable
+                            onPress={() => {
+                              setEditingItem(item);
+                              setIsItemModalOpen(true);
+                            }}
+                            className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
+                            accessibilityLabel="Edit inventory item"
+                          >
+                            <Edit size={18} color="#44403c" />
+                          </Pressable>
 
-                        <Pressable
-                          onPress={() => handleDeleteItem(item)}
-                          className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-rose-50 active:bg-rose-100"
-                        >
-                          <Trash2 size={18} color="#e11d48" />
-                        </Pressable>
+                          <Pressable
+                            onPress={() => handleDeleteItem(item)}
+                            className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-rose-50 active:bg-rose-100"
+                            accessibilityLabel="Delete inventory item"
+                          >
+                            <Trash2 size={18} color="#e11d48" />
+                          </Pressable>
+                        </View>
                       </View>
                     </View>
                   );

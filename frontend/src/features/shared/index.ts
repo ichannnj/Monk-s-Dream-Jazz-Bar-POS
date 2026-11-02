@@ -7,3 +7,4 @@ export * from './infrastructure/api';
 export * from './infrastructure/realtime';
 export * from './infrastructure/supabase';
 export * from './infrastructure/system.api';
+export * from './hooks/useResponsive';

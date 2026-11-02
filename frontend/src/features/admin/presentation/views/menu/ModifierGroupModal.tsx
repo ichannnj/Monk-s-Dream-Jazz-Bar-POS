@@ -202,7 +202,7 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
         />
 
         {/* Min & Max Selections */}
-        <View className="flex-row space-x-4">
+        <View className="flex-col sm:flex-row gap-4">
           <View className="flex-1">
             <AdminNumberInput
               label="Min Choices"
@@ -270,8 +270,8 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
                 key={idx}
                 className="rounded-xl border border-stone-200 bg-stone-50/70 p-4 space-y-3"
               >
-                <View className="flex-row items-start space-x-3">
-                  <View className="flex-1">
+                <View className="flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <View className="flex-1 w-full">
                     <AdminInput
                       label="Option Label"
                       value={opt.name}
@@ -279,7 +279,7 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
                       placeholder="e.g. Barista Oat Milk Swap"
                     />
                   </View>
-                  <View className="w-36">
+                  <View className="w-full sm:w-36">
                     <AdminNumberInput
                       label="Price Delta"
                       mode="currency"
@@ -290,7 +290,7 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
                   </View>
                   <Pressable
                     onPress={() => handleRemoveOption(idx)}
-                    className="mt-7 min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-rose-100 hover:bg-rose-100 transition-colors"
+                    className="self-end sm:self-auto sm:mt-7 min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-rose-100 hover:bg-rose-100 transition-colors"
                   >
                     <Trash2 size={20} color="#e11d48" />
                   </Pressable>

@@ -100,11 +100,14 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
   };
 
   return (
-    <ScrollView className="flex-1 bg-[#fcf9f9] p-8" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header */}
-      <View className="mb-6 flex-row items-center justify-between">
-        <View>
-          <Text className="text-3xl font-extrabold tracking-tight text-stone-900">
+      <View className="mb-6 flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <View className="flex-1 min-w-[260px]">
+          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
             Venue Settings, Taxes & Routing
           </Text>
           <Text className="mt-1 text-base text-stone-500">
@@ -116,7 +119,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
         <Pressable
           onPress={handleSaveAll}
           disabled={isSaving}
-          className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-6 active:opacity-90 shadow-sm"
+          className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-6 active:opacity-90 shadow-sm w-full sm:w-auto"
         >
           <Save size={20} color="#ffffff" />
           <Text className="ml-2 text-base font-bold text-white">
@@ -127,7 +130,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
 
       <View className="space-y-6">
         {/* SECTION 0: GENERAL VENUE IDENTITY */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs space-y-4">
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs space-y-4">
           <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
             <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
               <Building size={22} color="#800020" />
@@ -142,7 +145,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
             </View>
           </View>
 
-          <View className="flex-row space-x-4">
+          <View className="flex-col md:flex-row gap-4">
             <View className="flex-1">
               <AdminInput
                 label="Registered Business / Venue Name"
@@ -151,7 +154,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
                 placeholder="Monk's Dream Jazz Bar"
               />
             </View>
-            <View className="w-64">
+            <View className="w-full md:w-64">
               <AdminNumberInput
                 label="Daily Overhead Allocation"
                 mode="currency"
@@ -165,7 +168,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
         </View>
 
         {/* SECTION 1: TAXES & SERVICE CHARGE */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs space-y-4">
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs space-y-4">
           <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
             <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
               <Percent size={22} color="#800020" />
@@ -180,8 +183,8 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
             </View>
           </View>
 
-          <View className="flex-row items-start space-x-4">
-            <View className="flex-1">
+          <View className="flex-col md:flex-row items-start gap-4">
+            <View className="flex-1 w-full">
               <AdminNumberInput
                 label="VAT Rate"
                 mode="decimal"
@@ -193,7 +196,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
               />
             </View>
 
-            <View className="flex-1 pt-6">
+            <View className="flex-1 w-full md:pt-6">
               <Pressable
                 onPress={() => setVatInclusive(!vatInclusive)}
                 className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
@@ -217,8 +220,8 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
             </View>
           </View>
 
-          <View className="flex-row items-start space-x-4 pt-2">
-            <View className="flex-1">
+          <View className="flex-col md:flex-row items-start gap-4 pt-2">
+            <View className="flex-1 w-full">
               <AdminNumberInput
                 label="Service Charge Rate"
                 mode="decimal"
@@ -230,7 +233,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
               />
             </View>
 
-            <View className="flex-1 pt-6">
+            <View className="flex-1 w-full md:pt-6">
               <Pressable
                 onPress={() => setServiceChargeEnabled(!serviceChargeEnabled)}
                 className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
@@ -262,7 +265,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
         </View>
 
         {/* SECTION 2: DISCOUNTS & OPERATIONAL COMPS */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs space-y-4">
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs space-y-4">
           <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
             <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
               <Receipt size={22} color="#800020" />
@@ -277,7 +280,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
             </View>
           </View>
 
-          <View className="flex-row space-x-4">
+          <View className="flex-col md:flex-row gap-4">
             <View className="flex-1">
               <AdminNumberInput
                 label="Senior / PWD (RA 9994)"
@@ -317,7 +320,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
         </View>
 
         {/* SECTION 3: PRINTER & HARDWARE ROUTING */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs space-y-4">
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs space-y-4">
           <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
             <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
               <Printer size={22} color="#800020" />
@@ -332,7 +335,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
             </View>
           </View>
 
-          <View className="flex-row space-x-4">
+          <View className="flex-col md:flex-row gap-4">
             <View className="flex-1">
               <AdminInput
                 label="Bar Printer (Cocktails & Cafe)"

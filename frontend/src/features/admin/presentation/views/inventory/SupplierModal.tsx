@@ -131,7 +131,7 @@ export const SupplierModal: React.FC<SupplierModalProps> = ({
           placeholder="e.g. Luzon Beverage & Spirits Imports"
         />
 
-        <View className="flex-row space-x-4">
+        <View className="flex-col sm:flex-row gap-4">
           <View className="flex-1">
             <AdminInput
               label="Contact Representative"
@@ -140,7 +140,7 @@ export const SupplierModal: React.FC<SupplierModalProps> = ({
               placeholder="e.g. Marco Santos"
             />
           </View>
-          <View className="w-44">
+          <View className="w-full sm:w-44">
             <AdminNumberInput
               label="Lead Time (Days)"
               mode="integer"
@@ -152,7 +152,7 @@ export const SupplierModal: React.FC<SupplierModalProps> = ({
           </View>
         </View>
 
-        <View className="flex-row space-x-4">
+        <View className="flex-col sm:flex-row gap-4">
           <View className="flex-1">
             <AdminInput
               label="Phone Number"

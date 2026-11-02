@@ -153,7 +153,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
     >
       <View className="space-y-5">
         {/* Name & SKU */}
-        <View className="flex-row space-x-4">
+        <View className="flex-col sm:flex-row gap-4">
           <View className="flex-1">
             <AdminInput
               label="Item Name"
@@ -163,7 +163,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
               placeholder="e.g. Specialty Espresso Beans, 12oz Takeout Cup"
             />
           </View>
-          <View className="w-44">
+          <View className="w-full sm:w-44">
             <AdminInput
               label="SKU / Code"
               required
@@ -230,7 +230,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
         </View>
 
         {/* Par Alert, Stock, & Unit Cost */}
-        <View className="flex-row space-x-4">
+        <View className="flex-col sm:flex-row gap-4">
           <View className="flex-1">
             <AdminNumberInput
               label="Min Par (Alert Level)"

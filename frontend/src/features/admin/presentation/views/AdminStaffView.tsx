@@ -96,10 +96,13 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
   };
 
   return (
-    <ScrollView className="flex-1 bg-[#fcf9f9] p-8" showsVerticalScrollIndicator={false}>
-      <View className="mb-6 flex-row items-center justify-between">
-        <View>
-          <Text className="text-3xl font-extrabold tracking-tight text-stone-900">
+    <ScrollView
+      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      showsVerticalScrollIndicator={false}
+    >
+      <View className="mb-6 flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <View className="flex-1 min-w-[260px]">
+          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
             Staff Daily Salary & Discretionary Shift Add-ons
           </Text>
           <Text className="mt-1 text-base text-stone-500">
@@ -108,14 +111,14 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
           </Text>
         </View>
 
-        <View className="flex-row items-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 shadow-xs">
+        <View className="flex-row items-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 shadow-xs self-start sm:self-auto">
           <Calendar size={18} color="#78716c" />
           <Text className="ml-2 text-base font-bold text-stone-800">{todayStr}</Text>
         </View>
       </View>
 
       {/* Baseline Policy Banner */}
-      <View className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
+      <View className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
         <Text className="text-base font-bold text-amber-900">
           Daily Minimum Shift Rate: ₱50.00 / shift
         </Text>
@@ -126,12 +129,12 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
       </View>
 
       {/* Staff Attendance & Pay Table */}
-      <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
+      <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
         <View className="space-y-4">
           {attendance.map((rec) => (
             <View
               key={rec.id}
-              className="flex-row items-center justify-between border-b border-stone-100 py-4"
+              className="flex-col md:flex-row md:items-center justify-between border-b border-stone-100 py-4 gap-4"
             >
               <View className="flex-row items-center space-x-3">
                 <View className="h-12 w-12 items-center justify-center rounded-full bg-stone-100 border border-stone-200">
@@ -147,26 +150,28 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
                 </View>
               </View>
 
-              <View className="flex-row items-center space-x-6">
-                <View className="items-end mr-4">
-                  <Text className="text-base text-stone-400">Base Shift Pay</Text>
-                  <Text className="text-base font-semibold text-stone-800">
-                    ₱{Number(rec.base_daily_pay || 0).toFixed(2)}
-                  </Text>
-                </View>
+              <View className="flex-col sm:flex-row sm:items-center justify-between md:justify-end gap-3 pt-3 md:pt-0 border-t border-stone-100/70 md:border-t-0">
+                <View className="flex-row items-center justify-between sm:justify-start gap-4 flex-wrap">
+                  <View className="items-start sm:items-end">
+                    <Text className="text-base text-stone-400">Base Pay</Text>
+                    <Text className="text-base font-semibold text-stone-800">
+                      ₱{Number(rec.base_daily_pay || 0).toFixed(2)}
+                    </Text>
+                  </View>
 
-                <View className="items-end mr-4">
-                  <Text className="text-base text-stone-400">Bonus Add-on</Text>
-                  <Text className="text-base font-bold text-emerald-700">
-                    +₱{Number(rec.addon_pay || 0).toFixed(2)}
-                  </Text>
-                </View>
+                  <View className="items-start sm:items-end">
+                    <Text className="text-base text-stone-400">Bonus</Text>
+                    <Text className="text-base font-bold text-emerald-700">
+                      +₱{Number(rec.addon_pay || 0).toFixed(2)}
+                    </Text>
+                  </View>
 
-                <View className="items-end mr-4">
-                  <Text className="text-base text-stone-400">Total Shift Pay</Text>
-                  <Text className="text-lg font-black text-stone-900">
-                    ₱{Number(rec.total_day_pay || 0).toFixed(2)}
-                  </Text>
+                  <View className="items-start sm:items-end">
+                    <Text className="text-base text-stone-400">Total Pay</Text>
+                    <Text className="text-lg font-black text-stone-900">
+                      ₱{Number(rec.total_day_pay || 0).toFixed(2)}
+                    </Text>
+                  </View>
                 </View>
 
                 <Pressable
@@ -174,7 +179,8 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
                     setSelectedRecord(rec);
                     setAddonPayInput(rec.addon_pay.toString());
                   }}
-                  className="min-h-[48px] px-4 flex-row items-center rounded-xl bg-stone-100 active:bg-stone-200"
+                  className="min-h-[48px] px-4 flex-row items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
+                  accessibilityLabel="Adjust bonus"
                 >
                   <Award size={18} color="#800020" />
                   <Text className="ml-2 text-base font-bold text-[#800020]">Adjust Bonus</Text>

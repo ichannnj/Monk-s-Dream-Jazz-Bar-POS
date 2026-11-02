@@ -61,15 +61,17 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           style={Platform.OS === 'web' ? ({ pointerEvents: 'auto' } as any) : undefined}
         >
           {/* Header */}
-          <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-6 py-4">
-            <View className="flex-row items-center space-x-3.5 flex-1 pr-3">
+          <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-4 sm:px-6 py-3.5 sm:py-4">
+            <View className="flex-row items-center space-x-3 sm:space-x-3.5 flex-1 pr-3">
               {icon && (
-                <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#800020]/10 border border-[#800020]/20">
+                <View className="h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-[#800020]/10 border border-[#800020]/20">
                   {icon}
                 </View>
               )}
-              <View className="flex-1 ml-3">
-                <Text className="text-xl font-bold text-stone-900 leading-tight">{title}</Text>
+              <View className="flex-1 ml-2.5 sm:ml-3">
+                <Text className="text-lg sm:text-xl font-bold text-stone-900 leading-tight">
+                  {title}
+                </Text>
                 {subtitle && (
                   <Text className="text-base text-stone-500 font-medium mt-0.5">{subtitle}</Text>
                 )}
@@ -89,19 +91,19 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           {/* Modal Body */}
           {scrollable ? (
             <ScrollView
-              className={`p-6 flex-1 ${contentClassName}`}
+              className={`p-4 sm:p-6 flex-1 ${contentClassName}`}
               showsVerticalScrollIndicator={true}
               keyboardShouldPersistTaps="handled"
             >
               {children}
             </ScrollView>
           ) : (
-            <View className={`p-6 flex-1 ${contentClassName}`}>{children}</View>
+            <View className={`p-4 sm:p-6 flex-1 ${contentClassName}`}>{children}</View>
           )}
 
           {/* Footer (Sticky action buttons) */}
           {footer && (
-            <View className="flex-row items-center justify-end space-x-3 border-t border-stone-200 bg-stone-50 px-6 py-4">
+            <View className="flex-row items-center justify-end space-x-3 border-t border-stone-200 bg-stone-50 px-4 sm:px-6 py-3.5 sm:py-4 flex-wrap gap-2">
               {footer}
             </View>
           )}

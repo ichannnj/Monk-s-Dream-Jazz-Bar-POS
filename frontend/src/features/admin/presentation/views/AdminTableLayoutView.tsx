@@ -110,11 +110,14 @@ export const AdminTableLayoutView: React.FC = () => {
   const barTables = tables.filter((t) => t.zone === 'BAR_AREA');
 
   return (
-    <ScrollView className="flex-1 bg-[#fcf9f9] p-8" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header */}
-      <View className="mb-6 flex-row items-center justify-between">
-        <View>
-          <Text className="text-3xl font-extrabold tracking-tight text-stone-900">
+      <View className="mb-6 flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <View className="flex-1 min-w-[260px]">
+          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
             Table Layout & Floor Plan
           </Text>
           <Text className="mt-1 text-base text-stone-500">
@@ -124,7 +127,7 @@ export const AdminTableLayoutView: React.FC = () => {
 
         <Pressable
           onPress={handleOpenAdd}
-          className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm"
+          className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
         >
           <Plus size={20} color="#ffffff" />
           <Text className="ml-2 text-base font-bold text-white">Add Physical Table</Text>
@@ -134,8 +137,8 @@ export const AdminTableLayoutView: React.FC = () => {
       {/* Grid of Tables by Zone */}
       <View className="space-y-6">
         {/* CAFE ZONE */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
-          <View className="flex-row items-center justify-between border-b border-stone-100 pb-4 mb-4">
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
+          <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-2">
             <View className="flex-row items-center space-x-2">
               <Coffee size={22} color="#800020" />
               <Text className="text-xl font-bold text-stone-900">
@@ -147,11 +150,11 @@ export const AdminTableLayoutView: React.FC = () => {
             </Text>
           </View>
 
-          <View className="flex-row flex-wrap gap-4">
+          <View className="flex-row flex-wrap gap-3 sm:gap-4">
             {cafeTables.map((t) => (
               <View
                 key={t.id}
-                className="w-48 rounded-xl border border-stone-200 bg-stone-50/70 p-4 justify-between"
+                className="flex-1 min-w-[145px] max-w-[220px] sm:w-48 sm:flex-initial rounded-xl border border-stone-200 bg-stone-50/70 p-4 justify-between"
               >
                 <View>
                   <View className="flex-row items-center justify-between mb-2">
@@ -191,8 +194,8 @@ export const AdminTableLayoutView: React.FC = () => {
         </View>
 
         {/* BAR & LIVE STAGE ZONE */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
-          <View className="flex-row items-center justify-between border-b border-stone-100 pb-4 mb-4">
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
+          <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-2">
             <View className="flex-row items-center space-x-2">
               <Wine size={22} color="#800020" />
               <Text className="text-xl font-bold text-stone-900">
@@ -204,11 +207,11 @@ export const AdminTableLayoutView: React.FC = () => {
             </Text>
           </View>
 
-          <View className="flex-row flex-wrap gap-4">
+          <View className="flex-row flex-wrap gap-3 sm:gap-4">
             {barTables.map((t) => (
               <View
                 key={t.id}
-                className="w-48 rounded-xl border border-stone-200 bg-stone-50/70 p-4 justify-between"
+                className="flex-1 min-w-[145px] max-w-[220px] sm:w-48 sm:flex-initial rounded-xl border border-stone-200 bg-stone-50/70 p-4 justify-between"
               >
                 <View>
                   <View className="flex-row items-center justify-between mb-2">

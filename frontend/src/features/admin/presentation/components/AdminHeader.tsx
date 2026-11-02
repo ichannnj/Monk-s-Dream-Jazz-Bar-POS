@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Sun, Flame, Layers, LogOut } from 'lucide-react-native';
+import { Sun, Flame, Layers, LogOut, Menu } from 'lucide-react-native';
 import { useAuthStore } from '@/features/auth';
 import type { AdminRoute } from '../../domain/admin.types';
 
@@ -9,6 +9,7 @@ interface AdminHeaderProps {
   operatingMode: 'CAFE' | 'EVENT';
   onToggleOperatingMode: () => void;
   onSwitchToFloor?: () => void;
+  onOpenDrawer?: () => void;
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
@@ -16,6 +17,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   operatingMode,
   onToggleOperatingMode,
   onSwitchToFloor,
+  onOpenDrawer,
 }) => {
   const { logout } = useAuthStore();
   const [currentTimeStr, setCurrentTimeStr] = useState('Tue, Oct 6 - 3:00 PM');
@@ -64,53 +66,73 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
       case 'chats':
         return 'Team Chats';
       case 'menu':
-        return 'Menu Catalog & Recipes';
+        return 'Menu Catalog';
       case 'inventory':
-        return 'Inventory Hub (MAC)';
+        return 'Inventory Hub';
       case 'tables':
         return 'Table Floor Plan';
       case 'settings':
-        return 'Venue Settings & Hardware';
+        return 'Venue Settings';
       case 'staff':
         return 'Staff & Attendance';
       case 'sales':
-        return 'Sales & Transactions';
+        return 'Sales & Reports';
       case 'attendance':
-        return 'Attendance Records';
+        return 'Attendance';
       default:
         return 'Admin Console';
     }
   };
 
   return (
-    <View className="flex-row items-center justify-between border-b border-stone-200/80 bg-white px-8 py-3.5 shadow-xs">
-      {/* Route Title & Online Status */}
-      <View className="flex-row items-center space-x-3">
-        <Text className="text-2xl font-bold tracking-tight text-stone-900">{getRouteTitle()}</Text>
-        <View className="ml-3 flex-row items-center rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1">
-          <View className="h-2.5 w-2.5 rounded-full bg-emerald-500 mr-2" />
-          <Text className="text-base font-semibold text-emerald-700">Online</Text>
+    <View className="flex-row items-center justify-between border-b border-stone-200/80 bg-white px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 shadow-xs">
+      {/* Route Title & Mobile Hamburger & Online Status */}
+      <View className="flex-row items-center space-x-2 sm:space-x-3 flex-1 min-w-0 pr-2">
+        {onOpenDrawer && (
+          <Pressable
+            onPress={onOpenDrawer}
+            className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200 lg:hidden mr-2"
+            accessibilityLabel="Open Navigation Menu"
+          >
+            <Menu size={22} color="#44403c" />
+          </Pressable>
+        )}
+
+        <Text
+          className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 truncate"
+          numberOfLines={1}
+        >
+          {getRouteTitle()}
+        </Text>
+
+        {/* Compact Online Dot on Mobile, Pill on Tablet/Desktop */}
+        <View className="ml-2 flex-row items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 sm:px-3 py-1">
+          <View className="h-2.5 w-2.5 rounded-full bg-emerald-500 sm:mr-1.5" />
+          <Text className="hidden sm:flex text-base font-semibold text-emerald-700">Online</Text>
         </View>
       </View>
 
-      {/* Right Controls: Time, Mode Switcher, Floor POS Switcher, Profile, Lock */}
-      <View className="flex-row items-center space-x-3">
-        {/* Date Time */}
-        <Text className="text-base font-medium text-stone-600 mr-2">{currentTimeStr}</Text>
+      {/* Right Controls: Mode Switcher, Floor POS Switcher, Time, Profile, Logout */}
+      <View className="flex-row items-center space-x-2 sm:space-x-3">
+        {/* Date Time (Desktop Only) */}
+        <Text className="hidden lg:flex text-base font-medium text-stone-600 mr-2">
+          {currentTimeStr}
+        </Text>
 
         {/* Operating Mode Toggle (Cafe vs Event) */}
         <Pressable
           onPress={onToggleOperatingMode}
-          className={`min-h-[48px] flex-row items-center rounded-xl px-4 py-2 active:opacity-85 ${
+          className={`min-h-[48px] min-w-[48px] flex-row items-center justify-center rounded-xl px-3 sm:px-4 active:opacity-85 ${
             operatingMode === 'EVENT' ? 'bg-amber-600' : 'bg-sky-600'
           }`}
+          accessibilityLabel={`Switch to ${operatingMode === 'EVENT' ? 'Cafe' : 'Event'} Mode`}
         >
           {operatingMode === 'EVENT' ? (
-            <Flame size={18} color="#ffffff" />
+            <Flame size={20} color="#ffffff" />
           ) : (
-            <Sun size={18} color="#ffffff" />
+            <Sun size={20} color="#ffffff" />
           )}
-          <Text className="ml-2 text-base font-bold text-white">
+          <Text className="hidden sm:flex ml-2 text-base font-bold text-white">
             {operatingMode === 'EVENT' ? 'Event Mode' : 'Cafe Mode'}
           </Text>
         </Pressable>
@@ -119,15 +141,18 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {onSwitchToFloor && (
           <Pressable
             onPress={onSwitchToFloor}
-            className="min-h-[48px] flex-row items-center rounded-xl border border-stone-300 bg-white px-4 py-2 active:bg-stone-50"
+            className="min-h-[48px] min-w-[48px] flex-row items-center justify-center rounded-xl border border-stone-300 bg-white px-3 sm:px-4 active:bg-stone-50"
+            accessibilityLabel="Switch to Floor POS"
           >
-            <Layers size={18} color="#44403c" />
-            <Text className="ml-2 text-base font-bold text-stone-800">Floor POS</Text>
+            <Layers size={20} color="#44403c" />
+            <Text className="hidden sm:flex ml-2 text-base font-bold text-stone-800">
+              Floor POS
+            </Text>
           </Pressable>
         )}
 
-        {/* Dynamic Staff Profile Pill */}
-        <View className="flex-row items-center rounded-xl border border-stone-200 bg-stone-50/80 px-3.5 py-1.5 min-h-[48px]">
+        {/* Dynamic Staff Profile Pill (Desktop Only) */}
+        <View className="hidden lg:flex flex-row items-center rounded-xl border border-stone-200 bg-stone-50/80 px-3.5 py-1.5 min-h-[48px]">
           <View className="h-9 w-9 items-center justify-center rounded-full bg-[#800020]/15 border border-[#800020]/30">
             <Text className="text-base font-black text-[#800020]">{staffInitials}</Text>
           </View>

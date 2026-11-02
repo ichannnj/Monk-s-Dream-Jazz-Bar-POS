@@ -108,7 +108,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   return (
     <View
-      className="w-64 flex-col justify-between border-r border-white/10 p-5 shadow-2xl"
+      className="hidden lg:flex w-64 flex-col justify-between border-r border-white/10 p-5 shadow-2xl"
       style={{ backgroundColor: '#4A1020E0' }}
     >
       <View>

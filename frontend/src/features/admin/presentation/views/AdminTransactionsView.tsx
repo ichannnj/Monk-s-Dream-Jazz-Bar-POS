@@ -15,56 +15,62 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ an
 
   return (
     <View className="flex-1 bg-[#fcf9f9]">
-      {/* Sub-navigation bar */}
-      <View className="flex-row items-center border-b border-stone-200 bg-white px-8 py-3.5">
-        <Pressable
-          onPress={() => setSubTab('analytics')}
-          className={`mr-4 min-h-[48px] flex-row items-center rounded-xl px-5 ${
-            subTab === 'analytics' ? 'bg-[#800020]' : 'bg-stone-100 active:bg-stone-200'
-          }`}
-        >
-          <BarChart3 size={20} color={subTab === 'analytics' ? '#ffffff' : '#44403c'} />
-          <Text
-            className={`ml-2 text-base font-bold ${
-              subTab === 'analytics' ? 'text-white' : 'text-stone-700'
+      {/* Sub-navigation bar with horizontal scrolling */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="border-b border-stone-200 bg-white"
+      >
+        <View className="flex-row items-center px-4 sm:px-8 py-2.5 sm:py-3.5 space-x-3">
+          <Pressable
+            onPress={() => setSubTab('analytics')}
+            className={`min-h-[48px] flex-row items-center rounded-xl px-4 sm:px-5 ${
+              subTab === 'analytics' ? 'bg-[#800020]' : 'bg-stone-100 active:bg-stone-200'
             }`}
           >
-            Multi-Channel Financial Overview
-          </Text>
-        </Pressable>
+            <BarChart3 size={20} color={subTab === 'analytics' ? '#ffffff' : '#44403c'} />
+            <Text
+              className={`ml-2 text-base font-bold whitespace-nowrap ${
+                subTab === 'analytics' ? 'text-white' : 'text-stone-700'
+              }`}
+            >
+              Multi-Channel Financial Overview
+            </Text>
+          </Pressable>
 
-        <Pressable
-          onPress={() => setSubTab('checks')}
-          className={`mr-4 min-h-[48px] flex-row items-center rounded-xl px-5 ${
-            subTab === 'checks' ? 'bg-[#800020]' : 'bg-stone-100 active:bg-stone-200'
-          }`}
-        >
-          <Receipt size={20} color={subTab === 'checks' ? '#ffffff' : '#44403c'} />
-          <Text
-            className={`ml-2 text-base font-bold ${
-              subTab === 'checks' ? 'text-white' : 'text-stone-700'
+          <Pressable
+            onPress={() => setSubTab('checks')}
+            className={`min-h-[48px] flex-row items-center rounded-xl px-4 sm:px-5 ${
+              subTab === 'checks' ? 'bg-[#800020]' : 'bg-stone-100 active:bg-stone-200'
             }`}
           >
-            Customer Checks & Thermal Reprint
-          </Text>
-        </Pressable>
+            <Receipt size={20} color={subTab === 'checks' ? '#ffffff' : '#44403c'} />
+            <Text
+              className={`ml-2 text-base font-bold whitespace-nowrap ${
+                subTab === 'checks' ? 'text-white' : 'text-stone-700'
+              }`}
+            >
+              Customer Checks & Thermal Reprint
+            </Text>
+          </Pressable>
 
-        <Pressable
-          onPress={() => setSubTab('readings')}
-          className={`min-h-[48px] flex-row items-center rounded-xl px-5 ${
-            subTab === 'readings' ? 'bg-[#800020]' : 'bg-stone-100 active:bg-stone-200'
-          }`}
-        >
-          <FileText size={20} color={subTab === 'readings' ? '#ffffff' : '#44403c'} />
-          <Text
-            className={`ml-2 text-base font-bold ${
-              subTab === 'readings' ? 'text-white' : 'text-stone-700'
+          <Pressable
+            onPress={() => setSubTab('readings')}
+            className={`min-h-[48px] flex-row items-center rounded-xl px-4 sm:px-5 ${
+              subTab === 'readings' ? 'bg-[#800020]' : 'bg-stone-100 active:bg-stone-200'
             }`}
           >
-            X & Z Shift Readings
-          </Text>
-        </Pressable>
-      </View>
+            <FileText size={20} color={subTab === 'readings' ? '#ffffff' : '#44403c'} />
+            <Text
+              className={`ml-2 text-base font-bold whitespace-nowrap ${
+                subTab === 'readings' ? 'text-white' : 'text-stone-700'
+              }`}
+            >
+              X & Z Shift Readings
+            </Text>
+          </Pressable>
+        </View>
+      </ScrollView>
 
       {subTab === 'readings' ? (
         <View className="flex-1">
@@ -75,9 +81,9 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ an
           <ChecksHistoryView />
         </View>
       ) : (
-        <ScrollView className="flex-1 p-8" showsVerticalScrollIndicator={false}>
+        <ScrollView className="flex-1 p-4 sm:p-6 lg:p-8" showsVerticalScrollIndicator={false}>
           {/* Channel Breakdown Card */}
-          <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs mb-6">
+          <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs mb-6">
             <Text className="text-xl font-bold text-stone-900 mb-4">
               Sales by Channel & Fulfilment Route
             </Text>
@@ -86,7 +92,7 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({ an
               {Object.entries(analytics?.channelBreakdown || {}).map(([channel, data]) => (
                 <View
                   key={channel}
-                  className="flex-row items-center justify-between border-b border-stone-100 py-3.5"
+                  className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 py-3.5 gap-2"
                 >
                   <View>
                     <Text className="text-base font-bold text-stone-800">

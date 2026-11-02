@@ -268,13 +268,13 @@ export const YCloseShiftModal: React.FC<YCloseShiftModalProps> = ({
 
         {/* Physical Cash Count & Denomination Toggle */}
         <View className="mb-4">
-          <View className="flex-row items-center justify-between mb-1.5">
+          <View className="flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1.5">
             <Text className="text-base font-bold text-stone-700">
               Actual Physical Cash Counted in Drawer:
             </Text>
             <Pressable
               onPress={() => setShowDenominationCounter(!showDenominationCounter)}
-              className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 active:bg-stone-200 min-h-[48px]"
+              className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 active:bg-stone-200 min-h-[48px] self-start sm:self-auto"
             >
               <Calculator size={18} color="#800020" />
               <Text className="text-base font-bold text-[#800020]">

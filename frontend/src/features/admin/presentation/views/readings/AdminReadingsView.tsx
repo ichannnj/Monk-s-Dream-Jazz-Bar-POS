@@ -225,62 +225,67 @@ export const AdminReadingsView: React.FC = () => {
         : 'Consolidated Venue (All Tills)';
 
   return (
-    <ScrollView className="flex-1 bg-[#fcf9f9] p-8" showsVerticalScrollIndicator={false}>
+    <ScrollView
+      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      showsVerticalScrollIndicator={false}
+    >
       {/* Top Controls & Scope Selection */}
-      <View className="flex-row items-center justify-between flex-wrap gap-4 mb-6">
+      <View className="flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
         {/* Scope Pill Tabs */}
-        <View className="flex-row items-center bg-stone-200/70 p-1.5 rounded-2xl">
-          <Pressable
-            onPress={() => setDrawerScope('consolidated')}
-            className={`px-4 py-2 rounded-xl min-h-[44px] flex-row items-center ${
-              drawerScope === 'consolidated' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-            }`}
-          >
-            <Layers size={18} color={drawerScope === 'consolidated' ? '#800020' : '#57534e'} />
-            <Text
-              className={`ml-2 text-base font-bold ${
-                drawerScope === 'consolidated' ? 'text-stone-900' : 'text-stone-600'
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full lg:w-auto">
+          <View className="flex-row items-center bg-stone-200/70 p-1.5 rounded-2xl">
+            <Pressable
+              onPress={() => setDrawerScope('consolidated')}
+              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
+                drawerScope === 'consolidated' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
               }`}
             >
-              Consolidated (All Tills)
-            </Text>
-          </Pressable>
+              <Layers size={18} color={drawerScope === 'consolidated' ? '#800020' : '#57534e'} />
+              <Text
+                className={`ml-2 text-base font-bold ${
+                  drawerScope === 'consolidated' ? 'text-stone-900' : 'text-stone-600'
+                }`}
+              >
+                Consolidated (All Tills)
+              </Text>
+            </Pressable>
 
-          <Pressable
-            onPress={() => setDrawerScope('main')}
-            className={`px-4 py-2 rounded-xl min-h-[44px] flex-row items-center ${
-              drawerScope === 'main' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-            }`}
-          >
-            <Coins size={18} color={drawerScope === 'main' ? '#800020' : '#57534e'} />
-            <Text
-              className={`ml-2 text-base font-bold ${
-                drawerScope === 'main' ? 'text-stone-900' : 'text-stone-600'
+            <Pressable
+              onPress={() => setDrawerScope('main')}
+              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
+                drawerScope === 'main' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
               }`}
             >
-              Main Floor Till
-            </Text>
-          </Pressable>
+              <Coins size={18} color={drawerScope === 'main' ? '#800020' : '#57534e'} />
+              <Text
+                className={`ml-2 text-base font-bold ${
+                  drawerScope === 'main' ? 'text-stone-900' : 'text-stone-600'
+                }`}
+              >
+                Main Floor Till
+              </Text>
+            </Pressable>
 
-          <Pressable
-            onPress={() => setDrawerScope('bar')}
-            className={`px-4 py-2 rounded-xl min-h-[44px] flex-row items-center ${
-              drawerScope === 'bar' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-            }`}
-          >
-            <Receipt size={18} color={drawerScope === 'bar' ? '#800020' : '#57534e'} />
-            <Text
-              className={`ml-2 text-base font-bold ${
-                drawerScope === 'bar' ? 'text-stone-900' : 'text-stone-600'
+            <Pressable
+              onPress={() => setDrawerScope('bar')}
+              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
+                drawerScope === 'bar' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
               }`}
             >
-              Bar Station Till
-            </Text>
-          </Pressable>
-        </View>
+              <Receipt size={18} color={drawerScope === 'bar' ? '#800020' : '#57534e'} />
+              <Text
+                className={`ml-2 text-base font-bold ${
+                  drawerScope === 'bar' ? 'text-stone-900' : 'text-stone-600'
+                }`}
+              >
+                Bar Station Till
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
 
         {/* 3-Way Action Toolbar: X-Reading, Y-Reading, Z-Reading */}
-        <View className="flex-row items-center gap-3 flex-wrap">
+        <View className="flex-row items-center gap-3 flex-wrap w-full lg:w-auto">
           <Pressable
             onPress={handleRefresh}
             className="w-12 h-12 rounded-xl bg-white border border-stone-200 items-center justify-center active:bg-stone-100 shadow-xs"
@@ -401,48 +406,50 @@ export const AdminReadingsView: React.FC = () => {
       </View>
 
       {/* Historical Readings Archive Switcher */}
-      <View className="flex-row items-center justify-between mb-4">
-        <View className="flex-row bg-stone-200/80 p-1 rounded-2xl">
-          <Pressable
-            onPress={() => setHistoryTab('z_readings')}
-            className={`px-4 py-2 rounded-xl min-h-[44px] flex-row items-center ${
-              historyTab === 'z_readings' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-            }`}
-          >
-            <Lock size={16} color={historyTab === 'z_readings' ? '#1c1917' : '#57534e'} />
-            <Text
-              className={`ml-2 text-base font-bold ${
-                historyTab === 'z_readings' ? 'text-stone-900' : 'text-stone-600'
+      <View className="flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full sm:w-auto">
+          <View className="flex-row bg-stone-200/80 p-1 rounded-2xl">
+            <Pressable
+              onPress={() => setHistoryTab('z_readings')}
+              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
+                historyTab === 'z_readings' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
               }`}
             >
-              Daily Z-Readings Archive ({zHistory.length})
-            </Text>
-          </Pressable>
+              <Lock size={16} color={historyTab === 'z_readings' ? '#1c1917' : '#57534e'} />
+              <Text
+                className={`ml-2 text-base font-bold ${
+                  historyTab === 'z_readings' ? 'text-stone-900' : 'text-stone-600'
+                }`}
+              >
+                Daily Z-Readings Archive ({zHistory.length})
+              </Text>
+            </Pressable>
 
-          <Pressable
-            onPress={() => setHistoryTab('y_handovers')}
-            className={`px-4 py-2 rounded-xl min-h-[44px] flex-row items-center ${
-              historyTab === 'y_handovers' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-            }`}
-          >
-            <ArrowRightLeft
-              size={16}
-              color={historyTab === 'y_handovers' ? '#d97706' : '#57534e'}
-            />
-            <Text
-              className={`ml-2 text-base font-bold ${
-                historyTab === 'y_handovers' ? 'text-stone-900' : 'text-stone-600'
+            <Pressable
+              onPress={() => setHistoryTab('y_handovers')}
+              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
+                historyTab === 'y_handovers' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
               }`}
             >
-              Shift Handover Y-Reports ({yHistory.length})
-            </Text>
-          </Pressable>
-        </View>
+              <ArrowRightLeft
+                size={16}
+                color={historyTab === 'y_handovers' ? '#d97706' : '#57534e'}
+              />
+              <Text
+                className={`ml-2 text-base font-bold ${
+                  historyTab === 'y_handovers' ? 'text-stone-900' : 'text-stone-600'
+                }`}
+              >
+                Shift Handover Y-Reports ({yHistory.length})
+              </Text>
+            </Pressable>
+          </View>
+        </ScrollView>
 
         {/* Export Full Archive Button */}
         <Pressable
           onPress={handleExportArchive}
-          className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-stone-300 hover:bg-stone-50 active:bg-stone-100 shadow-xs min-h-[44px]"
+          className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-stone-300 hover:bg-stone-50 active:bg-stone-100 shadow-xs min-h-[48px] w-full sm:w-auto justify-center"
         >
           <FileSpreadsheet size={16} color="#047857" />
           <Text className="text-base font-bold text-stone-800">
