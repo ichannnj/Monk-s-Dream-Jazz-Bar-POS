@@ -66,7 +66,12 @@ ON public.pos_z_readings
 FOR ALL TO anon, authenticated 
 USING (true) WITH CHECK (true);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.pos_z_readings;
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.pos_z_readings;
+EXCEPTION WHEN duplicate_object THEN
+  NULL;
+END $$;
 
 -- 4. Stored Procedure: Atomic X-Reading Generator
 CREATE OR REPLACE FUNCTION public.get_current_x_reading(

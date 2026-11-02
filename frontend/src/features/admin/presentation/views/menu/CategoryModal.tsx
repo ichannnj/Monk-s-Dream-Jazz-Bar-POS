@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, TextInput, Modal } from 'react-native';
-import { X, FolderPlus } from 'lucide-react-native';
+import { View, Text, Pressable } from 'react-native';
+import { FolderPlus } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type CategoryAdmin } from '../../../data/admin.api';
+import { AdminModal } from '../../components/AdminModal';
+import { AdminInput } from '../../components/AdminInput';
+import { AdminNumberInput } from '../../components/AdminNumberInput';
 
 interface CategoryModalProps {
   visible: boolean;
@@ -83,87 +86,64 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
     }
   };
 
+  const footer = (
+    <>
+      <Pressable
+        onPress={onClose}
+        disabled={isSubmitting}
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+      >
+        <Text className="text-base font-bold text-stone-700">Cancel</Text>
+      </Pressable>
+      <Pressable
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+      >
+        <Text className="text-base font-bold text-white">
+          {isSubmitting ? 'Saving...' : category ? 'Save Changes' : 'Create Category'}
+        </Text>
+      </Pressable>
+    </>
+  );
+
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View className="flex-1 items-center justify-center bg-black/60 p-6">
-        <View className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden flex-col">
-          {/* Header */}
-          <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-6 py-4">
-            <View className="flex-row items-center space-x-3">
-              <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
-                <FolderPlus size={22} color="#800020" />
-              </View>
-              <Text className="text-xl font-bold text-stone-900">
-                {category ? 'Edit Menu Category' : 'Create Menu Category'}
-              </Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200"
-            >
-              <X size={22} color="#57534e" />
-            </Pressable>
-          </View>
+    <AdminModal
+      visible={visible}
+      onClose={onClose}
+      title={category ? 'Edit Menu Category' : 'Create Menu Category'}
+      subtitle="Groups products on Floor POS tables and customer receipts"
+      icon={<FolderPlus size={22} color="#800020" />}
+      size="md"
+      footer={footer}
+    >
+      <View className="space-y-4">
+        <AdminInput
+          label="Category Title"
+          required
+          value={name}
+          onChangeText={handleNameChange}
+          placeholder="e.g. Signature Cocktails, Artisan Espresso, Small Plates"
+        />
 
-          {/* Form */}
-          <View className="p-6 space-y-4">
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-1">Category Title</Text>
-              <TextInput
-                value={name}
-                onChangeText={handleNameChange}
-                placeholder="e.g. Signature Cocktails, Artisan Espresso, Small Plates"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900"
-              />
-            </View>
+        <AdminInput
+          label="Slug (Internal Key)"
+          required
+          value={slug}
+          onChangeText={setSlug}
+          placeholder="e.g. signature-cocktails, artisan-espresso"
+          helperText="Used internally for station routing"
+        />
 
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Slug (Internal Key)
-              </Text>
-              <TextInput
-                value={slug}
-                onChangeText={setSlug}
-                placeholder="e.g. signature-cocktails, artisan-espresso"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900"
-              />
-            </View>
-
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Display Sort Order (Lower displays first)
-              </Text>
-              <TextInput
-                value={sortOrder}
-                onChangeText={setSortOrder}
-                keyboardType="numeric"
-                placeholder="0"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900"
-              />
-            </View>
-          </View>
-
-          {/* Footer */}
-          <View className="flex-row items-center justify-end space-x-3 border-t border-stone-200 bg-stone-50 px-6 py-4">
-            <Pressable
-              onPress={onClose}
-              disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
-            >
-              <Text className="text-base font-bold text-stone-700">Cancel</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
-            >
-              <Text className="text-base font-bold text-white">
-                {isSubmitting ? 'Saving...' : category ? 'Save Changes' : 'Create Category'}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+        <AdminNumberInput
+          label="Display Sort Order"
+          mode="integer"
+          value={sortOrder}
+          onChangeText={setSortOrder}
+          placeholder="0"
+          helperText="Lower numbers appear first on POS buttons"
+        />
       </View>
-    </Modal>
+    </AdminModal>
   );
 };

@@ -22,6 +22,11 @@ import {
   type YReadingRecord,
   type ShiftVariancePoint,
 } from '../../../data/readings.api';
+import {
+  exportSingleReadingToExcel,
+  exportReadingsArchiveToExcel,
+} from '../../../utils/readingExcelExport';
+import { FileSpreadsheet } from 'lucide-react-native';
 import { ReadingReportModal } from './ReadingReportModal';
 import { ZCloseShiftModal } from './ZCloseShiftModal';
 import { YCloseShiftModal } from './YCloseShiftModal';
@@ -82,8 +87,13 @@ export const AdminReadingsView: React.FC = () => {
     setReportModalVisible(true);
   };
 
-  const handleOpenYClose = () => {
-    if (!activeReading) return;
+  const handleOpenYClose = async () => {
+    try {
+      const shiftReading = await readingsApi.fetchCurrentXReading(drawerScope, 'shift');
+      setActiveReading(shiftReading);
+    } catch (err) {
+      console.warn('[AdminReadingsView] Could not pre-fetch shift reading:', err);
+    }
     setYCloseModalVisible(true);
   };
 
@@ -168,57 +178,34 @@ export const AdminReadingsView: React.FC = () => {
     setReportModalVisible(true);
   };
 
-  const handleExportCSV = () => {
-    if (!activeReading || Platform.OS !== 'web' || typeof window === 'undefined') return;
+  const handleExportExcel = () => {
+    if (!activeReading) return;
+    try {
+      exportSingleReadingToExcel(activeReading);
+      toast.success('Reading exported to Excel (.xls)', { title: 'Export Ready' });
+    } catch (err: any) {
+      console.error('[AdminReadingsView] Excel export error:', err);
+      toast.error('Failed to export reading to Excel', { title: 'Export Error' });
+    }
+  };
 
-    const headers = [
-      'Reading Type',
-      'Drawer Scope',
-      'Start Time',
-      'End Time',
-      'Gross Sales',
-      'Discounts',
-      'Net Sales',
-      '12% VAT',
-      '10% Service Charge',
-      'Cash Tender',
-      'Card Tender',
-      'Digital Wallet',
-      'Opening Float',
-      'Expected Cash',
-      'Transaction Count',
-    ];
-
-    const values = [
-      activeReading.reading_type,
-      activeReading.drawer_target,
-      `"${new Date(activeReading.opened_at).toLocaleString()}"`,
-      `"${new Date(activeReading.generated_at || Date.now()).toLocaleString()}"`,
-      activeReading.gross_sales.toFixed(2),
-      activeReading.discount_total.toFixed(2),
-      activeReading.net_sales.toFixed(2),
-      activeReading.vat_amount.toFixed(2),
-      activeReading.service_charge.toFixed(2),
-      activeReading.tender_cash.toFixed(2),
-      activeReading.tender_card.toFixed(2),
-      activeReading.tender_digital.toFixed(2),
-      activeReading.opening_float.toFixed(2),
-      activeReading.expected_cash.toFixed(2),
-      activeReading.transaction_count,
-    ];
-
-    const csvContent = `${headers.join(',')}\n${values.join(',')}\n`;
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `readings_${activeReading.drawer_target}_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    toast.success('Reading data exported to CSV', { title: 'Export Complete' });
+  const handleExportArchive = () => {
+    try {
+      if (historyTab === 'z_readings') {
+        exportReadingsArchiveToExcel('Z_READING', zHistory);
+        toast.success(`Exported ${zHistory.length} Z-Readings to Excel`, {
+          title: 'Archive Exported',
+        });
+      } else {
+        exportReadingsArchiveToExcel('Y_READING', yHistory);
+        toast.success(`Exported ${yHistory.length} Y-Handovers to Excel`, {
+          title: 'Archive Exported',
+        });
+      }
+    } catch (err: any) {
+      console.error('[AdminReadingsView] Archive export error:', err);
+      toast.error('Failed to export archive to Excel', { title: 'Export Error' });
+    }
   };
 
   if (isLoading) {
@@ -302,11 +289,11 @@ export const AdminReadingsView: React.FC = () => {
           </Pressable>
 
           <Pressable
-            onPress={handleExportCSV}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-xl bg-white border border-stone-300 hover:bg-stone-50 active:bg-stone-100 min-h-[48px] shadow-xs"
+            onPress={handleExportExcel}
+            className="flex-row items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 active:bg-emerald-200 min-h-[48px] shadow-xs"
           >
-            <Download size={18} color="#44403c" />
-            <Text className="text-base font-bold text-stone-800">Export CSV</Text>
+            <FileSpreadsheet size={18} color="#047857" />
+            <Text className="text-base font-bold text-emerald-800">Export Excel (.xls)</Text>
           </Pressable>
 
           {/* X-Reading Trigger */}
@@ -451,6 +438,17 @@ export const AdminReadingsView: React.FC = () => {
             </Text>
           </Pressable>
         </View>
+
+        {/* Export Full Archive Button */}
+        <Pressable
+          onPress={handleExportArchive}
+          className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-stone-300 hover:bg-stone-50 active:bg-stone-100 shadow-xs min-h-[44px]"
+        >
+          <FileSpreadsheet size={16} color="#047857" />
+          <Text className="text-base font-bold text-stone-800">
+            Export {historyTab === 'z_readings' ? 'Z-Readings' : 'Y-Handovers'} Ledger (.xls)
+          </Text>
+        </Pressable>
       </View>
 
       {/* History Table */}

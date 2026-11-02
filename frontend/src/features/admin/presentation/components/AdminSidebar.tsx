@@ -12,6 +12,7 @@ import {
   Music,
   Settings,
 } from 'lucide-react-native';
+import { useAuthStore } from '@/features/auth';
 import type { AdminRoute } from '../../domain/admin.types';
 
 interface AdminSidebarProps {
@@ -32,6 +33,20 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   onRouteChange,
   unreadChatCount = 3,
 }) => {
+  const { currentUser } = useAuthStore();
+  const staffName = currentUser?.displayName || 'Dana Cruz';
+  const staffInitials =
+    staffName
+      .split(' ')
+      .filter(Boolean)
+      .map((p: string) => p[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2) || 'DC';
+  const staffRole = currentUser?.role
+    ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)
+    : 'Admin / Manager';
+
   const operationsItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
     { id: 'stations', label: 'Live Stations', icon: Activity },
@@ -116,15 +131,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {renderNavGroup('Reports', reportItems)}
       </View>
 
-      {/* Dana Cruz / User Profile Footer */}
+      {/* Dynamic Staff Profile Footer */}
       <View className="border-t border-white/15 pt-5 pb-1">
         <View className="flex-row items-center px-2 py-1">
           <View className="h-10 w-10 items-center justify-center rounded-full bg-black/30 border border-white/25">
-            <Text className="text-sm font-bold text-white">DC</Text>
+            <Text className="text-base font-black text-white">{staffInitials}</Text>
           </View>
           <View className="ml-3">
-            <Text className="text-base font-semibold text-white">Dana Cruz</Text>
-            <Text className="text-xs text-white/70">Admin / Manager</Text>
+            <Text className="text-base font-bold text-white">{staffName}</Text>
+            <Text className="text-sm font-medium text-white/70">{staffRole}</Text>
           </View>
         </View>
       </View>

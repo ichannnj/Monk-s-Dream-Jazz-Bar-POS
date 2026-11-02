@@ -1,27 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
-  X,
   Plus,
   Trash2,
   Layers,
   DollarSign,
-  Search,
-  Check,
   ChevronDown,
+  Check,
+  Search,
+  X,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type ProductAdmin, type InventoryItemAdmin } from '../../../data/admin.api';
+import { AdminModal } from '../../components/AdminModal';
+import { AdminInput } from '../../components/AdminInput';
+import { AdminNumberInput } from '../../components/AdminNumberInput';
 
 interface RecipeBomModalProps {
   visible: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  product: ProductAdmin | null;
+  product?: ProductAdmin | null;
   inventoryItems: InventoryItemAdmin[];
 }
 
-interface BomLine {
+interface TempBomLine {
+  id?: string;
   inventoryItemId: string;
   amount: string;
   unit: string;
@@ -35,90 +39,111 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
   product,
   inventoryItems,
 }) => {
-  const [lines, setLines] = useState<BomLine[]>([]);
+  const [lines, setLines] = useState<TempBomLine[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pickingLineIdx, setPickingLineIdx] = useState<number | null>(null);
   const [ingredientSearch, setIngredientSearch] = useState('');
 
   useEffect(() => {
-    if (product && product.ingredients) {
+    if (product && visible) {
       setLines(
-        product.ingredients.map((ing) => ({
-          inventoryItemId: ing.inventory_item_id,
-          amount: ing.amount.toString(),
-          unit: ing.unit,
-          conversionFactor: (ing.conversion_factor || 1).toString(),
+        (product.ingredients || []).map((b) => ({
+          id: b.id,
+          inventoryItemId: b.inventory_item_id,
+          amount: b.amount.toString(),
+          unit: b.unit,
+          conversionFactor: b.conversion_factor ? b.conversion_factor.toString() : '1',
         }))
       );
     } else {
       setLines([]);
     }
+    setPickingLineIdx(null);
+    setIngredientSearch('');
   }, [product, visible]);
 
   const handleAddLine = () => {
-    const firstItem = inventoryItems[0];
+    const firstInv = inventoryItems[0];
     setLines((prev) => [
       ...prev,
       {
-        inventoryItemId: firstItem?.id || '',
+        inventoryItemId: firstInv?.id || '',
         amount: '1',
-        unit: firstItem?.unit || 'g',
+        unit: firstInv?.unit || 'pcs',
         conversionFactor: '1',
       },
     ]);
   };
 
-  const handleRemoveLine = (idx: number) => {
-    setLines((prev) => prev.filter((_, i) => i !== idx));
+  const handleRemoveLine = (index: number) => {
+    setLines((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleLineChange = (idx: number, field: keyof BomLine, value: string) => {
-    setLines((prev) => {
-      const next = [...prev];
-      const line = { ...next[idx], [field]: value };
-      if (field === 'inventoryItemId') {
-        const item = inventoryItems.find((inv) => inv.id === value);
-        if (item) {
-          line.unit = item.unit;
+  const handleLineChange = (index: number, field: keyof TempBomLine, value: string) => {
+    setLines((prev) =>
+      prev.map((l, i) => {
+        if (i !== index) return l;
+        const updated = { ...l, [field]: value };
+        if (field === 'inventoryItemId') {
+          const inv = inventoryItems.find((item) => item.id === value);
+          if (inv) {
+            updated.unit = inv.unit;
+          }
         }
-      }
-      next[idx] = line;
-      return next;
-    });
+        return updated;
+      })
+    );
   };
 
-  // Compute live COGS & Gross Margin
+  // Live total COGS calculation
   const totalCogs = lines.reduce((acc, line) => {
     const item = inventoryItems.find((inv) => inv.id === line.inventoryItemId);
     if (!item) return acc;
-    const amt = parseFloat(line.amount) || 0;
+    const qty = parseFloat(line.amount) || 0;
     const factor = parseFloat(line.conversionFactor) || 1;
-    const lineCost = amt * factor * Number(item.unit_cost || 0);
-    return acc + lineCost;
+    return acc + qty * factor * Number(item.unit_cost || 0);
   }, 0);
 
-  const basePrice = Number(product?.base_price || 0);
-  const grossMargin = basePrice > 0 ? ((basePrice - totalCogs) / basePrice) * 100 : 0;
+  const basePrice = product ? Number(product.base_price) : 0;
+  const grossMargin = basePrice > 0 ? Math.max(0, ((basePrice - totalCogs) / basePrice) * 100) : 0;
 
   const handleSubmit = async () => {
     if (!product) return;
+
+    for (const line of lines) {
+      if (!line.inventoryItemId) {
+        toast.error('All recipe items must select an inventory ingredient', {
+          title: 'Validation Error',
+        });
+        return;
+      }
+      const amt = parseFloat(line.amount);
+      if (isNaN(amt) || amt <= 0) {
+        toast.error('Recipe amount must be greater than 0', { title: 'Validation Error' });
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
-      const payload = lines
-        .filter((l) => l.inventoryItemId && parseFloat(l.amount) > 0)
-        .map((l) => ({
+      await adminApi.saveProductBOM(
+        product.id,
+        lines.map((l) => ({
           inventoryItemId: l.inventoryItemId,
-          amount: parseFloat(l.amount),
-          unit: l.unit,
+          amount: parseFloat(l.amount) || 0,
+          unit: l.unit.trim(),
           conversionFactor: parseFloat(l.conversionFactor) || 1,
-        }));
+        }))
+      );
 
-      await adminApi.saveProductBOM(product.id, payload);
-      toast.success(`Recipe saved for "${product.name}"`, { title: 'Recipe Configured' });
+      toast.success(
+        `Updated BOM for "${product.name}". Calculated cost: ₱${totalCogs.toFixed(2)} (${grossMargin.toFixed(1)}% margin).`,
+        { title: 'Recipe Saved' }
+      );
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to save recipe', { title: 'Error' });
+      toast.error(err?.message || 'Failed to save recipe breakdown', { title: 'Error' });
     } finally {
       setIsSubmitting(false);
     }
@@ -133,42 +158,52 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
 
   if (!product) return null;
 
-  return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View className="flex-1 items-center justify-center bg-black/60 p-6">
-        <View className="w-full max-w-3xl max-h-[90%] rounded-2xl bg-white shadow-2xl overflow-hidden flex-col">
-          {/* Header */}
-          <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-6 py-4">
-            <View className="flex-row items-center space-x-3">
-              <View className="h-11 w-11 items-center justify-center rounded-xl bg-[#800020]/10">
-                <Layers size={22} color="#800020" />
-              </View>
-              <View>
-                <Text className="text-xl font-bold text-stone-900">Recipe & Costing Breakdown</Text>
-                <Text className="text-base text-stone-500">
-                  {product.name} • Price: ₱{basePrice.toFixed(2)}
-                </Text>
-              </View>
-            </View>
-            <Pressable
-              onPress={onClose}
-              className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200"
-            >
-              <X size={22} color="#57534e" />
-            </Pressable>
-          </View>
+  const footer = (
+    <>
+      <Pressable
+        onPress={onClose}
+        disabled={isSubmitting}
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl border border-stone-300 bg-white active:bg-stone-100"
+      >
+        <Text className="text-base font-semibold text-stone-700">Cancel</Text>
+      </Pressable>
+      <Pressable
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+      >
+        <Text className="text-base font-bold text-white">
+          {isSubmitting ? 'Saving...' : 'Save Recipe'}
+        </Text>
+      </Pressable>
+    </>
+  );
 
+  return (
+    <>
+      <AdminModal
+        visible={visible}
+        onClose={onClose}
+        title="Recipe & Costing Breakdown"
+        subtitle={`${product.name} • Price: ₱${basePrice.toFixed(2)}`}
+        icon={<Layers size={22} color="#800020" />}
+        size="xl"
+        footer={footer}
+      >
+        <View className="space-y-4">
           {/* Live COGS Metric Bar */}
-          <View className="flex-row items-center justify-between bg-stone-100 px-6 py-3.5 border-b border-stone-200">
+          <View className="flex-row items-center justify-between bg-stone-100 p-4 rounded-xl border border-stone-200">
             <View className="flex-row items-center space-x-2">
               <DollarSign size={20} color="#800020" />
-              <Text className="text-base font-medium text-stone-700">Calculated Cost (COGS):</Text>
-              <Text className="text-lg font-bold text-[#800020]">₱{totalCogs.toFixed(2)}</Text>
+              <Text className="text-base font-medium text-stone-700 ml-1.5">
+                Calculated Cost (COGS):
+              </Text>
+              <Text className="text-lg font-bold text-[#800020] ml-1">₱{totalCogs.toFixed(2)}</Text>
             </View>
             <View className="flex-row items-center space-x-2">
               <Text className="text-base font-medium text-stone-700">Gross Margin:</Text>
               <View
-                className={`rounded-lg px-3 py-1 ${
+                className={`rounded-lg px-3 py-1 ml-1.5 ${
                   grossMargin >= 70 ? 'bg-emerald-100' : 'bg-amber-100'
                 }`}
               >
@@ -184,31 +219,31 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
           </View>
 
           {/* Ingredients Vertical List */}
-          <ScrollView className="p-6 space-y-4" showsVerticalScrollIndicator={false}>
-            <View className="flex-row items-center justify-between mb-1">
-              <Text className="text-base font-bold text-stone-900">
-                Recipe Ingredients ({lines.length})
-              </Text>
-              <Pressable
-                onPress={handleAddLine}
-                className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020]/10 px-4 active:bg-[#800020]/20"
-              >
-                <Plus size={18} color="#800020" />
-                <Text className="ml-1.5 text-base font-bold text-[#800020]">Add Ingredient</Text>
-              </Pressable>
-            </View>
+          <View className="flex-row items-center justify-between mb-1">
+            <Text className="text-base font-bold text-stone-900">
+              Recipe Ingredients ({lines.length})
+            </Text>
+            <Pressable
+              onPress={handleAddLine}
+              className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020]/10 px-4 active:bg-[#800020]/20"
+            >
+              <Plus size={18} color="#800020" />
+              <Text className="ml-1.5 text-base font-bold text-[#800020]">Add Ingredient</Text>
+            </Pressable>
+          </View>
 
-            {lines.length === 0 ? (
-              <View className="py-12 items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-stone-50">
-                <Text className="text-base text-stone-500">
-                  No ingredients configured for this recipe.
-                </Text>
-                <Text className="text-base font-medium text-stone-400 mt-1">
-                  Tap "Add Ingredient" above to add raw items.
-                </Text>
-              </View>
-            ) : (
-              lines.map((line, idx) => {
+          {lines.length === 0 ? (
+            <View className="py-12 items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-stone-50">
+              <Text className="text-base text-stone-500">
+                No ingredients configured for this recipe.
+              </Text>
+              <Text className="text-base font-medium text-stone-400 mt-1">
+                Tap "Add Ingredient" above to add raw items.
+              </Text>
+            </View>
+          ) : (
+            <View className="space-y-3">
+              {lines.map((line, idx) => {
                 const currentItem = inventoryItems.find((inv) => inv.id === line.inventoryItemId);
                 const lineCost = currentItem
                   ? (parseFloat(line.amount) || 0) *
@@ -255,30 +290,26 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
                     {/* Inputs Row: Quantity, Unit, Line Cost */}
                     <View className="flex-row items-center space-x-4">
                       <View className="flex-1">
-                        <Text className="text-base font-medium text-stone-600 mb-1">
-                          Amount per Order
-                        </Text>
-                        <TextInput
+                        <AdminNumberInput
+                          label="Amount per Order"
+                          mode="decimal"
                           value={line.amount}
                           onChangeText={(v) => handleLineChange(idx, 'amount', v)}
-                          keyboardType="numeric"
                           placeholder="e.g. 1"
-                          className="min-h-[48px] rounded-xl border border-stone-300 bg-white px-3.5 text-base text-stone-900"
                         />
                       </View>
 
-                      <View className="w-32">
-                        <Text className="text-base font-medium text-stone-600 mb-1">Unit</Text>
-                        <TextInput
+                      <View className="w-36">
+                        <AdminInput
+                          label="Unit"
                           value={line.unit}
                           onChangeText={(v) => handleLineChange(idx, 'unit', v)}
                           placeholder="g, L, pcs"
-                          className="min-h-[48px] rounded-xl border border-stone-300 bg-white px-3.5 text-base text-stone-900"
                         />
                       </View>
 
                       <View className="w-36 items-end justify-center pt-5">
-                        <Text className="text-base text-stone-500">Portion Cost</Text>
+                        <Text className="text-sm text-stone-500">Portion Cost</Text>
                         <Text className="text-base font-bold text-stone-900">
                           ₱{lineCost.toFixed(2)}
                         </Text>
@@ -286,100 +317,83 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
                     </View>
                   </View>
                 );
-              })
-            )}
-          </ScrollView>
+              })}
+            </View>
+          )}
+        </View>
+      </AdminModal>
 
-          {/* Footer */}
-          <View className="flex-row items-center justify-end space-x-3 border-t border-stone-200 bg-stone-50 px-6 py-4">
-            <Pressable
-              onPress={onClose}
-              disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl border border-stone-300 bg-white active:bg-stone-100"
-            >
-              <Text className="text-base font-semibold text-stone-700">Cancel</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
-            >
-              <Text className="text-base font-bold text-white">
-                {isSubmitting ? 'Saving...' : 'Save Recipe'}
-              </Text>
-            </Pressable>
+      {/* INGREDIENT PICKER DIALOG */}
+      {pickingLineIdx !== null && (
+        <View className="absolute inset-0 items-center justify-center bg-black/60 p-6 z-50">
+          <Pressable
+            className="absolute inset-0"
+            onPress={() => setPickingLineIdx(null)}
+            accessibilityRole="button"
+            accessibilityLabel="Close ingredient picker"
+          />
+          <View className="w-full max-w-lg max-h-[85%] rounded-2xl bg-white shadow-2xl overflow-hidden flex-col z-10">
+            <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-5 py-4">
+              <Text className="text-lg font-bold text-stone-900">Select Raw Ingredient</Text>
+              <Pressable
+                onPress={() => setPickingLineIdx(null)}
+                className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200"
+              >
+                <X size={20} color="#57534e" />
+              </Pressable>
+            </View>
+
+            <View className="p-4 border-b border-stone-200 bg-white">
+              <AdminInput
+                value={ingredientSearch}
+                onChangeText={setIngredientSearch}
+                placeholder="Search by name, category, or SKU..."
+                leftElement={<Search size={18} color="#78716c" />}
+                autoFocus
+              />
+            </View>
+
+            <ScrollView className="p-4 space-y-2" showsVerticalScrollIndicator={true}>
+              {filteredPickerItems.length === 0 ? (
+                <View className="py-8 items-center justify-center">
+                  <Text className="text-base text-stone-500">No ingredients match search.</Text>
+                </View>
+              ) : (
+                filteredPickerItems.map((inv) => {
+                  const isSelected = lines[pickingLineIdx]?.inventoryItemId === inv.id;
+                  return (
+                    <Pressable
+                      key={inv.id}
+                      onPress={() => {
+                        handleLineChange(pickingLineIdx, 'inventoryItemId', inv.id);
+                        setPickingLineIdx(null);
+                      }}
+                      className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-3.5 border transition-all ${
+                        isSelected
+                          ? 'bg-[#800020]/10 border-[#800020]'
+                          : 'bg-white border-stone-200 active:bg-stone-50'
+                      }`}
+                    >
+                      <View className="flex-1 pr-3">
+                        <Text className="text-base font-bold text-stone-900">{inv.name}</Text>
+                        <Text className="text-base text-stone-500 mt-0.5">
+                          {inv.category} • Current Stock: {inv.current_stock} {inv.unit}
+                        </Text>
+                      </View>
+                      <View className="flex-row items-center space-x-2">
+                        <Text className="text-base font-extrabold text-[#800020]">
+                          ₱{Number(inv.unit_cost || 0).toFixed(2)}/{inv.unit}
+                        </Text>
+                        {isSelected && <Check size={18} color="#800020" />}
+                      </View>
+                    </Pressable>
+                  );
+                })
+              )}
+            </ScrollView>
           </View>
         </View>
-
-        {/* INGREDIENT PICKER DIALOG (Zero horizontal scroll) */}
-        {pickingLineIdx !== null && (
-          <View className="absolute inset-0 items-center justify-center bg-black/60 p-6 z-50">
-            <View className="w-full max-w-lg max-h-[85%] rounded-2xl bg-white shadow-2xl overflow-hidden flex-col">
-              <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-5 py-4">
-                <Text className="text-lg font-bold text-stone-900">Select Raw Ingredient</Text>
-                <Pressable
-                  onPress={() => setPickingLineIdx(null)}
-                  className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200"
-                >
-                  <X size={20} color="#57534e" />
-                </Pressable>
-              </View>
-
-              <View className="p-4 border-b border-stone-200 bg-white">
-                <View className="flex-row items-center rounded-xl border border-stone-300 px-3">
-                  <Search size={18} color="#78716c" />
-                  <TextInput
-                    value={ingredientSearch}
-                    onChangeText={setIngredientSearch}
-                    placeholder="Search by name, category, or SKU..."
-                    className="min-h-[48px] flex-1 px-3 text-base text-stone-900"
-                    autoFocus
-                  />
-                </View>
-              </View>
-
-              <ScrollView className="p-4 space-y-2" showsVerticalScrollIndicator={true}>
-                {filteredPickerItems.length === 0 ? (
-                  <View className="py-8 items-center justify-center">
-                    <Text className="text-base text-stone-500">No ingredients match search.</Text>
-                  </View>
-                ) : (
-                  filteredPickerItems.map((inv) => {
-                    const isSelected = lines[pickingLineIdx]?.inventoryItemId === inv.id;
-                    return (
-                      <Pressable
-                        key={inv.id}
-                        onPress={() => {
-                          handleLineChange(pickingLineIdx, 'inventoryItemId', inv.id);
-                          setPickingLineIdx(null);
-                        }}
-                        className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-3.5 border transition-all ${
-                          isSelected
-                            ? 'bg-[#800020]/10 border-[#800020]'
-                            : 'bg-white border-stone-200 active:bg-stone-50'
-                        }`}
-                      >
-                        <View className="flex-1 pr-3">
-                          <Text className="text-base font-bold text-stone-900">{inv.name}</Text>
-                          <Text className="text-base text-stone-500 mt-0.5">
-                            {inv.category} • Current Stock: {inv.current_stock} {inv.unit}
-                          </Text>
-                        </View>
-                        <View className="flex-row items-center space-x-2">
-                          <Text className="text-base font-extrabold text-[#800020]">
-                            ₱{Number(inv.unit_cost || 0).toFixed(2)}/{inv.unit}
-                          </Text>
-                          {isSelected && <Check size={18} color="#800020" />}
-                        </View>
-                      </Pressable>
-                    );
-                  })
-                )}
-              </ScrollView>
-            </View>
-          </View>
-        )}
-      </View>
-    </Modal>
+      )}
+    </>
   );
 };

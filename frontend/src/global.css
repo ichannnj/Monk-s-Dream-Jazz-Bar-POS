@@ -34,4 +34,34 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* Web Input Focus & Outline Reset (Removes black box focus ring on typing) */
+input,
+textarea,
+select,
+[contenteditable] {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+[contenteditable]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Chrome/Safari autofill background smoothing */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus {
+  -webkit-text-fill-color: #111827;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+
 

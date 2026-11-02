@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal } from 'react-native';
-import { X, PackagePlus } from 'lucide-react-native';
+import { View, Text, Pressable } from 'react-native';
+import { PackagePlus } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type InventoryItemAdmin, type SupplierAdmin } from '../../../data/admin.api';
+import { AdminModal } from '../../components/AdminModal';
+import { AdminInput } from '../../components/AdminInput';
+import { AdminNumberInput } from '../../components/AdminNumberInput';
 
 interface InventoryItemModalProps {
   visible: boolean;
@@ -99,14 +102,14 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
           sku: sku.trim(),
           name: name.trim(),
           category: category as any,
-          current_stock: stock,
           unit: unit.trim(),
           min_alert_level: par,
           unit_cost: cost,
+          current_stock: stock,
           supplier_id: supplierId || null,
           supplier_name: selectedSupplier?.name || null,
         });
-        toast.success(`Created "${name}"`, { title: 'Inventory Item Added' });
+        toast.success(`Created "${name}"`, { title: 'Item Added' });
       }
       onSuccess();
       onClose();
@@ -117,228 +120,203 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
     }
   };
 
+  const footer = (
+    <>
+      <Pressable
+        onPress={onClose}
+        disabled={isSubmitting}
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+      >
+        <Text className="text-base font-bold text-stone-700">Cancel</Text>
+      </Pressable>
+      <Pressable
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+      >
+        <Text className="text-base font-bold text-white">
+          {isSubmitting ? 'Saving...' : item ? 'Save Changes' : 'Create Item'}
+        </Text>
+      </Pressable>
+    </>
+  );
+
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View className="flex-1 items-center justify-center bg-black/60 p-6">
-        <View className="w-full max-w-2xl max-h-[90%] rounded-2xl bg-white shadow-2xl overflow-hidden flex-col">
-          {/* Header */}
-          <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-6 py-4">
-            <View className="flex-row items-center space-x-3">
-              <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
-                <PackagePlus size={22} color="#800020" />
-              </View>
-              <Text className="text-xl font-bold text-stone-900">
-                {item ? 'Edit Inventory Item' : 'New Inventory Item / Disposable'}
-              </Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200"
-            >
-              <X size={22} color="#57534e" />
-            </Pressable>
+    <AdminModal
+      visible={visible}
+      onClose={onClose}
+      title={item ? 'Edit Inventory Item' : 'New Inventory Item / Disposable'}
+      subtitle="Configure SKU, inventory category, stock alert thresholds, and unit costs"
+      icon={<PackagePlus size={22} color="#800020" />}
+      size="lg"
+      footer={footer}
+    >
+      <View className="space-y-5">
+        {/* Name & SKU */}
+        <View className="flex-row space-x-4">
+          <View className="flex-1">
+            <AdminInput
+              label="Item Name"
+              required
+              value={name}
+              onChangeText={setName}
+              placeholder="e.g. Specialty Espresso Beans, 12oz Takeout Cup"
+            />
           </View>
+          <View className="w-44">
+            <AdminInput
+              label="SKU / Code"
+              required
+              value={sku}
+              onChangeText={setSku}
+              placeholder="e.g. COF-001"
+              className="font-bold uppercase"
+            />
+          </View>
+        </View>
 
-          {/* Form */}
-          <ScrollView className="p-6 space-y-4" showsVerticalScrollIndicator={false}>
-            {/* Name & SKU */}
-            <View className="flex-row space-x-4">
-              <View className="flex-1">
-                <Text className="text-base font-semibold text-stone-800 mb-1">Item Name</Text>
-                <TextInput
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="e.g. Specialty Espresso Beans, 12oz Takeout Cup"
-                  className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900"
-                />
-              </View>
-              <View className="w-40">
-                <Text className="text-base font-semibold text-stone-800 mb-1">SKU / Code</Text>
-                <TextInput
-                  value={sku}
-                  onChangeText={setSku}
-                  placeholder="e.g. COF-001"
-                  className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
-                />
-              </View>
-            </View>
-
-            {/* Category Selector (Zero horizontal scroll) */}
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-1.5">Category</Text>
-              <View className="flex-row flex-wrap gap-2">
-                {INVENTORY_CATEGORIES.map((c) => {
-                  const isSel = category === c.key;
-                  return (
-                    <Pressable
-                      key={c.key}
-                      onPress={() => setCategory(c.key)}
-                      className={`min-h-[48px] px-4 items-center justify-center rounded-xl border ${
-                        isSel
-                          ? 'bg-[#800020] border-[#800020]'
-                          : 'bg-white border-stone-300 active:bg-stone-100'
-                      }`}
-                    >
-                      <Text
-                        className={`text-base font-semibold ${
-                          isSel ? 'text-white' : 'text-stone-700'
-                        }`}
-                      >
-                        {c.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Measurement Unit */}
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-1.5">
-                Measurement Unit
-              </Text>
-              <View className="flex-row flex-wrap gap-2">
-                {STANDARD_UNITS.map((u) => {
-                  const isSel = unit === u;
-                  return (
-                    <Pressable
-                      key={u}
-                      onPress={() => setUnit(u)}
-                      className={`min-h-[48px] px-3.5 items-center justify-center rounded-xl border ${
-                        isSel
-                          ? 'bg-[#800020] border-[#800020]'
-                          : 'bg-white border-stone-300 active:bg-stone-100'
-                      }`}
-                    >
-                      <Text
-                        className={`text-base font-bold ${isSel ? 'text-white' : 'text-stone-700'}`}
-                      >
-                        {u}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            {/* Par Alert, Stock, & Unit Cost */}
-            <View className="flex-row space-x-4">
-              <View className="flex-1">
-                <Text className="text-base font-semibold text-stone-800 mb-1">
-                  Min Par (Low Stock Alert)
-                </Text>
-                <TextInput
-                  value={minAlertLevel}
-                  onChangeText={setMinAlertLevel}
-                  keyboardType="numeric"
-                  placeholder="5"
-                  className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900"
-                />
-              </View>
-
-              <View className="flex-1">
-                <Text className="text-base font-semibold text-stone-800 mb-1">
-                  Unit Cost (₱ / {unit})
-                </Text>
-                <TextInput
-                  value={unitCost}
-                  onChangeText={setUnitCost}
-                  keyboardType="numeric"
-                  placeholder="0.00"
-                  className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
-                />
-              </View>
-            </View>
-
-            {/* Initial Stock */}
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Current Stock On-Hand ({unit})
-              </Text>
-              <TextInput
-                value={currentStock}
-                onChangeText={setCurrentStock}
-                keyboardType="numeric"
-                editable={!item} // If editing, stock must be modified via Restock or Stocktake
-                placeholder="0.00"
-                className={`min-h-[48px] rounded-xl border border-stone-300 px-4 text-base ${
-                  item ? 'bg-stone-100 text-stone-500' : 'bg-white text-stone-900 font-bold'
-                }`}
-              />
-              {item && (
-                <Text className="text-base text-stone-500 mt-1">
-                  Use Restock or Stocktake tab to adjust on-hand stock
-                </Text>
-              )}
-            </View>
-
-            {/* Primary Supplier (Zero horizontal scroll) */}
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-1.5">
-                Primary Vendor / Supplier
-              </Text>
-              <View className="flex-row flex-wrap gap-2">
+        {/* Category Selector */}
+        <View>
+          <Text className="text-base font-semibold text-stone-800 mb-2">Category</Text>
+          <View className="flex-row flex-wrap gap-2">
+            {INVENTORY_CATEGORIES.map((c) => {
+              const isSel = category === c.key;
+              return (
                 <Pressable
-                  onPress={() => setSupplierId('')}
-                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border ${
-                    !supplierId
-                      ? 'bg-stone-800 border-stone-800'
-                      : 'bg-white border-stone-300 active:bg-stone-100'
+                  key={c.key}
+                  onPress={() => setCategory(c.key)}
+                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
+                    isSel
+                      ? 'bg-[#800020] border-[#800020]'
+                      : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
                   }`}
                 >
                   <Text
-                    className={`text-base font-medium ${!supplierId ? 'text-white' : 'text-stone-700'}`}
+                    className={`text-base font-semibold ${isSel ? 'text-white' : 'text-stone-700'}`}
                   >
-                    No Assigned Supplier
+                    {c.label}
                   </Text>
                 </Pressable>
-                {suppliers.map((s) => {
-                  const isSel = supplierId === s.id;
-                  return (
-                    <Pressable
-                      key={s.id}
-                      onPress={() => setSupplierId(s.id)}
-                      className={`min-h-[48px] px-4 items-center justify-center rounded-xl border ${
-                        isSel
-                          ? 'bg-[#800020] border-[#800020]'
-                          : 'bg-white border-stone-300 active:bg-stone-100'
-                      }`}
-                    >
-                      <Text
-                        className={`text-base font-semibold ${
-                          isSel ? 'text-white' : 'text-stone-700'
-                        }`}
-                      >
-                        {s.name} ({s.lead_time_days}d lead)
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-          </ScrollView>
+              );
+            })}
+          </View>
+        </View>
 
-          {/* Footer */}
-          <View className="flex-row items-center justify-end space-x-3 border-t border-stone-200 bg-stone-50 px-6 py-4">
+        {/* Measurement Unit */}
+        <View>
+          <Text className="text-base font-semibold text-stone-800 mb-2">Measurement Unit</Text>
+          <View className="flex-row flex-wrap gap-2">
+            {STANDARD_UNITS.map((u) => {
+              const isSel = unit === u;
+              return (
+                <Pressable
+                  key={u}
+                  onPress={() => setUnit(u)}
+                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
+                    isSel
+                      ? 'bg-[#800020] border-[#800020]'
+                      : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
+                  }`}
+                >
+                  <Text
+                    className={`text-base font-bold ${isSel ? 'text-white' : 'text-stone-700'}`}
+                  >
+                    {u}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Par Alert, Stock, & Unit Cost */}
+        <View className="flex-row space-x-4">
+          <View className="flex-1">
+            <AdminNumberInput
+              label="Min Par (Alert Level)"
+              mode="decimal"
+              value={minAlertLevel}
+              onChangeText={setMinAlertLevel}
+              placeholder="5"
+              suffix={unit}
+              helperText="Alerts station when below this"
+            />
+          </View>
+
+          <View className="flex-1">
+            <AdminNumberInput
+              label={`Unit Cost (₱ / ${unit})`}
+              mode="currency"
+              value={unitCost}
+              onChangeText={setUnitCost}
+              placeholder="0.00"
+              helperText="Moving average cost basis"
+            />
+          </View>
+        </View>
+
+        {/* Initial Stock */}
+        <View>
+          <AdminNumberInput
+            label={`Current Stock On-Hand (${unit})`}
+            mode="decimal"
+            value={currentStock}
+            onChangeText={setCurrentStock}
+            editable={!item}
+            placeholder="0.00"
+            suffix={unit}
+            helperText={
+              item
+                ? 'On-hand stock must be adjusted via Restock Intake or Stocktake Audit'
+                : 'Initial counted stock at setup'
+            }
+            className={item ? 'bg-stone-100 text-stone-500' : ''}
+          />
+        </View>
+
+        {/* Primary Supplier */}
+        <View>
+          <Text className="text-base font-semibold text-stone-800 mb-2">
+            Primary Vendor / Supplier
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
             <Pressable
-              onPress={onClose}
-              disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+              onPress={() => setSupplierId('')}
+              className={`min-h-[48px] px-4 items-center justify-center rounded-xl border ${
+                !supplierId
+                  ? 'bg-stone-800 border-stone-800'
+                  : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
+              }`}
             >
-              <Text className="text-base font-bold text-stone-700">Cancel</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
-            >
-              <Text className="text-base font-bold text-white">
-                {isSubmitting ? 'Saving...' : item ? 'Save Changes' : 'Create Item'}
+              <Text
+                className={`text-base font-medium ${!supplierId ? 'text-white' : 'text-stone-700'}`}
+              >
+                No Assigned Supplier
               </Text>
             </Pressable>
+            {suppliers.map((s) => {
+              const isSel = supplierId === s.id;
+              return (
+                <Pressable
+                  key={s.id}
+                  onPress={() => setSupplierId(s.id)}
+                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border ${
+                    isSel
+                      ? 'bg-[#800020] border-[#800020]'
+                      : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
+                  }`}
+                >
+                  <Text
+                    className={`text-base font-semibold ${isSel ? 'text-white' : 'text-stone-700'}`}
+                  >
+                    {s.name} ({s.lead_time_days}d lead)
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       </View>
-    </Modal>
+    </AdminModal>
   );
 };

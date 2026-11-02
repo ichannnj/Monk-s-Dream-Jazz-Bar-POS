@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
   Utensils,
   Plus,
@@ -24,6 +24,7 @@ import { MenuItemModal } from './menu/MenuItemModal';
 import { CategoryModal } from './menu/CategoryModal';
 import { ModifierGroupModal } from './menu/ModifierGroupModal';
 import { RecipeBomModal } from './menu/RecipeBomModal';
+import { AdminInput } from '../components/AdminInput';
 
 type MenuTab = 'items' | 'categories' | 'modifiers' | 'bom';
 
@@ -270,15 +271,12 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
         <View className="space-y-4">
           {/* Search & Category Filter Bar */}
           <View className="space-y-3">
-            <View className="flex-row items-center rounded-xl border border-stone-300 bg-white px-4 shadow-2xs">
-              <Search size={20} color="#78716c" />
-              <TextInput
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Search products by name or category..."
-                className="min-h-[48px] flex-1 px-3 text-base text-stone-900"
-              />
-            </View>
+            <AdminInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search products by name or category..."
+              leftElement={<Search size={20} color="#78716c" />}
+            />
 
             {/* Responsive Wrapped Category Pills (Zero horizontal scroll) */}
             <View className="flex-row flex-wrap gap-2 pt-1">

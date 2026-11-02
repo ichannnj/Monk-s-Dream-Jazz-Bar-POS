@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
-import {
-  Settings,
-  Percent,
-  Receipt,
-  Printer,
-  ShieldCheck,
-  Check,
-  Music,
-  Save,
-} from 'lucide-react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Settings, Percent, Receipt, Printer, Check, Save, Building } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type VenueSettings } from '../../data/admin.api';
+import { AdminInput } from '../components/AdminInput';
+import { AdminNumberInput } from '../components/AdminNumberInput';
 
 interface AdminSettingsViewProps {
   onRefresh?: () => void;
@@ -133,13 +126,51 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
       </View>
 
       <View className="space-y-6">
+        {/* SECTION 0: GENERAL VENUE IDENTITY */}
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs space-y-4">
+          <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
+            <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
+              <Building size={22} color="#800020" />
+            </View>
+            <View className="ml-2">
+              <Text className="text-xl font-bold text-stone-900">
+                Venue Identity & Operating Float
+              </Text>
+              <Text className="text-base text-stone-500">
+                Official business name and standard daily overheads
+              </Text>
+            </View>
+          </View>
+
+          <View className="flex-row space-x-4">
+            <View className="flex-1">
+              <AdminInput
+                label="Registered Business / Venue Name"
+                value={venueName}
+                onChangeText={setVenueName}
+                placeholder="Monk's Dream Jazz Bar"
+              />
+            </View>
+            <View className="w-64">
+              <AdminNumberInput
+                label="Daily Overhead Allocation"
+                mode="currency"
+                value={dailyOverhead}
+                onChangeText={setDailyOverhead}
+                placeholder="150.00"
+                helperText="Fixed venue utilities per day"
+              />
+            </View>
+          </View>
+        </View>
+
         {/* SECTION 1: TAXES & SERVICE CHARGE */}
         <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs space-y-4">
           <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
             <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
               <Percent size={22} color="#800020" />
             </View>
-            <View>
+            <View className="ml-2">
               <Text className="text-xl font-bold text-stone-900">
                 Taxes & Hospitality Service Charge
               </Text>
@@ -149,82 +180,84 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
             </View>
           </View>
 
-          <View className="grid grid-cols-2 gap-4">
+          <View className="flex-row items-start space-x-4">
             <View className="flex-1">
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                VAT Percentage (%)
-              </Text>
-              <TextInput
+              <AdminNumberInput
+                label="VAT Rate"
+                mode="decimal"
                 value={vatRate}
                 onChangeText={setVatRate}
-                keyboardType="numeric"
                 placeholder="12.00"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
+                suffix="%"
+                helperText="Standard Philippine BIR VAT"
               />
             </View>
 
-            <Pressable
-              onPress={() => setVatInclusive(!vatInclusive)}
-              className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border mt-6 ${
-                vatInclusive ? 'bg-[#800020]/10 border-[#800020]' : 'bg-stone-50 border-stone-200'
-              }`}
-            >
-              <View>
-                <Text className="text-base font-bold text-stone-900">Prices are Tax-Inclusive</Text>
-                <Text className="text-base text-stone-500">
-                  Menu prices already include 12% VAT
-                </Text>
-              </View>
-              <View
-                className={`h-6 w-6 rounded-md items-center justify-center border ${
-                  vatInclusive ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
+            <View className="flex-1 pt-6">
+              <Pressable
+                onPress={() => setVatInclusive(!vatInclusive)}
+                className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
+                  vatInclusive ? 'bg-[#800020]/10 border-[#800020]' : 'bg-stone-50 border-stone-200'
                 }`}
               >
-                {vatInclusive && <Check size={16} color="#ffffff" />}
-              </View>
-            </Pressable>
+                <View>
+                  <Text className="text-base font-bold text-stone-900">
+                    Prices are Tax-Inclusive
+                  </Text>
+                  <Text className="text-base text-stone-500">Menu prices include 12% VAT</Text>
+                </View>
+                <View
+                  className={`h-6 w-6 rounded-md items-center justify-center border ${
+                    vatInclusive ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
+                  }`}
+                >
+                  {vatInclusive && <Check size={16} color="#ffffff" />}
+                </View>
+              </Pressable>
+            </View>
           </View>
 
-          <View className="grid grid-cols-2 gap-4 pt-2">
+          <View className="flex-row items-start space-x-4 pt-2">
             <View className="flex-1">
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Service Charge (%)
-              </Text>
-              <TextInput
+              <AdminNumberInput
+                label="Service Charge Rate"
+                mode="decimal"
                 value={serviceChargeRate}
                 onChangeText={setServiceChargeRate}
-                keyboardType="numeric"
                 placeholder="10.00"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
+                suffix="%"
+                helperText="Hospitality staff share"
               />
             </View>
 
-            <Pressable
-              onPress={() => setServiceChargeEnabled(!serviceChargeEnabled)}
-              className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border mt-6 ${
-                serviceChargeEnabled
-                  ? 'bg-[#800020]/10 border-[#800020]'
-                  : 'bg-stone-50 border-stone-200'
-              }`}
-            >
-              <View>
-                <Text className="text-base font-bold text-stone-900">
-                  Apply Service Charge to Dine-In Tabs
-                </Text>
-                <Text className="text-base text-stone-500">
-                  Automatically added to table settlements
-                </Text>
-              </View>
-              <View
-                className={`h-6 w-6 rounded-md items-center justify-center border ${
+            <View className="flex-1 pt-6">
+              <Pressable
+                onPress={() => setServiceChargeEnabled(!serviceChargeEnabled)}
+                className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
                   serviceChargeEnabled
-                    ? 'bg-[#800020] border-[#800020]'
-                    : 'bg-white border-stone-400'
+                    ? 'bg-[#800020]/10 border-[#800020]'
+                    : 'bg-stone-50 border-stone-200'
                 }`}
               >
-                {serviceChargeEnabled && <Check size={16} color="#ffffff" />}
-              </View>
-            </Pressable>
+                <View>
+                  <Text className="text-base font-bold text-stone-900">
+                    Apply Service Charge to Dine-In Tabs
+                  </Text>
+                  <Text className="text-base text-stone-500">
+                    Automatically added to floor table settlements
+                  </Text>
+                </View>
+                <View
+                  className={`h-6 w-6 rounded-md items-center justify-center border ${
+                    serviceChargeEnabled
+                      ? 'bg-[#800020] border-[#800020]'
+                      : 'bg-white border-stone-400'
+                  }`}
+                >
+                  {serviceChargeEnabled && <Check size={16} color="#ffffff" />}
+                </View>
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -234,7 +267,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
             <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
               <Receipt size={22} color="#800020" />
             </View>
-            <View>
+            <View className="ml-2">
               <Text className="text-xl font-bold text-stone-900">
                 Discounts & Operational Comps
               </Text>
@@ -246,51 +279,39 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
 
           <View className="flex-row space-x-4">
             <View className="flex-1">
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Senior Citizen / PWD (RA 9994) %
-              </Text>
-              <TextInput
+              <AdminNumberInput
+                label="Senior / PWD (RA 9994)"
+                mode="integer"
                 value={seniorPwdPercent}
                 onChangeText={setSeniorPwdPercent}
-                keyboardType="numeric"
                 placeholder="20"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
+                suffix="%"
+                helperText="Mandatory 20% + VAT exemption"
               />
-              <Text className="text-base text-stone-500 mt-1">
-                Mandatory 20% discount + VAT exemption
-              </Text>
             </View>
 
             <View className="flex-1">
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Musician / Artist Comp %
-              </Text>
-              <TextInput
+              <AdminNumberInput
+                label="Musician / Artist Comp"
+                mode="integer"
                 value={musicianCompPercent}
                 onChangeText={setMusicianCompPercent}
-                keyboardType="numeric"
                 placeholder="100"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
+                suffix="%"
+                helperText="100% comp for stage performers"
               />
-              <Text className="text-base text-stone-500 mt-1">
-                100% comp for live jazz stage performers
-              </Text>
             </View>
 
             <View className="flex-1">
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Staff Meal Discount %
-              </Text>
-              <TextInput
+              <AdminNumberInput
+                label="Staff Meal Discount"
+                mode="integer"
                 value={staffDiscountPercent}
                 onChangeText={setStaffDiscountPercent}
-                keyboardType="numeric"
                 placeholder="50"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
+                suffix="%"
+                helperText="Duty meal allowance deduction"
               />
-              <Text className="text-base text-stone-500 mt-1">
-                Duty meal deduction for active staff
-              </Text>
             </View>
           </View>
         </View>
@@ -301,7 +322,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
             <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
               <Printer size={22} color="#800020" />
             </View>
-            <View>
+            <View className="ml-2">
               <Text className="text-xl font-bold text-stone-900">
                 Hardware Thermal Printer Routing
               </Text>
@@ -313,44 +334,36 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
 
           <View className="flex-row space-x-4">
             <View className="flex-1">
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Bar Printer (Cocktails & Cafe)
-              </Text>
-              <TextInput
+              <AdminInput
+                label="Bar Printer (Cocktails & Cafe)"
                 value={barPrinterIp}
                 onChangeText={setBarPrinterIp}
                 placeholder="192.168.1.101"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-mono"
+                className="font-mono"
+                helperText="Prints bar beverage chits"
               />
-              <Text className="text-base text-stone-500 mt-1">Prints bar dispatch chits</Text>
             </View>
 
             <View className="flex-1">
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Kitchen Food Printer
-              </Text>
-              <TextInput
+              <AdminInput
+                label="Kitchen Food Printer"
                 value={kitchenPrinterIp}
                 onChangeText={setKitchenPrinterIp}
                 placeholder="192.168.1.102"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-mono"
+                className="font-mono"
+                helperText="Prints chef tickets & modifiers"
               />
-              <Text className="text-base text-stone-500 mt-1">Prints chef tickets & modifiers</Text>
             </View>
 
             <View className="flex-1">
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Runner Pass / Tray Printer
-              </Text>
-              <TextInput
+              <AdminInput
+                label="Runner Pass / Tray Printer"
                 value={runnerPrinterIp}
                 onChangeText={setRunnerPrinterIp}
                 placeholder="192.168.1.103"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-mono"
+                className="font-mono"
+                helperText="Consolidated order dispatch slip"
               />
-              <Text className="text-base text-stone-500 mt-1">
-                Consolidated order dispatch slip
-              </Text>
             </View>
           </View>
         </View>

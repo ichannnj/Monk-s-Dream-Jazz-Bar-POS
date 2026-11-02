@@ -122,12 +122,16 @@ export interface ShiftVariancePoint {
 export const readingsApi = {
   /**
    * Fetches the current, non-destructive X-Reading calculation directly from Postgres RPC.
+   * @param drawer Till target ('consolidated', 'main', 'bar')
+   * @param scope 'day' for full business day (Z/X), 'shift' for cashier handover (Y)
    */
   async fetchCurrentXReading(
-    drawer: 'consolidated' | 'main' | 'bar' = 'consolidated'
+    drawer: 'consolidated' | 'main' | 'bar' = 'consolidated',
+    scope: 'day' | 'shift' = 'day'
   ): Promise<ReadingData> {
     const { data, error } = await (supabase.rpc as any)('get_current_x_reading', {
       p_drawer: drawer,
+      p_scope: scope,
     });
 
     if (error) {
@@ -155,6 +159,27 @@ export const readingsApi = {
       safe_drops: Number(data.safe_drops || 0),
       expected_cash: Number(data.expected_cash || 0),
       transaction_count: Number(data.transaction_count || 0),
+    };
+  },
+
+  /**
+   * Safety Guard: Checks for unsettled/active open tabs before shift closing.
+   */
+  async checkUnsettledTabs(
+    drawer: 'consolidated' | 'main' | 'bar' = 'consolidated'
+  ): Promise<{ open_tab_count: number; open_tabs: any[] }> {
+    const { data, error } = await (supabase.rpc as any)('check_unsettled_tabs', {
+      p_drawer: drawer,
+    });
+
+    if (error) {
+      console.error('[readingsApi] checkUnsettledTabs error:', error);
+      return { open_tab_count: 0, open_tabs: [] };
+    }
+
+    return {
+      open_tab_count: Number(data?.open_tab_count || 0),
+      open_tabs: data?.open_tabs || [],
     };
   },
 

@@ -58,7 +58,12 @@ ON public.pos_y_readings
 FOR ALL TO anon, authenticated 
 USING (true) WITH CHECK (true);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.pos_y_readings;
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.pos_y_readings;
+EXCEPTION WHEN duplicate_object THEN
+  NULL;
+END $$;
 
 -- 3. Stored Procedure: Atomic Shift Handover Y-Reading Closer
 CREATE OR REPLACE FUNCTION public.close_shift_and_generate_y_reading(

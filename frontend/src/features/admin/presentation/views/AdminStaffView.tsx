@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Modal } from 'react-native';
-import { Users, Award, Calendar, X } from 'lucide-react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Users, Award, Calendar } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type AttendanceRecordAdmin } from '../../data/admin.api';
+import { AdminModal, AdminNumberInput } from '../components';
 
 interface AdminStaffViewProps {
   onRefresh?: () => void;
@@ -185,62 +186,40 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = () => {
       </View>
 
       {/* Bonus Modal */}
-      <Modal
+      <AdminModal
         visible={!!selectedRecord}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedRecord(null)}
+        onClose={() => setSelectedRecord(null)}
+        title={`Shift Bonus: ${selectedRecord?.user?.display_name || ''}`}
+        subtitle={`Base Daily Rate: ₱${Number(selectedRecord?.base_daily_pay || 0).toFixed(2)}`}
+        icon={<Award size={22} color="#800020" />}
+        size="sm"
+        footer={
+          <>
+            <Pressable
+              onPress={() => setSelectedRecord(null)}
+              className="min-h-[48px] px-5 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
+            >
+              <Text className="text-base font-semibold text-stone-700">Cancel</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleUpdateAddon}
+              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+            >
+              <Text className="text-base font-bold text-white">Save Bonus</Text>
+            </Pressable>
+          </>
+        }
       >
-        <View className="flex-1 items-center justify-center bg-black/50 p-6">
-          <View className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <View className="flex-row items-center justify-between border-b border-stone-100 pb-3 mb-2">
-              <View className="flex-1 pr-3">
-                <Text className="text-xl font-bold text-stone-900">
-                  Shift Bonus: {selectedRecord?.user?.display_name}
-                </Text>
-                <Text className="mt-1 text-base text-stone-500">
-                  Base Daily Rate: ₱{Number(selectedRecord?.base_daily_pay || 0).toFixed(2)}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => setSelectedRecord(null)}
-                className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-100"
-              >
-                <X size={22} color="#57534e" />
-              </Pressable>
-            </View>
-
-            <View className="mt-4">
-              <Text className="text-base font-medium text-stone-700">
-                Discretionary Add-on (₱):
-              </Text>
-              <TextInput
-                value={addonPayInput}
-                onChangeText={setAddonPayInput}
-                keyboardType="numeric"
-                placeholder="e.g. 20.00"
-                className="mt-1 min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
-              />
-            </View>
-
-            <View className="mt-6 flex-row justify-end space-x-3">
-              <Pressable
-                onPress={() => setSelectedRecord(null)}
-                className="min-h-[48px] px-5 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
-              >
-                <Text className="text-base font-semibold text-stone-700">Cancel</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleUpdateAddon}
-                className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
-              >
-                <Text className="text-base font-bold text-white">Save Bonus</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <AdminNumberInput
+          label="Discretionary Add-on"
+          mode="currency"
+          value={addonPayInput}
+          onChangeText={setAddonPayInput}
+          placeholder="e.g. 20.00"
+          helperText="Added on top of staff base daily pay"
+        />
+      </AdminModal>
     </ScrollView>
   );
 };

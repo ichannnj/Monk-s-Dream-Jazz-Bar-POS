@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, Pressable, ScrollView, Platform } from 'react-native';
-import { X, Printer, Download, Receipt, FileText, CheckCircle2 } from 'lucide-react-native';
+import {
+  X,
+  Printer,
+  Download,
+  Receipt,
+  FileText,
+  CheckCircle2,
+  FileSpreadsheet,
+} from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { readingsApi, type ReadingData } from '../../../data/readings.api';
+import { exportSingleReadingToExcel } from '../../../utils/readingExcelExport';
 
 interface ReadingReportModalProps {
   visible: boolean;
@@ -38,6 +47,44 @@ export const ReadingReportModal: React.FC<ReadingReportModalProps> = ({
 
   const handleBrowserPrint = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const printStyleId = 'monks-pos-reading-print-styles';
+      let styleEl = document.getElementById(printStyleId);
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = printStyleId;
+        styleEl.innerHTML = `
+          @media print {
+            body * {
+              visibility: hidden !important;
+            }
+            #monks-reading-print-area, #monks-reading-print-area * {
+              visibility: visible !important;
+            }
+            #monks-reading-print-area {
+              position: absolute !important;
+              left: 0 !important;
+              top: 0 !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              margin: 0 !important;
+              padding: 24px !important;
+              background: #ffffff !important;
+              box-shadow: none !important;
+              border: none !important;
+              color: #000000 !important;
+            }
+            .print-avoid-break {
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+            }
+            @page {
+              size: A4 portrait;
+              margin: 15mm;
+            }
+          }
+        `;
+        document.head.appendChild(styleEl);
+      }
       window.print();
     } else {
       toast.info('Printing is supported in web desktop view.');
@@ -58,7 +105,17 @@ export const ReadingReportModal: React.FC<ReadingReportModalProps> = ({
     }
   };
 
-  const handleDownload = () => {
+  const handleExportExcel = () => {
+    try {
+      exportSingleReadingToExcel(reading);
+      toast.success('Reading report exported to Excel (.xls)', { title: 'Excel Export Ready' });
+    } catch (err: any) {
+      console.error('[ReadingReportModal] Excel export error:', err);
+      toast.error('Failed to export report to Excel', { title: 'Export Error' });
+    }
+  };
+
+  const handleDownloadText = () => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
 
     const reportText = `================================================
@@ -68,19 +125,19 @@ ${title.toUpperCase()}
 Drawer Scope: ${drawerLabel}
 Opened At:    ${new Date(reading.opened_at).toLocaleString()}
 Generated At: ${new Date(reading.generated_at || reading.closed_at || Date.now()).toLocaleString()}
-Manager:      ${reading.performed_by_name || 'Manager'}
+Staff:        ${reading.outgoing_staff_name || reading.performed_by_name || 'Manager'}
 Invoice Range: ${reading.first_receipt_no} - ${reading.last_receipt_no}
 Transactions: ${reading.transaction_count}
 
 ------------------------------------------------
-FINANCIAL SUMMARY
+1. FINANCIAL SUMMARY
 ------------------------------------------------
 Gross Sales:        ${formatCurrency(reading.gross_sales)}
 Discounts & Comps: -${formatCurrency(reading.discount_total)}
 Net Sales:          ${formatCurrency(reading.net_sales)}
 
 ------------------------------------------------
-TAX & CHARGES BREAKDOWN
+2. TAX & CHARGES BREAKDOWN
 ------------------------------------------------
 VATable Sales (12%): ${formatCurrency(reading.vatable_sales)}
 12% VAT Amount:      ${formatCurrency(reading.vat_amount)}
@@ -88,7 +145,7 @@ VAT-Exempt Sales:    ${formatCurrency(reading.vat_exempt_sales)}
 10% Service Charge:  ${formatCurrency(reading.service_charge)}
 
 ------------------------------------------------
-TENDER SUMMARY
+3. TENDER SUMMARY
 ------------------------------------------------
 Cash Sales:         ${formatCurrency(reading.tender_cash)}
 Credit/Debit Card:  ${formatCurrency(reading.tender_card)}
@@ -97,17 +154,18 @@ Delivery Apps:      ${formatCurrency(reading.tender_delivery)}
 Total Tender:       ${formatCurrency(reading.total_tender)}
 
 ------------------------------------------------
-CASH DRAWER RECONCILIATION
+4. CASH DRAWER RECONCILIATION
 ------------------------------------------------
 Opening Float:      ${formatCurrency(reading.opening_float)}
+Cash Sales Intake:  +${formatCurrency(reading.tender_cash)}
 Cash In (+):        ${formatCurrency(reading.cash_in)}
 Petty Cash Out (-): ${formatCurrency(reading.cash_out)}
 Safe Drops (-):     ${formatCurrency(reading.safe_drops)}
-Expected System Cash: ${formatCurrency(reading.expected_cash)}
+Expected Cash:      ${formatCurrency(reading.expected_cash)}
 ${
   reading.counted_cash !== undefined
-    ? `Actual Counted Cash:  ${formatCurrency(reading.counted_cash)}
-Variance:             ${reading.variance && reading.variance > 0 ? '+' : ''}${formatCurrency(reading.variance || 0)}`
+    ? `Actual Counted Cash: ${formatCurrency(reading.counted_cash)}
+Variance:            ${reading.variance && reading.variance > 0 ? '+' : ''}${formatCurrency(reading.variance || 0)}`
     : ''
 }
 ================================================
@@ -124,7 +182,7 @@ Official POS Audit Document
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    toast.success('Reading report downloaded successfully', { title: 'Downloaded' });
+    toast.success('Reading report downloaded as text file', { title: 'Downloaded' });
   };
 
   return (
@@ -132,15 +190,18 @@ Official POS Audit Document
       <View className="flex-1 bg-black/75 justify-center items-center p-4">
         <Pressable className="absolute inset-0" onPress={onClose} />
 
-        <View className="bg-white rounded-3xl w-full max-w-3xl max-h-[90vh] shadow-2xl overflow-hidden flex-col border border-stone-200">
+        <View
+          onStartShouldSetResponder={() => true}
+          className="bg-white rounded-3xl w-full max-w-4xl max-h-[92vh] shadow-2xl overflow-hidden flex-col border border-stone-200"
+        >
           {/* Header */}
           <View className="flex-row items-center justify-between px-6 py-4 border-b border-stone-200 bg-stone-50">
             <View className="flex-row items-center gap-3">
-              <View className="w-10 h-10 rounded-xl bg-[#800020] items-center justify-center">
+              <View className="w-11 h-11 rounded-xl bg-[#800020] items-center justify-center">
                 {isZReading ? (
-                  <Receipt size={20} color="#ffffff" />
+                  <Receipt size={22} color="#ffffff" />
                 ) : (
-                  <FileText size={20} color="#ffffff" />
+                  <FileText size={22} color="#ffffff" />
                 )}
               </View>
               <View>
@@ -156,7 +217,7 @@ Official POS Audit Document
               <View className="flex-row bg-stone-200/80 p-1 rounded-xl mr-2">
                 <Pressable
                   onPress={() => setViewMode('document')}
-                  className={`px-3 py-1.5 rounded-lg min-h-[36px] flex-row items-center ${
+                  className={`px-3.5 py-1.5 rounded-lg min-h-[48px] flex-row items-center ${
                     viewMode === 'document' ? 'bg-white shadow-xs' : ''
                   }`}
                 >
@@ -170,7 +231,7 @@ Official POS Audit Document
                 </Pressable>
                 <Pressable
                   onPress={() => setViewMode('thermal')}
-                  className={`px-3 py-1.5 rounded-lg min-h-[36px] flex-row items-center ${
+                  className={`px-3.5 py-1.5 rounded-lg min-h-[48px] flex-row items-center ${
                     viewMode === 'thermal' ? 'bg-white shadow-xs' : ''
                   }`}
                 >
@@ -186,9 +247,11 @@ Official POS Audit Document
 
               <Pressable
                 onPress={onClose}
-                className="w-10 h-10 rounded-xl bg-stone-200/60 items-center justify-center active:bg-stone-300"
+                className="w-12 h-12 min-h-[48px] min-w-[48px] rounded-xl bg-stone-200/60 items-center justify-center active:bg-stone-300"
+                accessibilityRole="button"
+                accessibilityLabel="Close report modal"
               >
-                <X size={20} color="#57534e" />
+                <X size={22} color="#57534e" />
               </Pressable>
             </View>
           </View>
@@ -196,26 +259,28 @@ Official POS Audit Document
           {/* Report Body */}
           <ScrollView className="flex-1 p-6 bg-[#fcf9f9]" showsVerticalScrollIndicator={false}>
             {viewMode === 'document' ? (
-              /* Minimalist Document Sheet View */
-              <View className="bg-white rounded-2xl border border-stone-200 p-8 shadow-xs max-w-2xl mx-auto w-full">
+              /* Minimalist Document Sheet View - Printable Area */
+              <View
+                nativeID="monks-reading-print-area"
+                {...({ id: 'monks-reading-print-area' } as any)}
+                className="bg-white rounded-2xl border border-stone-200 p-8 shadow-xs max-w-2xl mx-auto w-full"
+              >
                 {/* Brand Header */}
-                <View className="items-center pb-6 border-b border-stone-200 mb-6">
+                <View className="items-center pb-6 border-b border-stone-200 mb-6 print-avoid-break">
                   <Text className="text-xs font-bold tracking-widest text-[#800020] uppercase">
-                    Monk's Dream Jazz Bar & Bistro
+                    Monk's Dream Jazz Bar &amp; Bistro
                   </Text>
                   <Text className="text-2xl font-black text-stone-900 mt-1">{title}</Text>
                   <Text className="text-base text-stone-500 mt-1">Official POS Terminal Audit</Text>
 
-                  <View className="flex-row items-center gap-4 mt-3 text-base text-stone-500">
-                    <Text className="text-base text-stone-600 font-semibold">
-                      Scope: {drawerLabel}
-                    </Text>
+                  <View className="flex-row items-center gap-4 mt-3">
+                    <Text className="text-base text-stone-700 font-bold">Scope: {drawerLabel}</Text>
                     <Text className="text-base text-stone-400">•</Text>
-                    <Text className="text-base text-stone-600 font-semibold">
-                      Manager: {reading.performed_by_name || 'Manager'}
+                    <Text className="text-base text-stone-700 font-bold">
+                      Staff: {reading.outgoing_staff_name || reading.performed_by_name || 'Manager'}
                     </Text>
                   </View>
-                  <View className="flex-row items-center gap-4 mt-1 text-base text-stone-500">
+                  <View className="flex-row items-center gap-4 mt-1">
                     <Text className="text-base text-stone-500">
                       Period:{' '}
                       {new Date(reading.opened_at).toLocaleTimeString([], {
@@ -231,9 +296,9 @@ Official POS Audit Document
                 </View>
 
                 {/* Section 1: Financial Summary */}
-                <View className="mb-6">
+                <View className="mb-6 print-avoid-break">
                   <Text className="text-base font-extrabold uppercase tracking-wider text-[#800020] mb-3">
-                    1. Sales & Revenue
+                    1. Sales &amp; Revenue
                   </Text>
                   <View className="border-t border-b border-stone-200 divide-y divide-stone-100">
                     <View className="flex-row justify-between py-2.5">
@@ -243,12 +308,12 @@ Official POS Audit Document
                       </Text>
                     </View>
                     <View className="flex-row justify-between py-2.5">
-                      <Text className="text-base text-stone-600">Discounts & Comps</Text>
+                      <Text className="text-base text-stone-600">Discounts &amp; Comps</Text>
                       <Text className="text-base font-bold text-amber-700">
                         -{formatCurrency(reading.discount_total)}
                       </Text>
                     </View>
-                    <View className="flex-row justify-between py-3 bg-stone-50 px-2 rounded-lg">
+                    <View className="flex-row justify-between py-3 bg-stone-50 px-2.5 rounded-lg">
                       <Text className="text-base font-black text-stone-900">Net Sales</Text>
                       <Text className="text-lg font-black text-[#800020]">
                         {formatCurrency(reading.net_sales)}
@@ -258,14 +323,14 @@ Official POS Audit Document
                 </View>
 
                 {/* Section 2: Tax & Surcharges */}
-                <View className="mb-6">
+                <View className="mb-6 print-avoid-break">
                   <Text className="text-base font-extrabold uppercase tracking-wider text-[#800020] mb-3">
-                    2. Tax & Service Charge (PH BIR Standard)
+                    2. Tax &amp; Service Charge (PH BIR Standard)
                   </Text>
                   <View className="border-t border-b border-stone-200 divide-y divide-stone-100">
                     <View className="flex-row justify-between py-2.5">
                       <Text className="text-base text-stone-600">
-                        VATable Sales (Net of VAT & SC)
+                        VATable Sales (Net of VAT &amp; SC)
                       </Text>
                       <Text className="text-base font-bold text-stone-900">
                         {formatCurrency(reading.vatable_sales)}
@@ -287,7 +352,7 @@ Official POS Audit Document
                 </View>
 
                 {/* Section 3: Tender Breakdown */}
-                <View className="mb-6">
+                <View className="mb-6 print-avoid-break">
                   <Text className="text-base font-extrabold uppercase tracking-wider text-[#800020] mb-3">
                     3. Payment Tender Breakdown
                   </Text>
@@ -320,7 +385,7 @@ Official POS Audit Document
                         {formatCurrency(reading.tender_delivery)}
                       </Text>
                     </View>
-                    <View className="flex-row justify-between py-3 bg-stone-50 px-2 rounded-lg">
+                    <View className="flex-row justify-between py-3 bg-stone-50 px-2.5 rounded-lg">
                       <Text className="text-base font-black text-stone-900">
                         Total Tender Collected
                       </Text>
@@ -332,7 +397,7 @@ Official POS Audit Document
                 </View>
 
                 {/* Section 4: Cash Drawer Audit */}
-                <View className="mb-6">
+                <View className="mb-6 print-avoid-break">
                   <Text className="text-base font-extrabold uppercase tracking-wider text-[#800020] mb-3">
                     4. Cash Drawer Reconciliation
                   </Text>
@@ -367,7 +432,7 @@ Official POS Audit Document
                         -{formatCurrency(reading.safe_drops)}
                       </Text>
                     </View>
-                    <View className="flex-row justify-between py-3 bg-stone-100 px-2 rounded-lg">
+                    <View className="flex-row justify-between py-3 bg-stone-100 px-2.5 rounded-lg">
                       <Text className="text-base font-black text-stone-900">
                         Expected System Cash
                       </Text>
@@ -412,62 +477,66 @@ Official POS Audit Document
                   </View>
                 </View>
 
-                {/* Audit Trailer */}
-                <View className="bg-stone-50 rounded-xl p-4 border border-stone-200 flex-row justify-between text-base">
+                {/* Audit Reference Trailer */}
+                <View className="bg-stone-50 rounded-xl p-4 border border-stone-200 flex-row justify-between print-avoid-break">
                   <View>
                     <Text className="text-base font-bold text-stone-700">
                       Invoice Reference Range
                     </Text>
                     <Text className="text-base text-stone-500">
-                      {reading.first_receipt_no} - {reading.last_receipt_no}
+                      {reading.first_receipt_no || 'N/A'} - {reading.last_receipt_no || 'N/A'}
                     </Text>
                   </View>
                   <View className="items-end">
                     <Text className="text-base font-bold text-stone-700">Settled Transactions</Text>
-                    <Text className="text-base text-stone-500 font-bold">
+                    <Text className="text-base text-stone-900 font-black">
                       {reading.transaction_count} tabs
                     </Text>
                   </View>
                 </View>
 
-                {/* Handover Signatures for Y-Reading */}
-                {isYReading && (
-                  <View className="mt-6 p-5 rounded-xl border border-stone-200 bg-stone-50">
-                    <Text className="text-base font-extrabold uppercase tracking-wider text-[#800020] mb-3">
-                      Staff Handover Acknowledgment
-                    </Text>
-                    <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <View className="p-3 bg-white rounded-lg border border-stone-200">
-                        <Text className="text-sm font-semibold text-stone-500">
-                          Handed Over By (Outgoing Cashier):
+                {/* Handover Signatures for Y-Reading / Z-Reading */}
+                <View className="mt-6 p-5 rounded-xl border border-stone-200 bg-stone-50 print-avoid-break">
+                  <Text className="text-base font-extrabold uppercase tracking-wider text-[#800020] mb-3">
+                    {isYReading
+                      ? 'Staff Handover Acknowledgment'
+                      : 'Fiscal Closeout Acknowledgment'}
+                  </Text>
+                  <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <View className="p-3 bg-white rounded-lg border border-stone-200">
+                      <Text className="text-sm font-semibold text-stone-500">
+                        {isYReading
+                          ? 'Handed Over By (Outgoing Cashier):'
+                          : 'Prepared By (Cashier):'}
+                      </Text>
+                      <Text className="text-base font-bold text-stone-900 mt-1">
+                        {reading.outgoing_staff_name ||
+                          reading.performed_by_name ||
+                          'Shift Cashier'}
+                      </Text>
+                      <View className="mt-8 pt-1 border-t border-stone-300">
+                        <Text className="text-xs text-stone-400">
+                          Signature: __________________________
                         </Text>
-                        <Text className="text-base font-bold text-stone-900 mt-1">
-                          {reading.outgoing_staff_name ||
-                            reading.performed_by_name ||
-                            'Outgoing Staff'}
-                        </Text>
-                        <View className="mt-6 pt-1 border-t border-stone-300">
-                          <Text className="text-xs text-stone-400">
-                            Signature: __________________________
-                          </Text>
-                        </View>
                       </View>
-                      <View className="p-3 bg-white rounded-lg border border-stone-200">
-                        <Text className="text-sm font-semibold text-stone-500">
-                          Received By (Incoming Cashier):
+                    </View>
+                    <View className="p-3 bg-white rounded-lg border border-stone-200">
+                      <Text className="text-sm font-semibold text-stone-500">
+                        {isYReading
+                          ? 'Received By (Incoming Cashier):'
+                          : 'Verified By (Duty Manager):'}
+                      </Text>
+                      <Text className="text-base font-bold text-stone-900 mt-1">
+                        {reading.incoming_staff_name || 'Duty Manager'}
+                      </Text>
+                      <View className="mt-8 pt-1 border-t border-stone-300">
+                        <Text className="text-xs text-stone-400">
+                          Signature: __________________________
                         </Text>
-                        <Text className="text-base font-bold text-stone-900 mt-1">
-                          {reading.incoming_staff_name || 'Incoming Staff'}
-                        </Text>
-                        <View className="mt-6 pt-1 border-t border-stone-300">
-                          <Text className="text-xs text-stone-400">
-                            Signature: __________________________
-                          </Text>
-                        </View>
                       </View>
                     </View>
                   </View>
-                )}
+                </View>
               </View>
             ) : (
               /* 80mm Thermal Monospace View */
@@ -476,7 +545,9 @@ Official POS Audit Document
                   <Text className="text-base font-black tracking-widest text-center">
                     MONK'S DREAM JAZZ BAR
                   </Text>
-                  <Text className="text-xs text-stone-600 text-center">POS TERMINAL REPORT</Text>
+                  <Text className="text-xs text-stone-600 text-center uppercase tracking-wider">
+                    POS TERMINAL FISCAL REPORT
+                  </Text>
                   <Text className="text-base font-black mt-2 text-center">{title}</Text>
                   <Text className="text-xs text-stone-500 mt-1">{drawerLabel}</Text>
                   <Text className="text-xs text-stone-500">
@@ -486,7 +557,7 @@ Official POS Audit Document
                   </Text>
                 </View>
 
-                <View className="border-b border-dashed border-stone-400 pb-3 mb-3 text-xs space-y-1">
+                <View className="border-b border-dashed border-stone-400 pb-3 mb-3 space-y-1">
                   <View className="flex-row justify-between">
                     <Text className="text-xs font-mono">GROSS SALES</Text>
                     <Text className="text-xs font-mono font-bold">
@@ -507,7 +578,7 @@ Official POS Audit Document
                   </View>
                 </View>
 
-                <View className="border-b border-dashed border-stone-400 pb-3 mb-3 text-xs space-y-1">
+                <View className="border-b border-dashed border-stone-400 pb-3 mb-3 space-y-1">
                   <View className="flex-row justify-between">
                     <Text className="text-xs font-mono">VATABLE SALES</Text>
                     <Text className="text-xs font-mono">
@@ -526,7 +597,7 @@ Official POS Audit Document
                   </View>
                 </View>
 
-                <View className="border-b border-dashed border-stone-400 pb-3 mb-3 text-xs space-y-1">
+                <View className="border-b border-dashed border-stone-400 pb-3 mb-3 space-y-1">
                   <View className="flex-row justify-between">
                     <Text className="text-xs font-mono">CASH TENDER</Text>
                     <Text className="text-xs font-mono font-bold">
@@ -553,7 +624,7 @@ Official POS Audit Document
                   </View>
                 </View>
 
-                <View className="pb-3 text-xs space-y-1">
+                <View className="pb-3 space-y-1">
                   <View className="flex-row justify-between">
                     <Text className="text-xs font-mono">EXPECTED CASH</Text>
                     <Text className="text-xs font-mono font-bold">
@@ -580,7 +651,7 @@ Official POS Audit Document
                 </View>
 
                 {isYReading && (
-                  <View className="border-t border-dashed border-stone-400 pt-3 pb-2 text-xs space-y-2">
+                  <View className="border-t border-dashed border-stone-400 pt-3 pb-2 space-y-2">
                     <Text className="text-xs font-mono font-bold">STAFF HANDOVER</Text>
                     <Text className="text-[10px] font-mono">
                       OUT: {reading.outgoing_staff_name || reading.performed_by_name || 'Staff'}
@@ -603,14 +674,14 @@ Official POS Audit Document
           </ScrollView>
 
           {/* Action Footer */}
-          <View className="flex-row items-center justify-between px-6 py-4 border-t border-stone-200 bg-white">
+          <View className="flex-row items-center justify-between px-6 py-4 border-t border-stone-200 bg-white flex-wrap gap-3">
             <View className="flex-row items-center gap-2">
               <Pressable
                 onPress={handleBrowserPrint}
                 className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 active:bg-stone-300 min-h-[48px]"
               >
                 <Printer size={18} color="#44403c" />
-                <Text className="text-base font-bold text-stone-800">Print Document</Text>
+                <Text className="text-base font-bold text-stone-800">Print A4 Document</Text>
               </Pressable>
 
               <Pressable
@@ -627,11 +698,19 @@ Official POS Audit Document
 
             <View className="flex-row items-center gap-2">
               <Pressable
-                onPress={handleDownload}
-                className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl border border-stone-300 active:bg-stone-50 min-h-[48px]"
+                onPress={handleExportExcel}
+                className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-300 active:bg-emerald-100 min-h-[48px]"
+              >
+                <FileSpreadsheet size={18} color="#047857" />
+                <Text className="text-base font-bold text-emerald-800">Export Excel (.xls)</Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleDownloadText}
+                className="flex-row items-center gap-2 px-3 py-2.5 rounded-xl border border-stone-300 active:bg-stone-50 min-h-[48px]"
               >
                 <Download size={18} color="#44403c" />
-                <Text className="text-base font-bold text-stone-800">Download Text/PDF</Text>
+                <Text className="text-base font-bold text-stone-700">Text File</Text>
               </Pressable>
 
               <Pressable

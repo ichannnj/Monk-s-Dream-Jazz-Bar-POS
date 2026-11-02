@@ -53,24 +53,25 @@ export const DepartmentSalesBreakdown: React.FC<DepartmentSalesBreakdownProps> =
 
   return (
     <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
-      <View className="flex-row items-center justify-between mb-5">
-        <View className="flex-row items-center gap-3">
-          <View className="w-10 h-10 rounded-xl bg-[#800020]/10 items-center justify-center">
+      <View className="flex-row items-center justify-between mb-5 flex-wrap gap-2">
+        <View className="flex-row items-center gap-3 flex-1 min-w-[200px]">
+          <View className="w-10 h-10 rounded-xl bg-[#800020]/10 items-center justify-center shrink-0">
             <BarChart2 size={20} color="#800020" />
           </View>
-          <View>
-            <Text className="text-lg font-extrabold text-stone-900">
+          <View className="flex-1">
+            <Text className="text-lg font-extrabold text-stone-900 leading-snug">
               Department & Category Revenue Mix
             </Text>
-            <Text className="text-base text-stone-500 font-medium">
+            <Text className="text-base text-stone-500 font-medium mt-0.5">
               Sales contribution across beverage stations and kitchen dining
             </Text>
           </View>
         </View>
 
-        <Text className="text-base font-bold text-stone-600">
-          {departments.length} Operational Departments
-        </Text>
+        <View className="rounded-xl bg-stone-100/80 px-3.5 py-1.5 shrink-0">
+          <Text className="text-sm font-semibold text-stone-500">Departments</Text>
+          <Text className="text-lg font-black text-stone-900">{departments.length} Active</Text>
+        </View>
       </View>
 
       <View className="space-y-4">
@@ -83,18 +84,24 @@ export const DepartmentSalesBreakdown: React.FC<DepartmentSalesBreakdownProps> =
               key={dept.name}
               className="p-3.5 rounded-xl border border-stone-100 bg-stone-50/50"
             >
-              <View className="flex-row items-center justify-between mb-2">
-                <View className="flex-row items-center gap-2">
-                  <View className={`w-8 h-8 rounded-lg ${styling.bg} items-center justify-center`}>
+              <View className="flex-row items-center justify-between mb-2 flex-wrap gap-2">
+                <View className="flex-row items-center gap-2.5 flex-1 min-w-[140px]">
+                  <View
+                    className={`w-8 h-8 rounded-lg ${styling.bg} items-center justify-center shrink-0`}
+                  >
                     {getIcon(dept.category)}
                   </View>
-                  <View>
-                    <Text className="text-base font-bold text-stone-800">{dept.name}</Text>
-                    <Text className="text-sm text-stone-500">{dept.itemCount} items sold</Text>
+                  <View className="flex-1">
+                    <Text className="text-base font-bold text-stone-800" numberOfLines={1}>
+                      {dept.name}
+                    </Text>
+                    <Text className="text-sm text-stone-500">
+                      {dept.itemCount} item{dept.itemCount === 1 ? '' : 's'} sold
+                    </Text>
                   </View>
                 </View>
 
-                <View className="items-end">
+                <View className="items-end shrink-0">
                   <Text className="text-base font-black text-stone-900">
                     {formatCurrency(dept.sales)}
                   </Text>

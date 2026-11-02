@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, Pressable, ScrollView, Modal } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
   RefreshCw,
   TrendingUp,
@@ -14,14 +14,15 @@ import {
   Sparkles,
   AlertTriangle,
   LayoutGrid,
-  CreditCard,
   Banknote,
   Smartphone,
+  CreditCard,
 } from 'lucide-react-native';
 import type { DashboardTelemetry, AdminRoute, TimeframeFilter } from '../../domain/admin.types';
 import { HourlySalesVelocityChart } from './analytics/HourlySalesVelocityChart';
 import { PaymentTenderMixBar } from './analytics/PaymentTenderMixBar';
 import { DepartmentSalesBreakdown, DepartmentShare } from './analytics/DepartmentSalesBreakdown';
+import { AdminModal } from '../components/AdminModal';
 
 export interface AdminDashboardViewProps {
   telemetry: DashboardTelemetry;
@@ -271,7 +272,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </View>
 
             {/* Bottom details & hourly chart */}
-            <View className="mt-4 pt-3 border-t border-white/20 flex-row items-end justify-between">
+            <View className="mt-4 pt-3 border-t border-white/20 flex-row items-end justify-between flex-wrap gap-2">
               <Text className="text-base font-medium text-white/90">
                 {telemetry.orderCount} checks · {telemetry.guestCount} guests
               </Text>
@@ -292,7 +293,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       );
                     })}
                   </View>
-                  <Text className="text-base text-white/70 mt-1">{telemetry.peakHourLabel}</Text>
+                  <Text className="text-sm text-white/70 mt-1">{telemetry.peakHourLabel}</Text>
                 </View>
               )}
             </View>
@@ -383,7 +384,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           {/* Card 4: Live Table & Floor Occupancy */}
           <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[190px]">
             <View>
-              <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center justify-between flex-wrap gap-1">
                 <Text className="text-base font-semibold text-stone-500">Floor & Tables</Text>
                 <View className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
                   <Text className="text-base font-bold text-emerald-700">
@@ -406,7 +407,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               </View>
             </View>
 
-            <View className="mt-4 pt-3 border-t border-stone-100 flex-row items-center justify-between">
+            <View className="mt-4 pt-3 border-t border-stone-100 flex-row items-center justify-between flex-wrap gap-2">
               <View className="flex-row items-center">
                 <LayoutGrid size={16} color="#800020" />
                 <Text className="ml-1.5 text-base font-medium text-stone-700">
@@ -559,36 +560,45 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               ) : (
                 visibleBestSellers.map((item) => (
                   <View key={item.id} className="pt-1">
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center space-x-3">
+                    <View className="flex-row items-center justify-between gap-3">
+                      {/* Left: Rank, Name, and Category */}
+                      <View className="flex-row items-center flex-1 min-w-0 mr-2">
                         {/* Rank Circle */}
-                        <View className="h-8 w-8 items-center justify-center rounded-full border border-stone-200 bg-stone-50">
+                        <View className="h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-50 mr-2.5">
                           <Text className="text-base font-bold text-stone-700">{item.rank}</Text>
                         </View>
-                        <Text className="text-lg font-bold text-stone-900 ml-2">{item.name}</Text>
-                        <View className="ml-2 rounded-md bg-stone-100 border border-stone-200 px-2.5 py-0.5">
-                          <Text className="text-base font-medium text-stone-600">
+                        <Text
+                          className="text-base font-bold text-stone-900 shrink truncate"
+                          numberOfLines={1}
+                        >
+                          {item.name}
+                        </Text>
+                        <View className="ml-2 shrink-0 rounded-md bg-stone-100 border border-stone-200 px-2 py-0.5">
+                          <Text className="text-sm font-medium text-stone-600">
                             {item.category}
                           </Text>
                         </View>
                       </View>
 
-                      <View className="flex-row items-baseline space-x-6">
-                        <View className="items-end mr-4">
-                          <Text className="text-lg font-bold text-stone-900">{item.soldCount}</Text>
-                          <Text className="text-base text-stone-400">sold</Text>
-                        </View>
+                      {/* Right: Sold & Sales amounts */}
+                      <View className="flex-row items-baseline gap-4 shrink-0">
                         <View className="items-end">
-                          <Text className="text-lg font-black text-stone-900">
+                          <Text className="text-base font-bold text-stone-900">
+                            {item.soldCount}
+                          </Text>
+                          <Text className="text-sm text-stone-400">sold</Text>
+                        </View>
+                        <View className="items-end min-w-[70px]">
+                          <Text className="text-base font-black text-stone-900">
                             ₱{Number(item.salesAmount || 0).toFixed(2)}
                           </Text>
-                          <Text className="text-base text-stone-400">sales</Text>
+                          <Text className="text-sm text-stone-400">sales</Text>
                         </View>
                       </View>
                     </View>
 
                     {/* Burgundy #800020 Progress Bar */}
-                    <View className="mt-2.5 h-2 w-full rounded-full bg-stone-100">
+                    <View className="mt-2 h-2 w-full rounded-full bg-stone-100">
                       <View
                         style={{ width: `${Math.min(100, Math.max(5, item.progressPercent))}%` }}
                         className="h-2 rounded-full bg-[#800020]"
@@ -615,7 +625,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           <View className="flex-1 min-w-[320px] space-y-6">
             {/* Live Stations Card */}
             <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
-              <View className="flex-row items-center justify-between mb-4">
+              <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
                 <Text className="text-xl font-bold text-stone-900">Live Stations</Text>
                 <Pressable
                   onPress={() => onNavigateRoute('stations')}
@@ -633,7 +643,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     key={station.stationKey}
                     className="rounded-xl border border-stone-200/70 bg-stone-50/60 p-4"
                   >
-                    <View className="flex-row items-center justify-between mb-2.5">
+                    <View className="flex-row items-center justify-between mb-2.5 flex-wrap gap-2">
                       <View className="flex-row items-center space-x-2">
                         <Text className="text-lg font-bold text-stone-900">{station.name}</Text>
                         {station.isOnline ? (
@@ -653,37 +663,37 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       </Text>
                     </View>
 
-                    <View className="flex-row items-center justify-between pt-1">
+                    <View className="grid grid-cols-4 gap-2 pt-1 text-center">
                       <View>
-                        <Text className="text-2xl font-black text-stone-900">
+                        <Text className="text-xl font-black text-stone-900">
                           {station.activeTickets}
                         </Text>
-                        <Text className="text-base text-stone-500">Active tickets</Text>
+                        <Text className="text-xs text-stone-500 mt-0.5">Active</Text>
                       </View>
 
                       <View>
-                        <Text className="text-2xl font-black text-stone-900">
+                        <Text className="text-xl font-black text-stone-900">
                           {station.avgTicketTime}
                         </Text>
-                        <Text className="text-base text-stone-500">Avg ticket time</Text>
+                        <Text className="text-xs text-stone-500 mt-0.5">Avg time</Text>
                       </View>
 
                       <View>
                         <Text
-                          className={`text-2xl font-black ${
+                          className={`text-xl font-black ${
                             station.lateTickets > 0 ? 'text-rose-600' : 'text-stone-900'
                           }`}
                         >
                           {station.lateTickets}
                         </Text>
-                        <Text className="text-base text-stone-500">Late</Text>
+                        <Text className="text-xs text-stone-500 mt-0.5">Late</Text>
                       </View>
 
                       <View>
-                        <Text className="text-2xl font-black text-amber-600">
+                        <Text className="text-xl font-black text-amber-600">
                           {station.stockoutCount}
                         </Text>
-                        <Text className="text-base text-stone-500">Sold out</Text>
+                        <Text className="text-xs text-stone-500 mt-0.5">Sold out</Text>
                       </View>
                     </View>
                   </View>
@@ -707,21 +717,24 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   </View>
                 ) : (
                   (telemetry.categorySales || []).map((cat) => (
-                    <View key={cat.category} className="flex-row items-center justify-between">
-                      <View className="w-28">
-                        <Text className="text-base font-semibold text-stone-800">
+                    <View
+                      key={cat.category}
+                      className="flex-row items-center justify-between gap-2"
+                    >
+                      <View className="w-32 shrink-0">
+                        <Text className="text-base font-semibold text-stone-800" numberOfLines={1}>
                           {cat.category}
                         </Text>
                       </View>
 
-                      <View className="flex-1 mx-3 h-2.5 rounded-full bg-stone-100">
+                      <View className="flex-1 min-w-[50px] mx-2 h-2.5 rounded-full bg-stone-100">
                         <View
                           style={{ width: `${Math.min(100, Math.max(8, cat.percentage))}%` }}
                           className="h-2.5 rounded-full bg-[#800020]"
                         />
                       </View>
 
-                      <Text className="w-24 text-right text-base font-bold text-stone-900">
+                      <Text className="w-28 shrink-0 text-right text-base font-bold text-stone-900">
                         ₱{Number(cat.amount || 0).toFixed(2)}
                       </Text>
                     </View>
@@ -768,12 +781,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 return (
                   <View
                     key={alert.id}
-                    className="flex-row items-center justify-between rounded-xl border border-stone-100 bg-stone-50/60 p-4"
+                    className="flex-row items-center justify-between rounded-xl border border-stone-100 bg-stone-50/60 p-4 flex-wrap gap-3"
                   >
-                    <View className="flex-row items-center space-x-4 flex-1 pr-4">
+                    <View className="flex-row items-center flex-1 min-w-[260px] mr-2">
                       {/* Badge */}
                       <View
-                        className={`rounded-lg px-3 py-1.5 border ${
+                        className={`rounded-lg px-3 py-1.5 border shrink-0 mr-3 ${
                           isVoid
                             ? 'bg-rose-50 border-rose-200'
                             : isStock
@@ -790,15 +803,15 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                         </Text>
                       </View>
 
-                      <View className="ml-3 flex-1">
+                      <View className="flex-1">
                         <Text className="text-base font-bold text-stone-900">{alert.title}</Text>
-                        <Text className="text-base text-stone-500">{alert.description}</Text>
+                        <Text className="text-base text-stone-500 mt-0.5">{alert.description}</Text>
                       </View>
                     </View>
 
                     <Pressable
                       onPress={() => onNavigateRoute(alert.targetRoute)}
-                      className="min-h-[48px] px-4 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
+                      className="min-h-[48px] px-4 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200 shrink-0"
                     >
                       <Text className="text-base font-bold text-[#800020]">View Details</Text>
                     </Pressable>
@@ -811,120 +824,88 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
       </View>
 
       {/* TIMEFRAME SELECTOR MODAL */}
-      <Modal
+      <AdminModal
         visible={isTimeframeModalOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsTimeframeModalOpen(false)}
+        onClose={() => setIsTimeframeModalOpen(false)}
+        title="Select Timeframe"
+        subtitle="Filter dashboard analytics, sales velocity, and station speed"
+        icon={<Calendar size={22} color="#800020" />}
+        size="md"
       >
-        <View className="flex-1 items-center justify-center bg-black/60 p-6">
-          <View className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <View className="flex-row items-center justify-between border-b border-stone-200 pb-3 mb-4">
-              <View className="flex-row items-center space-x-2">
-                <Calendar size={22} color="#800020" />
-                <Text className="text-xl font-bold text-stone-900 ml-2">Select Timeframe</Text>
-              </View>
+        <View className="space-y-3">
+          {TIMEFRAME_OPTIONS.map((opt) => {
+            const isSelected = opt.key === timeframe;
+            return (
               <Pressable
-                onPress={() => setIsTimeframeModalOpen(false)}
-                className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-100"
+                key={opt.key}
+                onPress={() => handleSelectTimeframe(opt.key)}
+                className={`min-h-[48px] p-4 rounded-xl border flex-row items-center justify-between transition-all ${
+                  isSelected
+                    ? 'bg-[#800020]/10 border-[#800020]'
+                    : 'bg-white border-stone-200 active:bg-stone-50 hover:bg-stone-50'
+                }`}
               >
-                <X size={22} color="#57534e" />
-              </Pressable>
-            </View>
-
-            <View className="space-y-3">
-              {TIMEFRAME_OPTIONS.map((opt) => {
-                const isSelected = opt.key === timeframe;
-                return (
-                  <Pressable
-                    key={opt.key}
-                    onPress={() => handleSelectTimeframe(opt.key)}
-                    className={`min-h-[48px] p-4 rounded-xl border flex-row items-center justify-between transition-all ${
-                      isSelected
-                        ? 'bg-[#800020]/10 border-[#800020]'
-                        : 'bg-white border-stone-200 active:bg-stone-50'
-                    }`}
-                  >
-                    <View className="flex-1 pr-3">
-                      <View className="flex-row items-center space-x-2">
-                        <Text
-                          className={`text-base font-bold ${
-                            isSelected ? 'text-[#800020]' : 'text-stone-900'
-                          }`}
-                        >
-                          {opt.label}
-                        </Text>
-                        <Text className="text-base text-stone-500 ml-2">
-                          ({opt.benchmarkLabel})
-                        </Text>
-                      </View>
-                      <Text className="text-base text-stone-500 mt-1">{opt.description}</Text>
-                    </View>
-                    <View
-                      className={`h-6 w-6 rounded-full items-center justify-center border ${
-                        isSelected ? 'bg-[#800020] border-[#800020]' : 'border-stone-400'
-                      }`}
-                    >
-                      {isSelected && <Check size={14} color="#ffffff" />}
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* BEST SELLERS CATEGORY MODAL */}
-      <Modal
-        visible={isCategoryModalOpen}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsCategoryModalOpen(false)}
-      >
-        <View className="flex-1 items-center justify-center bg-black/60 p-6">
-          <View className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-            <View className="flex-row items-center justify-between border-b border-stone-200 pb-3 mb-4">
-              <View className="flex-row items-center space-x-2">
-                <Layers size={22} color="#800020" />
-                <Text className="text-xl font-bold text-stone-900 ml-2">Filter Best Sellers</Text>
-              </View>
-              <Pressable
-                onPress={() => setIsCategoryModalOpen(false)}
-                className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-100"
-              >
-                <X size={22} color="#57534e" />
-              </Pressable>
-            </View>
-
-            <View className="space-y-2.5">
-              {availableCategories.map((cat) => {
-                const isSelected = cat === selectedCategory;
-                return (
-                  <Pressable
-                    key={cat}
-                    onPress={() => handleSelectCategory(cat)}
-                    className={`min-h-[48px] px-4 py-3 rounded-xl border flex-row items-center justify-between ${
-                      isSelected
-                        ? 'bg-[#800020]/10 border-[#800020]'
-                        : 'bg-white border-stone-200 active:bg-stone-50'
-                    }`}
-                  >
+                <View className="flex-1 pr-3">
+                  <View className="flex-row items-center space-x-2">
                     <Text
                       className={`text-base font-bold ${
-                        isSelected ? 'text-[#800020]' : 'text-stone-800'
+                        isSelected ? 'text-[#800020]' : 'text-stone-900'
                       }`}
                     >
-                      {cat}
+                      {opt.label}
                     </Text>
-                    {isSelected && <Check size={18} color="#800020" />}
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
+                    <Text className="text-base text-stone-500 ml-2">({opt.benchmarkLabel})</Text>
+                  </View>
+                  <Text className="text-base text-stone-500 mt-1">{opt.description}</Text>
+                </View>
+                <View
+                  className={`h-6 w-6 rounded-full items-center justify-center border ${
+                    isSelected ? 'bg-[#800020] border-[#800020]' : 'border-stone-400'
+                  }`}
+                >
+                  {isSelected && <Check size={14} color="#ffffff" />}
+                </View>
+              </Pressable>
+            );
+          })}
         </View>
-      </Modal>
+      </AdminModal>
+
+      {/* BEST SELLERS CATEGORY MODAL */}
+      <AdminModal
+        visible={isCategoryModalOpen}
+        onClose={() => setIsCategoryModalOpen(false)}
+        title="Filter Best Sellers"
+        subtitle="Focus leaderboard ranking on specific beverage or kitchen group"
+        icon={<Layers size={22} color="#800020" />}
+        size="sm"
+      >
+        <View className="space-y-2.5">
+          {availableCategories.map((cat) => {
+            const isSelected = cat === selectedCategory;
+            return (
+              <Pressable
+                key={cat}
+                onPress={() => handleSelectCategory(cat)}
+                className={`min-h-[48px] px-4 py-3 rounded-xl border flex-row items-center justify-between transition-all ${
+                  isSelected
+                    ? 'bg-[#800020]/10 border-[#800020]'
+                    : 'bg-white border-stone-200 active:bg-stone-50 hover:bg-stone-50'
+                }`}
+              >
+                <Text
+                  className={`text-base font-bold ${
+                    isSelected ? 'text-[#800020]' : 'text-stone-800'
+                  }`}
+                >
+                  {cat}
+                </Text>
+                {isSelected && <Check size={18} color="#800020" />}
+              </Pressable>
+            );
+          })}
+        </View>
+      </AdminModal>
     </ScrollView>
   );
 };

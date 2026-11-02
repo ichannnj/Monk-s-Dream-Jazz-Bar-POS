@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal } from 'react-native';
-import { X, Trash2, DollarSign } from 'lucide-react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Trash2, DollarSign } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type InventoryItemAdmin } from '../../../data/admin.api';
+import { AdminModal } from '../../components/AdminModal';
+import { AdminNumberInput } from '../../components/AdminNumberInput';
 
 interface WasteLoggerModalProps {
   visible: boolean;
@@ -73,133 +75,113 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
     }
   };
 
+  const footer = (
+    <>
+      <Pressable
+        onPress={onClose}
+        disabled={isSubmitting}
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+      >
+        <Text className="text-base font-bold text-stone-700">Cancel</Text>
+      </Pressable>
+      <Pressable
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+      >
+        <Text className="text-base font-bold text-white">
+          {isSubmitting ? 'Logging...' : 'Confirm Waste Entry'}
+        </Text>
+      </Pressable>
+    </>
+  );
+
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View className="flex-1 items-center justify-center bg-black/60 p-6">
-        <View className="w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden flex-col">
-          {/* Header */}
-          <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-6 py-4">
-            <View className="flex-row items-center space-x-3">
-              <View className="h-10 w-10 items-center justify-center rounded-xl bg-rose-100">
-                <Trash2 size={22} color="#e11d48" />
-              </View>
-              <Text className="text-xl font-bold text-stone-900">Log Spillage & Waste</Text>
-            </View>
-            <Pressable
-              onPress={onClose}
-              className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200"
-            >
-              <X size={22} color="#57534e" />
-            </Pressable>
-          </View>
-
-          {/* Form */}
-          <View className="p-6 space-y-4">
-            {/* Item Selector (Zero horizontal scroll) */}
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-1.5">Select Item</Text>
-              <ScrollView className="max-h-44" showsVerticalScrollIndicator={true}>
-                <View className="flex-row flex-wrap gap-2">
-                  {inventory.map((inv) => {
-                    const isSel = selectedItemId === inv.id;
-                    return (
-                      <Pressable
-                        key={inv.id}
-                        onPress={() => setSelectedItemId(inv.id)}
-                        className={`min-h-[48px] px-4 items-center justify-center rounded-xl border ${
-                          isSel
-                            ? 'bg-[#800020] border-[#800020]'
-                            : 'bg-white border-stone-300 active:bg-stone-100'
-                        }`}
-                      >
-                        <Text
-                          className={`text-base font-semibold ${
-                            isSel ? 'text-white' : 'text-stone-700'
-                          }`}
-                        >
-                          {inv.name} ({Number(inv.current_stock || 0).toFixed(1)} {inv.unit})
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-            </View>
-
-            {/* Quantity */}
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-1">
-                Quantity Lost ({selectedItem?.unit || 'unit'})
-              </Text>
-              <TextInput
-                value={quantity}
-                onChangeText={setQuantity}
-                keyboardType="numeric"
-                placeholder="e.g. 1.5"
-                className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
-              />
-            </View>
-
-            {/* Waste Reason */}
-            <View>
-              <Text className="text-base font-semibold text-stone-800 mb-2">Loss Reason</Text>
-              <View className="space-y-2">
-                {WASTE_REASONS.map((r) => {
-                  const isSel = reason === r.key;
-                  return (
-                    <Pressable
-                      key={r.key}
-                      onPress={() => setReason(r.key)}
-                      className={`min-h-[48px] px-4 flex-row items-center justify-between rounded-xl border ${
-                        isSel
-                          ? 'bg-rose-50 border-rose-300'
-                          : 'bg-white border-stone-200 active:bg-stone-100'
-                      }`}
+    <AdminModal
+      visible={visible}
+      onClose={onClose}
+      title="Log Spillage & Waste"
+      subtitle="Record spoiled, spilled, or tasted stock against operational overheads"
+      icon={<Trash2 size={22} color="#e11d48" />}
+      size="md"
+      footer={footer}
+    >
+      <View className="space-y-4">
+        {/* Item Selector */}
+        <View>
+          <Text className="text-base font-semibold text-stone-800 mb-2">Select Item</Text>
+          <ScrollView className="max-h-44" showsVerticalScrollIndicator={true}>
+            <View className="flex-row flex-wrap gap-2">
+              {inventory.map((inv) => {
+                const isSel = selectedItemId === inv.id;
+                return (
+                  <Pressable
+                    key={inv.id}
+                    onPress={() => setSelectedItemId(inv.id)}
+                    className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
+                      isSel
+                        ? 'bg-[#800020] border-[#800020]'
+                        : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
+                    }`}
+                  >
+                    <Text
+                      className={`text-base font-semibold ${isSel ? 'text-white' : 'text-stone-700'}`}
                     >
-                      <Text
-                        className={`text-base font-medium ${
-                          isSel ? 'text-rose-900 font-bold' : 'text-stone-700'
-                        }`}
-                      >
-                        {r.label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
+                      {inv.name} ({Number(inv.current_stock || 0).toFixed(1)} {inv.unit})
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
+          </ScrollView>
+        </View>
 
-            {/* Financial Loss Preview */}
-            <View className="flex-row items-center justify-between rounded-xl bg-stone-100 p-4 border border-stone-200">
-              <View className="flex-row items-center space-x-2">
-                <DollarSign size={20} color="#e11d48" />
-                <Text className="text-base font-medium text-stone-700">Financial Loss:</Text>
-              </View>
-              <Text className="text-lg font-bold text-rose-700">₱{costLost.toFixed(2)}</Text>
-            </View>
-          </View>
+        {/* Quantity */}
+        <AdminNumberInput
+          label={`Quantity Lost (${selectedItem?.unit || 'unit'})`}
+          mode="decimal"
+          value={quantity}
+          onChangeText={setQuantity}
+          placeholder="e.g. 1.5"
+          suffix={selectedItem?.unit}
+        />
 
-          {/* Footer */}
-          <View className="flex-row items-center justify-end space-x-3 border-t border-stone-200 bg-stone-50 px-6 py-4">
-            <Pressable
-              onPress={onClose}
-              disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
-            >
-              <Text className="text-base font-bold text-stone-700">Cancel</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleSubmit}
-              disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
-            >
-              <Text className="text-base font-bold text-white">
-                {isSubmitting ? 'Logging...' : 'Confirm Waste Entry'}
-              </Text>
-            </Pressable>
+        {/* Waste Reason */}
+        <View>
+          <Text className="text-base font-semibold text-stone-800 mb-2">Loss Reason</Text>
+          <View className="space-y-2">
+            {WASTE_REASONS.map((r) => {
+              const isSel = reason === r.key;
+              return (
+                <Pressable
+                  key={r.key}
+                  onPress={() => setReason(r.key)}
+                  className={`min-h-[48px] px-4 flex-row items-center justify-between rounded-xl border transition-all ${
+                    isSel
+                      ? 'bg-rose-50 border-rose-300'
+                      : 'bg-white border-stone-200 active:bg-stone-100 hover:bg-stone-50'
+                  }`}
+                >
+                  <Text
+                    className={`text-base font-medium ${isSel ? 'text-rose-900 font-bold' : 'text-stone-700'}`}
+                  >
+                    {r.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
+
+        {/* Financial Loss Preview */}
+        <View className="flex-row items-center justify-between rounded-xl bg-stone-100 p-4 border border-stone-200">
+          <View className="flex-row items-center space-x-2">
+            <DollarSign size={20} color="#e11d48" />
+            <Text className="text-base font-medium text-stone-700 ml-1.5">Financial Loss:</Text>
+          </View>
+          <Text className="text-lg font-bold text-rose-700">₱{costLost.toFixed(2)}</Text>
+        </View>
       </View>
-    </Modal>
+    </AdminModal>
   );
 };

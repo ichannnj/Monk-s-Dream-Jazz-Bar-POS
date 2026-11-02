@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Modal } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
   LayoutGrid,
   Plus,
@@ -13,6 +13,7 @@ import {
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type TableAdmin } from '../../data/admin.api';
+import { AdminModal, AdminInput, AdminNumberInput } from '../components';
 
 export const AdminTableLayoutView: React.FC = () => {
   const [tables, setTables] = useState<TableAdmin[]>([]);
@@ -248,115 +249,93 @@ export const AdminTableLayoutView: React.FC = () => {
       </View>
 
       {/* ADD / EDIT MODAL */}
-      <Modal
+      {/* ADD / EDIT MODAL */}
+      <AdminModal
         visible={isModalOpen}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setIsModalOpen(false)}
+        onClose={() => setIsModalOpen(false)}
+        title={editingTable ? 'Edit Table' : 'Add Physical Table'}
+        subtitle="Manage table numbers, room zones, and seating capacity"
+        icon={<LayoutGrid size={22} color="#800020" />}
+        size="md"
+        footer={
+          <>
+            <Pressable
+              onPress={() => setIsModalOpen(false)}
+              disabled={isSubmitting}
+              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+            >
+              <Text className="text-base font-bold text-stone-700">Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+            >
+              <Text className="text-base font-bold text-white">
+                {isSubmitting ? 'Saving...' : editingTable ? 'Save Changes' : 'Create Table'}
+              </Text>
+            </Pressable>
+          </>
+        }
       >
-        <View className="flex-1 items-center justify-center bg-black/60 p-6">
-          <View className="w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden flex-col">
-            <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-6 py-4">
-              <View className="flex-row items-center space-x-2">
-                <LayoutGrid size={22} color="#800020" />
-                <Text className="text-xl font-bold text-stone-900">
-                  {editingTable ? 'Edit Table' : 'Add Physical Table'}
-                </Text>
-              </View>
+        <View className="space-y-4">
+          <AdminInput
+            label="Table Number / Identifier"
+            required
+            value={tableNumber}
+            onChangeText={setTableNumber}
+            placeholder="e.g. T-07, BAR-2, STAGE-1"
+            className="font-bold uppercase"
+          />
+
+          <View>
+            <Text className="text-base font-semibold text-stone-800 mb-2">Venue Zone</Text>
+            <View className="flex-row space-x-3">
               <Pressable
-                onPress={() => setIsModalOpen(false)}
-                className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200"
+                onPress={() => setZone('CAFE_AREA')}
+                className={`min-h-[48px] flex-1 items-center justify-center rounded-xl border transition-all ${
+                  zone === 'CAFE_AREA'
+                    ? 'bg-[#800020] border-[#800020]'
+                    : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
+                }`}
               >
-                <X size={22} color="#57534e" />
-              </Pressable>
-            </View>
-
-            <View className="p-6 space-y-4">
-              <View>
-                <Text className="text-base font-semibold text-stone-800 mb-1">
-                  Table Number / Identifier
+                <Text
+                  className={`text-base font-bold ${
+                    zone === 'CAFE_AREA' ? 'text-white' : 'text-stone-700'
+                  }`}
+                >
+                  ☕ Cafe Area
                 </Text>
-                <TextInput
-                  value={tableNumber}
-                  onChangeText={setTableNumber}
-                  placeholder="e.g. T-07, BAR-2, STAGE-1"
-                  className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
-                />
-              </View>
-
-              <View>
-                <Text className="text-base font-semibold text-stone-800 mb-1">Venue Zone</Text>
-                <View className="flex-row space-x-3">
-                  <Pressable
-                    onPress={() => setZone('CAFE_AREA')}
-                    className={`min-h-[48px] flex-1 items-center justify-center rounded-xl border ${
-                      zone === 'CAFE_AREA'
-                        ? 'bg-[#800020] border-[#800020]'
-                        : 'bg-white border-stone-300'
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-bold ${
-                        zone === 'CAFE_AREA' ? 'text-white' : 'text-stone-700'
-                      }`}
-                    >
-                      ☕ Cafe Area
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => setZone('BAR_AREA')}
-                    className={`min-h-[48px] flex-1 items-center justify-center rounded-xl border ${
-                      zone === 'BAR_AREA'
-                        ? 'bg-[#800020] border-[#800020]'
-                        : 'bg-white border-stone-300'
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-bold ${
-                        zone === 'BAR_AREA' ? 'text-white' : 'text-stone-700'
-                      }`}
-                    >
-                      🍸 Bar / Stage
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-
-              <View>
-                <Text className="text-base font-semibold text-stone-800 mb-1">
-                  Seating Capacity (Guests)
-                </Text>
-                <TextInput
-                  value={capacity}
-                  onChangeText={setCapacity}
-                  keyboardType="numeric"
-                  placeholder="4"
-                  className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
-                />
-              </View>
-            </View>
-
-            <View className="flex-row items-center justify-end space-x-3 border-t border-stone-200 bg-stone-50 px-6 py-4">
-              <Pressable
-                onPress={() => setIsModalOpen(false)}
-                disabled={isSubmitting}
-                className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
-              >
-                <Text className="text-base font-bold text-stone-700">Cancel</Text>
               </Pressable>
               <Pressable
-                onPress={handleSubmit}
-                disabled={isSubmitting}
-                className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+                onPress={() => setZone('BAR_AREA')}
+                className={`min-h-[48px] flex-1 items-center justify-center rounded-xl border transition-all ${
+                  zone === 'BAR_AREA'
+                    ? 'bg-[#800020] border-[#800020]'
+                    : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
+                }`}
               >
-                <Text className="text-base font-bold text-white">
-                  {isSubmitting ? 'Saving...' : editingTable ? 'Save Changes' : 'Create Table'}
+                <Text
+                  className={`text-base font-bold ${
+                    zone === 'BAR_AREA' ? 'text-white' : 'text-stone-700'
+                  }`}
+                >
+                  🍸 Bar / Stage
                 </Text>
               </Pressable>
             </View>
           </View>
+
+          <AdminNumberInput
+            label="Seating Capacity (Guests)"
+            mode="integer"
+            value={capacity}
+            onChangeText={setCapacity}
+            placeholder="4"
+            suffix="seats"
+          />
         </View>
-      </Modal>
+      </AdminModal>
     </ScrollView>
   );
 };

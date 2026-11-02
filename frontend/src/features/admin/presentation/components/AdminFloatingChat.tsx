@@ -35,7 +35,15 @@ export const AdminFloatingChat: React.FC<AdminFloatingChatProps> = ({ unreadCoun
         onRequestClose={() => setIsOpen(false)}
       >
         <View className="flex-1 justify-end bg-black/40">
-          <View className="h-[85%] w-full rounded-t-3xl bg-white shadow-2xl overflow-hidden md:ml-auto md:h-full md:w-[480px] md:rounded-l-3xl md:rounded-t-none">
+          {/* Backdrop Click Dismiss */}
+          <Pressable
+            className="absolute inset-0"
+            onPress={() => setIsOpen(false)}
+            accessibilityRole="button"
+            accessibilityLabel="Close team chat drawer"
+          />
+
+          <View className="h-[85%] w-full rounded-t-3xl bg-white shadow-2xl overflow-hidden md:ml-auto md:h-full md:w-[480px] md:rounded-l-3xl md:rounded-t-none z-10">
             {/* Drawer Header */}
             <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-6 py-4">
               <View className="flex-row items-center space-x-2">

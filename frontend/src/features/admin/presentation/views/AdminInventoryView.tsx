@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, ScrollView, TextInput, Modal } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
   Package,
   Plus,
@@ -12,7 +12,6 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   RotateCcw,
-  X,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import {
@@ -25,6 +24,7 @@ import { InventoryItemModal } from './inventory/InventoryItemModal';
 import { SupplierModal } from './inventory/SupplierModal';
 import { StocktakeAuditModal } from './inventory/StocktakeAuditModal';
 import { WasteLoggerModal } from './inventory/WasteLoggerModal';
+import { AdminModal, AdminInput, AdminNumberInput } from '../components';
 
 type InventoryTab = 'stock' | 'suppliers' | 'ledger' | 'stocktake' | 'waste';
 
@@ -267,15 +267,12 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         <View className="space-y-4">
           {/* Search & Category Filter Bar */}
           <View className="flex-col gap-3">
-            <View className="flex-row items-center rounded-xl border border-stone-300 bg-white px-3.5">
-              <Search size={20} color="#78716c" />
-              <TextInput
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                placeholder="Search inventory items, SKUs, or vendors..."
-                className="min-h-[48px] flex-1 px-3 text-base text-stone-900"
-              />
-            </View>
+            <AdminInput
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search inventory items, SKUs, or vendors..."
+              leftElement={<Search size={20} color="#78716c" />}
+            />
 
             {/* Responsive Wrapped Category Pills (Zero horizontal scroll) */}
             <View className="flex-row flex-wrap gap-2">
@@ -632,93 +629,60 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
       )}
 
       {/* RESTOCK INTAKE MODAL (With Live MAC) */}
-      <Modal
+      <AdminModal
         visible={!!selectedRestockItem}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setSelectedRestockItem(null)}
+        onClose={() => setSelectedRestockItem(null)}
+        title={`Restock Intake: ${selectedRestockItem?.name || ''}`}
+        subtitle={`Current Stock: ${selectedRestockItem?.current_stock || 0} ${selectedRestockItem?.unit || ''} • Current MAC: ₱${Number(selectedRestockItem?.unit_cost || 0).toFixed(2)}`}
+        icon={<Package size={22} color="#800020" />}
+        size="md"
+        footer={
+          <>
+            <Pressable
+              onPress={() => setSelectedRestockItem(null)}
+              disabled={isSubmittingRestock}
+              className="min-h-[48px] rounded-xl bg-stone-100 px-5 items-center justify-center active:bg-stone-200"
+            >
+              <Text className="text-base font-bold text-stone-700">Cancel</Text>
+            </Pressable>
+            <Pressable
+              onPress={handleExecuteRestock}
+              disabled={isSubmittingRestock}
+              className="min-h-[48px] rounded-xl bg-[#800020] px-6 items-center justify-center active:opacity-90"
+            >
+              <Text className="text-base font-bold text-white">
+                {isSubmittingRestock ? 'Intaking...' : 'Confirm Delivery'}
+              </Text>
+            </Pressable>
+          </>
+        }
       >
-        <View className="flex-1 items-center justify-center bg-black/60 p-6">
-          <View className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
-            <View className="flex-row items-center justify-between border-b border-stone-100 pb-3 mb-4">
-              <View className="flex-1 pr-3">
-                <Text className="text-2xl font-bold text-stone-900">
-                  Restock Intake: {selectedRestockItem?.name}
-                </Text>
-                <Text className="mt-1 text-base text-stone-500">
-                  Current Stock: {selectedRestockItem?.current_stock} {selectedRestockItem?.unit} •
-                  Current MAC: ₱{Number(selectedRestockItem?.unit_cost || 0).toFixed(2)}
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => setSelectedRestockItem(null)}
-                className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-100"
-              >
-                <X size={22} color="#57534e" />
-              </Pressable>
-            </View>
+        <View className="space-y-4">
+          <AdminNumberInput
+            label={`Received Quantity (${selectedRestockItem?.unit || 'unit'})`}
+            mode="decimal"
+            value={restockQty}
+            onChangeText={setRestockQty}
+            placeholder="e.g. 10"
+            suffix={selectedRestockItem?.unit}
+          />
 
-            <View className="space-y-4">
-              <View>
-                <Text className="text-base font-semibold text-stone-700 mb-1">
-                  Received Quantity ({selectedRestockItem?.unit}):
-                </Text>
-                <TextInput
-                  value={restockQty}
-                  onChangeText={setRestockQty}
-                  keyboardType="numeric"
-                  placeholder="e.g. 10"
-                  className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900"
-                />
-              </View>
+          <AdminNumberInput
+            label={`Invoice Unit Cost (₱ / ${selectedRestockItem?.unit || 'unit'})`}
+            mode="currency"
+            value={restockCost}
+            onChangeText={setRestockCost}
+            placeholder="e.g. 25.50"
+          />
 
-              <View>
-                <Text className="text-base font-semibold text-stone-700 mb-1">
-                  Invoice Unit Cost (₱ / {selectedRestockItem?.unit}):
-                </Text>
-                <TextInput
-                  value={restockCost}
-                  onChangeText={setRestockCost}
-                  keyboardType="numeric"
-                  placeholder="e.g. 25.50"
-                  className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900 font-bold"
-                />
-              </View>
-
-              <View>
-                <Text className="text-base font-semibold text-stone-700 mb-1">
-                  Invoice / PO Reference #:
-                </Text>
-                <TextInput
-                  value={restockInvoice}
-                  onChangeText={setRestockInvoice}
-                  placeholder="e.g. INV-99218"
-                  className="min-h-[48px] rounded-xl border border-stone-300 px-4 text-base text-stone-900"
-                />
-              </View>
-            </View>
-
-            <View className="mt-6 flex-row justify-end space-x-3">
-              <Pressable
-                onPress={() => setSelectedRestockItem(null)}
-                disabled={isSubmittingRestock}
-                className="min-h-[48px] rounded-xl bg-stone-100 px-5 items-center justify-center active:bg-stone-200"
-              >
-                <Text className="text-base font-bold text-stone-700">Cancel</Text>
-              </Pressable>
-              <Pressable
-                onPress={handleExecuteRestock}
-                disabled={isSubmittingRestock}
-                className="min-h-[48px] rounded-xl bg-[#800020] px-6 items-center justify-center active:opacity-90"
-              >
-                <Text className="text-base font-bold text-white">
-                  {isSubmittingRestock ? 'Intaking...' : 'Confirm Delivery'}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
+          <AdminInput
+            label="Invoice / PO Reference #:"
+            value={restockInvoice}
+            onChangeText={setRestockInvoice}
+            placeholder="e.g. INV-99218"
+          />
         </View>
-      </Modal>
+      </AdminModal>
 
       {/* MODALS */}
       <InventoryItemModal
