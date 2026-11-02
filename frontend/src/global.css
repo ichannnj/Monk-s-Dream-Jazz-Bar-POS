@@ -63,5 +63,24 @@ textarea:-webkit-autofill:focus {
   transition: background-color 5000s ease-in-out 0s;
 }
 
+/* Print Media Rules & Layout Helpers */
+.print-only {
+  display: none !important;
+}
 
-
+@media print {
+  .print-only {
+    display: block !important;
+  }
+  .print-hidden {
+    display: none !important;
+  }
+  .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

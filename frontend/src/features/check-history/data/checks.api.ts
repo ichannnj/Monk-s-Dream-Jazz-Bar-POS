@@ -29,16 +29,13 @@ export const checksApi = {
           created_at,
           tabs:tab_id (
             id,
-            guest_name,
+            customer_name,
             table_id,
             order_channel,
             operating_mode,
-            total_amount,
-            discount_amount,
-            corkage_fee,
-            notes,
+            corkage_amount,
             tables:table_id (table_number),
-            staff:staff_id (name)
+            opened_by:opened_by_id (name)
           ),
           users:staff_id (name)
         `
@@ -137,11 +134,11 @@ export const checksApi = {
           tableOrRef = channelRaw.includes('panda') ? 'Foodpanda Delivery' : 'GrabFood Delivery';
         }
 
-        const guestName = tab.guest_name || 'Guest Tab';
-        const cashierName = p.users?.name || tab.staff?.name || 'Cashier';
+        const guestName = tab.customer_name || tab.guest_name || 'Guest Tab';
+        const cashierName = p.users?.name || tab.opened_by?.name || 'Cashier';
         const total = Number(p.amount) || 0;
-        const discountAmount = Number(p.discount_amount || tab.discount_amount || 0);
-        const corkageFee = Number(p.corkage_amount || tab.corkage_fee || 0);
+        const discountAmount = Number(p.discount_amount || 0);
+        const corkageFee = Number(p.corkage_amount || 0);
 
         // PH Fiscal Standard: 10% Service Charge on Dine-In, 12% VAT inclusive
         const netBase = Math.max(0, total - corkageFee);

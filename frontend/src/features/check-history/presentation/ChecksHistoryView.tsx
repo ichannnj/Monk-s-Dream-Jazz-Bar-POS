@@ -32,6 +32,7 @@ import { toast } from '@/features/shared/toast/useToastStore';
 import { checksApi } from '../data/checks.api';
 import type { SettledCheckItem, CheckOrderType } from '../domain/check.types';
 import { exportChecksRegisterToExcel } from '@/features/admin/utils/readingExcelExport';
+import { printHtmlElement } from '@/features/shared';
 
 import { Sparkles } from 'lucide-react-native';
 
@@ -124,49 +125,18 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
   };
 
   const handleBrowserPrintReceipt = () => {
-    if (Platform.OS !== 'web' || typeof window === 'undefined') {
+    if (Platform.OS !== 'web' || typeof window !== 'undefined') {
+      const checkTitle = selectedCheck
+        ? `Check ${selectedCheck.checkNumber} (${selectedCheck.guestName})`
+        : 'Official Customer Receipt';
+      printHtmlElement('monks-check-receipt-printable', {
+        title: `${checkTitle} - Monk's Dream POS`,
+        isThermal: true,
+        pageSize: '80mm',
+      });
+    } else {
       toast.info('Browser receipt printing is supported on web desktop view.');
-      return;
     }
-
-    const printStyleId = 'monks-check-receipt-print-styles';
-    let styleEl = document.getElementById(printStyleId);
-    if (!styleEl) {
-      styleEl = document.createElement('style');
-      styleEl.id = printStyleId;
-      styleEl.innerHTML = `
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          #monks-check-receipt-printable, #monks-check-receipt-printable * {
-            visibility: visible !important;
-          }
-          #monks-check-receipt-printable {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 80mm !important;
-            max-width: 80mm !important;
-            margin: 0 auto !important;
-            padding: 16px !important;
-            background: #ffffff !important;
-            color: #000000 !important;
-            font-family: monospace !important;
-            font-size: 13px !important;
-            line-height: 1.4 !important;
-            border: none !important;
-            box-shadow: none !important;
-          }
-          @page {
-            size: 80mm auto;
-            margin: 4mm;
-          }
-        }
-      `;
-      document.head.appendChild(styleEl);
-    }
-    window.print();
   };
 
   const handleExportChecksExcel = () => {

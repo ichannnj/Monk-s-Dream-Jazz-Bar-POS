@@ -32,6 +32,7 @@ import { PaymentTenderMixBar } from './analytics/PaymentTenderMixBar';
 import { adminApi, type SalesAnalyticsOverview } from '../../data/admin.api';
 import { exportFinancialOverviewToExcel } from '../../utils/readingExcelExport';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { printHtmlElement } from '@/features/shared';
 
 interface AdminTransactionsViewProps {
   analytics: SalesAnalyticsOverview | null;
@@ -366,48 +367,10 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
 
   const handlePrintReport = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const printStyleId = 'monks-pos-sales-report-print-styles';
-      let styleEl = document.getElementById(printStyleId);
-      if (!styleEl) {
-        styleEl = document.createElement('style');
-        styleEl.id = printStyleId;
-        document.head.appendChild(styleEl);
-      }
-      styleEl.innerHTML = `
-        @media print {
-          body * {
-            visibility: hidden !important;
-          }
-          #monks-sales-report-printable, #monks-sales-report-printable * {
-            visibility: visible !important;
-          }
-          #monks-sales-report-printable {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 24px !important;
-            background: #ffffff !important;
-            color: #000000 !important;
-            border: none !important;
-            box-shadow: none !important;
-          }
-          .print-hidden {
-            display: none !important;
-          }
-          .print-avoid-break {
-            page-break-inside: avoid !important;
-            break-inside: avoid !important;
-          }
-          @page {
-            size: A4 portrait;
-            margin: 12mm;
-          }
-        }
-      `;
-      window.print();
+      printHtmlElement('monks-sales-report-printable', {
+        title: `Sales & Transactions Report (${timeframeDisplayLabel}) - Monk's Dream POS`,
+        pageSize: 'A4',
+      });
     } else {
       toast.info('Printing is supported on desktop web browser.');
     }
@@ -809,18 +772,37 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
               </View>
             </View>
 
-            {/* Print-Only Executive Header */}
-            <View className="mb-6 pb-4 border-b-2 border-stone-900 hidden print:block">
-              <Text className="text-2xl font-black text-stone-900 tracking-tight">
-                MONK'S DREAM JAZZ BAR &amp; CAFE
-              </Text>
-              <Text className="text-lg font-bold text-stone-700 mt-1">
-                Executive Sales, Fulfilment &amp; Tender Audit Report
-              </Text>
-              <Text className="text-base text-stone-500 mt-1">
-                Scope: {selectedStation === 'ALL' ? 'All Operational Stations' : selectedStation} ·
-                Timeframe: {timeframeDisplayLabel} · Generated on {new Date().toLocaleString()}
-              </Text>
+            {/* Print-Only Executive 1-Page Summary Sheet */}
+            <View className="mb-4 pb-2 border-b-2 border-stone-900 print-only">
+              <View className="flex-row justify-between items-end">
+                <View>
+                  <Text className="text-xs font-bold tracking-widest text-[#800020] uppercase">
+                    Monk's Dream Jazz Bar &amp; Bistro
+                  </Text>
+                  <Text className="text-xl font-black text-stone-900 mt-0.5">
+                    Executive Financial &amp; Sales Summary
+                  </Text>
+                  <Text className="text-xs font-medium text-stone-500 mt-0.5">
+                    Scope:{' '}
+                    {selectedStation === 'ALL' ? 'All Operational Stations' : selectedStation} ·
+                    Timeframe: {timeframeDisplayLabel}
+                  </Text>
+                </View>
+                <View className="items-end">
+                  <Text className="text-xs text-stone-500">
+                    Generated: {new Date().toLocaleDateString()}{' '}
+                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </Text>
+                  <Text className="text-xs font-bold text-stone-700">
+                    Filter:{' '}
+                    {selectedMode === 'ALL'
+                      ? 'Consolidated'
+                      : selectedMode === 'CAFE'
+                        ? 'Cafe Mode'
+                        : 'Event Mode'}
+                  </Text>
+                </View>
+              </View>
             </View>
 
             {/* Dedicated Operating Mode Revenue Breakdown Card */}
@@ -1067,8 +1049,8 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
               </View>
             </View>
 
-            {/* Visual Analytics Suite: Hourly Pacing & Payment Tender Mix */}
-            <View className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 print-avoid-break">
+            {/* Visual Analytics Suite: Hourly Pacing & Payment Tender Mix (Screen only, omitted from 1-page executive print) */}
+            <View className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6 print-hidden">
               <HourlySalesVelocityChart
                 data={effectiveAnalytics?.hourlySales || []}
                 peakHourLabel={effectiveAnalytics?.peakHourLabel}
@@ -1110,8 +1092,8 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
                 </View>
               </View>
 
-              {/* Channel List */}
-              <View className="space-y-4">
+              {/* Channel List - 2 columns in print, 1 column on mobile/tablet */}
+              <View className="report-grid-2col space-y-4 md:space-y-0">
                 {channelEntries.map(([channel, data]) => {
                   const meta = getChannelMeta(channel);
                   const salesValue = Number(data.sales || 0);
@@ -1121,46 +1103,50 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
                   return (
                     <View
                       key={channel}
-                      className="p-4 rounded-xl border border-stone-100 bg-[#fbfaf8] hover:border-stone-200 transition-colors"
+                      className="p-3 sm:p-4 rounded-xl border border-stone-100 bg-[#fbfaf8] hover:border-stone-200 transition-colors justify-between"
                     >
-                      <View className="flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <View className="flex-col sm:flex-row sm:items-center justify-between gap-2">
                         {/* Left: Icon, Name, and Meta */}
-                        <View className="flex-row items-center gap-3.5">
+                        <View className="flex-row items-center gap-2.5">
                           <View
-                            className={`w-11 h-11 rounded-xl items-center justify-center border ${meta.badgeBg} ${meta.badgeBorder}`}
+                            className={`w-9 h-9 sm:w-11 sm:h-11 rounded-xl items-center justify-center border ${meta.badgeBg} ${meta.badgeBorder}`}
                           >
                             {meta.icon}
                           </View>
                           <View>
-                            <View className="flex-row items-center gap-2">
-                              <Text className="text-lg font-bold text-stone-900">{meta.label}</Text>
-                              <View className="bg-stone-200/80 px-2 py-0.5 rounded-md">
-                                <Text className="text-base font-semibold text-stone-700">
+                            <View className="flex-row items-center gap-1.5">
+                              <Text className="text-base sm:text-lg font-bold text-stone-900">
+                                {meta.label}
+                              </Text>
+                              <View className="bg-stone-200/80 px-1.5 py-0.5 rounded-md">
+                                <Text className="text-xs sm:text-base font-semibold text-stone-700">
                                   {data.count} {data.count === 1 ? 'order' : 'orders'}
                                 </Text>
                               </View>
                             </View>
-                            <Text className="text-base text-stone-500">{meta.subtext}</Text>
+                            <Text className="text-xs sm:text-base text-stone-500">
+                              {meta.subtext}
+                            </Text>
                           </View>
                         </View>
 
                         {/* Right: Sales and Percentage */}
                         <View className="flex-row items-baseline sm:flex-col sm:items-end justify-between sm:justify-center">
-                          <Text className="text-xl font-black text-stone-900 tracking-tight">
+                          <Text className="text-base sm:text-xl font-black text-stone-900 tracking-tight">
                             ₱
                             {salesValue.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}
                           </Text>
-                          <Text className="text-base font-bold text-stone-500">
-                            {percentOfTotal}% of venue sales
+                          <Text className="text-xs sm:text-base font-bold text-stone-500">
+                            {percentOfTotal}% of sales
                           </Text>
                         </View>
                       </View>
 
                       {/* Progress Bar Container */}
-                      <View className="mt-3.5 w-full bg-stone-200/70 h-2.5 rounded-full overflow-hidden">
+                      <View className="mt-2.5 w-full bg-stone-200/70 h-2 rounded-full overflow-hidden">
                         <View
                           className={`h-full rounded-full ${meta.progressBg}`}
                           style={{ width: `${Math.min(100, Math.max(percentOfTotal, 0))}%` }}
@@ -1223,8 +1209,8 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
             </View>
 
             {/* Print Sign-off Trailer */}
-            <View className="mt-8 pt-6 border-t-2 border-stone-300 hidden print:block print-avoid-break">
-              <View className="grid grid-cols-2 gap-8">
+            <View className="mt-8 pt-6 border-t-2 border-stone-300 print-only print-avoid-break">
+              <View className="report-grid-2col grid grid-cols-2 gap-8">
                 <View className="border-t border-stone-400 pt-2">
                   <Text className="text-sm font-bold">Manager On Duty Signature</Text>
                   <Text className="text-xs text-stone-500 mt-1">
