@@ -831,6 +831,14 @@ export const adminApi = {
     const { error } = await supabase.from('tables').delete().eq('id', id);
     if (error) throw error;
   },
+
+  async releaseTable(id: string): Promise<{ success: boolean; closedTabsCount: number }> {
+    const { data, error } = await (supabase.rpc as any)('admin_force_release_table', {
+      p_table_id: id,
+    });
+    if (error) throw error;
+    return (data as any) || { success: true, closedTabsCount: 0 };
+  },
 };
 
 export interface TableAdmin {

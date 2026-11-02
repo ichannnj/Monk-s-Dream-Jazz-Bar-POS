@@ -206,8 +206,29 @@ export const adminTelemetryService = {
 
       const allTables = tablesRes.data || [];
       const openTabs = openTabsRes.data || [];
+      const openTableIds = new Set(
+        openTabs.filter((tb) => tb.table_id).map((tb) => tb.table_id as string)
+      );
+
+      // Self-heal any desynchronized tables where is_occupied is true but has 0 open tabs
+      const desyncedTables = allTables.filter((t) => t.is_occupied && !openTableIds.has(t.id));
+      if (desyncedTables.length > 0) {
+        Promise.resolve(
+          supabase
+            .from('tables')
+            .update({ is_occupied: false, updated_at: new Date().toISOString() })
+            .in(
+              'id',
+              desyncedTables.map((t) => t.id)
+            )
+        ).catch((err: unknown) => {
+          console.warn('[adminTelemetry] Auto-heal table occupancy error:', err);
+        });
+      }
+
       const totalTables = allTables.length;
-      const occupiedTables = allTables.filter((t) => t.is_occupied).length;
+      // Authoritative occupancy: strictly requires an active OPEN tab for the table
+      const occupiedTables = allTables.filter((t) => openTableIds.has(t.id)).length;
       const activeOpenTabs = openTabs.length;
       const occupancyPercent =
         totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;

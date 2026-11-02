@@ -3,6 +3,8 @@ import { tablesApi } from '../../table-service/data/tables.api';
 import { deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
+import { supabase } from '../../shared/infrastructure/supabase';
+import { resolveTableUuid } from '../../floor/data/resolver';
 
 export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) => ({
   settleTab: (
@@ -114,18 +116,46 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
     else if (paymentMethod === 'digital_wallet') dbMethod = 'DIGITAL_WALLET';
     else if (paymentMethod === 'comp') dbMethod = 'COMP';
 
-    tablesApi
-      .settleTabAndRecordPayment({
-        tabId: targetTabRef?.id || '00000000-0000-0000-0000-000000000000',
-        paymentMethod: dbMethod,
-        amount: grandTotalPaid,
-        discountAmount,
-        staffId: effectiveStaffId,
-        notes: `Settled by ${effectiveCashierName}`,
-      })
-      .catch((err) => {
+    (async () => {
+      try {
+        let tabUuid = targetTabRef?.id;
+        const isUuid =
+          tabUuid &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tabUuid);
+
+        if (!isUuid) {
+          const validTableId = await resolveTableUuid(tableId);
+          if (validTableId) {
+            const { data: openTabs } = await supabase
+              .from('tabs')
+              .select('id')
+              .eq('table_id', validTableId)
+              .eq('status', 'OPEN')
+              .order('created_at', { ascending: true })
+              .limit(1);
+            if (openTabs && openTabs.length > 0) {
+              tabUuid = openTabs[0].id;
+            }
+          }
+        }
+
+        if (
+          tabUuid &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tabUuid)
+        ) {
+          await tablesApi.settleTabAndRecordPayment({
+            tabId: tabUuid,
+            paymentMethod: dbMethod,
+            amount: grandTotalPaid,
+            discountAmount,
+            staffId: effectiveStaffId,
+            notes: `Settled by ${effectiveCashierName}`,
+          });
+        }
+      } catch (err) {
         console.warn('Background settleTab offline notice:', err);
-      });
+      }
+    })();
   },
 
   settleTableGroup: (
@@ -137,10 +167,13 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
     const effectiveCashierName =
       cashierName || useAuthStore.getState().currentUser?.displayName || 'Coltrane (Cashier)';
     const effectiveStaffId = staffId || useAuthStore.getState().currentUser?.id;
+    let tabsToSettle: CustomerTab[] = [];
+
     set((state) => {
       const table = state.tables.find((t) => t.id === tableId);
       if (!table) return state;
 
+      tabsToSettle = [...(table.tabs || [])];
       const subtotal = table.totalAmount || 0;
       const tax = subtotal * 0.1;
       const grandTotal = subtotal + tax;
@@ -213,5 +246,72 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
         drawerEntries: nextDrawer,
       };
     });
+
+    // Background asynchronous Supabase entire table settlement
+    let dbMethod: 'CASH' | 'CARD' | 'DIGITAL_WALLET' | 'COMP' = 'CASH';
+    if (paymentMethod === 'card') dbMethod = 'CARD';
+    else if (paymentMethod === 'digital_wallet') dbMethod = 'DIGITAL_WALLET';
+    else if (paymentMethod === 'comp') dbMethod = 'COMP';
+
+    (async () => {
+      try {
+        const validTableId = await resolveTableUuid(tableId);
+
+        // Settle each known tab on this table
+        for (const tab of tabsToSettle) {
+          const isUuid =
+            tab.id &&
+            /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tab.id);
+          const tabAmt = (tab.totalAmount || 0) * 1.1;
+          if (isUuid) {
+            await tablesApi
+              .settleTabAndRecordPayment({
+                tabId: tab.id,
+                paymentMethod: dbMethod,
+                amount: tabAmt,
+                staffId: effectiveStaffId,
+                notes: `Group Settle by ${effectiveCashierName}`,
+              })
+              .catch((e) => console.warn('[settleTableGroup] tab settle warn:', e));
+          }
+        }
+
+        // If there are any remaining open tabs on this table in Supabase, close or settle them
+        if (validTableId) {
+          const { data: remainingOpenTabs } = await supabase
+            .from('tabs')
+            .select('id, customer_name')
+            .eq('table_id', validTableId)
+            .eq('status', 'OPEN');
+
+          if (remainingOpenTabs && remainingOpenTabs.length > 0) {
+            for (const rem of remainingOpenTabs) {
+              await tablesApi
+                .settleTabAndRecordPayment({
+                  tabId: rem.id,
+                  paymentMethod: dbMethod,
+                  amount: 0,
+                  staffId: effectiveStaffId,
+                  notes: `Group Settle cleanup (${rem.customer_name})`,
+                })
+                .catch(() => {
+                  supabase
+                    .from('tabs')
+                    .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
+                    .eq('id', rem.id);
+                });
+            }
+          }
+
+          // Ensure table is freed in DB
+          await supabase
+            .from('tables')
+            .update({ is_occupied: false, updated_at: new Date().toISOString() })
+            .eq('id', validTableId);
+        }
+      } catch (err) {
+        console.warn('[settleTableGroup] Background database error:', err);
+      }
+    })();
   },
 });

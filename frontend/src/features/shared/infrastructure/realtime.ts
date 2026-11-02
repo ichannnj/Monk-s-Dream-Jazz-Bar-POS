@@ -67,6 +67,9 @@ export interface GlobalRealtimeCallbacks {
   onTableTransfer?: (payload: TableTransferPayload) => void;
   onBuzzout?: (payload: any) => void;
   onCashDrawerChange?: (payload: any) => void;
+  onPaymentChange?: (payload: any) => void;
+  onInventoryChange?: (payload: any) => void;
+  onWasteLogChange?: (payload: any) => void;
 }
 
 export interface ChatRealtimeCallbacks {
@@ -273,6 +276,19 @@ export class RealtimeGateway {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'cash_drawer_transactions' },
         (payload) => callbacks.onCashDrawerChange?.(payload)
+      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, (payload) =>
+        callbacks.onPaymentChange?.(payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'inventory_items' },
+        (payload) => callbacks.onInventoryChange?.(payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'waste_logs' },
+        (payload) => callbacks.onWasteLogChange?.(payload)
       )
       .on('broadcast', { event: 'foh:buzzout' }, (event) => {
         callbacks.onBuzzout?.(event.payload);

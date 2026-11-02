@@ -99,6 +99,8 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 
 - **Single Source of Truth (SSOT):** PostgreSQL is the authoritative record. Active tickets across KDS boards and Admin Telemetry strictly require `tabs.status = 'OPEN'` and `orders.status IN ('OPEN', 'IN_PREPARATION')`.
 - **Atomic Settlement Cascade:** In PostgreSQL RPC `settle_tab_and_record_payment`, settling a customer tab atomically sets `tabs.status = 'BILLED'`, cascades `orders.status = 'COMPLETED'`, and sets un-served `order_items.status = 'SERVED'`.
+- **Authoritative Table Occupancy & Auto-Healing:** Physical tables are occupied if and only if they have an active `OPEN` tab. The database trigger `trg_sync_table_occupancy` continuously reconciles `tables.is_occupied`, the Admin Telemetry engine auto-heals desynced tables, and managers have an emergency `admin_force_release_table` action in Floor Layout View.
+- **Event-Driven Real-Time Admin Telemetry:** Admin Back-Office multiplexes `pos_global_sync` via Supabase Realtime across `tables`, `tabs`, `orders`, `order_items`, `payments`, `cash_drawer_transactions`, `inventory_items`, and `waste_logs` with a 400ms debounce to quietly reflect all floor activities live without page reloads.
 - **Station Telemetry Metrics:** When a station's active preparation queue is 0, speed strictly displays `'Idle'` instead of synthetic placeholder strings. Station ticket times are dynamically computed from elapsed timestamps (`orders.created_at`).
 
 ---

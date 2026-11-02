@@ -10,8 +10,10 @@ import {
   Coffee,
   Wine,
   CheckCircle,
+  Unlock,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { ConfirmationModal } from '@/features/shared';
 import { adminApi, type TableAdmin } from '../../data/admin.api';
 import { AdminModal, AdminInput, AdminNumberInput } from '../components';
 
@@ -22,6 +24,7 @@ export const AdminTableLayoutView: React.FC = () => {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTable, setEditingTable] = useState<TableAdmin | null>(null);
+  const [tableToRelease, setTableToRelease] = useState<TableAdmin | null>(null);
   const [tableNumber, setTableNumber] = useState('');
   const [zone, setZone] = useState<'CAFE_AREA' | 'BAR_AREA'>('CAFE_AREA');
   const [capacity, setCapacity] = useState('4');
@@ -38,6 +41,20 @@ export const AdminTableLayoutView: React.FC = () => {
       setIsLoading(false);
     }
   }, []);
+
+  const handleConfirmRelease = async () => {
+    if (!tableToRelease) return;
+    try {
+      await adminApi.releaseTable(tableToRelease.id);
+      toast.success(`Table "${tableToRelease.table_number}" released and marked Available.`, {
+        title: 'Table Released',
+      });
+      setTableToRelease(null);
+      loadTables();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to release table', { title: 'Release Error' });
+    }
+  };
 
   useEffect(() => {
     loadTables();
@@ -175,6 +192,15 @@ export const AdminTableLayoutView: React.FC = () => {
                 </View>
 
                 <View className="flex-row items-center justify-end space-x-2 mt-4 pt-3 border-t border-stone-200">
+                  {t.is_occupied && (
+                    <Pressable
+                      onPress={() => setTableToRelease(t)}
+                      className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-amber-50 border border-amber-200 active:bg-amber-100"
+                      accessibilityLabel={`Release table ${t.table_number}`}
+                    >
+                      <Unlock size={18} color="#d97706" />
+                    </Pressable>
+                  )}
                   <Pressable
                     onPress={() => handleOpenEdit(t)}
                     className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-white border border-stone-300 active:bg-stone-100"
@@ -232,6 +258,15 @@ export const AdminTableLayoutView: React.FC = () => {
                 </View>
 
                 <View className="flex-row items-center justify-end space-x-2 mt-4 pt-3 border-t border-stone-200">
+                  {t.is_occupied && (
+                    <Pressable
+                      onPress={() => setTableToRelease(t)}
+                      className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-amber-50 border border-amber-200 active:bg-amber-100"
+                      accessibilityLabel={`Release table ${t.table_number}`}
+                    >
+                      <Unlock size={18} color="#d97706" />
+                    </Pressable>
+                  )}
                   <Pressable
                     onPress={() => handleOpenEdit(t)}
                     className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-white border border-stone-300 active:bg-stone-100"
@@ -339,6 +374,17 @@ export const AdminTableLayoutView: React.FC = () => {
           />
         </View>
       </AdminModal>
+
+      <ConfirmationModal
+        visible={!!tableToRelease}
+        title={`Release Table ${tableToRelease?.table_number || ''}?`}
+        message="This will close any open tabs associated with this table and immediately reset its status to Available."
+        confirmText="Force Release"
+        cancelText="Cancel"
+        variant="warning"
+        onConfirm={handleConfirmRelease}
+        onCancel={() => setTableToRelease(null)}
+      />
     </ScrollView>
   );
 };

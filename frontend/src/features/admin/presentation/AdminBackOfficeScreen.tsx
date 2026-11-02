@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { SharedChatView } from '@/features/chat/presentation/SharedChatView';
 import { useResponsive } from '@/features/shared/hooks/useResponsive';
+import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 import type { AdminRoute, DashboardTelemetry, TimeframeFilter } from '../domain/admin.types';
 import {
   adminApi,
@@ -41,9 +42,14 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   const [products, setProducts] = useState<ProductAdmin[]>([]);
   const [analytics, setAnalytics] = useState<SalesAnalyticsOverview | null>(null);
 
-  const loadData = useCallback(async (tf?: TimeframeFilter) => {
-    setIsLoading(true);
-    const activeTimeframe = tf ?? timeframe;
+  const timeframeRef = useRef<TimeframeFilter>(timeframe);
+  useEffect(() => {
+    timeframeRef.current = timeframe;
+  }, [timeframe]);
+
+  const loadData = useCallback(async (tf?: TimeframeFilter, silent: boolean = false) => {
+    if (!silent) setIsLoading(true);
+    const activeTimeframe = tf ?? timeframeRef.current;
     try {
       const [settingsRes, invRes, prodRes, analRes, telemRes] = await Promise.allSettled([
         adminApi.getVenueSettings(),
@@ -76,15 +82,50 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       }
     } catch (err) {
       console.error('[AdminBackOfficeScreen] Unexpected error in loadData:', err);
-      toast.error('Failed to refresh administrative data', { title: 'Admin Notice' });
+      if (!silent) {
+        toast.error('Failed to refresh administrative data', { title: 'Admin Notice' });
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     loadData();
   }, [loadData]);
+
+  // Realtime Centralized Event-Driven Sync (tables, tabs, orders, payments, drawer, inventory)
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerQuietRefresh = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    debounceTimerRef.current = setTimeout(() => {
+      loadData(timeframeRef.current, true);
+    }, 400);
+  }, [loadData]);
+
+  useEffect(() => {
+    const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
+      onTableChange: () => triggerQuietRefresh(),
+      onTabChange: () => triggerQuietRefresh(),
+      onOrderChange: () => triggerQuietRefresh(),
+      onOrderItemChange: () => triggerQuietRefresh(),
+      onProductChange: () => triggerQuietRefresh(),
+      onPaymentChange: () => triggerQuietRefresh(),
+      onInventoryChange: () => triggerQuietRefresh(),
+      onWasteLogChange: () => triggerQuietRefresh(),
+      onCashDrawerChange: () => triggerQuietRefresh(),
+    });
+
+    return () => {
+      unsub();
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [triggerQuietRefresh]);
 
   const handleToggleMode = async () => {
     const nextMode = operatingMode === 'CAFE' ? 'EVENT' : 'CAFE';

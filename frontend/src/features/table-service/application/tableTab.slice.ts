@@ -4,6 +4,8 @@ import { ordersApi } from '../../orders/data/orders.api';
 import { posHlc, deriveTabTotal, deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
+import { supabase } from '../../shared/infrastructure/supabase';
+import { resolveTableUuid } from '../../floor/data/resolver';
 
 export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   openTableTab: (tableId: string, guestName: string, guestCount = 1) => {
@@ -239,14 +241,19 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
   },
 
   closeEmptyTab: (tableId: string, tabIndex: number) => {
+    let targetTabRef: CustomerTab | undefined;
+    let isTableEmptyResult = false;
+
     set((state) => {
       const table = state.tables.find((t) => t.id === tableId);
       if (!table) return state;
 
+      targetTabRef = (table.tabs || []).find((t) => t.tabIndex === tabIndex);
       const remainingTabs = (table.tabs || []).filter((t) => t.tabIndex !== tabIndex);
       const remainingActiveTabs = (table.activeTabs || []).filter((num) => num !== tabIndex);
       const remainingAmount = remainingTabs.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
       const isTableEmpty = remainingActiveTabs.length === 0 || remainingTabs.length === 0;
+      isTableEmptyResult = isTableEmpty;
       const nextTableStatus = isTableEmpty ? 'empty' : deriveTableStatus(true, remainingTabs);
 
       const updatedTables = state.tables.map((t) => {
@@ -266,5 +273,45 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
 
       return { tables: updatedTables };
     });
+
+    // Asynchronously close tab and free table in Supabase
+    (async () => {
+      try {
+        const validTableId = await resolveTableUuid(tableId);
+        const isUuid =
+          targetTabRef?.id &&
+          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetTabRef.id);
+
+        if (isUuid && targetTabRef) {
+          await supabase
+            .from('tabs')
+            .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
+            .eq('id', targetTabRef.id);
+        } else if (validTableId) {
+          // Fallback: close the matching open tab on this table
+          const { data: openTabs } = await supabase
+            .from('tabs')
+            .select('id')
+            .eq('table_id', validTableId)
+            .eq('status', 'OPEN')
+            .limit(1);
+          if (openTabs && openTabs.length > 0) {
+            await supabase
+              .from('tabs')
+              .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
+              .eq('id', openTabs[0].id);
+          }
+        }
+
+        if (isTableEmptyResult && validTableId) {
+          await supabase
+            .from('tables')
+            .update({ is_occupied: false, updated_at: new Date().toISOString() })
+            .eq('id', validTableId);
+        }
+      } catch (err) {
+        console.warn('[closeEmptyTab] Background database close notice:', err);
+      }
+    })();
   },
 });
