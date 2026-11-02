@@ -33,11 +33,14 @@ import { checksApi } from '../data/checks.api';
 import type { SettledCheckItem, CheckOrderType } from '../domain/check.types';
 import { exportChecksRegisterToExcel } from '@/features/admin/utils/readingExcelExport';
 
+import { Sparkles } from 'lucide-react-native';
+
 export interface ChecksHistoryViewProps {
   startDate?: string;
   endDate?: string;
   station?: string;
   timeframeLabel?: string;
+  mode?: 'all' | 'ALL' | 'CAFE' | 'EVENT';
 }
 
 export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
@@ -45,9 +48,16 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
   endDate,
   station = 'ALL',
   timeframeLabel,
+  mode: propMode = 'all',
 }) => {
   const [checks, setChecks] = useState<SettledCheckItem[]>([]);
   const [selectedChannel, setSelectedChannel] = useState<'all' | CheckOrderType>('all');
+  const normalizedPropMode = propMode === 'ALL' ? 'all' : propMode;
+  const [selectedMode, setSelectedMode] = useState<'all' | 'CAFE' | 'EVENT'>(normalizedPropMode);
+
+  useEffect(() => {
+    setSelectedMode(propMode === 'ALL' ? 'all' : propMode);
+  }, [propMode]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCheck, setSelectedCheck] = useState<SettledCheckItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -64,6 +74,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
         station,
         channel: selectedChannel,
         searchQuery,
+        mode: selectedMode,
       });
       setChecks(data);
       if (data.length > 0) {
@@ -82,7 +93,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
       setIsLoading(false);
       setIsRefreshing(false);
     }
-  }, [startDate, endDate, station, selectedChannel, searchQuery]);
+  }, [startDate, endDate, station, selectedChannel, searchQuery, selectedMode]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -232,8 +243,64 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
           </View>
         </View>
 
-        {/* Channel Filter Pills */}
+        {/* Mode & Channel Filter Pills */}
         <View className="flex-row items-center gap-2 mt-4 flex-wrap">
+          {/* Operating Mode Filter Pills */}
+          <Pressable
+            onPress={() => setSelectedMode('all')}
+            className={`min-h-[48px] px-4 py-2 rounded-xl border flex-row items-center gap-2 ${
+              selectedMode === 'all'
+                ? 'bg-stone-900 border-stone-900 shadow-xs'
+                : 'bg-white border-stone-300 active:bg-stone-50'
+            }`}
+          >
+            <Text
+              className={`text-base font-bold ${
+                selectedMode === 'all' ? 'text-white' : 'text-stone-700'
+              }`}
+            >
+              All Modes
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setSelectedMode('CAFE')}
+            className={`min-h-[48px] px-4 py-2 rounded-xl border flex-row items-center gap-2 ${
+              selectedMode === 'CAFE'
+                ? 'bg-sky-600 border-sky-600 shadow-xs'
+                : 'bg-white border-sky-300 active:bg-sky-50'
+            }`}
+          >
+            <Coffee size={16} color={selectedMode === 'CAFE' ? '#ffffff' : '#0284c7'} />
+            <Text
+              className={`text-base font-bold ${
+                selectedMode === 'CAFE' ? 'text-white' : 'text-sky-800'
+              }`}
+            >
+              ☀️ Cafe Mode
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => setSelectedMode('EVENT')}
+            className={`min-h-[48px] px-4 py-2 rounded-xl border flex-row items-center gap-2 ${
+              selectedMode === 'EVENT'
+                ? 'bg-amber-600 border-amber-600 shadow-xs'
+                : 'bg-white border-amber-300 active:bg-amber-50'
+            }`}
+          >
+            <Sparkles size={16} color={selectedMode === 'EVENT' ? '#ffffff' : '#d97706'} />
+            <Text
+              className={`text-base font-bold ${
+                selectedMode === 'EVENT' ? 'text-white' : 'text-amber-800'
+              }`}
+            >
+              🎷 Event Mode
+            </Text>
+          </Pressable>
+
+          <View className="h-8 w-px bg-stone-300 self-center mx-1 hidden sm:flex" />
+
           <Pressable
             onPress={() => setSelectedChannel('all')}
             className={`min-h-[48px] px-4 py-2 rounded-xl border flex-row items-center gap-2 ${
@@ -374,6 +441,23 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                               <Text className="text-base font-semibold text-stone-600 truncate">
                                 {chk.guestName}
                               </Text>
+                              <View
+                                className={`px-2 py-0.5 rounded-md border ${
+                                  chk.operatingMode === 'EVENT'
+                                    ? 'bg-amber-50 border-amber-300'
+                                    : 'bg-sky-50 border-sky-300'
+                                }`}
+                              >
+                                <Text
+                                  className={`text-xs font-bold ${
+                                    chk.operatingMode === 'EVENT'
+                                      ? 'text-amber-800'
+                                      : 'text-sky-800'
+                                  }`}
+                                >
+                                  {chk.operatingMode === 'EVENT' ? 'EVENT' : 'CAFE'}
+                                </Text>
+                              </View>
                             </View>
                             <Text className="text-base text-stone-500 font-medium mt-0.5">
                               {chk.tableOrRef} · {chk.timestamp}

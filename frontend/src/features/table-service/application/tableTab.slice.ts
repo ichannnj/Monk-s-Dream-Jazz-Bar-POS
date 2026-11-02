@@ -4,6 +4,7 @@ import { ordersApi } from '../../orders/data/orders.api';
 import { posHlc, deriveTabTotal, deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
+import { useVenueStore } from '../../shared/stores/useVenueStore';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { resolveTableUuid } from '../../floor/data/resolver';
 
@@ -18,6 +19,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     const nextTabIndex = existingIndices.length > 0 ? Math.max(...existingIndices) + 1 : 1;
     const finalGuestName = guestName.trim() || `Guest ${nextTabIndex}`;
     const localTabId = `tab-${tableId}-${nextTabIndex}`;
+    const currentOperatingMode = useVenueStore.getState().operatingMode;
 
     const newTab: CustomerTab = {
       id: localTabId,
@@ -27,6 +29,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       totalAmount: 0,
       items: [],
       openedAt: 'Just now',
+      operatingMode: currentOperatingMode,
     };
 
     set((state) => {
@@ -64,6 +67,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         orderType: 'DINE_IN',
         orderChannel: targetTable?.area === 'bar' ? 'BAR_AREA' : 'CAFE_AREA',
         openedById: currentUserId,
+        operatingMode: currentOperatingMode,
       })
       .then((res) => {
         if (res?.id) {

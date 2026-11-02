@@ -14,6 +14,10 @@ export interface ReadingData {
   gross_sales: number;
   discount_total: number;
   net_sales: number;
+  cafe_sales?: number;
+  event_sales?: number;
+  cafe_tx_count?: number;
+  event_tx_count?: number;
   vatable_sales: number;
   vat_amount: number;
   vat_exempt_sales: number;
@@ -48,6 +52,10 @@ export interface ZReadingRecord {
   performed_by_name: string;
   gross_sales: number;
   net_sales: number;
+  cafe_net_sales?: number;
+  event_net_sales?: number;
+  cafe_tx_count?: number;
+  event_tx_count?: number;
   discount_total: number;
   vatable_sales: number;
   vat_amount: number;
@@ -83,6 +91,10 @@ export interface YReadingRecord {
   incoming_staff_name: string;
   gross_sales: number;
   net_sales: number;
+  cafe_net_sales?: number;
+  event_net_sales?: number;
+  cafe_tx_count?: number;
+  event_tx_count?: number;
   discount_total: number;
   vatable_sales: number;
   vat_amount: number;
@@ -159,6 +171,10 @@ export const readingsApi = {
       safe_drops: Number(data.safe_drops || 0),
       expected_cash: Number(data.expected_cash || 0),
       transaction_count: Number(data.transaction_count || 0),
+      cafe_sales: Number(data.cafe_sales || 0),
+      event_sales: Number(data.event_sales || 0),
+      cafe_tx_count: Number(data.cafe_tx_count || 0),
+      event_tx_count: Number(data.event_tx_count || 0),
     };
   },
 
@@ -220,6 +236,10 @@ export const readingsApi = {
       counted_cash: Number(row.counted_cash || 0),
       variance: Number(row.variance || 0),
       transaction_count: Number(row.transaction_count || 0),
+      cafe_sales: Number(row.cafe_net_sales ?? row.cafe_sales ?? 0),
+      event_sales: Number(row.event_net_sales ?? row.event_sales ?? 0),
+      cafe_tx_count: Number(row.cafe_tx_count || 0),
+      event_tx_count: Number(row.event_tx_count || 0),
     }));
   },
 
@@ -259,6 +279,10 @@ export const readingsApi = {
       counted_cash: Number(row.counted_cash || 0),
       variance: Number(row.variance || 0),
       transaction_count: Number(row.transaction_count || 0),
+      cafe_sales: Number(row.cafe_net_sales ?? row.cafe_sales ?? 0),
+      event_sales: Number(row.event_net_sales ?? row.event_sales ?? 0),
+      cafe_tx_count: Number(row.cafe_tx_count || 0),
+      event_tx_count: Number(row.event_tx_count || 0),
     }));
   },
 
@@ -306,6 +330,10 @@ export const readingsApi = {
       counted_cash: Number(data.counted_cash || 0),
       variance: Number(data.variance || 0),
       transaction_count: Number(data.transaction_count || 0),
+      cafe_sales: Number(data.cafe_net_sales ?? data.cafe_sales ?? 0),
+      event_sales: Number(data.event_net_sales ?? data.event_sales ?? 0),
+      cafe_tx_count: Number(data.cafe_tx_count || 0),
+      event_tx_count: Number(data.event_tx_count || 0),
     };
   },
 
@@ -354,6 +382,10 @@ export const readingsApi = {
       counted_cash: Number(data.counted_cash || 0),
       variance: Number(data.variance || 0),
       transaction_count: Number(data.transaction_count || 0),
+      cafe_sales: Number(data.cafe_net_sales ?? data.cafe_sales ?? 0),
+      event_sales: Number(data.event_net_sales ?? data.event_sales ?? 0),
+      cafe_tx_count: Number(data.cafe_tx_count || 0),
+      event_tx_count: Number(data.event_tx_count || 0),
     };
   },
 

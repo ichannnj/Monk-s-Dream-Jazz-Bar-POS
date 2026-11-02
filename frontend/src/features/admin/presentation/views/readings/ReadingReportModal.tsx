@@ -140,6 +140,9 @@ Transactions: ${reading.transaction_count}
 Gross Sales:        ${formatCurrency(reading.gross_sales)}
 Discounts & Comps: -${formatCurrency(reading.discount_total)}
 Net Sales:          ${formatCurrency(reading.net_sales)}
+Operating Mode Split:
+  • Cafe Mode:      ${formatCurrency(reading.cafe_sales || 0)} (${reading.cafe_tx_count || 0} tabs)
+  • Event Mode:     ${formatCurrency(reading.event_sales || 0)} (${reading.event_tx_count || 0} tabs)
 
 ------------------------------------------------
 2. TAX & CHARGES BREAKDOWN
@@ -328,6 +331,57 @@ Official POS Audit Document
                       </Text>
                     </View>
                   </View>
+
+                  {/* Operating Mode Split */}
+                  {(reading.cafe_sales !== undefined || reading.event_sales !== undefined) && (
+                    <View className="mt-4 pt-3 border-t border-dashed border-stone-200">
+                      <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">
+                        Operating Mode Revenue Split
+                      </Text>
+                      <View className="bg-stone-50 rounded-xl p-3 border border-stone-200 divide-y divide-stone-100">
+                        <View className="flex-row justify-between py-2">
+                          <View className="flex-row items-center gap-2">
+                            <View className="w-2.5 h-2.5 rounded-full bg-amber-500" />
+                            <Text className="text-base text-stone-700 font-semibold">
+                              ☀️ Cafe Mode Sales
+                            </Text>
+                            {reading.cafe_tx_count !== undefined && (
+                              <Text className="text-sm text-stone-400 font-medium">
+                                ({reading.cafe_tx_count} tabs)
+                              </Text>
+                            )}
+                          </View>
+                          <Text className="text-base font-bold text-stone-900">
+                            {formatCurrency(reading.cafe_sales || 0)}
+                          </Text>
+                        </View>
+                        <View className="flex-row justify-between py-2">
+                          <View className="flex-row items-center gap-2">
+                            <View className="w-2.5 h-2.5 rounded-full bg-[#800020]" />
+                            <Text className="text-base text-stone-700 font-semibold">
+                              🎷 Event Mode Sales
+                            </Text>
+                            {reading.event_tx_count !== undefined && (
+                              <Text className="text-sm text-stone-400 font-medium">
+                                ({reading.event_tx_count} tabs)
+                              </Text>
+                            )}
+                          </View>
+                          <Text className="text-base font-bold text-stone-900">
+                            {formatCurrency(reading.event_sales || 0)}
+                          </Text>
+                        </View>
+                        <View className="flex-row justify-between py-2.5 bg-stone-100/70 px-2 rounded-lg mt-1">
+                          <Text className="text-base font-bold text-stone-900">
+                            Consolidated Net Total
+                          </Text>
+                          <Text className="text-base font-black text-[#800020]">
+                            {formatCurrency(reading.net_sales)}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  )}
                 </View>
 
                 {/* Section 2: Tax & Surcharges */}
@@ -588,6 +642,26 @@ Official POS Audit Document
                       {formatCurrency(reading.net_sales)}
                     </Text>
                   </View>
+                  {(reading.cafe_sales !== undefined || reading.event_sales !== undefined) && (
+                    <View className="border-t border-stone-200 pt-1 mt-1 space-y-0.5">
+                      <View className="flex-row justify-between">
+                        <Text className="text-[10px] font-mono text-stone-600">
+                          CAFE MODE SALES
+                        </Text>
+                        <Text className="text-[10px] font-mono font-bold">
+                          {formatCurrency(reading.cafe_sales || 0)}
+                        </Text>
+                      </View>
+                      <View className="flex-row justify-between">
+                        <Text className="text-[10px] font-mono text-stone-600">
+                          EVENT MODE SALES
+                        </Text>
+                        <Text className="text-[10px] font-mono font-bold">
+                          {formatCurrency(reading.event_sales || 0)}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                 </View>
 
                 <View className="border-b border-dashed border-stone-400 pb-3 mb-3 space-y-1">

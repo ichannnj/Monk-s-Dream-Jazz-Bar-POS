@@ -71,6 +71,17 @@ export interface DashboardTelemetry {
   cashSales: number;
   digitalSales: number;
   cardSales: number;
+
+  // Operating Mode Revenue Split (Cafe vs Event vs Total)
+  cafeSales: number;
+  eventSales: number;
+  cafePercentage: number;
+  eventPercentage: number;
+  cafeOrdersCount: number;
+  eventOrdersCount: number;
+  cafeAvgCheck: number;
+  eventAvgCheck: number;
+  activeOperatingMode: 'CAFE' | 'EVENT';
   totalTables: number;
   occupiedTables: number;
   activeOpenTabs: number;

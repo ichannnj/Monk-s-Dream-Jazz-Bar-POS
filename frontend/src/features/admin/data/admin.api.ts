@@ -179,10 +179,19 @@ export interface SalesAnalyticsOverview {
     orderCount?: number;
   }[];
   peakHourLabel?: string;
+  modeBreakdown?: {
+    cafeSales: number;
+    eventSales: number;
+    cafeOrderCount: number;
+    eventOrderCount: number;
+    totalSales: number;
+    cafePercent: number;
+    eventPercent: number;
+  };
 }
 
 export interface SalesOverviewFilterParams {
-  filterMode?: OperatingMode;
+  filterMode?: OperatingMode | 'ALL';
   startDate?: string;
   endDate?: string;
   station?: string;
@@ -219,9 +228,13 @@ export const adminApi = {
   },
 
   async setOperatingMode(mode: OperatingMode): Promise<void> {
+    const current = await adminApi.getVenueSettings();
+    const targetId =
+      current?.id && current.id !== 'default' ? current.id : '00000000-0000-0000-0000-000000000001';
+
     const { error } = await (supabase.from as any)('venue_settings')
       .update({ operating_mode: mode, updated_at: new Date().toISOString() })
-      .neq('id', 'non-existent');
+      .eq('id', targetId);
 
     if (error) {
       console.error('[adminApi.setOperatingMode] Failed:', error);
@@ -230,9 +243,13 @@ export const adminApi = {
   },
 
   async updateVenueSettings(updates: Partial<VenueSettings>): Promise<void> {
+    const current = await adminApi.getVenueSettings();
+    const targetId =
+      current?.id && current.id !== 'default' ? current.id : '00000000-0000-0000-0000-000000000001';
+
     const { error } = await (supabase.from as any)('venue_settings')
       .update({ ...updates, updated_at: new Date().toISOString() })
-      .neq('id', 'non-existent');
+      .eq('id', targetId);
 
     if (error) throw error;
   },
@@ -774,7 +791,7 @@ export const adminApi = {
       typeof params === 'string' ? { filterMode: params } : params || {};
 
     let query = (supabase.from as any)('payments').select(
-      'id, amount, payment_method, created_at, drawer_target, tab_id, tabs(order_channel, operating_mode)'
+      'id, amount, payment_method, operating_mode, created_at, drawer_target, tab_id, tabs(order_channel, operating_mode)'
     );
 
     if (filterOptions.startDate) {
@@ -812,9 +829,34 @@ export const adminApi = {
       hourlyBucket.set(h, { sales: 0, count: 0 });
     }
 
+    // Overall Mode Breakdown across the timeframe
+    let cafeSales = 0;
+    let eventSales = 0;
+    let cafeOrderCount = 0;
+    let eventOrderCount = 0;
+
+    for (const p of payments || []) {
+      const amt = Number(p.amount) || 0;
+      const m = p.operating_mode || p.tabs?.operating_mode || 'CAFE';
+      if (m === 'EVENT') {
+        eventSales += amt;
+        eventOrderCount++;
+      } else {
+        cafeSales += amt;
+        cafeOrderCount++;
+      }
+    }
+
+    const totalModeSales = cafeSales + eventSales;
+    const cafePercent = totalModeSales > 0 ? Math.round((cafeSales / totalModeSales) * 100) : 0;
+    const eventPercent = totalModeSales > 0 ? 100 - cafePercent : 0;
+
     const filtered = (payments || []).filter((p: any) => {
-      if (filterOptions.filterMode && p.tabs?.operating_mode !== filterOptions.filterMode) {
-        return false;
+      if (filterOptions.filterMode && filterOptions.filterMode !== 'ALL') {
+        const itemMode = p.operating_mode || p.tabs?.operating_mode || 'CAFE';
+        if (itemMode !== filterOptions.filterMode) {
+          return false;
+        }
       }
       if (filterOptions.station && filterOptions.station !== 'ALL') {
         const st = filterOptions.station.toUpperCase();
@@ -903,6 +945,15 @@ export const adminApi = {
       tenderBreakdown,
       hourlySales,
       peakHourLabel: maxHourSales > 0 ? peakHourStr : undefined,
+      modeBreakdown: {
+        cafeSales,
+        eventSales,
+        cafeOrderCount,
+        eventOrderCount,
+        totalSales: totalModeSales,
+        cafePercent,
+        eventPercent,
+      },
     };
   },
 

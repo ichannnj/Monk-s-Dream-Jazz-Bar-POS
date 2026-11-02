@@ -17,6 +17,7 @@ import {
   Banknote,
   Smartphone,
   CreditCard,
+  Coffee,
 } from 'lucide-react-native';
 import type { DashboardTelemetry, AdminRoute, TimeframeFilter } from '../../domain/admin.types';
 import { HourlySalesVelocityChart } from './analytics/HourlySalesVelocityChart';
@@ -452,6 +453,178 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </Pressable>
           </View>
         )}
+
+        {/* Dedicated Operating Mode Revenue Split Section */}
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-5 sm:p-6 shadow-xs">
+          <View className="flex-row items-center justify-between flex-wrap gap-3 mb-5">
+            <View className="flex-row items-center gap-3">
+              <View className="w-10 h-10 rounded-xl bg-[#800020]/10 border border-[#800020]/20 items-center justify-center">
+                <Sparkles size={20} color="#800020" />
+              </View>
+              <View>
+                <Text className="text-xl font-bold text-stone-900">
+                  Operating Mode Revenue Split
+                </Text>
+                <Text className="text-base text-stone-500 font-medium">
+                  Segregated sales for Daytime Cafe vs. Evening Live Jazz Sets
+                </Text>
+              </View>
+            </View>
+
+            {/* Active Mode Pill */}
+            <View className="flex-row items-center gap-2">
+              <Text className="text-base font-semibold text-stone-500">Venue Active Mode:</Text>
+              <View
+                className={`flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border ${
+                  telemetry.activeOperatingMode === 'EVENT'
+                    ? 'bg-amber-50 border-amber-300'
+                    : 'bg-sky-50 border-sky-300'
+                }`}
+              >
+                {telemetry.activeOperatingMode === 'EVENT' ? (
+                  <>
+                    <Sparkles size={14} color="#d97706" />
+                    <Text className="text-base font-bold text-amber-700">🎷 Event Mode</Text>
+                  </>
+                ) : (
+                  <>
+                    <Coffee size={14} color="#0284c7" />
+                    <Text className="text-base font-bold text-sky-700">☀️ Cafe Mode</Text>
+                  </>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* Dual Segment Split Progress Bar */}
+          <View className="mb-6">
+            <View className="flex-row items-center justify-between mb-2">
+              <View className="flex-row items-center gap-2">
+                <View className="w-3 h-3 rounded-full bg-sky-500" />
+                <Text className="text-base font-bold text-stone-700">
+                  Cafe Mode ({telemetry.cafePercentage || 0}%)
+                </Text>
+              </View>
+              <View className="flex-row items-center gap-2">
+                <Text className="text-base font-bold text-stone-700">
+                  Event Mode ({telemetry.eventPercentage || 0}%)
+                </Text>
+                <View className="w-3 h-3 rounded-full bg-amber-500" />
+              </View>
+            </View>
+
+            {/* Visual ratio bar */}
+            <View className="h-4 w-full bg-stone-100 rounded-full overflow-hidden flex-row">
+              <View
+                style={{ width: `${telemetry.cafePercentage || 0}%` }}
+                className="h-full bg-sky-500 rounded-l-full"
+              />
+              <View
+                style={{ width: `${telemetry.eventPercentage || 0}%` }}
+                className="h-full bg-amber-500 rounded-r-full"
+              />
+            </View>
+          </View>
+
+          {/* 3 Metric Cards Grid: Cafe vs Event vs Consolidated Total */}
+          <View className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 1. Cafe Mode Card */}
+            <View className="rounded-xl border border-sky-200 bg-sky-50/50 p-4 justify-between">
+              <View>
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-2">
+                    <Coffee size={18} color="#0284c7" />
+                    <Text className="text-base font-bold text-sky-900">☀️ Cafe Mode Sales</Text>
+                  </View>
+                  <View className="px-2 py-0.5 rounded-md bg-sky-100 border border-sky-300">
+                    <Text className="text-base font-bold text-sky-800">
+                      {telemetry.cafePercentage || 0}%
+                    </Text>
+                  </View>
+                </View>
+                <Text className="mt-3 text-2xl font-black text-sky-950">
+                  ₱
+                  {Number(telemetry.cafeSales || 0).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+              <View className="mt-3 pt-3 border-t border-sky-200 flex-row items-center justify-between">
+                <Text className="text-base font-medium text-sky-700">
+                  {telemetry.cafeOrdersCount || 0} checks
+                </Text>
+                <Text className="text-base font-medium text-sky-700">
+                  Avg: ₱{Number(telemetry.cafeAvgCheck || 0).toFixed(2)}
+                </Text>
+              </View>
+            </View>
+
+            {/* 2. Event Mode Card */}
+            <View className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 justify-between">
+              <View>
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-2">
+                    <Sparkles size={18} color="#d97706" />
+                    <Text className="text-base font-bold text-amber-900">🎷 Event Mode Sales</Text>
+                  </View>
+                  <View className="px-2 py-0.5 rounded-md bg-amber-100 border border-amber-300">
+                    <Text className="text-base font-bold text-amber-800">
+                      {telemetry.eventPercentage || 0}%
+                    </Text>
+                  </View>
+                </View>
+                <Text className="mt-3 text-2xl font-black text-amber-950">
+                  ₱
+                  {Number(telemetry.eventSales || 0).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+              <View className="mt-3 pt-3 border-t border-amber-200 flex-row items-center justify-between">
+                <Text className="text-base font-medium text-amber-700">
+                  {telemetry.eventOrdersCount || 0} checks
+                </Text>
+                <Text className="text-base font-medium text-amber-700">
+                  Avg: ₱{Number(telemetry.eventAvgCheck || 0).toFixed(2)}
+                </Text>
+              </View>
+            </View>
+
+            {/* 3. Consolidated Total Sales Card */}
+            <View className="rounded-xl border border-stone-200 bg-stone-50/70 p-4 justify-between">
+              <View>
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-2">
+                    <TrendingUp size={18} color="#800020" />
+                    <Text className="text-base font-bold text-stone-900">
+                      Total Consolidated Sales
+                    </Text>
+                  </View>
+                  <View className="px-2 py-0.5 rounded-md bg-stone-200/80 border border-stone-300">
+                    <Text className="text-base font-bold text-stone-800">100%</Text>
+                  </View>
+                </View>
+                <Text className="mt-3 text-2xl font-black text-stone-900">
+                  ₱
+                  {Number(telemetry.liveSalesTotal || 0).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </Text>
+              </View>
+              <View className="mt-3 pt-3 border-t border-stone-200 flex-row items-center justify-between">
+                <Text className="text-base font-medium text-stone-600">
+                  {telemetry.orderCount || 0} checks combined
+                </Text>
+                <Text className="text-base font-medium text-stone-600">
+                  Avg: ₱{Number(telemetry.averageCheck || 0).toFixed(2)}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
 
         {/* Executive Visual Analytics Trio: Hourly Velocity + Tender Mix + Department Split */}
         <View className="space-y-6">

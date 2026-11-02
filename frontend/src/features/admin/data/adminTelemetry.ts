@@ -113,7 +113,7 @@ export const adminTelemetryService = {
     try {
       // 1. QUERY PAYMENTS (Strictly from DB)
       let paymentsQuery = (supabase.from as any)('payments').select(
-        'id, amount, payment_method, created_at, tab_id, tabs(order_channel, operating_mode)'
+        'id, amount, payment_method, operating_mode, created_at, tab_id, tabs(order_channel, operating_mode)'
       );
 
       if (bounds.startDate) paymentsQuery = paymentsQuery.gte('created_at', bounds.startDate);
@@ -126,19 +126,25 @@ export const adminTelemetryService = {
       if (bounds.benchmarkEnd)
         benchmarkQuery = benchmarkQuery.lt('created_at', bounds.benchmarkEnd);
 
-      const [paymentsRes, benchmarkRes] = await Promise.all([
+      const [paymentsRes, benchmarkRes, settingsRes] = await Promise.all([
         paymentsQuery,
         bounds.benchmarkStart ? benchmarkQuery : Promise.resolve({ data: [] }),
+        (supabase.from as any)('venue_settings').select('operating_mode').limit(1).maybeSingle(),
       ]);
 
       const payments = (paymentsRes.data || []) as any[];
       const benchmarkPayments = (benchmarkRes.data || []) as any[];
+      const activeOperatingMode = (settingsRes?.data?.operating_mode || 'CAFE') as 'CAFE' | 'EVENT';
 
-      // Compute Revenue & Payment Methods Split
+      // Compute Revenue & Payment Methods Split & Operating Mode Split
       let liveSalesTotal = 0;
       let cashSales = 0;
       let digitalSales = 0;
       let cardSales = 0;
+      let cafeSales = 0;
+      let eventSales = 0;
+      let cafeOrdersCount = 0;
+      let eventOrdersCount = 0;
       const hourlyBucket = new Map<number, number>();
 
       for (const p of payments) {
@@ -149,9 +155,25 @@ export const adminTelemetryService = {
         else if (p.payment_method === 'DIGITAL_WALLET') digitalSales += amt;
         else if (p.payment_method === 'CARD') cardSales += amt;
 
+        // Operating Mode Split
+        const mode = p.operating_mode || p.tabs?.operating_mode || 'CAFE';
+        if (mode === 'EVENT') {
+          eventSales += amt;
+          eventOrdersCount++;
+        } else {
+          cafeSales += amt;
+          cafeOrdersCount++;
+        }
+
         const h = new Date(p.created_at).getHours();
         hourlyBucket.set(h, (hourlyBucket.get(h) || 0) + amt);
       }
+
+      const cafePercentage =
+        liveSalesTotal > 0 ? Math.round((cafeSales / liveSalesTotal) * 100) : 0;
+      const eventPercentage = liveSalesTotal > 0 ? 100 - cafePercentage : 0;
+      const cafeAvgCheck = cafeOrdersCount > 0 ? cafeSales / cafeOrdersCount : 0;
+      const eventAvgCheck = eventOrdersCount > 0 ? eventSales / eventOrdersCount : 0;
 
       const orderCount = payments.length;
       const averageCheck = orderCount > 0 ? liveSalesTotal / orderCount : 0;
@@ -552,6 +574,18 @@ export const adminTelemetryService = {
         cashSales,
         digitalSales,
         cardSales,
+
+        // Operating Mode Revenue Split (Cafe vs Event vs Total)
+        cafeSales,
+        eventSales,
+        cafePercentage,
+        eventPercentage,
+        cafeOrdersCount,
+        eventOrdersCount,
+        cafeAvgCheck,
+        eventAvgCheck,
+        activeOperatingMode,
+
         totalTables,
         occupiedTables,
         activeOpenTabs,
@@ -586,6 +620,17 @@ export const adminTelemetryService = {
         cashSales: 0,
         digitalSales: 0,
         cardSales: 0,
+
+        cafeSales: 0,
+        eventSales: 0,
+        cafePercentage: 0,
+        eventPercentage: 0,
+        cafeOrdersCount: 0,
+        eventOrdersCount: 0,
+        cafeAvgCheck: 0,
+        eventAvgCheck: 0,
+        activeOperatingMode: 'CAFE',
+
         totalTables: 25,
         occupiedTables: 0,
         activeOpenTabs: 0,

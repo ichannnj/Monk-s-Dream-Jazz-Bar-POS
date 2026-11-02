@@ -16,6 +16,17 @@
    - Intimate seated cocktail lounge, craft spirits, wine, kitchen dining, and live musical performances.
    - Tagged event revenue sessions, table-side waiter service, tab transfers, and corkage management.
 
+### Operating Mode Architecture & Revenue Segregation Invariant:
+
+- **Master Venue Switch:** Managed via `venue_settings.operating_mode` (`'CAFE' | 'EVENT'`). Modifiable from Admin Back-Office or Floor POS Command Bar with Manager PIN `9999` (`ManagerModeSwitchModal.tsx`).
+- **Reactive Synchronization:** Client state is synchronized reactively across all workstations via `useVenueStore` listening on Supabase Realtime channel `pos_venue_settings_sync`.
+- **Creation-Time Tagging:** New customer tabs inherit the active operating mode at creation time (`tabs.operating_mode`). Open tabs maintain their tagged mode across shift transitions to prevent artificial mid-service revenue reallocations.
+- **Settlement Cascade:** When settled, `settle_tab_and_record_payment` atomically writes the tab's `operating_mode` into `payments.operating_mode`.
+- **Three-Way Revenue Reporting:** Dashboards, Sales Overview, Settled Checks, Shift Readings (X/Y/Z), and Excel workbooks compute and display three distinct financial dimensions:
+  1. **Cafe Mode Sales & Transactions**
+  2. **Event Mode Sales & Transactions**
+  3. **Consolidated Venue Total (Cafe + Event)**
+
 ---
 
 ## 🔑 Crucial Domain Rules & Invariants

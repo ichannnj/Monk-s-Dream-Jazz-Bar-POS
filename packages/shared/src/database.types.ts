@@ -237,14 +237,14 @@ isOneToOne: false
                   ]
                 },"payments": {
                   Row: {
-                    "amount": number,"corkage_amount": number,"created_at": string,"discount_amount": number,"id": string,"notes": string | null,"payment_method": Database["public"]['Enums']["payment_method"],"staff_id": string | null,"tab_id": string,"tip_amount": number
+                    "amount": number,"corkage_amount": number,"created_at": string,"discount_amount": number,"id": string,"notes": string | null,"operating_mode": Database["public"]['Enums']["operating_mode"],"payment_method": Database["public"]['Enums']["payment_method"],"staff_id": string | null,"tab_id": string,"tip_amount": number
                   }
                   ComputedFields: never
                   Insert: {
-                    "amount": number,"corkage_amount"?: number,"created_at"?: string,"discount_amount"?: number,"id"?: string,"notes"?: string | null,"payment_method": Database["public"]['Enums']["payment_method"],"staff_id"?: string | null,"tab_id": string,"tip_amount"?: number
+                    "amount": number,"corkage_amount"?: number,"created_at"?: string,"discount_amount"?: number,"id"?: string,"notes"?: string | null,"operating_mode"?: Database["public"]['Enums']["operating_mode"],"payment_method": Database["public"]['Enums']["payment_method"],"staff_id"?: string | null,"tab_id": string,"tip_amount"?: number
                   }
                   Update: {
-                    "amount"?: number,"corkage_amount"?: number,"created_at"?: string,"discount_amount"?: number,"id"?: string,"notes"?: string | null,"payment_method"?: Database["public"]['Enums']["payment_method"],"staff_id"?: string | null,"tab_id"?: string,"tip_amount"?: number
+                    "amount"?: number,"corkage_amount"?: number,"created_at"?: string,"discount_amount"?: number,"id"?: string,"notes"?: string | null,"operating_mode"?: Database["public"]['Enums']["operating_mode"],"payment_method"?: Database["public"]['Enums']["payment_method"],"staff_id"?: string | null,"tab_id"?: string,"tip_amount"?: number
                   }
                   Relationships: [
                     {

@@ -9,6 +9,8 @@ import { FloorGridView } from './FloorGridView';
 import { useFloorFilters } from './useFloorFilters';
 import { useWaiterWorkflows } from '../application/useWaiterWorkflows';
 import { WaiterModalsCluster } from './WaiterModalsCluster';
+import { ManagerModeSwitchModal } from './ManagerModeSwitchModal';
+import { useVenueStore } from '@/features/shared';
 import { getStaffFirstName, getStaffInitials } from '@/features/shared/utils/staffHelpers';
 
 export interface FloorWorkspaceViewProps {
@@ -28,6 +30,10 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
   // Channel & Status Filter state
   const [selectedChannel, setSelectedChannel] = useState<ChannelCategory>('all');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('all');
+
+  // Venue operating mode & Manager mode switch modal state
+  const { operatingMode, setOperatingMode } = useVenueStore();
+  const [isModeSwitchModalOpen, setIsModeSwitchModalOpen] = useState(false);
 
   // Encapsulated Waiter Workflows with optional autoStartStation
   const workflows = useWaiterWorkflows({ autoStartStation });
@@ -90,6 +96,8 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
           onInputOnlineOrder={() => workflows.setIsOnlineModalOpen(true)}
           staffName={activeStaffName}
           staffInitials={activeStaffInitials}
+          operatingMode={operatingMode}
+          onToggleOperatingMode={() => setIsModeSwitchModalOpen(true)}
         />
 
         {/* Combined Responsive Grid: Tables, Takeout Queue & Online Orders */}
@@ -225,6 +233,23 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
         variant="success"
         onConfirm={workflows.handleExecuteFloorAction}
         onCancel={() => workflows.setConfirmFloorAction(null)}
+      />
+
+      {/* Manager Operating Mode Switch Modal */}
+      <ManagerModeSwitchModal
+        visible={isModeSwitchModalOpen}
+        currentMode={operatingMode}
+        isAdminUser={currentUser?.role === 'admin'}
+        onClose={() => setIsModeSwitchModalOpen(false)}
+        onConfirmSwitch={async (next) => {
+          await setOperatingMode(next);
+          toast.success(
+            next === 'EVENT'
+              ? '🎷 Event Mode Activated! New orders tagged for Live Jazz Set.'
+              : '☀️ Daytime Cafe Mode Activated! New orders tagged for Cafe.',
+            { title: 'Operating Mode Updated' }
+          );
+        }}
       />
     </View>
   );

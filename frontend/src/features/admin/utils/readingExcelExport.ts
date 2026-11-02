@@ -97,6 +97,13 @@ const EXCEL_STYLES = `
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#F5F5F4"/>
       </Borders>
+    <Style ss:ID="DataNumber">
+      <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1C1917"/>
+      <NumberFormat ss:Format="#,##0"/>
+      <Borders>
+        <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#F5F5F4"/>
+      </Borders>
     </Style>
     <Style ss:ID="TotalLabel">
       <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
@@ -230,8 +237,18 @@ export function exportSingleReadingToExcel(reading: ReadingData): void {
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">-${reading.discount_total}</Data></Cell>
       </Row>
       <Row>
-        <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">Net Sales Revenue</Data></Cell>
+        <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">Net Sales Revenue (Consolidated)</Data></Cell>
         <Cell ss:StyleID="TotalCurrency"><Data ss:Type="Number">${reading.net_sales}</Data></Cell>
+      </Row>
+      <Row>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">  • Cafe Mode Net Sales</Data></Cell>
+        <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${reading.cafe_sales || 0}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${reading.cafe_tx_count || 0} tabs</Data></Cell>
+      </Row>
+      <Row>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">  • Event Mode Net Sales</Data></Cell>
+        <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${reading.event_sales || 0}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${reading.event_tx_count || 0} tabs</Data></Cell>
       </Row>
       <Row ss:Height="12"/>
 
@@ -383,6 +400,8 @@ export function exportReadingsArchiveToExcel(
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.gross_sales}</Data></Cell>
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.discount_total}</Data></Cell>
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.net_sales}</Data></Cell>
+      <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.cafe_sales ?? r.cafe_net_sales ?? 0}</Data></Cell>
+      <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.event_sales ?? r.event_net_sales ?? 0}</Data></Cell>
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.vatable_sales}</Data></Cell>
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.vat_amount}</Data></Cell>
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.service_charge}</Data></Cell>
@@ -417,6 +436,8 @@ export function exportReadingsArchiveToExcel(
       <Column ss:Width="90"/>
       <Column ss:Width="100"/>
       <Column ss:Width="100"/>
+      <Column ss:Width="100"/>
+      <Column ss:Width="100"/>
       <Column ss:Width="90"/>
       <Column ss:Width="90"/>
       <Column ss:Width="90"/>
@@ -429,12 +450,12 @@ export function exportReadingsArchiveToExcel(
       <Column ss:Width="160"/>
 
       <Row ss:Height="30">
-        <Cell ss:MergeAcross="18" ss:StyleID="TitleBanner">
+        <Cell ss:MergeAcross="20" ss:StyleID="TitleBanner">
           <Data ss:Type="String">MONK'S DREAM JAZZ BAR &amp; BISTRO — ${title}</Data>
         </Cell>
       </Row>
       <Row ss:Height="22">
-        <Cell ss:MergeAcross="18" ss:StyleID="SubtitleBanner">
+        <Cell ss:MergeAcross="20" ss:StyleID="SubtitleBanner">
           <Data ss:Type="String">Exported on ${new Date().toLocaleString()} • Official POS Fiscal Audit Trail</Data>
         </Cell>
       </Row>
@@ -449,6 +470,8 @@ export function exportReadingsArchiveToExcel(
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Gross Sales</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Discounts</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Net Sales</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Cafe Sales</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Event Sales</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">VATable</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">12% VAT</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">10% SC</Data></Cell>
@@ -552,8 +575,38 @@ export function exportFinancialOverviewToExcel(
       </Row>
       <Row ss:Height="12"/>
 
+      <!-- Section 2: Operating Mode Split -->
       <Row ss:Height="22">
-        <Cell ss:MergeAcross="3" ss:StyleID="SectionHeader"><Data ss:Type="String">2. CHANNEL &amp; FULFILLMENT BREAKDOWN</Data></Cell>
+        <Cell ss:MergeAcross="3" ss:StyleID="SectionHeader"><Data ss:Type="String">2. OPERATING MODE REVENUE SPLIT</Data></Cell>
+      </Row>
+      <Row ss:Height="24">
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Operating Mode</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Settled Tabs</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Net Revenue</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Revenue Share</Data></Cell>
+      </Row>
+      <Row ss:Height="20">
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">☀️ Cafe Mode</Data></Cell>
+        <Cell ss:StyleID="DataNumber"><Data ss:Type="Number">${analytics.modeBreakdown?.cafeOrderCount || 0}</Data></Cell>
+        <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${analytics.modeBreakdown?.cafeSales || 0}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${analytics.modeBreakdown?.cafePercent || 0}%</Data></Cell>
+      </Row>
+      <Row ss:Height="20">
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">🎷 Event Mode</Data></Cell>
+        <Cell ss:StyleID="DataNumber"><Data ss:Type="Number">${analytics.modeBreakdown?.eventOrderCount || 0}</Data></Cell>
+        <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${analytics.modeBreakdown?.eventSales || 0}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${analytics.modeBreakdown?.eventPercent || 0}%</Data></Cell>
+      </Row>
+      <Row ss:Height="22">
+        <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">Consolidated Total</Data></Cell>
+        <Cell ss:StyleID="DataNumber"><Data ss:Type="Number">${count}</Data></Cell>
+        <Cell ss:StyleID="TotalCurrency"><Data ss:Type="Number">${analytics.modeBreakdown?.totalSales || gross}</Data></Cell>
+        <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">100%</Data></Cell>
+      </Row>
+      <Row ss:Height="12"/>
+
+      <Row ss:Height="22">
+        <Cell ss:MergeAcross="3" ss:StyleID="SectionHeader"><Data ss:Type="String">3. CHANNEL &amp; FULFILLMENT BREAKDOWN</Data></Cell>
       </Row>
       <Row ss:Height="24">
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Operational Channel</Data></Cell>
@@ -582,6 +635,7 @@ export function exportChecksRegisterToExcel(
       (chk) => `
       <Row ss:Height="20">
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(chk.checkNumber)}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(chk.operatingMode || 'CAFE')}</Data></Cell>
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${new Date(chk.settledAt).toLocaleDateString()}</Data></Cell>
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${chk.timestamp}</Data></Cell>
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(chk.orderType.toUpperCase())}</Data></Cell>
@@ -610,6 +664,7 @@ export function exportChecksRegisterToExcel(
   <Worksheet ss:Name="Checks Register">
     <Table ss:DefaultColumnWidth="90" ss:DefaultRowHeight="20">
       <Column ss:Width="80"/>
+      <Column ss:Width="70"/>
       <Column ss:Width="85"/>
       <Column ss:Width="70"/>
       <Column ss:Width="90"/>
@@ -626,12 +681,12 @@ export function exportChecksRegisterToExcel(
       <Column ss:Width="65"/>
 
       <Row ss:Height="30">
-        <Cell ss:MergeAcross="14" ss:StyleID="TitleBanner">
+        <Cell ss:MergeAcross="15" ss:StyleID="TitleBanner">
           <Data ss:Type="String">MONK'S DREAM JAZZ BAR &amp; BISTRO — SETTLED CHECKS REGISTER</Data>
         </Cell>
       </Row>
       <Row ss:Height="22">
-        <Cell ss:MergeAcross="14" ss:StyleID="SubtitleBanner">
+        <Cell ss:MergeAcross="15" ss:StyleID="SubtitleBanner">
           <Data ss:Type="String">Scope: ${escapeXml(filterLabel)} • Exported on ${new Date().toLocaleString()} • ${checks.length} Records</Data>
         </Cell>
       </Row>
@@ -639,6 +694,7 @@ export function exportChecksRegisterToExcel(
 
       <Row ss:Height="24">
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Check #</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Mode</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Date</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Time</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Channel</Data></Cell>

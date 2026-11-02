@@ -51,6 +51,7 @@ export interface CustomerTab {
   items: OrderLineItem[];
   totalAmount: number;
   openedAt?: string;
+  operatingMode?: 'CAFE' | 'EVENT';
   transferredFrom?: {
     tableCode: string;
     transferredAt?: string;

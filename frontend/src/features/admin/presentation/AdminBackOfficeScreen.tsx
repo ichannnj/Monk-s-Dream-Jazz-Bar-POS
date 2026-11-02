@@ -4,6 +4,7 @@ import { toast } from '@/features/shared/toast/useToastStore';
 import { SharedChatView } from '@/features/chat/presentation/SharedChatView';
 import { useResponsive } from '@/features/shared/hooks/useResponsive';
 import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
+import { useVenueStore } from '@/features/shared';
 import type { AdminRoute, DashboardTelemetry, TimeframeFilter } from '../domain/admin.types';
 import {
   adminApi,
@@ -31,7 +32,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
 }) => {
   const { isMobile, isTablet } = useResponsive();
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>('dashboard');
-  const [operatingMode, setOperatingMode] = useState<'CAFE' | 'EVENT'>('CAFE');
+  const { operatingMode, setOperatingMode } = useVenueStore();
   const [timeframe, setTimeframe] = useState<TimeframeFilter>('today');
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -130,8 +131,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   const handleToggleMode = async () => {
     const nextMode = operatingMode === 'CAFE' ? 'EVENT' : 'CAFE';
     try {
-      await adminApi.setOperatingMode(nextMode);
-      setOperatingMode(nextMode);
+      await setOperatingMode(nextMode);
       toast.success(
         nextMode === 'EVENT'
           ? '🎷 Event Mode Activated! Orders tagged for Live Jazz Set.'

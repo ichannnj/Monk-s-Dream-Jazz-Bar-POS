@@ -181,13 +181,17 @@ export const checksApi = {
           settledAt: p.created_at,
           timestamp,
           orderChannel: tab.order_channel || 'CAFE_AREA',
-          operatingMode: tab.operating_mode || 'CAFE_DAY',
+          operatingMode: tab.operating_mode || p.operating_mode || 'CAFE',
           notes: p.notes || tab.notes || undefined,
         };
       });
 
-      // Apply client-side filters (channel, station, search)
+      // Apply client-side filters (channel, station, mode, search)
       return checks.filter((chk) => {
+        if (filter.mode && filter.mode !== 'all' && chk.operatingMode !== filter.mode) {
+          return false;
+        }
+
         if (filter.channel && filter.channel !== 'all' && chk.orderType !== filter.channel) {
           return false;
         }

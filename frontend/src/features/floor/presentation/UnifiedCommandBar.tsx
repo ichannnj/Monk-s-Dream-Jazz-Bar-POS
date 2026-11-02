@@ -39,6 +39,8 @@ interface UnifiedCommandBarProps {
   onInputOnlineOrder?: () => void;
   staffName?: string;
   staffInitials?: string;
+  operatingMode?: 'CAFE' | 'EVENT';
+  onToggleOperatingMode?: () => void;
 }
 
 export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
@@ -53,6 +55,8 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
   onInputOnlineOrder,
   staffName = 'Floor Staff',
   staffInitials = 'MD',
+  operatingMode = 'CAFE',
+  onToggleOperatingMode,
 }) => {
   const channelItems: { id: ChannelCategory; label: string; count: number; Icon: any }[] = [
     { id: 'all', label: 'All', count: channelCounts.all, Icon: Sparkles },
@@ -205,6 +209,30 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
             );
           })}
         </View>
+
+        {/* Operating Mode Indicator & Fast Toggle */}
+        <Pressable
+          onPress={onToggleOperatingMode}
+          style={({ pressed }) => [
+            styles.modePill,
+            operatingMode === 'EVENT' ? styles.modePillEvent : styles.modePillCafe,
+            pressed && { opacity: 0.8 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Operating Mode: ${operatingMode === 'EVENT' ? 'Event Mode' : 'Cafe Mode'}. Tap to switch.`}
+        >
+          {operatingMode === 'EVENT' ? (
+            <>
+              <Sparkles size={16} color="#d97706" />
+              <Text style={styles.modeTextEvent}>🎷 Event Mode</Text>
+            </>
+          ) : (
+            <>
+              <Coffee size={16} color="#0284c7" />
+              <Text style={styles.modeTextCafe}>☀️ Cafe Mode</Text>
+            </>
+          )}
+        </Pressable>
 
         {/* Staff & Clock Pill */}
         <View style={styles.staffPill}>
@@ -403,8 +431,37 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   staffNameText: {
-    fontSize: 13.5,
+    fontSize: 16,
     fontWeight: '800',
     color: '#832238',
+  },
+  modePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    minHeight: 48,
+    minWidth: 48,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  modePillCafe: {
+    backgroundColor: '#f0f9ff',
+    borderColor: '#bae6fd',
+  },
+  modePillEvent: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+  },
+  modeTextCafe: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0369a1',
+  },
+  modeTextEvent: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#b45309',
   },
 });

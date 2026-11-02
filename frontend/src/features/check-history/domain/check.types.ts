@@ -42,4 +42,5 @@ export interface CheckFilterParams {
   channel?: 'all' | CheckOrderType;
   station?: string;
   searchQuery?: string;
+  mode?: 'all' | 'CAFE' | 'EVENT';
 }

@@ -55,9 +55,11 @@ export async function createTab(params: {
   hasCorkageFee?: boolean;
   corkageAmount?: number;
   openedById?: string;
+  operatingMode?: 'CAFE' | 'EVENT';
 }): Promise<{ id: string } | null> {
   try {
     const validTableId = params.tableId ? await resolveTableUuid(params.tableId) : null;
+    const effectiveMode = params.operatingMode || 'CAFE';
 
     const { data, error } = await supabase
       .from('tabs')
@@ -69,6 +71,7 @@ export async function createTab(params: {
         has_corkage_fee: params.hasCorkageFee || false,
         corkage_amount: params.corkageAmount || 0,
         opened_by_id: params.openedById || null,
+        operating_mode: effectiveMode,
         status: 'OPEN',
       })
       .select('id')

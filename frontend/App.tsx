@@ -11,6 +11,8 @@ import { useChatStore } from './src/features/chat';
 
 import { AdminBackOfficeScreen } from './src/features/admin';
 
+import { useVenueStore } from './src/features/shared';
+
 // Ensure 1rem = 16px root scale for tablet typography
 try {
   rem.set(16);
@@ -23,10 +25,11 @@ export default function App() {
   const { initRealtimeSync } = useOrderStore();
   const [adminView, setAdminView] = React.useState<'admin' | 'floor'>('admin');
 
-  // Keep all stations synchronized with POS orders and Team Chat in real-time
+  // Keep all stations synchronized with POS orders, venue settings and Team Chat in real-time
   useEffect(() => {
     const unsubOrders = initRealtimeSync();
     const unsubChat = useChatStore.getState().setupRealtimeSubscription();
+    const unsubVenue = useVenueStore.getState().initRealtimeSubscription();
     useChatStore.getState().loadInitialData(currentUser?.id);
     if (currentUser?.id) {
       useChatStore.getState().trackCurrentPresence();
@@ -35,6 +38,7 @@ export default function App() {
     return () => {
       unsubOrders();
       unsubChat();
+      unsubVenue();
     };
   }, [initRealtimeSync, currentUser?.id]);
 
