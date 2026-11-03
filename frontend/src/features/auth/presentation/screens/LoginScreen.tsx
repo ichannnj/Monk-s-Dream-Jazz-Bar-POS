@@ -19,7 +19,7 @@ import { posApi } from '../../../shared/infrastructure/api';
 import { PinCodeInput } from '../components/PinCodeInput';
 import { TrainingModeSwitch } from '../components/TrainingModeSwitch';
 import { ForgotPinModal } from '../components/ForgotPinModal';
-import { AlertCircle } from 'lucide-react-native';
+import { AlertCircle, Shield, Users, Eye, EyeOff, Lock, UserCheck } from 'lucide-react-native';
 import { styles } from './LoginScreen.styles';
 
 const JAZZ_HERO_IMAGE = require('../../../../../assets/images/jazz-club-stage.jpg');
@@ -36,8 +36,11 @@ export const LoginScreen: React.FC = () => {
   // Brand font 'Raconteur NF' is loaded via global.css @font-face and CDNFonts for web/tablets
 
   // Form State
+  const [authMode, setAuthMode] = useState<'staff' | 'admin'>('staff');
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isTraining, setIsTraining] = useState(false);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -66,10 +69,65 @@ export const LoginScreen: React.FC = () => {
       const trimmedUsername = username.trim();
       if (!trimmedUsername) {
         setIsError(true);
-        setErrorMessage('Staff ID / Username is required.');
-        toast.warning('Please enter your Staff ID / Username.', {
+        const reqText =
+          authMode === 'admin'
+            ? 'Admin Username or Email is required.'
+            : 'Staff ID / Username is required.';
+        setErrorMessage(reqText);
+        toast.warning(reqText, {
           title: 'Username Required',
         });
+        return;
+      }
+
+      if (authMode === 'admin') {
+        if (!adminPassword) {
+          setIsError(true);
+          setErrorMessage('Admin Password is required.');
+          toast.warning('Please enter your Admin Password.', {
+            title: 'Password Required',
+          });
+          return;
+        }
+
+        setIsSubmitting(true);
+        setIsError(false);
+        setErrorMessage(null);
+
+        try {
+          const result = await posApi.loginAdminWithPassword(trimmedUsername, adminPassword);
+          if (result && result.success && result.user) {
+            setIsTrainingMode(isTraining);
+            setUser({
+              id: result.user.id,
+              username: result.user.username,
+              displayName: result.user.displayName,
+              role: result.user.role as any,
+              isActive: true,
+              jobTitle: (result.user as any).jobTitle,
+              email: result.user.email,
+              phone: result.user.phone,
+              avatarUrl: result.user.avatarUrl,
+              baseDailyRate: result.user.baseDailyRate,
+              lastLoginAt: (result.user as any).lastLoginAt,
+              passwordUpdatedAt: (result.user as any).passwordUpdatedAt,
+              pinUpdatedAt: (result.user as any).pinUpdatedAt,
+            });
+
+            toast.success(`Administrator session verified: ${result.user.displayName} (Manager)`, {
+              title: 'Admin Console Access Granted',
+            });
+            return;
+          }
+          throw new Error('Invalid Admin credentials. Access denied.');
+        } catch (err: any) {
+          setIsError(true);
+          const errText = err.message || 'Invalid Admin credentials. Access denied.';
+          setErrorMessage(errText);
+          toast.error(errText, { title: 'Authentication Failed' });
+        } finally {
+          setIsSubmitting(false);
+        }
         return;
       }
 
@@ -108,10 +166,12 @@ export const LoginScreen: React.FC = () => {
             displayName: result.user.displayName,
             role: result.user.role as any,
             isActive: true,
+            jobTitle: (result.user as any).jobTitle,
             email: result.user.email,
             phone: result.user.phone,
             avatarUrl: result.user.avatarUrl,
             baseDailyRate: result.user.baseDailyRate,
+            lastLoginAt: (result.user as any).lastLoginAt,
           });
 
           toast.success(
@@ -136,11 +196,12 @@ export const LoginScreen: React.FC = () => {
         setIsSubmitting(false);
       }
     },
-    [username, pin, isTraining, isSubmitting, setUser, setIsTrainingMode]
+    [username, pin, adminPassword, authMode, isTraining, isSubmitting, setUser, setIsTrainingMode]
   );
 
   const handlePinComplete = useCallback(
     (completedPin: string) => {
+      if (authMode === 'admin') return;
       if (!username.trim()) {
         setIsError(true);
         setErrorMessage('Please enter your Staff ID / Username first.');
@@ -154,7 +215,7 @@ export const LoginScreen: React.FC = () => {
         handleClockIn(completedPin);
       }, 100);
     },
-    [username, handleClockIn]
+    [username, authMode, handleClockIn]
   );
 
   return (
@@ -242,7 +303,56 @@ export const LoginScreen: React.FC = () => {
                   />
                 </View>
 
-                <Text style={styles.formTitle}>Staff Login & Attendance</Text>
+                <Text style={styles.formTitle}>
+                  {authMode === 'admin'
+                    ? 'Administrator Back-Office Portal'
+                    : 'Staff Login & Attendance'}
+                </Text>
+              </View>
+
+              {/* Dual-Mode Toggle: Staff PIN Clock-In vs Admin Portal Login */}
+              <View style={styles.modeToggleContainer}>
+                <Pressable
+                  onPress={() => {
+                    setAuthMode('staff');
+                    setErrorMessage(null);
+                    setIsError(false);
+                  }}
+                  style={[styles.modeToggleTab, authMode === 'staff' && styles.modeToggleTabActive]}
+                  accessibilityRole="tab"
+                  accessibilityLabel="Staff Clock-In Mode"
+                >
+                  <Users size={16} color={authMode === 'staff' ? '#641b2a' : '#6b7280'} />
+                  <Text
+                    style={[
+                      styles.modeToggleText,
+                      authMode === 'staff' && styles.modeToggleTextActive,
+                    ]}
+                  >
+                    Staff PIN Clock-In
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    setAuthMode('admin');
+                    setErrorMessage(null);
+                    setIsError(false);
+                  }}
+                  style={[styles.modeToggleTab, authMode === 'admin' && styles.modeToggleTabActive]}
+                  accessibilityRole="tab"
+                  accessibilityLabel="Admin Portal Login Mode"
+                >
+                  <Shield size={16} color={authMode === 'admin' ? '#641b2a' : '#6b7280'} />
+                  <Text
+                    style={[
+                      styles.modeToggleText,
+                      authMode === 'admin' && styles.modeToggleTextActive,
+                    ]}
+                  >
+                    Admin Portal (Password)
+                  </Text>
+                </Pressable>
               </View>
 
               {/* Error Banner */}
@@ -257,14 +367,18 @@ export const LoginScreen: React.FC = () => {
               <View style={styles.formBody}>
                 {/* Username / Staff ID */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Username</Text>
+                  <Text style={styles.inputLabel}>
+                    {authMode === 'admin' ? 'Admin Username or Email' : 'Username'}
+                  </Text>
                   <TextInput
                     value={username}
                     onChangeText={(val) => {
                       setUsername(val);
                       if (errorMessage) setErrorMessage(null);
                     }}
-                    placeholder="Enter staff ID"
+                    placeholder={
+                      authMode === 'admin' ? 'Enter admin username or email' : 'Enter staff ID'
+                    }
                     placeholderTextColor="#9ca3af"
                     autoCapitalize="none"
                     autoCorrect={false}
@@ -272,39 +386,86 @@ export const LoginScreen: React.FC = () => {
                   />
                 </View>
 
-                {/* PIN Grid (4 Discrete Cells) */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>4-Digit Staff PIN</Text>
-                  <PinCodeInput
-                    value={pin}
-                    length={4}
-                    onChange={(val) => {
-                      setPin(val);
-                      if (errorMessage) setErrorMessage(null);
-                      if (isError) setIsError(false);
-                    }}
-                    onComplete={handlePinComplete}
-                    isError={isError}
-                  />
-                </View>
+                {authMode === 'admin' ? (
+                  /* Admin Password Input */
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Admin Password</Text>
+                    <View style={styles.passwordInputWrapper}>
+                      <TextInput
+                        value={adminPassword}
+                        onChangeText={(val) => {
+                          setAdminPassword(val);
+                          if (errorMessage) setErrorMessage(null);
+                          if (isError) setIsError(false);
+                        }}
+                        placeholder="Enter admin password"
+                        placeholderTextColor="#9ca3af"
+                        secureTextEntry={!showPassword}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        onSubmitEditing={() => handleClockIn()}
+                        style={styles.passwordInput}
+                      />
+                      <Pressable
+                        onPress={() => setShowPassword(!showPassword)}
+                        style={styles.passwordEyeButton}
+                        accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? (
+                          <EyeOff size={18} color="#641b2a" />
+                        ) : (
+                          <Eye size={18} color="#9ca3af" />
+                        )}
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  /* Staff PIN Grid (4 Discrete Cells) */
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>4-Digit Staff PIN</Text>
+                    <PinCodeInput
+                      value={pin}
+                      length={4}
+                      onChange={(val) => {
+                        setPin(val);
+                        if (errorMessage) setErrorMessage(null);
+                        if (isError) setIsError(false);
+                      }}
+                      onComplete={handlePinComplete}
+                      isError={isError}
+                    />
+                  </View>
+                )}
 
-                {/* Primary CTA: Clock-In Button */}
+                {/* Primary CTA: Clock-In or Admin Login Button */}
                 <Animated.View style={[styles.clockInButtonWrapper, buttonAnimatedStyle]}>
                   <Pressable
                     onPress={() => handleClockIn()}
                     onPressIn={handlePressIn}
                     onPressOut={handlePressOut}
-                    disabled={isSubmitting || !username.trim() || pin.length !== 4}
+                    disabled={
+                      isSubmitting ||
+                      !username.trim() ||
+                      (authMode === 'admin' ? !adminPassword : pin.length !== 4)
+                    }
                     style={[
                       styles.clockInButton,
-                      (isSubmitting || !username.trim() || pin.length !== 4) &&
+                      (isSubmitting ||
+                        !username.trim() ||
+                        (authMode === 'admin' ? !adminPassword : pin.length !== 4)) &&
                         styles.clockInButtonDisabled,
                     ]}
                     accessibilityRole="button"
-                    accessibilityLabel="Clock In"
+                    accessibilityLabel={
+                      authMode === 'admin' ? 'Sign In as Administrator' : 'Clock In'
+                    }
                   >
                     <Text style={styles.clockInButtonText}>
-                      {isSubmitting ? 'Verifying...' : 'Clock - In'}
+                      {isSubmitting
+                        ? 'Verifying...'
+                        : authMode === 'admin'
+                          ? 'Sign In to Admin Console'
+                          : 'Clock - In'}
                     </Text>
                   </Pressable>
                 </Animated.View>

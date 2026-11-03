@@ -4,6 +4,7 @@ import { AlertTriangle, Trash2, X } from 'lucide-react-native';
 import { OrderLineItem } from '../../../../types/floor';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '../../../shared/toast/useToastStore';
+import { posApi } from '../../../shared/infrastructure/api';
 
 interface TableActionVoidModalProps {
   visible: boolean;
@@ -24,11 +25,12 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
 
   const isPostPrep = item.status === 'preparing' || item.status === 'ready';
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (isPostPrep) {
-      if (managerPin !== '9999') {
-        setPinError('Invalid Manager PIN. Contact Supervisor.');
-        toast.error('Invalid Manager PIN. Action denied.', {
+      const pinResult = await posApi.verifyManagerPin(managerPin);
+      if (!pinResult.success) {
+        setPinError(pinResult.error || 'Invalid Manager PIN. Contact Supervisor.');
+        toast.error(pinResult.error || 'Invalid Manager PIN. Action denied.', {
           title: 'Supervisor PIN Required',
         });
         return;

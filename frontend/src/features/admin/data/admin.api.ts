@@ -209,6 +209,7 @@ export interface CreateStaffUserPayload {
   email?: string | null;
   phone?: string | null;
   avatar_url?: string | null;
+  password?: string | null;
 }
 
 export interface CreateNonWorkflowStaffPayload {
@@ -986,6 +987,32 @@ export const adminApi = {
     }
     if (!/^\d{4}$/.test(cleanPin)) {
       throw new Error('A 4-digit numeric PIN is required for POS user accounts.');
+    }
+
+    // If password provided for Admin, call atomic RPC
+    if (payload.role === 'admin' && payload.password) {
+      const { data: rpcRes, error: rpcErr } = await (supabase.rpc as any)(
+        'create_staff_account_with_secrets',
+        {
+          p_display_name: payload.display_name.trim(),
+          p_username: cleanUsername,
+          p_pin: cleanPin,
+          p_role: payload.role,
+          p_job_title: payload.job_title?.trim() || null,
+          p_base_daily_rate: payload.base_daily_rate,
+          p_phone: payload.phone?.trim() || null,
+          p_email: payload.email?.trim() || null,
+          p_password: payload.password,
+        }
+      );
+      if (!rpcErr && rpcRes && rpcRes.success) {
+        const { data: createdUser } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', rpcRes.userId)
+          .single();
+        if (createdUser) return createdUser as StaffMemberAdmin;
+      }
     }
 
     const insertRow: Record<string, any> = {

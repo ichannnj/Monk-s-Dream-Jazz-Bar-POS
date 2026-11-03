@@ -21,6 +21,10 @@ export interface User {
   phone?: string;
   avatarUrl?: string;
   baseDailyRate?: number;
+  jobTitle?: string;
+  lastLoginAt?: string;
+  passwordUpdatedAt?: string;
+  pinUpdatedAt?: string;
 }
 
 interface AuthState {
@@ -29,6 +33,7 @@ interface AuthState {
   isOnline: boolean;
   isTrainingMode: boolean;
   setUser: (user: User | null) => void;
+  updateCurrentUser: (patch: Partial<User>) => void;
   setServerUrl: (url: string) => void;
   setIsOnline: (online: boolean) => void;
   setIsTrainingMode: (val: boolean) => void;
@@ -41,6 +46,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   isOnline: true,
   isTrainingMode: false,
   setUser: (user) => set({ currentUser: user }),
+  updateCurrentUser: (patch) =>
+    set((state) => ({
+      currentUser: state.currentUser ? { ...state.currentUser, ...patch } : null,
+    })),
   setServerUrl: (serverUrl) => set({ serverUrl }),
   setIsOnline: (isOnline) => set({ isOnline }),
   setIsTrainingMode: (isTrainingMode) => set({ isTrainingMode }),

@@ -32,19 +32,24 @@
 
 ## 🔑 Crucial Domain Rules & Invariants
 
-### 1. Staff Roles & 4-Digit PIN Matrix
+### 1. Staff Roles & Credentials Matrix
 
-Access control is PIN-based across all shared floor and counter tablets. PINs are strictly **4 digits**:
+| Role                | Login Credential / Floor Override                          | Primary Responsibilities                                                    |
+| ------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Admin / Manager** | `MonksDream9999!` (Password) / `9999` (Floor Override PIN) | Full access: recipe builder, stock audit, shift payroll, system settings    |
+| **Cashier**         | `1111` (PIN)                                               | Register, takeout queue, third-party delivery intake, bill settlement       |
+| **Floor Waiter**    | `2222` (PIN)                                               | Floor table ordering, customer named tabs, table moves & transfers          |
+| **Bartender**       | `3333` (PIN)                                               | Bar KDS tablet (`station_bar`): cocktails, liquor, wine prep                |
+| **Barista**         | `4444` (PIN)                                               | Bar KDS tablet (`station_bar`): coffee, espresso, teas, daytime drinks      |
+| **Kitchen Chef**    | `5555` (PIN)                                               | Kitchen KDS tablet (`station_kitchen`): hot food, pasta, pizza, prep        |
+| **FOH Runner**      | `6666` (PIN)                                               | Expediter Buzzout tablet (`foh_runner`): tray dispatch & delivery packaging |
 
-| Role                | 4-Digit PIN | Primary Responsibilities                                                    |
-| ------------------- | ----------- | --------------------------------------------------------------------------- |
-| **Admin / Manager** | `9999`      | Full access: recipe builder, stock audit, shift payroll, system settings    |
-| **Cashier**         | `1111`      | Register, takeout queue, third-party delivery intake, bill settlement       |
-| **Floor Waiter**    | `2222`      | Floor table ordering, customer named tabs, table moves & transfers          |
-| **Bartender**       | `3333`      | Bar KDS tablet (`station_bar`): cocktails, liquor, wine prep                |
-| **Barista**         | `4444`      | Bar KDS tablet (`station_bar`): coffee, espresso, teas, daytime drinks      |
-| **Kitchen Chef**    | `5555`      | Kitchen KDS tablet (`station_kitchen`): hot food, pasta, pizza, prep        |
-| **FOH Runner**      | `6666`      | Expediter Buzzout tablet (`foh_runner`): tray dispatch & delivery packaging |
+> **Dual-Mode Login & Cryptographic Secret Hashing (`pgcrypto` Bcrypt):**
+>
+> - **Admin Password Portal:** Administrator console sign-in strictly requires Username/Email and a secure password (`authenticate_admin_credentials`). Admin accounts are forbidden from signing in via PIN alone.
+> - **Floor Manager Override PIN:** In high-speed service, floor supervisors use their 4-digit Manager Override PIN (`verify_manager_override_pin`) for rapid on-floor approvals (item voids after prep and Cafe/Event mode switches) without exposing the master back-office password.
+> - **Zero Plaintext Secrets at Rest:** All passwords (`password_hash`) and staff PINs (`pin_hash`) are cryptographically hashed using PostgreSQL `pgcrypto` Blowfish bcrypt (`$2a$10$`). Plaintext PINs are automatically masked (`'****'`) upon creation.
+> - **Admin Profile & Security Management (`AdminProfileView.tsx`):** Dedicated back-office view allowing managers to update their personal identity, rotate passwords (gated by current password verification and live complexity meters), rotate Floor Override PINs, and audit security timestamps (`last_login_at`, `password_updated_at`, `pin_updated_at`).
 
 > **Unified Floor & Counter Intake Role:** Floor staff perform both table ordering and checkout/billing on handheld tablets without needing role-switching or manager overrides. Counter staff (Baristas/Bartenders on `station_bar`) also have access to the full shared Floor POS (`FloorWorkspaceView`), Checks History, and Cash Drawer directly from their KDS tablet for customers ordering walk-up at the bar.
 >

@@ -40,6 +40,33 @@ export class PosApiClient {
     return this.auth.loginWithPin(pin);
   }
 
+  loginAdminWithPassword(identifier: string, password: string) {
+    return this.auth.loginAdminWithPassword(identifier, password);
+  }
+
+  verifyManagerPin(pin: string) {
+    return this.auth.verifyManagerPin(pin);
+  }
+
+  updateAdminProfile(payload: {
+    userId: string;
+    displayName: string;
+    username: string;
+    jobTitle?: string;
+    email?: string;
+    phone?: string;
+  }) {
+    return this.auth.updateAdminProfile(payload);
+  }
+
+  changeAdminPassword(userId: string, currentPassword: string, newPassword: string) {
+    return this.auth.changeAdminPassword(userId, currentPassword, newPassword);
+  }
+
+  changeAdminOverridePin(userId: string, currentPassword: string, newPin: string) {
+    return this.auth.changeAdminOverridePin(userId, currentPassword, newPin);
+  }
+
   getStaffList() {
     return this.auth.getStaffList();
   }

@@ -8,7 +8,8 @@ export type AdminRoute =
   | 'sales'
   | 'attendance'
   | 'tables'
-  | 'settings';
+  | 'settings'
+  | 'profile';
 
 export interface BestSellerItem {
   id: string;

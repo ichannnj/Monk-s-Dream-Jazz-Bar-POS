@@ -10,6 +10,7 @@ interface AdminHeaderProps {
   onToggleOperatingMode: () => void;
   onSwitchToFloor?: () => void;
   onOpenDrawer?: () => void;
+  onNavigateProfile?: () => void;
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
@@ -18,6 +19,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   onToggleOperatingMode,
   onSwitchToFloor,
   onOpenDrawer,
+  onNavigateProfile,
 }) => {
   const { logout } = useAuthStore();
   const [currentTimeStr, setCurrentTimeStr] = useState('Tue, Oct 6 - 3:00 PM');
@@ -79,6 +81,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         return 'Sales & Reports';
       case 'attendance':
         return 'Attendance';
+      case 'profile':
+        return 'My Profile & Security';
       default:
         return 'Admin Console';
     }
@@ -152,7 +156,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         )}
 
         {/* Dynamic Staff Profile Pill (Extra Large Desktop Only) */}
-        <View className="hidden xl:flex flex-row items-center rounded-xl border border-stone-200 bg-stone-50/80 px-3.5 py-1.5 min-h-[48px]">
+        <Pressable
+          onPress={onNavigateProfile}
+          className="hidden xl:flex flex-row items-center rounded-xl border border-stone-200 bg-stone-50/80 px-3.5 py-1.5 min-h-[48px] active:bg-stone-100"
+          accessibilityLabel="Open Admin Profile"
+        >
           <View className="h-9 w-9 items-center justify-center rounded-full bg-[#800020]/15 border border-[#800020]/30">
             <Text className="text-base font-black text-[#800020]">{staffInitials}</Text>
           </View>
@@ -160,7 +168,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             <Text className="text-base font-bold text-stone-800 leading-tight">{staffName}</Text>
             <Text className="text-base font-medium text-stone-500">{staffRole}</Text>
           </View>
-        </View>
+        </Pressable>
 
         {/* Logout / Lock Button */}
         <Pressable

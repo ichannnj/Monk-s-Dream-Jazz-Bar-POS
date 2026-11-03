@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { X, Sparkles, Coffee, ShieldCheck, Clock, AlertTriangle } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { posApi } from '@/features/shared/infrastructure/api';
 
 interface ManagerModeSwitchModalProps {
   visible: boolean;
@@ -41,9 +42,10 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
 
   const handleConfirm = async () => {
     if (!isAdminUser) {
-      if (managerPin !== '9999') {
-        setPinError('Invalid Manager PIN. Default PIN is 9999.');
-        toast.error('Invalid Manager PIN. Action denied.', {
+      const pinResult = await posApi.verifyManagerPin(managerPin);
+      if (!pinResult.success) {
+        setPinError(pinResult.error || 'Invalid Manager PIN.');
+        toast.error(pinResult.error || 'Invalid Manager PIN. Action denied.', {
           title: 'Authorization Required',
         });
         return;

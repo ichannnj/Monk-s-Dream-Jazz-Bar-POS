@@ -11,6 +11,7 @@ import {
   Clock,
   Music,
   Settings,
+  Shield,
 } from 'lucide-react-native';
 import { useAuthStore } from '@/features/auth';
 import type { AdminRoute } from '../../domain/admin.types';
@@ -64,6 +65,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { id: 'sales', label: 'Sales & Transactions', icon: Receipt },
     { id: 'attendance', label: 'Attendance', icon: Clock },
     { id: 'settings', label: 'Venue Settings', icon: Settings },
+    { id: 'profile', label: 'My Profile & Security', icon: Shield },
   ];
 
   const renderNavGroup = (title: string, items: NavItem[]) => (
@@ -132,7 +134,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </View>
 
       {/* Dynamic Staff Profile Footer */}
-      <View className="border-t border-white/15 pt-5 pb-1">
+      <Pressable
+        onPress={() => onRouteChange('profile')}
+        className="border-t border-white/15 pt-5 pb-1 active:opacity-85"
+        accessibilityLabel="Navigate to My Profile & Security"
+      >
         <View className="flex-row items-center px-2 py-1">
           <View className="h-10 w-10 items-center justify-center rounded-full bg-black/30 border border-white/25">
             <Text className="text-base font-black text-white">{staffInitials}</Text>
@@ -142,7 +148,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <Text className="text-sm font-medium text-white/70">{staffRole}</Text>
           </View>
         </View>
-      </View>
+      </Pressable>
     </View>
   );
 };

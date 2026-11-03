@@ -26,6 +26,7 @@ import { AdminStationsView } from './views/AdminStationsView';
 import { AdminTransactionsView } from './views/AdminTransactionsView';
 import { AdminSettingsView } from './views/AdminSettingsView';
 import { AdminTableLayoutView } from './views/AdminTableLayoutView';
+import { AdminProfileView } from './views/AdminProfileView';
 import { ManagerModeSwitchModal } from '@/features/floor/presentation/ManagerModeSwitchModal';
 
 export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> = ({
@@ -195,6 +196,8 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         return <AdminTableLayoutView />;
       case 'settings':
         return <AdminSettingsView onRefresh={loadData} />;
+      case 'profile':
+        return <AdminProfileView />;
       case 'chats':
         return (
           <View className="flex-1">
@@ -227,6 +230,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
           onToggleOperatingMode={handleToggleMode}
           onSwitchToFloor={onSwitchToFloor}
           onOpenDrawer={() => setIsDrawerOpen(true)}
+          onNavigateProfile={() => setCurrentRoute('profile')}
         />
 
         {/* Dynamic Route Body */}

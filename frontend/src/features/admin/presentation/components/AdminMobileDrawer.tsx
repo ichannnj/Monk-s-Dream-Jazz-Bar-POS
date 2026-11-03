@@ -11,6 +11,7 @@ import {
   Clock,
   Music,
   Settings,
+  Shield,
   X,
   LogOut,
   Layers,
@@ -79,6 +80,7 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
     { id: 'sales', label: 'Sales & Transactions', icon: Receipt },
     { id: 'attendance', label: 'Attendance', icon: Clock },
     { id: 'settings', label: 'Venue Settings', icon: Settings },
+    { id: 'profile', label: 'My Profile & Security', icon: Shield },
   ];
 
   const handleSelectRoute = (route: AdminRoute) => {
@@ -159,8 +161,12 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
               </Pressable>
             </View>
 
-            {/* Staff Card */}
-            <View className="mb-5 flex-row items-center rounded-xl bg-white/10 p-3 border border-white/15">
+            {/* Staff Card (Clickable to Profile) */}
+            <Pressable
+              onPress={() => handleSelectRoute('profile')}
+              className="mb-5 flex-row items-center rounded-xl bg-white/10 p-3 border border-white/15 active:bg-white/20"
+              accessibilityLabel="View Profile & Security"
+            >
               <View className="h-11 w-11 items-center justify-center rounded-full bg-black/30 border border-white/25">
                 <Text className="text-base font-black text-white">{staffInitials}</Text>
               </View>
@@ -168,7 +174,7 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
                 <Text className="text-base font-bold text-white">{staffName}</Text>
                 <Text className="text-base font-medium text-white/75">{staffRole}</Text>
               </View>
-            </View>
+            </Pressable>
 
             {/* Scrollable Nav Items */}
             <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>

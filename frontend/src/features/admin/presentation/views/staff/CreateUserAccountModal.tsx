@@ -1,6 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { UserCheck, Shield, KeyRound, Mail, Phone, Briefcase, AtSign } from 'lucide-react-native';
+import { View, Text, Pressable, TextInput } from 'react-native';
+import {
+  UserCheck,
+  Shield,
+  KeyRound,
+  Mail,
+  Phone,
+  Briefcase,
+  AtSign,
+  Lock,
+  Eye,
+  EyeOff,
+} from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type StaffRoleType } from '../../../data/admin.api';
 import { AdminModal } from '../../components/AdminModal';
@@ -36,6 +47,8 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
   const [baseDailyRate, setBaseDailyRate] = useState('645.00');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -48,6 +61,8 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
       setBaseDailyRate('645.00');
       setPhone('');
       setEmail('');
+      setAdminPassword('');
+      setShowAdminPassword(false);
     }
   }, [visible]);
 
@@ -92,6 +107,13 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
       return;
     }
 
+    if (role === 'admin' && adminPassword.length < 8) {
+      toast.error('Admin accounts require an initial password of at least 8 characters', {
+        title: 'Password Required',
+      });
+      return;
+    }
+
     const parsedRate = parseFloat(baseDailyRate);
     if (isNaN(parsedRate) || parsedRate < 0) {
       toast.error('Please enter a valid daily shift rate', { title: 'Validation Error' });
@@ -109,6 +131,7 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
         base_daily_rate: parsedRate,
         phone: phone.trim() || null,
         email: email.trim() || null,
+        password: role === 'admin' ? adminPassword : null,
       });
 
       toast.success(
@@ -197,7 +220,7 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
         <View className="flex-col sm:flex-row gap-4">
           <View className="flex-1">
             <AdminInput
-              label="4-Digit Security PIN"
+              label={role === 'admin' ? '4-Digit Manager Override PIN' : '4-Digit Security PIN'}
               required
               keyboardType="number-pad"
               maxLength={4}
@@ -205,7 +228,11 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
               value={pin}
               onChangeText={handlePinChange}
               leftElement={<KeyRound size={16} color="#800020" />}
-              helperText={`${pin.length}/4 digits — Required for POS login`}
+              helperText={
+                role === 'admin'
+                  ? `${pin.length}/4 digits — For Floor POS overrides`
+                  : `${pin.length}/4 digits — Required for POS login`
+              }
             />
           </View>
           <View className="flex-1">
@@ -219,6 +246,39 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
             />
           </View>
         </View>
+
+        {role === 'admin' && (
+          <View className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 space-y-2">
+            <View className="flex-row items-center gap-2">
+              <Lock size={16} color="#b45309" />
+              <Text className="text-base font-bold text-amber-900">
+                Initial Administrator Password <Text className="text-rose-600 font-bold">*</Text>
+              </Text>
+            </View>
+            <View className="flex-row items-center rounded-xl border border-amber-300 bg-white px-3.5 h-[50px]">
+              <TextInput
+                value={adminPassword}
+                onChangeText={setAdminPassword}
+                placeholder="Minimum 8 characters (e.g. MonksDream9999!)"
+                placeholderTextColor="#a8a29e"
+                secureTextEntry={!showAdminPassword}
+                autoCapitalize="none"
+                style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+              />
+              <Pressable onPress={() => setShowAdminPassword(!showAdminPassword)} className="p-2">
+                {showAdminPassword ? (
+                  <EyeOff size={18} color="#78716c" />
+                ) : (
+                  <Eye size={18} color="#a8a29e" />
+                )}
+              </Pressable>
+            </View>
+            <Text className="text-sm font-medium text-amber-800">
+              Required for signing in to the Administrator Back-Office console. Stored as Blowfish
+              bcrypt hash.
+            </Text>
+          </View>
+        )}
 
         {/* System Role Selector */}
         <View>
