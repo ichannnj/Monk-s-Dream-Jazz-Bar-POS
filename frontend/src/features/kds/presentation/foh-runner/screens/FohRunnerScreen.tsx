@@ -1,21 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, ScrollView, Text, StyleSheet } from 'react-native';
+import { BellRing, Layers, Utensils, ShoppingBag } from 'lucide-react-native';
 import { supabase } from '../../../../shared/infrastructure/supabase';
 import { useAuthStore } from '../../../../auth/application/useAuthStore';
 import { toast } from '../../../../shared/toast/useToastStore';
 import { Sidebar, NavTabId } from '../../../../shared/navigation/Sidebar';
+import { useResponsive } from '../../../../shared/hooks/useResponsive';
+import { PosDropdown, PosDropdownOption } from '../../../../shared/ui/PosDropdown';
 import { SharedChatView } from '../../../../chat/presentation/SharedChatView';
 import { useChatStore } from '../../../../chat';
 import { SharedAlertsView } from '../../../../alerts/presentation/SharedAlertsView';
 import { ConfirmationModal } from '../../../../shared/ui/ConfirmationModal';
 import { StationHeader } from '../../common/components/StationHeader';
-import { RunnerTicket, ConfirmHandoffState } from '../types';
+import { ConfirmHandoffState } from '../types';
 import { useRunnerTickets } from '../hooks/useRunnerTickets';
 import { RunnerTicketCard } from '../components/RunnerTicketCard';
 
+type RunnerQueueFilter = 'all' | 'ready' | 'dine_in' | 'off_premise';
+
 export const FohRunnerScreen: React.FC = () => {
   const { currentUser, logout } = useAuthStore();
+  const { isMobile } = useResponsive();
   const [activeTab, setActiveTab] = useState<NavTabId>('board');
+  const [queueFilter, setQueueFilter] = useState<RunnerQueueFilter>('all');
   const [confirmHandoff, setConfirmHandoff] = useState<ConfirmHandoffState | null>(null);
 
   // Heartbeat tracking to report runner station online status to PostgreSQL
@@ -56,8 +63,43 @@ export const FohRunnerScreen: React.FC = () => {
     setConfirmHandoff(null);
   };
 
+  const filteredRunnerTickets = useMemo(() => {
+    return runnerTickets.filter((t) => {
+      if (queueFilter === 'ready') return t.allDone;
+      if (queueFilter === 'dine_in') return t.orderType === 'dine_in';
+      if (queueFilter === 'off_premise') return t.orderType !== 'dine_in';
+      return true;
+    });
+  }, [runnerTickets, queueFilter]);
+
+  const queueFilterOptions: PosDropdownOption<RunnerQueueFilter>[] = [
+    {
+      value: 'all',
+      label: 'All Active',
+      badge: runnerTickets.length,
+      icon: Layers,
+    },
+    {
+      value: 'ready',
+      label: 'Buzzout Ready',
+      badge: fullyReadyCount,
+      icon: BellRing,
+      dotColor: '#16a34a',
+    },
+    {
+      value: 'dine_in',
+      label: 'Dine-In Tables',
+      icon: Utensils,
+    },
+    {
+      value: 'off_premise',
+      label: 'Takeout & Delivery',
+      icon: ShoppingBag,
+    },
+  ];
+
   return (
-    <View style={styles.screenContainer}>
+    <View style={[styles.screenContainer, isMobile && styles.screenContainerMobile]}>
       <Sidebar
         mode="kds"
         activeTab={activeTab}
@@ -67,7 +109,7 @@ export const FohRunnerScreen: React.FC = () => {
         alertCount={unreadAlertCount}
       />
 
-      <View style={styles.mainContent}>
+      <View style={[styles.mainContent, isMobile && styles.mainContentMobile]}>
         {activeTab === 'chat' ? (
           <SharedChatView
             senderRole="FOH Runner"
@@ -79,18 +121,27 @@ export const FohRunnerScreen: React.FC = () => {
         ) : (
           <>
             <StationHeader
-              title="Pass Staging & Multi-Station Assembly"
+              title="Pass Staging & Assembly"
               stationType="runner"
               activeTicketsCount={runnerTickets.length}
               urgentTicketsCount={fullyReadyCount}
               onLogout={handleLogout}
+              rightAccessory={
+                <PosDropdown
+                  options={queueFilterOptions}
+                  value={queueFilter}
+                  onChange={setQueueFilter}
+                  sheetTitle="Filter Expediter Queue"
+                  className="min-w-[165px]"
+                />
+              }
             />
 
             <ScrollView
               showsVerticalScrollIndicator={false}
               contentContainerStyle={styles.scrollContent}
             >
-              {runnerTickets.length === 0 ? (
+              {filteredRunnerTickets.length === 0 ? (
                 <View style={styles.emptyContainer}>
                   <Text style={styles.emptyTitle}>Pass Staging Clear</Text>
                   <Text style={styles.emptySubtitle}>
@@ -100,13 +151,14 @@ export const FohRunnerScreen: React.FC = () => {
                 </View>
               ) : (
                 <View style={styles.grid}>
-                  {runnerTickets.map((ticket) => (
-                    <RunnerTicketCard
-                      key={ticket.id}
-                      ticket={ticket}
-                      onDeliverTarget={(t, target) => setConfirmHandoff({ ticket: t, target })}
-                      onHandoff={(t) => setConfirmHandoff({ ticket: t })}
-                    />
+                  {filteredRunnerTickets.map((ticket) => (
+                    <View key={ticket.id} className="w-full md:w-[48%] xl:w-[32%]">
+                      <RunnerTicketCard
+                        ticket={ticket}
+                        onDeliverTarget={(t, target) => setConfirmHandoff({ ticket: t, target })}
+                        onHandoff={(t) => setConfirmHandoff({ ticket: t })}
+                      />
+                    </View>
                   ))}
                 </View>
               )}
@@ -153,11 +205,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#f8fafc',
   },
+  screenContainerMobile: {
+    flexDirection: 'column',
+    paddingHorizontal: 10,
+    paddingTop: 8,
+  },
   mainContent: {
     flex: 1,
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 24,
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 20,
+  },
+  mainContentMobile: {
+    paddingHorizontal: 0,
+    paddingTop: 4,
+    paddingBottom: 12,
   },
   scrollContent: {
     paddingTop: 16,

@@ -6,11 +6,11 @@ import { useAuthStore } from '../../../auth/application/useAuthStore';
 import { useOrderStore } from '../../../orders/application/useOrderStore';
 import { toast } from '../../../shared/toast/useToastStore';
 import { Sidebar, NavTabId } from '../../../shared/navigation/Sidebar';
-import { BaristaKdsHeader } from '../barista/components/BaristaKdsHeader';
+import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { BaristaKanbanColumn } from '../barista/components/BaristaKanbanColumn';
 import { BarTicket } from '../barista/types';
 import { KdsModals } from './components/KdsModals';
-import { KdsToolbar } from './components/KdsToolbar';
+import { KdsToolbar, KdsStageFilter } from './components/KdsToolbar';
 import { SharedChatView } from '../../../chat/presentation/SharedChatView';
 import { useChatStore } from '../../../chat';
 import { SharedAlertsView } from '../../../alerts/presentation/SharedAlertsView';
@@ -43,10 +43,12 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   chatDefaultChannel,
 }) => {
   const { currentUser, logout, isOnline, setIsOnline } = useAuthStore();
+  const { isMobile } = useResponsive();
   const alerts = useOrderStore((state) => state.alerts);
   const addAlert = useOrderStore((state) => state.addAlert);
 
   const [activeSidebarTab, setActiveSidebarTab] = useState<NavTabId>('board');
+  const [mobileStage, setMobileStage] = useState<KdsStageFilter>('new');
   const [audioChimes, setAudioChimes] = useState(true);
   const [stationFilter, setStationFilter] = useState(true);
 
@@ -162,7 +164,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
       .toUpperCase() || defaultStaffInitials;
 
   return (
-    <View style={styles.screenContainer}>
+    <View style={[styles.screenContainer, isMobile && styles.screenContainerMobile]}>
       {/* 1. App-Wide Navigation Sidebar (mode="kds") */}
       <Sidebar
         mode="kds"
@@ -181,6 +183,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
       <View
         style={[
           styles.mainContent,
+          isMobile && styles.mainContentMobile,
           (activeSidebarTab === 'chat' || activeSidebarTab === 'tables') && styles.mainContentFlush,
         ]}
       >
@@ -205,60 +208,66 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           <SharedAlertsView onBack={() => setActiveSidebarTab('board')} />
         ) : (
           <>
-            {/* Top Header Banner */}
-            <BaristaKdsHeader
+            {/* Unified Station Header & Action Toolbar */}
+            <KdsToolbar
               stationName={stationName}
               isOnline={isOnline}
               staffName={staffDisplayName}
-              staffRole={staffDisplayRole}
               staffInitials={staffInitials}
               onStaffPress={() => setIsSettingsModalOpen(true)}
-            />
-
-            {/* Subheader & Action Toolbar */}
-            <KdsToolbar
               stationSubtitle={stationSubtitle}
               activeTicketsCount={activeTicketsCount}
               outOfStockCount={outOfStockItems.length}
+              newCount={newTickets.length}
+              preparingCount={preparingTickets.length}
+              readyCount={readyTickets.length}
+              mobileStage={mobileStage}
+              onMobileStageChange={setMobileStage}
               onOpenAvailability={() => setIsAvailabilityModalOpen(true)}
               onOpenOutOfStockList={() => setIsOutOfStockListModalOpen(true)}
               onOpenStockAdjust={() => setIsStockModalOpen(true)}
             />
 
-            {/* 3. Three-Column Kanban Board */}
+            {/* 3. Kanban Board (Single Stage on Mobile <768px | Three Columns on >=768px) */}
             <View style={styles.kanbanBoard}>
-              <BaristaKanbanColumn
-                stage="new"
-                title="New"
-                count={newTickets.length}
-                tickets={newTickets}
-                overflowCount={newTickets.length > 2 ? newTickets.length - 1 : 0}
-                onStartTicket={handleStartTicket}
-                onViewFohStatus={(ticket) => setFohModalTicket(ticket)}
-                onToggleItem={handleToggleItem}
-              />
+              {(!isMobile || mobileStage === 'new') && (
+                <BaristaKanbanColumn
+                  stage="new"
+                  title="New"
+                  count={newTickets.length}
+                  tickets={newTickets}
+                  overflowCount={newTickets.length > 2 ? newTickets.length - 1 : 0}
+                  onStartTicket={handleStartTicket}
+                  onViewFohStatus={(ticket) => setFohModalTicket(ticket)}
+                  onToggleItem={handleToggleItem}
+                />
+              )}
 
-              <BaristaKanbanColumn
-                stage="preparing"
-                title="Preparing"
-                count={preparingTickets.length}
-                tickets={preparingTickets}
-                overflowCount={preparingTickets.length > 2 ? preparingTickets.length - 1 : 1}
-                onReadyTicket={handleReadyTicket}
-                onReadyBlockedPress={(ticket) => setFohModalTicket(ticket)}
-                onToggleItem={handleToggleItem}
-              />
+              {(!isMobile || mobileStage === 'preparing') && (
+                <BaristaKanbanColumn
+                  stage="preparing"
+                  title="Preparing"
+                  count={preparingTickets.length}
+                  tickets={preparingTickets}
+                  overflowCount={preparingTickets.length > 2 ? preparingTickets.length - 1 : 1}
+                  onReadyTicket={handleReadyTicket}
+                  onReadyBlockedPress={(ticket) => setFohModalTicket(ticket)}
+                  onToggleItem={handleToggleItem}
+                />
+              )}
 
-              <BaristaKanbanColumn
-                stage="ready"
-                title="Ready"
-                count={readyTickets.length}
-                tickets={readyTickets}
-                overflowCount={readyTickets.length > 2 ? 1 : 0}
-                onRecallTicket={handleRecallTicket}
-                onDismissTicket={handleDismissReadyTicket}
-                onToggleItem={handleToggleItem}
-              />
+              {(!isMobile || mobileStage === 'ready') && (
+                <BaristaKanbanColumn
+                  stage="ready"
+                  title="Ready"
+                  count={readyTickets.length}
+                  tickets={readyTickets}
+                  overflowCount={readyTickets.length > 2 ? 1 : 0}
+                  onRecallTicket={handleRecallTicket}
+                  onDismissTicket={handleDismissReadyTicket}
+                  onToggleItem={handleToggleItem}
+                />
+              )}
             </View>
           </>
         )}
@@ -324,11 +333,22 @@ const styles = StyleSheet.create({
     paddingLeft: 14,
     paddingRight: 18,
   },
+  screenContainerMobile: {
+    flexDirection: 'column',
+    paddingVertical: 8,
+    paddingLeft: 10,
+    paddingRight: 10,
+  },
   mainContent: {
     flex: 1,
     paddingHorizontal: 12,
     paddingTop: 8,
     paddingBottom: 12,
+  },
+  mainContentMobile: {
+    paddingHorizontal: 0,
+    paddingTop: 0,
+    paddingBottom: 8,
   },
   mainContentFlush: {
     paddingHorizontal: 0,

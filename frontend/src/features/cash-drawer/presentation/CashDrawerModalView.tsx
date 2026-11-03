@@ -5,6 +5,7 @@ import { useOrderStore } from '../../orders/application/useOrderStore';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '../../shared/toast/useToastStore';
+import { PosDropdown, PosDropdownOption } from '../../shared/ui/PosDropdown';
 import { CashDrawerMetricsGrid } from './cash-drawer/CashDrawerMetricsGrid';
 import { CashDrawerLedger } from './cash-drawer/CashDrawerLedger';
 import { CashDrawerActionModal, CashActionType } from './cash-drawer/CashDrawerActionModal';
@@ -117,97 +118,85 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
     setActiveModal('none');
   };
 
+  const drawerOptions: PosDropdownOption<'main' | 'bar'>[] = [
+    {
+      value: 'main',
+      label: 'Main Floor Till',
+      description: 'Waiter & Cashier counter till',
+      icon: Vault,
+    },
+    {
+      value: 'bar',
+      label: 'Bar Station Till',
+      description: 'Barista & Bartender station till',
+      icon: Coins,
+    },
+  ];
+
+  const drawerActions: PosDropdownOption<'cash_in' | 'cash_out' | 'drop' | 'audit'>[] = [
+    {
+      value: 'cash_in',
+      label: 'Cash In (Add Change Float)',
+      description: 'Record additional bills or coin change added to drawer',
+      icon: ArrowDownCircle,
+      variant: 'success',
+    },
+    {
+      value: 'cash_out',
+      label: 'Petty Cash Paid-Out',
+      description: 'Record petty cash expense or supplier payout',
+      icon: ArrowUpCircle,
+      variant: 'warning',
+    },
+    {
+      value: 'drop',
+      label: 'Safe Drop Transfer',
+      description: 'Transfer excess cash from register to floor safe',
+      icon: Vault,
+    },
+    {
+      value: 'audit',
+      label: 'End Shift Cash Audit',
+      description: 'Reconcile physical cash count against expected balance',
+      icon: Calculator,
+    },
+  ];
+
   return (
-    <View className="flex-1 bg-gray-50 p-6">
-      {/* Top Header Card */}
-      <View className="flex-row items-center justify-between bg-white p-5 rounded-3xl border border-gray-100 mb-4 shadow-sm">
-        <View className="flex-row items-center gap-3.5">
-          <View className="w-12 h-12 rounded-2xl bg-wine-800 items-center justify-center shadow-sm">
-            <Coins size={22} color="#ffffff" strokeWidth={2.4} />
-          </View>
-          <View>
-            <Text className="text-xl font-extrabold text-jazz-text">
-              Cash Drawer Management & Audit
-            </Text>
-            <Text className="text-base text-gray-500 font-medium">
-              Monitor opening float, paid-outs, safe drops, and shift reconciliation
-            </Text>
-          </View>
-        </View>
-
-        {/* Quick Action Buttons */}
+    <View className="flex-1 bg-gray-50 p-3 sm:p-6">
+      {/* Unified Responsive Top Header Card */}
+      <View className="flex-col lg:flex-row lg:items-center justify-between bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 mb-4 shadow-sm gap-3">
         <View className="flex-row items-center gap-3">
-          <Pressable
-            onPress={() => setActiveModal('cash_in')}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-2xl bg-emerald-600 active:bg-emerald-700 min-h-[48px]"
-          >
-            <ArrowDownCircle size={18} color="#ffffff" />
-            <Text className="text-base font-bold text-white">Cash In</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setActiveModal('cash_out')}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-2xl bg-amber-600 active:bg-amber-700 min-h-[48px]"
-          >
-            <ArrowUpCircle size={18} color="#ffffff" />
-            <Text className="text-base font-bold text-white">Petty Cash Out</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setActiveModal('drop')}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-2xl bg-wine-800 active:bg-wine-900 min-h-[48px]"
-          >
-            <Vault size={18} color="#ffffff" />
-            <Text className="text-base font-bold text-white">Safe Drop</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setActiveModal('audit')}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-2xl bg-slate-800 active:bg-slate-900 min-h-[48px]"
-          >
-            <Calculator size={18} color="#ffffff" />
-            <Text className="text-base font-bold text-white">End Shift Audit</Text>
-          </Pressable>
+          <View className="w-11 h-11 rounded-2xl bg-wine-800 items-center justify-center shadow-sm">
+            <Coins size={20} color="#ffffff" strokeWidth={2.4} />
+          </View>
+          <Text className="text-xl font-extrabold text-jazz-text">
+            Cash Drawer &amp; Till Audit
+          </Text>
         </View>
-      </View>
 
-      {/* Drawer Scope Selector */}
-      <View className="flex-row items-center gap-3 mb-4">
-        <Pressable
-          onPress={() => setActiveDrawer('main')}
-          className={`flex-1 flex-row items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl border min-h-[48px] ${
-            activeDrawer === 'main'
-              ? 'bg-wine-800 border-wine-900 shadow-sm'
-              : 'bg-white border-gray-200 active:bg-gray-50'
-          }`}
-        >
-          <Vault size={18} color={activeDrawer === 'main' ? '#ffffff' : '#6b7280'} />
-          <Text
-            className={`text-base font-bold ${
-              activeDrawer === 'main' ? 'text-white' : 'text-gray-700'
-            }`}
-          >
-            Main Floor Till (Waiter & Cashier)
-          </Text>
-        </Pressable>
+        {/* Till Scope Selector + Cash Action Dropdown */}
+        <View className="flex-row flex-wrap items-center gap-2.5">
+          <PosDropdown
+            options={drawerOptions}
+            value={activeDrawer}
+            onChange={setActiveDrawer}
+            prefixLabel="Till:"
+            sheetTitle="Select Cash Drawer Till"
+            className="flex-1 sm:flex-initial min-w-[180px]"
+          />
 
-        <Pressable
-          onPress={() => setActiveDrawer('bar')}
-          className={`flex-1 flex-row items-center justify-center gap-2.5 py-3.5 px-4 rounded-2xl border min-h-[48px] ${
-            activeDrawer === 'bar'
-              ? 'bg-wine-800 border-wine-900 shadow-sm'
-              : 'bg-white border-gray-200 active:bg-gray-50'
-          }`}
-        >
-          <Coins size={18} color={activeDrawer === 'bar' ? '#ffffff' : '#6b7280'} />
-          <Text
-            className={`text-base font-bold ${
-              activeDrawer === 'bar' ? 'text-white' : 'text-gray-700'
-            }`}
-          >
-            Bar Station Till (Barista & Bartender)
-          </Text>
-        </Pressable>
+          <PosDropdown
+            mode="action"
+            options={drawerActions}
+            onChange={(act) => setActiveModal(act)}
+            triggerLabel="Drawer Actions"
+            triggerIcon={Calculator}
+            variant="wine"
+            sheetTitle="Cash Drawer Operations"
+            className="flex-1 sm:flex-initial min-w-[170px]"
+          />
+        </View>
       </View>
 
       {/* KPI Metrics Grid */}

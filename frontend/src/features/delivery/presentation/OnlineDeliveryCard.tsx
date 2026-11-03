@@ -100,16 +100,16 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1.5,
-    padding: 20,
+    padding: 15,
     shadowColor: '#2b0f16',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 3,
     justifyContent: 'space-between',
-    minHeight: 220,
+    minHeight: 156,
   },
   mainPressableArea: {
     flex: 1,

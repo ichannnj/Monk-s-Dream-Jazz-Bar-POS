@@ -18,7 +18,8 @@
 
 ### Operating Mode Architecture & Revenue Segregation Invariant:
 
-- **Master Venue Switch:** Managed via `venue_settings.operating_mode` (`'CAFE' | 'EVENT'`). Modifiable from Admin Back-Office or Floor POS Command Bar with Manager PIN `9999` (`ManagerModeSwitchModal.tsx`).
+- **Master Venue Switch & Confirmation Dialog:** Managed via `venue_settings.operating_mode` (`'CAFE' | 'EVENT'`) and `venue_settings.mode_switched_at`. Switching modes from either Admin Back-Office (`AdminHeader`, `AdminMobileDrawer`) or Floor POS Command Bar always prompts a confirmation modal (`ManagerModeSwitchModal.tsx`, requiring Manager PIN `9999` for non-admin roles).
+- **6:00 AM Daily Automatic Revert to Cafe Mode:** Event Mode automatically reverts to Daytime Cafe Mode (`'CAFE'`) every morning at **6:00 AM** via PostgreSQL `reconcile_operating_mode_6am()`, tab-creation trigger `trg_reconcile_tab_mode_before_insert`, `pg_cron`, and live `useVenueStore` 6:00 AM timers + wakeup checks.
 - **Reactive Synchronization:** Client state is synchronized reactively across all workstations via `useVenueStore` listening on Supabase Realtime channel `pos_venue_settings_sync`.
 - **Creation-Time Tagging:** New customer tabs inherit the active operating mode at creation time (`tabs.operating_mode`). Open tabs maintain their tagged mode across shift transitions to prevent artificial mid-service revenue reallocations.
 - **Settlement Cascade:** When settled, `settle_tab_and_record_payment` atomically writes the tab's `operating_mode` into `payments.operating_mode`.
@@ -46,6 +47,11 @@ Access control is PIN-based across all shared floor and counter tablets. PINs ar
 | **FOH Runner**      | `6666`      | Expediter Buzzout tablet (`foh_runner`): tray dispatch & delivery packaging |
 
 > **Unified Floor & Counter Intake Role:** Floor staff perform both table ordering and checkout/billing on handheld tablets without needing role-switching or manager overrides. Counter staff (Baristas/Bartenders on `station_bar`) also have access to the full shared Floor POS (`FloorWorkspaceView`), Checks History, and Cash Drawer directly from their KDS tablet for customers ordering walk-up at the bar.
+>
+> **Dual Staff Identity Model (POS Users vs. Non-User Venue Staff):**
+>
+> - **POS App Users (`is_workflow_staff: true`):** Operational staff who log into POS tablets with a `username` and a 4-digit numeric `pin`, assigned to one of the system terminal roles (`admin`, `cashier`, `waiter`, `station_bar`, `station_cafe`, `station_food`, `foh_runner`).
+> - **Non-User Venue Personnel (`is_workflow_staff: false`):** Venue support staff who do not use POS terminals (e.g., Dishwashers, Security, Cleaners, Sound Techs, Musicians, Barbacks, Kitchen Prep). They are registered in `public.users` with a custom `job_title` and `pin = NULL` for daily shift payroll and discretionary bonuses, while `authenticate_staff_credentials` strictly blocks non-workflow staff from logging into POS terminals.
 
 ### 2. Category-Based Station Routing (Not Location-Based)
 
@@ -104,6 +110,7 @@ To ensure token efficiency and prevent maintenance degradation:
 - **250–350 LOC Standard:** Maintain a target ceiling of 250–350 physical lines per file, separating views, state, and domain logic cleanly.
 - **Admin Console & Operations Command Center:** Manager console (`role: 'admin'`, PIN `9999`) provides real-time telemetry (sales in ₱, hourly curve, best sellers, station ticket turnarounds, and needs-attention alerts) with full sidebar access to Inventory MAC Hub & restock intake, Recipe BOM (+20% outside food rule), Staff attendance & bonuses, Station KDS monitoring, Checks history, and interactive slide-over Team Chat.
 - **Tablet Team Chats & Inter-Station Comms:** Unified 2-column communication workspace (`features/chat`) directly persisted to Supabase PostgreSQL (`chat_conversations`, `chat_participants`, `chat_messages`), featuring zero mock data at runtime, Supabase Realtime synchronization across all stations, Messenger-style auto-scrolling with smart bottom anchoring and jump pills, 1-on-1 staff Direct Messages, pinned shift announcements (allergies/briefings), and POS system alert card streaming across Floor POS, KDS tablets, and Admin.
+- **Dropdown-First Visual Declutter & Phone-to-Desktop Responsiveness:** Every operational screen (`WaiterCashierScreen`, `FloorWorkspaceView`, `UnifiedKdsScreen`, `FohRunnerScreen`), modal (`OrderEntryModal`, `TableActionModal`, `BillSettlementModal`), and Admin Back-Office view uses the shared `PosDropdown` primitive (`features/shared/ui/PosDropdown.tsx`) to consolidate sub-tab bars, category/channel/status filter pill walls, and multi-button action bars into clean 48px+ dropdown triggers, scaling smoothly down to ~360px mobile viewports.
 
 ---
 

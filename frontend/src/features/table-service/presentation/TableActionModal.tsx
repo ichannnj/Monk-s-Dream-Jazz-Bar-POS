@@ -167,13 +167,13 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   return (
     <>
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <View className="flex-1 bg-black/75 justify-center items-center p-5">
+        <View className="flex-1 bg-black/75 justify-center items-center p-2.5 sm:p-5">
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={onClose}
             accessibilityLabel="Close modal"
           />
-          <View className="w-full max-w-2xl bg-white rounded-3xl p-6 shadow-2xl max-h-[90%] flex-col">
+          <View className="w-full max-w-2xl bg-white rounded-3xl p-4 sm:p-6 shadow-2xl max-h-[94%] flex-col">
             {/* 1. Header */}
             <TableActionHeader table={table} onClose={onClose} />
 
@@ -197,7 +197,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
               />
 
               {/* 4. Natural Service Progression Actions */}
-              <View className="gap-3 pt-2">
+              <View className="gap-2.5 pt-2">
                 {/* 1. ORDERING: Start Order / Next Round */}
                 <Pressable
                   onPress={() => {
@@ -215,7 +215,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                 </Pressable>
 
                 {/* 2 & 3. TAB MANAGEMENT: Split Tab & Transfer */}
-                <View className="flex-row gap-3">
+                <View className="flex-col sm:flex-row gap-2.5">
                   <Pressable
                     onPress={() => {
                       onClose();
@@ -226,7 +226,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     accessibilityLabel="Open Split Tab"
                   >
                     <PlusCircle size={18} color="#15803d" strokeWidth={2.2} />
-                    <Text className="text-base font-bold text-emerald-800">+ Open Split Tab</Text>
+                    <Text className="text-base font-bold text-emerald-800">+ Split Tab</Text>
                   </Pressable>
 
                   <Pressable
@@ -239,7 +239,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     accessibilityLabel="Transfer Tab or Table"
                   >
                     <Repeat size={18} color="#641b2a" strokeWidth={2.2} />
-                    <Text className="text-base font-bold text-wine-900">Transfer Tab/Table</Text>
+                    <Text className="text-base font-bold text-wine-900">Transfer Table</Text>
                   </Pressable>
                 </View>
 

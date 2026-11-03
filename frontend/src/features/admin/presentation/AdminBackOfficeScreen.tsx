@@ -26,6 +26,7 @@ import { AdminStationsView } from './views/AdminStationsView';
 import { AdminTransactionsView } from './views/AdminTransactionsView';
 import { AdminSettingsView } from './views/AdminSettingsView';
 import { AdminTableLayoutView } from './views/AdminTableLayoutView';
+import { ManagerModeSwitchModal } from '@/features/floor/presentation/ManagerModeSwitchModal';
 
 export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> = ({
   onSwitchToFloor,
@@ -36,6 +37,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   const [timeframe, setTimeframe] = useState<TimeframeFilter>('today');
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isModeSwitchModalOpen, setIsModeSwitchModalOpen] = useState(false);
 
   // Telemetry & back-office data state
   const [telemetry, setTelemetry] = useState<DashboardTelemetry | null>(null);
@@ -128,19 +130,19 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
     };
   }, [triggerQuietRefresh]);
 
-  const handleToggleMode = async () => {
-    const nextMode = operatingMode === 'CAFE' ? 'EVENT' : 'CAFE';
-    try {
-      await setOperatingMode(nextMode);
-      toast.success(
-        nextMode === 'EVENT'
-          ? '🎷 Event Mode Activated! Orders tagged for Live Jazz Set.'
-          : '☀️ Daytime Cafe Mode Activated!',
-        { title: 'Operating Mode Updated' }
-      );
-    } catch {
-      toast.error('Failed to switch operating mode', { title: 'Update Error' });
-    }
+  const handleToggleMode = () => {
+    setIsDrawerOpen(false);
+    setIsModeSwitchModalOpen(true);
+  };
+
+  const handleConfirmSwitchMode = async (nextMode: 'CAFE' | 'EVENT') => {
+    await setOperatingMode(nextMode);
+    toast.success(
+      nextMode === 'EVENT'
+        ? '🎷 Event Mode Activated! Orders tagged for Live Jazz Set (auto-reverts to Cafe Mode at 6:00 AM).'
+        : '☀️ Daytime Cafe Mode Activated!',
+      { title: 'Operating Mode Updated' }
+    );
   };
 
   const renderActiveView = () => {
@@ -204,7 +206,10 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   };
 
   return (
-    <View className="flex-1 flex-row" style={{ backgroundColor: '#4A1020E0' }}>
+    <View
+      className="flex-1 flex-row w-full overflow-hidden"
+      style={{ backgroundColor: '#4A1020E0' }}
+    >
       {/* Pinned Wine Burgundy Sidebar (Visible on Desktop >= 1024px) */}
       <AdminSidebar
         currentRoute={currentRoute}
@@ -213,7 +218,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       />
 
       {/* Main Content Workspace */}
-      <View className="flex-1 flex-col bg-[#fcf9f9]">
+      <View className="flex-1 min-w-0 flex-col bg-[#fcf9f9] overflow-hidden">
         {/* Top Header Bar */}
         <AdminHeader
           currentRoute={currentRoute}
@@ -224,7 +229,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         />
 
         {/* Dynamic Route Body */}
-        <View className="flex-1">{renderActiveView()}</View>
+        <View className="flex-1 min-w-0">{renderActiveView()}</View>
 
         {/* Mobile / Tablet Bottom Navigation Bar (< 1024px) */}
         {(isMobile || isTablet) && (
@@ -251,6 +256,15 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
 
       {/* Slide-over Team Chat Trigger Button (Desktop only; on mobile, Chat is in bottom bar) */}
       {!isMobile && currentRoute !== 'chats' && <AdminFloatingChat unreadCount={3} />}
+
+      {/* Operating Mode Switch Confirmation Modal */}
+      <ManagerModeSwitchModal
+        visible={isModeSwitchModalOpen}
+        currentMode={operatingMode}
+        isAdminUser={true}
+        onClose={() => setIsModeSwitchModalOpen(false)}
+        onConfirmSwitch={handleConfirmSwitchMode}
+      />
     </View>
   );
 };

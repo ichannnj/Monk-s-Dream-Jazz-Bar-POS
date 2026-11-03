@@ -14,7 +14,12 @@ import {
 import { TableItem, CustomerTab } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { ConfirmationModal } from '@/features/shared';
+import {
+  ConfirmationModal,
+  PosDropdown,
+  PosDropdownOption,
+  useResponsive,
+} from '@/features/shared';
 import { styles } from './BillSettlementModal.styles';
 
 interface BillSettlementModalProps {
@@ -37,6 +42,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   onClose,
   onConfirmPayment,
 }) => {
+  const { isMobile } = useResponsive();
   const [settlementMode, setSettlementMode] = useState<'single_tab' | 'entire_table'>('single_tab');
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'digital_wallet' | 'comp'>(
     'cash'
@@ -109,15 +115,55 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
       ? table.tabs.filter((t) => t.status !== 'closed').length
       : table.activeTabs.length;
 
+  const scopeOptions: PosDropdownOption<'single_tab' | 'entire_table'>[] = [
+    {
+      value: 'single_tab',
+      label: `Individual Tab (${activeTab?.guestName || 'Selected Guest'})`,
+      icon: Receipt,
+    },
+    {
+      value: 'entire_table',
+      label: `Entire Table Group (All ${activeTabsCount} Tabs)`,
+      icon: Sparkles,
+    },
+  ];
+
+  const paymentMethodOptions: PosDropdownOption<'cash' | 'card' | 'digital_wallet' | 'comp'>[] = [
+    {
+      value: 'cash',
+      label: 'Cash Tender',
+      description: 'Physical bills & coins with change calculation',
+      icon: Banknote,
+    },
+    {
+      value: 'card',
+      label: 'Credit / Debit Card (Terminal)',
+      description: 'External bank POS card terminal settlement',
+      icon: CreditCard,
+    },
+    {
+      value: 'digital_wallet',
+      label: 'GCash / Maya QR Wallet',
+      description: 'Digital QR wallet payment confirmation',
+      icon: QrCode,
+    },
+    {
+      value: 'comp',
+      label: 'House Comp (100% Complimentary)',
+      description: 'Musician or managerial complimentary check',
+      icon: Gift,
+    },
+  ];
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, isMobile && { padding: 8 }]}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
           accessibilityLabel="Close modal"
         />
-        <View style={styles.modalCard}>
+        <View style={[styles.modalCard, isMobile && { padding: 16, maxHeight: '95%' }]}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
@@ -146,267 +192,184 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             </Pressable>
           </View>
 
-          {/* Settlement Scope Toggle if multiple tabs */}
-          {activeTabsCount > 1 ? (
-            <View style={styles.scopeToggleRow}>
-              <Pressable
-                onPress={() => setSettlementMode('single_tab')}
-                style={[
-                  styles.scopeOption,
-                  settlementMode === 'single_tab' && styles.scopeOptionActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.scopeOptionText,
-                    settlementMode === 'single_tab' && styles.scopeOptionTextActive,
-                  ]}
-                >
-                  Individual Tab ({activeTab?.guestName || 'Selected Guest'})
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={() => setSettlementMode('entire_table')}
-                style={[
-                  styles.scopeOption,
-                  settlementMode === 'entire_table' && styles.scopeOptionActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.scopeOptionText,
-                    settlementMode === 'entire_table' && styles.scopeOptionTextActive,
-                  ]}
-                >
-                  Table Group Settle (All {activeTabsCount} Tabs)
-                </Text>
-              </Pressable>
-            </View>
-          ) : null}
-
-          {/* Split Content: Left Payment Controls, Right Thermal Receipt Mockup */}
-          <View style={styles.splitRow}>
-            {/* LEFT COLUMN: PAYMENT METHOD & CASH CALCULATOR */}
-            <View style={styles.leftCol}>
-              {/* Total Display Card */}
-              <View style={styles.totalDisplayCard}>
-                <Text style={styles.totalCardLabel}>Balance Due</Text>
-                <Text style={styles.totalCardAmount}>{formatCurrency(grandTotal)}</Text>
-                <Text style={styles.totalCardSub}>
-                  Subtotal: {formatCurrency(subtotal)} + VAT (10%): {formatCurrency(tax)}
-                </Text>
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Settlement Scope Dropdown if multiple tabs */}
+            {activeTabsCount > 1 ? (
+              <View className="mb-4">
+                <PosDropdown
+                  options={scopeOptions}
+                  value={settlementMode}
+                  onChange={setSettlementMode}
+                  prefixLabel="Scope:"
+                  sheetTitle="Select Settlement Scope"
+                  className="w-full"
+                />
               </View>
+            ) : null}
 
-              {/* Payment Methods */}
-              <Text style={styles.sectionLabel}>Select Payment Method:</Text>
-              <View style={styles.methodGrid}>
-                {/* Cash */}
-                <Pressable
-                  onPress={() => setSelectedMethod('cash')}
-                  style={[styles.methodBtn, selectedMethod === 'cash' && styles.methodBtnActive]}
-                >
-                  <Banknote size={18} color={selectedMethod === 'cash' ? '#ffffff' : '#15803d'} />
-                  <Text
-                    style={[
-                      styles.methodBtnText,
-                      selectedMethod === 'cash' && styles.methodBtnTextActive,
-                    ]}
-                  >
-                    Cash
+            {/* Split Content: Left Payment Controls, Right Thermal Receipt Mockup */}
+            <View style={[styles.splitRow, isMobile && { flexDirection: 'column', gap: 14 }]}>
+              {/* LEFT COLUMN: PAYMENT METHOD & CASH CALCULATOR */}
+              <View style={styles.leftCol}>
+                {/* Total Display Card */}
+                <View style={styles.totalDisplayCard}>
+                  <Text style={styles.totalCardLabel}>Balance Due</Text>
+                  <Text style={styles.totalCardAmount}>{formatCurrency(grandTotal)}</Text>
+                  <Text style={styles.totalCardSub}>
+                    Subtotal: {formatCurrency(subtotal)} + VAT (10%): {formatCurrency(tax)}
                   </Text>
-                </Pressable>
+                </View>
 
-                {/* Card */}
-                <Pressable
-                  onPress={() => setSelectedMethod('card')}
-                  style={[styles.methodBtn, selectedMethod === 'card' && styles.methodBtnActive]}
-                >
-                  <CreditCard size={18} color={selectedMethod === 'card' ? '#ffffff' : '#2563eb'} />
-                  <Text
-                    style={[
-                      styles.methodBtnText,
-                      selectedMethod === 'card' && styles.methodBtnTextActive,
-                    ]}
-                  >
-                    Card (Terminal)
-                  </Text>
-                </Pressable>
-
-                {/* Digital Wallet */}
-                <Pressable
-                  onPress={() => setSelectedMethod('digital_wallet')}
-                  style={[
-                    styles.methodBtn,
-                    selectedMethod === 'digital_wallet' && styles.methodBtnActive,
-                  ]}
-                >
-                  <QrCode
-                    size={18}
-                    color={selectedMethod === 'digital_wallet' ? '#ffffff' : '#7c3aed'}
+                {/* Payment Method Dropdown */}
+                <View className="mb-4">
+                  <PosDropdown
+                    options={paymentMethodOptions}
+                    value={selectedMethod}
+                    onChange={setSelectedMethod}
+                    prefixLabel="Tender:"
+                    sheetTitle="Select Payment Method"
+                    className="w-full"
                   />
-                  <Text
-                    style={[
-                      styles.methodBtnText,
-                      selectedMethod === 'digital_wallet' && styles.methodBtnTextActive,
-                    ]}
-                  >
-                    QR Wallet
-                  </Text>
-                </Pressable>
+                </View>
 
-                {/* Comp */}
-                <Pressable
-                  onPress={() => setSelectedMethod('comp')}
-                  style={[styles.methodBtn, selectedMethod === 'comp' && styles.methodBtnActive]}
-                >
-                  <Gift size={18} color={selectedMethod === 'comp' ? '#ffffff' : '#d97706'} />
-                  <Text
-                    style={[
-                      styles.methodBtnText,
-                      selectedMethod === 'comp' && styles.methodBtnTextActive,
-                    ]}
-                  >
-                    House Comp
-                  </Text>
-                </Pressable>
-              </View>
-
-              {/* Cash Denominations Pad if Cash Selected */}
-              {selectedMethod === 'cash' ? (
-                <View style={styles.cashSection}>
-                  <Text style={styles.sectionLabel}>Quick Cash Denominations:</Text>
-                  <View style={styles.quickCashRow}>
-                    {quickCashOptions.map((opt, i) => (
-                      <Pressable
-                        key={i}
-                        onPress={() => setTenderedCash(opt.toString())}
-                        style={[
-                          styles.quickCashChip,
-                          numericTendered === opt && styles.quickCashChipActive,
-                        ]}
-                      >
-                        <Text
+                {/* Cash Denominations Pad if Cash Selected */}
+                {selectedMethod === 'cash' ? (
+                  <View style={styles.cashSection}>
+                    <Text style={styles.sectionLabel}>Quick Cash Denominations:</Text>
+                    <View style={styles.quickCashRow}>
+                      {quickCashOptions.map((opt, i) => (
+                        <Pressable
+                          key={i}
+                          onPress={() => setTenderedCash(opt.toString())}
                           style={[
-                            styles.quickCashText,
-                            numericTendered === opt && styles.quickCashTextActive,
+                            styles.quickCashChip,
+                            numericTendered === opt && styles.quickCashChipActive,
                           ]}
                         >
-                          {formatCurrency(opt)}
+                          <Text
+                            style={[
+                              styles.quickCashText,
+                              numericTendered === opt && styles.quickCashTextActive,
+                            ]}
+                          >
+                            {formatCurrency(opt)}
+                          </Text>
+                        </Pressable>
+                      ))}
+                    </View>
+
+                    <View style={styles.tenderedInputRow}>
+                      <Text style={styles.inputPrefix}>Tendered: ₱</Text>
+                      <TextInput
+                        style={styles.tenderedInput}
+                        keyboardType="numeric"
+                        placeholder={grandTotal.toFixed(2)}
+                        placeholderTextColor="#9ca3af"
+                        value={tenderedCash}
+                        onChangeText={setTenderedCash}
+                      />
+                    </View>
+
+                    {/* Cash Validation Warning */}
+                    {!isPaymentValid ? (
+                      <View
+                        style={{
+                          backgroundColor: '#fef2f2',
+                          borderWidth: 1,
+                          borderColor: '#fecdd3',
+                          borderRadius: 10,
+                          paddingVertical: 8,
+                          paddingHorizontal: 12,
+                          marginBottom: 10,
+                        }}
+                      >
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: '#dc2626' }}>
+                          {numericTendered === 0
+                            ? `⚠️ Cash tendered required (min. ${formatCurrency(grandTotal)})`
+                            : `⚠️ Tendered amount is less than total due (${formatCurrency(grandTotal)})`}
                         </Text>
-                      </Pressable>
-                    ))}
-                  </View>
+                      </View>
+                    ) : null}
 
-                  <View style={styles.tenderedInputRow}>
-                    <Text style={styles.inputPrefix}>Tendered: ₱</Text>
-                    <TextInput
-                      style={styles.tenderedInput}
-                      keyboardType="numeric"
-                      placeholder={grandTotal.toFixed(2)}
-                      placeholderTextColor="#9ca3af"
-                      value={tenderedCash}
-                      onChangeText={setTenderedCash}
-                    />
+                    {/* Change Due Banner */}
+                    <View style={styles.changeDueBanner}>
+                      <Text style={styles.changeDueLabel}>Change Due to Guest:</Text>
+                      <Text style={styles.changeDueAmount}>{formatCurrency(changeDue)}</Text>
+                    </View>
                   </View>
+                ) : null}
 
-                  {/* Cash Validation Warning */}
-                  {!isPaymentValid ? (
-                    <View
-                      style={{
-                        backgroundColor: '#fef2f2',
-                        borderWidth: 1,
-                        borderColor: '#fecdd3',
-                        borderRadius: 10,
-                        paddingVertical: 8,
-                        paddingHorizontal: 12,
-                        marginBottom: 10,
-                      }}
-                    >
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#dc2626' }}>
-                        {numericTendered === 0
-                          ? `⚠️ Cash tendered required (min. ${formatCurrency(grandTotal)})`
-                          : `⚠️ Tendered amount is less than total due (${formatCurrency(grandTotal)})`}
+                {/* Print Receipt Toggle */}
+                <Pressable
+                  onPress={() => setShouldPrintReceipt(!shouldPrintReceipt)}
+                  style={styles.printCheckboxRow}
+                >
+                  <View
+                    style={[styles.checkboxBox, shouldPrintReceipt && styles.checkboxBoxActive]}
+                  >
+                    {shouldPrintReceipt ? <CheckCircle2 size={14} color="#ffffff" /> : null}
+                  </View>
+                  <Printer size={16} color="#4b5563" />
+                  <Text style={styles.printCheckboxText}>
+                    Send Print Trigger to USB Printer PC (ESC/POS Receipt)
+                  </Text>
+                </Pressable>
+              </View>
+
+              {/* RIGHT COLUMN: THERMAL RECEIPT MOCKUP PREVIEW */}
+              <View style={styles.rightCol}>
+                <View style={styles.receiptPaper}>
+                  {/* Receipt Header */}
+                  <Text style={styles.receiptLogo}>MONK'S DREAM JAZZ BAR</Text>
+                  <Text style={styles.receiptTagline}>Specialty Coffee & Jazz Bar</Text>
+                  <Text style={styles.receiptDivider}>--------------------------------</Text>
+
+                  {/* Meta */}
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptMeta}>TABLE: Table {table.code}</Text>
+                    <Text style={styles.receiptMeta}>
+                      GUEST: {activeTab?.guestName || 'Table Guest'}
+                    </Text>
+                  </View>
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptMeta}>DATE: 2026-10-17</Text>
+                    <Text style={styles.receiptMeta}>TIME: 21:15</Text>
+                  </View>
+                  <Text style={styles.receiptMeta}>CASHIER: Coltrane</Text>
+                  <Text style={styles.receiptDivider}>--------------------------------</Text>
+
+                  {/* Items */}
+                  {(activeTab?.items || []).slice(0, 4).map((item, idx) => (
+                    <View key={idx} style={styles.receiptRow}>
+                      <Text style={styles.receiptItemName}>
+                        {item.quantity}x {item.productName.slice(0, 18)}
+                      </Text>
+                      <Text style={styles.receiptItemPrice}>
+                        {formatCurrency(item.unitPrice * item.quantity)}
                       </Text>
                     </View>
-                  ) : null}
+                  ))}
+                  <Text style={styles.receiptDivider}>--------------------------------</Text>
 
-                  {/* Change Due Banner */}
-                  <View style={styles.changeDueBanner}>
-                    <Text style={styles.changeDueLabel}>Change Due to Guest:</Text>
-                    <Text style={styles.changeDueAmount}>{formatCurrency(changeDue)}</Text>
+                  {/* Totals */}
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptMeta}>SUBTOTAL:</Text>
+                    <Text style={styles.receiptMeta}>{formatCurrency(subtotal)}</Text>
                   </View>
-                </View>
-              ) : null}
-
-              {/* Print Receipt Toggle */}
-              <Pressable
-                onPress={() => setShouldPrintReceipt(!shouldPrintReceipt)}
-                style={styles.printCheckboxRow}
-              >
-                <View style={[styles.checkboxBox, shouldPrintReceipt && styles.checkboxBoxActive]}>
-                  {shouldPrintReceipt ? <CheckCircle2 size={14} color="#ffffff" /> : null}
-                </View>
-                <Printer size={16} color="#4b5563" />
-                <Text style={styles.printCheckboxText}>
-                  Send Print Trigger to USB Printer PC (ESC/POS Receipt)
-                </Text>
-              </Pressable>
-            </View>
-
-            {/* RIGHT COLUMN: THERMAL RECEIPT MOCKUP PREVIEW */}
-            <View style={styles.rightCol}>
-              <View style={styles.receiptPaper}>
-                {/* Receipt Header */}
-                <Text style={styles.receiptLogo}>MONK'S DREAM JAZZ BAR</Text>
-                <Text style={styles.receiptTagline}>Specialty Coffee & Jazz Bar</Text>
-                <Text style={styles.receiptDivider}>--------------------------------</Text>
-
-                {/* Meta */}
-                <View style={styles.receiptRow}>
-                  <Text style={styles.receiptMeta}>TABLE: Table {table.code}</Text>
-                  <Text style={styles.receiptMeta}>
-                    GUEST: {activeTab?.guestName || 'Table Guest'}
-                  </Text>
-                </View>
-                <View style={styles.receiptRow}>
-                  <Text style={styles.receiptMeta}>DATE: 2026-10-17</Text>
-                  <Text style={styles.receiptMeta}>TIME: 21:15</Text>
-                </View>
-                <Text style={styles.receiptMeta}>CASHIER: Coltrane</Text>
-                <Text style={styles.receiptDivider}>--------------------------------</Text>
-
-                {/* Items */}
-                {(activeTab?.items || []).slice(0, 4).map((item, idx) => (
-                  <View key={idx} style={styles.receiptRow}>
-                    <Text style={styles.receiptItemName}>
-                      {item.quantity}x {item.productName.slice(0, 18)}
-                    </Text>
-                    <Text style={styles.receiptItemPrice}>
-                      {formatCurrency(item.unitPrice * item.quantity)}
-                    </Text>
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptMeta}>TAX (10%):</Text>
+                    <Text style={styles.receiptMeta}>{formatCurrency(tax)}</Text>
                   </View>
-                ))}
-                <Text style={styles.receiptDivider}>--------------------------------</Text>
-
-                {/* Totals */}
-                <View style={styles.receiptRow}>
-                  <Text style={styles.receiptMeta}>SUBTOTAL:</Text>
-                  <Text style={styles.receiptMeta}>{formatCurrency(subtotal)}</Text>
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptBold}>TOTAL PAID:</Text>
+                    <Text style={styles.receiptBold}>{formatCurrency(grandTotal)}</Text>
+                  </View>
+                  <Text style={styles.receiptDivider}>================================</Text>
+                  <Text style={styles.receiptFooter}>Thank you for jamming with us!</Text>
                 </View>
-                <View style={styles.receiptRow}>
-                  <Text style={styles.receiptMeta}>TAX (10%):</Text>
-                  <Text style={styles.receiptMeta}>{formatCurrency(tax)}</Text>
-                </View>
-                <View style={styles.receiptRow}>
-                  <Text style={styles.receiptBold}>TOTAL PAID:</Text>
-                  <Text style={styles.receiptBold}>{formatCurrency(grandTotal)}</Text>
-                </View>
-                <Text style={styles.receiptDivider}>================================</Text>
-                <Text style={styles.receiptFooter}>Thank you for jamming with us!</Text>
               </View>
             </View>
-          </View>
+          </ScrollView>
 
           {/* Actions */}
           <View style={styles.footerRow}>

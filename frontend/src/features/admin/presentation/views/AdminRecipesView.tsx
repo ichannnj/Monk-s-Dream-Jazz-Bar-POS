@@ -25,6 +25,7 @@ import { CategoryModal } from './menu/CategoryModal';
 import { ModifierGroupModal } from './menu/ModifierGroupModal';
 import { RecipeBomModal } from './menu/RecipeBomModal';
 import { AdminInput } from '../components/AdminInput';
+import { PosDropdown, PosDropdownOption } from '@/features/shared';
 
 type MenuTab = 'items' | 'categories' | 'modifiers' | 'bom';
 
@@ -176,35 +177,76 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
     return matchesSearch && matchesCat;
   });
 
+  const menuTabOptions: PosDropdownOption<MenuTab>[] = [
+    {
+      value: 'items',
+      label: 'Menu Items',
+      badge: displayProducts.length,
+      icon: Utensils,
+      description: 'Active menu catalog, pricing, and Auto-86 availability',
+    },
+    {
+      value: 'categories',
+      label: 'Categories',
+      badge: categories.length,
+      icon: FolderPlus,
+      description: 'Menu category hierarchy and KDS station routing',
+    },
+    {
+      value: 'modifiers',
+      label: 'Modifier Groups',
+      badge: modifierGroups.length,
+      icon: Sliders,
+      description: 'Add-ons, milk options, doneness, and price deltas',
+    },
+    {
+      value: 'bom',
+      label: 'Recipe BOM & Costing',
+      icon: Layers,
+      description: 'Bill of Materials ingredient depletion & live COGS',
+    },
+  ];
+
+  const categoryFilterOptions: PosDropdownOption<string>[] = [
+    { value: 'ALL', label: 'All Categories', badge: displayProducts.length, icon: Layers },
+    ...categories.map((c) => ({
+      value: c.id,
+      label: c.name,
+    })),
+  ];
+
   return (
     <ScrollView
       className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
-      {/* Page Header */}
-      <View className="mb-6 flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <View className="flex-1 min-w-[260px]">
-          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-            Menu Catalog & Recipe Engineering
-          </Text>
-          <Text className="mt-1 text-base text-stone-500">
-            Products, category hierarchy, modifier groups, and Bill of Materials (BOM) with live
-            COGS
-          </Text>
-        </View>
+      {/* Page Header & View Dropdown */}
+      <View className="mb-5 flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+          Menu Catalog &amp; Recipe BOM
+        </Text>
 
-        {/* Global Action Buttons based on tab */}
-        <View className="flex-row items-center gap-3 flex-wrap">
+        {/* View Selector Dropdown + Contextual Action Button */}
+        <View className="flex-row items-center gap-2.5 flex-wrap">
+          <PosDropdown
+            options={menuTabOptions}
+            value={activeTab}
+            onChange={setActiveTab}
+            prefixLabel="View:"
+            sheetTitle="Select Menu Catalog Section"
+            className="flex-1 sm:flex-initial min-w-[195px]"
+          />
+
           {activeTab === 'items' && (
             <Pressable
               onPress={() => {
                 setEditingProduct(null);
                 setIsProductModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Plus size={20} color="#ffffff" />
-              <Text className="ml-2 text-base font-bold text-white">Add Menu Item</Text>
+              <Text className="ml-2 text-base font-bold text-white">+ Add Item</Text>
             </Pressable>
           )}
 
@@ -214,10 +256,10 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingCategory(null);
                 setIsCategoryModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <FolderPlus size={20} color="#ffffff" />
-              <Text className="ml-2 text-base font-bold text-white">Add Category</Text>
+              <Text className="ml-2 text-base font-bold text-white">+ Add Category</Text>
             </Pressable>
           )}
 
@@ -227,111 +269,36 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingModifierGroup(null);
                 setIsModifierModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Sliders size={20} color="#ffffff" />
-              <Text className="ml-2 text-base font-bold text-white">New Modifier Group</Text>
+              <Text className="ml-2 text-base font-bold text-white">+ New Modifier Group</Text>
             </Pressable>
           )}
         </View>
       </View>
 
-      {/* Sub-Navigation Tabs with horizontal scrolling */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="mb-6 border-b border-stone-200"
-      >
-        <View className="flex-row">
-          {[
-            { key: 'items', label: `Menu Items (${displayProducts.length})`, icon: Utensils },
-            { key: 'categories', label: `Categories (${categories.length})`, icon: FolderPlus },
-            {
-              key: 'modifiers',
-              label: `Modifier Groups (${modifierGroups.length})`,
-              icon: Sliders,
-            },
-            { key: 'bom', label: 'Recipe BOM & Costing', icon: Layers },
-          ].map((tab) => {
-            const isActive = activeTab === tab.key;
-            const IconComp = tab.icon;
-            return (
-              <Pressable
-                key={tab.key}
-                onPress={() => setActiveTab(tab.key as MenuTab)}
-                className={`min-h-[48px] flex-row items-center px-4 sm:px-6 border-b-2 transition-all ${
-                  isActive
-                    ? 'border-[#800020] bg-[#800020]/5'
-                    : 'border-transparent active:bg-stone-100'
-                }`}
-              >
-                <IconComp size={18} color={isActive ? '#800020' : '#78716c'} />
-                <Text
-                  className={`ml-2 text-base whitespace-nowrap ${
-                    isActive ? 'font-bold text-[#800020]' : 'font-medium text-stone-600'
-                  }`}
-                >
-                  {tab.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </ScrollView>
-
       {/* TAB 1: MENU ITEMS */}
       {activeTab === 'items' && (
         <View className="space-y-4">
-          {/* Search & Category Filter Bar */}
-          <View className="space-y-3">
-            <AdminInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search products by name or category..."
-              leftElement={<Search size={20} color="#78716c" />}
-            />
-
-            {/* Responsive Wrapped Category Pills (Zero horizontal scroll) */}
-            <View className="flex-row flex-wrap gap-2 pt-1">
-              <Pressable
-                onPress={() => setSelectedCategoryFilter('ALL')}
-                className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
-                  selectedCategoryFilter === 'ALL'
-                    ? 'bg-[#800020] border-[#800020]'
-                    : 'bg-white border-stone-300 active:bg-stone-100'
-                }`}
-              >
-                <Text
-                  className={`text-base font-semibold ${
-                    selectedCategoryFilter === 'ALL' ? 'text-white' : 'text-stone-700'
-                  }`}
-                >
-                  All Categories
-                </Text>
-              </Pressable>
-              {categories.map((c) => {
-                const isSelected = selectedCategoryFilter === c.id;
-                return (
-                  <Pressable
-                    key={c.id}
-                    onPress={() => setSelectedCategoryFilter(c.id)}
-                    className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
-                      isSelected
-                        ? 'bg-[#800020] border-[#800020]'
-                        : 'bg-white border-stone-300 active:bg-stone-100'
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-semibold ${
-                        isSelected ? 'text-white' : 'text-stone-700'
-                      }`}
-                    >
-                      {c.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+          {/* Search & Category Dropdown Bar */}
+          <View className="flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <View className="flex-1">
+              <AdminInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search products by name or category..."
+                leftElement={<Search size={20} color="#78716c" />}
+              />
             </View>
+
+            <PosDropdown
+              options={categoryFilterOptions}
+              value={selectedCategoryFilter}
+              onChange={setSelectedCategoryFilter}
+              sheetTitle="Filter Products by Category"
+              className="w-full sm:w-64"
+            />
           </View>
 
           {/* Products List Cards */}

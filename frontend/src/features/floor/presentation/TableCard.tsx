@@ -150,13 +150,9 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
             <Text style={[styles.amountText, isEmpty && styles.amountTextEmpty]}>
               {formattedAmount || '₱0.00'}
             </Text>
-            {isEmpty ? (
-              <Text style={styles.tagEmpty}>EMPTY</Text>
-            ) : activeTabCount > 1 ? (
+            {!isEmpty && activeTabCount > 1 ? (
               <Text style={styles.tagWine}>{activeTabCount} TABS</Text>
-            ) : (
-              <Text style={styles.tagWine}>DINE-IN</Text>
-            )}
+            ) : null}
           </View>
         </View>
       </Pressable>
@@ -171,7 +167,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
             accessibilityLabel={`Open Tab at Table ${code}`}
           >
             <Plus size={18} color="#ffffff" strokeWidth={2.5} />
-            <Text style={styles.actionBtnOpenTabText}>OPEN TABLE TAB</Text>
+            <Text style={styles.actionBtnOpenTabText}>+ Open Tab</Text>
           </Pressable>
         ) : (
           <Pressable
@@ -182,7 +178,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
           >
             <Utensils size={18} color="#832238" strokeWidth={2.3} />
             <Text style={styles.actionBtnManageText}>
-              {status === 'served' ? 'SETTLE BILL / ORDER' : 'VIEW & ADD ORDERS'}
+              {status === 'served' ? 'Settle / Order' : 'View / Order'}
             </Text>
           </Pressable>
         )}
@@ -196,17 +192,17 @@ TableCard.displayName = 'TableCard';
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 22,
+    borderRadius: 20,
     borderWidth: 1.5,
     borderColor: '#eee8e3',
-    padding: 20,
+    padding: 15,
     shadowColor: '#2b0f16',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 3,
     justifyContent: 'space-between',
-    minHeight: 220,
+    minHeight: 152,
   },
   cardOccupied: {
     backgroundColor: '#ffffff',

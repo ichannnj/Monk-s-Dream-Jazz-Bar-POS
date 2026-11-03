@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView, TextInput } from 'react-native';
+import { View, Pressable, TextInput } from 'react-native';
 import { Search, X, Coffee, Wine, Pizza, UtensilsCrossed, Cake } from 'lucide-react-native';
 import { MenuCategory } from '../../../../types/floor';
+import { PosDropdown, PosDropdownOption } from '@/features/shared';
 import { styles } from './OrderEntryModal.styles';
 
 export interface OrderCategoryBarProps {
@@ -12,7 +13,7 @@ export interface OrderCategoryBarProps {
 }
 
 export const CATEGORIES: { id: MenuCategory; label: string; Icon: any }[] = [
-  { id: 'coffee', label: 'Coffee', Icon: Coffee },
+  { id: 'coffee', label: 'Coffee & Espresso', Icon: Coffee },
   { id: 'cocktails_wine', label: 'Bar & Wine', Icon: Wine },
   { id: 'mains_pasta', label: 'Pasta & Mains', Icon: Pizza },
   { id: 'small_plates', label: 'Small Bites', Icon: UtensilsCrossed },
@@ -25,41 +26,28 @@ export const OrderCategoryBar: React.FC<OrderCategoryBarProps> = ({
   searchQuery,
   onSearchChange,
 }) => {
-  return (
-    <View style={styles.catalogHeader}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoryPillsScroll}
-      >
-        {CATEGORIES.map((cat) => {
-          const isActive = selectedCategory === cat.id;
-          const { Icon } = cat;
+  const categoryOptions: PosDropdownOption<MenuCategory>[] = CATEGORIES.map((cat) => ({
+    value: cat.id,
+    label: cat.label,
+    icon: cat.Icon,
+  }));
 
-          return (
-            <Pressable
-              key={cat.id}
-              onPress={() => {
-                onSelectCategory(cat.id);
-                onSearchChange('');
-              }}
-              style={[styles.catPill, isActive && styles.catPillActive]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: isActive }}
-              accessibilityLabel={`${cat.label} category`}
-            >
-              <Icon size={16} color={isActive ? '#ffffff' : '#4b5563'} strokeWidth={2.2} />
-              <Text style={[styles.catPillText, isActive && styles.catPillTextActive]}>
-                {cat.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
+  return (
+    <View className="bg-white border-b border-stone-200 px-4 py-3 flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+      <PosDropdown
+        options={categoryOptions}
+        value={selectedCategory}
+        onChange={(cat) => {
+          onSelectCategory(cat);
+          onSearchChange('');
+        }}
+        sheetTitle="Select Menu Category"
+        className="w-full sm:w-56"
+      />
 
       {/* Instant Search Bar */}
-      <View style={styles.searchRow}>
-        <Search size={16} color="#9ca3af" />
+      <View style={[styles.searchRow, { flex: 1 }]}>
+        <Search size={18} color="#9ca3af" />
         <TextInput
           style={styles.searchInput}
           placeholder="Search dishes, drinks, cocktails..."
@@ -77,7 +65,7 @@ export const OrderCategoryBar: React.FC<OrderCategoryBarProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Clear search"
           >
-            <X size={16} color="#9ca3af" />
+            <X size={18} color="#9ca3af" />
           </Pressable>
         ) : null}
       </View>

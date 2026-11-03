@@ -85,13 +85,13 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
   };
 
   return (
-    <View className="flex-row items-center justify-between border-b border-stone-200/80 bg-white px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 shadow-xs">
+    <View className="w-full flex-row items-center justify-between border-b border-stone-200/80 bg-white px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3.5 shadow-xs gap-2">
       {/* Route Title & Mobile Hamburger & Online Status */}
-      <View className="flex-row items-center space-x-2 sm:space-x-3 flex-1 min-w-0 pr-2">
+      <View className="flex-row items-center gap-2 sm:gap-3 flex-1 min-w-0">
         {onOpenDrawer && (
           <Pressable
             onPress={onOpenDrawer}
-            className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200 lg:hidden mr-2"
+            className="min-h-[48px] min-w-[48px] shrink-0 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200 lg:hidden"
             accessibilityLabel="Open Navigation Menu"
           >
             <Menu size={22} color="#44403c" />
@@ -99,23 +99,23 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         )}
 
         <Text
-          className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 truncate"
+          className="text-lg sm:text-2xl font-bold tracking-tight text-stone-900 shrink"
           numberOfLines={1}
         >
           {getRouteTitle()}
         </Text>
 
         {/* Compact Online Dot on Mobile, Pill on Tablet/Desktop */}
-        <View className="ml-2 flex-row items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 sm:px-3 py-1">
+        <View className="shrink-0 flex-row items-center rounded-full border border-emerald-200 bg-emerald-50 px-2 sm:px-3 py-1">
           <View className="h-2.5 w-2.5 rounded-full bg-emerald-500 sm:mr-1.5" />
           <Text className="hidden sm:flex text-base font-semibold text-emerald-700">Online</Text>
         </View>
       </View>
 
       {/* Right Controls: Mode Switcher, Floor POS Switcher, Time, Profile, Logout */}
-      <View className="flex-row items-center space-x-2 sm:space-x-3">
-        {/* Date Time (Desktop Only) */}
-        <Text className="hidden lg:flex text-base font-medium text-stone-600 mr-2">
+      <View className="flex-row items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Date Time (Extra Large Desktop Only) */}
+        <Text className="hidden xl:flex text-base font-medium text-stone-600 mr-1">
           {currentTimeStr}
         </Text>
 
@@ -132,7 +132,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           ) : (
             <Sun size={20} color="#ffffff" />
           )}
-          <Text className="hidden sm:flex ml-2 text-base font-bold text-white">
+          <Text className="hidden md:flex ml-2 text-base font-bold text-white">
             {operatingMode === 'EVENT' ? 'Event Mode' : 'Cafe Mode'}
           </Text>
         </Pressable>
@@ -145,20 +145,20 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             accessibilityLabel="Switch to Floor POS"
           >
             <Layers size={20} color="#44403c" />
-            <Text className="hidden sm:flex ml-2 text-base font-bold text-stone-800">
+            <Text className="hidden md:flex ml-2 text-base font-bold text-stone-800">
               Floor POS
             </Text>
           </Pressable>
         )}
 
-        {/* Dynamic Staff Profile Pill (Desktop Only) */}
-        <View className="hidden lg:flex flex-row items-center rounded-xl border border-stone-200 bg-stone-50/80 px-3.5 py-1.5 min-h-[48px]">
+        {/* Dynamic Staff Profile Pill (Extra Large Desktop Only) */}
+        <View className="hidden xl:flex flex-row items-center rounded-xl border border-stone-200 bg-stone-50/80 px-3.5 py-1.5 min-h-[48px]">
           <View className="h-9 w-9 items-center justify-center rounded-full bg-[#800020]/15 border border-[#800020]/30">
             <Text className="text-base font-black text-[#800020]">{staffInitials}</Text>
           </View>
           <View className="ml-2.5">
             <Text className="text-base font-bold text-stone-800 leading-tight">{staffName}</Text>
-            <Text className="text-sm font-medium text-stone-500">{staffRole}</Text>
+            <Text className="text-base font-medium text-stone-500">{staffRole}</Text>
           </View>
         </View>
 

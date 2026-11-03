@@ -55,16 +55,18 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
 
   const [gridWidth, setGridWidth] = useState<number>(0);
 
-  // Tablet-optimized dynamic grid column distribution
+  // Phone-to-Desktop dynamic grid column distribution
   const numColumns = useMemo(() => {
     if (windowWidth >= 1440) return 5;
     if (windowWidth >= 1140) return 4;
-    if (windowWidth >= 740) return 3;
-    return 2;
+    if (windowWidth >= 768) return 3;
+    if (windowWidth >= 460) return 2;
+    return 1;
   }, [windowWidth]);
 
   const gridGap = 16;
   const cardWidth = useMemo(() => {
+    if (numColumns === 1) return '100%' as any;
     if (gridWidth > 0) {
       return Math.floor((gridWidth - (numColumns - 1) * gridGap) / numColumns);
     }
@@ -245,7 +247,7 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
           await setOperatingMode(next);
           toast.success(
             next === 'EVENT'
-              ? '🎷 Event Mode Activated! New orders tagged for Live Jazz Set.'
+              ? '🎷 Event Mode Activated! New orders tagged for Live Jazz Set (auto-reverts to Cafe Mode at 6:00 AM).'
               : '☀️ Daytime Cafe Mode Activated! New orders tagged for Cafe.',
             { title: 'Operating Mode Updated' }
           );

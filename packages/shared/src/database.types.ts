@@ -441,14 +441,14 @@ isOneToOne: false
                   ]
                 },"users": {
                   Row: {
-                    "base_daily_rate": number,"created_at": string,"display_name": string,"id": string,"is_active": boolean,"is_workflow_staff": boolean,"pin": string,"role": Database["public"]['Enums']["role"],"updated_at": string,"username": string
+                    "avatar_url": string | null,"base_daily_rate": number,"created_at": string,"display_name": string,"email": string | null,"id": string,"is_active": boolean,"is_workflow_staff": boolean,"job_title": string | null,"phone": string | null,"pin": string | null,"role": Database["public"]['Enums']["role"],"updated_at": string,"username": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "base_daily_rate"?: number,"created_at"?: string,"display_name": string,"id"?: string,"is_active"?: boolean,"is_workflow_staff"?: boolean,"pin": string,"role"?: Database["public"]['Enums']["role"],"updated_at"?: string,"username": string
+                    "avatar_url"?: string | null,"base_daily_rate"?: number,"created_at"?: string,"display_name": string,"email"?: string | null,"id"?: string,"is_active"?: boolean,"is_workflow_staff"?: boolean,"job_title"?: string | null,"phone"?: string | null,"pin"?: string | null,"role"?: Database["public"]['Enums']["role"],"updated_at"?: string,"username": string
                   }
                   Update: {
-                    "base_daily_rate"?: number,"created_at"?: string,"display_name"?: string,"id"?: string,"is_active"?: boolean,"is_workflow_staff"?: boolean,"pin"?: string,"role"?: Database["public"]['Enums']["role"],"updated_at"?: string,"username"?: string
+                    "avatar_url"?: string | null,"base_daily_rate"?: number,"created_at"?: string,"display_name"?: string,"email"?: string | null,"id"?: string,"is_active"?: boolean,"is_workflow_staff"?: boolean,"job_title"?: string | null,"phone"?: string | null,"pin"?: string | null,"role"?: Database["public"]['Enums']["role"],"updated_at"?: string,"username"?: string
                   }
                   Relationships: [
                     

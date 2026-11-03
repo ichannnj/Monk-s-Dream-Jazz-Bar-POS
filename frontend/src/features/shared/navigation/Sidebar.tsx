@@ -11,7 +11,10 @@ import {
   Settings,
   LogOut,
   Printer,
+  LayoutDashboard,
 } from 'lucide-react-native';
+import { useResponsive } from '../hooks/useResponsive';
+import { PosDropdown, PosDropdownOption } from '../ui/PosDropdown';
 
 const MONKS_DREAM_LOGO = require('../../../../assets/Monks Dream Logo files-02.png');
 
@@ -22,6 +25,7 @@ export interface SidebarProps {
   activeTab: NavTabId;
   onTabChange: (tab: NavTabId) => void;
   onLogout?: () => void;
+  onSwitchToAdmin?: () => void;
   unreadChatCount?: number;
   alertCount?: number;
   mode?: 'pos' | 'kds';
@@ -32,11 +36,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
   onLogout,
+  onSwitchToAdmin,
   unreadChatCount = 0,
   alertCount = 0,
   mode = 'pos',
   hiddenTabs = [],
 }) => {
+  const { isMobile } = useResponsive();
+
   const posNavItems = [
     {
       id: 'tables' as NavTabId,
@@ -110,6 +117,84 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const rawNavItems = mode === 'kds' ? kdsNavItems : posNavItems;
   const navItems = rawNavItems.filter((item) => !hiddenTabs.includes(item.id));
 
+  const dropdownOptions: PosDropdownOption<NavTabId>[] = [
+    ...navItems.map((item) => ({
+      value: item.id,
+      label: item.label,
+      icon: item.Icon,
+      badge: typeof item.badge === 'number' && item.badge > 0 ? item.badge : undefined,
+      hasDot: item.hasDot,
+    })),
+    {
+      value: 'settings' as NavTabId,
+      label: 'Station Settings',
+      icon: Settings,
+    },
+  ];
+
+  if (isMobile) {
+    return (
+      <View className="w-full bg-[#431621] rounded-2xl px-3 py-2 mb-2.5 flex-row items-center justify-between gap-2 shadow-sm">
+        <View className="flex-row items-center gap-2.5 flex-1">
+          <View className="w-11 h-11 rounded-xl bg-white/15 border border-white/20 items-center justify-center p-1">
+            <ExpoImage
+              source={MONKS_DREAM_LOGO}
+              style={{ width: 32, height: 32 }}
+              contentFit="contain"
+              priority="high"
+            />
+          </View>
+
+          <PosDropdown
+            options={dropdownOptions}
+            value={activeTab}
+            onChange={onTabChange}
+            variant="burgundy-nav"
+            sheetTitle="Navigate Workspace"
+            className="flex-1"
+          />
+        </View>
+
+        <View className="flex-row items-center gap-1.5">
+          {unreadChatCount > 0 && activeTab !== 'chat' ? (
+            <Pressable
+              onPress={() => onTabChange('chat')}
+              className="min-h-[48px] min-w-[48px] rounded-xl bg-rose-600 px-3 items-center justify-center flex-row gap-1.5"
+              accessibilityRole="button"
+              accessibilityLabel={`${unreadChatCount} unread messages`}
+            >
+              <MessageSquare size={18} color="#ffffff" />
+              <Text className="text-base font-extrabold text-white">{unreadChatCount}</Text>
+            </Pressable>
+          ) : null}
+
+          {onSwitchToAdmin ? (
+            <Pressable
+              onPress={onSwitchToAdmin}
+              className="min-h-[48px] min-w-[48px] rounded-xl bg-[#800020] border border-white/20 items-center justify-center px-3 flex-row gap-1.5 active:opacity-90"
+              accessibilityRole="button"
+              accessibilityLabel="Back to Admin Dashboard"
+            >
+              <LayoutDashboard size={18} color="#ffffff" />
+              <Text className="text-base font-bold text-white hidden sm:flex">Admin</Text>
+            </Pressable>
+          ) : null}
+
+          {onLogout ? (
+            <Pressable
+              onPress={onLogout}
+              className="min-h-[48px] min-w-[48px] rounded-xl bg-white/10 border border-white/15 items-center justify-center active:opacity-85"
+              accessibilityRole="button"
+              accessibilityLabel="Clock Out"
+            >
+              <LogOut size={18} color="#f5d0fe" />
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.sidebarContainer}>
       {/* Top: Official Bar Logo */}
@@ -162,8 +247,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </View>
 
-      {/* Bottom: Settings & Logout */}
+      {/* Bottom: Admin Switch, Settings & Logout */}
       <View style={styles.bottomSection}>
+        {onSwitchToAdmin ? (
+          <Pressable
+            onPress={onSwitchToAdmin}
+            style={({ pressed }) => [
+              styles.settingsBtn,
+              { backgroundColor: '#800020', borderColor: 'rgba(255,255,255,0.28)' },
+              pressed && styles.navButtonPressed,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Back to Admin Dashboard"
+          >
+            <LayoutDashboard size={20} color="#ffffff" />
+          </Pressable>
+        ) : null}
+
         <Pressable
           onPress={() => onTabChange('settings')}
           style={({ pressed }) => [

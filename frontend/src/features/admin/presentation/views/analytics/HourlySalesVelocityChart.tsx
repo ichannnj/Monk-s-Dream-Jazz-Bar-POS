@@ -38,18 +38,18 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
   );
 
   return (
-    <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
+    <View className="w-full min-w-0 rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
       {/* Header */}
-      <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
-        <View className="flex-row items-center gap-3">
-          <View className="w-10 h-10 rounded-xl bg-[#800020]/10 items-center justify-center">
+      <View className="flex-row items-center justify-between mb-4 flex-wrap gap-3">
+        <View className="flex-row items-center gap-3 flex-1 min-w-[200px]">
+          <View className="w-10 h-10 shrink-0 rounded-xl bg-[#800020]/10 items-center justify-center">
             <TrendingUp size={20} color="#800020" />
           </View>
-          <View>
-            <Text className="text-lg font-extrabold text-stone-900">
+          <View className="flex-1 min-w-0">
+            <Text className="text-lg font-extrabold text-stone-900 leading-snug">
               Hourly Sales Velocity & Peak Pacing
             </Text>
-            <Text className="text-base text-stone-500 font-medium">
+            <Text className="text-base text-stone-500 font-medium mt-0.5">
               Real-time revenue pacing across service day-parts
             </Text>
           </View>
@@ -57,7 +57,7 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
 
         {/* Peak Badge */}
         {peakPoint.sales > 0 && (
-          <View className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200">
+          <View className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 shrink-0">
             <Sparkles size={16} color="#d97706" />
             <Text className="text-base font-bold text-amber-800">
               Peak: {peakPoint.hour} ({formatCurrency(peakPoint.sales)})
@@ -68,8 +68,8 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
 
       {/* Selected Hour Insight Banner */}
       {selectedHour && (
-        <View className="bg-stone-50 rounded-xl p-3 mb-4 flex-row justify-between items-center border border-stone-200">
-          <View className="flex-row items-center gap-2">
+        <View className="bg-stone-50 rounded-xl p-3 mb-4 flex-row flex-wrap justify-between items-center gap-2 border border-stone-200">
+          <View className="flex-row items-center gap-2 flex-wrap">
             <Clock size={16} color="#57534e" />
             <Text className="text-base font-bold text-stone-700">Hour {selectedHour.hour}:</Text>
             <Text className="text-base font-black text-[#800020]">
@@ -85,7 +85,7 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
       )}
 
       {/* Chart Bars */}
-      <View className="h-44 flex-row items-end justify-between pt-6 pb-2 border-b border-stone-100 gap-1.5">
+      <View className="h-44 w-full min-w-0 flex-row items-end justify-between pt-6 pb-2 border-b border-stone-100 gap-1 sm:gap-1.5">
         {hoursList.map((pt) => {
           const heightPercent = Math.max((pt.sales / maxSales) * 100, 4);
           const isPeak = pt.hour === peakPoint.hour && pt.sales > 0;
@@ -95,15 +95,8 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
             <Pressable
               key={pt.hour}
               onPress={() => setSelectedHour(isSelected ? null : pt)}
-              className="flex-1 items-center h-full justify-end group min-w-[18px]"
+              className="flex-1 min-w-0 items-center h-full justify-end group"
             >
-              {/* Tooltip on hover/active */}
-              {pt.sales > 0 && (
-                <Text className="text-[10px] font-bold text-stone-400 mb-1 opacity-0 group-hover:opacity-100">
-                  {Math.round(pt.sales)}
-                </Text>
-              )}
-
               {/* Bar Fill */}
               <View
                 style={{ height: `${heightPercent}%` }}
@@ -123,20 +116,15 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
       </View>
 
       {/* X-Axis Hour Labels */}
-      <View className="flex-row justify-between pt-2">
+      <View className="w-full min-w-0 flex-row justify-between pt-2">
         {hoursList.map((pt, index) => {
-          // Show every 2nd or 3rd hour to avoid crowding
-          const shouldShowLabel = index % 2 === 0 || index === hoursList.length - 1;
-          return (
-            <Text
-              key={pt.hour}
-              className={`text-xs font-semibold ${
-                shouldShowLabel ? 'text-stone-400' : 'opacity-0'
-              }`}
-            >
-              {pt.hour.slice(0, 2)}
+          // Show every 3rd hour to avoid crowding on smaller viewports
+          const shouldShowLabel = index % 3 === 0 || index === hoursList.length - 1;
+          return shouldShowLabel ? (
+            <Text key={pt.hour} className="text-base font-semibold text-stone-500">
+              {pt.hour.slice(0, 2)}h
             </Text>
-          );
+          ) : null;
         })}
       </View>
     </View>

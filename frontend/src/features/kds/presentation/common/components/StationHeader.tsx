@@ -13,6 +13,7 @@ interface StationHeaderProps {
   activeTicketsCount: number;
   urgentTicketsCount?: number;
   onLogout?: () => void;
+  rightAccessory?: React.ReactNode;
 }
 
 export const StationHeader: React.FC<StationHeaderProps> = ({
@@ -20,9 +21,9 @@ export const StationHeader: React.FC<StationHeaderProps> = ({
   stationType,
   activeTicketsCount,
   urgentTicketsCount = 0,
-  onLogout,
+  rightAccessory,
 }) => {
-  const { currentUser, isOnline } = useAuthStore();
+  const { isOnline } = useAuthStore();
 
   const getStationConfig = () => {
     switch (stationType) {
@@ -55,9 +56,9 @@ export const StationHeader: React.FC<StationHeaderProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Left: Official Logo + Station Identification */}
-      <View style={styles.leftSection}>
-        <View style={styles.logoBadge}>
+      {/* Left: Station Identification + Online Status + Active Queue Badges */}
+      <View className="flex-row items-center flex-wrap gap-2.5">
+        <View style={styles.logoBadge} className="hidden sm:flex">
           <ExpoImage
             source={MONKS_DREAM_LOGO}
             style={styles.logoImage}
@@ -66,60 +67,45 @@ export const StationHeader: React.FC<StationHeaderProps> = ({
           />
         </View>
 
-        <View style={styles.titleCol}>
-          <View style={styles.brandRow}>
-            <Text style={styles.brandText}>MONK'S DREAM</Text>
-            <View
-              style={[
-                styles.stationPill,
-                { backgroundColor: config.badgeBg, borderColor: `${config.badgeColor}40` },
-              ]}
-            >
-              <IconComponent size={12} color={config.badgeColor} />
-              <Text style={[styles.stationPillText, { color: config.badgeColor }]}>
-                {config.badgeText}
-              </Text>
-            </View>
-          </View>
-          <Text style={styles.subText}>
-            {title} • Staff: {currentUser?.displayName || 'Active Station'}
+        <Text className="text-xl font-extrabold text-stone-900 tracking-tight">{title}</Text>
+
+        <View
+          style={[
+            styles.stationPill,
+            { backgroundColor: config.badgeBg, borderColor: `${config.badgeColor}40` },
+          ]}
+        >
+          <IconComponent size={14} color={config.badgeColor} />
+          <Text style={[styles.stationPillText, { color: config.badgeColor }]}>
+            {config.badgeText}
           </Text>
         </View>
-      </View>
 
-      {/* Center: Live Queue Metrics */}
-      <View style={styles.metricsRow}>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricLabel}>ACTIVE QUEUE</Text>
-          <Text style={styles.metricValue}>{activeTicketsCount}</Text>
-        </View>
-        {urgentTicketsCount > 0 ? (
-          <View style={[styles.metricCard, styles.metricCardUrgent]}>
-            <View style={styles.urgentDot} />
-            <Text style={styles.urgentLabel}>OVERDUE (&gt;10m)</Text>
-            <Text style={styles.urgentValue}>{urgentTicketsCount}</Text>
-          </View>
-        ) : null}
-      </View>
-
-      {/* Right: Cloud Sync Status & Logout */}
-      <View style={styles.rightSection}>
         <View style={[styles.syncPill, isOnline ? styles.syncPillOnline : styles.syncPillOffline]}>
           <View style={[styles.syncDot, { backgroundColor: isOnline ? '#10b981' : '#f43f5e' }]} />
-          <Text style={[styles.syncText, { color: isOnline ? '#10b981' : '#f43f5e' }]}>
-            {isOnline ? 'Realtime Connected' : 'Offline'}
+          <Text style={[styles.syncText, { color: isOnline ? '#065f46' : '#be123c' }]}>
+            {isOnline ? 'Online' : 'Offline'}
           </Text>
         </View>
+      </View>
 
-        <Pressable
-          onPress={onLogout}
-          style={({ pressed }) => [styles.logoutBtn, pressed && styles.logoutBtnPressed]}
-          accessibilityRole="button"
-          accessibilityLabel="Switch Staff User"
-        >
-          <LogOut size={16} color="#832238" />
-          <Text style={styles.logoutBtnText}>Switch User</Text>
-        </Pressable>
+      {/* Right: Metrics & Optional Filter Dropdown */}
+      <View className="flex-row items-center flex-wrap gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+        <View style={styles.metricsRow}>
+          <View style={styles.metricCard}>
+            <Text style={styles.metricLabel}>QUEUE</Text>
+            <Text style={styles.metricValue}>{activeTicketsCount}</Text>
+          </View>
+          {urgentTicketsCount > 0 ? (
+            <View style={[styles.metricCard, styles.metricCardUrgent]}>
+              <View style={styles.urgentDot} />
+              <Text style={styles.urgentLabel}>READY</Text>
+              <Text style={styles.urgentValue}>{urgentTicketsCount}</Text>
+            </View>
+          ) : null}
+        </View>
+
+        {rightAccessory}
       </View>
     </View>
   );
@@ -129,9 +115,10 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#ffffff',
     borderRadius: 20,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingVertical: 12,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     shadowColor: '#2b0f16',
@@ -139,8 +126,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 8,
     elevation: 2,
-    marginBottom: 16,
-    gap: 16,
+    marginBottom: 14,
+    gap: 12,
   },
   leftSection: {
     flexDirection: 'row',

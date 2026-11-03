@@ -8,7 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { X, Sparkles, Coffee, ShieldCheck } from 'lucide-react-native';
+import { X, Sparkles, Coffee, ShieldCheck, Clock, AlertTriangle } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 
 interface ManagerModeSwitchModalProps {
@@ -65,17 +65,17 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 bg-stone-950/75 justify-center items-center p-5">
+      <View className="flex-1 bg-stone-950/75 justify-center items-center p-4 sm:p-5">
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
           accessibilityLabel="Close mode switch modal"
         />
 
-        <View className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl elevation-8">
+        <View className="w-full max-w-lg bg-white rounded-3xl p-5 sm:p-6 shadow-2xl elevation-8">
           {/* Header */}
           <View className="flex-row items-center justify-between mb-4">
-            <View className="flex-row items-center gap-3">
+            <View className="flex-row items-center gap-3 flex-1 pr-2">
               <View
                 className={`w-12 h-12 rounded-2xl items-center justify-center ${
                   nextMode === 'EVENT' ? 'bg-amber-100' : 'bg-sky-100'
@@ -87,12 +87,12 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
                   <Coffee size={24} color="#0284c7" strokeWidth={2.4} />
                 )}
               </View>
-              <View>
+              <View className="flex-1">
                 <Text className="text-xl font-bold text-stone-900">
-                  Switch to {nextMode === 'EVENT' ? 'Event Mode' : 'Cafe Mode'}
+                  Confirm Switch to {nextMode === 'EVENT' ? 'Event Mode' : 'Cafe Mode'}?
                 </Text>
                 <Text className="text-base text-stone-500 font-medium">
-                  Currently in {currentMode === 'EVENT' ? 'Event Mode' : 'Cafe Mode'}
+                  Currently in {currentMode === 'EVENT' ? '🎷 Event Mode' : '☀️ Cafe Mode'}
                 </Text>
               </View>
             </View>
@@ -107,26 +107,46 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
             </Pressable>
           </View>
 
-          {/* Explanation Banner */}
+          {/* Confirmation Prompt & Revenue Segregation Notice */}
           <View
-            className={`p-4 rounded-2xl mb-5 border ${
+            className={`p-4 rounded-2xl mb-3.5 border ${
               nextMode === 'EVENT'
-                ? 'bg-amber-50/70 border-amber-200'
-                : 'bg-sky-50/70 border-sky-200'
+                ? 'bg-amber-50/80 border-amber-200'
+                : 'bg-sky-50/80 border-sky-200'
             }`}
           >
+            <View className="flex-row items-center gap-2 mb-1.5">
+              <AlertTriangle size={18} color={nextMode === 'EVENT' ? '#b45309' : '#0369a1'} />
+              <Text
+                className={`text-base font-bold ${
+                  nextMode === 'EVENT' ? 'text-amber-950' : 'text-sky-950'
+                }`}
+              >
+                Are you sure you want to change the venue operating mode?
+              </Text>
+            </View>
             <Text
               className={`text-base font-semibold leading-relaxed ${
                 nextMode === 'EVENT' ? 'text-amber-900' : 'text-sky-900'
               }`}
             >
               {nextMode === 'EVENT'
-                ? '🎷 Live Jazz Night: All subsequent dine-in tabs, takeout, and delivery orders will be tagged as Event Mode.'
-                : '☀️ Daytime Operations: All subsequent dine-in tabs, takeout, and delivery orders will be tagged as Cafe Mode.'}
+                ? '🎷 Live Jazz Night: All new dine-in tabs, takeout, and delivery orders will be tagged as Event Mode.'
+                : '☀️ Daytime Operations: All new dine-in tabs, takeout, and delivery orders will be tagged as Cafe Mode.'}
             </Text>
-            <Text className="text-base text-stone-600 mt-2">
-              Note: Existing open tabs will retain their original mode and settle to their
-              respective revenue streams.
+            <Text className="text-base text-stone-600 mt-1.5">
+              Existing open tabs retain their original mode upon settlement.
+            </Text>
+          </View>
+
+          {/* 6:00 AM Automatic Revert Schedule Notice */}
+          <View className="flex-row items-start gap-3 p-3.5 rounded-2xl mb-5 bg-stone-100/90 border border-stone-200">
+            <View className="mt-0.5">
+              <Clock size={18} color="#800020" />
+            </View>
+            <Text className="flex-1 text-base font-medium text-stone-700 leading-snug">
+              <Text className="font-bold text-stone-900">6:00 AM Auto-Reset: </Text>
+              Event Mode automatically reverts back to Daytime Cafe Mode every morning at 6:00 AM.
             </Text>
           </View>
 
@@ -180,7 +200,7 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
                 <ActivityIndicator size="small" color="#ffffff" />
               ) : (
                 <Text className="text-base font-bold text-white">
-                  Activate {nextMode === 'EVENT' ? 'Event' : 'Cafe'} Mode
+                  Confirm {nextMode === 'EVENT' ? 'Event' : 'Cafe'} Mode
                 </Text>
               )}
             </Pressable>

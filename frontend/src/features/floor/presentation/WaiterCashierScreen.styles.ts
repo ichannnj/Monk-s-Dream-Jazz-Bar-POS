@@ -10,6 +10,13 @@ export const styles = StyleSheet.create({
     paddingRight: 18,
     gap: 18,
   },
+  screenContainerMobile: {
+    flexDirection: 'column',
+    paddingVertical: 8,
+    paddingLeft: 10,
+    paddingRight: 10,
+    gap: 8,
+  },
   mainContent: {
     flex: 1,
   },

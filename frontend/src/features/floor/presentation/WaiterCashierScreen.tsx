@@ -1,10 +1,9 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { LayoutDashboard } from 'lucide-react-native';
+import { View } from 'react-native';
 import { useAuthStore } from '@/features/auth';
 import { useOrderStore } from '@/features/orders';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { Sidebar, NavTabId } from '@/features/shared';
+import { Sidebar, NavTabId, useResponsive } from '@/features/shared';
 import { styles } from './WaiterCashierScreen.styles';
 import { FloorWorkspaceView } from './FloorWorkspaceView';
 import { ChecksHistoryView } from '@/features/check-history';
@@ -19,7 +18,8 @@ interface WaiterCashierScreenProps {
 }
 
 export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwitchToAdmin }) => {
-  const { currentUser, logout } = useAuthStore();
+  const { logout } = useAuthStore();
+  const { isMobile } = useResponsive();
   const alerts = useOrderStore((state) => state.alerts);
   const unreadChatCount = useChatStore((state) =>
     state.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
@@ -37,25 +37,13 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
   const unreadAlerts = useMemo(() => alerts.filter((a) => !a.isRead).length, [alerts]);
 
   return (
-    <View style={styles.screenContainer}>
-      {/* Return to Admin Dashboard Button for Managers */}
-      {onSwitchToAdmin && (
-        <View className="absolute top-3 right-5 z-50">
-          <Pressable
-            onPress={onSwitchToAdmin}
-            className="flex-row items-center rounded-xl bg-[#800020] px-3.5 py-2 shadow-lg active:opacity-90"
-          >
-            <LayoutDashboard size={15} color="#ffffff" />
-            <Text className="ml-2 text-xs font-bold text-white">Back to Admin Dashboard</Text>
-          </Pressable>
-        </View>
-      )}
-
-      {/* 1. Dedicated Left Navigation Sidebar */}
+    <View style={[styles.screenContainer, isMobile && styles.screenContainerMobile]}>
+      {/* 1. Navigation Sidebar (Top Bar on Mobile <768px | Left Rail on >=768px) */}
       <Sidebar
         activeTab={activeNavTab}
         onTabChange={setActiveNavTab}
         onLogout={handleLogout}
+        onSwitchToAdmin={onSwitchToAdmin}
         alertCount={unreadAlerts}
         unreadChatCount={unreadChatCount}
       />

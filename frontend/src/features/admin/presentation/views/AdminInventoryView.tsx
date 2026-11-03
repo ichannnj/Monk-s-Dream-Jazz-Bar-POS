@@ -25,6 +25,7 @@ import { SupplierModal } from './inventory/SupplierModal';
 import { StocktakeAuditModal } from './inventory/StocktakeAuditModal';
 import { WasteLoggerModal } from './inventory/WasteLoggerModal';
 import { AdminModal, AdminInput, AdminNumberInput } from '../components';
+import { PosDropdown, PosDropdownOption } from '@/features/shared';
 
 type InventoryTab = 'stock' | 'suppliers' | 'ledger' | 'stocktake' | 'waste';
 
@@ -164,35 +165,79 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
     return matchesSearch && matchesCat;
   });
 
+  const inventoryTabOptions: PosDropdownOption<InventoryTab>[] = [
+    {
+      value: 'stock',
+      label: 'Stock On-Hand',
+      badge: inventory.length,
+      icon: Package,
+      description: 'Live ingredient stock levels and restock intake',
+    },
+    {
+      value: 'suppliers',
+      label: 'Vendors & Suppliers',
+      badge: suppliers.length,
+      icon: Building2,
+      description: 'Directory of active food, beverage, and packaging vendors',
+    },
+    {
+      value: 'ledger',
+      label: 'Movement Ledger',
+      badge: movements.length,
+      icon: FileText,
+      description: 'Chronological audit trail of deliveries, depletions, and adjustments',
+    },
+    {
+      value: 'stocktake',
+      label: 'Physical Stocktake',
+      icon: ClipboardCheck,
+      description: 'Reconcile shelf counts against system inventory',
+    },
+    {
+      value: 'waste',
+      label: 'Waste & Spillage',
+      icon: Trash2,
+      description: 'Log spoilage, breakage, and post-prep voids',
+    },
+  ];
+
+  const categoryDropdownOptions: PosDropdownOption<string>[] = CATEGORY_FILTERS.map((f) => ({
+    value: f.key,
+    label: f.label,
+  }));
+
   return (
     <ScrollView
       className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
-      {/* Page Header */}
-      <View className="mb-6 flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <View className="flex-1 min-w-[260px]">
-          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-            Inventory Hub & Moving Average Cost (MAC)
-          </Text>
-          <Text className="mt-1 text-base text-stone-500">
-            Raw ingredients, packaging/disposables, suppliers, stocktake audits, and spillage
-            tracking
-          </Text>
-        </View>
+      {/* Page Header & View Dropdown */}
+      <View className="mb-5 flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+          Inventory &amp; Costing (MAC)
+        </Text>
 
-        {/* Global Action Buttons based on active tab */}
-        <View className="flex-row items-center gap-3 flex-wrap">
+        {/* View Selector Dropdown + Contextual Action Button */}
+        <View className="flex-row items-center gap-2.5 flex-wrap">
+          <PosDropdown
+            options={inventoryTabOptions}
+            value={activeTab}
+            onChange={setActiveTab}
+            prefixLabel="View:"
+            sheetTitle="Select Inventory Section"
+            className="flex-1 sm:flex-initial min-w-[195px]"
+          />
+
           {activeTab === 'stock' && (
             <Pressable
               onPress={() => {
                 setEditingItem(null);
                 setIsItemModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Plus size={20} color="#ffffff" />
-              <Text className="ml-2 text-base font-bold text-white">Add Inventory Item</Text>
+              <Text className="ml-2 text-base font-bold text-white">+ Add Item</Text>
             </Pressable>
           )}
 
@@ -202,27 +247,27 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
                 setEditingSupplier(null);
                 setIsSupplierModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Building2 size={20} color="#ffffff" />
-              <Text className="ml-2 text-base font-bold text-white">Add Supplier</Text>
+              <Text className="ml-2 text-base font-bold text-white">+ Add Supplier</Text>
             </Pressable>
           )}
 
           {activeTab === 'stocktake' && (
             <Pressable
               onPress={() => setIsStocktakeModalOpen(true)}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <ClipboardCheck size={20} color="#ffffff" />
-              <Text className="ml-2 text-base font-bold text-white">Run Physical Stocktake</Text>
+              <Text className="ml-2 text-base font-bold text-white">Run Stocktake</Text>
             </Pressable>
           )}
 
           {activeTab === 'waste' && (
             <Pressable
               onPress={() => setIsWasteModalOpen(true)}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-rose-700 px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-rose-700 px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
             >
               <Trash2 size={20} color="#ffffff" />
               <Text className="ml-2 text-base font-bold text-white">Log Spillage / Waste</Text>
@@ -231,81 +276,27 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         </View>
       </View>
 
-      {/* Sub-Navigation Tabs with horizontal scrolling */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="mb-6 border-b border-stone-200"
-      >
-        <View className="flex-row">
-          {[
-            { key: 'stock', label: `Stock On-Hand (${inventory.length})`, icon: Package },
-            { key: 'suppliers', label: `Suppliers (${suppliers.length})`, icon: Building2 },
-            { key: 'ledger', label: `Movement Ledger (${movements.length})`, icon: FileText },
-            { key: 'stocktake', label: 'Physical Stocktake', icon: ClipboardCheck },
-            { key: 'waste', label: 'Waste & Spillage', icon: Trash2 },
-          ].map((tab) => {
-            const isActive = activeTab === tab.key;
-            const IconComp = tab.icon;
-            return (
-              <Pressable
-                key={tab.key}
-                onPress={() => setActiveTab(tab.key as InventoryTab)}
-                className={`min-h-[48px] flex-row items-center px-4 sm:px-6 border-b-2 transition-all ${
-                  isActive
-                    ? 'border-[#800020] bg-[#800020]/5'
-                    : 'border-transparent active:bg-stone-100'
-                }`}
-              >
-                <IconComp size={18} color={isActive ? '#800020' : '#78716c'} />
-                <Text
-                  className={`ml-2 text-base whitespace-nowrap ${
-                    isActive ? 'font-bold text-[#800020]' : 'font-medium text-stone-600'
-                  }`}
-                >
-                  {tab.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </ScrollView>
-
       {/* TAB 1: STOCK ON-HAND */}
       {activeTab === 'stock' && (
         <View className="space-y-4">
-          {/* Search & Category Filter Bar */}
-          <View className="flex-col gap-3">
-            <AdminInput
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder="Search inventory items, SKUs, or vendors..."
-              leftElement={<Search size={20} color="#78716c" />}
-            />
-
-            {/* Responsive Wrapped Category Pills (Zero horizontal scroll) */}
-            <View className="flex-row flex-wrap gap-2">
-              {CATEGORY_FILTERS.map((f) => {
-                const isSel = categoryFilter === f.key;
-                return (
-                  <Pressable
-                    key={f.key}
-                    onPress={() => setCategoryFilter(f.key)}
-                    className={`min-h-[48px] px-4 items-center justify-center rounded-xl border ${
-                      isSel
-                        ? 'bg-[#800020] border-[#800020]'
-                        : 'bg-white border-stone-300 active:bg-stone-100'
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-semibold ${isSel ? 'text-white' : 'text-stone-700'}`}
-                    >
-                      {f.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
+          {/* Search & Category Dropdown Bar */}
+          <View className="flex-col sm:flex-row items-stretch sm:items-center gap-3">
+            <View className="flex-1">
+              <AdminInput
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholder="Search inventory items, SKUs, or vendors..."
+                leftElement={<Search size={20} color="#78716c" />}
+              />
             </View>
+
+            <PosDropdown
+              options={categoryDropdownOptions}
+              value={categoryFilter}
+              onChange={setCategoryFilter}
+              sheetTitle="Filter Inventory by Category"
+              className="w-full sm:w-64"
+            />
           </View>
 
           {/* Inventory Table / Cards */}

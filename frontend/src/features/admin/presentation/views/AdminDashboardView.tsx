@@ -3,16 +3,11 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
   RefreshCw,
   TrendingUp,
-  TrendingDown,
   ArrowRight,
-  ChevronDown,
-  X,
-  Check,
   Calendar,
   Layers,
   Clock,
   Sparkles,
-  AlertTriangle,
   LayoutGrid,
   Banknote,
   Smartphone,
@@ -23,7 +18,7 @@ import type { DashboardTelemetry, AdminRoute, TimeframeFilter } from '../../doma
 import { HourlySalesVelocityChart } from './analytics/HourlySalesVelocityChart';
 import { PaymentTenderMixBar } from './analytics/PaymentTenderMixBar';
 import { DepartmentSalesBreakdown, DepartmentShare } from './analytics/DepartmentSalesBreakdown';
-import { AdminModal } from '../components/AdminModal';
+import { PosDropdown, PosDropdownOption } from '@/features/shared';
 
 export interface AdminDashboardViewProps {
   telemetry: DashboardTelemetry;
@@ -93,8 +88,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const [bestSellerFilter, setBestSellerFilter] = useState<BestSellerFilter>('top5');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [alerts, setAlerts] = useState(telemetry.alerts || []);
-  const [isTimeframeModalOpen, setIsTimeframeModalOpen] = useState(false);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
 
   // Sync alerts whenever telemetry updates from refresh
   useEffect(() => {
@@ -141,13 +134,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   };
 
   const handleSelectTimeframe = (selectedKey: TimeframeFilter) => {
-    setIsTimeframeModalOpen(false);
     onChangeTimeframe?.(selectedKey);
-  };
-
-  const handleSelectCategory = (category: string) => {
-    setSelectedCategory(category);
-    setIsCategoryModalOpen(false);
   };
 
   const hasZeroOrders = (telemetry.orderCount || 0) === 0;
@@ -182,43 +169,39 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   }, [telemetry.categorySales]);
 
   return (
-    <ScrollView className="flex-1 bg-[#fcf9f9]" showsVerticalScrollIndicator={false}>
-      <View className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+    <ScrollView className="flex-1 min-w-0 bg-[#fcf9f9]" showsVerticalScrollIndicator={false}>
+      <View className="w-full min-w-0 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 overflow-hidden">
         {/* Header: Title, Timeframe Selector, and Refresh */}
-        <View className="flex-col sm:flex-row sm:items-center justify-between pb-1 gap-4">
-          <View className="flex-1 min-w-[260px]">
-            <View className="flex-row items-center space-x-2">
-              <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-                Performance Overview
-              </Text>
-              <View className="ml-2 rounded-full bg-stone-100 border border-stone-200 px-3 py-1">
-                <Text className="text-base font-bold text-stone-700">100% Live DB</Text>
-              </View>
-            </View>
-            <Text className="mt-1 text-base font-medium text-stone-500">
-              Bar & Cafe · all stations · Updated {telemetry.lastUpdated}
+        <View className="flex-col sm:flex-row sm:items-center justify-between pb-1 gap-3">
+          <View className="flex-1 min-w-0">
+            <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+              Performance Overview
+            </Text>
+            <Text className="mt-0.5 text-base font-medium text-stone-500">
+              Updated {telemetry.lastUpdated}
             </Text>
           </View>
 
-          <View className="flex-row items-center gap-3 flex-wrap">
-            {/* Primary Timeframe Selector Trigger */}
-            <Pressable
-              onPress={() => setIsTimeframeModalOpen(true)}
-              className="min-h-[48px] flex-row items-center rounded-xl border border-stone-300 bg-white px-4 py-2.5 shadow-xs active:bg-stone-50"
-            >
-              <Calendar size={18} color="#800020" />
-              <Text className="text-base text-stone-500 ml-2 mr-1.5">Period:</Text>
-              <Text className="text-base font-bold text-stone-900 mr-2">
-                {activeTimeframeOption.label}
-              </Text>
-              <ChevronDown size={18} color="#78716c" />
-            </Pressable>
+          <View className="flex-row items-center gap-2.5 flex-wrap">
+            {/* Primary Timeframe Selector Dropdown */}
+            <PosDropdown
+              options={TIMEFRAME_OPTIONS.map((opt) => ({
+                value: opt.key,
+                label: opt.label,
+                description: opt.description,
+                icon: Calendar,
+              }))}
+              value={timeframe}
+              onChange={(key) => onChangeTimeframe?.(key)}
+              prefixLabel="Period:"
+              sheetTitle="Select Analytics Timeframe"
+            />
 
             {/* Refresh Button */}
             <Pressable
               onPress={onRefresh}
               disabled={isLoading}
-              className="min-h-[48px] flex-row items-center rounded-xl border border-stone-200 bg-white px-5 py-2.5 shadow-xs active:bg-stone-50"
+              className="min-h-[48px] flex-row items-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 shadow-xs active:bg-stone-50"
             >
               <RefreshCw size={18} color="#44403c" className={isLoading ? 'animate-spin' : ''} />
               <Text className="ml-2 text-base font-bold text-stone-800">
@@ -229,19 +212,19 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </View>
 
         {/* 4 KPI Cards: Operational Floor Mix */}
-        <View className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <View className="flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-5">
           {/* Card 1: Net Sales Revenue (Burgundy #800020) */}
-          <View className="rounded-2xl bg-[#800020] p-5 sm:p-6 shadow-sm justify-between min-h-[190px]">
-            <View>
-              <View className="flex-row items-center justify-between">
+          <View className="w-full sm:w-[48%] xl:flex-1 min-w-0 rounded-2xl bg-[#800020] p-5 sm:p-6 shadow-sm justify-between min-h-[190px]">
+            <View className="min-w-0">
+              <View className="flex-row items-center justify-between flex-wrap gap-2">
                 <Text className="text-base font-semibold text-white/90">Net Sales Revenue</Text>
                 {timeframe === 'today' ? (
-                  <View className="flex-row items-center rounded-full bg-white/20 border border-white/25 px-2.5 py-0.5">
+                  <View className="flex-row items-center rounded-full bg-white/20 border border-white/25 px-2.5 py-0.5 shrink-0">
                     <View className="h-2 w-2 rounded-full bg-emerald-400 mr-1.5" />
                     <Text className="text-base font-bold text-white">Live Shift</Text>
                   </View>
                 ) : (
-                  <View className="flex-row items-center rounded-full bg-white/20 border border-white/25 px-2.5 py-0.5">
+                  <View className="flex-row items-center rounded-full bg-white/20 border border-white/25 px-2.5 py-0.5 shrink-0">
                     <Text className="text-base font-bold text-white">
                       {activeTimeframeOption.shortLabel}
                     </Text>
@@ -249,7 +232,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 )}
               </View>
 
-              <Text className="mt-3 text-3xl font-black tracking-tight text-white">
+              <Text className="mt-3 text-2xl sm:text-3xl font-black tracking-tight text-white">
                 ₱
                 {Number(telemetry.liveSalesTotal || 0).toLocaleString('en-US', {
                   minimumFractionDigits: 2,
@@ -259,14 +242,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
               {/* Benchmark delta badge */}
               <View className="mt-2 flex-row items-center flex-wrap gap-2">
-                <View className="flex-row items-center rounded-md bg-white/20 px-2.5 py-0.5">
+                <View className="flex-row items-center rounded-md bg-white/20 px-2.5 py-0.5 shrink-0">
                   <TrendingUp size={16} color="#ffffff" />
                   <Text className="ml-1.5 text-base font-bold text-white">
                     {telemetry.salesGrowthPercent >= 0 ? '+' : ''}
                     {telemetry.salesGrowthPercent}%
                   </Text>
                 </View>
-                <Text className="text-base text-white/80">
+                <Text className="text-base text-white/80 flex-1 min-w-[120px]">
                   {telemetry.benchmarkLabel || activeTimeframeOption.benchmarkLabel}
                 </Text>
               </View>
@@ -280,7 +263,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
               {/* Mini Hourly Bar Chart */}
               {telemetry.hourlySales && telemetry.hourlySales.length > 0 && (
-                <View className="items-end">
+                <View className="items-end shrink-0">
                   <View className="flex-row items-end h-8 space-x-1">
                     {telemetry.hourlySales.map((h, idx) => {
                       const maxSales = Math.max(...telemetry.hourlySales.map((s) => s.sales), 100);
@@ -294,22 +277,22 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       );
                     })}
                   </View>
-                  <Text className="text-sm text-white/70 mt-1">{telemetry.peakHourLabel}</Text>
+                  <Text className="text-base text-white/80 mt-1">{telemetry.peakHourLabel}</Text>
                 </View>
               )}
             </View>
           </View>
 
           {/* Card 2: Average Ticket / Check */}
-          <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[190px]">
-            <View>
+          <View className="w-full sm:w-[48%] xl:flex-1 min-w-0 rounded-2xl border border-stone-200/80 bg-white p-5 sm:p-6 shadow-xs justify-between min-h-[190px]">
+            <View className="min-w-0">
               <Text className="text-base font-semibold text-stone-500">Avg Ticket / Check</Text>
-              <Text className="mt-2 text-3xl font-black text-stone-900 tracking-tight">
+              <Text className="mt-2 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
                 ₱{Number(telemetry.averageCheck || 0).toFixed(2)}
               </Text>
 
               <View className="mt-2 flex-row items-center flex-wrap gap-2">
-                <View className="flex-row items-center rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
+                <View className="flex-row items-center rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 shrink-0">
                   <TrendingUp size={16} color="#059669" />
                   <Text className="ml-1 text-base font-bold text-emerald-700">
                     {telemetry.averageCheckGrowthPercent >= 0 ? '+' : ''}
@@ -320,7 +303,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
               </View>
             </View>
 
-            <View className="mt-4 pt-3 border-t border-stone-100 flex-row items-center justify-between">
+            <View className="mt-4 pt-3 border-t border-stone-100 flex-row items-center justify-between flex-wrap gap-2">
               <Text className="text-base text-stone-500">Spend Per Guest</Text>
               <Text className="text-base font-bold text-stone-800">
                 ₱{Number(telemetry.spendPerGuest || 0).toFixed(2)}
@@ -329,20 +312,20 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           </View>
 
           {/* Card 3: Settled Orders & Payment Mix */}
-          <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[190px]">
-            <View>
+          <View className="w-full sm:w-[48%] xl:flex-1 min-w-0 rounded-2xl border border-stone-200/80 bg-white p-5 sm:p-6 shadow-xs justify-between min-h-[190px]">
+            <View className="min-w-0">
               <Text className="text-base font-semibold text-stone-500">Settled Orders & Mix</Text>
-              <Text className="mt-2 text-3xl font-black text-stone-900 tracking-tight">
+              <Text className="mt-2 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
                 {telemetry.orderCount}
               </Text>
 
               <View className="mt-2 flex-row items-center flex-wrap gap-2">
-                <View className="flex-row items-center rounded-md bg-stone-100 border border-stone-200 px-2.5 py-0.5">
+                <View className="flex-row items-center rounded-md bg-stone-100 border border-stone-200 px-2.5 py-0.5 shrink-0">
                   <Text className="text-base font-bold text-stone-700">
                     {telemetry.ordersPerHour} / hr
                   </Text>
                 </View>
-                <Text className="text-base text-stone-500">
+                <Text className="text-base text-stone-500 flex-1 min-w-[110px]">
                   {telemetry.benchmarkLabel || activeTimeframeOption.benchmarkLabel}
                 </Text>
               </View>
@@ -350,7 +333,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
             {/* Payment Method Breakdown */}
             <View className="mt-4 pt-3 border-t border-stone-100 space-y-1.5">
-              <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center justify-between flex-wrap gap-1">
                 <View className="flex-row items-center">
                   <Banknote size={16} color="#059669" />
                   <Text className="ml-1.5 text-base text-stone-600">Cash</Text>
@@ -360,7 +343,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 </Text>
               </View>
 
-              <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center justify-between flex-wrap gap-1">
                 <View className="flex-row items-center">
                   <Smartphone size={16} color="#2563eb" />
                   <Text className="ml-1.5 text-base text-stone-600">Digital / GCash</Text>
@@ -370,7 +353,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 </Text>
               </View>
 
-              <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center justify-between flex-wrap gap-1">
                 <View className="flex-row items-center">
                   <CreditCard size={16} color="#7c3aed" />
                   <Text className="ml-1.5 text-base text-stone-600">Card</Text>
@@ -383,18 +366,18 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           </View>
 
           {/* Card 4: Live Table & Floor Occupancy */}
-          <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs justify-between min-h-[190px]">
-            <View>
+          <View className="w-full sm:w-[48%] xl:flex-1 min-w-0 rounded-2xl border border-stone-200/80 bg-white p-5 sm:p-6 shadow-xs justify-between min-h-[190px]">
+            <View className="min-w-0">
               <View className="flex-row items-center justify-between flex-wrap gap-1">
                 <Text className="text-base font-semibold text-stone-500">Floor & Tables</Text>
-                <View className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
+                <View className="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 shrink-0">
                   <Text className="text-base font-bold text-emerald-700">
                     {telemetry.occupancyPercent}% Busy
                   </Text>
                 </View>
               </View>
 
-              <Text className="mt-2 text-3xl font-black text-stone-900 tracking-tight">
+              <Text className="mt-2 text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
                 {telemetry.occupiedTables} / {telemetry.totalTables}{' '}
                 <Text className="text-xl font-normal text-stone-500">Tables</Text>
               </Text>
@@ -455,24 +438,24 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         )}
 
         {/* Dedicated Operating Mode Revenue Split Section */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-5 sm:p-6 shadow-xs">
+        <View className="w-full min-w-0 rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
           <View className="flex-row items-center justify-between flex-wrap gap-3 mb-5">
-            <View className="flex-row items-center gap-3">
-              <View className="w-10 h-10 rounded-xl bg-[#800020]/10 border border-[#800020]/20 items-center justify-center">
+            <View className="flex-row items-center gap-3 flex-1 min-w-[200px]">
+              <View className="w-10 h-10 shrink-0 rounded-xl bg-[#800020]/10 border border-[#800020]/20 items-center justify-center">
                 <Sparkles size={20} color="#800020" />
               </View>
-              <View>
+              <View className="flex-1 min-w-0">
                 <Text className="text-xl font-bold text-stone-900">
                   Operating Mode Revenue Split
                 </Text>
-                <Text className="text-base text-stone-500 font-medium">
+                <Text className="text-base text-stone-500 font-medium mt-0.5">
                   Segregated sales for Daytime Cafe vs. Evening Live Jazz Sets
                 </Text>
               </View>
             </View>
 
             {/* Active Mode Pill */}
-            <View className="flex-row items-center gap-2">
+            <View className="flex-row items-center gap-2 flex-wrap">
               <Text className="text-base font-semibold text-stone-500">Venue Active Mode:</Text>
               <View
                 className={`flex-row items-center gap-1.5 px-3 py-1.5 rounded-full border ${
@@ -498,7 +481,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
           {/* Dual Segment Split Progress Bar */}
           <View className="mb-6">
-            <View className="flex-row items-center justify-between mb-2">
+            <View className="flex-row items-center justify-between flex-wrap gap-2 mb-2">
               <View className="flex-row items-center gap-2">
                 <View className="w-3 h-3 rounded-full bg-sky-500" />
                 <Text className="text-base font-bold text-stone-700">
@@ -526,17 +509,17 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </View>
           </View>
 
-          {/* 3 Metric Cards Grid: Cafe vs Event vs Consolidated Total */}
-          <View className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* 3 Metric Cards Flex Row: Cafe vs Event vs Consolidated Total */}
+          <View className="flex-col md:flex-row gap-4">
             {/* 1. Cafe Mode Card */}
-            <View className="rounded-xl border border-sky-200 bg-sky-50/50 p-4 justify-between">
-              <View>
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-2">
+            <View className="flex-1 min-w-0 rounded-xl border border-sky-200 bg-sky-50/50 p-4 justify-between">
+              <View className="min-w-0">
+                <View className="flex-row items-center justify-between flex-wrap gap-2">
+                  <View className="flex-row items-center gap-2 flex-1 min-w-[140px]">
                     <Coffee size={18} color="#0284c7" />
                     <Text className="text-base font-bold text-sky-900">☀️ Cafe Mode Sales</Text>
                   </View>
-                  <View className="px-2 py-0.5 rounded-md bg-sky-100 border border-sky-300">
+                  <View className="px-2 py-0.5 rounded-md bg-sky-100 border border-sky-300 shrink-0">
                     <Text className="text-base font-bold text-sky-800">
                       {telemetry.cafePercentage || 0}%
                     </Text>
@@ -550,7 +533,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   })}
                 </Text>
               </View>
-              <View className="mt-3 pt-3 border-t border-sky-200 flex-row items-center justify-between">
+              <View className="mt-3 pt-3 border-t border-sky-200 flex-row items-center justify-between flex-wrap gap-2">
                 <Text className="text-base font-medium text-sky-700">
                   {telemetry.cafeOrdersCount || 0} checks
                 </Text>
@@ -561,14 +544,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </View>
 
             {/* 2. Event Mode Card */}
-            <View className="rounded-xl border border-amber-200 bg-amber-50/50 p-4 justify-between">
-              <View>
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-2">
+            <View className="flex-1 min-w-0 rounded-xl border border-amber-200 bg-amber-50/50 p-4 justify-between">
+              <View className="min-w-0">
+                <View className="flex-row items-center justify-between flex-wrap gap-2">
+                  <View className="flex-row items-center gap-2 flex-1 min-w-[140px]">
                     <Sparkles size={18} color="#d97706" />
                     <Text className="text-base font-bold text-amber-900">🎷 Event Mode Sales</Text>
                   </View>
-                  <View className="px-2 py-0.5 rounded-md bg-amber-100 border border-amber-300">
+                  <View className="px-2 py-0.5 rounded-md bg-amber-100 border border-amber-300 shrink-0">
                     <Text className="text-base font-bold text-amber-800">
                       {telemetry.eventPercentage || 0}%
                     </Text>
@@ -582,7 +565,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   })}
                 </Text>
               </View>
-              <View className="mt-3 pt-3 border-t border-amber-200 flex-row items-center justify-between">
+              <View className="mt-3 pt-3 border-t border-amber-200 flex-row items-center justify-between flex-wrap gap-2">
                 <Text className="text-base font-medium text-amber-700">
                   {telemetry.eventOrdersCount || 0} checks
                 </Text>
@@ -593,16 +576,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </View>
 
             {/* 3. Consolidated Total Sales Card */}
-            <View className="rounded-xl border border-stone-200 bg-stone-50/70 p-4 justify-between">
-              <View>
-                <View className="flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-2">
+            <View className="flex-1 min-w-0 rounded-xl border border-stone-200 bg-stone-50/70 p-4 justify-between">
+              <View className="min-w-0">
+                <View className="flex-row items-center justify-between flex-wrap gap-2">
+                  <View className="flex-row items-center gap-2 flex-1 min-w-[140px]">
                     <TrendingUp size={18} color="#800020" />
                     <Text className="text-base font-bold text-stone-900">
                       Total Consolidated Sales
                     </Text>
                   </View>
-                  <View className="px-2 py-0.5 rounded-md bg-stone-200/80 border border-stone-300">
+                  <View className="px-2 py-0.5 rounded-md bg-stone-200/80 border border-stone-300 shrink-0">
                     <Text className="text-base font-bold text-stone-800">100%</Text>
                   </View>
                 </View>
@@ -614,7 +597,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   })}
                 </Text>
               </View>
-              <View className="mt-3 pt-3 border-t border-stone-200 flex-row items-center justify-between">
+              <View className="mt-3 pt-3 border-t border-stone-200 flex-row items-center justify-between flex-wrap gap-2">
                 <Text className="text-base font-medium text-stone-600">
                   {telemetry.orderCount || 0} checks combined
                 </Text>
@@ -627,7 +610,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </View>
 
         {/* Executive Visual Analytics Trio: Hourly Velocity + Tender Mix + Department Split */}
-        <View className="space-y-6">
+        <View className="w-full min-w-0 space-y-6">
           {/* 1. Hourly Sales Velocity & Peak Pacing Curve */}
           <HourlySalesVelocityChart
             data={(telemetry.hourlySales || []).map((pt) => ({
@@ -638,8 +621,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             totalSales={telemetry.liveSalesTotal}
           />
 
-          {/* 2 & 3: Tender Mix & Department Breakdown Grid */}
-          <View className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* 2 & 3: Tender Mix & Department Breakdown Flex Row */}
+          <View className="flex-col lg:flex-row gap-6">
             <PaymentTenderMixBar
               data={{
                 cash: telemetry.cashSales || 0,
@@ -660,9 +643,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         {/* Middle Section: Best Sellers (Left) & Right Column (Stations + Category Sales) */}
         <View className="flex-col lg:flex-row gap-6">
           {/* Left: Best Sellers Card */}
-          <View className="w-full lg:flex-[1.35] rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
+          <View className="w-full lg:flex-[1.35] min-w-0 rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
             <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
-              <View>
+              <View className="flex-1 min-w-[180px]">
                 <Text className="text-xl font-bold tracking-tight text-stone-900">
                   Best Sellers
                 </Text>
@@ -672,86 +655,67 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 </Text>
               </View>
 
-              <View className="rounded-full bg-stone-100 border border-stone-200 px-3.5 py-1.5">
+              <View className="rounded-full bg-stone-100 border border-stone-200 px-3.5 py-1.5 shrink-0">
                 <Text className="text-base font-bold text-stone-700">By Quantity</Text>
               </View>
             </View>
 
-            {/* Filter Controls Row (Range Pills + Interactive Category Selector) */}
-            <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-3">
-              {/* Range Pills with >= 48px touch targets */}
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-                <View className="flex-row items-center rounded-xl bg-stone-100/90 p-1 space-x-1">
-                  {(['top3', 'top5', 'top10', 'all'] as BestSellerFilter[]).map((tab) => {
-                    const label =
-                      tab === 'top3'
-                        ? 'Top 3'
-                        : tab === 'top5'
-                          ? 'Top 5'
-                          : tab === 'top10'
-                            ? 'Top 10'
-                            : 'All';
-                    const isActive = bestSellerFilter === tab;
-                    return (
-                      <Pressable
-                        key={tab}
-                        onPress={() => setBestSellerFilter(tab)}
-                        className={`min-h-[48px] px-3.5 sm:px-4 items-center justify-center rounded-lg transition-all ${
-                          isActive ? 'bg-white shadow-xs' : 'active:bg-stone-200/60'
-                        }`}
-                      >
-                        <Text
-                          className={`text-base font-bold ${
-                            isActive ? 'text-stone-900' : 'text-stone-600'
-                          }`}
-                        >
-                          {label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
+            {/* Filter Controls Row (Dropdowns for Rank Limit & Category) */}
+            <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-2.5">
+              <PosDropdown
+                options={
+                  [
+                    { value: 'top3', label: 'Top 3 Items' },
+                    { value: 'top5', label: 'Top 5 Items' },
+                    { value: 'top10', label: 'Top 10 Items' },
+                    { value: 'all', label: 'All Ranked Items' },
+                  ] as PosDropdownOption<BestSellerFilter>[]
+                }
+                value={bestSellerFilter}
+                onChange={setBestSellerFilter}
+                prefixLabel="Show:"
+                sheetTitle="Select Best Seller Limit"
+                className="flex-1"
+              />
 
-              {/* Interactive Category Selector Modal Trigger */}
-              <Pressable
-                onPress={() => setIsCategoryModalOpen(true)}
-                className="min-h-[48px] flex-row items-center rounded-xl border border-stone-300 bg-white px-4 active:bg-stone-50"
-              >
-                <Layers size={18} color="#800020" />
-                <Text className="ml-2 text-base font-bold text-stone-800">{selectedCategory}</Text>
-                <ChevronDown size={18} color="#78716c" className="ml-2" />
-              </Pressable>
+              <PosDropdown
+                options={availableCategories.map((cat) => ({
+                  value: cat,
+                  label: cat,
+                  icon: Layers,
+                }))}
+                value={selectedCategory}
+                onChange={setSelectedCategory}
+                sheetTitle="Filter by Category"
+                className="flex-1"
+              />
             </View>
 
             {/* Ranked List Items with Progress Bar */}
             <View className="space-y-4">
               {visibleBestSellers.length === 0 ? (
                 <View className="py-10 items-center justify-center">
-                  <Text className="text-base text-stone-500 font-medium">
+                  <Text className="text-base text-stone-500 font-medium text-center">
                     No items sold for "{selectedCategory}" in {activeTimeframeOption.label}.
                   </Text>
                 </View>
               ) : (
                 visibleBestSellers.map((item) => (
                   <View key={item.id} className="pt-1">
-                    <View className="flex-row items-center justify-between gap-3">
+                    <View className="flex-row items-start justify-between gap-3 flex-wrap">
                       {/* Left: Rank, Name, and Category */}
-                      <View className="flex-row items-center flex-1 min-w-0 mr-2">
+                      <View className="flex-row items-start flex-1 min-w-[160px]">
                         {/* Rank Circle */}
-                        <View className="h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-50 mr-2.5">
+                        <View className="h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-50 mr-2.5 mt-0.5">
                           <Text className="text-base font-bold text-stone-700">{item.rank}</Text>
                         </View>
-                        <Text
-                          className="text-base font-bold text-stone-900 shrink truncate"
-                          numberOfLines={1}
-                        >
-                          {item.name}
-                        </Text>
-                        <View className="ml-2 shrink-0 rounded-md bg-stone-100 border border-stone-200 px-2 py-0.5">
-                          <Text className="text-sm font-medium text-stone-600">
-                            {item.category}
-                          </Text>
+                        <View className="flex-1 min-w-0">
+                          <Text className="text-base font-bold text-stone-900">{item.name}</Text>
+                          <View className="mt-1 self-start rounded-md bg-stone-100 border border-stone-200 px-2 py-0.5">
+                            <Text className="text-base font-medium text-stone-600">
+                              {item.category}
+                            </Text>
+                          </View>
                         </View>
                       </View>
 
@@ -761,13 +725,13 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                           <Text className="text-base font-bold text-stone-900">
                             {item.soldCount}
                           </Text>
-                          <Text className="text-sm text-stone-400">sold</Text>
+                          <Text className="text-base text-stone-400">sold</Text>
                         </View>
                         <View className="items-end min-w-[70px]">
                           <Text className="text-base font-black text-stone-900">
                             ₱{Number(item.salesAmount || 0).toFixed(2)}
                           </Text>
-                          <Text className="text-sm text-stone-400">sales</Text>
+                          <Text className="text-base text-stone-400">sales</Text>
                         </View>
                       </View>
                     </View>
@@ -791,15 +755,15 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 {visibleBestSellers.length === 1 ? '' : 's'}
               </Text>
               <Text className="text-base font-medium text-stone-600">
-                100% direct database order item aggregations
+                Direct database order item aggregations
               </Text>
             </View>
           </View>
 
           {/* Right Column: Live Stations + Sales By Category */}
-          <View className="w-full lg:flex-1 space-y-6">
+          <View className="w-full lg:flex-1 min-w-0 space-y-6">
             {/* Live Stations Card */}
-            <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
+            <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
               <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
                 <Text className="text-xl font-bold text-stone-900">Live Stations</Text>
                 <Pressable
@@ -818,16 +782,16 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     key={station.stationKey}
                     className="rounded-xl border border-stone-200/70 bg-stone-50/60 p-4"
                   >
-                    <View className="flex-row items-center justify-between mb-2.5 flex-wrap gap-2">
-                      <View className="flex-row items-center space-x-2">
+                    <View className="flex-row items-center justify-between mb-3 flex-wrap gap-2">
+                      <View className="flex-row items-center gap-2 flex-wrap">
                         <Text className="text-lg font-bold text-stone-900">{station.name}</Text>
                         {station.isOnline ? (
-                          <View className="ml-2 flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
+                          <View className="flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
                             <View className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
                             <Text className="text-base font-bold text-emerald-700">Online</Text>
                           </View>
                         ) : (
-                          <View className="ml-2 flex-row items-center rounded-full bg-stone-100 border border-stone-300 px-2.5 py-0.5">
+                          <View className="flex-row items-center rounded-full bg-stone-100 border border-stone-300 px-2.5 py-0.5">
                             <View className="h-2 w-2 rounded-full bg-stone-400 mr-1.5" />
                             <Text className="text-base font-bold text-stone-600">Offline</Text>
                           </View>
@@ -838,22 +802,22 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                       </Text>
                     </View>
 
-                    <View className="grid grid-cols-4 gap-2 pt-1 text-center">
-                      <View>
+                    <View className="flex-row flex-wrap gap-2 pt-1">
+                      <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
                         <Text className="text-xl font-black text-stone-900">
                           {station.activeTickets}
                         </Text>
-                        <Text className="text-xs text-stone-500 mt-0.5">Active</Text>
+                        <Text className="text-base text-stone-500 mt-0.5">Active</Text>
                       </View>
 
-                      <View>
+                      <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
                         <Text className="text-xl font-black text-stone-900">
                           {station.avgTicketTime}
                         </Text>
-                        <Text className="text-xs text-stone-500 mt-0.5">Avg time</Text>
+                        <Text className="text-base text-stone-500 mt-0.5">Avg time</Text>
                       </View>
 
-                      <View>
+                      <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
                         <Text
                           className={`text-xl font-black ${
                             station.lateTickets > 0 ? 'text-rose-600' : 'text-stone-900'
@@ -861,14 +825,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                         >
                           {station.lateTickets}
                         </Text>
-                        <Text className="text-xs text-stone-500 mt-0.5">Late</Text>
+                        <Text className="text-base text-stone-500 mt-0.5">Late</Text>
                       </View>
 
-                      <View>
+                      <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
                         <Text className="text-xl font-black text-amber-600">
                           {station.stockoutCount}
                         </Text>
-                        <Text className="text-xs text-stone-500 mt-0.5">Sold out</Text>
+                        <Text className="text-base text-stone-500 mt-0.5">Sold out</Text>
                       </View>
                     </View>
                   </View>
@@ -877,13 +841,13 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </View>
 
             {/* Sales By Category Card */}
-            <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
+            <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
               <Text className="text-xl font-bold text-stone-900">Sales By Category</Text>
               <Text className="text-base text-stone-500 mb-4">
                 {activeTimeframeOption.label} · Scaled to top category
               </Text>
 
-              <View className="space-y-3.5">
+              <View className="space-y-4">
                 {(telemetry.categorySales || []).length === 0 ? (
                   <View className="py-6 items-center">
                     <Text className="text-base text-stone-500 font-medium">
@@ -892,26 +856,22 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                   </View>
                 ) : (
                   (telemetry.categorySales || []).map((cat) => (
-                    <View
-                      key={cat.category}
-                      className="flex-row items-center justify-between gap-2"
-                    >
-                      <View className="w-32 shrink-0">
-                        <Text className="text-base font-semibold text-stone-800" numberOfLines={1}>
+                    <View key={cat.category} className="min-w-0">
+                      <View className="flex-row items-center justify-between gap-2 mb-1.5 flex-wrap">
+                        <Text className="flex-1 min-w-[120px] text-base font-semibold text-stone-800">
                           {cat.category}
+                        </Text>
+                        <Text className="shrink-0 text-right text-base font-bold text-stone-900">
+                          ₱{Number(cat.amount || 0).toFixed(2)}
                         </Text>
                       </View>
 
-                      <View className="flex-1 min-w-[50px] mx-2 h-2.5 rounded-full bg-stone-100">
+                      <View className="w-full h-2.5 rounded-full bg-stone-100 overflow-hidden">
                         <View
                           style={{ width: `${Math.min(100, Math.max(8, cat.percentage))}%` }}
                           className="h-2.5 rounded-full bg-[#800020]"
                         />
                       </View>
-
-                      <Text className="w-28 shrink-0 text-right text-base font-bold text-stone-900">
-                        ₱{Number(cat.amount || 0).toFixed(2)}
-                      </Text>
                     </View>
                   ))
                 )}
@@ -921,12 +881,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
         </View>
 
         {/* Bottom Full-Width Card: Needs Attention */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs mb-8">
-          <View className="flex-row items-center justify-between mb-4">
-            <View className="flex-row items-center space-x-2">
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs mb-8 overflow-hidden">
+          <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
+            <View className="flex-row items-center gap-2">
               <Text className="text-xl font-bold text-stone-900">Needs Attention</Text>
               {alerts.length > 0 && (
-                <View className="ml-3 h-7 w-7 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
+                <View className="h-7 w-7 items-center justify-center rounded-full bg-rose-100 border border-rose-200">
                   <Text className="text-base font-bold text-rose-700">{alerts.length}</Text>
                 </View>
               )}
@@ -944,7 +904,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
           {alerts.length === 0 ? (
             <View className="py-6 items-center">
-              <Text className="text-base font-medium text-stone-500">
+              <Text className="text-base font-medium text-stone-500 text-center">
                 All station alerts and inventory items are at healthy levels.
               </Text>
             </View>
@@ -956,12 +916,12 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                 return (
                   <View
                     key={alert.id}
-                    className="flex-row items-center justify-between rounded-xl border border-stone-100 bg-stone-50/60 p-4 flex-wrap gap-3"
+                    className="flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-stone-100 bg-stone-50/60 p-4 gap-3"
                   >
-                    <View className="flex-row items-center flex-1 min-w-[260px] mr-2">
+                    <View className="flex-row items-start flex-1 min-w-0 gap-3">
                       {/* Badge */}
                       <View
-                        className={`rounded-lg px-3 py-1.5 border shrink-0 mr-3 ${
+                        className={`rounded-lg px-3 py-1.5 border shrink-0 ${
                           isVoid
                             ? 'bg-rose-50 border-rose-200'
                             : isStock
@@ -978,7 +938,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                         </Text>
                       </View>
 
-                      <View className="flex-1">
+                      <View className="flex-1 min-w-0">
                         <Text className="text-base font-bold text-stone-900">{alert.title}</Text>
                         <Text className="text-base text-stone-500 mt-0.5">{alert.description}</Text>
                       </View>
@@ -986,7 +946,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
                     <Pressable
                       onPress={() => onNavigateRoute(alert.targetRoute)}
-                      className="min-h-[48px] px-4 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200 shrink-0"
+                      className="min-h-[48px] px-4 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200 shrink-0 self-end sm:self-center"
                     >
                       <Text className="text-base font-bold text-[#800020]">View Details</Text>
                     </Pressable>
@@ -997,90 +957,6 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
           )}
         </View>
       </View>
-
-      {/* TIMEFRAME SELECTOR MODAL */}
-      <AdminModal
-        visible={isTimeframeModalOpen}
-        onClose={() => setIsTimeframeModalOpen(false)}
-        title="Select Timeframe"
-        subtitle="Filter dashboard analytics, sales velocity, and station speed"
-        icon={<Calendar size={22} color="#800020" />}
-        size="md"
-      >
-        <View className="space-y-3">
-          {TIMEFRAME_OPTIONS.map((opt) => {
-            const isSelected = opt.key === timeframe;
-            return (
-              <Pressable
-                key={opt.key}
-                onPress={() => handleSelectTimeframe(opt.key)}
-                className={`min-h-[48px] p-4 rounded-xl border flex-row items-center justify-between transition-all ${
-                  isSelected
-                    ? 'bg-[#800020]/10 border-[#800020]'
-                    : 'bg-white border-stone-200 active:bg-stone-50 hover:bg-stone-50'
-                }`}
-              >
-                <View className="flex-1 pr-3">
-                  <View className="flex-row items-center space-x-2">
-                    <Text
-                      className={`text-base font-bold ${
-                        isSelected ? 'text-[#800020]' : 'text-stone-900'
-                      }`}
-                    >
-                      {opt.label}
-                    </Text>
-                    <Text className="text-base text-stone-500 ml-2">({opt.benchmarkLabel})</Text>
-                  </View>
-                  <Text className="text-base text-stone-500 mt-1">{opt.description}</Text>
-                </View>
-                <View
-                  className={`h-6 w-6 rounded-full items-center justify-center border ${
-                    isSelected ? 'bg-[#800020] border-[#800020]' : 'border-stone-400'
-                  }`}
-                >
-                  {isSelected && <Check size={14} color="#ffffff" />}
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-      </AdminModal>
-
-      {/* BEST SELLERS CATEGORY MODAL */}
-      <AdminModal
-        visible={isCategoryModalOpen}
-        onClose={() => setIsCategoryModalOpen(false)}
-        title="Filter Best Sellers"
-        subtitle="Focus leaderboard ranking on specific beverage or kitchen group"
-        icon={<Layers size={22} color="#800020" />}
-        size="sm"
-      >
-        <View className="space-y-2.5">
-          {availableCategories.map((cat) => {
-            const isSelected = cat === selectedCategory;
-            return (
-              <Pressable
-                key={cat}
-                onPress={() => handleSelectCategory(cat)}
-                className={`min-h-[48px] px-4 py-3 rounded-xl border flex-row items-center justify-between transition-all ${
-                  isSelected
-                    ? 'bg-[#800020]/10 border-[#800020]'
-                    : 'bg-white border-stone-200 active:bg-stone-50 hover:bg-stone-50'
-                }`}
-              >
-                <Text
-                  className={`text-base font-bold ${
-                    isSelected ? 'text-[#800020]' : 'text-stone-800'
-                  }`}
-                >
-                  {cat}
-                </Text>
-                {isSelected && <Check size={18} color="#800020" />}
-              </Pressable>
-            );
-          })}
-        </View>
-      </AdminModal>
     </ScrollView>
   );
 };

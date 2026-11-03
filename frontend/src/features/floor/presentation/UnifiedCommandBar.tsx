@@ -1,16 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
-import {
-  Sparkles,
-  Coffee,
-  Wine,
-  ShoppingBag,
-  Bike,
-  PlusCircle,
-  Clock,
-  ChevronDown,
-} from 'lucide-react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { Sparkles, Coffee, Wine, ShoppingBag, Bike, PlusCircle } from 'lucide-react-native';
 import { ChannelCategory, TableStatus } from '../../../types/floor';
+import { PosDropdown, PosDropdownOption } from '@/features/shared';
 
 export type StatusFilter = 'all' | TableStatus;
 
@@ -58,159 +50,147 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
   operatingMode = 'CAFE',
   onToggleOperatingMode,
 }) => {
-  const channelItems: { id: ChannelCategory; label: string; count: number; Icon: any }[] = [
-    { id: 'all', label: 'All', count: channelCounts.all, Icon: Sparkles },
-    { id: 'cafe', label: 'Cafe', count: channelCounts.cafe, Icon: Coffee },
-    { id: 'bar', label: 'Bar', count: channelCounts.bar, Icon: Wine },
-    { id: 'takeout', label: 'Takeout', count: channelCounts.takeout, Icon: ShoppingBag },
-    { id: 'online', label: 'Delivery', count: channelCounts.online, Icon: Bike },
+  const channelOptions: PosDropdownOption<ChannelCategory>[] = [
+    {
+      value: 'all',
+      label: 'All Channels',
+      badge: channelCounts.all,
+      icon: Sparkles,
+      description: 'Show all tables, takeout, and delivery orders',
+    },
+    {
+      value: 'cafe',
+      label: 'Cafe Area',
+      badge: channelCounts.cafe,
+      icon: Coffee,
+      description: 'Daytime cafe tables and counter service',
+    },
+    {
+      value: 'bar',
+      label: 'Bar Area',
+      badge: channelCounts.bar,
+      icon: Wine,
+      description: 'Live jazz stage and cocktail bar seating',
+    },
+    {
+      value: 'takeout',
+      label: 'Takeout',
+      badge: channelCounts.takeout,
+      icon: ShoppingBag,
+      description: 'Walk-in to-go pickup queue',
+    },
+    {
+      value: 'online',
+      label: 'Delivery',
+      badge: channelCounts.online,
+      icon: Bike,
+      description: 'GrabFood & Foodpanda courier queue',
+    },
   ];
 
-  const statusItems: { id: StatusFilter; label: string; count: number; color?: string }[] = [
-    { id: 'all', label: 'All', count: statusCounts.all },
-    { id: 'occupied', label: 'Occupied', count: statusCounts.occupied, color: '#be123c' },
-    { id: 'preparing', label: 'Prep', count: statusCounts.preparing, color: '#b45309' },
-    { id: 'ready', label: 'Ready', count: statusCounts.ready, color: '#15803d' },
-    { id: 'empty', label: 'Empty', count: statusCounts.empty, color: '#6b7280' },
+  const statusOptions: PosDropdownOption<StatusFilter>[] = [
+    { value: 'all', label: 'All Statuses', badge: statusCounts.all },
+    {
+      value: 'occupied',
+      label: 'Occupied',
+      badge: statusCounts.occupied,
+      dotColor: '#be123c',
+    },
+    {
+      value: 'preparing',
+      label: 'Preparing',
+      badge: statusCounts.preparing,
+      dotColor: '#b45309',
+    },
+    {
+      value: 'ready',
+      label: 'Ready',
+      badge: statusCounts.ready,
+      dotColor: '#15803d',
+    },
+    {
+      value: 'empty',
+      label: 'Available',
+      badge: statusCounts.empty,
+      dotColor: '#6b7280',
+    },
   ];
+
+  const newOrderActions: PosDropdownOption<'tab' | 'takeout' | 'delivery'>[] = [
+    ...(onOpenTableTab
+      ? [
+          {
+            value: 'tab' as const,
+            label: '+ Open Table Tab',
+            description: 'Assign a new dine-in guest tab to a table',
+            icon: PlusCircle,
+          },
+        ]
+      : []),
+    ...(onNewTakeout
+      ? [
+          {
+            value: 'takeout' as const,
+            label: '+ New Walk-In Takeout',
+            description: 'Create a counter to-go order ticket',
+            icon: ShoppingBag,
+          },
+        ]
+      : []),
+    ...(onInputOnlineOrder
+      ? [
+          {
+            value: 'delivery' as const,
+            label: '+ Input Delivery Order',
+            description: 'Log a GrabFood or Foodpanda courier order',
+            icon: Bike,
+          },
+        ]
+      : []),
+  ];
+
+  const handleActionSelect = (action: 'tab' | 'takeout' | 'delivery') => {
+    if (action === 'tab') onOpenTableTab?.();
+    else if (action === 'takeout') onNewTakeout?.();
+    else if (action === 'delivery') onInputOnlineOrder?.();
+  };
 
   return (
     <View style={styles.container}>
-      {/* 1. Left: Channel Segmented Switcher */}
-      <View style={styles.channelSegment}>
-        {channelItems.map((item) => {
-          const isActive = selectedChannel === item.id;
-          const { Icon } = item;
+      {/* Left: Channel & Status Filter Dropdowns */}
+      <View className="flex-row flex-wrap items-center gap-2.5 flex-1 min-w-[260px]">
+        <PosDropdown
+          options={channelOptions}
+          value={selectedChannel}
+          onChange={onChannelChange}
+          sheetTitle="Filter Floor by Channel"
+          className="flex-1 sm:flex-initial min-w-[148px]"
+        />
 
-          return (
-            <Pressable
-              key={item.id}
-              onPress={() => onChannelChange(item.id)}
-              style={[styles.segmentBtn, isActive && styles.segmentBtnActive]}
-            >
-              <Icon
-                size={15}
-                color={isActive ? '#ffffff' : '#6b7280'}
-                strokeWidth={isActive ? 2.4 : 2}
-              />
-              <Text style={[styles.segmentText, isActive && styles.segmentTextActive]}>
-                {item.label}
-              </Text>
-              <View
-                style={[
-                  styles.countBadge,
-                  isActive ? styles.countBadgeActive : styles.countBadgeInactive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.countText,
-                    isActive ? styles.countTextActive : styles.countTextInactive,
-                  ]}
-                >
-                  {item.count}
-                </Text>
-              </View>
-            </Pressable>
-          );
-        })}
+        <PosDropdown
+          options={statusOptions}
+          value={selectedStatus}
+          onChange={onStatusChange}
+          sheetTitle="Filter Floor by Status"
+          className="flex-1 sm:flex-initial min-w-[140px]"
+        />
       </View>
 
-      {/* 2. Center: Sleek Quick Actions */}
-      <View style={styles.quickActionsGroup}>
-        {onOpenTableTab ? (
-          <Pressable
-            onPress={onOpenTableTab}
-            style={({ pressed }) => [
-              styles.actionBtn,
-              styles.actionBtnWine,
-              pressed && styles.actionBtnPressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Open Table Tab"
-          >
-            <PlusCircle size={16} color="#ffffff" strokeWidth={2.4} />
-            <Text style={styles.actionBtnText}>+ Tab</Text>
-          </Pressable>
+      {/* Right: + New Order Dropdown, Operating Mode Toggle & Staff Pill */}
+      <View className="flex-row flex-wrap items-center gap-2.5 w-full sm:w-auto justify-between sm:justify-end">
+        {newOrderActions.length > 0 ? (
+          <PosDropdown
+            mode="action"
+            options={newOrderActions}
+            onChange={handleActionSelect}
+            triggerLabel="+ New Order"
+            triggerIcon={PlusCircle}
+            variant="wine"
+            sheetTitle="Create New Order or Tab"
+            className="flex-1 sm:flex-initial min-w-[150px]"
+          />
         ) : null}
 
-        {onNewTakeout ? (
-          <Pressable
-            onPress={onNewTakeout}
-            style={({ pressed }) => [
-              styles.actionBtn,
-              styles.actionBtnEmerald,
-              pressed && styles.actionBtnPressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="New Takeout"
-          >
-            <ShoppingBag size={16} color="#ffffff" strokeWidth={2.4} />
-            <Text style={styles.actionBtnText}>+ To-Go</Text>
-          </Pressable>
-        ) : null}
-
-        {onInputOnlineOrder ? (
-          <Pressable
-            onPress={onInputOnlineOrder}
-            style={({ pressed }) => [
-              styles.actionBtn,
-              styles.actionBtnAmber,
-              pressed && styles.actionBtnPressed,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Input Delivery Order"
-          >
-            <Bike size={16} color="#ffffff" strokeWidth={2.4} />
-            <Text style={styles.actionBtnText}>+ Delivery</Text>
-          </Pressable>
-        ) : null}
-      </View>
-
-      {/* 3. Right: Status Filter & Staff Pill */}
-      <View style={styles.rightSection}>
-        {/* Status Filter Chips */}
-        <View style={styles.statusGroup}>
-          {statusItems.map((s) => {
-            const isActive = selectedStatus === s.id;
-
-            return (
-              <Pressable
-                key={s.id}
-                onPress={() => onStatusChange(s.id)}
-                style={[
-                  styles.statusChip,
-                  isActive && styles.statusChipActive,
-                  s.color && !isActive ? { borderColor: `${s.color}30` } : null,
-                ]}
-              >
-                {s.color ? (
-                  <View
-                    style={[
-                      styles.statusDot,
-                      { backgroundColor: s.color },
-                      isActive && { backgroundColor: '#ffffff' },
-                    ]}
-                  />
-                ) : null}
-                <Text
-                  style={[
-                    styles.statusChipText,
-                    isActive && styles.statusChipTextActive,
-                    s.color && !isActive ? { color: s.color } : null,
-                  ]}
-                >
-                  {s.label}
-                </Text>
-                <Text style={[styles.statusCountText, isActive && styles.statusCountTextActive]}>
-                  {s.count}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        {/* Operating Mode Indicator & Fast Toggle */}
         <Pressable
           onPress={onToggleOperatingMode}
           style={({ pressed }) => [
@@ -224,18 +204,18 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           {operatingMode === 'EVENT' ? (
             <>
               <Sparkles size={16} color="#d97706" />
-              <Text style={styles.modeTextEvent}>🎷 Event Mode</Text>
+              <Text style={styles.modeTextEvent}>🎷 Event</Text>
             </>
           ) : (
             <>
               <Coffee size={16} color="#0284c7" />
-              <Text style={styles.modeTextCafe}>☀️ Cafe Mode</Text>
+              <Text style={styles.modeTextCafe}>☀️ Cafe</Text>
             </>
           )}
         </Pressable>
 
-        {/* Staff & Clock Pill */}
-        <View style={styles.staffPill}>
+        {/* Compact Staff Pill (Visible on Tablet/Desktop >= 768px) */}
+        <View style={styles.staffPill} className="hidden md:flex">
           <View style={styles.staffAvatar}>
             <Text style={styles.staffAvatarText}>{staffInitials}</Text>
           </View>

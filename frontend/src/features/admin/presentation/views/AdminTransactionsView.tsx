@@ -32,7 +32,7 @@ import { PaymentTenderMixBar } from './analytics/PaymentTenderMixBar';
 import { adminApi, type SalesAnalyticsOverview } from '../../data/admin.api';
 import { exportFinancialOverviewToExcel } from '../../utils/readingExcelExport';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { printHtmlElement } from '@/features/shared';
+import { printHtmlElement, PosDropdown, PosDropdownOption } from '@/features/shared';
 
 interface AdminTransactionsViewProps {
   analytics: SalesAnalyticsOverview | null;
@@ -518,72 +518,48 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
     }
   };
 
+  const subTabOptions: PosDropdownOption<'analytics' | 'checks' | 'readings'>[] = [
+    {
+      value: 'analytics',
+      label: 'Financial Overview',
+      icon: BarChart3,
+      description: 'Revenue, COGS, net profit, and dual-mode Cafe/Event analytics',
+    },
+    {
+      value: 'checks',
+      label: 'Checks & Reprints',
+      icon: Receipt,
+      description: 'Settled checks register, receipt reprints, and Excel ledger export',
+    },
+    {
+      value: 'readings',
+      label: 'X, Y & Z Shift Readings',
+      icon: FileText,
+      description: 'Interim X-Readings, Y-Shift Handovers, and End-of-Day Z-Readings',
+    },
+  ];
+
+  const modeFilterOptions: PosDropdownOption<ModeFilter>[] = [
+    { value: 'ALL', label: 'All Modes', icon: Sparkles },
+    { value: 'CAFE', label: '☀️ Cafe Mode', icon: Coffee },
+    { value: 'EVENT', label: '🎷 Event Mode', icon: Sparkles },
+  ];
+
   return (
     <View className="flex-1 bg-[#fcf9f9]">
-      {/* Sleek, Space-Efficient Sub-navigation Tabs */}
-      <View className="border-b border-stone-200/80 bg-white">
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ flexGrow: 1 }}
-          className="flex-row"
-        >
-          <View className="flex-row items-center px-4 sm:px-8">
-            <Pressable
-              onPress={() => setSubTab('analytics')}
-              className={`min-h-[48px] flex-row items-center justify-center px-3 sm:px-5 border-b-2 transition-all ${
-                subTab === 'analytics'
-                  ? 'border-[#800020] bg-[#800020]/5'
-                  : 'border-transparent active:bg-stone-50'
-              }`}
-            >
-              <BarChart3 size={18} color={subTab === 'analytics' ? '#800020' : '#78716c'} />
-              <Text
-                className={`ml-2 text-base whitespace-nowrap ${
-                  subTab === 'analytics' ? 'font-bold text-[#800020]' : 'font-medium text-stone-600'
-                }`}
-              >
-                Financial Overview
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setSubTab('checks')}
-              className={`min-h-[48px] flex-row items-center justify-center px-3 sm:px-5 border-b-2 transition-all ${
-                subTab === 'checks'
-                  ? 'border-[#800020] bg-[#800020]/5'
-                  : 'border-transparent active:bg-stone-50'
-              }`}
-            >
-              <Receipt size={18} color={subTab === 'checks' ? '#800020' : '#78716c'} />
-              <Text
-                className={`ml-2 text-base whitespace-nowrap ${
-                  subTab === 'checks' ? 'font-bold text-[#800020]' : 'font-medium text-stone-600'
-                }`}
-              >
-                Checks &amp; Reprints
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setSubTab('readings')}
-              className={`min-h-[48px] flex-row items-center justify-center px-3 sm:px-5 border-b-2 transition-all ${
-                subTab === 'readings'
-                  ? 'border-[#800020] bg-[#800020]/5'
-                  : 'border-transparent active:bg-stone-50'
-              }`}
-            >
-              <FileText size={18} color={subTab === 'readings' ? '#800020' : '#78716c'} />
-              <Text
-                className={`ml-2 text-base whitespace-nowrap ${
-                  subTab === 'readings' ? 'font-bold text-[#800020]' : 'font-medium text-stone-600'
-                }`}
-              >
-                X &amp; Z Shift Readings
-              </Text>
-            </Pressable>
-          </View>
-        </ScrollView>
+      {/* Sleek Top Sub-View Selector Bar */}
+      <View className="border-b border-stone-200/80 bg-white px-4 sm:px-8 py-3 flex-row items-center justify-between gap-3">
+        <Text className="text-lg font-extrabold text-stone-900 hidden sm:flex">
+          Reports &amp; Fiscal Hub
+        </Text>
+        <PosDropdown
+          options={subTabOptions}
+          value={subTab}
+          onChange={setSubTab}
+          prefixLabel="Report:"
+          sheetTitle="Select Sales & Fiscal Report"
+          className="w-full sm:w-80"
+        />
       </View>
 
       {subTab === 'readings' ? (
@@ -682,62 +658,15 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
                     <ChevronDown size={18} color="#78716c" className="ml-3" />
                   </Pressable>
 
-                  {/* Operating Mode Filter Chips */}
-                  <View className="flex-row items-center gap-1.5 p-1 bg-stone-100 rounded-xl border border-stone-200">
-                    <Pressable
-                      onPress={() => setSelectedMode('ALL')}
-                      className={`min-h-[40px] px-3 py-1.5 rounded-lg flex-row items-center ${
-                        selectedMode === 'ALL'
-                          ? 'bg-white shadow-xs border border-stone-200'
-                          : 'active:bg-stone-200/50'
-                      }`}
-                    >
-                      <Text
-                        className={`text-base font-bold ${
-                          selectedMode === 'ALL' ? 'text-stone-900' : 'text-stone-600'
-                        }`}
-                      >
-                        All Modes
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => setSelectedMode('CAFE')}
-                      className={`min-h-[40px] px-3 py-1.5 rounded-lg flex-row items-center gap-1.5 ${
-                        selectedMode === 'CAFE' ? 'bg-sky-600 shadow-xs' : 'active:bg-stone-200/50'
-                      }`}
-                    >
-                      <Coffee size={15} color={selectedMode === 'CAFE' ? '#ffffff' : '#0284c7'} />
-                      <Text
-                        className={`text-base font-bold ${
-                          selectedMode === 'CAFE' ? 'text-white' : 'text-sky-800'
-                        }`}
-                      >
-                        Cafe
-                      </Text>
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => setSelectedMode('EVENT')}
-                      className={`min-h-[40px] px-3 py-1.5 rounded-lg flex-row items-center gap-1.5 ${
-                        selectedMode === 'EVENT'
-                          ? 'bg-amber-600 shadow-xs'
-                          : 'active:bg-stone-200/50'
-                      }`}
-                    >
-                      <Sparkles
-                        size={15}
-                        color={selectedMode === 'EVENT' ? '#ffffff' : '#d97706'}
-                      />
-                      <Text
-                        className={`text-base font-bold ${
-                          selectedMode === 'EVENT' ? 'text-white' : 'text-amber-800'
-                        }`}
-                      >
-                        Event
-                      </Text>
-                    </Pressable>
-                  </View>
+                  {/* Operating Mode Dropdown */}
+                  <PosDropdown
+                    options={modeFilterOptions}
+                    value={selectedMode}
+                    onChange={setSelectedMode}
+                    prefixLabel="Mode:"
+                    sheetTitle="Filter by Operating Mode"
+                    className="w-full sm:w-auto min-w-[165px]"
+                  />
                 </View>
 
                 {/* Right: Refresh, Export, Print Buttons */}

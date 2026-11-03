@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, Text, Pressable, FlatList, ActivityIndicator } from 'react-native';
 import {
   Printer,
@@ -9,13 +9,18 @@ import {
   AlertCircle,
   FileText,
   RotateCw,
+  Layers,
 } from 'lucide-react-native';
 import { supabase } from '@/features/shared/infrastructure/supabase';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { PosDropdown, PosDropdownOption } from '@/features/shared';
 import { printerApi, type PrintJobItem } from '../data/printer.api';
+
+type PrintJobFilter = 'ALL' | 'CUSTOMER_RECEIPT' | 'RUNNER_CHIT' | 'ISSUES';
 
 export const PrinterTerminalScreen: React.FC = () => {
   const [jobs, setJobs] = useState<PrintJobItem[]>([]);
+  const [jobFilter, setJobFilter] = useState<PrintJobFilter>('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [reprintingId, setReprintingId] = useState<string | null>(null);
@@ -189,38 +194,60 @@ export const PrinterTerminalScreen: React.FC = () => {
     );
   };
 
+  const filteredJobs = useMemo(() => {
+    return jobs.filter((j) => {
+      if (jobFilter === 'CUSTOMER_RECEIPT') return j.job_type === 'CUSTOMER_RECEIPT';
+      if (jobFilter === 'RUNNER_CHIT') return j.job_type === 'RUNNER_CHIT';
+      if (jobFilter === 'ISSUES') return j.status === 'FAILED' || j.status === 'PENDING';
+      return true;
+    });
+  }, [jobs, jobFilter]);
+
+  const filterOptions: PosDropdownOption<PrintJobFilter>[] = [
+    { value: 'ALL', label: 'All Print Jobs', badge: jobs.length, icon: Layers },
+    { value: 'CUSTOMER_RECEIPT', label: 'Customer Receipts', icon: FileText },
+    { value: 'RUNNER_CHIT', label: 'Station & Runner Chits', icon: Printer },
+    { value: 'ISSUES', label: 'Queued / Failed', icon: AlertCircle },
+  ];
+
   return (
-    <View className="flex-1 bg-stone-100 p-6">
+    <View className="flex-1 bg-stone-100 p-3 sm:p-6">
       {/* Top Bar Header */}
-      <View className="mb-6 flex-row items-center justify-between rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-        <View className="flex-row items-center space-x-3">
-          <View className="rounded-2xl bg-amber-100 p-3">
-            <Printer size={28} color="#d97706" />
+      <View className="mb-4 flex-col lg:flex-row lg:items-center justify-between rounded-2xl border border-stone-200 bg-white p-4 sm:p-5 shadow-sm gap-3">
+        <View className="flex-row items-center gap-3">
+          <View className="rounded-2xl bg-amber-100 p-2.5">
+            <Printer size={24} color="#d97706" />
           </View>
-          <View className="ml-3">
-            <Text className="text-2xl font-black text-stone-900">Dedicated Thermal Terminal</Text>
+          <View>
+            <Text className="text-xl font-black text-stone-900">Thermal Print Queue</Text>
             <View className="mt-0.5 flex-row items-center">
-              <View className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
-              <Text className="ml-2 text-base font-medium text-stone-600">
-                Printer Online • Realtime CDC Active
-              </Text>
+              <View className="h-2 w-2 rounded-full bg-emerald-500" />
+              <Text className="ml-2 text-base font-medium text-stone-600">Realtime CDC Active</Text>
             </View>
           </View>
         </View>
 
-        <View className="flex-row items-center space-x-3">
+        <View className="flex-row flex-wrap items-center gap-2.5">
+          <PosDropdown
+            options={filterOptions}
+            value={jobFilter}
+            onChange={setJobFilter}
+            sheetTitle="Filter Print Queue"
+            className="flex-1 sm:flex-initial min-w-[165px]"
+          />
+
           {/* Diagnostic Kick Cash Drawer */}
           <Pressable
             onPress={handleKickDrawer}
             disabled={isKickingDrawer}
-            className="min-h-[48px] min-w-[48px] flex-row items-center rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 active:bg-amber-100"
+            className="min-h-[48px] min-w-[48px] flex-row items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 active:bg-amber-100"
           >
             {isKickingDrawer ? (
               <ActivityIndicator size="small" color="#d97706" />
             ) : (
-              <Coins size={20} color="#d97706" />
+              <Coins size={18} color="#d97706" />
             )}
-            <Text className="ml-2 text-base font-bold text-amber-800">Kick Cash Drawer</Text>
+            <Text className="ml-2 text-base font-bold text-amber-800">Kick Drawer</Text>
           </Pressable>
 
           {/* Refresh List */}
@@ -230,14 +257,14 @@ export const PrinterTerminalScreen: React.FC = () => {
               fetchJobs();
             }}
             disabled={isRefreshing}
-            className="min-h-[48px] min-w-[48px] flex-row items-center rounded-xl bg-stone-800 px-4 py-2 active:bg-stone-900"
+            className="min-h-[48px] min-w-[48px] flex-row items-center justify-center rounded-xl bg-stone-800 px-4 py-2 active:bg-stone-900"
           >
             {isRefreshing ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
               <RefreshCw size={18} color="#ffffff" />
             )}
-            <Text className="ml-2 text-base font-semibold text-white">Refresh Queue</Text>
+            <Text className="ml-2 text-base font-semibold text-white">Refresh</Text>
           </Pressable>
         </View>
       </View>
@@ -248,17 +275,17 @@ export const PrinterTerminalScreen: React.FC = () => {
           <ActivityIndicator size="large" color="#d97706" />
           <Text className="mt-4 text-base text-stone-600">Loading thermal print jobs...</Text>
         </View>
-      ) : jobs.length === 0 ? (
+      ) : filteredJobs.length === 0 ? (
         <View className="flex-1 items-center justify-center rounded-2xl border border-dashed border-stone-300 bg-white p-8">
           <Printer size={48} color="#a8a29e" />
-          <Text className="mt-4 text-xl font-bold text-stone-700">No Print Jobs in Queue</Text>
+          <Text className="mt-4 text-xl font-bold text-stone-700">No Print Jobs Found</Text>
           <Text className="mt-1 text-center text-base text-stone-500">
             Dispatched kitchen chits and settled receipts will appear here in real-time.
           </Text>
         </View>
       ) : (
         <FlatList
-          data={jobs}
+          data={filteredJobs}
           keyExtractor={(item) => item.id}
           renderItem={renderJobCard}
           contentContainerStyle={{ paddingBottom: 24 }}

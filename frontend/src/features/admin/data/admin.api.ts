@@ -24,6 +24,35 @@ export interface VenueSettings {
     runner_printer_ip?: string;
     [key: string]: string | undefined;
   };
+  mode_switched_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Returns the most recent 6:00:00 AM local timestamp.
+ * Any Event Mode activated before this cutoff should automatically revert to Cafe Mode.
+ */
+export function getLatest6AmCutoff(now: Date = new Date()): Date {
+  const today6Am = new Date(now);
+  today6Am.setHours(6, 0, 0, 0);
+  if (now.getTime() >= today6Am.getTime()) {
+    return today6Am;
+  }
+  const yesterday6Am = new Date(today6Am);
+  yesterday6Am.setDate(yesterday6Am.getDate() - 1);
+  return yesterday6Am;
+}
+
+/**
+ * Returns milliseconds remaining until the next 6:00:00 AM local time.
+ */
+export function getMsUntilNext6Am(now: Date = new Date()): number {
+  const next6Am = new Date(now);
+  next6Am.setHours(6, 0, 0, 0);
+  if (now.getTime() >= next6Am.getTime()) {
+    next6Am.setDate(next6Am.getDate() + 1);
+  }
+  return Math.max(1000, next6Am.getTime() - now.getTime());
 }
 
 export interface SupplierAdmin {
@@ -143,6 +172,67 @@ export interface StocktakeSessionAdmin {
   created_at: string;
 }
 
+export const PH_MINIMUM_WAGE_DAILY = 645.0;
+
+export type StaffRoleType =
+  | 'admin'
+  | 'cashier'
+  | 'waiter'
+  | 'station_bar'
+  | 'station_cafe'
+  | 'station_food'
+  | 'foh_runner'
+  | 'printer_station';
+
+export interface StaffMemberAdmin {
+  id: string;
+  username: string;
+  display_name: string;
+  role: StaffRoleType | string;
+  job_title?: string | null;
+  is_workflow_staff: boolean;
+  base_daily_rate: number | string;
+  email?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
+  is_active: boolean;
+  created_at?: string;
+}
+
+export interface CreateStaffUserPayload {
+  display_name: string;
+  username: string;
+  pin: string;
+  role: StaffRoleType;
+  job_title?: string | null;
+  base_daily_rate: number;
+  email?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
+}
+
+export interface CreateNonWorkflowStaffPayload {
+  display_name: string;
+  job_title: string;
+  username?: string;
+  base_daily_rate: number;
+  email?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
+}
+
+export interface UpdateStaffMemberPayload {
+  display_name?: string;
+  username?: string;
+  role?: StaffRoleType;
+  job_title?: string | null;
+  base_daily_rate?: number;
+  email?: string | null;
+  phone?: string | null;
+  avatar_url?: string | null;
+  is_active?: boolean;
+}
+
 export interface AttendanceRecordAdmin {
   id: string;
   user_id: string;
@@ -154,6 +244,7 @@ export interface AttendanceRecordAdmin {
   user?: {
     display_name: string;
     role: string;
+    job_title?: string | null;
     is_workflow_staff: boolean;
   };
 }
@@ -202,6 +293,18 @@ export const adminApi = {
    * Venue Settings & Operating Mode
    */
   async getVenueSettings(): Promise<VenueSettings> {
+    // 1. Attempt server-side 6:00 AM reconciliation RPC first
+    try {
+      const { data: rpcData, error: rpcError } = await (supabase.rpc as any)(
+        'reconcile_operating_mode_6am'
+      );
+      if (!rpcError && rpcData && rpcData.id) {
+        return rpcData as VenueSettings;
+      }
+    } catch {
+      // Fallback to standard select if migration RPC is not yet applied
+    }
+
     const { data, error } = await (supabase.from as any)('venue_settings')
       .select('*')
       .limit(1)
@@ -224,16 +327,37 @@ export const adminApi = {
         },
       };
     }
-    return data as VenueSettings;
+
+    const settings = data as VenueSettings;
+    // Client-side safeguard: if operating_mode is EVENT from before the latest 6:00 AM cutoff, auto-revert to CAFE
+    if (settings.operating_mode === 'EVENT') {
+      const switchedAtStr = settings.mode_switched_at || settings.updated_at;
+      if (switchedAtStr) {
+        const switchedAt = new Date(switchedAtStr);
+        const cutoff6Am = getLatest6AmCutoff();
+        if (!isNaN(switchedAt.getTime()) && switchedAt.getTime() < cutoff6Am.getTime()) {
+          const nowIso = new Date().toISOString();
+          settings.operating_mode = 'CAFE';
+          settings.mode_switched_at = nowIso;
+          settings.updated_at = nowIso;
+          await (supabase.from as any)('venue_settings')
+            .update({ operating_mode: 'CAFE', updated_at: nowIso })
+            .eq('id', settings.id);
+        }
+      }
+    }
+
+    return settings;
   },
 
   async setOperatingMode(mode: OperatingMode): Promise<void> {
     const current = await adminApi.getVenueSettings();
     const targetId =
       current?.id && current.id !== 'default' ? current.id : '00000000-0000-0000-0000-000000000001';
+    const nowIso = new Date().toISOString();
 
     const { error } = await (supabase.from as any)('venue_settings')
-      .update({ operating_mode: mode, updated_at: new Date().toISOString() })
+      .update({ operating_mode: mode, updated_at: nowIso })
       .eq('id', targetId);
 
     if (error) {
@@ -740,21 +864,64 @@ export const adminApi = {
   async getAttendanceRecords(dateStr: string): Promise<AttendanceRecordAdmin[]> {
     const { data, error } = await supabase
       .from('attendance_records')
-      .select('*, users(display_name, role, is_workflow_staff)')
+      .select('*, users(username, display_name, role, is_workflow_staff, base_daily_rate)')
       .eq('date', dateStr);
 
     if (error) throw error;
-    return (data || []).map((row: any) => ({
-      ...row,
-      user: row.users,
-    })) as AttendanceRecordAdmin[];
+    return (data || []).map((row: any) => {
+      const userRate = Number(row.users?.base_daily_rate || 0);
+      const rawBase = Number(row.base_daily_pay || 0);
+      const resolvedBase =
+        userRate > 200 ? userRate : rawBase > 200 ? rawBase : PH_MINIMUM_WAGE_DAILY;
+      const addon = Number(row.addon_pay || 0);
+      return {
+        ...row,
+        base_daily_pay: resolvedBase,
+        total_day_pay: resolvedBase + addon,
+        user: row.users,
+      };
+    }) as AttendanceRecordAdmin[];
   },
 
-  async updateDiscretionaryAddon(recordId: string, addonPay: number, baseRate: number) {
+  async updateDiscretionaryAddon(
+    recordId: string,
+    addonPay: number,
+    baseRate: number,
+    fallbackContext?: { userId: string; dateStr: string; isPresent?: boolean }
+  ) {
     const total = baseRate + addonPay;
+
+    if (fallbackContext?.userId) {
+      await supabase
+        .from('users')
+        .update({
+          base_daily_rate: baseRate,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', fallbackContext.userId);
+    }
+
+    if (recordId.startsWith('att-') && fallbackContext) {
+      const { error } = await supabase.from('attendance_records').upsert(
+        {
+          user_id: fallbackContext.userId,
+          date: fallbackContext.dateStr,
+          is_present: fallbackContext.isPresent ?? true,
+          base_daily_pay: baseRate,
+          addon_pay: addonPay,
+          total_day_pay: total,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: 'user_id,date' }
+      );
+      if (error) throw error;
+      return;
+    }
+
     const { error } = await supabase
       .from('attendance_records')
       .update({
+        base_daily_pay: baseRate,
         addon_pay: addonPay,
         total_day_pay: total,
         updated_at: new Date().toISOString(),
@@ -765,17 +932,226 @@ export const adminApi = {
   },
 
   /**
-   * Venue Staff Profiles Roster
+   * Venue Staff Profiles Roster & Management
    */
-  async getStaffRoster(): Promise<any[]> {
-    const { data, error } = await supabase
-      .from('users')
+  async getStaffRoster(): Promise<StaffMemberAdmin[]> {
+    const normalizeRoster = (rows: any[]): StaffMemberAdmin[] => {
+      return rows.map((row) => {
+        const rawRate = parseFloat(String(row.base_daily_rate ?? 0));
+        // Upgrade only legacy USD-era (< 200) seed values to PH minimum wage baseline (645.00),
+        // while preserving any custom base pay set by the Admin.
+        if (isNaN(rawRate) || rawRate <= 200) {
+          supabase
+            .from('users')
+            .update({ base_daily_rate: PH_MINIMUM_WAGE_DAILY })
+            .eq('id', row.id)
+            .then(() => {});
+          return { ...row, base_daily_rate: PH_MINIMUM_WAGE_DAILY };
+        }
+        return row;
+      });
+    };
+
+    const { data, error } = await (supabase.from('users') as any)
       .select(
-        'id, username, display_name, role, is_workflow_staff, base_daily_rate, email, phone, avatar_url, is_active'
+        'id, username, display_name, role, job_title, is_workflow_staff, base_daily_rate, email, phone, avatar_url, is_active, created_at'
       )
-      .order('role', { ascending: true });
+      .order('is_workflow_staff', { ascending: false })
+      .order('display_name', { ascending: true });
+
+    if (error) {
+      // Fallback if job_title column is not yet migrated on remote DB
+      const fallback = await supabase
+        .from('users')
+        .select(
+          'id, username, display_name, role, is_workflow_staff, base_daily_rate, email, phone, avatar_url, is_active, created_at'
+        )
+        .order('is_workflow_staff', { ascending: false })
+        .order('display_name', { ascending: true });
+      if (fallback.error) throw fallback.error;
+      return normalizeRoster(fallback.data || []);
+    }
+    return normalizeRoster(data || []);
+  },
+
+  /**
+   * Create a POS App User Account (is_workflow_staff = true, requires 4-digit PIN)
+   */
+  async createStaffUser(payload: CreateStaffUserPayload): Promise<StaffMemberAdmin> {
+    const cleanUsername = payload.username.trim().toLowerCase().replace(/\s+/g, '_');
+    const cleanPin = payload.pin.trim();
+
+    if (!cleanUsername) {
+      throw new Error('Staff ID / Username is required.');
+    }
+    if (!/^\d{4}$/.test(cleanPin)) {
+      throw new Error('A 4-digit numeric PIN is required for POS user accounts.');
+    }
+
+    const insertRow: Record<string, any> = {
+      display_name: payload.display_name.trim(),
+      username: cleanUsername,
+      pin: cleanPin,
+      role: payload.role,
+      job_title: payload.job_title?.trim() || null,
+      is_workflow_staff: true,
+      base_daily_rate: payload.base_daily_rate,
+      email: payload.email?.trim() || null,
+      phone: payload.phone?.trim() || null,
+      avatar_url: payload.avatar_url?.trim() || null,
+      is_active: true,
+    };
+
+    const { data, error } = await (supabase.from('users') as any)
+      .insert(insertRow)
+      .select()
+      .single();
+
+    if (error) {
+      // Handle case where job_title column does not exist yet on remote
+      if (error.message?.includes('job_title')) {
+        delete insertRow.job_title;
+        const retry = await (supabase.from('users') as any).insert(insertRow).select().single();
+        if (retry.error) throw retry.error;
+        return retry.data as StaffMemberAdmin;
+      }
+      throw error;
+    }
+
+    return data as StaffMemberAdmin;
+  },
+
+  /**
+   * Add a Non-User Venue Staff Member (is_workflow_staff = false, no POS login PIN required)
+   */
+  async createNonWorkflowStaff(payload: CreateNonWorkflowStaffPayload): Promise<StaffMemberAdmin> {
+    const cleanTitle = payload.job_title.trim();
+    const slugBase = payload.display_name
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_|_$/g, '');
+    const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+    const resolvedUsername =
+      payload.username?.trim().toLowerCase().replace(/\s+/g, '_') ||
+      `staff_${slugBase || 'member'}_${randomSuffix}`;
+
+    const insertRow: Record<string, any> = {
+      display_name: payload.display_name.trim(),
+      username: resolvedUsername,
+      pin: null,
+      role: 'waiter',
+      job_title: cleanTitle || 'Venue Staff',
+      is_workflow_staff: false,
+      base_daily_rate: payload.base_daily_rate,
+      email: payload.email?.trim() || null,
+      phone: payload.phone?.trim() || null,
+      avatar_url: payload.avatar_url?.trim() || null,
+      is_active: true,
+    };
+
+    const { data, error } = await (supabase.from('users') as any)
+      .insert(insertRow)
+      .select()
+      .single();
+
+    if (error) {
+      // Fallback if remote DB has not yet applied nullable pin or job_title migration
+      const fallbackRow = { ...insertRow };
+      if (error.message?.includes('job_title')) {
+        delete fallbackRow.job_title;
+      }
+      if (error.message?.includes('pin') || error.code === '23502') {
+        fallbackRow.pin = '0000';
+      }
+      const retry = await (supabase.from('users') as any).insert(fallbackRow).select().single();
+      if (retry.error) throw retry.error;
+      return { ...retry.data, job_title: cleanTitle } as StaffMemberAdmin;
+    }
+
+    return data as StaffMemberAdmin;
+  },
+
+  /**
+   * Update existing staff member profile (both POS users and non-user staff)
+   */
+  async updateStaffMember(
+    id: string,
+    payload: UpdateStaffMemberPayload
+  ): Promise<StaffMemberAdmin> {
+    const updateData: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (payload.display_name !== undefined) updateData.display_name = payload.display_name.trim();
+    if (payload.username !== undefined) {
+      updateData.username = payload.username.trim().toLowerCase().replace(/\s+/g, '_');
+    }
+    if (payload.role !== undefined) updateData.role = payload.role;
+    if (payload.job_title !== undefined) updateData.job_title = payload.job_title?.trim() || null;
+    if (payload.base_daily_rate !== undefined) updateData.base_daily_rate = payload.base_daily_rate;
+    if (payload.email !== undefined) updateData.email = payload.email?.trim() || null;
+    if (payload.phone !== undefined) updateData.phone = payload.phone?.trim() || null;
+    if (payload.avatar_url !== undefined)
+      updateData.avatar_url = payload.avatar_url?.trim() || null;
+    if (payload.is_active !== undefined) updateData.is_active = payload.is_active;
+
+    const { data, error } = await (supabase.from('users') as any)
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      if (error.message?.includes('job_title')) {
+        delete updateData.job_title;
+        const retry = await (supabase.from('users') as any)
+          .update(updateData)
+          .eq('id', id)
+          .select()
+          .single();
+        if (retry.error) throw retry.error;
+        return retry.data as StaffMemberAdmin;
+      }
+      throw error;
+    }
+
+    return data as StaffMemberAdmin;
+  },
+
+  /**
+   * Reset 4-digit numeric PIN for a POS user account
+   */
+  async resetStaffPin(id: string, newPin: string): Promise<void> {
+    const cleanPin = newPin.trim();
+    if (!/^\d{4}$/.test(cleanPin)) {
+      throw new Error('PIN must be exactly 4 numeric digits.');
+    }
+
+    const { error } = await supabase
+      .from('users')
+      .update({
+        pin: cleanPin,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
     if (error) throw error;
-    return data || [];
+  },
+
+  /**
+   * Soft deactivate or reactivate a staff member
+   */
+  async toggleStaffStatus(id: string, isActive: boolean): Promise<void> {
+    const { error } = await supabase
+      .from('users')
+      .update({
+        is_active: isActive,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) throw error;
   },
 
   /**

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Modal, Pressable, StyleSheet } from 'react-native';
-import { X } from 'lucide-react-native';
+import { X, ShoppingBag, ChevronLeft } from 'lucide-react-native';
 import { MenuItem, MenuCategory, OrderLineItem } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 
@@ -8,7 +8,7 @@ import { toast } from '@/features/shared/toast/useToastStore';
 import { useAuthStore } from '@/features/auth';
 import { menuApi } from '@/features/menu/data/menu.api';
 import { AdminItemImageModal } from '../admin-item-image/AdminItemImageModal';
-import { ConfirmationModal } from '@/features/shared';
+import { ConfirmationModal, useResponsive } from '@/features/shared';
 import { OrderCategoryBar } from './OrderCategoryBar';
 import { OrderMenuItemGrid } from './OrderMenuItemGrid';
 import { OrderCartSidebar } from './OrderCartSidebar';
@@ -37,6 +37,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   onSendOrder,
 }) => {
   const { currentUser } = useAuthStore();
+  const { isMobile } = useResponsive();
   const isAdmin = currentUser?.role === 'admin';
 
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>('coffee');
@@ -44,6 +45,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   const [cartItems, setCartItems] = useState<OrderLineItem[]>(initialItems);
   const [hasCorkage, setHasCorkage] = useState(hasExistingCorkage);
   const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>([]);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
   // Admin image upload state
   const [editingImageItem, setEditingImageItem] = useState<MenuItem | null>(null);
@@ -245,22 +247,42 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     }
   };
 
+  const totalCartQty = useMemo(
+    () => cartItems.reduce((acc, i) => acc + i.quantity, 0),
+    [cartItems]
+  );
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, isMobile && { padding: 6 }]}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
           accessibilityLabel="Close modal"
         />
-        <View style={styles.fullscreenModal}>
+        <View style={[styles.fullscreenModal, isMobile && { height: '98%', borderRadius: 20 }]}>
           {/* Top Bar */}
-          <View style={styles.topBar}>
-            <View style={styles.topBarLeft}>
-              <View style={styles.activeDestinationBadge}>
-                <Text style={styles.activeDestinationText}>{title}</Text>
+          <View style={[styles.topBar, isMobile && { paddingHorizontal: 14, paddingVertical: 10 }]}>
+            <View style={[styles.topBarLeft, { flex: 1 }]}>
+              {isMobile && isMobileCartOpen ? (
+                <Pressable
+                  onPress={() => setIsMobileCartOpen(false)}
+                  className="min-h-[48px] px-3 rounded-xl bg-stone-100 border border-stone-200 flex-row items-center gap-1"
+                  accessibilityRole="button"
+                  accessibilityLabel="Back to menu catalog"
+                >
+                  <ChevronLeft size={18} color="#1c1917" />
+                  <Text className="text-base font-bold text-stone-800">Menu</Text>
+                </Pressable>
+              ) : null}
+              <View style={[styles.activeDestinationBadge, { flexShrink: 1 }]}>
+                <Text style={styles.activeDestinationText} numberOfLines={1}>
+                  {title}
+                </Text>
               </View>
-              <Text style={styles.topBarSub}>Monk’s Dream POS • Station Auto-Routing Active</Text>
+              <Text style={styles.topBarSub} className="hidden md:flex">
+                Monk’s Dream POS • Station Auto-Routing Active
+              </Text>
             </View>
 
             <Pressable
@@ -273,36 +295,73 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
             </Pressable>
           </View>
 
-          {/* Main Content Split: Left Catalog (62%), Right Cart (38%) */}
-          <View style={styles.mainSplit}>
-            <View style={styles.catalogPanel}>
-              <OrderCategoryBar
-                selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-                searchQuery={searchQuery}
-                onSearchChange={setSearchQuery}
-              />
-              <OrderMenuItemGrid
-                items={filteredMenuItems}
-                isAdmin={isAdmin}
-                onItemClick={handleItemClick}
-                onOpenImageEditor={handleOpenImageEditor}
-              />
-            </View>
+          {/* Main Content: Responsive Split on Desktop/Tablet | Toggleable Menu vs Cart on Mobile */}
+          <View style={[styles.mainSplit, isMobile && { flexDirection: 'column' }]}>
+            {(!isMobile || !isMobileCartOpen) && (
+              <View style={styles.catalogPanel}>
+                <OrderCategoryBar
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                  searchQuery={searchQuery}
+                  onSearchChange={setSearchQuery}
+                />
+                <OrderMenuItemGrid
+                  items={filteredMenuItems}
+                  isAdmin={isAdmin}
+                  onItemClick={handleItemClick}
+                  onOpenImageEditor={handleOpenImageEditor}
+                />
 
-            <OrderCartSidebar
-              cartItems={cartItems}
-              previousTabItems={previousTabItems}
-              roundNumber={roundNumber}
-              hasCorkage={hasCorkage}
-              corkageAmount={corkageAmount}
-              itemsSubtotal={itemsSubtotal}
-              taxAmount={taxAmount}
-              grandTotal={grandTotal}
-              onUpdateQuantity={updateQuantity}
-              onToggleCorkage={handleToggleCorkage}
-              onSend={handleOpenConfirm}
-            />
+                {/* Mobile Sticky Bottom Cart Bar */}
+                {isMobile ? (
+                  <View className="bg-white border-t border-stone-200 px-4 py-3 flex-row items-center justify-between gap-3">
+                    <Pressable
+                      onPress={() => setIsMobileCartOpen(true)}
+                      className="flex-1 min-h-[48px] rounded-xl bg-stone-900 px-4 py-2.5 flex-row items-center justify-between active:opacity-90"
+                      accessibilityRole="button"
+                      accessibilityLabel="Open order basket"
+                    >
+                      <View className="flex-row items-center gap-2">
+                        <ShoppingBag size={18} color="#ffffff" />
+                        <Text className="text-base font-bold text-white">
+                          Basket ({totalCartQty})
+                        </Text>
+                      </View>
+                      <Text className="text-base font-extrabold text-amber-300">
+                        {formatCurrency(grandTotal)}
+                      </Text>
+                    </Pressable>
+
+                    {totalCartQty > 0 ? (
+                      <Pressable
+                        onPress={handleOpenConfirm}
+                        className="min-h-[48px] rounded-xl bg-[#800020] px-5 items-center justify-center active:opacity-90"
+                        accessibilityRole="button"
+                        accessibilityLabel="Send Order"
+                      >
+                        <Text className="text-base font-extrabold text-white">Send</Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ) : null}
+              </View>
+            )}
+
+            {(!isMobile || isMobileCartOpen) && (
+              <OrderCartSidebar
+                cartItems={cartItems}
+                previousTabItems={previousTabItems}
+                roundNumber={roundNumber}
+                hasCorkage={hasCorkage}
+                corkageAmount={corkageAmount}
+                itemsSubtotal={itemsSubtotal}
+                taxAmount={taxAmount}
+                grandTotal={grandTotal}
+                onUpdateQuantity={updateQuantity}
+                onToggleCorkage={handleToggleCorkage}
+                onSend={handleOpenConfirm}
+              />
+            )}
           </View>
 
           {/* ITEM CUSTOMIZER SHEET */}

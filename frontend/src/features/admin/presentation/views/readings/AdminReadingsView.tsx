@@ -43,6 +43,7 @@ import { YCloseShiftModal } from './YCloseShiftModal';
 import { ZReadingsHistoryTable } from './ZReadingsHistoryTable';
 import { CashDrawerWaterfallCard } from '../analytics/CashDrawerWaterfallCard';
 import { ShiftVarianceTrendChart } from '../analytics/ShiftVarianceTrendChart';
+import { PosDropdown, PosDropdownOption } from '@/features/shared';
 
 export const AdminReadingsView: React.FC = () => {
   const [drawerScope, setDrawerScope] = useState<'consolidated' | 'main' | 'bar'>('consolidated');
@@ -273,109 +274,122 @@ export const AdminReadingsView: React.FC = () => {
         ? 'Main Floor Till'
         : 'Consolidated Venue (All Tills)';
 
+  const scopeOptions: PosDropdownOption<'consolidated' | 'main' | 'bar'>[] = [
+    {
+      value: 'consolidated',
+      label: 'Consolidated (All Tills)',
+      icon: Layers,
+      description: 'Combined venue sales and cash drawers',
+    },
+    {
+      value: 'main',
+      label: 'Main Floor Till',
+      icon: Coins,
+      description: 'Waiter & Cashier counter register till',
+    },
+    {
+      value: 'bar',
+      label: 'Bar Station Till',
+      icon: Receipt,
+      description: 'Barista & Bartender station till',
+    },
+  ];
+
+  const readingActions: PosDropdownOption<
+    'x_reading' | 'y_reading' | 'z_reading' | 'export_xls'
+  >[] = [
+    {
+      value: 'x_reading',
+      label: 'Preview Interim X-Reading',
+      description: 'Non-destructive live snapshot of current shift accumulators',
+      icon: FileText,
+    },
+    {
+      value: 'y_reading',
+      label: 'Close Shift & Handover (Y-Reading)',
+      description: 'Reconcile cashier drawer for shift handover without resetting daily totals',
+      icon: ArrowRightLeft,
+      variant: 'warning',
+    },
+    {
+      value: 'z_reading',
+      label: 'End-of-Day Fiscal Close (Z-Reading)',
+      description: 'Lock business day, advance Z-counter, and reset daily accumulators',
+      icon: Lock,
+      variant: 'danger',
+    },
+    {
+      value: 'export_xls',
+      label: 'Export Current Reading to Excel (.xls)',
+      description: 'Download formatted spreadsheet of active shift reading',
+      icon: FileSpreadsheet,
+      variant: 'success',
+    },
+  ];
+
+  const historyTabOptions: PosDropdownOption<'z_readings' | 'y_handovers'>[] = [
+    {
+      value: 'z_readings',
+      label: 'Daily Z-Readings Archive',
+      badge: filteredZHistory.length,
+      icon: Lock,
+    },
+    {
+      value: 'y_handovers',
+      label: 'Shift Handover Y-Reports',
+      badge: filteredYHistory.length,
+      icon: ArrowRightLeft,
+    },
+  ];
+
+  const archiveTillOptions: PosDropdownOption<'all' | 'consolidated' | 'main' | 'bar'>[] = [
+    { value: 'all', label: 'All Tills', icon: Layers },
+    { value: 'consolidated', label: 'Consolidated', icon: Layers },
+    { value: 'main', label: 'Main Floor Till', icon: Coins },
+    { value: 'bar', label: 'Bar Station Till', icon: Receipt },
+  ];
+
   return (
     <ScrollView
       className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
-      {/* Top Controls & Scope Selection */}
-      <View className="flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6">
-        {/* Scope Pill Tabs */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full lg:w-auto">
-          <View className="flex-row items-center bg-stone-200/70 p-1.5 rounded-2xl">
-            <Pressable
-              onPress={() => setDrawerScope('consolidated')}
-              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
-                drawerScope === 'consolidated' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-              }`}
-            >
-              <Layers size={18} color={drawerScope === 'consolidated' ? '#800020' : '#57534e'} />
-              <Text
-                className={`ml-2 text-base font-bold ${
-                  drawerScope === 'consolidated' ? 'text-stone-900' : 'text-stone-600'
-                }`}
-              >
-                Consolidated (All Tills)
-              </Text>
-            </Pressable>
+      {/* Top Controls: Till Scope Dropdown & Reading Actions Dropdown */}
+      <View className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
+        <PosDropdown
+          options={scopeOptions}
+          value={drawerScope}
+          onChange={setDrawerScope}
+          prefixLabel="Scope:"
+          sheetTitle="Select Till Scope"
+          className="w-full sm:w-72"
+        />
 
-            <Pressable
-              onPress={() => setDrawerScope('main')}
-              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
-                drawerScope === 'main' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-              }`}
-            >
-              <Coins size={18} color={drawerScope === 'main' ? '#800020' : '#57534e'} />
-              <Text
-                className={`ml-2 text-base font-bold ${
-                  drawerScope === 'main' ? 'text-stone-900' : 'text-stone-600'
-                }`}
-              >
-                Main Floor Till
-              </Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => setDrawerScope('bar')}
-              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
-                drawerScope === 'bar' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-              }`}
-            >
-              <Receipt size={18} color={drawerScope === 'bar' ? '#800020' : '#57534e'} />
-              <Text
-                className={`ml-2 text-base font-bold ${
-                  drawerScope === 'bar' ? 'text-stone-900' : 'text-stone-600'
-                }`}
-              >
-                Bar Station Till
-              </Text>
-            </Pressable>
-          </View>
-        </ScrollView>
-
-        {/* 3-Way Action Toolbar: X-Reading, Y-Reading, Z-Reading */}
-        <View className="flex-row items-center gap-3 flex-wrap w-full lg:w-auto">
+        <View className="flex-row items-center gap-2.5 flex-wrap">
           <Pressable
             onPress={handleRefresh}
             className="w-12 h-12 rounded-xl bg-white border border-stone-200 items-center justify-center active:bg-stone-100 shadow-xs"
+            accessibilityRole="button"
+            accessibilityLabel="Refresh readings"
           >
             <RefreshCw size={18} color="#57534e" className={isRefreshing ? 'animate-spin' : ''} />
           </Pressable>
 
-          <Pressable
-            onPress={handleExportExcel}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-300 hover:bg-emerald-100 active:bg-emerald-200 min-h-[48px] shadow-xs"
-          >
-            <FileSpreadsheet size={18} color="#047857" />
-            <Text className="text-base font-bold text-emerald-800">Export Excel (.xls)</Text>
-          </Pressable>
-
-          {/* X-Reading Trigger */}
-          <Pressable
-            onPress={handleOpenXReading}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-xl bg-[#800020] active:bg-[#600018] min-h-[48px] shadow-xs"
-          >
-            <FileText size={18} color="#ffffff" />
-            <Text className="text-base font-extrabold text-white">Preview X-Reading</Text>
-          </Pressable>
-
-          {/* Y-Reading Handover Trigger */}
-          <Pressable
-            onPress={handleOpenYClose}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-xl bg-amber-600 active:bg-amber-700 min-h-[48px] shadow-xs"
-          >
-            <ArrowRightLeft size={18} color="#ffffff" />
-            <Text className="text-base font-extrabold text-white">Handover Y-Reading</Text>
-          </Pressable>
-
-          {/* Z-Reading End-of-Day Close Trigger */}
-          <Pressable
-            onPress={handleOpenZClose}
-            className="flex-row items-center gap-2 px-4 py-3 rounded-xl bg-stone-900 active:bg-black min-h-[48px] shadow-xs"
-          >
-            <Lock size={18} color="#ffffff" />
-            <Text className="text-base font-extrabold text-white">Close Day Z-Reading</Text>
-          </Pressable>
+          <PosDropdown
+            mode="action"
+            options={readingActions}
+            onChange={(act) => {
+              if (act === 'x_reading') handleOpenXReading();
+              else if (act === 'y_reading') handleOpenYClose();
+              else if (act === 'z_reading') handleOpenZClose();
+              else if (act === 'export_xls') handleExportExcel();
+            }}
+            triggerLabel="X / Y / Z Reading Actions"
+            triggerIcon={FileText}
+            variant="wine"
+            sheetTitle="Fiscal Shift Reading Actions"
+            className="flex-1 sm:flex-initial min-w-[220px]"
+          />
         </View>
       </View>
 
@@ -455,106 +469,51 @@ export const AdminReadingsView: React.FC = () => {
       </View>
 
       {/* Historical Readings Archive Switcher & Filter Toolbar */}
-      <View className="flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full sm:w-auto">
-          <View className="flex-row bg-stone-200/80 p-1 rounded-2xl">
-            <Pressable
-              onPress={() => setHistoryTab('z_readings')}
-              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
-                historyTab === 'z_readings' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-              }`}
-            >
-              <Lock size={16} color={historyTab === 'z_readings' ? '#1c1917' : '#57534e'} />
-              <Text
-                className={`ml-2 text-base font-bold ${
-                  historyTab === 'z_readings' ? 'text-stone-900' : 'text-stone-600'
-                }`}
-              >
-                Daily Z-Readings Archive ({filteredZHistory.length})
-              </Text>
-            </Pressable>
+      <View className="flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 mb-4 bg-white p-3.5 rounded-2xl border border-stone-200/80 shadow-xs">
+        <View className="flex-col sm:flex-row items-stretch sm:items-center gap-2.5 flex-1">
+          <PosDropdown
+            options={historyTabOptions}
+            value={historyTab}
+            onChange={setHistoryTab}
+            prefixLabel="Archive:"
+            sheetTitle="Select Historical Readings Archive"
+            className="w-full sm:w-64"
+          />
 
-            <Pressable
-              onPress={() => setHistoryTab('y_handovers')}
-              className={`px-4 py-2 rounded-xl min-h-[48px] flex-row items-center ${
-                historyTab === 'y_handovers' ? 'bg-white shadow-xs' : 'hover:bg-stone-300/50'
-              }`}
-            >
-              <ArrowRightLeft
-                size={16}
-                color={historyTab === 'y_handovers' ? '#d97706' : '#57534e'}
-              />
-              <Text
-                className={`ml-2 text-base font-bold ${
-                  historyTab === 'y_handovers' ? 'text-stone-900' : 'text-stone-600'
-                }`}
-              >
-                Shift Handover Y-Reports ({filteredYHistory.length})
-              </Text>
-            </Pressable>
+          <PosDropdown
+            options={archiveTillOptions}
+            value={archiveDrawer}
+            onChange={setArchiveDrawer}
+            prefixLabel="Till:"
+            sheetTitle="Filter Archive by Till"
+            className="w-full sm:w-48"
+          />
+
+          <View className="flex-row items-center bg-stone-100 border border-stone-300 rounded-xl px-3 py-2 flex-1 min-h-[48px]">
+            <Search size={16} color="#78716c" />
+            <TextInput
+              className="flex-1 ml-2 text-base text-stone-900"
+              placeholder="Search reading #, staff, notes..."
+              placeholderTextColor="#a8a29e"
+              value={archiveSearch}
+              onChangeText={setArchiveSearch}
+            />
+            {archiveSearch.length > 0 && (
+              <Pressable onPress={() => setArchiveSearch('')} className="p-1">
+                <X size={16} color="#78716c" />
+              </Pressable>
+            )}
           </View>
-        </ScrollView>
+        </View>
 
         {/* Export Full Archive Button */}
         <Pressable
           onPress={handleExportArchive}
-          className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-stone-300 hover:bg-stone-50 active:bg-stone-100 shadow-xs min-h-[48px] w-full sm:w-auto justify-center"
+          className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-300 active:bg-emerald-100 shadow-xs min-h-[48px] justify-center"
         >
           <FileSpreadsheet size={16} color="#047857" />
-          <Text className="text-base font-bold text-stone-800">
-            Export {historyTab === 'z_readings' ? 'Z-Readings' : 'Y-Handovers'} Ledger (.xls)
-          </Text>
+          <Text className="text-base font-bold text-emerald-800">Export Archive (.xls)</Text>
         </Pressable>
-      </View>
-
-      {/* Archive Search & Till Filter Strip */}
-      <View className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-4 bg-white p-3 rounded-2xl border border-stone-200/80">
-        <View className="flex-row items-center bg-stone-100 border border-stone-300 rounded-xl px-3 py-2 flex-1 min-h-[44px]">
-          <Search size={16} color="#78716c" />
-          <TextInput
-            className="flex-1 ml-2 text-base text-stone-900"
-            placeholder="Search reading #, staff, notes..."
-            placeholderTextColor="#a8a29e"
-            value={archiveSearch}
-            onChangeText={setArchiveSearch}
-          />
-          {archiveSearch.length > 0 && (
-            <Pressable onPress={() => setArchiveSearch('')} className="p-1">
-              <X size={16} color="#78716c" />
-            </Pressable>
-          )}
-        </View>
-
-        <View className="flex-row items-center gap-1.5 flex-wrap">
-          {(['all', 'consolidated', 'main', 'bar'] as const).map((till) => {
-            const isSelected = archiveDrawer === till;
-            const label =
-              till === 'all'
-                ? 'All Tills'
-                : till === 'consolidated'
-                  ? 'Consolidated'
-                  : till === 'main'
-                    ? 'Main Floor'
-                    : 'Bar Station';
-            return (
-              <Pressable
-                key={till}
-                onPress={() => setArchiveDrawer(till)}
-                className={`px-3 py-1.5 rounded-lg border min-h-[40px] items-center justify-center ${
-                  isSelected
-                    ? 'bg-[#800020] border-[#800020]'
-                    : 'bg-white border-stone-300 active:bg-stone-50'
-                }`}
-              >
-                <Text
-                  className={`text-base font-bold ${isSelected ? 'text-white' : 'text-stone-700'}`}
-                >
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
       </View>
 
       {/* History Table */}
