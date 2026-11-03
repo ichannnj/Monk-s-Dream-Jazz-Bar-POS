@@ -8,6 +8,10 @@ export interface RunnerTicket {
   orderType: 'dine_in' | 'takeout' | 'online_delivery';
   elapsedTime: string;
   minutesElapsed: number;
+  createdAt?: string;
+  isPrepaid?: boolean;
+  takeoutId?: string;
+  onlineId?: string;
   items: OrderLineItem[];
   allDone: boolean;
   readyItemsCount: number;

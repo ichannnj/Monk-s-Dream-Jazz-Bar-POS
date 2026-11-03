@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Bike, CheckCircle2, UserCheck } from 'lucide-react-native';
 import { OnlineDeliveryOrder } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
+import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
 
 interface OnlineDeliveryCardProps {
   order: OnlineDeliveryOrder;
@@ -19,6 +20,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
 }) => {
   const isGrab = order.platform === 'grabfood';
   const isReady = order.status === 'ready';
+  const liveTimer = useLiveElapsedTimer(order.createdAt, order.elapsedTime, 'kitchen');
 
   return (
     <View style={[styles.cardContainer, isGrab ? styles.cardGrab : styles.cardFoodpanda]}>
@@ -52,7 +54,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
               {isReady ? 'READY' : 'PREP'}
             </Text>
             <Text style={[styles.timeText, { color: isReady ? '#15803d' : '#b45309' }]}>
-              · {order.elapsedTime}
+              · {liveTimer.formattedTimer}
             </Text>
           </View>
         </View>

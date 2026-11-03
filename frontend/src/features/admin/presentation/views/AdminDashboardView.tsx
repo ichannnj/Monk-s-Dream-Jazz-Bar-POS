@@ -19,6 +19,7 @@ import { HourlySalesVelocityChart } from './analytics/HourlySalesVelocityChart';
 import { PaymentTenderMixBar } from './analytics/PaymentTenderMixBar';
 import { DepartmentSalesBreakdown, DepartmentShare } from './analytics/DepartmentSalesBreakdown';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
+import { useLiveNow, getLiveStationTurnaround } from '@/features/shared/utils/elapsedTime';
 
 export interface AdminDashboardViewProps {
   telemetry: DashboardTelemetry;
@@ -88,6 +89,11 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const [bestSellerFilter, setBestSellerFilter] = useState<BestSellerFilter>('top5');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
   const [alerts, setAlerts] = useState(telemetry.alerts || []);
+
+  const hasActiveTickets = Boolean(
+    telemetry?.stations?.some((s) => (s.activeTicketTimestamps?.length || 0) > 0)
+  );
+  const nowMs = useLiveNow(hasActiveTickets);
 
   // Sync alerts whenever telemetry updates from refresh
   useEffect(() => {
@@ -777,66 +783,75 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
               {/* Stations Rows */}
               <View className="space-y-3.5">
-                {(telemetry.stations || []).map((station) => (
-                  <View
-                    key={station.stationKey}
-                    className="rounded-xl border border-stone-200/70 bg-stone-50/60 p-4"
-                  >
-                    <View className="flex-row items-center justify-between mb-3 flex-wrap gap-2">
-                      <View className="flex-row items-center gap-2 flex-wrap">
-                        <Text className="text-lg font-bold text-stone-900">{station.name}</Text>
-                        {station.isOnline ? (
-                          <View className="flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
-                            <View className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
-                            <Text className="text-base font-bold text-emerald-700">Online</Text>
-                          </View>
-                        ) : (
-                          <View className="flex-row items-center rounded-full bg-stone-100 border border-stone-300 px-2.5 py-0.5">
-                            <View className="h-2 w-2 rounded-full bg-stone-400 mr-1.5" />
-                            <Text className="text-base font-bold text-stone-600">Offline</Text>
-                          </View>
-                        )}
+                {(telemetry.stations || []).map((station) => {
+                  const liveStats = getLiveStationTurnaround(
+                    station.stationKey,
+                    station.activeTicketTimestamps,
+                    station.avgTicketTime,
+                    station.lateTickets,
+                    nowMs
+                  );
+                  return (
+                    <View
+                      key={station.stationKey}
+                      className="rounded-xl border border-stone-200/70 bg-stone-50/60 p-4"
+                    >
+                      <View className="flex-row items-center justify-between mb-3 flex-wrap gap-2">
+                        <View className="flex-row items-center gap-2 flex-wrap">
+                          <Text className="text-lg font-bold text-stone-900">{station.name}</Text>
+                          {station.isOnline ? (
+                            <View className="flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
+                              <View className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
+                              <Text className="text-base font-bold text-emerald-700">Online</Text>
+                            </View>
+                          ) : (
+                            <View className="flex-row items-center rounded-full bg-stone-100 border border-stone-300 px-2.5 py-0.5">
+                              <View className="h-2 w-2 rounded-full bg-stone-400 mr-1.5" />
+                              <Text className="text-base font-bold text-stone-600">Offline</Text>
+                            </View>
+                          )}
+                        </View>
+                        <Text className="text-base text-stone-500">
+                          Target {station.targetTicketTime}
+                        </Text>
                       </View>
-                      <Text className="text-base text-stone-500">
-                        Target {station.targetTicketTime}
-                      </Text>
+
+                      <View className="flex-row flex-wrap gap-2 pt-1">
+                        <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
+                          <Text className="text-xl font-black text-stone-900">
+                            {station.activeTickets}
+                          </Text>
+                          <Text className="text-base text-stone-500 mt-0.5">Active</Text>
+                        </View>
+
+                        <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
+                          <Text className="text-xl font-black text-stone-900">
+                            {liveStats.avgTicketTime}
+                          </Text>
+                          <Text className="text-base text-stone-500 mt-0.5">Avg time</Text>
+                        </View>
+
+                        <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
+                          <Text
+                            className={`text-xl font-black ${
+                              liveStats.lateTickets > 0 ? 'text-rose-600' : 'text-stone-900'
+                            }`}
+                          >
+                            {liveStats.lateTickets}
+                          </Text>
+                          <Text className="text-base text-stone-500 mt-0.5">Late</Text>
+                        </View>
+
+                        <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
+                          <Text className="text-xl font-black text-amber-600">
+                            {station.stockoutCount}
+                          </Text>
+                          <Text className="text-base text-stone-500 mt-0.5">Sold out</Text>
+                        </View>
+                      </View>
                     </View>
-
-                    <View className="flex-row flex-wrap gap-2 pt-1">
-                      <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
-                        <Text className="text-xl font-black text-stone-900">
-                          {station.activeTickets}
-                        </Text>
-                        <Text className="text-base text-stone-500 mt-0.5">Active</Text>
-                      </View>
-
-                      <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
-                        <Text className="text-xl font-black text-stone-900">
-                          {station.avgTicketTime}
-                        </Text>
-                        <Text className="text-base text-stone-500 mt-0.5">Avg time</Text>
-                      </View>
-
-                      <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
-                        <Text
-                          className={`text-xl font-black ${
-                            station.lateTickets > 0 ? 'text-rose-600' : 'text-stone-900'
-                          }`}
-                        >
-                          {station.lateTickets}
-                        </Text>
-                        <Text className="text-base text-stone-500 mt-0.5">Late</Text>
-                      </View>
-
-                      <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
-                        <Text className="text-xl font-black text-amber-600">
-                          {station.stockoutCount}
-                        </Text>
-                        <Text className="text-base text-stone-500 mt-0.5">Sold out</Text>
-                      </View>
-                    </View>
-                  </View>
-                ))}
+                  );
+                })}
               </View>
             </View>
 

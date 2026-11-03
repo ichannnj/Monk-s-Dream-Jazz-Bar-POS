@@ -96,6 +96,11 @@ export async function ensureTab(params: {
   riderName?: string;
   hasCorkageFee?: boolean;
   corkageAmount?: number;
+  isPrepaid?: boolean;
+  notes?: string;
+  ticketNumber?: string;
+  operatingMode?: 'CAFE' | 'EVENT';
+  openedById?: string;
 }): Promise<string> {
   try {
     // 1. Resolve valid physical table UUID
@@ -144,25 +149,46 @@ export async function ensureTab(params: {
       }
     }
 
-    // 4. Insert new Tab
-    const { data: newTab, error } = await supabase
-      .from('tabs')
-      .insert({
-        table_id: validTableId,
-        customer_name: params.customerName || 'Guest',
-        order_type: params.orderType || 'DINE_IN',
-        order_channel: params.orderChannel || 'CAFE_AREA',
-        external_order_ref: params.externalOrderRef || null,
-        rider_name: params.riderName || null,
-        has_corkage_fee: params.hasCorkageFee || false,
-        corkage_amount: params.corkageAmount || 0,
-        status: 'OPEN',
-      })
+    // 4. Insert new Tab (with resilience if optional migration columns are pending)
+    const baseTabPayload: Record<string, any> = {
+      table_id: validTableId,
+      customer_name: params.customerName || 'Guest',
+      order_type: params.orderType || 'DINE_IN',
+      order_channel: params.orderChannel || 'CAFE_AREA',
+      external_order_ref: params.externalOrderRef || null,
+      rider_name: params.riderName || null,
+      has_corkage_fee: params.hasCorkageFee || false,
+      corkage_amount: params.corkageAmount || 0,
+      operating_mode: params.operatingMode || 'CAFE',
+      opened_by_id: params.openedById || null,
+      status: 'OPEN',
+    };
+
+    const extendedTabPayload: Record<string, any> = {
+      ...baseTabPayload,
+      is_prepaid: params.isPrepaid ?? params.orderType === 'ONLINE_DELIVERY',
+      notes: params.notes || null,
+      ticket_number: params.ticketNumber || null,
+    };
+
+    let { data: newTab, error } = await (supabase.from as any)('tabs')
+      .insert(extendedTabPayload)
       .select('id')
       .single();
 
     if (error) {
-      console.warn('ensureTab insert error:', error.message);
+      // Fallback to base columns if schema migration hasn't been applied yet
+      const retry = await supabase
+        .from('tabs')
+        .insert(baseTabPayload as any)
+        .select('id')
+        .single();
+      newTab = retry.data;
+      error = retry.error;
+    }
+
+    if (error || !newTab) {
+      console.warn('ensureTab insert error:', error?.message);
       throw error;
     }
 
@@ -199,6 +225,11 @@ export async function createOrderWithItems(params: {
   hasCorkageFee?: boolean;
   corkageAmount?: number;
   roundNumber?: number;
+  isPrepaid?: boolean;
+  notes?: string;
+  ticketNumber?: string;
+  operatingMode?: 'CAFE' | 'EVENT';
+  openedById?: string;
   items: Array<{
     id?: string;
     productId: string;
@@ -206,6 +237,7 @@ export async function createOrderWithItems(params: {
     quantity: number;
     unitPrice: number;
     stationTarget: 'bar' | 'kitchen';
+    status?: string;
     modifiers?: string[];
     notes?: string;
   }>;
@@ -221,6 +253,11 @@ export async function createOrderWithItems(params: {
       riderName: params.riderName,
       hasCorkageFee: params.hasCorkageFee,
       corkageAmount: params.corkageAmount,
+      isPrepaid: params.isPrepaid,
+      notes: params.notes,
+      ticketNumber: params.ticketNumber,
+      operatingMode: params.operatingMode,
+      openedById: params.openedById,
     });
 
     // 1. Insert Order
@@ -235,7 +272,7 @@ export async function createOrderWithItems(params: {
         round_number: params.roundNumber || 1,
         status: 'OPEN',
       })
-      .select('id, order_number, status')
+      .select('id, order_number, status, created_at')
       .single();
 
     if (orderError) throw orderError;
@@ -246,12 +283,17 @@ export async function createOrderWithItems(params: {
         const resolvedProdId =
           (await resolveProductId(item.productId)) ||
           (await resolveProductId(item.productName || ''));
+        const itemDbStatus =
+          item.status &&
+          ['PENDING', 'PREPARING', 'READY', 'SERVED'].includes(item.status.toUpperCase())
+            ? (item.status.toUpperCase() as any)
+            : ('PENDING' as const);
         return {
           order_id: orderData.id,
           product_id: resolvedProdId || 'e1111111-0000-0000-0000-000000000001',
           quantity: item.quantity,
           unit_price: item.unitPrice,
-          status: 'PENDING' as const,
+          status: itemDbStatus,
           station_target: item.stationTarget,
           modifiers: item.modifiers ? JSON.stringify(item.modifiers) : ('[]' as any),
           notes: item.notes || null,

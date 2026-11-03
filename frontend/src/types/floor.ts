@@ -37,6 +37,7 @@ export interface OrderLineItem {
   status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
   roundNumber?: number;
   voidReason?: string;
+  createdAt?: string;
 }
 
 export interface CustomerTab {
@@ -51,6 +52,7 @@ export interface CustomerTab {
   items: OrderLineItem[];
   totalAmount: number;
   openedAt?: string;
+  openedAtIso?: string;
   operatingMode?: 'CAFE' | 'EVENT';
   transferredFrom?: {
     tableCode: string;
@@ -66,6 +68,7 @@ export interface TableItem {
   guests: number;
   status: TableStatus;
   elapsedTime: string;
+  occupiedSinceIso?: string;
   assignedStaff?: {
     initials: string;
     name: string;
@@ -105,18 +108,23 @@ export interface MenuItem {
 
 export interface TakeoutOrder {
   id: string;
+  tabId?: string;
   ticketNumber: string; // e.g. "T-105"
   customerName: string;
   items: OrderLineItem[];
   total: number;
   status: 'preparing' | 'ready' | 'completed';
   elapsedTime: string;
+  createdAt?: string;
   isPrepaid: boolean;
+  paymentMethod?: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp';
+  operatingMode?: 'CAFE' | 'EVENT';
   notes?: string;
 }
 
 export interface OnlineDeliveryOrder {
   id: string;
+  tabId?: string;
   platform: 'grabfood' | 'foodpanda';
   platformOrderRef: string; // e.g. "GF-8842" or "FP-3012"
   riderName: string;
@@ -125,6 +133,8 @@ export interface OnlineDeliveryOrder {
   total: number;
   status: 'preparing' | 'ready' | 'completed';
   elapsedTime: string;
+  createdAt?: string;
+  operatingMode?: 'CAFE' | 'EVENT';
   paymentStatus: 'PAID_ONLINE_GRAB' | 'PAID_ONLINE_FOODPANDA';
 }
 

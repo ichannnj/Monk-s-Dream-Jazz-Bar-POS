@@ -1,12 +1,14 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { ShoppingBag, CheckCircle2, PackageCheck } from 'lucide-react-native';
+import { ShoppingBag, CheckCircle2, PackageCheck, CreditCard } from 'lucide-react-native';
 import { TakeoutOrder } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
+import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
 
 interface TakeoutQueueCardProps {
   order: TakeoutOrder;
   onPress: (order: TakeoutOrder) => void;
+  onPayTakeout?: (order: TakeoutOrder, collectAfterPay?: boolean) => void;
   onMarkReady?: (orderId: string) => void;
   onMarkCollected?: (orderId: string) => void;
 }
@@ -14,10 +16,12 @@ interface TakeoutQueueCardProps {
 export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
   order,
   onPress,
+  onPayTakeout,
   onMarkReady,
   onMarkCollected,
 }) => {
   const isReady = order.status === 'ready';
+  const liveTimer = useLiveElapsedTimer(order.createdAt, order.elapsedTime, 'bar');
 
   return (
     <View style={[styles.cardContainer, isReady ? styles.cardReady : styles.cardPreparing]}>
@@ -49,7 +53,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
               {isReady ? 'READY' : 'PREP'}
             </Text>
             <Text style={[styles.timeText, { color: isReady ? '#15803d' : '#b45309' }]}>
-              · {order.elapsedTime}
+              · {liveTimer.formattedTimer}
             </Text>
           </View>
         </View>
@@ -71,15 +75,50 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
       {/* 3. Bottom Row: Direct Action */}
       <View style={styles.actionRow}>
         {isReady ? (
-          <Pressable
-            onPress={() => onMarkCollected?.(order.id)}
-            style={styles.actionBtnCollect}
-            accessibilityRole="button"
-            accessibilityLabel={`Mark order ${order.ticketNumber} as collected`}
-          >
-            <PackageCheck size={16} color="#ffffff" strokeWidth={2.3} />
-            <Text style={styles.actionBtnText}>Collected</Text>
-          </Pressable>
+          order.isPrepaid ? (
+            <Pressable
+              onPress={() => onMarkCollected?.(order.id)}
+              style={styles.actionBtnCollect}
+              accessibilityRole="button"
+              accessibilityLabel={`Mark order ${order.ticketNumber} as collected`}
+            >
+              <PackageCheck size={16} color="#ffffff" strokeWidth={2.3} />
+              <Text style={styles.actionBtnText}>Collected</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              onPress={() =>
+                onPayTakeout ? onPayTakeout(order, true) : onMarkCollected?.(order.id)
+              }
+              style={styles.actionBtnPayCollect}
+              accessibilityRole="button"
+              accessibilityLabel={`Pay and collect order ${order.ticketNumber}`}
+            >
+              <CreditCard size={16} color="#ffffff" strokeWidth={2.3} />
+              <Text style={styles.actionBtnText}>Pay & Collect</Text>
+            </Pressable>
+          )
+        ) : !order.isPrepaid && onPayTakeout ? (
+          <View style={styles.dualActionRow}>
+            <Pressable
+              onPress={() => onPayTakeout(order, false)}
+              style={styles.actionBtnPayNow}
+              accessibilityRole="button"
+              accessibilityLabel={`Collect payment now for order ${order.ticketNumber}`}
+            >
+              <CreditCard size={15} color="#7e2235" strokeWidth={2.3} />
+              <Text style={styles.actionBtnPayNowText}>Pay Now</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => onMarkReady?.(order.id)}
+              style={[styles.actionBtnReady, { flex: 1 }]}
+              accessibilityRole="button"
+              accessibilityLabel={`Mark order ${order.ticketNumber} as ready`}
+            >
+              <CheckCircle2 size={15} color="#92400e" strokeWidth={2.3} />
+              <Text style={styles.actionBtnReadyText}>Mark Ready</Text>
+            </Pressable>
+          </View>
         ) : (
           <Pressable
             onPress={() => onMarkReady?.(order.id)}
@@ -212,6 +251,42 @@ const styles = StyleSheet.create({
   },
   actionRow: {
     paddingTop: 6,
+  },
+  dualActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionBtnPayNow: {
+    flex: 1,
+    backgroundColor: '#fdf2f4',
+    borderWidth: 1,
+    borderColor: '#fbcfe8',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    minHeight: 52,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+  },
+  actionBtnPayNowText: {
+    color: '#7e2235',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.2,
+  },
+  actionBtnPayCollect: {
+    backgroundColor: '#7e2235',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 52,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
   },
   actionBtnCollect: {
     backgroundColor: '#16a34a',

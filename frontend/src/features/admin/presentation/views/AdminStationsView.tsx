@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView } from 'react-native';
 import { Wine, Coffee, UtensilsCrossed, PackageCheck } from 'lucide-react-native';
 import type { DashboardTelemetry } from '../../domain/admin.types';
+import { useLiveNow, getLiveStationTurnaround } from '@/features/shared/utils/elapsedTime';
 
 interface AdminStationsViewProps {
   telemetry?: DashboardTelemetry | null;
@@ -9,6 +10,10 @@ interface AdminStationsViewProps {
 }
 
 export const AdminStationsView: React.FC<AdminStationsViewProps> = ({ telemetry }) => {
+  const hasActiveTickets = Boolean(
+    telemetry?.stations?.some((s) => (s.activeTicketTimestamps?.length || 0) > 0)
+  );
+  const nowMs = useLiveNow(hasActiveTickets);
   const stationMeta: Record<
     string,
     { role: string; icon: any; color: string; defaultTarget: string }
@@ -42,80 +47,87 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({ telemetry 
   const stationData =
     (telemetry?.stations || []).length > 0
       ? telemetry!.stations.map((st) => {
-          const meta = stationMeta[st.stationKey] || {
-            role: 'Station Workstation',
-            icon: UtensilsCrossed,
-            color: 'bg-stone-600',
-            defaultTarget: '10:00',
-          };
-          return {
-            id: st.stationKey,
-            name: st.name,
-            role: meta.role,
-            icon: meta.icon,
-            color: meta.color,
-            activeTickets: st.activeTickets,
-            avgTime: st.avgTicketTime,
-            targetTime: st.targetTicketTime || meta.defaultTarget,
-            isOnline: st.isOnline,
-            lateCount: st.lateTickets,
-            stockoutCount: st.stockoutCount,
-          };
-        })
+        const meta = stationMeta[st.stationKey] || {
+          role: 'Station Workstation',
+          icon: UtensilsCrossed,
+          color: 'bg-stone-600',
+          defaultTarget: '10:00',
+        };
+        const liveStats = getLiveStationTurnaround(
+          st.stationKey,
+          st.activeTicketTimestamps,
+          st.avgTicketTime,
+          st.lateTickets,
+          nowMs
+        );
+        return {
+          id: st.stationKey,
+          name: st.name,
+          role: meta.role,
+          icon: meta.icon,
+          color: meta.color,
+          activeTickets: st.activeTickets,
+          avgTime: liveStats.avgTicketTime,
+          targetTime: st.targetTicketTime || meta.defaultTarget,
+          isOnline: st.isOnline,
+          lateCount: liveStats.lateTickets,
+          stockoutCount: st.stockoutCount,
+        };
+      })
       : [
-          {
-            id: 'bar',
-            name: 'Bar Counter',
-            role: 'Bartender & Cocktail Mixology',
-            icon: Wine,
-            color: 'bg-amber-600',
-            activeTickets: 0,
-            avgTime: 'Idle',
-            targetTime: '10:00',
-            isOnline: false,
-            lateCount: 0,
-            stockoutCount: 0,
-          },
-          {
-            id: 'cafe',
-            name: 'Barista Espresso',
-            role: 'Espresso Bar & Teas',
-            icon: Coffee,
-            color: 'bg-stone-700',
-            activeTickets: 0,
-            avgTime: 'Idle',
-            targetTime: '06:00',
-            isOnline: false,
-            lateCount: 0,
-            stockoutCount: 0,
-          },
-          {
-            id: 'kitchen',
-            name: 'Kitchen Hot Line',
-            role: 'Main Line Chef & Appetizers',
-            icon: UtensilsCrossed,
-            color: 'bg-rose-700',
-            activeTickets: 0,
-            avgTime: 'Idle',
-            targetTime: '15:00',
-            isOnline: false,
-            lateCount: 0,
-            stockoutCount: 0,
-          },
-          {
-            id: 'runner',
-            name: 'FOH Expediter',
-            role: 'Tablet Buzzout & Tray Dispatch',
-            icon: PackageCheck,
-            color: 'bg-emerald-700',
-            activeTickets: 0,
-            avgTime: 'Idle',
-            targetTime: '03:00',
-            isOnline: false,
-            lateCount: 0,
-            stockoutCount: 0,
-          },
-        ];
+        {
+          id: 'bar',
+          name: 'Bar Counter',
+          role: 'Bartender & Cocktail Mixology',
+          icon: Wine,
+          color: 'bg-amber-600',
+          activeTickets: 0,
+          avgTime: 'Idle',
+          targetTime: '10:00',
+          isOnline: false,
+          lateCount: 0,
+          stockoutCount: 0,
+        },
+        {
+          id: 'cafe',
+          name: 'Barista Espresso',
+          role: 'Espresso Bar & Teas',
+          icon: Coffee,
+          color: 'bg-stone-700',
+          activeTickets: 0,
+          avgTime: 'Idle',
+          targetTime: '06:00',
+          isOnline: false,
+          lateCount: 0,
+          stockoutCount: 0,
+        },
+        {
+          id: 'kitchen',
+          name: 'Kitchen Hot Line',
+          role: 'Main Line Chef & Appetizers',
+          icon: UtensilsCrossed,
+          color: 'bg-rose-700',
+          activeTickets: 0,
+          avgTime: 'Idle',
+          targetTime: '15:00',
+          isOnline: false,
+          lateCount: 0,
+          stockoutCount: 0,
+        },
+        {
+          id: 'runner',
+          name: 'FOH Expediter',
+          role: 'Tablet Buzzout & Tray Dispatch',
+          icon: PackageCheck,
+          color: 'bg-emerald-700',
+          activeTickets: 0,
+          avgTime: 'Idle',
+          targetTime: '03:00',
+          isOnline: false,
+          lateCount: 0,
+          stockoutCount: 0,
+        },
+      ];
 
   return (
     <ScrollView
@@ -182,9 +194,8 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({ telemetry 
                 <View>
                   <Text className="text-base text-stone-500">Overdue / Late</Text>
                   <Text
-                    className={`text-2xl font-black ${
-                      st.lateCount > 0 ? 'text-rose-600' : 'text-stone-900'
-                    }`}
+                    className={`text-2xl font-black ${st.lateCount > 0 ? 'text-rose-600' : 'text-stone-900'
+                      }`}
                   >
                     {st.lateCount}
                   </Text>

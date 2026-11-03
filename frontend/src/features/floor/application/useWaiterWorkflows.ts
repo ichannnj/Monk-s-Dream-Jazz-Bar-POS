@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useOrderStore } from '@/features/orders';
 import { useAuthStore } from '@/features/auth';
-import { TableItem, OrderLineItem } from '@/types/floor';
+import { TableItem, OrderLineItem, TakeoutOrder } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
 import {
@@ -25,9 +25,12 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
     transferTableOrTab,
     settleTab,
     settleTableGroup,
+    settleTakeoutOrder,
     createTakeoutOrder,
+    addItemsToTakeoutOrder,
     updateTakeoutStatus,
     createOnlineOrder,
+    addItemsToOnlineOrder,
     updateOnlineStatus,
   } = useOrderStore();
   const { currentUser } = useAuthStore();
@@ -61,11 +64,24 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
     null
   );
 
+  const handleOpenTakeoutCheckout = (order: TakeoutOrder, collectAfterPay = false) => {
+    setCheckoutContext({
+      takeoutOrder: order,
+      takeoutCollectAfterPay: collectAfterPay,
+    });
+    setIsCheckoutOpen(true);
+  };
+
   const handleExecuteFloorAction = () => {
     if (!confirmFloorAction) return;
     try {
       if (confirmFloorAction.type === 'takeout_collected') {
         const o = takeoutOrders.find((x) => x.id === confirmFloorAction.id);
+        if (o && !o.isPrepaid) {
+          setConfirmFloorAction(null);
+          handleOpenTakeoutCheckout(o, true);
+          return;
+        }
         updateTakeoutStatus(confirmFloorAction.id, 'completed');
         toast.info(
           `Takeout #${o?.ticketNumber || ''} handed to ${o?.customerName || 'guest'}. Order completed.`,
@@ -153,7 +169,10 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
     openTableTab,
     addItemsToTab,
     createTakeoutOrder,
+    addItemsToTakeoutOrder,
     createOnlineOrder,
+    addItemsToOnlineOrder,
+    onOpenTakeoutCheckout: handleOpenTakeoutCheckout,
     setSelectedTable,
     setOrderEntryContext,
     setIsOrderEntryOpen,
@@ -201,21 +220,13 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
 
   // Checkout Payment Confirmation
   const handleConfirmPayment = (
-    mode: 'single_tab' | 'entire_table',
+    mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
     method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp'
   ) => {
     if (!checkoutContext) return;
 
     try {
-      const tableCode = checkoutContext.table.code;
-      const tabName = checkoutContext.activeTab?.guestName || `Tab #${tabIndex}`;
-      const rawSubtotal =
-        mode === 'single_tab' && checkoutContext.activeTab
-          ? checkoutContext.activeTab.totalAmount
-          : checkoutContext.table.totalAmount || 0;
-      const totalWithTax = rawSubtotal * 1.1;
-
       const methodLabels: Record<string, string> = {
         cash: 'Cash',
         card: 'Credit / Debit Card',
@@ -224,6 +235,40 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
         comp: 'House Comp (100%)',
       };
       const methodName = methodLabels[method] || method.toUpperCase();
+
+      if (mode === 'takeout' || checkoutContext.takeoutOrder) {
+        const toOrder = checkoutContext.takeoutOrder;
+        if (!toOrder) return;
+        const totalWithTax = (toOrder.total || 0) * 1.1;
+        const completeOrder = Boolean(checkoutContext.takeoutCollectAfterPay);
+
+        settleTakeoutOrder(toOrder.id, method, {
+          completeOrder,
+          cashierName: currentUser?.displayName,
+          staffId: currentUser?.id,
+        });
+
+        toast.success(
+          completeOrder
+            ? `Takeout #${toOrder.ticketNumber} settled via ${methodName} (${formatCurrency(totalWithTax)}) & handed off to ${toOrder.customerName}!`
+            : `Takeout #${toOrder.ticketNumber} (${toOrder.customerName}) paid via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt printed`,
+          {
+            title: completeOrder
+              ? 'Takeout Settled & Collected'
+              : 'Takeout Counter Payment Confirmed',
+          }
+        );
+        return;
+      }
+
+      if (!checkoutContext.table) return;
+      const tableCode = checkoutContext.table.code;
+      const tabName = checkoutContext.activeTab?.guestName || `Tab #${tabIndex}`;
+      const rawSubtotal =
+        mode === 'single_tab' && checkoutContext.activeTab
+          ? checkoutContext.activeTab.totalAmount
+          : checkoutContext.table.totalAmount || 0;
+      const totalWithTax = rawSubtotal * 1.1;
 
       if (mode === 'entire_table') {
         settleTableGroup(
@@ -297,6 +342,7 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
     handleOpenOrderEntryFromModal,
     handleOpenNewSplitTab,
     handleOpenCheckout,
+    handleOpenTakeoutCheckout,
     handleConfirmOpenTab,
     handleProceedTakeout,
     handleProceedOnline,

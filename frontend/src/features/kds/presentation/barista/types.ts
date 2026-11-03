@@ -15,6 +15,7 @@ export interface BarTicket {
   stage: KdsStage;
   elapsedTime: string; // e.g. "00:20" or "06:20"
   minutesElapsed: number;
+  createdAt?: string;
   badges: string[];
   roundNumber?: number;
   multiStationTag?: string; // e.g. "Multi-Station · Cafe · Preparing"
@@ -29,6 +30,7 @@ export interface BarTicket {
   tabIndex?: number;
   takeoutId?: string;
   onlineId?: string;
+  isPrepaid?: boolean;
   transferredFrom?: {
     tableCode: string;
     transferredAt?: string;

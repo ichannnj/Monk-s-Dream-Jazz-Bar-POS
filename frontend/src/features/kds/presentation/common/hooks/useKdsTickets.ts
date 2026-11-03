@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useOrderStore } from '../../../../orders/application/useOrderStore';
 import { toast } from '../../../../shared/toast/useToastStore';
 import { BarTicket, StockInventoryItem } from '../../barista/types';
+import { getElapsedSeconds, formatElapsedTimer } from '@/features/shared/utils/elapsedTime';
 
 interface UseKdsTicketsProps {
   stationTarget: 'bar' | 'kitchen';
@@ -14,6 +15,8 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
     takeoutOrders,
     onlineOrders,
     updateOrderItemStatus,
+    updateTakeoutStatus,
+    updateOnlineStatus,
     markRoundServed,
     markTakeoutServed,
     markOnlineServed,
@@ -78,7 +81,12 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
               ? `Multi-Station · ${otherStationItems.length} ${otherLabel}`
               : undefined;
 
-          const minutes = parseInt(table.elapsedTime || '1', 10) || 1;
+          const roundCreatedAt =
+            activeRoundItems.find((i) => i.createdAt)?.createdAt ||
+            tab.openedAtIso ||
+            table.occupiedSinceIso;
+          const elapsedSecs = getElapsedSeconds(roundCreatedAt, table.elapsedTime);
+          const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
           const cleanCode = table.code
             .replace('Table ', 'T')
             .replace('Cafe ', 'C')
@@ -93,7 +101,8 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
             roundNumber: roundNum,
             tableId: table.id,
             tabIndex: tab.tabIndex,
-            elapsedTime: table.elapsedTime || '1m',
+            createdAt: roundCreatedAt,
+            elapsedTime: formatElapsedTimer(elapsedSecs),
             minutesElapsed: minutes,
             badges,
             multiStationTag,
@@ -126,7 +135,18 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
       if (order.status === 'ready' || allReady) stage = 'ready';
       else if (hasPrep || order.status === 'preparing') stage = 'preparing';
 
-      const minutes = parseInt(order.elapsedTime || '1', 10) || 1;
+      const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
+      const elapsedSecs = getElapsedSeconds(orderCreatedAt, order.elapsedTime);
+      const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
+
+      const otherStationItems = (order.items || []).filter(
+        (i) => i.stationTarget !== stationTarget && i.status !== 'cancelled'
+      );
+      const otherLabel = stationTarget === 'bar' ? 'food item(s) at Kitchen' : 'drink(s) at Bar';
+      const multiStationTag =
+        otherStationItems.length > 0
+          ? `Multi-Station · ${otherStationItems.length} ${otherLabel}`
+          : undefined;
 
       list.push({
         id: `takeout-${order.id}`,
@@ -134,10 +154,14 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
         orderNumber: order.ticketNumber,
         tableOrSource: `Takeout · ${order.customerName}`,
         stage,
-        elapsedTime: order.elapsedTime || '1m',
+        createdAt: orderCreatedAt,
+        isPrepaid: order.isPrepaid,
+        elapsedTime: formatElapsedTimer(elapsedSecs),
         minutesElapsed: minutes,
         badges:
           stage === 'new' ? ['NEW', 'JUST IN'] : stage === 'preparing' ? ['PREPARING'] : ['READY'],
+        multiStationTag,
+        specialNote: order.notes ? `! ${order.notes}` : undefined,
         items: stationItems,
         serverName: order.customerName,
       });
@@ -158,7 +182,18 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
       if (order.status === 'ready' || allReady) stage = 'ready';
       else if (hasPrep || order.status === 'preparing') stage = 'preparing';
 
-      const minutes = parseInt(order.elapsedTime || '1', 10) || 1;
+      const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
+      const elapsedSecs = getElapsedSeconds(orderCreatedAt, order.elapsedTime);
+      const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
+
+      const otherStationItems = (order.items || []).filter(
+        (i) => i.stationTarget !== stationTarget && i.status !== 'cancelled'
+      );
+      const otherLabel = stationTarget === 'bar' ? 'food item(s) at Kitchen' : 'drink(s) at Bar';
+      const multiStationTag =
+        otherStationItems.length > 0
+          ? `Multi-Station · ${otherStationItems.length} ${otherLabel}`
+          : undefined;
 
       list.push({
         id: `online-${order.id}`,
@@ -166,10 +201,13 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
         orderNumber: order.platformOrderRef,
         tableOrSource: `${platformLabel} · ${order.riderName}`,
         stage,
-        elapsedTime: order.elapsedTime || '1m',
+        createdAt: orderCreatedAt,
+        isPrepaid: true,
+        elapsedTime: formatElapsedTimer(elapsedSecs),
         minutesElapsed: minutes,
         badges:
           stage === 'new' ? ['NEW', 'RUSH'] : stage === 'preparing' ? ['PREPARING'] : ['READY'],
+        multiStationTag,
         items: stationItems,
         serverName: order.customerName,
       });
@@ -208,6 +246,33 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
       ticket.items
         .filter((i) => i.status === 'preparing' || i.status === 'pending')
         .forEach((item) => updateOrderItemStatus(item.id, 'ready'));
+
+      if (ticket.takeoutId) {
+        const order = takeoutOrders.find((o) => o.id === ticket.takeoutId);
+        const otherIncomplete = (order?.items || []).some(
+          (i) =>
+            i.stationTarget !== stationTarget &&
+            i.status !== 'ready' &&
+            i.status !== 'served' &&
+            i.status !== 'cancelled'
+        );
+        if (!otherIncomplete) {
+          updateTakeoutStatus(ticket.takeoutId, 'ready');
+        }
+      } else if (ticket.onlineId) {
+        const order = onlineOrders.find((o) => o.id === ticket.onlineId);
+        const otherIncomplete = (order?.items || []).some(
+          (i) =>
+            i.stationTarget !== stationTarget &&
+            i.status !== 'ready' &&
+            i.status !== 'served' &&
+            i.status !== 'cancelled'
+        );
+        if (!otherIncomplete) {
+          updateOnlineStatus(ticket.onlineId, 'ready');
+        }
+      }
+
       toast.success(`Order Ready: ${ticket.orderNumber} for pickup`);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to mark ticket ready.', {
@@ -220,16 +285,30 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
     try {
       if (ticket.tableId && ticket.tabIndex !== undefined) {
         markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber || 1, stationTarget);
-      } else if (ticket.takeoutId) {
-        markTakeoutServed(ticket.takeoutId);
-      } else if (ticket.onlineId) {
-        markOnlineServed(ticket.onlineId);
-      } else if (ticket.id.startsWith('takeout-')) {
-        const orderId = ticket.id.replace('takeout-', '');
-        markTakeoutServed(orderId);
-      } else if (ticket.id.startsWith('online-')) {
-        const orderId = ticket.id.replace('online-', '');
-        markOnlineServed(orderId);
+      } else if (ticket.takeoutId || ticket.id.startsWith('takeout-')) {
+        const orderId = ticket.takeoutId || ticket.id.replace('takeout-', '');
+        const order = takeoutOrders.find((o) => o.id === orderId);
+        const otherUnserved = (order?.items || []).some(
+          (i) =>
+            i.stationTarget !== stationTarget && i.status !== 'served' && i.status !== 'cancelled'
+        );
+        if (otherUnserved) {
+          ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'served'));
+        } else {
+          markTakeoutServed(orderId);
+        }
+      } else if (ticket.onlineId || ticket.id.startsWith('online-')) {
+        const orderId = ticket.onlineId || ticket.id.replace('online-', '');
+        const order = onlineOrders.find((o) => o.id === orderId);
+        const otherUnserved = (order?.items || []).some(
+          (i) =>
+            i.stationTarget !== stationTarget && i.status !== 'served' && i.status !== 'cancelled'
+        );
+        if (otherUnserved) {
+          ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'served'));
+        } else {
+          markOnlineServed(orderId);
+        }
       } else {
         ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'served'));
       }

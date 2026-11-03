@@ -10,9 +10,11 @@ import {
   CheckCircle2,
   Receipt,
   Sparkles,
+  ShoppingBag,
 } from 'lucide-react-native';
-import { TableItem, CustomerTab } from '@/types/floor';
+import { TableItem, CustomerTab, TakeoutOrder } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
+import { useAuthStore } from '@/features/auth';
 import { toast } from '@/features/shared/toast/useToastStore';
 import {
   ConfirmationModal,
@@ -24,11 +26,14 @@ import { styles } from './BillSettlementModal.styles';
 
 interface BillSettlementModalProps {
   visible: boolean;
-  table: TableItem | null;
+  table?: TableItem | null;
   activeTab?: CustomerTab | null;
+  takeoutOrder?: TakeoutOrder | null;
+  takeoutCollectAfterPay?: boolean;
   onClose: () => void;
+  onDeferTakeoutPayment?: () => void;
   onConfirmPayment: (
-    mode: 'single_tab' | 'entire_table',
+    mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
     method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     tenderedAmount?: number
@@ -39,10 +44,14 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   visible,
   table,
   activeTab,
+  takeoutOrder,
+  takeoutCollectAfterPay = false,
   onClose,
+  onDeferTakeoutPayment,
   onConfirmPayment,
 }) => {
   const { isMobile } = useResponsive();
+  const { currentUser } = useAuthStore();
   const [settlementMode, setSettlementMode] = useState<'single_tab' | 'entire_table'>('single_tab');
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'digital_wallet' | 'comp'>(
     'cash'
@@ -51,11 +60,15 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const [shouldPrintReceipt, setShouldPrintReceipt] = useState(true);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
-  if (!table) return null;
+  const isTakeout = Boolean(takeoutOrder);
+  if (!table && !takeoutOrder) return null;
 
   // Determine amount
-  const subtotal =
-    settlementMode === 'single_tab' && activeTab ? activeTab.totalAmount : table.totalAmount || 0;
+  const subtotal = isTakeout
+    ? takeoutOrder?.total || 0
+    : settlementMode === 'single_tab' && activeTab
+      ? activeTab.totalAmount
+      : table?.totalAmount || 0;
 
   const tax = subtotal * 0.1;
   const grandTotal = subtotal + tax;
@@ -86,11 +99,12 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const handleFinalizePayment = () => {
     try {
       onConfirmPayment(
-        settlementMode,
+        isTakeout ? 'takeout' : settlementMode,
         activeTab?.tabIndex || 1,
         selectedMethod,
         selectedMethod === 'cash' ? numericTendered : undefined
       );
+      setTenderedCash('');
       setIsConfirmModalOpen(false);
       onClose();
     } catch (err: any) {
@@ -110,10 +124,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
     Math.ceil(grandTotal / 1000) * 1000,
   ].filter((v, i, a) => a.indexOf(v) === i && v >= grandTotal);
 
-  const activeTabsCount =
-    table.tabs && table.tabs.length > 0
+  const activeTabsCount = isTakeout
+    ? 1
+    : table?.tabs && table.tabs.length > 0
       ? table.tabs.filter((t) => t.status !== 'closed').length
-      : table.activeTabs.length;
+      : table?.activeTabs.length || 1;
 
   const scopeOptions: PosDropdownOption<'single_tab' | 'entire_table'>[] = [
     {
@@ -167,17 +182,32 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <View style={styles.badge}>
-                <Receipt size={18} color="#ffffff" strokeWidth={2.4} />
+              <View style={[styles.badge, isTakeout && { backgroundColor: '#15803d' }]}>
+                {isTakeout ? (
+                  <ShoppingBag size={18} color="#ffffff" strokeWidth={2.4} />
+                ) : (
+                  <Receipt size={18} color="#ffffff" strokeWidth={2.4} />
+                )}
               </View>
               <View>
-                <Text style={styles.title}>Checkout & Bill Settlement</Text>
+                <Text style={styles.title}>
+                  {isTakeout
+                    ? takeoutCollectAfterPay
+                      ? 'Takeout Settlement & Hand-off'
+                      : 'Takeout Counter Settlement'
+                    : 'Checkout & Bill Settlement'}
+                </Text>
                 <Text style={styles.subtitle}>
-                  {table.code.toLowerCase().startsWith('cafe') ||
-                  table.code.toLowerCase().startsWith('bar')
-                    ? table.code
-                    : `${table.area === 'bar' ? 'Bar' : 'Cafe'} ${table.code}`}{' '}
-                  • {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
+                  {isTakeout
+                    ? `Takeout #${takeoutOrder?.ticketNumber} • ${takeoutOrder?.customerName} (${takeoutOrder?.items.length || 0} items)`
+                    : table
+                      ? `${
+                          table.code.toLowerCase().startsWith('cafe') ||
+                          table.code.toLowerCase().startsWith('bar')
+                            ? table.code
+                            : `${table.area === 'bar' ? 'Bar' : 'Cafe'} ${table.code}`
+                        } • ${table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}`
+                      : ''}
                 </Text>
               </View>
             </View>
@@ -193,8 +223,8 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
-            {/* Settlement Scope Dropdown if multiple tabs */}
-            {activeTabsCount > 1 ? (
+            {/* Settlement Scope Dropdown if multiple tabs on Dine-In */}
+            {!isTakeout && activeTabsCount > 1 ? (
               <View className="mb-4">
                 <PosDropdown
                   options={scopeOptions}
@@ -326,29 +356,46 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 
                   {/* Meta */}
                   <View style={styles.receiptRow}>
-                    <Text style={styles.receiptMeta}>TABLE: Table {table.code}</Text>
                     <Text style={styles.receiptMeta}>
-                      GUEST: {activeTab?.guestName || 'Table Guest'}
+                      {isTakeout
+                        ? `TAKEOUT: #${takeoutOrder?.ticketNumber}`
+                        : `TABLE: Table ${table?.code || ''}`}
+                    </Text>
+                    <Text style={styles.receiptMeta}>
+                      GUEST:{' '}
+                      {isTakeout
+                        ? takeoutOrder?.customerName || 'Walk-in'
+                        : activeTab?.guestName || 'Table Guest'}
                     </Text>
                   </View>
                   <View style={styles.receiptRow}>
-                    <Text style={styles.receiptMeta}>DATE: 2026-10-17</Text>
-                    <Text style={styles.receiptMeta}>TIME: 21:15</Text>
+                    <Text style={styles.receiptMeta}>
+                      DATE: {new Date().toISOString().slice(0, 10)}
+                    </Text>
+                    <Text style={styles.receiptMeta}>
+                      TIME:{' '}
+                      {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
                   </View>
-                  <Text style={styles.receiptMeta}>CASHIER: Coltrane</Text>
+                  <Text style={styles.receiptMeta}>
+                    CASHIER: {currentUser?.displayName || 'Coltrane'}
+                  </Text>
                   <Text style={styles.receiptDivider}>--------------------------------</Text>
 
                   {/* Items */}
-                  {(activeTab?.items || []).slice(0, 4).map((item, idx) => (
-                    <View key={idx} style={styles.receiptRow}>
-                      <Text style={styles.receiptItemName}>
-                        {item.quantity}x {item.productName.slice(0, 18)}
-                      </Text>
-                      <Text style={styles.receiptItemPrice}>
-                        {formatCurrency(item.unitPrice * item.quantity)}
-                      </Text>
-                    </View>
-                  ))}
+                  {(isTakeout ? takeoutOrder?.items || [] : activeTab?.items || [])
+                    .filter((item) => item.status !== 'cancelled')
+                    .slice(0, 6)
+                    .map((item, idx) => (
+                      <View key={idx} style={styles.receiptRow}>
+                        <Text style={styles.receiptItemName}>
+                          {item.quantity}x {item.productName.slice(0, 18)}
+                        </Text>
+                        <Text style={styles.receiptItemPrice}>
+                          {formatCurrency(item.unitPrice * item.quantity)}
+                        </Text>
+                      </View>
+                    ))}
                   <Text style={styles.receiptDivider}>--------------------------------</Text>
 
                   {/* Totals */}
@@ -373,15 +420,30 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 
           {/* Actions */}
           <View style={styles.footerRow}>
-            <Pressable onPress={onClose} style={styles.cancelBtn}>
-              <Text style={styles.cancelBtnText}>Back</Text>
-            </Pressable>
+            {isTakeout && onDeferTakeoutPayment && !takeoutCollectAfterPay ? (
+              <Pressable
+                onPress={() => {
+                  onDeferTakeoutPayment();
+                  onClose();
+                }}
+                style={styles.cancelBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Defer takeout payment to pickup"
+              >
+                <Text style={styles.cancelBtnText}>Pay on Pickup (DUE)</Text>
+              </Pressable>
+            ) : (
+              <Pressable onPress={onClose} style={styles.cancelBtn}>
+                <Text style={styles.cancelBtnText}>Back</Text>
+              </Pressable>
+            )}
 
             <Pressable
               onPress={handleOpenConfirm}
               disabled={!isPaymentValid}
               style={[
                 styles.confirmPayBtn,
+                isTakeout && { backgroundColor: '#15803d' },
                 !isPaymentValid && { opacity: 0.5, backgroundColor: '#9ca3af' },
               ]}
               accessibilityRole="button"
@@ -389,7 +451,9 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             >
               <CheckCircle2 size={18} color="#ffffff" strokeWidth={2.4} />
               <Text style={styles.confirmPayBtnText}>
-                Confirm Payment & Print Receipt ({formatCurrency(grandTotal)})
+                {isTakeout && takeoutCollectAfterPay
+                  ? `Confirm Payment & Hand Off (${formatCurrency(grandTotal)})`
+                  : `Confirm Payment & Print Receipt (${formatCurrency(grandTotal)})`}
               </Text>
             </Pressable>
           </View>
@@ -399,12 +463,24 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
       <ConfirmationModal
         visible={isConfirmModalOpen}
         title={`Confirm Payment of ${formatCurrency(grandTotal)}?`}
-        message={`Table ${table.code} • ${
-          settlementMode === 'single_tab'
-            ? activeTab?.guestName || `Tab #${activeTab?.tabIndex || 1}`
-            : 'Entire Table'
-        } via ${selectedMethod.toUpperCase().replace('_', ' ')}. This will finalize the tab and send the receipt to the printer.`}
-        confirmText="Complete Settlement"
+        message={
+          isTakeout
+            ? `Takeout #${takeoutOrder?.ticketNumber} (${takeoutOrder?.customerName}) via ${selectedMethod
+                .toUpperCase()
+                .replace('_', ' ')}. ${
+                takeoutCollectAfterPay
+                  ? 'This will record payment, print the receipt, and mark the order as collected.'
+                  : 'This will record payment, print the receipt, and keep the ticket active on KDS until collected.'
+              }`
+            : `Table ${table?.code || ''} • ${
+                settlementMode === 'single_tab'
+                  ? activeTab?.guestName || `Tab #${activeTab?.tabIndex || 1}`
+                  : 'Entire Table'
+              } via ${selectedMethod.toUpperCase().replace('_', ' ')}. This will finalize the tab and send the receipt to the printer.`
+        }
+        confirmText={
+          isTakeout && takeoutCollectAfterPay ? 'Pay & Complete Hand-off' : 'Complete Settlement'
+        }
         cancelText="Back"
         variant="success"
         onConfirm={handleFinalizePayment}

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useOrderStore } from '../../../../orders/application/useOrderStore';
 import { toast } from '../../../../shared/toast/useToastStore';
 import { RunnerTicket, ConfirmHandoffState } from '../types';
+import { getElapsedSeconds, formatElapsedTimer } from '@/features/shared/utils/elapsedTime';
 
 export function useRunnerTickets() {
   const {
@@ -41,7 +42,12 @@ export function useRunnerTickets() {
           const readyCount = roundItems.filter((i) => i.status === 'ready').length;
           const totalCount = roundItems.length;
           const allDone = readyCount === totalCount && totalCount > 0;
-          const minutes = parseInt(table.elapsedTime || '1', 10) || 1;
+          const roundCreatedAt =
+            roundItems.find((i) => i.createdAt)?.createdAt ||
+            tab.openedAtIso ||
+            table.occupiedSinceIso;
+          const elapsedSecs = getElapsedSeconds(roundCreatedAt, table.elapsedTime);
+          const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
 
           list.push({
             id: `tbl-${table.id}-${tab.id || tab.tabIndex}-r${roundNum}`,
@@ -52,7 +58,8 @@ export function useRunnerTickets() {
             roundNumber: roundNum,
             tableId: table.id,
             tabIndex: tab.tabIndex,
-            elapsedTime: table.elapsedTime || '1m',
+            createdAt: roundCreatedAt,
+            elapsedTime: formatElapsedTimer(elapsedSecs),
             minutesElapsed: minutes,
             items: roundItems,
             allDone,
@@ -74,15 +81,20 @@ export function useRunnerTickets() {
         const readyCount = activeItems.filter((i) => i.status === 'ready').length;
         const totalCount = activeItems.length;
         const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
-        const minutes = parseInt(order.elapsedTime || '1', 10) || 1;
+        const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
+        const elapsedSecs = getElapsedSeconds(orderCreatedAt, order.elapsedTime);
+        const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
 
         list.push({
           id: `takeout-${order.id}`,
+          takeoutId: order.id,
           orderNumber: order.ticketNumber,
           sourceTitle: `Takeout ${order.ticketNumber}`,
           guestName: order.customerName,
           orderType: 'takeout',
-          elapsedTime: order.elapsedTime || '1m',
+          createdAt: orderCreatedAt,
+          isPrepaid: order.isPrepaid,
+          elapsedTime: formatElapsedTimer(elapsedSecs),
           minutesElapsed: minutes,
           items: order.items,
           allDone,
@@ -103,15 +115,20 @@ export function useRunnerTickets() {
         const totalCount = activeItems.length;
         const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
         const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
-        const minutes = parseInt(order.elapsedTime || '1', 10) || 1;
+        const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
+        const elapsedSecs = getElapsedSeconds(orderCreatedAt, order.elapsedTime);
+        const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
 
         list.push({
           id: `online-${order.id}`,
+          onlineId: order.id,
           orderNumber: order.platformOrderRef,
           sourceTitle: `${platformLabel} ${order.platformOrderRef}`,
           guestName: `${order.customerName} · Rider: ${order.riderName}`,
           orderType: 'online_delivery',
-          elapsedTime: order.elapsedTime || '1m',
+          createdAt: orderCreatedAt,
+          isPrepaid: true,
+          elapsedTime: formatElapsedTimer(elapsedSecs),
           minutesElapsed: minutes,
           items: order.items,
           allDone,
@@ -168,10 +185,18 @@ export function useRunnerTickets() {
             }
           });
           if (ticket.orderType === 'takeout') {
-            const orderId = ticket.id.replace('takeout-', '');
+            const orderId = ticket.takeoutId || ticket.id.replace('takeout-', '');
+            const toOrder = takeoutOrders.find((o) => o.id === orderId);
             markTakeoutServed(orderId);
+            if (toOrder && !toOrder.isPrepaid) {
+              toast.info(
+                `Bagged ${ticket.sourceTitle}. Payment is DUE AT COUNTER — settle at Floor POS before handoff!`,
+                { title: 'Payment Required at Counter' }
+              );
+              return;
+            }
           } else if (ticket.orderType === 'online_delivery') {
-            const orderId = ticket.id.replace('online-', '');
+            const orderId = ticket.onlineId || ticket.id.replace('online-', '');
             markOnlineServed(orderId);
           }
         }

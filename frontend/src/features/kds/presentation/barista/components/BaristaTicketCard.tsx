@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { BarTicket } from '../types';
+import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
 
 interface BaristaTicketCardProps {
   ticket: BarTicket;
@@ -38,25 +39,32 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
     hasFohStatusAlert,
   } = ticket;
 
+  const stationCategory = ticket.items[0]?.stationTarget === 'kitchen' ? 'kitchen' : 'bar';
+  const liveTimer = useLiveElapsedTimer(ticket.createdAt, elapsedTime, stationCategory);
+
   const getTimePillStyle = () => {
-    switch (stage) {
-      case 'ready':
-        return {
-          bg: '#dcfce7',
-          text: '#15803d',
-        };
-      case 'preparing':
-        return {
-          bg: '#fef3c7',
-          text: '#b45309',
-        };
-      case 'new':
-      default:
-        return {
-          bg: '#f3f4f6',
-          text: '#374151',
-        };
+    if (stage === 'ready') {
+      return {
+        bg: '#dcfce7',
+        text: '#15803d',
+      };
     }
+    if (liveTimer.urgency === 'late') {
+      return {
+        bg: '#fee2e2',
+        text: '#b91c1c',
+      };
+    }
+    if (liveTimer.urgency === 'warning' || stage === 'preparing') {
+      return {
+        bg: '#fef3c7',
+        text: '#b45309',
+      };
+    }
+    return {
+      bg: '#f3f4f6',
+      text: '#374151',
+    };
   };
 
   const timePill = getTimePillStyle();
@@ -98,12 +106,30 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
           <Text style={styles.tableText}>{tableOrSource}</Text>
         </View>
         <View style={[styles.timePill, { backgroundColor: timePill.bg }]}>
-          <Text style={[styles.timePillText, { color: timePill.text }]}>{elapsedTime}</Text>
+          <Text style={[styles.timePillText, { color: timePill.text }]}>
+            {liveTimer.formattedTimer}
+          </Text>
         </View>
       </View>
 
       {/* Badges Row - Clean and Non-redundant */}
       <View style={styles.badgeRow}>
+        {ticket.takeoutId && ticket.isPrepaid !== undefined ? (
+          <View
+            style={[
+              styles.badgeReady,
+              {
+                backgroundColor: ticket.isPrepaid ? '#dcfce7' : '#fef3c7',
+              },
+            ]}
+          >
+            <Text
+              style={[styles.badgeReadyText, { color: ticket.isPrepaid ? '#15803d' : '#b45309' }]}
+            >
+              {ticket.isPrepaid ? 'PAID' : 'DUE AT PICKUP'}
+            </Text>
+          </View>
+        ) : null}
         {badges
           .filter((badge) => !badge.startsWith('ROUND') && badge !== 'JUST IN')
           .map((badge, idx) => {

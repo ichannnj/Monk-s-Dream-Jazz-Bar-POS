@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Plus, Utensils, Receipt } from 'lucide-react-native';
 import { TableItem } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
+import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
 
 interface TableCardProps {
   table: TableItem;
@@ -16,6 +17,16 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
   const isReady = status === 'ready';
   const isPrep = status === 'preparing';
   const isServed = status === 'served';
+
+  const earliestTabIso = useMemo(() => {
+    if (table.occupiedSinceIso) return table.occupiedSinceIso;
+    const isos = (table.tabs || [])
+      .filter((t) => t.status !== 'closed' && t.openedAtIso)
+      .map((t) => t.openedAtIso as string);
+    return isos[0];
+  }, [table.occupiedSinceIso, table.tabs]);
+
+  const liveTimer = useLiveElapsedTimer(earliestTabIso, elapsedTime, 'floor', !isEmpty);
 
   // Derive accurate active tabs count
   const activeTabCount = useMemo(() => {
@@ -132,8 +143,10 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {statusConfig.label}
             </Text>
-            {!isEmpty && elapsedTime ? (
-              <Text style={[styles.timeText, { color: statusConfig.color }]}>· {elapsedTime}</Text>
+            {!isEmpty && (earliestTabIso || elapsedTime) ? (
+              <Text style={[styles.timeText, { color: statusConfig.color }]}>
+                · {liveTimer.formattedTimer}
+              </Text>
             ) : null}
           </View>
         </View>

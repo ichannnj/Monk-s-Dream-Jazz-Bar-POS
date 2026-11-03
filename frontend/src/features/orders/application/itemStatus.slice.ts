@@ -1,9 +1,12 @@
 import { CustomerTab, FloorAlert } from '../../../types/floor';
 import { ordersApi } from '../data/orders.api';
+import { tablesApi } from '../../table-service/data/tables.api';
+import { useAuthStore } from '../../auth/application/useAuthStore';
+import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { deriveTabTotal, deriveTableStatus } from './order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
 
-export const createItemStatusSlice = (set: OrderStoreSet, _get: OrderStoreGet) => ({
+export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   updateOrderItemStatus: (
     itemId: string,
     newStatus: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled'
@@ -38,7 +41,9 @@ export const createItemStatusSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
           item.id === itemId ? { ...item, status: newStatus } : item
         );
         const activeItems = updatedItems.filter((i) => i.status !== 'cancelled');
-        const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
+        const allReady =
+          activeItems.length > 0 &&
+          activeItems.every((i) => i.status === 'ready' || i.status === 'served');
         return {
           ...order,
           items: updatedItems,
@@ -52,7 +57,9 @@ export const createItemStatusSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
           item.id === itemId ? { ...item, status: newStatus } : item
         );
         const activeItems = updatedItems.filter((i) => i.status !== 'cancelled');
-        const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
+        const allReady =
+          activeItems.length > 0 &&
+          activeItems.every((i) => i.status === 'ready' || i.status === 'served');
         return {
           ...order,
           items: updatedItems,
@@ -68,7 +75,9 @@ export const createItemStatusSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
     });
 
     // Background update to Supabase
-    ordersApi.updateOrderItemStatus(itemId, newStatus);
+    ordersApi.updateOrderItemStatus(itemId, newStatus).then(() => {
+      realtimeGateway.broadcastPosSync('item_status_updated');
+    });
   },
 
   markRoundServed: (
@@ -114,17 +123,20 @@ export const createItemStatusSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
       return { tables: updatedTables };
     });
 
-    itemIdsToUpdate.forEach((id) => {
-      ordersApi.updateOrderItemStatus(id, 'served');
-    });
+    Promise.all(itemIdsToUpdate.map((id) => ordersApi.updateOrderItemStatus(id, 'served'))).then(
+      () => {
+        realtimeGateway.broadcastPosSync('round_served');
+      }
+    );
   },
 
   markTakeoutServed: (orderId: string) => {
+    const targetOrder = get().takeoutOrders.find((o) => o.id === orderId || o.tabId === orderId);
     const itemIdsToUpdate: string[] = [];
 
     set((state) => {
       const updatedTakeout = state.takeoutOrders.map((order) => {
-        if (order.id !== orderId) return order;
+        if (order.id !== orderId && order.tabId !== orderId) return order;
         const updatedItems = order.items.map((i) => {
           if (i.status !== 'cancelled') {
             itemIdsToUpdate.push(i.id);
@@ -135,23 +147,35 @@ export const createItemStatusSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
         return {
           ...order,
           items: updatedItems,
-          status: 'completed' as const,
+          // Keep unpaid (DUE) takeout orders in 'ready' on the Floor Grid until settled
+          status: order.isPrepaid ? ('completed' as const) : ('ready' as const),
         };
       });
       return { takeoutOrders: updatedTakeout };
     });
 
-    itemIdsToUpdate.forEach((id) => {
-      ordersApi.updateOrderItemStatus(id, 'served');
-    });
+    Promise.all(itemIdsToUpdate.map((id) => ordersApi.updateOrderItemStatus(id, 'served'))).then(
+      () => {
+        if (targetOrder?.isPrepaid) {
+          const dbTabId = targetOrder.tabId || targetOrder.id;
+          const staffId = useAuthStore.getState().currentUser?.id;
+          tablesApi.completeOffPremiseTab({ tabId: dbTabId, staffId }).then(() => {
+            realtimeGateway.broadcastPosSync('takeout_served');
+          });
+        } else {
+          realtimeGateway.broadcastPosSync('takeout_ready_awaiting_payment');
+        }
+      }
+    );
   },
 
   markOnlineServed: (orderId: string) => {
+    const targetOrder = get().onlineOrders.find((o) => o.id === orderId || o.tabId === orderId);
     const itemIdsToUpdate: string[] = [];
 
     set((state) => {
       const updatedOnline = state.onlineOrders.map((order) => {
-        if (order.id !== orderId) return order;
+        if (order.id !== orderId && order.tabId !== orderId) return order;
         const updatedItems = order.items.map((i) => {
           if (i.status !== 'cancelled') {
             itemIdsToUpdate.push(i.id);
@@ -168,9 +192,17 @@ export const createItemStatusSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
       return { onlineOrders: updatedOnline };
     });
 
-    itemIdsToUpdate.forEach((id) => {
-      ordersApi.updateOrderItemStatus(id, 'served');
-    });
+    Promise.all(itemIdsToUpdate.map((id) => ordersApi.updateOrderItemStatus(id, 'served'))).then(
+      () => {
+        if (targetOrder) {
+          const dbTabId = targetOrder.tabId || targetOrder.id;
+          const staffId = useAuthStore.getState().currentUser?.id;
+          tablesApi.completeOffPremiseTab({ tabId: dbTabId, staffId }).then(() => {
+            realtimeGateway.broadcastPosSync('online_served');
+          });
+        }
+      }
+    );
   },
 
   voidOrderItem: async (

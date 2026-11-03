@@ -63,12 +63,23 @@ export interface OrderState {
     cashierName?: string,
     staffId?: string
   ) => void;
+  settleTakeoutOrder: (
+    takeoutId: string,
+    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    options?: {
+      completeOrder?: boolean;
+      cashierName?: string;
+      discountAmount?: number;
+      staffId?: string;
+    }
+  ) => void;
   createTakeoutOrder: (
     customerName: string,
     items: OrderLineItem[],
     isPrepaid?: boolean,
     notes?: string
   ) => TakeoutOrder;
+  addItemsToTakeoutOrder: (takeoutId: string, items: OrderLineItem[]) => void;
   updateTakeoutStatus: (id: string, status: 'preparing' | 'ready' | 'completed') => void;
   createOnlineOrder: (
     platform: 'grabfood' | 'foodpanda',
@@ -77,6 +88,7 @@ export interface OrderState {
     customerName: string,
     items: OrderLineItem[]
   ) => OnlineDeliveryOrder;
+  addItemsToOnlineOrder: (onlineId: string, items: OrderLineItem[]) => void;
   updateOnlineStatus: (id: string, status: 'preparing' | 'ready' | 'completed') => void;
   addDrawerEntry: (
     type: 'float' | 'cash_in' | 'cash_out' | 'drop' | 'sale',

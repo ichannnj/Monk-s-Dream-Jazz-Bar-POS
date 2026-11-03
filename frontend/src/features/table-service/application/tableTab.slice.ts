@@ -6,6 +6,7 @@ import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
 import { supabase } from '../../shared/infrastructure/supabase';
+import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { resolveTableUuid } from '../../floor/data/resolver';
 
 export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
@@ -20,6 +21,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     const finalGuestName = guestName.trim() || `Guest ${nextTabIndex}`;
     const localTabId = `tab-${tableId}-${nextTabIndex}`;
     const currentOperatingMode = useVenueStore.getState().operatingMode;
+    const nowIso = new Date().toISOString();
 
     const newTab: CustomerTab = {
       id: localTabId,
@@ -28,7 +30,8 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       status: 'open',
       totalAmount: 0,
       items: [],
-      openedAt: 'Just now',
+      openedAt: new Date(nowIso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      openedAtIso: nowIso,
       operatingMode: currentOperatingMode,
     };
 
@@ -51,7 +54,8 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
           activeTabs: nextActiveTabs,
           maxTabs: Math.max(t.maxTabs || 1, nextTabIndex, nextActiveTabs.length, 99),
           tabs: nextTabs,
-          elapsedTime: tableWasEmpty ? '1m' : t.elapsedTime,
+          elapsedTime: tableWasEmpty ? '00:01' : t.elapsedTime,
+          occupiedSinceIso: tableWasEmpty ? nowIso : t.occupiedSinceIso || nowIso,
         };
       });
 
@@ -82,6 +86,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
               };
             }),
           }));
+          realtimeGateway.broadcastPosSync('tab_opened');
         }
       })
       .catch((err) => {
@@ -105,12 +110,14 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     const maxExistingRound =
       existingItems.length > 0 ? Math.max(0, ...existingItems.map((i) => i.roundNumber || 1)) : 0;
     const targetRound = maxExistingRound + 1;
+    const nowIso = new Date().toISOString();
 
     const roundTaggedItems = items.map((i, idx) => ({
       ...i,
       id: i.id || `item-${tableId}-tab${tabIndex}-r${targetRound}-${Date.now()}-${idx}`,
       roundNumber: targetRound,
       status: i.status || ('pending' as const),
+      createdAt: i.createdAt || nowIso,
     }));
 
     set((state) => {
@@ -188,6 +195,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
           quantity: i.quantity,
           unitPrice: i.unitPrice,
           stationTarget: i.stationTarget,
+          status: i.status,
           modifiers: i.modifiers,
           notes: i.notes,
         })),
@@ -195,11 +203,15 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       .then((res) => {
         if (res.items && res.items.length > 0) {
           // Map returned database item UUIDs cleanly onto newly added items
-          const newlyAddedMap = new Map<string, string>();
+          const newlyAddedMap = new Map<string, { id: string; createdAt?: string }>();
+          const dbOrderCreatedAt = (res.order as any)?.created_at;
           res.items.forEach((dbIt: any, idx: number) => {
             const localItem = roundTaggedItems[idx];
             if (localItem && dbIt.id) {
-              newlyAddedMap.set(localItem.id, dbIt.id);
+              newlyAddedMap.set(localItem.id, {
+                id: dbIt.id,
+                createdAt: dbIt.created_at || dbOrderCreatedAt || localItem.createdAt,
+              });
             }
           });
 
@@ -211,8 +223,9 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
                 tabs: (t.tabs || []).map((tb) => {
                   if (tb.tabIndex !== tabIndex) return tb;
                   const updatedItems = tb.items.map((it) => {
-                    if (newlyAddedMap.has(it.id)) {
-                      return { ...it, id: newlyAddedMap.get(it.id)! };
+                    const mapped = newlyAddedMap.get(it.id);
+                    if (mapped) {
+                      return { ...it, id: mapped.id, createdAt: mapped.createdAt || it.createdAt };
                     }
                     return it;
                   });
@@ -225,6 +238,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
               };
             }),
           }));
+          realtimeGateway.broadcastPosSync('dine_in_order_dispatched');
         }
       })
       .catch((err) => {

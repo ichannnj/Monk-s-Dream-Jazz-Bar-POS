@@ -14,6 +14,7 @@ export interface FloorGridViewProps {
   filteredOnlineOrders: OnlineDeliveryOrder[];
   onTablePress: (table: TableItem) => void;
   onTakeoutPress: (order: TakeoutOrder) => void;
+  onTakeoutPay?: (order: TakeoutOrder, collectAfterPay?: boolean) => void;
   onTakeoutReady: (id: string) => void;
   onTakeoutCollected: (id: string) => void;
   onOnlinePress: (order: OnlineDeliveryOrder) => void;
@@ -30,6 +31,7 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
   filteredOnlineOrders,
   onTablePress,
   onTakeoutPress,
+  onTakeoutPay,
   onTakeoutReady,
   onTakeoutCollected,
   onOnlinePress,
@@ -89,6 +91,7 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
           <TakeoutQueueCard
             order={toOrder}
             onPress={onTakeoutPress}
+            onPayTakeout={onTakeoutPay}
             onMarkReady={onTakeoutReady}
             onMarkCollected={onTakeoutCollected}
           />

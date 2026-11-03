@@ -1,5 +1,5 @@
 import React from 'react';
-import { TableItem, OrderLineItem, CustomerTab } from '@/types/floor';
+import { TableItem, OrderLineItem, CustomerTab, TakeoutOrder } from '@/types/floor';
 import {
   TableActionModal,
   TableTransferModal,
@@ -76,12 +76,15 @@ export interface WaiterModalsClusterProps {
   // Checkout Modal
   isCheckoutOpen: boolean;
   checkoutContext: {
-    table: TableItem;
+    table?: TableItem | null;
     activeTab?: CustomerTab | null;
+    takeoutOrder?: TakeoutOrder | null;
+    takeoutCollectAfterPay?: boolean;
   } | null;
   onCloseCheckout: () => void;
+  onDeferTakeoutPayment?: () => void;
   onConfirmPayment: (
-    mode: 'single_tab' | 'entire_table',
+    mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
     method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     tenderedAmount?: number
@@ -106,7 +109,7 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
   onCloseOpenTabModal,
   onConfirmOpenTab,
   isOpenDirectModalOpen = false,
-  onCloseOpenDirectModal = () => {},
+  onCloseOpenDirectModal = () => { },
   isSplitTabDirect = false,
   isTakeoutModalOpen,
   onCloseTakeoutModal,
@@ -121,6 +124,7 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
   isCheckoutOpen,
   checkoutContext,
   onCloseCheckout,
+  onDeferTakeoutPayment,
   onConfirmPayment,
 }) => {
   return (
@@ -195,12 +199,15 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
       />
 
       {/* MODAL 7: Bill Settlement & Checkout Modal */}
-      {checkoutContext?.table && (
+      {Boolean(checkoutContext?.table || checkoutContext?.takeoutOrder) && (
         <BillSettlementModal
           visible={isCheckoutOpen}
-          table={checkoutContext.table}
+          table={checkoutContext?.table || undefined}
           activeTab={checkoutContext?.activeTab}
+          takeoutOrder={checkoutContext?.takeoutOrder}
+          takeoutCollectAfterPay={checkoutContext?.takeoutCollectAfterPay}
           onClose={onCloseCheckout}
+          onDeferTakeoutPayment={onDeferTakeoutPayment}
           onConfirmPayment={onConfirmPayment}
         />
       )}

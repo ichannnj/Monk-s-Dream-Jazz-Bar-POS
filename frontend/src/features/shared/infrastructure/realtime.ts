@@ -70,6 +70,7 @@ export interface GlobalRealtimeCallbacks {
   onPaymentChange?: (payload: any) => void;
   onInventoryChange?: (payload: any) => void;
   onWasteLogChange?: (payload: any) => void;
+  onPosSyncNeeded?: (payload: { reason: string; timestamp: string }) => void;
 }
 
 export interface ChatRealtimeCallbacks {
@@ -84,6 +85,7 @@ export interface ChatRealtimeCallbacks {
 
 export class RealtimeGateway {
   private channels: Map<string, RealtimeChannel> = new Map();
+  private globalPosListeners: Set<GlobalRealtimeCallbacks> = new Set();
 
   /**
    * Subscribe to station-specific order items (KDS screens).
@@ -242,67 +244,88 @@ export class RealtimeGateway {
 
   /**
    * Subscribe to all Floor POS and station events across all tablets simultaneously.
-   * Single websocket connection multiplexed for optimal performance.
+   * Single websocket connection multiplexed across multiple subscribers for optimal performance.
    */
   subscribeGlobalPOSRealtime(callbacks: GlobalRealtimeCallbacks): () => void {
     const channelName = 'pos_global_sync';
-    if (this.channels.has(channelName)) {
-      this.channels.get(channelName)?.unsubscribe();
+    this.globalPosListeners.add(callbacks);
+
+    if (!this.channels.has(channelName)) {
+      const channel = supabase
+        .channel(channelName)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload) => {
+          this.globalPosListeners.forEach((cb) => cb.onTableChange?.(payload));
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tabs' }, (payload) => {
+          this.globalPosListeners.forEach((cb) => cb.onTabChange?.(payload));
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+          this.globalPosListeners.forEach((cb) => cb.onOrderChange?.(payload));
+        })
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'order_items' },
+          (payload) => {
+            this.globalPosListeners.forEach((cb) => cb.onOrderItemChange?.(payload));
+          }
+        )
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
+          this.globalPosListeners.forEach((cb) => cb.onProductChange?.(payload));
+        })
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'table_transfer_logs' },
+          (payload) => {
+            this.globalPosListeners.forEach((cb) => cb.onTransferLog?.(payload));
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'cash_drawer_transactions' },
+          (payload) => {
+            this.globalPosListeners.forEach((cb) => cb.onCashDrawerChange?.(payload));
+          }
+        )
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, (payload) => {
+          this.globalPosListeners.forEach((cb) => cb.onPaymentChange?.(payload));
+        })
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'inventory_items' },
+          (payload) => {
+            this.globalPosListeners.forEach((cb) => cb.onInventoryChange?.(payload));
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: 'INSERT', schema: 'public', table: 'waste_logs' },
+          (payload) => {
+            this.globalPosListeners.forEach((cb) => cb.onWasteLogChange?.(payload));
+          }
+        )
+        .on('broadcast', { event: 'foh:buzzout' }, (event) => {
+          this.globalPosListeners.forEach((cb) => cb.onBuzzout?.(event.payload));
+        })
+        .on('broadcast', { event: 'station:table_transferred' }, (event) => {
+          this.globalPosListeners.forEach((cb) => cb.onTableTransfer?.(event.payload));
+        })
+        .on('broadcast', { event: 'pos:sync_needed' }, (event) => {
+          this.globalPosListeners.forEach((cb) => cb.onPosSyncNeeded?.(event.payload));
+        })
+        .subscribe();
+
+      this.channels.set(channelName, channel);
     }
 
-    const channel = supabase
-      .channel(channelName)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload) =>
-        callbacks.onTableChange?.(payload)
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tabs' }, (payload) =>
-        callbacks.onTabChange?.(payload)
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) =>
-        callbacks.onOrderChange?.(payload)
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, (payload) =>
-        callbacks.onOrderItemChange?.(payload)
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) =>
-        callbacks.onProductChange?.(payload)
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'table_transfer_logs' },
-        (payload) => callbacks.onTransferLog?.(payload)
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'cash_drawer_transactions' },
-        (payload) => callbacks.onCashDrawerChange?.(payload)
-      )
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, (payload) =>
-        callbacks.onPaymentChange?.(payload)
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'inventory_items' },
-        (payload) => callbacks.onInventoryChange?.(payload)
-      )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'waste_logs' },
-        (payload) => callbacks.onWasteLogChange?.(payload)
-      )
-      .on('broadcast', { event: 'foh:buzzout' }, (event) => {
-        callbacks.onBuzzout?.(event.payload);
-      })
-      .on('broadcast', { event: 'station:table_transferred' }, (event) => {
-        callbacks.onTableTransfer?.(event.payload);
-      })
-      .subscribe();
-
-    this.channels.set(channelName, channel);
-
     return () => {
-      channel.unsubscribe();
-      this.channels.delete(channelName);
+      this.globalPosListeners.delete(callbacks);
+      if (this.globalPosListeners.size === 0) {
+        const existingChannel = this.channels.get(channelName);
+        if (existingChannel) {
+          existingChannel.unsubscribe();
+          this.channels.delete(channelName);
+        }
+      }
     };
   }
 
@@ -310,12 +333,28 @@ export class RealtimeGateway {
    * Broadcast a table relocation event across all stations (KDS, Runner, Floor).
    */
   async broadcastTableTransfer(payload: TableTransferPayload): Promise<void> {
-    const channel = supabase.channel('pos_global_sync');
+    const channel = this.channels.get('pos_global_sync') || supabase.channel('pos_global_sync');
     await channel.send({
       type: 'broadcast',
       event: 'station:table_transferred',
       payload,
     });
+  }
+
+  /**
+   * Broadcast an instant POS sync signal so all connected workstations hydrate immediately.
+   */
+  async broadcastPosSync(reason: string): Promise<void> {
+    try {
+      const channel = this.channels.get('pos_global_sync') || supabase.channel('pos_global_sync');
+      await channel.send({
+        type: 'broadcast',
+        event: 'pos:sync_needed',
+        payload: { reason, timestamp: new Date().toISOString() },
+      });
+    } catch {
+      // Non-fatal if offline
+    }
   }
 
   /**

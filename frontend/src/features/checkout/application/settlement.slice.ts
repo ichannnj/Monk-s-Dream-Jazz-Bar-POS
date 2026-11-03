@@ -1,12 +1,19 @@
-import { CustomerTab, CheckItem, DrawerEntry, OrderLineItem } from '../../../types/floor';
+import {
+  CustomerTab,
+  CheckItem,
+  DrawerEntry,
+  OrderLineItem,
+  TakeoutOrder,
+} from '../../../types/floor';
 import { tablesApi } from '../../table-service/data/tables.api';
 import { deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { supabase } from '../../shared/infrastructure/supabase';
+import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { resolveTableUuid } from '../../floor/data/resolver';
 
-export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) => ({
+export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   settleTab: (
     tableId: string,
     tabIndex: number,
@@ -151,6 +158,7 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
             staffId: effectiveStaffId,
             notes: `Settled by ${effectiveCashierName}`,
           });
+          realtimeGateway.broadcastPosSync('tab_settled');
         }
       } catch (err) {
         console.warn('Background settleTab offline notice:', err);
@@ -309,8 +317,171 @@ export const createSettlementSlice = (set: OrderStoreSet, _get: OrderStoreGet) =
             .update({ is_occupied: false, updated_at: new Date().toISOString() })
             .eq('id', validTableId);
         }
+        realtimeGateway.broadcastPosSync('table_group_settled');
       } catch (err) {
         console.warn('[settleTableGroup] Background database error:', err);
+      }
+    })();
+  },
+
+  settleTakeoutOrder: (
+    takeoutId: string,
+    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    options?: {
+      completeOrder?: boolean;
+      cashierName?: string;
+      discountAmount?: number;
+      staffId?: string;
+    }
+  ) => {
+    const completeOrder = Boolean(options?.completeOrder);
+    const discountAmount = options?.discountAmount || 0;
+    const effectiveCashierName =
+      options?.cashierName ||
+      useAuthStore.getState().currentUser?.displayName ||
+      'Coltrane (Cashier)';
+    const effectiveStaffId = options?.staffId || useAuthStore.getState().currentUser?.id;
+
+    let targetOrderRef: TakeoutOrder | undefined;
+    let grandTotalPaid = 0;
+
+    set((state) => {
+      const targetOrder = state.takeoutOrders.find(
+        (o) => o.id === takeoutId || o.tabId === takeoutId
+      );
+      if (!targetOrder) return state;
+
+      targetOrderRef = targetOrder;
+      const subtotal = targetOrder.total || 0;
+      const netSubtotal = Math.max(0, subtotal - discountAmount);
+      const tax = netSubtotal * 0.1;
+      const grandTotal = netSubtotal + tax;
+      grandTotalPaid = grandTotal;
+
+      const newCheck: CheckItem = {
+        id: `chk-${Date.now()}`,
+        checkNumber: `#${1042 + state.checks.length}`,
+        orderType: 'takeout',
+        tableOrRef: `Takeout #${targetOrder.ticketNumber}`,
+        guestName: targetOrder.customerName || 'Walk-in Guest',
+        itemsCount: targetOrder.items.length || 1,
+        subtotal: netSubtotal,
+        tax,
+        total: grandTotal,
+        paymentMethod,
+        status: 'paid',
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        cashierName: effectiveCashierName,
+        itemsSummary:
+          targetOrder.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ') ||
+          'Takeout Order',
+      };
+
+      let nextDrawer = state.drawerEntries;
+      if (paymentMethod === 'cash') {
+        const isBar =
+          effectiveCashierName.toLowerCase().includes('bar') ||
+          effectiveCashierName.toLowerCase().includes('thelonious') ||
+          effectiveCashierName.toLowerCase().includes('bill');
+        const drawerTarget: 'main' | 'bar' = isBar ? 'bar' : 'main';
+
+        const cashDrawerEntry: DrawerEntry = {
+          id: `drw-${Date.now()}`,
+          type: 'sale',
+          amount: grandTotal,
+          reason: `Takeout #${targetOrder.ticketNumber} (${targetOrder.customerName}) Cash Settle`,
+          performedBy: effectiveCashierName,
+          timestamp: new Date().toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+          drawerTarget,
+        };
+        nextDrawer = [cashDrawerEntry, ...state.drawerEntries];
+      }
+
+      const updatedTakeout = state.takeoutOrders.map((o) => {
+        if (o.id !== takeoutId && o.tabId !== takeoutId) return o;
+        return {
+          ...o,
+          isPrepaid: true,
+          paymentMethod,
+          status: completeOrder ? ('completed' as const) : o.status,
+          items: completeOrder
+            ? o.items.map((i) =>
+              i.status === 'cancelled' ? i : { ...i, status: 'served' as const }
+            )
+            : o.items,
+        };
+      });
+
+      return {
+        takeoutOrders: updatedTakeout,
+        checks: [newCheck, ...state.checks],
+        drawerEntries: nextDrawer,
+      };
+    });
+
+    // Background asynchronous Supabase takeout settlement
+    let dbMethod: 'CASH' | 'CARD' | 'DIGITAL_WALLET' | 'COMP' = 'CASH';
+    if (paymentMethod === 'card') dbMethod = 'CARD';
+    else if (paymentMethod === 'digital_wallet') dbMethod = 'DIGITAL_WALLET';
+    else if (paymentMethod === 'comp') dbMethod = 'COMP';
+
+    (async () => {
+      try {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        let tabUuid = targetOrderRef?.tabId || targetOrderRef?.id;
+
+        // Wait briefly if createTakeoutOrder's DB insert is still in flight
+        for (let attempt = 0; attempt < 12 && (!tabUuid || !uuidRegex.test(tabUuid)); attempt++) {
+          await new Promise((r) => setTimeout(r, 250));
+          const liveOrder = get().takeoutOrders.find(
+            (o) =>
+              o.id === takeoutId ||
+              o.tabId === takeoutId ||
+              (targetOrderRef && o.ticketNumber === targetOrderRef.ticketNumber)
+          );
+          if (liveOrder?.tabId && uuidRegex.test(liveOrder.tabId)) {
+            tabUuid = liveOrder.tabId;
+            break;
+          }
+          if (liveOrder?.id && uuidRegex.test(liveOrder.id)) {
+            tabUuid = liveOrder.id;
+            break;
+          }
+        }
+
+        if (!tabUuid || !uuidRegex.test(tabUuid)) {
+          const { data: openTakeoutTabs } = await supabase
+            .from('tabs')
+            .select('id')
+            .eq('order_type', 'TAKEOUT')
+            .eq('status', 'OPEN')
+            .order('created_at', { ascending: false })
+            .limit(1);
+          if (openTakeoutTabs && openTakeoutTabs.length > 0) {
+            tabUuid = openTakeoutTabs[0].id;
+          }
+        }
+
+        if (tabUuid && uuidRegex.test(tabUuid)) {
+          await tablesApi.settleTabAndRecordPayment({
+            tabId: tabUuid,
+            paymentMethod: dbMethod,
+            amount: grandTotalPaid,
+            discountAmount,
+            staffId: effectiveStaffId,
+            notes: `Takeout #${targetOrderRef?.ticketNumber || ''} settled by ${effectiveCashierName}`,
+            keepOpenForPrep: !completeOrder,
+          });
+          realtimeGateway.broadcastPosSync('takeout_settled');
+        }
+      } catch (err) {
+        console.warn('Background settleTakeoutOrder notice:', err);
       }
     })();
   },

@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { BellRing, Repeat, Clock, Coffee, Utensils, CheckCircle2 } from 'lucide-react-native';
 import { RunnerTicket } from '../types';
 import { RunnerTicketItemList } from './RunnerTicketItemList';
+import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
 
 interface RunnerTicketCardProps {
   ticket: RunnerTicket;
@@ -15,6 +16,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
   onDeliverTarget,
   onHandoff,
 }) => {
+  const liveTimer = useLiveElapsedTimer(ticket.createdAt, ticket.elapsedTime, 'runner');
   const progressPct =
     ticket.totalItemsCount > 0 ? (ticket.readyItemsCount / ticket.totalItemsCount) * 100 : 0;
 
@@ -63,10 +65,55 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
         <View style={styles.headerLeft}>
           <Text style={styles.sourceText}>{ticket.sourceTitle}</Text>
           <Text style={styles.guestText}>{ticket.guestName}</Text>
+          {ticket.orderType === 'takeout' && ticket.isPrepaid !== undefined ? (
+            <View
+              style={{
+                alignSelf: 'flex-start',
+                marginTop: 4,
+                paddingHorizontal: 8,
+                paddingVertical: 2,
+                borderRadius: 6,
+                backgroundColor: ticket.isPrepaid ? '#dcfce7' : '#fef3c7',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 16,
+                  fontWeight: '800',
+                  color: ticket.isPrepaid ? '#15803d' : '#b45309',
+                }}
+              >
+                {ticket.isPrepaid ? 'PAID' : 'DUE AT COUNTER'}
+              </Text>
+            </View>
+          ) : null}
         </View>
-        <View style={styles.timerPill}>
-          <Clock size={16} color="#6b7280" />
-          <Text style={styles.timerText}>{ticket.elapsedTime}</Text>
+        <View
+          style={[
+            styles.timerPill,
+            liveTimer.urgency === 'late' && { backgroundColor: '#fee2e2' },
+            liveTimer.urgency === 'warning' && { backgroundColor: '#fef3c7' },
+          ]}
+        >
+          <Clock
+            size={16}
+            color={
+              liveTimer.urgency === 'late'
+                ? '#b91c1c'
+                : liveTimer.urgency === 'warning'
+                  ? '#b45309'
+                  : '#6b7280'
+            }
+          />
+          <Text
+            style={[
+              styles.timerText,
+              liveTimer.urgency === 'late' && { color: '#b91c1c' },
+              liveTimer.urgency === 'warning' && { color: '#b45309' },
+            ]}
+          >
+            {liveTimer.formattedTimer}
+          </Text>
         </View>
       </View>
 

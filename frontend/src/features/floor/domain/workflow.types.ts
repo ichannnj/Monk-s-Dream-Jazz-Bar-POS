@@ -1,4 +1,4 @@
-import { TableItem, OrderLineItem, CustomerTab } from '@/types/floor';
+import { TableItem, OrderLineItem, CustomerTab, TakeoutOrder } from '@/types/floor';
 
 export interface OrderEntryContext {
   type: 'dine_in' | 'takeout' | 'online';
@@ -9,9 +9,11 @@ export interface OrderEntryContext {
   initialItems?: OrderLineItem[];
   previousTabItems?: OrderLineItem[];
   hasExistingCorkage?: boolean;
+  takeoutOrderId?: string;
   takeoutCustomer?: string;
   takeoutPrepaid?: boolean;
   takeoutNotes?: string;
+  onlineOrderId?: string;
   onlinePlatform?: 'grabfood' | 'foodpanda';
   onlineRef?: string;
   onlineRider?: string;
@@ -19,8 +21,10 @@ export interface OrderEntryContext {
 }
 
 export interface CheckoutContext {
-  table: TableItem;
+  table?: TableItem | null;
   activeTab?: CustomerTab | null;
+  takeoutOrder?: TakeoutOrder | null;
+  takeoutCollectAfterPay?: boolean;
 }
 
 export interface ConfirmFloorActionContext {

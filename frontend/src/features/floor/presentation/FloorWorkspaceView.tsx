@@ -117,12 +117,18 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
             workflows.setOrderEntryContext({
               type: 'takeout',
               title: `Takeout #${o.ticketNumber} • "${o.customerName}"`,
+              takeoutOrderId: o.id,
               takeoutCustomer: o.customerName,
               takeoutPrepaid: o.isPrepaid,
-              initialItems: o.items,
+              takeoutNotes: o.notes,
+              previousTabItems: o.items,
+              initialItems: [],
             });
             workflows.setIsOrderEntryOpen(true);
           }}
+          onTakeoutPay={(order, collectAfterPay) =>
+            workflows.handleOpenTakeoutCheckout(order, collectAfterPay)
+          }
           onTakeoutReady={(id) => {
             const o = workflows.takeoutOrders.find((x) => x.id === id);
             workflows.updateTakeoutStatus(id, 'ready');
@@ -133,6 +139,10 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
           }}
           onTakeoutCollected={(id) => {
             const o = workflows.takeoutOrders.find((x) => x.id === id);
+            if (o && !o.isPrepaid) {
+              workflows.handleOpenTakeoutCheckout(o, true);
+              return;
+            }
             workflows.setConfirmFloorAction({
               type: 'takeout_collected',
               id,
@@ -146,11 +156,13 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
             workflows.setOrderEntryContext({
               type: 'online',
               title: `${o.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda'} #${o.platformOrderRef} • "${o.customerName}"`,
+              onlineOrderId: o.id,
               onlinePlatform: o.platform,
               onlineRef: o.platformOrderRef,
               onlineRider: o.riderName,
               onlineCustomer: o.customerName,
-              initialItems: o.items,
+              previousTabItems: o.items,
+              initialItems: [],
             });
             workflows.setIsOrderEntryOpen(true);
           }}
@@ -221,6 +233,16 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
         onCloseCheckout={() => {
           workflows.setIsCheckoutOpen(false);
           workflows.setCheckoutContext(null);
+        }}
+        onDeferTakeoutPayment={() => {
+          const toOrder = workflows.checkoutContext?.takeoutOrder;
+          workflows.setIsCheckoutOpen(false);
+          workflows.setCheckoutContext(null);
+          if (toOrder) {
+            toast.info(`Takeout #${toOrder.ticketNumber} remains DUE on pickup.`, {
+              title: 'Deferred to Pickup',
+            });
+          }
         }}
         onConfirmPayment={workflows.handleConfirmPayment}
       />

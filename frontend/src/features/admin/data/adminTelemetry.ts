@@ -410,21 +410,26 @@ export const adminTelemetryService = {
       let barTickets = 0;
       let barElapsedSum = 0;
       let barLate = 0;
+      const barTimestamps: string[] = [];
 
       let cafeTickets = 0;
       let cafeElapsedSum = 0;
       let cafeLate = 0;
+      const cafeTimestamps: string[] = [];
 
       let kitchenTickets = 0;
       let kitchenElapsedSum = 0;
       let kitchenLate = 0;
+      const kitchenTimestamps: string[] = [];
 
       let runnerTickets = 0;
       let runnerElapsedSum = 0;
       let runnerLate = 0;
+      const runnerTimestamps: string[] = [];
 
       for (const ord of openOrders) {
-        const orderTime = new Date(ord.created_at || nowMs).getTime();
+        const orderIso = ord.created_at || new Date(nowMs).toISOString();
+        const orderTime = new Date(orderIso).getTime();
         const elapsedSec = Math.max(0, Math.floor((nowMs - orderTime) / 1000));
         const items = ord.order_items || [];
         const activeItems = items.filter(
@@ -458,21 +463,25 @@ export const adminTelemetryService = {
         if (hasBar) {
           barTickets++;
           barElapsedSum += elapsedSec;
+          barTimestamps.push(orderIso);
           if (elapsedSec > 600) barLate++; // Target 10:00
         }
         if (hasCafe) {
           cafeTickets++;
           cafeElapsedSum += elapsedSec;
+          cafeTimestamps.push(orderIso);
           if (elapsedSec > 360) cafeLate++; // Target 06:00
         }
         if (hasKitchen) {
           kitchenTickets++;
           kitchenElapsedSum += elapsedSec;
+          kitchenTimestamps.push(orderIso);
           if (elapsedSec > 900) kitchenLate++; // Target 15:00
         }
         if (hasRunner) {
           runnerTickets++;
           runnerElapsedSum += elapsedSec;
+          runnerTimestamps.push(orderIso);
           if (elapsedSec > 180) runnerLate++; // Target 03:00
         }
       }
@@ -507,6 +516,7 @@ export const adminTelemetryService = {
           activeTickets: barTickets,
           avgTicketTime: barTickets > 0 ? formatDuration(barElapsedSum / barTickets) : 'Idle',
           lateTickets: barLate,
+          activeTicketTimestamps: barTimestamps,
           stockoutCount: lowStockItems.filter(
             (i) =>
               i.name.toLowerCase().includes('bourbon') ||
@@ -522,6 +532,7 @@ export const adminTelemetryService = {
           activeTickets: cafeTickets,
           avgTicketTime: cafeTickets > 0 ? formatDuration(cafeElapsedSum / cafeTickets) : 'Idle',
           lateTickets: cafeLate,
+          activeTicketTimestamps: cafeTimestamps,
           stockoutCount: lowStockItems.filter(
             (i) =>
               i.name.toLowerCase().includes('milk') ||
@@ -538,6 +549,7 @@ export const adminTelemetryService = {
           avgTicketTime:
             kitchenTickets > 0 ? formatDuration(kitchenElapsedSum / kitchenTickets) : 'Idle',
           lateTickets: kitchenLate,
+          activeTicketTimestamps: kitchenTimestamps,
           stockoutCount: lowStockItems.filter(
             (i) =>
               i.name.toLowerCase().includes('pasta') ||
@@ -554,6 +566,7 @@ export const adminTelemetryService = {
           avgTicketTime:
             runnerTickets > 0 ? formatDuration(runnerElapsedSum / runnerTickets) : 'Idle',
           lateTickets: runnerLate,
+          activeTicketTimestamps: runnerTimestamps,
           stockoutCount: 0,
         },
       ];

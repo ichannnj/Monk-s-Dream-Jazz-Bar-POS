@@ -106,6 +106,7 @@ export async function settleTabAndRecordPayment(params: {
   discountAmount?: number;
   tipAmount?: number;
   notes?: string;
+  keepOpenForPrep?: boolean;
 }) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     params.tabId
@@ -116,7 +117,7 @@ export async function settleTabAndRecordPayment(params: {
   }
 
   try {
-    const { data, error } = await supabase.rpc('settle_tab_and_record_payment', {
+    const rpcPayload: Record<string, any> = {
       p_tab_id: params.tabId,
       p_staff_id: (params.staffId || null) as any,
       p_payment_method: params.paymentMethod,
@@ -125,7 +126,29 @@ export async function settleTabAndRecordPayment(params: {
       p_discount_amount: params.discountAmount || 0,
       p_tip_amount: params.tipAmount || 0,
       p_notes: (params.notes || null) as any,
-    });
+      p_keep_open_for_prep: Boolean(params.keepOpenForPrep),
+    };
+
+    let { data, error } = await (supabase.rpc as any)('settle_tab_and_record_payment', rpcPayload);
+
+    if (error && error.message?.includes('p_keep_open_for_prep')) {
+      // Fallback if 9-arg migration not yet applied on remote DB
+      const { p_keep_open_for_prep: _ignored, ...legacyPayload } = rpcPayload;
+      const retry = await supabase.rpc('settle_tab_and_record_payment', legacyPayload as any);
+      data = retry.data;
+      error = retry.error;
+
+      if (!error && params.keepOpenForPrep) {
+        await supabase
+          .from('tabs')
+          .update({ status: 'OPEN', updated_at: new Date().toISOString() })
+          .eq('id', params.tabId);
+        await supabase
+          .from('orders')
+          .update({ status: 'OPEN', updated_at: new Date().toISOString() })
+          .eq('tab_id', params.tabId);
+      }
+    }
 
     if (error) {
       throw new Error(error.message || 'Failed to settle tab and record payment.');
@@ -135,5 +158,39 @@ export async function settleTabAndRecordPayment(params: {
   } catch (err: any) {
     console.error('settleTabAndRecordPayment error:', err);
     throw err;
+  }
+}
+
+export async function completeOffPremiseTab(params: { tabId: string; staffId?: string }) {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    params.tabId
+  );
+  if (!isUuid) {
+    return { success: true };
+  }
+
+  try {
+    const { data, error } = await (supabase.rpc as any)('complete_off_premise_tab', {
+      p_tab_id: params.tabId,
+      p_staff_id: params.staffId || null,
+    });
+
+    if (error) {
+      // Fallback direct update if RPC is not yet deployed
+      await supabase
+        .from('tabs')
+        .update({ status: 'BILLED', updated_at: new Date().toISOString() })
+        .eq('id', params.tabId);
+      await supabase
+        .from('orders')
+        .update({ status: 'COMPLETED', updated_at: new Date().toISOString() })
+        .eq('tab_id', params.tabId);
+      return { success: true };
+    }
+
+    return data || { success: true };
+  } catch (err) {
+    console.warn('completeOffPremiseTab error:', err);
+    return { success: false };
   }
 }

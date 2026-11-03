@@ -29,6 +29,7 @@ export interface StationTelemetry {
   avgTicketTime: string;
   lateTickets: number;
   stockoutCount: number;
+  activeTicketTimestamps?: string[];
 }
 
 export interface CategorySalesItem {

@@ -1,4 +1,4 @@
-import { TableItem, OrderLineItem } from '@/types/floor';
+import { TableItem, OrderLineItem, TakeoutOrder, OnlineDeliveryOrder } from '@/types/floor';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { OrderEntryContext } from '../domain/workflow.types';
 
@@ -19,14 +19,17 @@ interface UseOrderEntryFlowProps {
     items: OrderLineItem[],
     isPrepaid: boolean,
     notes?: string
-  ) => { ticketNumber: string; customerName: string };
+  ) => TakeoutOrder;
+  addItemsToTakeoutOrder: (takeoutId: string, items: OrderLineItem[]) => void;
   createOnlineOrder: (
     platform: 'grabfood' | 'foodpanda',
     platformRef: string,
     riderName: string,
     customerName: string,
     items: OrderLineItem[]
-  ) => { platformOrderRef: string; riderName: string };
+  ) => OnlineDeliveryOrder;
+  addItemsToOnlineOrder: (onlineId: string, items: OrderLineItem[]) => void;
+  onOpenTakeoutCheckout?: (order: TakeoutOrder, collectAfterPay?: boolean) => void;
   setSelectedTable: (table: TableItem | null) => void;
   setOrderEntryContext: (ctx: OrderEntryContext | null) => void;
   setIsOrderEntryOpen: (open: boolean) => void;
@@ -39,7 +42,10 @@ export function useOrderEntryFlow({
   openTableTab,
   addItemsToTab,
   createTakeoutOrder,
+  addItemsToTakeoutOrder,
   createOnlineOrder,
+  addItemsToOnlineOrder,
+  onOpenTakeoutCheckout,
   setSelectedTable,
   setOrderEntryContext,
   setIsOrderEntryOpen,
@@ -92,6 +98,7 @@ export function useOrderEntryFlow({
         takeoutPrepaid: isPrepaid,
         takeoutNotes: notes,
         initialItems: [],
+        previousTabItems: [],
       });
       setIsOrderEntryOpen(true);
     } catch (err: any) {
@@ -122,6 +129,7 @@ export function useOrderEntryFlow({
         onlineRider: riderName,
         onlineCustomer: customerName,
         initialItems: [],
+        previousTabItems: [],
       });
       setIsOrderEntryOpen(true);
     } catch (err: any) {
@@ -141,11 +149,13 @@ export function useOrderEntryFlow({
     if (!orderEntryContext) return;
 
     try {
+      const nowIso = new Date().toISOString();
       const processedItems: OrderLineItem[] = items.map((item) => {
         const isAutoStart = autoStartStation && item.stationTarget === autoStartStation;
         return {
           ...item,
           status: isAutoStart ? ('preparing' as const) : item.status || ('pending' as const),
+          createdAt: item.createdAt || nowIso,
         };
       });
 
@@ -168,30 +178,57 @@ export function useOrderEntryFlow({
           { title: `Round ${roundNum} Sent to Stations` }
         );
       } else if (orderEntryContext.type === 'takeout') {
-        const newOrder = createTakeoutOrder(
-          orderEntryContext.takeoutCustomer || 'Walk-in Guest',
-          processedItems,
-          orderEntryContext.takeoutPrepaid ?? true,
-          orderEntryContext.takeoutNotes
-        );
-        toast.success(
-          `Takeout #${newOrder.ticketNumber} created for ${newOrder.customerName} (${items.length} items)`,
-          { title: 'Takeout Order Queued' }
-        );
+        if (orderEntryContext.takeoutOrderId) {
+          addItemsToTakeoutOrder(orderEntryContext.takeoutOrderId, processedItems);
+          toast.success(
+            `${items.length} additional item(s) dispatched for ${orderEntryContext.takeoutCustomer || 'Takeout'}`,
+            { title: 'Takeout Order Updated' }
+          );
+        } else {
+          const wantsPrepaidNow = orderEntryContext.takeoutPrepaid ?? true;
+          // Create order with isPrepaid=false initially until payment is confirmed in BillSettlementModal
+          const newOrder = createTakeoutOrder(
+            orderEntryContext.takeoutCustomer || 'Walk-in Guest',
+            processedItems,
+            false,
+            orderEntryContext.takeoutNotes
+          );
+
+          if (wantsPrepaidNow && onOpenTakeoutCheckout) {
+            toast.info(
+              `Takeout #${newOrder.ticketNumber} sent to stations • Proceed to Counter Settlement`,
+              { title: 'Complete Counter Payment' }
+            );
+            onOpenTakeoutCheckout(newOrder, false);
+          } else {
+            toast.success(
+              `Takeout #${newOrder.ticketNumber} queued for ${newOrder.customerName} (${items.length} items • Pay on Pickup)`,
+              { title: 'Takeout Order Dispatched' }
+            );
+          }
+        }
       } else if (orderEntryContext.type === 'online') {
         const platformLabel =
           orderEntryContext.onlinePlatform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
-        const newOrder = createOnlineOrder(
-          orderEntryContext.onlinePlatform || 'grabfood',
-          orderEntryContext.onlineRef || 'GF-8842',
-          orderEntryContext.onlineRider || 'Rider Assigned',
-          orderEntryContext.onlineCustomer || 'Customer',
-          processedItems
-        );
-        toast.success(
-          `${platformLabel} #${newOrder.platformOrderRef} logged (${items.length} items) • Rider: ${newOrder.riderName}`,
-          { title: 'Online Delivery Queued' }
-        );
+        if (orderEntryContext.onlineOrderId) {
+          addItemsToOnlineOrder(orderEntryContext.onlineOrderId, processedItems);
+          toast.success(
+            `${items.length} additional item(s) added to ${platformLabel} #${orderEntryContext.onlineRef || ''}`,
+            { title: 'Delivery Order Updated' }
+          );
+        } else {
+          const newOrder = createOnlineOrder(
+            orderEntryContext.onlinePlatform || 'grabfood',
+            orderEntryContext.onlineRef || 'GF-8842',
+            orderEntryContext.onlineRider || 'Rider Assigned',
+            orderEntryContext.onlineCustomer || 'Customer',
+            processedItems
+          );
+          toast.success(
+            `${platformLabel} #${newOrder.platformOrderRef} logged (${items.length} items) • Rider: ${newOrder.riderName}`,
+            { title: 'Online Delivery Queued' }
+          );
+        }
       }
     } catch (err: any) {
       toast.error(err?.message || 'Failed to dispatch order. Check station connectivity.', {
