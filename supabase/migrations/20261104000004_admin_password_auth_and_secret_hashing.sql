@@ -568,3 +568,4 @@ GRANT EXECUTE ON FUNCTION public.update_admin_profile(UUID, TEXT, TEXT, TEXT, TE
 GRANT EXECUTE ON FUNCTION public.change_admin_password(UUID, TEXT, TEXT) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.change_admin_override_pin(UUID, TEXT, TEXT) TO anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.create_staff_account_with_secrets(TEXT, TEXT, TEXT, TEXT, TEXT, NUMERIC, TEXT, TEXT, TEXT) TO anon, authenticated, service_role;
+
