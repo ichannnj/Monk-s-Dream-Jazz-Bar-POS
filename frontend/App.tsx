@@ -5,7 +5,7 @@ import { rem } from 'nativewind';
 import { WaiterCashierScreen } from './src/features/floor';
 import { BaristaKdsScreen, KitchenKdsScreen, FohRunnerScreen } from './src/features/kds';
 import { ToastContainer } from './src/features/shared';
-import { LoginScreen, useAuthStore } from './src/features/auth';
+import { LoginScreen, TimeclockKioskScreen, useAuthStore } from './src/features/auth';
 import { useOrderStore } from './src/features/orders';
 import { useChatStore } from './src/features/chat';
 
@@ -48,6 +48,11 @@ export default function App() {
   }, [currentUser]);
 
   const renderScreen = () => {
+    // Check if running in dedicated Timeclock Kiosk tab (?mode=timeclock)
+    if (typeof window !== 'undefined' && window.location?.search?.includes('mode=timeclock')) {
+      return <TimeclockKioskScreen isStandaloneTab />;
+    }
+
     if (!currentUser) {
       return <LoginScreen />;
     }

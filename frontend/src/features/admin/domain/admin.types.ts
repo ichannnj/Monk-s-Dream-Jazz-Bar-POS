@@ -74,6 +74,18 @@ export interface DashboardTelemetry {
   digitalSales: number;
   cardSales: number;
 
+  // Staff Attendance & Payroll Expense Telemetry (Direct from attendance_records DB)
+  totalPayrollExpense: number;
+  basePayrollTotal: number;
+  bonusPayrollTotal: number;
+  laborCostPercent: number;
+  estimatedCogs: number;
+  estimatedNetProfit: number;
+  clockedInStaffCount: number;
+  completedShiftsCount: number;
+  presentStaffCount: number;
+  totalActiveStaffCount: number;
+
   // Operating Mode Revenue Split (Cafe vs Event vs Total)
   cafeSales: number;
   eventSales: number;

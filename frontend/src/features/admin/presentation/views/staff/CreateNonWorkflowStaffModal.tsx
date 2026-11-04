@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Users, Briefcase, Phone, Mail, Hash } from 'lucide-react-native';
+import { Users, Briefcase, Phone, Mail, Hash, KeyRound } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi } from '../../../data/admin.api';
 import { AdminModal } from '../../components/AdminModal';
@@ -31,6 +31,7 @@ export const CreateNonWorkflowStaffModal: React.FC<CreateNonWorkflowStaffModalPr
   const [displayName, setDisplayName] = useState('');
   const [jobTitle, setJobTitle] = useState('Dishwasher');
   const [staffIdCode, setStaffIdCode] = useState('');
+  const [pin, setPin] = useState('');
   const [baseDailyRate, setBaseDailyRate] = useState('645.00');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -41,6 +42,7 @@ export const CreateNonWorkflowStaffModal: React.FC<CreateNonWorkflowStaffModalPr
       setDisplayName('');
       setJobTitle('Dishwasher');
       setStaffIdCode('');
+      setPin('');
       setBaseDailyRate('645.00');
       setPhone('');
       setEmail('');
@@ -63,12 +65,19 @@ export const CreateNonWorkflowStaffModal: React.FC<CreateNonWorkflowStaffModalPr
       return;
     }
 
+    const cleanPin = pin.trim() || '0000';
+    if (cleanPin.length !== 4) {
+      toast.error('Timeclock PIN must be exactly 4 digits', { title: 'Validation Error' });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       await adminApi.createNonWorkflowStaff({
         display_name: displayName.trim(),
         job_title: jobTitle.trim(),
         username: staffIdCode.trim() || undefined,
+        pin: cleanPin,
         base_daily_rate: parsedRate,
         phone: phone.trim() || null,
         email: email.trim() || null,
@@ -124,11 +133,11 @@ export const CreateNonWorkflowStaffModal: React.FC<CreateNonWorkflowStaffModalPr
         {/* Non-User Info Banner */}
         <View className="rounded-xl border border-purple-200 bg-purple-50/70 p-3.5">
           <Text className="text-sm font-bold text-purple-900">
-            Non-User Venue Personnel (No POS Login)
+            Non-POS Venue Personnel (Timeclock Attendance Only)
           </Text>
           <Text className="mt-0.5 text-sm text-purple-800">
-            This staff member is included in daily shift payroll and discretionary bonuses, but
-            cannot log into POS terminals and does not require a PIN.
+            This staff member cannot log into POS/KDS order screens, but punches in and out on the
+            Timeclock Kiosk using their Staff ID and 4-digit PIN for shift payroll tracking.
           </Text>
         </View>
 
@@ -217,15 +226,32 @@ export const CreateNonWorkflowStaffModal: React.FC<CreateNonWorkflowStaffModalPr
           </View>
         </View>
 
-        <AdminInput
-          label="Staff Reference ID (Optional)"
-          autoCapitalize="none"
-          placeholder="Leave blank to auto-generate (e.g. staff_art_blakey_4821)"
-          value={staffIdCode}
-          onChangeText={(val) => setStaffIdCode(val.toLowerCase().replace(/\s+/g, '_'))}
-          leftElement={<Hash size={16} color="#78716c" />}
-          helperText="Internal roster identifier — automatically generated if left empty"
-        />
+        <View className="flex-col sm:flex-row gap-4">
+          <View className="flex-1">
+            <AdminInput
+              label="Staff Reference ID (Optional)"
+              autoCapitalize="none"
+              placeholder="e.g. staff_art_blakey or leave blank"
+              value={staffIdCode}
+              onChangeText={(val) => setStaffIdCode(val.toLowerCase().replace(/\s+/g, '_'))}
+              leftElement={<Hash size={16} color="#78716c" />}
+              helperText="Roster login code — auto-generated if left empty"
+            />
+          </View>
+          <View className="flex-1">
+            <AdminInput
+              label="Timeclock 4-Digit PIN"
+              required
+              placeholder="e.g. 7777 (defaults to 0000)"
+              maxLength={4}
+              keyboardType="numeric"
+              value={pin}
+              onChangeText={setPin}
+              leftElement={<KeyRound size={16} color="#78716c" />}
+              helperText="4-digit PIN for punching in/out at Timeclock Kiosk"
+            />
+          </View>
+        </View>
       </View>
     </AdminModal>
   );

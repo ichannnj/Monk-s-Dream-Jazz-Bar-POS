@@ -22,6 +22,7 @@ import { AdminDashboardView } from './views/AdminDashboardView';
 import { AdminInventoryView } from './views/AdminInventoryView';
 import { AdminRecipesView } from './views/AdminRecipesView';
 import { AdminStaffView } from './views/AdminStaffView';
+import { AdminAttendancePayrollView } from './views/AdminAttendancePayrollView';
 import { AdminStationsView } from './views/AdminStationsView';
 import { AdminTransactionsView } from './views/AdminTransactionsView';
 import { AdminSettingsView } from './views/AdminSettingsView';
@@ -121,6 +122,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       onInventoryChange: () => triggerQuietRefresh(),
       onWasteLogChange: () => triggerQuietRefresh(),
       onCashDrawerChange: () => triggerQuietRefresh(),
+      onAttendanceChange: () => triggerQuietRefresh(),
       onPosSyncNeeded: () => triggerQuietRefresh(),
     });
 
@@ -186,8 +188,19 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       case 'menu':
         return <AdminRecipesView products={products} onRefresh={loadData} />;
       case 'staff':
+        return (
+          <AdminStaffView
+            onRefresh={loadData}
+            onNavigateToAttendance={() => setCurrentRoute('attendance')}
+          />
+        );
       case 'attendance':
-        return <AdminStaffView onRefresh={loadData} />;
+        return (
+          <AdminAttendancePayrollView
+            onRefresh={loadData}
+            onNavigateToRoster={() => setCurrentRoute('staff')}
+          />
+        );
       case 'stations':
         return <AdminStationsView telemetry={telemetry} onRefresh={() => loadData(timeframe)} />;
       case 'sales':

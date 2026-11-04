@@ -1,28 +1,20 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, Platform } from 'react-native';
 import {
   Users,
-  Award,
-  Calendar,
   UserPlus,
-  UserCheck,
   Search,
   Edit3,
   KeyRound,
   Power,
-  Phone,
-  Mail,
+  ExternalLink,
+  Clock,
   Shield,
   Briefcase,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
-import {
-  adminApi,
-  PH_MINIMUM_WAGE_DAILY,
-  type AttendanceRecordAdmin,
-  type StaffMemberAdmin,
-} from '../../data/admin.api';
-import { AdminModal, AdminNumberInput, AdminInput } from '../components';
+import { adminApi, PH_MINIMUM_WAGE_DAILY, type StaffMemberAdmin } from '../../data/admin.api';
+import { AdminInput } from '../components';
 import { CreateUserAccountModal } from './staff/CreateUserAccountModal';
 import { CreateNonWorkflowStaffModal } from './staff/CreateNonWorkflowStaffModal';
 import { EditStaffModal } from './staff/EditStaffModal';
@@ -31,9 +23,9 @@ import { PosDropdown, PosDropdownOption } from '@/features/shared';
 
 interface AdminStaffViewProps {
   onRefresh?: () => void;
+  onNavigateToAttendance?: () => void;
 }
 
-type StaffMainTab = 'directory' | 'payroll';
 type DirectoryFilter = 'all' | 'pos_users' | 'non_users' | 'inactive';
 
 const ROLE_LABELS: Record<string, string> = {
@@ -47,17 +39,14 @@ const ROLE_LABELS: Record<string, string> = {
   printer_station: 'Printer Service',
 };
 
-export const AdminStaffView: React.FC<AdminStaffViewProps> = ({ onRefresh }) => {
-  const [activeTab, setActiveTab] = useState<StaffMainTab>('directory');
+export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
+  onRefresh,
+  onNavigateToAttendance,
+}) => {
+  const [staffList, setStaffList] = useState<StaffMemberAdmin[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [directoryFilter, setDirectoryFilter] = useState<DirectoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
-
-  const [staffRoster, setStaffRoster] = useState<StaffMemberAdmin[]>([]);
-  const [attendance, setAttendance] = useState<AttendanceRecordAdmin[]>([]);
-  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecordAdmin | null>(null);
-  const [basePayInput, setBasePayInput] = useState('');
-  const [addonPayInput, setAddonPayInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   // Modals state
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
@@ -65,215 +54,84 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({ onRefresh }) => 
   const [editingStaff, setEditingStaff] = useState<StaffMemberAdmin | null>(null);
   const [resetPinStaff, setResetPinStaff] = useState<StaffMemberAdmin | null>(null);
 
-  const todayStr = new Date().toISOString().split('T')[0];
-
-  const loadStaffAndAttendance = async () => {
+  const loadStaff = async () => {
     setIsLoading(true);
     try {
-      const staff = await adminApi.getStaffRoster();
-      setStaffRoster(staff);
-
-      try {
-        const records = await adminApi.getAttendanceRecords(todayStr);
-        if (records && records.length > 0) {
-          // Merge any newly added staff who don't have an attendance record row yet today
-          const recordedUserIds = new Set(records.map((r) => r.user_id));
-          const missingStaffRecords: AttendanceRecordAdmin[] = staff
-            .filter((s) => s.is_active && !recordedUserIds.has(s.id))
-            .map((s) => ({
-              id: `att-staff-${s.id}`,
-              user_id: s.id,
-              date: todayStr,
-              is_present: s.is_active,
-              base_daily_pay: parseFloat(String(s.base_daily_rate)) || PH_MINIMUM_WAGE_DAILY,
-              addon_pay: 0.0,
-              total_day_pay: parseFloat(String(s.base_daily_rate)) || PH_MINIMUM_WAGE_DAILY,
-              user: {
-                display_name: s.display_name,
-                role: s.role,
-                job_title: s.job_title,
-                is_workflow_staff: s.is_workflow_staff,
-              },
-            }));
-          setAttendance([...records, ...missingStaffRecords]);
-        } else {
-          const liveRecords: AttendanceRecordAdmin[] = staff.map((s) => ({
-            id: `att-staff-${s.id}`,
-            user_id: s.id,
-            date: todayStr,
-            is_present: s.is_active,
-            base_daily_pay: parseFloat(String(s.base_daily_rate)) || PH_MINIMUM_WAGE_DAILY,
-            addon_pay: 0.0,
-            total_day_pay: parseFloat(String(s.base_daily_rate)) || PH_MINIMUM_WAGE_DAILY,
-            user: {
-              display_name: s.display_name,
-              role: s.role,
-              job_title: s.job_title,
-              is_workflow_staff: s.is_workflow_staff,
-            },
-          }));
-          setAttendance(liveRecords);
-        }
-      } catch {
-        setAttendance(
-          staff.map((s) => ({
-            id: `att-${s.id}`,
-            user_id: s.id,
-            date: todayStr,
-            is_present: s.is_active,
-            base_daily_pay: parseFloat(String(s.base_daily_rate)) || PH_MINIMUM_WAGE_DAILY,
-            addon_pay: 0.0,
-            total_day_pay: parseFloat(String(s.base_daily_rate)) || PH_MINIMUM_WAGE_DAILY,
-            user: {
-              display_name: s.display_name,
-              role: s.role,
-              job_title: s.job_title,
-              is_workflow_staff: s.is_workflow_staff,
-            },
-          }))
-        );
-      }
+      const data = await adminApi.getStaffRoster();
+      setStaffList(data);
     } catch (e) {
-      console.warn('Failed to load live staff roster:', e);
+      console.warn('Failed to load staff roster:', e);
+      toast.error('Failed to load staff roster', { title: 'Network Notice' });
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadStaffAndAttendance();
+    loadStaff();
   }, []);
 
-  const handleMutationSuccess = () => {
-    loadStaffAndAttendance();
-    onRefresh?.();
-  };
-
   const handleToggleActiveStatus = async (member: StaffMemberAdmin) => {
-    const nextStatus = !member.is_active;
     try {
-      await adminApi.toggleStaffStatus(member.id, nextStatus);
-      toast.success(`${member.display_name} is now ${nextStatus ? 'Active' : 'Inactive'}`, {
-        title: nextStatus ? 'Staff Reactivated' : 'Staff Deactivated',
-      });
-      handleMutationSuccess();
-    } catch {
-      toast.error('Failed to update staff active status', { title: 'Status Error' });
-    }
-  };
-
-  const handleUpdateAddon = async () => {
-    if (!selectedRecord) return;
-    const parsedBase = parseFloat(basePayInput);
-    const parsedAddon = parseFloat(addonPayInput || '0');
-
-    if (isNaN(parsedBase) || parsedBase < 0) {
-      toast.error('Please enter a valid base daily rate', { title: 'Validation Error' });
-      return;
-    }
-    if (isNaN(parsedAddon) || parsedAddon < 0) {
-      toast.error('Please enter a valid discretionary bonus', { title: 'Validation Error' });
-      return;
-    }
-
-    try {
-      await adminApi.updateDiscretionaryAddon(selectedRecord.id, parsedAddon, parsedBase, {
-        userId: selectedRecord.user_id,
-        dateStr: todayStr,
-        isPresent: selectedRecord.is_present,
+      await adminApi.updateStaffMember(member.id, {
+        is_active: !member.is_active,
       });
       toast.success(
-        `Updated pay (Base: ₱${parsedBase.toFixed(2)}, Bonus: +₱${parsedAddon.toFixed(2)}) for ${selectedRecord.user?.display_name}`,
-        { title: 'Pay & Bonus Updated' }
+        `${member.display_name} has been ${member.is_active ? 'deactivated' : 'reactivated'}.`,
+        { title: 'Staff Status' }
       );
-      setSelectedRecord(null);
-      setBasePayInput('');
-      setAddonPayInput('');
-      loadStaffAndAttendance();
-    } catch {
-      toast.error('Failed to update staff pay and shift add-on', { title: 'Update Error' });
+      loadStaff();
+      onRefresh?.();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to update active status', { title: 'Error' });
     }
   };
 
-  // Counts & Filtered Directory
-  const counts = useMemo(() => {
-    const activeAll = staffRoster.filter((s) => s.is_active).length;
-    const posUsers = staffRoster.filter((s) => s.is_active && s.is_workflow_staff).length;
-    const nonUsers = staffRoster.filter((s) => s.is_active && !s.is_workflow_staff).length;
-    const inactive = staffRoster.filter((s) => !s.is_active).length;
-    return { activeAll, posUsers, nonUsers, inactive };
-  }, [staffRoster]);
-
   const filteredStaff = useMemo(() => {
-    return staffRoster.filter((member) => {
-      if (directoryFilter === 'all' && !member.is_active) return false;
-      if (directoryFilter === 'pos_users' && (!member.is_active || !member.is_workflow_staff))
-        return false;
-      if (directoryFilter === 'non_users' && (!member.is_active || member.is_workflow_staff))
-        return false;
-      if (directoryFilter === 'inactive' && member.is_active) return false;
+    return staffList.filter((s) => {
+      if (directoryFilter === 'pos_users' && !s.is_workflow_staff) return false;
+      if (directoryFilter === 'non_users' && s.is_workflow_staff) return false;
+      if (directoryFilter === 'inactive' && s.is_active) return false;
 
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
-        const matchName = member.display_name?.toLowerCase().includes(q);
-        const matchUser = member.username?.toLowerCase().includes(q);
-        const matchRole = member.role?.toLowerCase().includes(q);
-        const matchTitle = member.job_title?.toLowerCase().includes(q);
-        return matchName || matchUser || matchRole || matchTitle;
+        const matchName = s.display_name?.toLowerCase().includes(q);
+        const matchUsername = s.username?.toLowerCase().includes(q);
+        const matchRole = s.role?.toLowerCase().includes(q);
+        const matchJobTitle = s.job_title?.toLowerCase().includes(q);
+        return matchName || matchUsername || matchRole || matchJobTitle;
       }
-
       return true;
     });
-  }, [staffRoster, directoryFilter, searchQuery]);
+  }, [staffList, directoryFilter, searchQuery]);
 
-  const getInitials = (name: string) => {
-    return (
-      name
-        .replace(/\(.*?\)/g, '')
-        .trim()
-        .split(/\s+/)
-        .map((part) => part[0])
-        .slice(0, 2)
-        .join('')
-        .toUpperCase() || 'ST'
-    );
-  };
-
-  const staffTabOptions: PosDropdownOption<StaffMainTab>[] = [
-    {
-      value: 'directory',
-      label: 'Staff Directory',
-      badge: counts.activeAll,
-      icon: Users,
-      description: 'Manage POS user accounts, non-user staff, and PIN security',
-    },
-    {
-      value: 'payroll',
-      label: 'Daily Payroll & Bonuses',
-      icon: Award,
-      description: 'Attendance tracking, base daily shift rates, and add-on bonuses',
-    },
-  ];
+  const counts = useMemo(() => {
+    const activeAll = staffList.filter((s) => s.is_active).length;
+    const posUsers = staffList.filter((s) => s.is_active && s.is_workflow_staff).length;
+    const nonUsers = staffList.filter((s) => s.is_active && !s.is_workflow_staff).length;
+    const inactive = staffList.filter((s) => !s.is_active).length;
+    return { activeAll, posUsers, nonUsers, inactive };
+  }, [staffList]);
 
   const directoryFilterOptions: PosDropdownOption<DirectoryFilter>[] = [
-    { value: 'all', label: 'All Active Staff', badge: counts.activeAll, icon: Users },
-    { value: 'pos_users', label: 'POS User Accounts', badge: counts.posUsers, icon: Shield },
-    { value: 'non_users', label: 'Non-User Venue Staff', badge: counts.nonUsers, icon: Briefcase },
-    { value: 'inactive', label: 'Inactive / Archived', badge: counts.inactive, icon: Power },
+    { value: 'all', label: `All Staff (${counts.activeAll})`, icon: Users },
+    { value: 'pos_users', label: `POS Users (${counts.posUsers})`, icon: Shield },
+    { value: 'non_users', label: `Support Staff (${counts.nonUsers})`, icon: Briefcase },
+    { value: 'inactive', label: `Inactive (${counts.inactive})`, icon: Users },
   ];
 
   const createStaffActions: PosDropdownOption<'create_user' | 'create_staff'>[] = [
     {
       value: 'create_user',
-      label: '+ New POS User Account',
-      description: 'Waiter, Cashier, Bartender, Barista, Chef, Runner, or Manager with 4-digit PIN',
-      icon: UserCheck,
+      label: 'New POS User Account',
+      description: 'Cashiers, Waiters, Baristas, Chefs, Runners with station logins & PINs',
+      icon: Shield,
     },
     {
       value: 'create_staff',
-      label: '+ Add Non-User Venue Staff',
-      description: 'Support staff (Dishwasher, Security, Cleaner, Musician, Sound Tech)',
-      icon: UserPlus,
+      label: 'New Support Personnel',
+      description: 'Dishwashers, Security, Sound Techs, Cleaners with timeclock PINs',
+      icon: Briefcase,
     },
   ];
 
@@ -282,21 +140,40 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({ onRefresh }) => 
       className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
-      {/* Top Header & Unified Dropdown Controls */}
-      <View className="mb-5 flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-          Staff Roster &amp; Payroll
-        </Text>
+      {/* Sleek Top Header Bar */}
+      <View className="mb-5 flex-col md:flex-row md:items-center justify-between gap-3">
+        <View className="flex-row items-center gap-3">
+          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+            Staff Roster
+          </Text>
+          <View className="rounded-full bg-stone-200/80 px-3 py-1">
+            <Text className="text-base font-bold text-stone-700">{counts.activeAll} Active</Text>
+          </View>
+        </View>
 
-        <View className="flex-row flex-wrap items-center gap-2.5">
-          <PosDropdown
-            options={staffTabOptions}
-            value={activeTab}
-            onChange={setActiveTab}
-            prefixLabel="View:"
-            sheetTitle="Select Staff Section"
-            className="flex-1 sm:flex-initial min-w-[190px]"
-          />
+        {/* Action Shortcuts */}
+        <View className="flex-row flex-wrap items-center gap-2">
+          {Platform.OS === 'web' && (
+            <Pressable
+              onPress={() => window.open('?mode=timeclock', '_blank')}
+              className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
+              accessibilityLabel="Launch Timeclock Kiosk in new tab"
+            >
+              <ExternalLink size={16} color="#800020" />
+              <Text className="ml-2 text-base font-bold text-[#800020]">Timeclock ↗</Text>
+            </Pressable>
+          )}
+
+          {onNavigateToAttendance && (
+            <Pressable
+              onPress={onNavigateToAttendance}
+              className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-rose-200 bg-rose-50/70 active:bg-rose-100 shadow-xs"
+              accessibilityLabel="Go to Attendance & Payroll Ledger"
+            >
+              <Clock size={16} color="#800020" />
+              <Text className="ml-2 text-base font-bold text-[#800020]">Attendance →</Text>
+            </Pressable>
+          )}
 
           <PosDropdown
             mode="action"
@@ -305,446 +182,210 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({ onRefresh }) => 
               if (act === 'create_user') setShowCreateUserModal(true);
               else setShowCreateStaffModal(true);
             }}
-            triggerLabel="+ Add Staff / User"
+            triggerLabel="+ Add Staff"
             triggerIcon={UserPlus}
             variant="wine"
             sheetTitle="Add Team Member"
-            className="flex-1 sm:flex-initial min-w-[175px]"
+            className="min-w-[150px]"
           />
-
-          <View className="min-h-[48px] hidden sm:flex flex-row items-center rounded-xl border border-stone-200 bg-white px-3.5 py-2.5">
-            <Calendar size={16} color="#78716c" />
-            <Text className="ml-2 text-base font-bold text-stone-700">{todayStr}</Text>
-          </View>
         </View>
       </View>
 
-      {activeTab === 'directory' ? (
-        <View className="space-y-4">
-          {/* Filter Dropdown & Search Bar */}
-          <View className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 rounded-2xl border border-stone-200/80 bg-white p-3.5 shadow-xs">
-            <PosDropdown
-              options={directoryFilterOptions}
-              value={directoryFilter}
-              onChange={setDirectoryFilter}
-              prefixLabel="Show:"
-              sheetTitle="Filter Staff Directory"
-              className="w-full sm:w-64"
-            />
+      {/* Streamlined Search & Filter Row */}
+      <View className="mb-4 flex-col sm:flex-row items-stretch sm:items-center gap-2.5 rounded-2xl border border-stone-200/80 bg-white p-2.5 shadow-xs">
+        <PosDropdown
+          options={directoryFilterOptions}
+          value={directoryFilter}
+          onChange={setDirectoryFilter}
+          prefixLabel="Filter:"
+          sheetTitle="Filter Staff Directory"
+          className="w-full sm:w-56"
+        />
 
-            <View className="flex-1">
-              <AdminInput
-                placeholder="Search name, role, job title..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                leftElement={<Search size={18} color="#78716c" />}
-              />
-            </View>
+        <View className="flex-1">
+          <AdminInput
+            placeholder="Search by name, role, @username..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            leftElement={<Search size={18} color="#78716c" />}
+          />
+        </View>
+      </View>
+
+      {/* Decluttered Staff Directory List */}
+      <View className="rounded-2xl border border-stone-200/80 bg-white p-3 sm:p-5 shadow-xs">
+        {filteredStaff.length === 0 ? (
+          <View className="py-12 items-center justify-center">
+            <Users size={36} color="#a8a29e" />
+            <Text className="mt-3 text-lg font-bold text-stone-700">No staff found</Text>
+            <Text className="mt-1 text-base text-stone-500 text-center">
+              Try adjusting your filter or search terms.
+            </Text>
           </View>
+        ) : (
+          <View className="space-y-2.5">
+            {filteredStaff.map((member) => {
+              const isPosUser = member.is_workflow_staff;
+              const roleDisplay = isPosUser
+                ? ROLE_LABELS[member.role] || member.role
+                : member.job_title || 'Support Staff';
 
-          {/* Staff Directory List */}
-          <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
-            {filteredStaff.length === 0 ? (
-              <View className="py-12 items-center justify-center">
-                <Users size={36} color="#a8a29e" />
-                <Text className="mt-3 text-lg font-bold text-stone-700">
-                  No staff members found
-                </Text>
-                <Text className="mt-1 text-sm text-stone-500">
-                  Use the buttons above to create a POS User Account or add a Venue Staff member.
-                </Text>
-              </View>
-            ) : (
-              <View className="space-y-3">
-                {filteredStaff.map((member) => {
-                  const isPosUser = member.is_workflow_staff;
-                  const roleLabel = isPosUser
-                    ? ROLE_LABELS[member.role] || member.role
-                    : member.job_title || 'Venue Staff';
+              // Generate 2-letter avatar initials
+              const initials =
+                (member.display_name || '')
+                  .split(' ')
+                  .filter(Boolean)
+                  .map((n) => n[0])
+                  .slice(0, 2)
+                  .join('')
+                  .toUpperCase() || 'MD';
 
-                  return (
+              return (
+                <View
+                  key={member.id}
+                  className={`flex-col md:flex-row md:items-center justify-between rounded-xl border p-3.5 sm:p-4 gap-3 ${
+                    member.is_active
+                      ? 'border-stone-200 bg-white'
+                      : 'border-stone-200 bg-stone-50 opacity-60'
+                  }`}
+                >
+                  {/* Left: Identity & Metadata */}
+                  <View className="flex-row items-center space-x-3 flex-1 min-w-0">
                     <View
-                      key={member.id}
-                      className={`flex-col lg:flex-row lg:items-center justify-between rounded-2xl border p-4 gap-4 ${
-                        member.is_active
-                          ? 'border-stone-200/80 bg-white'
-                          : 'border-stone-200 bg-stone-50/70 opacity-75'
+                      className={`min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border ${
+                        isPosUser
+                          ? 'bg-rose-50 border-rose-200 text-[#800020]'
+                          : 'bg-purple-50 border-purple-200 text-purple-700'
                       }`}
                     >
-                      {/* Left: Identity & Badges */}
-                      <View className="flex-row items-start sm:items-center gap-3.5 flex-1">
+                      <Text
+                        className={`text-base font-black ${
+                          isPosUser ? 'text-[#800020]' : 'text-purple-700'
+                        }`}
+                      >
+                        {initials}
+                      </Text>
+                    </View>
+
+                    <View className="ml-3 flex-1 min-w-0">
+                      <View className="flex-row flex-wrap items-center gap-2">
+                        <Text className="text-lg font-extrabold text-stone-900 truncate">
+                          {member.display_name}
+                        </Text>
+
+                        {/* Clean Single Role Badge */}
                         <View
-                          className={`h-12 w-12 items-center justify-center rounded-full border ${
+                          className={`rounded-full px-2.5 py-0.5 border ${
                             isPosUser
-                              ? 'border-[#800020]/20 bg-[#800020]/10'
-                              : 'border-purple-200 bg-purple-50'
+                              ? 'bg-rose-50 border-rose-200'
+                              : 'bg-purple-50 border-purple-200'
                           }`}
                         >
                           <Text
-                            className={`text-base font-black ${
-                              isPosUser ? 'text-[#800020]' : 'text-purple-800'
+                            className={`text-base font-bold ${
+                              isPosUser ? 'text-[#800020]' : 'text-purple-700'
                             }`}
                           >
-                            {getInitials(member.display_name)}
+                            {roleDisplay}
                           </Text>
                         </View>
 
-                        <View className="flex-1">
-                          <View className="flex-row flex-wrap items-center gap-2">
-                            <Text className="text-lg font-bold text-stone-900">
-                              {member.display_name}
-                            </Text>
-
-                            {/* Type Badge: POS User vs Venue Personnel */}
-                            <View
-                              className={`flex-row items-center rounded-full px-2.5 py-0.5 ${
-                                isPosUser
-                                  ? 'bg-emerald-50 border border-emerald-200'
-                                  : 'bg-purple-50 border border-purple-200'
-                              }`}
-                            >
-                              <View
-                                className={`mr-1.5 h-1.5 w-1.5 rounded-full ${
-                                  isPosUser ? 'bg-emerald-600' : 'bg-purple-600'
-                                }`}
-                              />
-                              <Text
-                                className={`text-xs font-bold ${
-                                  isPosUser ? 'text-emerald-800' : 'text-purple-800'
-                                }`}
-                              >
-                                {isPosUser ? 'POS App User' : 'Non-User Staff'}
-                              </Text>
-                            </View>
-
-                            {!member.is_active && (
-                              <View className="rounded-full bg-stone-200 px-2.5 py-0.5">
-                                <Text className="text-xs font-bold text-stone-700">Inactive</Text>
-                              </View>
-                            )}
+                        {!member.is_active && (
+                          <View className="rounded-full bg-stone-200 px-2 py-0.5">
+                            <Text className="text-base font-bold text-stone-600">Inactive</Text>
                           </View>
-
-                          {/* Sub-details: Role, Job Title, Username */}
-                          <View className="mt-1 flex-row flex-wrap items-center gap-x-4 gap-y-1">
-                            <View className="flex-row items-center">
-                              {isPosUser ? (
-                                <Shield size={13} color="#78716c" />
-                              ) : (
-                                <Briefcase size={13} color="#78716c" />
-                              )}
-                              <Text className="ml-1 text-sm font-semibold text-stone-700">
-                                {roleLabel}
-                              </Text>
-                            </View>
-
-                            {isPosUser && member.job_title ? (
-                              <Text className="text-sm text-stone-500">• {member.job_title}</Text>
-                            ) : null}
-
-                            <Text className="text-sm text-stone-400">ID: @{member.username}</Text>
-
-                            {member.phone ? (
-                              <View className="flex-row items-center">
-                                <Phone size={12} color="#78716c" />
-                                <Text className="ml-1 text-xs text-stone-500">{member.phone}</Text>
-                              </View>
-                            ) : null}
-
-                            {member.email ? (
-                              <View className="flex-row items-center">
-                                <Mail size={12} color="#78716c" />
-                                <Text className="ml-1 text-xs text-stone-500">{member.email}</Text>
-                              </View>
-                            ) : null}
-                          </View>
-                        </View>
+                        )}
                       </View>
 
-                      {/* Right: Rate & Actions */}
-                      <View className="flex-row flex-wrap items-center justify-between lg:justify-end gap-3 pt-3 lg:pt-0 border-t border-stone-100 lg:border-t-0">
-                        <View className="mr-2">
-                          <Text className="text-xs text-stone-400">Base Shift Rate</Text>
-                          <Text className="text-base font-black text-stone-900">
-                            ₱{Number(member.base_daily_rate || PH_MINIMUM_WAGE_DAILY).toFixed(2)}
-                          </Text>
-                        </View>
-
-                        <View className="flex-row items-center gap-2">
-                          <Pressable
-                            onPress={() => setEditingStaff(member)}
-                            className="min-h-[42px] flex-row items-center rounded-xl border border-stone-200 bg-stone-50 px-3.5 py-2 active:bg-stone-100"
-                          >
-                            <Edit3 size={15} color="#44403c" />
-                            <Text className="ml-1.5 text-sm font-bold text-stone-700">Edit</Text>
-                          </Pressable>
-
-                          {isPosUser && (
-                            <Pressable
-                              onPress={() => setResetPinStaff(member)}
-                              className="min-h-[42px] flex-row items-center rounded-xl border border-[#800020]/20 bg-[#800020]/5 px-3.5 py-2 active:bg-[#800020]/10"
-                            >
-                              <KeyRound size={15} color="#800020" />
-                              <Text className="ml-1.5 text-sm font-bold text-[#800020]">
-                                Reset PIN
-                              </Text>
-                            </Pressable>
-                          )}
-
-                          <Pressable
-                            onPress={() => handleToggleActiveStatus(member)}
-                            className={`min-h-[42px] flex-row items-center rounded-xl border px-3 py-2 ${
-                              member.is_active
-                                ? 'border-stone-200 bg-white active:bg-rose-50'
-                                : 'border-emerald-200 bg-emerald-50 active:bg-emerald-100'
-                            }`}
-                          >
-                            <Power size={15} color={member.is_active ? '#78716c' : '#047857'} />
-                            <Text
-                              className={`ml-1.5 text-sm font-bold ${
-                                member.is_active ? 'text-stone-600' : 'text-emerald-800'
-                              }`}
-                            >
-                              {member.is_active ? 'Deactivate' : 'Activate'}
-                            </Text>
-                          </Pressable>
-                        </View>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
-          </View>
-        </View>
-      ) : (
-        <View>
-          {/* Baseline Policy Banner */}
-          <View className="mb-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 sm:p-5">
-            <Text className="text-base font-bold text-amber-900">
-              Daily Minimum Shift Rate: ₱{PH_MINIMUM_WAGE_DAILY.toFixed(2)} / shift (PH Minimum Wage
-              Baseline)
-            </Text>
-            <Text className="mt-1 text-base text-amber-800">
-              Discretionary jazz night bonuses can be granted by Managers at end of shift for
-              stellar table turnovers, bar speed, and venue support.
-            </Text>
-          </View>
-
-          {/* Staff Attendance & Pay Table */}
-          <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs">
-            <View className="space-y-4">
-              {attendance.map((rec) => {
-                const isPosUser = rec.user?.is_workflow_staff ?? true;
-                const displayRole = isPosUser
-                  ? ROLE_LABELS[rec.user?.role || ''] || rec.user?.role
-                  : rec.user?.job_title || 'Venue Staff';
-
-                return (
-                  <View
-                    key={rec.id}
-                    className="flex-col md:flex-row md:items-center justify-between border-b border-stone-100 py-4 gap-4"
-                  >
-                    <View className="flex-row items-center space-x-3">
-                      <View className="h-12 w-12 items-center justify-center rounded-full bg-stone-100 border border-stone-200">
-                        <Users size={20} color="#44403c" />
-                      </View>
-                      <View className="ml-3">
-                        <View className="flex-row items-center gap-2">
-                          <Text className="text-lg font-bold text-stone-900">
-                            {rec.user?.display_name || 'Staff Member'}
-                          </Text>
-                          <View
-                            className={`rounded-full px-2 py-0.5 ${
-                              isPosUser ? 'bg-emerald-50' : 'bg-purple-50'
-                            }`}
-                          >
-                            <Text
-                              className={`text-xs font-bold ${
-                                isPosUser ? 'text-emerald-700' : 'text-purple-700'
-                              }`}
-                            >
-                              {isPosUser ? 'POS User' : 'Venue Staff'}
-                            </Text>
-                          </View>
-                        </View>
-                        <Text className="text-base text-stone-500">
-                          {displayRole} • Status: {rec.is_present ? 'Present' : 'Absent'}
-                        </Text>
-                      </View>
-                    </View>
-
-                    <View className="flex-col sm:flex-row sm:items-center justify-between md:justify-end gap-3 pt-3 md:pt-0 border-t border-stone-100/70 md:border-t-0">
-                      <View className="flex-row items-center justify-between sm:justify-start gap-4 flex-wrap">
-                        <View className="items-start sm:items-end">
-                          <Text className="text-base text-stone-400">Base Pay</Text>
-                          <Text className="text-base font-semibold text-stone-800">
-                            ₱{Number(rec.base_daily_pay || 0).toFixed(2)}
-                          </Text>
-                        </View>
-
-                        <View className="items-start sm:items-end">
-                          <Text className="text-base text-stone-400">Bonus</Text>
-                          <Text className="text-base font-bold text-emerald-700">
-                            +₱{Number(rec.addon_pay || 0).toFixed(2)}
-                          </Text>
-                        </View>
-
-                        <View className="items-start sm:items-end">
-                          <Text className="text-base text-stone-400">Total Pay</Text>
-                          <Text className="text-lg font-black text-stone-900">
-                            ₱{Number(rec.total_day_pay || 0).toFixed(2)}
-                          </Text>
-                        </View>
-                      </View>
-
-                      <Pressable
-                        onPress={() => {
-                          setSelectedRecord(rec);
-                          setBasePayInput(
-                            Number(rec.base_daily_pay || PH_MINIMUM_WAGE_DAILY).toFixed(2)
-                          );
-                          setAddonPayInput(Number(rec.addon_pay || 0).toFixed(2));
-                        }}
-                        className="min-h-[48px] px-4 flex-row items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
-                        accessibilityLabel="Adjust pay and bonus"
-                      >
-                        <Award size={18} color="#800020" />
-                        <Text className="ml-2 text-base font-bold text-[#800020]">
-                          Adjust Pay & Bonus
-                        </Text>
-                      </Pressable>
+                      {/* Clean Subtitle: Username, Base Daily Rate, Phone */}
+                      <Text className="text-base text-stone-500 mt-0.5 truncate">
+                        @{member.username} · ₱
+                        {Number(member.base_daily_rate || PH_MINIMUM_WAGE_DAILY).toFixed(2)}/day
+                        {member.phone ? ` · ${member.phone}` : ''}
+                      </Text>
                     </View>
                   </View>
-                );
-              })}
-            </View>
+
+                  {/* Right: Quick Actions */}
+                  <View className="flex-row items-center justify-end gap-2 pt-2 md:pt-0 border-t border-stone-100 md:border-t-0">
+                    <Pressable
+                      onPress={() => setEditingStaff(member)}
+                      className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-stone-100"
+                    >
+                      <Edit3 size={16} color="#44403c" />
+                      <Text className="ml-1.5 text-base font-bold text-stone-700">Edit</Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => setResetPinStaff(member)}
+                      className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-[#800020]/20 bg-[#800020]/5 active:bg-[#800020]/10"
+                      accessibilityLabel={`Reset PIN for ${member.display_name}`}
+                    >
+                      <KeyRound size={16} color="#800020" />
+                      <Text className="ml-1.5 text-base font-bold text-[#800020]">PIN</Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => handleToggleActiveStatus(member)}
+                      className={`min-h-[48px] w-12 items-center justify-center rounded-xl border ${
+                        member.is_active
+                          ? 'border-stone-200 bg-white active:bg-rose-50'
+                          : 'border-emerald-200 bg-emerald-50 active:bg-emerald-100'
+                      }`}
+                      accessibilityLabel={member.is_active ? 'Deactivate staff' : 'Activate staff'}
+                    >
+                      <Power size={18} color={member.is_active ? '#78716c' : '#047857'} />
+                    </Pressable>
+                  </View>
+                </View>
+              );
+            })}
           </View>
-        </View>
-      )}
+        )}
+      </View>
 
       {/* Modals */}
       <CreateUserAccountModal
         visible={showCreateUserModal}
         onClose={() => setShowCreateUserModal(false)}
-        onSuccess={handleMutationSuccess}
+        onSuccess={() => {
+          loadStaff();
+          onRefresh?.();
+        }}
       />
 
       <CreateNonWorkflowStaffModal
         visible={showCreateStaffModal}
         onClose={() => setShowCreateStaffModal(false)}
-        onSuccess={handleMutationSuccess}
+        onSuccess={() => {
+          loadStaff();
+          onRefresh?.();
+        }}
       />
 
-      <EditStaffModal
-        visible={!!editingStaff}
-        staff={editingStaff}
-        onClose={() => setEditingStaff(null)}
-        onSuccess={handleMutationSuccess}
-      />
+      {editingStaff && (
+        <EditStaffModal
+          visible={!!editingStaff}
+          staff={editingStaff}
+          onClose={() => setEditingStaff(null)}
+          onSuccess={() => {
+            loadStaff();
+            onRefresh?.();
+          }}
+        />
+      )}
 
-      <ResetPinModal
-        visible={!!resetPinStaff}
-        staff={resetPinStaff}
-        onClose={() => setResetPinStaff(null)}
-        onSuccess={handleMutationSuccess}
-      />
-
-      {/* Base Pay & Bonus Adjustment Modal */}
-      <AdminModal
-        visible={!!selectedRecord}
-        onClose={() => setSelectedRecord(null)}
-        title={`Adjust Pay & Bonus: ${selectedRecord?.user?.display_name || ''}`}
-        subtitle={`Role: ${
-          selectedRecord?.user?.is_workflow_staff
-            ? ROLE_LABELS[selectedRecord?.user?.role || ''] || selectedRecord?.user?.role
-            : selectedRecord?.user?.job_title || 'Venue Staff'
-        } • PH Minimum Wage Baseline: ₱${PH_MINIMUM_WAGE_DAILY.toFixed(2)}`}
-        icon={<Award size={22} color="#800020" />}
-        size="md"
-        footer={
-          <>
-            <Pressable
-              onPress={() => setSelectedRecord(null)}
-              className="min-h-[48px] px-5 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
-            >
-              <Text className="text-base font-semibold text-stone-700">Cancel</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={handleUpdateAddon}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
-            >
-              <Text className="text-base font-bold text-white">Save Pay & Bonus</Text>
-            </Pressable>
-          </>
-        }
-      >
-        <View className="space-y-4">
-          {/* Role-Based Base Pay Quick Presets */}
-          <View>
-            <Text className="mb-2 text-sm font-semibold text-stone-700">
-              Quick Role Pay Tiers (Daily Shift Base)
-            </Text>
-            <View className="flex-row flex-wrap gap-2">
-              {[
-                { label: '₱645 (Min Wage)', value: '645.00' },
-                { label: '₱700 (Barista/Floor)', value: '700.00' },
-                { label: '₱750 (Cashier)', value: '750.00' },
-                { label: '₱850 (Bartender/Tech)', value: '850.00' },
-                { label: '₱1,000 (Head Chef)', value: '1000.00' },
-                { label: '₱1,200 (Manager)', value: '1200.00' },
-              ].map((tier) => {
-                const isSelected = parseFloat(basePayInput) === parseFloat(tier.value);
-                return (
-                  <Pressable
-                    key={tier.value}
-                    onPress={() => setBasePayInput(tier.value)}
-                    className={`rounded-xl border px-3 py-1.5 ${
-                      isSelected
-                        ? 'border-[#800020] bg-[#800020]'
-                        : 'border-stone-200 bg-stone-100 active:bg-stone-200'
-                    }`}
-                  >
-                    <Text
-                      className={`text-xs font-bold ${
-                        isSelected ? 'text-white' : 'text-stone-700'
-                      }`}
-                    >
-                      {tier.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-          <AdminNumberInput
-            label="Base Daily Shift Pay"
-            mode="currency"
-            value={basePayInput}
-            onChangeText={setBasePayInput}
-            placeholder="645.00"
-            helperText="Adjustable per role/seniority (starts at ₱645.00 PH Minimum Wage)"
-          />
-
-          <AdminNumberInput
-            label="Discretionary Shift Bonus / Add-on"
-            mode="currency"
-            value={addonPayInput}
-            onChangeText={setAddonPayInput}
-            placeholder="e.g. 150.00"
-            helperText="Added on top of base daily pay for event rushes or top performance"
-          />
-
-          {/* Live Total Shift Pay Preview */}
-          <View className="flex-row items-center justify-between rounded-xl border border-stone-200 bg-stone-50 p-3.5">
-            <Text className="text-sm font-bold text-stone-600">Total Shift Pay</Text>
-            <Text className="text-xl font-black text-stone-900">
-              ₱{((parseFloat(basePayInput) || 0) + (parseFloat(addonPayInput) || 0)).toFixed(2)}
-            </Text>
-          </View>
-        </View>
-      </AdminModal>
+      {resetPinStaff && (
+        <ResetPinModal
+          visible={!!resetPinStaff}
+          staff={resetPinStaff}
+          onClose={() => setResetPinStaff(null)}
+          onSuccess={() => {
+            loadStaff();
+            onRefresh?.();
+          }}
+        />
+      )}
     </ScrollView>
   );
 };

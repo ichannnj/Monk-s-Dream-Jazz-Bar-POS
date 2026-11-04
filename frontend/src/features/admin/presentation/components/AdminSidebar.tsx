@@ -63,7 +63,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   const reportItems: NavItem[] = [
     { id: 'sales', label: 'Sales & Transactions', icon: Receipt },
-    { id: 'attendance', label: 'Attendance', icon: Clock },
+    { id: 'attendance', label: 'Attendance & Payroll', icon: Clock },
     { id: 'settings', label: 'Venue Settings', icon: Settings },
     { id: 'profile', label: 'My Profile & Security', icon: Shield },
   ];

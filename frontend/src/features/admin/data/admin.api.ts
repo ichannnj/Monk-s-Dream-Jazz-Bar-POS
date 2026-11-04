@@ -219,6 +219,7 @@ export interface CreateNonWorkflowStaffPayload {
   display_name: string;
   job_title: string;
   username?: string;
+  pin?: string;
   base_daily_rate: number;
   email?: string | null;
   phone?: string | null;
@@ -242,9 +243,14 @@ export interface AttendanceRecordAdmin {
   user_id: string;
   date: string;
   is_present: boolean;
+  shift_status?: 'CLOCKED_IN' | 'COMPLETED' | 'ABSENT';
+  clock_in_at?: string | null;
+  clock_out_at?: string | null;
+  hours_worked?: number;
   base_daily_pay: number;
   addon_pay: number;
   total_day_pay: number;
+  notes?: string | null;
   user?: {
     display_name: string;
     role: string;
@@ -872,13 +878,25 @@ export const adminApi = {
   },
 
   /**
-   * Staff Attendance & Payroll
+   * Staff Attendance & Payroll Ledger Query (Supports single date or date range)
    */
-  async getAttendanceRecords(dateStr: string): Promise<AttendanceRecordAdmin[]> {
-    const { data, error } = await supabase
+  async getAttendanceRecords(
+    startDate: string,
+    endDate?: string
+  ): Promise<AttendanceRecordAdmin[]> {
+    let query = supabase
       .from('attendance_records')
-      .select('*, users(username, display_name, role, is_workflow_staff, base_daily_rate)')
-      .eq('date', dateStr);
+      .select(
+        '*, users(username, display_name, role, job_title, is_workflow_staff, base_daily_rate)'
+      );
+
+    if (endDate && endDate !== startDate) {
+      query = query.gte('date', startDate).lte('date', endDate);
+    } else {
+      query = query.eq('date', startDate);
+    }
+
+    const { data, error } = await query.order('date', { ascending: false });
 
     if (error) throw error;
     return (data || []).map((row: any) => {
@@ -890,10 +908,36 @@ export const adminApi = {
       return {
         ...row,
         base_daily_pay: resolvedBase,
-        total_day_pay: resolvedBase + addon,
+        total_day_pay: row.is_present ? resolvedBase + addon : 0,
         user: row.users,
       };
     }) as AttendanceRecordAdmin[];
+  },
+
+  /**
+   * Admin Upsert Attendance Record (Manual Clock-In/Out, Absent override, and OT Bonus adjustment)
+   */
+  async adminUpsertAttendance(params: {
+    userId: string;
+    date: string;
+    isPresent: boolean;
+    shiftStatus: 'CLOCKED_IN' | 'COMPLETED' | 'ABSENT';
+    baseDailyPay: number;
+    addonPay: number;
+    notes?: string;
+  }): Promise<any> {
+    const { data, error } = await (supabase.rpc as any)('admin_upsert_attendance_record', {
+      p_user_id: params.userId,
+      p_date: params.date,
+      p_is_present: params.isPresent,
+      p_shift_status: params.shiftStatus,
+      p_base_daily_pay: params.baseDailyPay,
+      p_addon_pay: params.addonPay,
+      p_notes: params.notes || null,
+    });
+
+    if (error) throw error;
+    return data;
   },
 
   async updateDiscretionaryAddon(
@@ -1078,7 +1122,7 @@ export const adminApi = {
     const insertRow: Record<string, any> = {
       display_name: payload.display_name.trim(),
       username: resolvedUsername,
-      pin: null,
+      pin: payload.pin?.trim() || '0000',
       role: 'waiter',
       job_title: cleanTitle || 'Venue Staff',
       is_workflow_staff: false,
@@ -1216,11 +1260,34 @@ export const adminApi = {
       query = query.lt('created_at', filterOptions.endDate);
     }
 
-    const { data: payments, error } = await query;
-    if (error) {
-      console.error('[adminApi.getSalesOverview] DB query error:', error);
-      throw error;
+    // Query actual staff attendance payroll records within this boundary
+    let attendanceQuery = (supabase.from as any)('attendance_records').select(
+      'total_day_pay, is_present, date'
+    );
+    if (filterOptions.startDate) {
+      attendanceQuery = attendanceQuery.gte('date', filterOptions.startDate.split('T')[0]);
     }
+    if (filterOptions.endDate) {
+      attendanceQuery = attendanceQuery.lte('date', filterOptions.endDate.split('T')[0]);
+    }
+
+    const [paymentsRes, attendanceRes] = await Promise.all([
+      query,
+      attendanceQuery.eq('is_present', true),
+    ]);
+
+    const payments = paymentsRes.data;
+    if (paymentsRes.error) {
+      console.error('[adminApi.getSalesOverview] DB query error:', paymentsRes.error);
+      throw paymentsRes.error;
+    }
+
+    // Real payroll expense from attendance records
+    const attendanceRows = (attendanceRes.data || []) as any[];
+    const actualPayrollExpense = attendanceRows.reduce(
+      (sum, row) => sum + (Number(row.total_day_pay) || 0),
+      0
+    );
 
     let grossSales = 0;
     const channelBreakdown: Record<string, { sales: number; count: number }> = {
@@ -1324,8 +1391,13 @@ export const adminApi = {
 
     const orderCount = filtered.length;
     const averageTicket = orderCount > 0 ? grossSales / orderCount : 0;
-    // Labor: benchmark ₱450 per station shift, scaled with active volume
-    const totalLaborExpense = orderCount > 0 ? Math.min(grossSales * 0.18, 600) : 0;
+    // Real labor expense from attendance ledger (or fallback to active shift minimum wage baseline if unrecorded)
+    const totalLaborExpense =
+      actualPayrollExpense > 0
+        ? actualPayrollExpense
+        : orderCount > 0
+          ? Math.min(grossSales * 0.18, 645)
+          : 0;
     // COGS: 28% of gross
     const totalCogs = grossSales * 0.28;
     const estimatedNetProfit =

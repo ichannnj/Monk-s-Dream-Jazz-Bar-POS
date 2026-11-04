@@ -53,10 +53,11 @@
 
 > **Unified Floor & Counter Intake Role:** Floor staff perform both table ordering and checkout/billing on handheld tablets without needing role-switching or manager overrides. Counter staff (Baristas/Bartenders on `station_bar`) also have access to the full shared Floor POS (`FloorWorkspaceView`), Checks History, and Cash Drawer directly from their KDS tablet for customers ordering walk-up at the bar.
 >
-> **Dual Staff Identity Model (POS Users vs. Non-User Venue Staff):**
+> **Dual Staff Identity Model & Universal Timeclock Kiosk:**
 >
-> - **POS App Users (`is_workflow_staff: true`):** Operational staff who log into POS tablets with a `username` and a 4-digit numeric `pin`, assigned to one of the system terminal roles (`admin`, `cashier`, `waiter`, `station_bar`, `station_cafe`, `station_food`, `foh_runner`).
-> - **Non-User Venue Personnel (`is_workflow_staff: false`):** Venue support staff who do not use POS terminals (e.g., Dishwashers, Security, Cleaners, Sound Techs, Musicians, Barbacks, Kitchen Prep). They are registered in `public.users` with a custom `job_title` and `pin = NULL` for daily shift payroll and discretionary bonuses, while `authenticate_staff_credentials` strictly blocks non-workflow staff from logging into POS terminals.
+> - **POS App Users (`is_workflow_staff: true`):** Operational staff who log into POS tablets with a `username` and a 4-digit numeric `pin`, assigned to one of the system terminal roles (`admin`, `cashier`, `waiter`, `station_bar`, `station_cafe`, `station_food`, `foh_runner`). Logging into a POS terminal automatically registers their daily timeclock clock-in if not yet punched.
+> - **Non-User Venue Personnel (`is_workflow_staff: false`):** Venue support staff who do not use POS terminals (e.g., Dishwashers, Security, Cleaners, Sound Techs, Musicians, Barbacks, Kitchen Prep). Registered with custom `job_title`, base daily shift pay, and a 4-digit numeric PIN strictly used to clock in and out on the **Staff Timeclock Kiosk** (`?mode=timeclock` or modal). `authenticate_staff_credentials` strictly enforces `is_workflow_staff = true` to prevent non-POS staff from accessing floor or KDS ordering.
+> - **Dedicated Attendance & Payroll Ledger (`AdminAttendancePayrollView.tsx`):** Eliminates duplication with Staff Roster. Enables managers to audit attendance and calculate payroll expenses across any arbitrary date or period (Today, Yesterday, Specific Date, This Week, Select Week, This Month, Select Month, All-Time). Payroll is authoritatively derived from actual attendance records: clocked-in staff receive their fixed daily rate (`base_daily_pay`, minimum wage baseline ₱645.00) plus any supervisor-granted OT / Shift Bonus (`addon_pay`), while unclocked staff incur ₱0.00. Integrates directly into Admin Dashboard executive telemetry (Total Payroll, Labor Cost %, Net Profit).
 
 ### 2. Category-Based Station Routing (Not Location-Based)
 

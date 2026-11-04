@@ -126,15 +126,51 @@ export const adminTelemetryService = {
       if (bounds.benchmarkEnd)
         benchmarkQuery = benchmarkQuery.lt('created_at', bounds.benchmarkEnd);
 
-      const [paymentsRes, benchmarkRes, settingsRes] = await Promise.all([
+      // Query Staff Attendance Records & Active Staff Roster
+      let attendanceQuery = (supabase.from as any)('attendance_records').select(
+        'id, user_id, date, is_present, shift_status, base_daily_pay, addon_pay, total_day_pay'
+      );
+      if (bounds.startDate) {
+        attendanceQuery = attendanceQuery.gte('date', bounds.startDate.split('T')[0]);
+      }
+      if (bounds.endDate) {
+        attendanceQuery = attendanceQuery.lte('date', bounds.endDate.split('T')[0]);
+      }
+
+      const [paymentsRes, benchmarkRes, settingsRes, attendanceRes, staffRes] = await Promise.all([
         paymentsQuery,
         bounds.benchmarkStart ? benchmarkQuery : Promise.resolve({ data: [] }),
         (supabase.from as any)('venue_settings').select('operating_mode').limit(1).maybeSingle(),
+        attendanceQuery,
+        supabase.from('users').select('id, is_active, is_workflow_staff').eq('is_active', true),
       ]);
 
       const payments = (paymentsRes.data || []) as any[];
       const benchmarkPayments = (benchmarkRes.data || []) as any[];
       const activeOperatingMode = (settingsRes?.data?.operating_mode || 'CAFE') as 'CAFE' | 'EVENT';
+      const attendanceRows = (attendanceRes.data || []) as any[];
+      const activeStaffRows = (staffRes.data || []) as any[];
+
+      // Compute Attendance & Payroll Metrics
+      const totalActiveStaffCount = activeStaffRows.length;
+      const presentRows = attendanceRows.filter((r) => r.is_present);
+      const presentStaffCount = presentRows.length;
+      const clockedInStaffCount = attendanceRows.filter(
+        (r) => r.shift_status === 'CLOCKED_IN'
+      ).length;
+      const completedShiftsCount = attendanceRows.filter(
+        (r) => r.shift_status === 'COMPLETED'
+      ).length;
+
+      const basePayrollTotal = presentRows.reduce(
+        (sum, r) => sum + (Number(r.base_daily_pay) || 0),
+        0
+      );
+      const bonusPayrollTotal = presentRows.reduce((sum, r) => sum + (Number(r.addon_pay) || 0), 0);
+      const totalPayrollExpense = presentRows.reduce(
+        (sum, r) => sum + (Number(r.total_day_pay) || 0),
+        0
+      );
 
       // Compute Revenue & Payment Methods Split & Operating Mode Split
       let liveSalesTotal = 0;
@@ -588,6 +624,24 @@ export const adminTelemetryService = {
         digitalSales,
         cardSales,
 
+        // Attendance & Payroll Expenses (Real DB Ledger)
+        totalPayrollExpense,
+        basePayrollTotal,
+        bonusPayrollTotal,
+        laborCostPercent:
+          liveSalesTotal > 0
+            ? Number(((totalPayrollExpense / liveSalesTotal) * 100).toFixed(1))
+            : 0,
+        estimatedCogs: Number((liveSalesTotal * 0.28).toFixed(2)),
+        estimatedNetProfit: Math.max(
+          0,
+          Number((liveSalesTotal - liveSalesTotal * 0.28 - totalPayrollExpense).toFixed(2))
+        ),
+        clockedInStaffCount,
+        completedShiftsCount,
+        presentStaffCount,
+        totalActiveStaffCount,
+
         // Operating Mode Revenue Split (Cafe vs Event vs Total)
         cafeSales,
         eventSales,
@@ -633,6 +687,17 @@ export const adminTelemetryService = {
         cashSales: 0,
         digitalSales: 0,
         cardSales: 0,
+
+        totalPayrollExpense: 0,
+        basePayrollTotal: 0,
+        bonusPayrollTotal: 0,
+        laborCostPercent: 0,
+        estimatedCogs: 0,
+        estimatedNetProfit: 0,
+        clockedInStaffCount: 0,
+        completedShiftsCount: 0,
+        presentStaffCount: 0,
+        totalActiveStaffCount: 0,
 
         cafeSales: 0,
         eventSales: 0,

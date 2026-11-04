@@ -246,6 +246,52 @@ export class AuthApi {
   }
 
   /**
+   * Universal Timeclock Punch for ALL venue staff (POS users + non-POS support personnel).
+   * Calls PostgreSQL stored procedure `punch_staff_timeclock`.
+   */
+  async punchStaffTimeclock(
+    username: string,
+    pin: string,
+    action: 'AUTO' | 'CLOCK_IN' | 'CLOCK_OUT' = 'AUTO'
+  ): Promise<{
+    success: boolean;
+    actionTaken: 'CLOCKED_IN' | 'CLOCKED_OUT';
+    user: AuthStaffUser;
+    date: string;
+    clockInAt: string;
+    clockOutAt: string | null;
+    hoursWorked: number;
+    baseDailyPay: number;
+    addonPay: number;
+    totalDayPay: number;
+  }> {
+    const cleanUsername = username.trim().toLowerCase();
+    const cleanPin = pin.trim();
+
+    if (!cleanUsername) {
+      throw new Error('Staff ID / Username is required.');
+    }
+    if (!cleanPin || cleanPin.length !== 4) {
+      throw new Error('4-digit PIN is required.');
+    }
+
+    const { data, error } = await (supabase.rpc as any)('punch_staff_timeclock', {
+      p_username: cleanUsername,
+      p_pin: cleanPin,
+      p_action: action,
+    });
+
+    if (error) {
+      throw new Error(error.message || 'Timeclock punch failed.');
+    }
+    if (!data || !(data as any).success) {
+      throw new Error((data as any)?.error || 'Timeclock punch failed. Please verify credentials.');
+    }
+
+    return data as any;
+  }
+
+  /**
    * Fetch active staff directory for administrative shift overviews.
    */
   async getStaffList() {

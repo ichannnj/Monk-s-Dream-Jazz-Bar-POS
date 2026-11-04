@@ -19,7 +19,18 @@ import { posApi } from '../../../shared/infrastructure/api';
 import { PinCodeInput } from '../components/PinCodeInput';
 import { TrainingModeSwitch } from '../components/TrainingModeSwitch';
 import { ForgotPinModal } from '../components/ForgotPinModal';
-import { AlertCircle, Shield, Users, Eye, EyeOff, Lock, UserCheck } from 'lucide-react-native';
+import {
+  AlertCircle,
+  Shield,
+  Users,
+  Eye,
+  EyeOff,
+  Lock,
+  UserCheck,
+  Clock,
+  ExternalLink,
+} from 'lucide-react-native';
+import { TimeclockKioskScreen } from './TimeclockKioskScreen';
 import { styles } from './LoginScreen.styles';
 
 const JAZZ_HERO_IMAGE = require('../../../../../assets/images/jazz-club-stage.jpg');
@@ -36,7 +47,7 @@ export const LoginScreen: React.FC = () => {
   // Brand font 'Raconteur NF' is loaded via global.css @font-face and CDNFonts for web/tablets
 
   // Form State
-  const [authMode, setAuthMode] = useState<'staff' | 'admin'>('staff');
+  const [authMode, setAuthMode] = useState<'staff' | 'admin' | 'timeclock'>('staff');
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -218,6 +229,10 @@ export const LoginScreen: React.FC = () => {
     [username, authMode, handleClockIn]
   );
 
+  if (authMode === 'timeclock') {
+    return <TimeclockKioskScreen onBackToLogin={() => setAuthMode('staff')} />;
+  }
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -310,7 +325,7 @@ export const LoginScreen: React.FC = () => {
                 </Text>
               </View>
 
-              {/* Dual-Mode Toggle: Staff PIN Clock-In vs Admin Portal Login */}
+              {/* Mode Toggle: Staff PIN Clock-In vs Admin Portal Login vs Timeclock Kiosk */}
               <View style={styles.modeToggleContainer}>
                 <Pressable
                   onPress={() => {
@@ -329,7 +344,7 @@ export const LoginScreen: React.FC = () => {
                       authMode === 'staff' && styles.modeToggleTextActive,
                     ]}
                   >
-                    Staff PIN Clock-In
+                    Floor POS
                   </Text>
                 </Pressable>
 
@@ -350,10 +365,39 @@ export const LoginScreen: React.FC = () => {
                       authMode === 'admin' && styles.modeToggleTextActive,
                     ]}
                   >
-                    Admin Portal (Password)
+                    Admin Portal
                   </Text>
                 </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    setAuthMode('timeclock');
+                    setErrorMessage(null);
+                    setIsError(false);
+                  }}
+                  style={styles.modeToggleTab}
+                  accessibilityRole="tab"
+                  accessibilityLabel="Timeclock Kiosk Mode"
+                >
+                  <Clock size={16} color="#6b7280" />
+                  <Text style={styles.modeToggleText}>Timeclock</Text>
+                </Pressable>
               </View>
+
+              {/* Quick Standalone Tab Launcher */}
+              {Platform.OS === 'web' && (
+                <View className="mb-4 flex-row items-center justify-end">
+                  <Pressable
+                    onPress={() => window.open('?mode=timeclock', '_blank')}
+                    className="flex-row items-center py-1 px-2.5 rounded-lg active:bg-stone-100"
+                  >
+                    <ExternalLink size={13} color="#800020" />
+                    <Text className="ml-1 text-xs font-bold text-[#800020]">
+                      Open Timeclock in New Tab ↗
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
 
               {/* Error Banner */}
               {errorMessage ? (
