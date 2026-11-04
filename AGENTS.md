@@ -78,6 +78,8 @@ All frontend business logic, views, stores, and API clients live strictly under 
 | **Delivery Orders**                 | `frontend/src/features/delivery/presentation/OnlineDeliveryModal.tsx`                    | Full screen files           |
 | **Cash Drawer Operations**          | `frontend/src/features/cash-drawer/presentation/CashDrawerModalView.tsx`                 | Monolithic views            |
 | **Menu & Auto-86 Catalog**          | `frontend/src/features/menu/data/menu.api.ts`                                            | Monolithic mock files       |
+| **Menu Image Upload & Storage**     | `frontend/src/features/menu/data/imageUpload.service.ts`                                 | Monolithic services         |
+| **Menu Image Field & Live Preview** | `frontend/src/features/admin/presentation/components/MenuImageUploadField.tsx`           | Monolithic components       |
 | **Station KDS (Bar/Kitchen)**       | `frontend/src/features/kds/presentation/common/UnifiedKdsScreen.tsx`                     | Entire KDS folder           |
 | **FOH Runner Expediter**            | `frontend/src/features/kds/presentation/foh-runner/screens/FohRunnerScreen.tsx`          | Full runner views           |
 | **Alerts & Call Bells**             | `frontend/src/features/alerts/presentation/SharedAlertsView.tsx`                         | Large modal trees           |

@@ -1,6 +1,7 @@
 export * from './ui/ConfirmationModal';
 export * from './ui/Header';
 export * from './ui/PosDropdown';
+export * from './ui/PosMultiSelectDropdown';
 export * from './navigation/Sidebar';
 export * from './toast/useToastStore';
 export * from './toast/ToastContainer';

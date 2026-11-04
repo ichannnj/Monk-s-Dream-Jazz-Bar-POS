@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Check, Utensils, AlertTriangle } from 'lucide-react-native';
+import {
+  Check,
+  Utensils,
+  AlertTriangle,
+  Wine,
+  Coffee,
+  FolderPlus,
+  Compass,
+  ShieldAlert,
+  Leaf,
+} from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { useAuthStore } from '@/features/auth';
+import { PosDropdown, PosMultiSelectDropdown, type PosDropdownOption } from '@/features/shared';
 import { adminApi, type ProductAdmin, type CategoryAdmin } from '../../../data/admin.api';
 import { AdminModal } from '../../components/AdminModal';
 import { AdminInput } from '../../components/AdminInput';
 import { AdminNumberInput } from '../../components/AdminNumberInput';
+import { MenuImageUploadField } from '../../components/MenuImageUploadField';
+import {
+  uploadAndRecordProductImage,
+  cleanupStorageObject,
+  type PreparedMenuImage,
+} from '@/features/menu/data/imageUpload.service';
 
 interface MenuItemModalProps {
   visible: boolean;
@@ -36,6 +54,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
   product,
   categories,
 }) => {
+  const { currentUser } = useAuthStore();
   const [name, setName] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [basePrice, setBasePrice] = useState('');
@@ -43,6 +62,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
   const [isResoldOutsideFood, setIsResoldOutsideFood] = useState(false);
   const [originalCost, setOriginalCost] = useState('');
   const [imageUrl, setImageUrl] = useState('');
+  const [stagedImage, setStagedImage] = useState<PreparedMenuImage | null>(null);
   const [description, setDescription] = useState('');
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
@@ -57,6 +77,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       setIsResoldOutsideFood(product.is_resold_outside_food);
       setOriginalCost(product.original_cost ? product.original_cost.toString() : '');
       setImageUrl(product.image_url || '');
+      setStagedImage(null);
       setDescription(product.description || '');
       setSelectedAllergens(product.allergens || []);
       setSelectedDietary(product.dietary || []);
@@ -68,11 +89,21 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       setIsResoldOutsideFood(false);
       setOriginalCost('');
       setImageUrl('');
+      setStagedImage(null);
       setDescription('');
       setSelectedAllergens([]);
       setSelectedDietary([]);
     }
   }, [product, categories, visible]);
+
+  // Clean up staged blob URL when modal closes or unmounts
+  useEffect(() => {
+    return () => {
+      if (stagedImage?.previewUri && stagedImage.previewUri.startsWith('blob:')) {
+        URL.revokeObjectURL(stagedImage.previewUri);
+      }
+    };
+  }, [stagedImage]);
 
   const handleToggleOutsideFood = () => {
     const nextVal = !isResoldOutsideFood;
@@ -129,7 +160,30 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
 
     setIsSubmitting(true);
     try {
+      let finalImageUrl: string | null = imageUrl.trim() || null;
+      let finalStoragePath: string | null = product?.image_storage_path || null;
+
       if (product) {
+        // If user staged a new local file, upload it now
+        if (stagedImage) {
+          const uploadRes = await uploadAndRecordProductImage(
+            product.id,
+            stagedImage,
+            currentUser?.id
+          );
+          if (!uploadRes.success) {
+            toast.error(uploadRes.error || 'Failed to upload photo to storage');
+            setIsSubmitting(false);
+            return;
+          }
+          finalImageUrl = uploadRes.publicUrl || null;
+          finalStoragePath = uploadRes.storagePath || null;
+        } else if (!finalImageUrl && product.image_storage_path) {
+          // User cleared the photo
+          cleanupStorageObject(product.image_storage_path);
+          finalStoragePath = null;
+        }
+
         await adminApi.updateProduct(product.id, {
           name: name.trim(),
           category_id: categoryId,
@@ -137,25 +191,44 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
           station_target: stationTarget,
           is_resold_outside_food: isResoldOutsideFood,
           original_cost: isResoldOutsideFood ? parseFloat(originalCost) || null : null,
-          image_url: imageUrl.trim() || null,
+          image_url: finalImageUrl,
+          image_storage_path: finalStoragePath,
           description: description.trim(),
           allergens: selectedAllergens,
           dietary: selectedDietary,
         });
         toast.success(`Updated "${name}"`, { title: 'Menu Item Saved' });
       } else {
-        await adminApi.createProduct({
+        // 1. Create product row first to obtain authoritative UUID
+        const newProduct = await adminApi.createProduct({
           name: name.trim(),
           category_id: categoryId,
           base_price: price,
           station_target: stationTarget,
           is_resold_outside_food: isResoldOutsideFood,
           original_cost: isResoldOutsideFood ? parseFloat(originalCost) || null : null,
-          image_url: imageUrl.trim() || null,
+          image_url: stagedImage ? null : finalImageUrl,
           description: description.trim(),
           allergens: selectedAllergens,
           dietary: selectedDietary,
         });
+
+        // 2. If a local file was staged, upload to newly created product's folder
+        if (stagedImage && newProduct?.id) {
+          const uploadRes = await uploadAndRecordProductImage(
+            newProduct.id,
+            stagedImage,
+            currentUser?.id
+          );
+          if (!uploadRes.success) {
+            console.warn(
+              '[MenuItemModal] Image upload failed after product creation:',
+              uploadRes.error
+            );
+            toast.error('Product created, but photo upload failed: ' + uploadRes.error);
+          }
+        }
+
         toast.success(`Created "${name}"`, { title: 'Menu Item Created' });
       }
       onSuccess();
@@ -166,6 +239,27 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  const stationOptions: PosDropdownOption<'bar' | 'kitchen'>[] = [
+    {
+      value: 'bar',
+      label: 'Bar Station (Cocktails, Wine & Espresso)',
+      description: 'Chits and tickets route to Barista & Bartender KDS',
+      icon: Wine,
+    },
+    {
+      value: 'kitchen',
+      label: 'Kitchen Station (Hot Food & Pastas)',
+      description: 'Chits and tickets route to Kitchen Chef KDS',
+      icon: Utensils,
+    },
+  ];
+
+  const categoryOptions: PosDropdownOption<string>[] = categories.map((c) => ({
+    value: c.id,
+    label: c.name,
+    icon: FolderPlus,
+  }));
 
   const footer = (
     <>
@@ -208,65 +302,28 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
           placeholder="e.g. Monk's Signature Old Fashioned"
         />
 
-        {/* Category */}
-        <View>
-          <Text className="text-base font-semibold text-stone-800 mb-2">Category</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {categories.map((c) => {
-              const isSelected = categoryId === c.id;
-              return (
-                <Pressable
-                  key={c.id}
-                  onPress={() => setCategoryId(c.id)}
-                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
-                    isSelected
-                      ? 'bg-[#800020] border-[#800020]'
-                      : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
-                  }`}
-                >
-                  <Text
-                    className={`text-base font-semibold ${isSelected ? 'text-white' : 'text-stone-700'}`}
-                  >
-                    {c.name}
-                  </Text>
-                </Pressable>
-              );
-            })}
+        {/* Category & Target Station Dropdowns */}
+        <View className="flex-col sm:flex-row gap-4">
+          <View className="flex-1">
+            <Text className="text-base font-semibold text-stone-800 mb-2">Category</Text>
+            <PosDropdown
+              options={categoryOptions}
+              value={categoryId}
+              onChange={setCategoryId}
+              sheetTitle="Select Menu Category"
+              className="w-full"
+            />
           </View>
-        </View>
 
-        {/* Station Target */}
-        <View>
-          <Text className="text-base font-semibold text-stone-800 mb-2">Target Station</Text>
-          <View className="flex-col sm:flex-row gap-3">
-            <Pressable
-              onPress={() => setStationTarget('bar')}
-              className={`min-h-[48px] flex-1 items-center justify-center rounded-xl border transition-all ${
-                stationTarget === 'bar'
-                  ? 'bg-[#800020] border-[#800020]'
-                  : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
-              }`}
-            >
-              <Text
-                className={`text-base font-bold ${stationTarget === 'bar' ? 'text-white' : 'text-stone-700'}`}
-              >
-                🍸 Bar Station (Drinks/Espresso)
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setStationTarget('kitchen')}
-              className={`min-h-[48px] flex-1 items-center justify-center rounded-xl border transition-all ${
-                stationTarget === 'kitchen'
-                  ? 'bg-[#800020] border-[#800020]'
-                  : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
-              }`}
-            >
-              <Text
-                className={`text-base font-bold ${stationTarget === 'kitchen' ? 'text-white' : 'text-stone-700'}`}
-              >
-                🍳 Kitchen Station (Food/Pastas)
-              </Text>
-            </Pressable>
+          <View className="flex-1">
+            <Text className="text-base font-semibold text-stone-800 mb-2">Target Station</Text>
+            <PosDropdown
+              options={stationOptions}
+              value={stationTarget}
+              onChange={setStationTarget}
+              sheetTitle="Select KDS Routing Station"
+              className="w-full"
+            />
           </View>
         </View>
 
@@ -334,12 +391,20 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
           </View>
         )}
 
-        {/* Image URL & Description */}
-        <AdminInput
-          label="Image URL (Optional)"
-          value={imageUrl}
-          onChangeText={setImageUrl}
-          placeholder="https://images.unsplash.com/..."
+        {/* Product Photo: File Upload & Live Preview */}
+        <MenuImageUploadField
+          currentImageUrl={product?.image_url}
+          currentStoragePath={product?.image_storage_path}
+          stagedImage={stagedImage}
+          onStagedImageChange={setStagedImage}
+          urlValue={imageUrl}
+          onUrlValueChange={setImageUrl}
+          onClearPhoto={() => {
+            setImageUrl('');
+            setStagedImage(null);
+          }}
+          productName={name}
+          stationTarget={stationTarget}
         />
 
         <AdminInput
@@ -352,59 +417,38 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
           className="min-h-[72px] py-2"
         />
 
-        {/* Allergens Flags */}
-        <View>
-          <Text className="text-base font-semibold text-stone-800 mb-2">
-            Allergen Warnings (Flags on POS Tablets & Chits)
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {ALLERGEN_OPTIONS.map((alg) => {
-              const active = selectedAllergens.includes(alg);
-              return (
-                <Pressable
-                  key={alg}
-                  onPress={() => toggleAllergen(alg)}
-                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
-                    active
-                      ? 'bg-rose-50 border-rose-300'
-                      : 'bg-stone-50 border-stone-200 active:bg-stone-100 hover:bg-stone-100'
-                  }`}
-                >
-                  <Text
-                    className={`text-base font-bold ${active ? 'text-rose-800' : 'text-stone-600'}`}
-                  >
-                    {active ? `⚠️ ${alg}` : alg}
-                  </Text>
-                </Pressable>
-              );
-            })}
+        {/* Dropdowns for Allergens & Dietary (Clean, Compact Dropdown View) */}
+        <View className="flex-col sm:flex-row gap-4">
+          <View className="flex-1">
+            <PosMultiSelectDropdown
+              label="Allergen Warnings"
+              placeholder="No allergens flagged"
+              sheetTitle="Select Allergen Flags"
+              options={ALLERGEN_OPTIONS.map((alg) => ({
+                value: alg,
+                label: `⚠️ ${alg}`,
+              }))}
+              selectedValues={selectedAllergens}
+              onChange={setSelectedAllergens}
+              variant="danger"
+              icon={ShieldAlert}
+            />
           </View>
-        </View>
 
-        {/* Dietary Tags */}
-        <View>
-          <Text className="text-base font-semibold text-stone-800 mb-2">Dietary Badges</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {DIETARY_OPTIONS.map((diet) => {
-              const active = selectedDietary.includes(diet);
-              return (
-                <Pressable
-                  key={diet}
-                  onPress={() => toggleDietary(diet)}
-                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
-                    active
-                      ? 'bg-emerald-50 border-emerald-300'
-                      : 'bg-stone-50 border-stone-200 active:bg-stone-100 hover:bg-stone-100'
-                  }`}
-                >
-                  <Text
-                    className={`text-base font-bold ${active ? 'text-emerald-800' : 'text-stone-600'}`}
-                  >
-                    {active ? `🌿 ${diet}` : diet}
-                  </Text>
-                </Pressable>
-              );
-            })}
+          <View className="flex-1">
+            <PosMultiSelectDropdown
+              label="Dietary Badges"
+              placeholder="No dietary badges"
+              sheetTitle="Select Dietary Tags"
+              options={DIETARY_OPTIONS.map((diet) => ({
+                value: diet,
+                label: `🌿 ${diet}`,
+              }))}
+              selectedValues={selectedDietary}
+              onChange={setSelectedDietary}
+              variant="success"
+              icon={Leaf}
+            />
           </View>
         </View>
       </View>

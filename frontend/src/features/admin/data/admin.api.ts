@@ -123,6 +123,9 @@ export interface ProductAdmin {
   original_cost: number | null;
   auto_86: boolean;
   image_url: string | null;
+  image_storage_path?: string | null;
+  image_mime_type?: string | null;
+  image_size_bytes?: number | null;
   description?: string;
   allergens?: string[];
   dietary?: string[];
@@ -455,6 +458,9 @@ export const adminApi = {
     is_resold_outside_food?: boolean;
     original_cost?: number | null;
     image_url?: string | null;
+    image_storage_path?: string | null;
+    image_mime_type?: string | null;
+    image_size_bytes?: number | null;
     description?: string;
     allergens?: string[];
     dietary?: string[];
@@ -470,11 +476,14 @@ export const adminApi = {
         is_resold_outside_food: params.is_resold_outside_food ?? false,
         original_cost: params.original_cost ?? null,
         image_url: params.image_url ?? null,
+        image_storage_path: params.image_storage_path ?? null,
+        image_mime_type: params.image_mime_type ?? null,
+        image_size_bytes: params.image_size_bytes ?? null,
         description: params.description ?? '',
         allergens: params.allergens ?? [],
         dietary: params.dietary ?? [],
         is_available: params.is_available ?? true,
-      })
+      } as any)
       .select('*, categories(id, name, slug)')
       .single();
 
@@ -492,6 +501,9 @@ export const adminApi = {
       is_resold_outside_food: boolean;
       original_cost: number | null;
       image_url: string | null;
+      image_storage_path: string | null;
+      image_mime_type: string | null;
+      image_size_bytes: number | null;
       description: string;
       allergens: string[];
       dietary: string[];
@@ -501,7 +513,7 @@ export const adminApi = {
   ): Promise<void> {
     const { error } = await supabase
       .from('products')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update({ ...updates, updated_at: new Date().toISOString() } as any)
       .eq('id', id);
 
     if (error) throw error;

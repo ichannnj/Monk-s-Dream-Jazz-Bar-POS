@@ -3,6 +3,12 @@
  * Monk's Dream Jazz Bar POS (Supabase BaaS)
  */
 import { supabase } from '../../shared/infrastructure/supabase';
+import {
+  prepareMenuImageForUpload,
+  uploadAndRecordProductImage,
+  cleanupStorageObject,
+  type PreparedMenuImage,
+} from './imageUpload.service';
 
 export class MenuApi {
   /**
@@ -177,37 +183,60 @@ export class MenuApi {
   }
 
   /**
-   * Upload an image file or blob to the 'menu-images' storage bucket.
+   * Upload an image file or blob to the 'menu-images' storage bucket using
+   * client-side optimization and PostgreSQL media audit recording.
    */
   async uploadProductImage(
     productId: string,
     file: Blob | File | ArrayBuffer,
-    fileExt: string = 'jpg'
+    fileExt: string = 'jpg',
+    uploadedByUserId?: string
   ) {
     try {
-      const fileName = `${productId}-${Date.now()}.${fileExt}`;
-      const filePath = `items/${fileName}`;
-
-      const { error } = await supabase.storage.from('menu-images').upload(filePath, file, {
-        cacheControl: '3600',
-        upsert: true,
-      });
-
-      if (error) {
-        throw new Error(error.message);
+      let prepared: PreparedMenuImage;
+      if (file instanceof Blob || (typeof File !== 'undefined' && file instanceof File)) {
+        prepared = await prepareMenuImageForUpload(file as Blob | File, `product-${productId}`);
+      } else {
+        const blob = new Blob([file], { type: `image/${fileExt}` });
+        prepared = await prepareMenuImageForUpload(blob, `product-${productId}`);
       }
 
-      const { data: publicUrlData } = supabase.storage.from('menu-images').getPublicUrl(filePath);
+      const res = await uploadAndRecordProductImage(productId, prepared, uploadedByUserId);
+      if (!res.success) {
+        return { success: false, error: res.error || 'Failed to upload image' };
+      }
 
-      const publicUrl = publicUrlData.publicUrl;
-
-      // Update product record
-      await this.updateProductImage(productId, publicUrl);
-
-      return { success: true, url: publicUrl };
+      return { success: true, url: res.publicUrl, storagePath: res.storagePath };
     } catch (err: any) {
       console.warn('uploadProductImage error:', err);
       return { success: false, error: err?.message || 'Failed to upload image' };
+    }
+  }
+
+  /**
+   * Delete a storage object and dissociate it from a product.
+   */
+  async deleteProductImage(productId: string, storagePath?: string) {
+    try {
+      if (storagePath) {
+        await cleanupStorageObject(storagePath);
+      }
+      await supabase
+        .from('products')
+        .update({
+          image_url: null,
+          image_storage_path: null,
+          image_mime_type: null,
+          image_size_bytes: null,
+          image_updated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq('id', productId);
+
+      return { success: true };
+    } catch (err: any) {
+      console.warn('deleteProductImage error:', err);
+      return { success: false, error: err?.message };
     }
   }
 

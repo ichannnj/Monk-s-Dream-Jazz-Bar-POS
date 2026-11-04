@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
+import { Image } from 'expo-image';
 import {
   Utensils,
   Plus,
@@ -11,6 +12,8 @@ import {
   Search,
   CheckCircle,
   AlertOctagon,
+  Coffee,
+  Wine,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import {
@@ -317,42 +320,61 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                     key={prod.id}
                     className="flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-stone-200 bg-white p-4 gap-3.5 transition-all"
                   >
-                    {/* Left Side: Product Info */}
-                    <View className="flex-1 sm:pr-4">
-                      <View className="flex-row items-center space-x-2.5 flex-wrap gap-1.5">
-                        <Text className="text-lg font-bold text-stone-900">{prod.name}</Text>
-                        <View
-                          className={`rounded-md px-2.5 py-0.5 border ${
-                            prod.station_target === 'bar'
-                              ? 'bg-purple-50 border-purple-200'
-                              : 'bg-amber-50 border-amber-200'
-                          }`}
-                        >
-                          <Text
-                            className={`text-base font-bold ${
-                              prod.station_target === 'bar' ? 'text-purple-800' : 'text-amber-800'
-                            }`}
-                          >
-                            {prod.station_target === 'bar' ? 'Bar' : 'Kitchen'}
-                          </Text>
-                        </View>
-                        {prod.is_resold_outside_food && (
-                          <View className="rounded-md bg-stone-100 border border-stone-300 px-2.5 py-0.5">
-                            <Text className="text-base font-medium text-stone-700">
-                              +20% Partner
-                            </Text>
-                          </View>
+                    {/* Left Side: Thumbnail & Product Info */}
+                    <View className="flex-1 flex-row items-center sm:pr-4">
+                      {/* Product Thumbnail */}
+                      <View className="h-14 w-14 rounded-xl overflow-hidden bg-stone-100 border border-stone-200 mr-3.5 items-center justify-center flex-shrink-0">
+                        {prod.image_url ? (
+                          <Image
+                            source={{ uri: prod.image_url }}
+                            style={{ width: '100%', height: '100%' }}
+                            contentFit="cover"
+                            cachePolicy="memory-disk"
+                          />
+                        ) : prod.station_target === 'bar' ? (
+                          <Wine size={22} color="#a8a29e" />
+                        ) : (
+                          <Utensils size={22} color="#a8a29e" />
                         )}
                       </View>
 
-                      <View className="flex-row items-center space-x-2 mt-1">
-                        <Text className="text-base text-stone-500">
-                          {prod.categories?.name || 'Unassigned'}
-                        </Text>
-                        <Text className="text-stone-300">•</Text>
-                        <Text className="text-base font-extrabold text-[#800020]">
-                          ₱{Number(prod.base_price || 0).toFixed(2)}
-                        </Text>
+                      {/* Title & Metadata */}
+                      <View className="flex-1">
+                        <View className="flex-row items-center space-x-2.5 flex-wrap gap-1.5">
+                          <Text className="text-lg font-bold text-stone-900">{prod.name}</Text>
+                          <View
+                            className={`rounded-md px-2.5 py-0.5 border ${
+                              prod.station_target === 'bar'
+                                ? 'bg-purple-50 border-purple-200'
+                                : 'bg-amber-50 border-amber-200'
+                            }`}
+                          >
+                            <Text
+                              className={`text-base font-bold ${
+                                prod.station_target === 'bar' ? 'text-purple-800' : 'text-amber-800'
+                              }`}
+                            >
+                              {prod.station_target === 'bar' ? 'Bar' : 'Kitchen'}
+                            </Text>
+                          </View>
+                          {prod.is_resold_outside_food && (
+                            <View className="rounded-md bg-stone-100 border border-stone-300 px-2.5 py-0.5">
+                              <Text className="text-base font-medium text-stone-700">
+                                +20% Partner
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+
+                        <View className="flex-row items-center space-x-2 mt-1">
+                          <Text className="text-base text-stone-500">
+                            {prod.categories?.name || 'Unassigned'}
+                          </Text>
+                          <Text className="text-stone-300">•</Text>
+                          <Text className="text-base font-extrabold text-[#800020]">
+                            ₱{Number(prod.base_price || 0).toFixed(2)}
+                          </Text>
+                        </View>
                       </View>
                     </View>
 

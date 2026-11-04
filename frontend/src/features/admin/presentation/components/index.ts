@@ -6,3 +6,4 @@ export * from './AdminNumberInput';
 export * from './AdminModal';
 export * from './AdminBottomNav';
 export * from './AdminMobileDrawer';
+export * from './MenuImageUploadField';
