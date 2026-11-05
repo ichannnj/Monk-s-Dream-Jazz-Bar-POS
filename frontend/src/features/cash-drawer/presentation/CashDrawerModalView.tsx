@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Coins, ArrowDownCircle, ArrowUpCircle, Vault, Calculator } from 'lucide-react-native';
+import { Coins, ArrowDownCircle, ArrowUpCircle, Vault, Calculator, Zap } from 'lucide-react-native';
+import { printerApi } from '@/features/printer';
 import { useOrderStore } from '../../orders/application/useOrderStore';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { formatCurrency } from '@monks/shared';
@@ -104,6 +105,11 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
       );
     }
 
+    // Auto-kick physical cash drawer on cash operations
+    printerApi.kickCashDrawer().catch((err) => {
+      console.warn('[CashDrawer] Auto-kick drawer signal error:', err);
+    });
+
     setModalAmount('');
     setModalReason('');
     setActiveModal('none');
@@ -133,7 +139,14 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
     },
   ];
 
-  const drawerActions: PosDropdownOption<'cash_in' | 'cash_out' | 'drop' | 'audit'>[] = [
+  const drawerActions: PosDropdownOption<'cash_in' | 'cash_out' | 'drop' | 'audit' | 'kick'>[] = [
+    {
+      value: 'kick',
+      label: 'Open Cash Drawer',
+      description: 'Send 24V solenoid pulse to pop cash drawer open',
+      icon: Zap,
+      variant: 'warning',
+    },
     {
       value: 'cash_in',
       label: 'Cash In (Add Change Float)',
@@ -189,7 +202,14 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
           <PosDropdown
             mode="action"
             options={drawerActions}
-            onChange={(act) => setActiveModal(act)}
+            onChange={(act) => {
+              if (act === 'kick') {
+                printerApi.kickCashDrawer();
+                toast.success('Cash drawer pulse signal sent', { title: 'Drawer Solenoid' });
+              } else {
+                setActiveModal(act);
+              }
+            }}
             triggerLabel="Drawer Actions"
             triggerIcon={Calculator}
             variant="wine"

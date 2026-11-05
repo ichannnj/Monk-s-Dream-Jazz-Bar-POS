@@ -1,6 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import { Settings, Percent, Receipt, Printer, Check, Save, Building } from 'lucide-react-native';
+import {
+  Settings,
+  Percent,
+  Receipt,
+  Printer,
+  Check,
+  Save,
+  Building,
+  ExternalLink,
+} from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type VenueSettings } from '../../data/admin.api';
 import { AdminInput } from '../components/AdminInput';
@@ -337,6 +346,28 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
                 IP and USB printer dispatch targets for Bar, Kitchen, and Runner Pass chits
               </Text>
             </View>
+          </View>
+
+          {/* Dedicated Web Serial Station Tab Banner */}
+          <View className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <View className="flex-1">
+              <Text className="text-base font-bold text-amber-950">
+                Single Store Printer &amp; Cash Drawer Station (?mode=printer)
+              </Text>
+              <Text className="text-sm text-amber-800 mt-0.5">
+                Run this dedicated background tab on the counter PC connected to the USB thermal
+                printer and RJ11 cash drawer. It listens to all store orders in real-time and
+                automatically pops open the cash drawer on cash payments.
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => window.open('?mode=printer', '_blank')}
+              className="px-4 py-2.5 rounded-xl bg-amber-600 active:bg-amber-700 flex-row items-center"
+            >
+              <Printer size={16} color="#ffffff" />
+              <Text className="ml-2 text-sm font-bold text-white">Open Station Tab</Text>
+              <ExternalLink size={14} color="#ffffff" className="ml-1.5" />
+            </Pressable>
           </View>
 
           <View className="flex-col md:flex-row gap-4">

@@ -7,6 +7,7 @@ import { BaristaKdsScreen, KitchenKdsScreen, FohRunnerScreen } from './src/featu
 import { ToastContainer } from './src/features/shared';
 import { LoginScreen, TimeclockKioskScreen, useAuthStore } from './src/features/auth';
 import { PublicEventCalendarScreen } from './src/features/events';
+import { HardwarePrintStationScreen, useDeviceHardwareStation } from './src/features/printer';
 import { useOrderStore } from './src/features/orders';
 import { useChatStore } from './src/features/chat';
 
@@ -48,7 +49,22 @@ export default function App() {
     setAdminView('admin');
   }, [currentUser]);
 
+  // Keep device-level hardware station active across all screens & logins if this PC is designated
+  const initDeviceStation = useDeviceHardwareStation((s) => s.initDeviceStation);
+  const isHardwareStation = useDeviceHardwareStation((s) => s.isHardwareStation);
+  useEffect(() => {
+    const unsubStation = initDeviceStation();
+    return () => {
+      unsubStation();
+    };
+  }, [initDeviceStation, isHardwareStation]);
+
   const renderScreen = () => {
+    // Check if running in dedicated Hardware Print & Cash Drawer Station tab (?mode=printer)
+    if (typeof window !== 'undefined' && window.location?.search?.includes('mode=printer')) {
+      return <HardwarePrintStationScreen />;
+    }
+
     // Check if running in dedicated Public Event Calendar tab (?mode=events)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=events')) {
       return <PublicEventCalendarScreen />;

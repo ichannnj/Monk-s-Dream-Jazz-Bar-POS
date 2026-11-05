@@ -10,6 +10,7 @@ import {
   FileText,
   RotateCw,
   Layers,
+  ExternalLink,
 } from 'lucide-react-native';
 import { supabase } from '@/features/shared/infrastructure/supabase';
 import { toast } from '@/features/shared/toast/useToastStore';
@@ -244,6 +245,18 @@ export const PrinterTerminalScreen: React.FC = () => {
             sheetTitle="Filter Print Queue"
             className="flex-1 sm:flex-initial min-w-[165px]"
           />
+
+          {/* Launch Dedicated Hardware Tab */}
+          <Pressable
+            onPress={() => window.open('?mode=printer', '_blank')}
+            className="min-h-[48px] min-w-[48px] flex-row items-center justify-center rounded-xl border border-stone-800 bg-stone-900 px-4 py-2 active:bg-stone-800 shadow-sm"
+          >
+            <Printer size={18} color="#f59e0b" />
+            <Text className="ml-2 text-base font-bold text-amber-400">
+              Launch Print Station Tab
+            </Text>
+            <ExternalLink size={14} color="#f59e0b" className="ml-1.5" />
+          </Pressable>
 
           {/* Diagnostic Kick Cash Drawer */}
           <Pressable

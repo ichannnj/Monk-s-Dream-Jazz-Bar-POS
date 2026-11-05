@@ -1,0 +1,38 @@
+{
+  "name": "@monks/desktop",
+  "version": "1.0.0",
+  "description": "Monk's Dream Jazz Bar POS — Windows Desktop App with Native Hardware Drivers",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "bar.monksdream.pos",
+    "productName": "Monk's Dream POS",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
+  },
+  "dependencies": {
+    "electron-serve": "^2.1.1"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  }
+}

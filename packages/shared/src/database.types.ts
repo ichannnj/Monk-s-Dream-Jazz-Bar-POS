@@ -1928,6 +1928,10 @@ export type Database = {
         Returns: Json
       }
       reconcile_operating_mode_6am: { Args: never; Returns: Json }
+      record_pos_staff_logout_punch: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       record_product_image_upload: {
         Args: {
           p_height?: number

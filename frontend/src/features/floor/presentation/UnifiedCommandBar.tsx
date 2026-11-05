@@ -1,9 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Sparkles, Coffee, Wine, ShoppingBag, Bike, PlusCircle } from 'lucide-react-native';
+import {
+  Sparkles,
+  Coffee,
+  Wine,
+  ShoppingBag,
+  Bike,
+  PlusCircle,
+  Printer,
+} from 'lucide-react-native';
 import { ChannelCategory, TableStatus } from '../../../types/floor';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
 import { TodaysEventBanner } from '@/features/events';
+import { HardwareStationToggleModal, useDeviceHardwareStation } from '@/features/printer';
 
 export type StatusFilter = 'all' | TableStatus;
 
@@ -51,6 +60,8 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
   operatingMode = 'CAFE',
   onToggleOperatingMode,
 }) => {
+  const [stationModalVisible, setStationModalVisible] = useState(false);
+  const isHardwareStation = useDeviceHardwareStation((s) => s.isHardwareStation);
   const channelOptions: PosDropdownOption<ChannelCategory>[] = [
     {
       value: 'all',
@@ -218,6 +229,24 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           )}
         </Pressable>
 
+        {/* Hardware Printer Station Quick Launch & Setting (Tablet/Desktop >= 768px) */}
+        <Pressable
+          onPress={() => setStationModalVisible(true)}
+          style={({ pressed }) => [
+            styles.printerPill,
+            isHardwareStation && styles.printerPillActive,
+            pressed && { opacity: 0.8 },
+          ]}
+          className="hidden md:flex"
+          accessibilityRole="button"
+          accessibilityLabel="Hardware Printer & Cash Drawer Station Settings"
+        >
+          <Printer size={16} color={isHardwareStation ? '#d97706' : '#57534e'} />
+          <Text style={[styles.printerText, isHardwareStation && styles.printerTextActive]}>
+            {isHardwareStation ? 'Station Active' : 'Station'}
+          </Text>
+        </Pressable>
+
         {/* Compact Staff Pill (Visible on Tablet/Desktop >= 768px) */}
         <View style={styles.staffPill} className="hidden md:flex">
           <View style={styles.staffAvatar}>
@@ -226,6 +255,12 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           <Text style={styles.staffNameText}>{staffName.split(' ')[0]}</Text>
         </View>
       </View>
+
+      {/* Hardware Station Configuration Modal */}
+      <HardwareStationToggleModal
+        visible={stationModalVisible}
+        onClose={() => setStationModalVisible(false)}
+      />
     </View>
   );
 };
@@ -446,6 +481,30 @@ const styles = StyleSheet.create({
   modeTextEvent: {
     fontSize: 16,
     fontWeight: '800',
+    color: '#b45309',
+  },
+  printerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: '#f5f5f4',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
+  },
+  printerPillActive: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+  },
+  printerText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#57534e',
+  },
+  printerTextActive: {
     color: '#b45309',
   },
 });

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
-import { Settings, User, Printer, LogOut, Sparkles, Wifi } from 'lucide-react-native';
+import { Settings, User, Printer, LogOut, Sparkles, Wifi, Lock } from 'lucide-react-native';
 import { useAuthStore } from '@/features/auth';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { getStaffInitials, getStaffRoleLabel } from '@/features/shared/utils/staffHelpers';
@@ -8,9 +8,16 @@ import { getStaffInitials, getStaffRoleLabel } from '@/features/shared/utils/sta
 interface ShiftSettingsModalProps {
   onClose?: () => void;
   onLogout?: () => void;
+  onLock?: () => void;
+  onClockOut?: () => void;
 }
 
-export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({ onClose, onLogout }) => {
+export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
+  onClose,
+  onLogout,
+  onLock,
+  onClockOut,
+}) => {
   const { currentUser, isTrainingMode, setIsTrainingMode } = useAuthStore();
 
   return (
@@ -59,12 +66,33 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({ onClose,
             </View>
           </View>
 
-          {onLogout ? (
-            <Pressable onPress={onLogout} style={styles.switchStaffBtn}>
-              <LogOut size={15} color="#dc2626" />
-              <Text style={styles.switchStaffText}>Switch Staff User / Lock</Text>
+          <View style={{ flexDirection: 'column', gap: 8, marginTop: 8 }}>
+            <Pressable
+              onPress={onLock || onLogout}
+              style={[
+                styles.switchStaffBtn,
+                { backgroundColor: '#f3f4f6', borderColor: '#e5e7eb' },
+              ]}
+            >
+              <Lock size={15} color="#4b5563" />
+              <Text style={[styles.switchStaffText, { color: '#374151' }]}>
+                Lock Terminal (Keep Shift Active)
+              </Text>
             </Pressable>
-          ) : null}
+
+            {onClockOut ? (
+              <Pressable
+                onPress={onClockOut}
+                style={[
+                  styles.switchStaffBtn,
+                  { backgroundColor: '#fef2f2', borderColor: '#fecaca' },
+                ]}
+              >
+                <LogOut size={15} color="#dc2626" />
+                <Text style={styles.switchStaffText}>Clock Out &amp; End Shift (Timeclock)</Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
 
         {/* Training Mode Card */}

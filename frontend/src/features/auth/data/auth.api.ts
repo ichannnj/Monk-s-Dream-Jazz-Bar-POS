@@ -292,6 +292,41 @@ export class AuthApi {
   }
 
   /**
+   * Automatic logout punch for POS workflow staff.
+   * Pauses their active attendance session, accumulates worked hours,
+   * and marks their shift paused until they log back in.
+   */
+  async recordPosStaffLogoutPunch(userId: string): Promise<{
+    success: boolean;
+    exempt?: boolean;
+    actionTaken?: string;
+    sessionHours?: number;
+    totalHours?: number;
+    displayName?: string;
+    message?: string;
+  }> {
+    if (!userId) {
+      return { success: false, message: 'No user ID provided.' };
+    }
+
+    try {
+      const { data, error } = await (supabase.rpc as any)('record_pos_staff_logout_punch', {
+        p_user_id: userId,
+      });
+
+      if (error) {
+        console.warn('Auto logout punch error:', error);
+        return { success: false, message: error.message };
+      }
+
+      return data as any;
+    } catch (err: any) {
+      console.warn('Auto logout punch failed:', err);
+      return { success: false, message: err?.message || 'Auto logout punch failed' };
+    }
+  }
+
+  /**
    * Fetch active staff directory for administrative shift overviews.
    */
   async getStaffList() {

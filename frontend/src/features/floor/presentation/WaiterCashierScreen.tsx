@@ -18,16 +18,15 @@ interface WaiterCashierScreenProps {
 }
 
 export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwitchToAdmin }) => {
-  const { logout } = useAuthStore();
+  const { lockTerminal, logout } = useAuthStore();
   const { isMobile } = useResponsive();
   const alerts = useOrderStore((state) => state.alerts);
   const unreadChatCount = useChatStore((state) =>
     state.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
   );
 
-  const handleLogout = () => {
-    toast.info('Terminal locked. Staff session ended.', { title: 'Clocked Out' });
-    logout();
+  const handleLockTerminal = () => {
+    lockTerminal();
   };
 
   // Navigation state (Sidebar)
@@ -42,7 +41,7 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
       <Sidebar
         activeTab={activeNavTab}
         onTabChange={setActiveNavTab}
-        onLogout={handleLogout}
+        onLogout={handleLockTerminal}
         onSwitchToAdmin={onSwitchToAdmin}
         alertCount={unreadAlerts}
         unreadChatCount={unreadChatCount}
@@ -63,7 +62,7 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
         ) : activeNavTab === 'chat' ? (
           <FloorChatView />
         ) : (
-          <ShiftSettingsModal onLogout={handleLogout} />
+          <ShiftSettingsModal onLock={handleLockTerminal} onClockOut={logout} />
         )}
       </View>
     </View>
