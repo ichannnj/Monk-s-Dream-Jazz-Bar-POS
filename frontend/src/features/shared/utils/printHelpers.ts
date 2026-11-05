@@ -181,7 +181,8 @@ export function printHtmlElement(elementId: string, options?: PrintOptions): boo
         display: block !important;
       }
 
-      .print-hidden {
+      .print-hidden,
+      .no-print {
         display: none !important;
       }
 

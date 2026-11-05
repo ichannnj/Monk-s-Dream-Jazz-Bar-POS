@@ -1,0 +1,5 @@
+schemaVersion: 1
+setup:
+  - project: monk-s-dream-jazz-bar
+    config: dev
+    path: ./

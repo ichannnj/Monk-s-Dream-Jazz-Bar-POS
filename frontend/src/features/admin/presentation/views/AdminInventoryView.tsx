@@ -12,6 +12,7 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   RotateCcw,
+  FileSpreadsheet,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import {
@@ -20,6 +21,7 @@ import {
   type SupplierAdmin,
   type StockMovementAdmin,
 } from '../../data/admin.api';
+import { exportInventoryValuationToExcel } from '../../utils/readingExcelExport';
 import { InventoryItemModal } from './inventory/InventoryItemModal';
 import { SupplierModal } from './inventory/SupplierModal';
 import { StocktakeAuditModal } from './inventory/StocktakeAuditModal';
@@ -227,6 +229,26 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
             sheetTitle="Select Inventory Section"
             className="flex-1 sm:flex-initial min-w-[195px]"
           />
+
+          {/* Export Inventory Valuation Button */}
+          <Pressable
+            onPress={() => {
+              try {
+                exportInventoryValuationToExcel(inventory, categoryFilter);
+                toast.success('Inventory valuation exported to Excel (.xls)', {
+                  title: 'Excel Export Ready',
+                });
+              } catch (err) {
+                console.error('[AdminInventoryView] Export error:', err);
+                toast.error('Failed to export inventory spreadsheet', { title: 'Export Error' });
+              }
+            }}
+            className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-stone-200 bg-white px-3.5 sm:px-4 active:bg-stone-50 shadow-xs"
+            accessibilityLabel="Export Inventory Valuation to Excel"
+          >
+            <FileSpreadsheet size={18} color="#047857" />
+            <Text className="ml-2 text-base font-bold text-stone-800">Export Excel</Text>
+          </Pressable>
 
           {activeTab === 'stock' && (
             <Pressable

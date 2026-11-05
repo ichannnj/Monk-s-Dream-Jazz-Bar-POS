@@ -11,6 +11,7 @@ import {
   List,
   Columns,
   Sparkles,
+  FileSpreadsheet,
 } from 'lucide-react-native';
 import { useEventStore } from '../../application/useEventStore';
 import { MonthCalendarGrid } from '../components/MonthCalendarGrid';
@@ -21,6 +22,7 @@ import { CreateEditEventModal } from '../components/CreateEditEventModal';
 import { ShareCalendarModal } from '../components/ShareCalendarModal';
 import { TodaysEventBanner } from '../components/TodaysEventBanner';
 import { generateMonthScheduleIcs, triggerIcsDownload } from '../../utils/eventIcsExport';
+import { exportEventsScheduleToExcel } from '@/features/admin/utils/readingExcelExport';
 import { toast } from '@/features/shared/toast/useToastStore';
 
 export const AdminEventsView: React.FC = () => {
@@ -213,7 +215,7 @@ export const AdminEventsView: React.FC = () => {
               </View>
             </View>
 
-            {/* Right Tools: Print, Export, Share */}
+            {/* Right Tools: Print, Excel Export, ICS, Share */}
             <View className="flex flex-row items-center gap-2 self-start sm:self-auto">
               {/* Print Calendar */}
               <Pressable
@@ -224,13 +226,33 @@ export const AdminEventsView: React.FC = () => {
                 <Text className="text-xs font-semibold text-stone-700">Print</Text>
               </Pressable>
 
+              {/* Export Excel (.xls) */}
+              <Pressable
+                onPress={() => {
+                  try {
+                    exportEventsScheduleToExcel(events, currentPeriodTitle());
+                    toast.success('Event run-of-show exported to Excel (.xls)', {
+                      title: 'Excel Export Ready',
+                    });
+                  } catch (err) {
+                    console.error('[AdminEventsView] Excel export error:', err);
+                    toast.error('Failed to export event spreadsheet', { title: 'Export Error' });
+                  }
+                }}
+                className="flex flex-row items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 sm:py-2 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-xs"
+                accessibilityLabel="Export Event Schedule to Excel"
+              >
+                <FileSpreadsheet size={14} color="#047857" />
+                <Text className="text-xs font-bold text-emerald-800">Excel</Text>
+              </Pressable>
+
               {/* Export .ICS */}
               <Pressable
                 onPress={handleExportMonthIcs}
                 className="flex flex-row items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-1.5 sm:py-2 text-stone-700 hover:bg-stone-50 transition-colors shadow-xs"
               >
                 <Download size={14} color="#57534e" />
-                <Text className="text-xs font-semibold text-stone-700">Export</Text>
+                <Text className="text-xs font-semibold text-stone-700">iCal</Text>
               </Pressable>
 
               {/* Share Live Link */}

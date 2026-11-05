@@ -14,6 +14,7 @@ import {
   AlertOctagon,
   Coffee,
   Wine,
+  FileSpreadsheet,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import {
@@ -23,6 +24,7 @@ import {
   type ModifierGroupAdmin,
   type InventoryItemAdmin,
 } from '../../data/admin.api';
+import { exportMenuCatalogToExcel } from '../../utils/readingExcelExport';
 import { MenuItemModal } from './menu/MenuItemModal';
 import { CategoryModal } from './menu/CategoryModal';
 import { ModifierGroupModal } from './menu/ModifierGroupModal';
@@ -239,6 +241,26 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
             sheetTitle="Select Menu Catalog Section"
             className="flex-1 sm:flex-initial min-w-[195px]"
           />
+
+          {/* Export Recipe Catalog & BOM Costing */}
+          <Pressable
+            onPress={() => {
+              try {
+                exportMenuCatalogToExcel(displayProducts);
+                toast.success('Recipe BOM & costing exported to Excel (.xls)', {
+                  title: 'Excel Export Ready',
+                });
+              } catch (err) {
+                console.error('[AdminRecipesView] Export error:', err);
+                toast.error('Failed to export recipe spreadsheet', { title: 'Export Error' });
+              }
+            }}
+            className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-stone-200 bg-white px-3.5 sm:px-4 active:bg-stone-50 shadow-xs"
+            accessibilityLabel="Export Recipe Catalog & BOM to Excel"
+          >
+            <FileSpreadsheet size={18} color="#047857" />
+            <Text className="ml-2 text-base font-bold text-stone-800">Export Excel</Text>
+          </Pressable>
 
           {activeTab === 'items' && (
             <Pressable
