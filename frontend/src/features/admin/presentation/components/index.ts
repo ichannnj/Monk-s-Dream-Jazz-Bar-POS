@@ -7,3 +7,4 @@ export * from './AdminModal';
 export * from './AdminBottomNav';
 export * from './AdminMobileDrawer';
 export * from './MenuImageUploadField';
+export * from './AdminQrPaymentManager';

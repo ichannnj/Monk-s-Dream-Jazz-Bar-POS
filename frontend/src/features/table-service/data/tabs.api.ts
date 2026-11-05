@@ -107,6 +107,8 @@ export async function settleTabAndRecordPayment(params: {
   tipAmount?: number;
   notes?: string;
   keepOpenForPrep?: boolean;
+  paymentChannel?: string;
+  referenceNumber?: string;
 }) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     params.tabId
@@ -127,14 +129,27 @@ export async function settleTabAndRecordPayment(params: {
       p_tip_amount: params.tipAmount || 0,
       p_notes: (params.notes || null) as any,
       p_keep_open_for_prep: Boolean(params.keepOpenForPrep),
+      p_payment_channel: (params.paymentChannel || null) as any,
+      p_reference_number: (params.referenceNumber || null) as any,
     };
 
     let { data, error } = await (supabase.rpc as any)('settle_tab_and_record_payment', rpcPayload);
 
-    if (error && error.message?.includes('p_keep_open_for_prep')) {
-      // Fallback if 9-arg migration not yet applied on remote DB
-      const { p_keep_open_for_prep: _ignored, ...legacyPayload } = rpcPayload;
-      const retry = await supabase.rpc('settle_tab_and_record_payment', legacyPayload as any);
+    if (
+      error &&
+      (error.message?.includes('p_keep_open_for_prep') ||
+        error.message?.includes('p_payment_channel') ||
+        error.message?.includes('schema'))
+    ) {
+      // Fallback if 11-arg migration not yet applied on remote DB
+      const { p_payment_channel: _ch, p_reference_number: _ref, ...legacy1Payload } = rpcPayload;
+      let retry = await supabase.rpc('settle_tab_and_record_payment', legacy1Payload as any);
+
+      if (retry.error && retry.error.message?.includes('p_keep_open_for_prep')) {
+        const { p_keep_open_for_prep: _ignored, ...legacyPayload } = legacy1Payload;
+        retry = await supabase.rpc('settle_tab_and_record_payment', legacyPayload as any);
+      }
+
       data = retry.data;
       error = retry.error;
 

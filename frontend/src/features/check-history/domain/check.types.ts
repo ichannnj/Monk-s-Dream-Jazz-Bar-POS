@@ -27,6 +27,8 @@ export interface SettledCheckItem {
   serviceCharge: number;
   total: number;
   paymentMethod: string;
+  paymentChannel?: string;
+  referenceNumber?: string;
   drawerTarget: 'main' | 'bar' | 'consolidated';
   cashierName: string;
   settledAt: string;

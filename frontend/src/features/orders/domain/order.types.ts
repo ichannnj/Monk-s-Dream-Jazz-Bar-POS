@@ -55,13 +55,17 @@ export interface OrderState {
     paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     cashierName?: string,
     discountAmount?: number,
-    staffId?: string
+    staffId?: string,
+    paymentChannel?: string,
+    referenceNumber?: string
   ) => void;
   settleTableGroup: (
     tableId: string,
     paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     cashierName?: string,
-    staffId?: string
+    staffId?: string,
+    paymentChannel?: string,
+    referenceNumber?: string
   ) => void;
   settleTakeoutOrder: (
     takeoutId: string,
@@ -71,6 +75,8 @@ export interface OrderState {
       cashierName?: string;
       discountAmount?: number;
       staffId?: string;
+      paymentChannel?: string;
+      referenceNumber?: string;
     }
   ) => void;
   createTakeoutOrder: (

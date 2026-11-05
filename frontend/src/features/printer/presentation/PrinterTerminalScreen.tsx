@@ -146,9 +146,18 @@ export const PrinterTerminalScreen: React.FC = () => {
               Round: <Text className="font-semibold text-stone-800">#{rawData.roundNumber}</Text>
             </Text>
           )}
-          {rawData.paymentMethod && (
+          {(rawData.paymentMethod || rawData.payment_method) && (
             <Text className="ml-4 text-base text-stone-600">
-              Payment: <Text className="font-semibold text-stone-800">{rawData.paymentMethod}</Text>
+              Payment:{' '}
+              <Text className="font-semibold text-stone-800">
+                {rawData.payment_channel ||
+                  rawData.paymentChannel ||
+                  rawData.payment_method ||
+                  rawData.paymentMethod}
+                {rawData.reference_number || rawData.referenceNumber
+                  ? ` (Ref: #${rawData.reference_number || rawData.referenceNumber})`
+                  : ''}
+              </Text>
             </Text>
           )}
           <Text className="ml-4 text-base text-stone-500">

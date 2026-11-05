@@ -222,7 +222,10 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
   const handleConfirmPayment = (
     mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
-    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp'
+    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    _tenderedAmount?: number,
+    paymentChannel?: string,
+    referenceNumber?: string
   ) => {
     if (!checkoutContext) return;
 
@@ -230,7 +233,9 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
       const methodLabels: Record<string, string> = {
         cash: 'Cash',
         card: 'Credit / Debit Card',
-        digital_wallet: 'Digital Wallet (QR)',
+        digital_wallet: paymentChannel
+          ? `${paymentChannel}${referenceNumber ? ` (Ref #${referenceNumber})` : ''}`
+          : 'Digital Wallet (QR)',
         platform_prepaid: 'Platform Prepaid',
         comp: 'House Comp (100%)',
       };
@@ -246,6 +251,8 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           completeOrder,
           cashierName: currentUser?.displayName,
           staffId: currentUser?.id,
+          paymentChannel,
+          referenceNumber,
         });
 
         toast.success(
@@ -275,7 +282,9 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           checkoutContext.table.id,
           method,
           currentUser?.displayName,
-          currentUser?.id
+          currentUser?.id,
+          paymentChannel,
+          referenceNumber
         );
         toast.success(
           `Table ${tableCode} settled in full via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt dispatched to printer station`,
@@ -288,7 +297,9 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           method,
           currentUser?.displayName,
           0,
-          currentUser?.id
+          currentUser?.id,
+          paymentChannel,
+          referenceNumber
         );
         toast.success(
           `Tab "${tabName}" on Table ${tableCode} settled via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt dispatched to printer station`,

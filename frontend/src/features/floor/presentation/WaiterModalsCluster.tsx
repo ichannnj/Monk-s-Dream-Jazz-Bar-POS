@@ -87,7 +87,9 @@ export interface WaiterModalsClusterProps {
     mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
     method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
-    tenderedAmount?: number
+    tenderedAmount?: number,
+    paymentChannel?: string,
+    referenceNumber?: string
   ) => void;
 }
 
@@ -109,7 +111,7 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
   onCloseOpenTabModal,
   onConfirmOpenTab,
   isOpenDirectModalOpen = false,
-  onCloseOpenDirectModal = () => { },
+  onCloseOpenDirectModal = () => {},
   isSplitTabDirect = false,
   isTakeoutModalOpen,
   onCloseTakeoutModal,

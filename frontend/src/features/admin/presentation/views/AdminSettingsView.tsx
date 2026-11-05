@@ -5,6 +5,7 @@ import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type VenueSettings } from '../../data/admin.api';
 import { AdminInput } from '../components/AdminInput';
 import { AdminNumberInput } from '../components/AdminNumberInput';
+import { AdminQrPaymentManager } from '../components/AdminQrPaymentManager';
 
 interface AdminSettingsViewProps {
   onRefresh?: () => void;
@@ -319,7 +320,10 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
           </View>
         </View>
 
-        {/* SECTION 3: PRINTER & HARDWARE ROUTING */}
+        {/* SECTION 3: DIGITAL WALLET & QR PAYMENT METHODS */}
+        <AdminQrPaymentManager />
+
+        {/* SECTION 4: PRINTER & HARDWARE ROUTING */}
         <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs space-y-4">
           <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
             <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">

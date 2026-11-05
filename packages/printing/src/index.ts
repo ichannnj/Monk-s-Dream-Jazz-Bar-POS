@@ -31,6 +31,8 @@ export interface CustomerReceiptPayload {
   tendered: number;
   change: number;
   paymentMethod: string;
+  paymentChannel?: string;
+  referenceNumber?: string;
   timestamp: string;
   isReprint?: boolean;
 }
@@ -224,7 +226,13 @@ export class UsbEscPosPrinter implements IPrinterService {
 
     push(`Tendered: PHP ${(payload.tendered / 100).toFixed(2).padStart(32, ' ')}\n`);
     push(`Change:   PHP ${(payload.change / 100).toFixed(2).padStart(32, ' ')}\n`);
-    push(`Payment:     ${payload.paymentMethod.padStart(34, ' ')}\n`);
+    const paymentLabel = payload.paymentChannel
+      ? `${payload.paymentChannel} QR`
+      : payload.paymentMethod;
+    push(`Payment:     ${paymentLabel.padStart(34, ' ')}\n`);
+    if (payload.referenceNumber) {
+      push(`Ref #:       #${payload.referenceNumber.padStart(33, ' ')}\n`);
+    }
     push('------------------------------------------------\n');
 
     // Center alignment: ESC a 1

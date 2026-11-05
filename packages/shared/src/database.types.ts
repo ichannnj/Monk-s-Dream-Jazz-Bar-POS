@@ -564,7 +564,9 @@ export type Database = {
           id: string
           notes: string | null
           operating_mode: Database["public"]["Enums"]["operating_mode"]
+          payment_channel: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
+          reference_number: string | null
           staff_id: string | null
           tab_id: string
           tip_amount: number
@@ -578,7 +580,9 @@ export type Database = {
           id?: string
           notes?: string | null
           operating_mode?: Database["public"]["Enums"]["operating_mode"]
+          payment_channel?: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
+          reference_number?: string | null
           staff_id?: string | null
           tab_id: string
           tip_amount?: number
@@ -592,7 +596,9 @@ export type Database = {
           id?: string
           notes?: string | null
           operating_mode?: Database["public"]["Enums"]["operating_mode"]
+          payment_channel?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
+          reference_number?: string | null
           staff_id?: string | null
           tab_id?: string
           tip_amount?: number
@@ -1674,6 +1680,48 @@ export type Database = {
         }
         Relationships: []
       }
+      venue_qr_payment_channels: {
+        Row: {
+          account_name: string
+          account_number: string
+          channel_code: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          qr_image_url: string
+          qr_storage_path: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          account_name: string
+          account_number: string
+          channel_code: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          qr_image_url: string
+          qr_storage_path?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          channel_code?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          qr_image_url?: string
+          qr_storage_path?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       venue_settings: {
         Row: {
           daily_overhead_cost: number
@@ -1909,7 +1957,9 @@ export type Database = {
           p_discount_amount?: number
           p_keep_open_for_prep?: boolean
           p_notes?: string
+          p_payment_channel?: string
           p_payment_method: Database["public"]["Enums"]["payment_method"]
+          p_reference_number?: string
           p_staff_id: string
           p_tab_id: string
           p_tip_amount?: number

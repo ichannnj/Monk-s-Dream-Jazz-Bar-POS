@@ -20,6 +20,8 @@ export const checksApi = {
           tab_id,
           staff_id,
           payment_method,
+          payment_channel,
+          reference_number,
           amount,
           corkage_amount,
           discount_amount,
@@ -173,6 +175,8 @@ export const checksApi = {
           serviceCharge,
           total,
           paymentMethod: p.payment_method || 'CASH',
+          paymentChannel: p.payment_channel || undefined,
+          referenceNumber: p.reference_number || undefined,
           drawerTarget: (p.drawer_target || 'main') as 'main' | 'bar' | 'consolidated',
           cashierName,
           settledAt: p.created_at,
@@ -214,7 +218,21 @@ export const checksApi = {
           const matchRef = chk.tableOrRef.toLowerCase().includes(q);
           const matchCashier = chk.cashierName.toLowerCase().includes(q);
           const matchItem = chk.items.some((it) => it.name.toLowerCase().includes(q));
-          return matchCheck || matchGuest || matchRef || matchCashier || matchItem;
+          const matchPaymentRef = chk.referenceNumber
+            ? chk.referenceNumber.toLowerCase().includes(q)
+            : false;
+          const matchChannel = chk.paymentChannel
+            ? chk.paymentChannel.toLowerCase().includes(q)
+            : false;
+          return (
+            matchCheck ||
+            matchGuest ||
+            matchRef ||
+            matchCashier ||
+            matchItem ||
+            matchPaymentRef ||
+            matchChannel
+          );
         }
 
         return true;

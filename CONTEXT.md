@@ -137,6 +137,13 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 - **Public Read-Only Live Link (`?mode=events`):** Standalone web route for musicians, staff, and guests allowing real-time calendar viewing without POS login. Synchronized reactively via Supabase Realtime (`venue_events`), with 1-click `.ics` iCalendar download and dedicated `@media print` layout for high-contrast printable gig sheets.
 - **Floor & Back-Office Awareness:** Floor POS command bar (`UnifiedCommandBar.tsx`) and Admin Dashboard (`AdminDashboardView.tsx`) render a live "Tonight at Monk's Dream" banner with artist details, showtime, and sound check status when an event is scheduled today.
 
+### 9. Cashless QR Payment Lifecycle & 4-Digit Reference Tracking
+
+- **Dynamic Multi-Channel QR Management:** Managed in Admin Back-Office (`AdminSettingsView.tsx` -> `AdminQrPaymentManager.tsx`) backed by `public.venue_qr_payment_channels` and Supabase Storage bucket `payment-qr-codes`. Administrators can upload custom QR codes, enter Account Name and Account/Mobile Number, and toggle channels active/inactive for GCash, Maya, Bank Transfer (BPI, BDO, UnionBank), and QRPH.
+- **Tablet Floor Checkout UX (`BillSettlementModal.tsx` & `FullscreenQrModal.tsx`):** When selecting "GCash / Maya QR Wallet", the modal renders horizontal channel selector pills, a high-contrast scannable QR card, and a 1-tap **"Show to Guest (Full Screen)"** expander that opens a dedicated, high-contrast modal displaying the exact amount due and scannable QR code for guest phones.
+- **Strict 4-Digit Reference Verification:** Settlement requires inputting the last 4 digits of the payment confirmation reference number (`/^\d{4}$/`). The "Confirm Payment" button remains strictly disabled until exactly 4 digits are entered.
+- **End-to-End Downstream Audit & Receipts:** The payment channel and reference number are saved in `payments` (`payment_channel`, `reference_number`), printed on ESC/POS thermal chits (`GCash (Ref: #8921)`), and indexed in Checks History (`ChecksHistoryView.tsx`) with instant reference search.
+
 ---
 
 ## 🗺️ System Topology

@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, Pressable, StyleSheet, ScrollView, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  Modal,
+  Pressable,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
 import {
   X,
   CreditCard,
@@ -11,6 +21,9 @@ import {
   Receipt,
   Sparkles,
   ShoppingBag,
+  Maximize2,
+  ShieldCheck,
+  AlertCircle,
 } from 'lucide-react-native';
 import { TableItem, CustomerTab, TakeoutOrder } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
@@ -22,6 +35,8 @@ import {
   PosDropdownOption,
   useResponsive,
 } from '@/features/shared';
+import { qrPaymentChannelsApi, type QrPaymentChannel } from '../../data/qrPaymentChannels.api';
+import { FullscreenQrModal } from '../components/FullscreenQrModal';
 import { styles } from './BillSettlementModal.styles';
 
 interface BillSettlementModalProps {
@@ -36,7 +51,9 @@ interface BillSettlementModalProps {
     mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
     method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
-    tenderedAmount?: number
+    tenderedAmount?: number,
+    paymentChannel?: string,
+    referenceNumber?: string
   ) => void;
 }
 
@@ -60,6 +77,38 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const [shouldPrintReceipt, setShouldPrintReceipt] = useState(true);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
+  // Digital Wallet QR & Reference Number Tracking State
+  const [qrChannels, setQrChannels] = useState<QrPaymentChannel[]>([]);
+  const [selectedQrChannel, setSelectedQrChannel] = useState<QrPaymentChannel | null>(null);
+  const [referenceNumber, setReferenceNumber] = useState<string>('');
+  const [isFullscreenQrOpen, setIsFullscreenQrOpen] = useState(false);
+  const [isLoadingQrChannels, setIsLoadingQrChannels] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      let isMounted = true;
+      setIsLoadingQrChannels(true);
+      qrPaymentChannelsApi
+        .fetchActiveQrPaymentChannels()
+        .then((channels) => {
+          if (!isMounted) return;
+          setQrChannels(channels);
+          if (channels.length > 0 && !selectedQrChannel) {
+            setSelectedQrChannel(channels[0]);
+          }
+          setIsLoadingQrChannels(false);
+        })
+        .catch((err) => {
+          console.warn('[BillSettlementModal] Failed to load QR channels:', err);
+          if (isMounted) setIsLoadingQrChannels(false);
+        });
+
+      return () => {
+        isMounted = false;
+      };
+    }
+  }, [visible]);
+
   const isTakeout = Boolean(takeoutOrder);
   if (!table && !takeoutOrder) return null;
 
@@ -77,9 +126,14 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const numericTendered = parseFloat(tenderedCash) || 0;
   const changeDue = Math.max(0, numericTendered - grandTotal);
 
-  // Strict payment validation guard
+  // Strict reference number & payment validation guards
+  const isRefNumberValid = /^\d{4}$/.test(referenceNumber.trim());
   const isPaymentValid =
-    selectedMethod === 'cash' ? numericTendered >= grandTotal && numericTendered > 0 : true;
+    selectedMethod === 'cash'
+      ? numericTendered >= grandTotal && numericTendered > 0
+      : selectedMethod === 'digital_wallet'
+        ? isRefNumberValid
+        : true;
 
   const handleOpenConfirm = () => {
     if (!isPaymentValid) {
@@ -89,6 +143,13 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             ? `Please enter cash tendered (min. ${formatCurrency(grandTotal)})`
             : `Tendered amount (${formatCurrency(numericTendered)}) is less than total due (${formatCurrency(grandTotal)})`,
           { title: 'Invalid Cash Input' }
+        );
+      } else if (selectedMethod === 'digital_wallet') {
+        toast.warning(
+          referenceNumber.trim().length === 0
+            ? 'Please enter the last 4 digits of the payment reference number.'
+            : `Reference number must be exactly 4 numeric digits (currently ${referenceNumber.trim().length}/4).`,
+          { title: 'Reference Number Required' }
         );
       }
       return;
@@ -102,9 +163,14 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         isTakeout ? 'takeout' : settlementMode,
         activeTab?.tabIndex || 1,
         selectedMethod,
-        selectedMethod === 'cash' ? numericTendered : undefined
+        selectedMethod === 'cash' ? numericTendered : undefined,
+        selectedMethod === 'digital_wallet'
+          ? selectedQrChannel?.name || 'Digital Wallet'
+          : undefined,
+        selectedMethod === 'digital_wallet' ? referenceNumber.trim() : undefined
       );
       setTenderedCash('');
+      setReferenceNumber('');
       setIsConfirmModalOpen(false);
       onClose();
     } catch (err: any) {
@@ -329,6 +395,142 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                   </View>
                 ) : null}
 
+                {/* Digital Wallet (QR) Section */}
+                {selectedMethod === 'digital_wallet' ? (
+                  <View style={styles.qrSection}>
+                    {/* Channel Selector Pills */}
+                    {isLoadingQrChannels ? (
+                      <View style={{ paddingVertical: 12, alignItems: 'center' }}>
+                        <ActivityIndicator size="small" color="#800020" />
+                      </View>
+                    ) : qrChannels.length > 0 ? (
+                      <>
+                        <Text style={styles.refLabel}>Select Digital Wallet / Bank:</Text>
+                        <View style={styles.channelPillsRow}>
+                          {qrChannels.map((ch) => {
+                            const isSelected =
+                              selectedQrChannel?.id === ch.id ||
+                              (!selectedQrChannel && ch === qrChannels[0]);
+                            return (
+                              <Pressable
+                                key={ch.id}
+                                onPress={() => setSelectedQrChannel(ch)}
+                                style={[styles.channelPill, isSelected && styles.channelPillActive]}
+                              >
+                                <Text
+                                  style={[
+                                    styles.channelPillText,
+                                    isSelected && styles.channelPillTextActive,
+                                  ]}
+                                >
+                                  {ch.name}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+
+                        {/* Selected Channel Display Card */}
+                        {selectedQrChannel ? (
+                          <View style={styles.qrDisplayCard}>
+                            <View style={styles.qrThumbContainer}>
+                              <Image
+                                source={{ uri: selectedQrChannel.qr_image_url }}
+                                style={styles.qrThumbImage}
+                                resizeMode="contain"
+                              />
+                            </View>
+                            <View style={styles.qrDetailsCol}>
+                              <Text style={styles.qrChannelName}>{selectedQrChannel.name}</Text>
+                              <Text style={styles.qrAccountName} numberOfLines={1}>
+                                {selectedQrChannel.account_name}
+                              </Text>
+                              <Text style={styles.qrAccountNumber}>
+                                {selectedQrChannel.account_number}
+                              </Text>
+                              <Pressable
+                                onPress={() => setIsFullscreenQrOpen(true)}
+                                style={styles.expandQrBtn}
+                                accessibilityRole="button"
+                                accessibilityLabel="Show QR full screen for customer to scan"
+                              >
+                                <Maximize2 size={12} color="#800020" />
+                                <Text style={styles.expandQrBtnText}>
+                                  Show to Guest (Full Screen)
+                                </Text>
+                              </Pressable>
+                            </View>
+                          </View>
+                        ) : null}
+                      </>
+                    ) : (
+                      <View
+                        style={{
+                          padding: 12,
+                          backgroundColor: '#fef2f2',
+                          borderRadius: 10,
+                          borderWidth: 1,
+                          borderColor: '#fecdd3',
+                        }}
+                      >
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            color: '#991b1b',
+                            fontWeight: '600',
+                          }}
+                        >
+                          No active QR payment methods configured in Admin Settings. Please ask
+                          Admin to upload a QR code.
+                        </Text>
+                      </View>
+                    )}
+
+                    {/* 4-Digit Reference Number Input */}
+                    <View style={styles.refInputCard}>
+                      <View style={styles.refLabelRow}>
+                        <Text style={styles.refLabel}>Reference Number (Last 4 Digits)</Text>
+                        <Text style={styles.refRequiredBadge}>REQUIRED</Text>
+                      </View>
+
+                      <View style={styles.refInputRow}>
+                        <Text style={styles.refPrefix}>REF #</Text>
+                        <TextInput
+                          style={styles.refInput}
+                          keyboardType="numeric"
+                          maxLength={4}
+                          placeholder="8921"
+                          placeholderTextColor="#94a3b8"
+                          value={referenceNumber}
+                          onChangeText={(val) =>
+                            setReferenceNumber(val.replace(/[^0-9]/g, '').slice(0, 4))
+                          }
+                        />
+                      </View>
+
+                      {referenceNumber.length > 0 && !isRefNumberValid ? (
+                        <View style={styles.validationBannerError}>
+                          <AlertCircle size={14} color="#dc2626" />
+                          <Text style={styles.validationTextError}>
+                            Enter exactly 4 numeric digits ({referenceNumber.length}/4)
+                          </Text>
+                        </View>
+                      ) : isRefNumberValid ? (
+                        <View style={styles.validationBannerSuccess}>
+                          <ShieldCheck size={14} color="#16a34a" />
+                          <Text style={styles.validationTextSuccess}>
+                            Verified Reference: #{referenceNumber}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text style={styles.refHelperText}>
+                          Input the last 4 digits shown on the customer's payment confirmation slip.
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                ) : null}
+
                 {/* Print Receipt Toggle */}
                 <Pressable
                   onPress={() => setShouldPrintReceipt(!shouldPrintReceipt)}
@@ -411,6 +613,30 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                     <Text style={styles.receiptBold}>TOTAL PAID:</Text>
                     <Text style={styles.receiptBold}>{formatCurrency(grandTotal)}</Text>
                   </View>
+
+                  {/* Payment Tender & Reference Breakdown in Receipt Mockup */}
+                  {selectedMethod === 'digital_wallet' ? (
+                    <>
+                      <View style={styles.receiptRow}>
+                        <Text style={styles.receiptMeta}>PAYMENT:</Text>
+                        <Text style={styles.receiptMeta}>
+                          {(selectedQrChannel?.name || 'DIGITAL WALLET').toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={styles.receiptRow}>
+                        <Text style={styles.receiptMeta}>REF #:</Text>
+                        <Text
+                          style={[
+                            styles.receiptMeta,
+                            !isRefNumberValid && { color: '#dc2626', fontWeight: '800' },
+                          ]}
+                        >
+                          {isRefNumberValid ? `****${referenceNumber}` : 'REQUIRED (4-DIGIT)'}
+                        </Text>
+                      </View>
+                    </>
+                  ) : null}
+
                   <Text style={styles.receiptDivider}>================================</Text>
                   <Text style={styles.receiptFooter}>Thank you for jamming with us!</Text>
                 </View>
@@ -465,9 +691,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         title={`Confirm Payment of ${formatCurrency(grandTotal)}?`}
         message={
           isTakeout
-            ? `Takeout #${takeoutOrder?.ticketNumber} (${takeoutOrder?.customerName}) via ${selectedMethod
-                .toUpperCase()
-                .replace('_', ' ')}. ${
+            ? `Takeout #${takeoutOrder?.ticketNumber} (${takeoutOrder?.customerName}) via ${
+                selectedMethod === 'digital_wallet' && selectedQrChannel
+                  ? `${selectedQrChannel.name} (Ref: #${referenceNumber})`
+                  : selectedMethod.toUpperCase().replace('_', ' ')
+              }. ${
                 takeoutCollectAfterPay
                   ? 'This will record payment, print the receipt, and mark the order as collected.'
                   : 'This will record payment, print the receipt, and keep the ticket active on KDS until collected.'
@@ -476,7 +704,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 settlementMode === 'single_tab'
                   ? activeTab?.guestName || `Tab #${activeTab?.tabIndex || 1}`
                   : 'Entire Table'
-              } via ${selectedMethod.toUpperCase().replace('_', ' ')}. This will finalize the tab and send the receipt to the printer.`
+              } via ${
+                selectedMethod === 'digital_wallet' && selectedQrChannel
+                  ? `${selectedQrChannel.name} (Ref: #${referenceNumber})`
+                  : selectedMethod.toUpperCase().replace('_', ' ')
+              }. This will finalize the tab and send the receipt to the printer.`
         }
         confirmText={
           isTakeout && takeoutCollectAfterPay ? 'Pay & Complete Hand-off' : 'Complete Settlement'
@@ -485,6 +717,14 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         variant="success"
         onConfirm={handleFinalizePayment}
         onCancel={() => setIsConfirmModalOpen(false)}
+      />
+
+      {/* Guest Fullscreen QR Scan Modal */}
+      <FullscreenQrModal
+        visible={isFullscreenQrOpen}
+        channel={selectedQrChannel}
+        amount={grandTotal}
+        onClose={() => setIsFullscreenQrOpen(false)}
       />
     </Modal>
   );

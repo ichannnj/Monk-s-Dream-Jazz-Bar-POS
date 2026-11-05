@@ -128,7 +128,9 @@ export class PrinterStationDaemon {
             total: rawData.total || rawData.amount || 0,
             tendered: rawData.tendered || rawData.amount || 0,
             change: rawData.change || 0,
-            paymentMethod: rawData.paymentMethod || 'CASH',
+            paymentMethod: rawData.payment_method || rawData.paymentMethod || 'CASH',
+            paymentChannel: rawData.payment_channel || rawData.paymentChannel,
+            referenceNumber: rawData.reference_number || rawData.referenceNumber,
             timestamp: rawData.settledAt || rawData.timestamp || new Date().toISOString(),
           };
 

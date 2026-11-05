@@ -149,6 +149,8 @@ export interface CheckItem {
   tax: number;
   total: number;
   paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp';
+  paymentChannel?: string;
+  referenceNumber?: string;
   status: 'open' | 'billed' | 'paid' | 'voided';
   timestamp: string;
   cashierName: string;

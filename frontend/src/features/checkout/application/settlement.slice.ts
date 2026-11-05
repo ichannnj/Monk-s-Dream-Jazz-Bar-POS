@@ -20,7 +20,9 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
     paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     cashierName?: string,
     discountAmount = 0,
-    staffId?: string
+    staffId?: string,
+    paymentChannel?: string,
+    referenceNumber?: string
   ) => {
     let grandTotalPaid = 0;
     let targetTabRef: CustomerTab | undefined;
@@ -52,6 +54,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         tax: tax,
         total: grandTotal,
         paymentMethod: paymentMethod,
+        paymentChannel,
+        referenceNumber,
         status: 'paid',
         timestamp: new Date().toLocaleTimeString([], {
           hour: '2-digit',
@@ -157,6 +161,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
             discountAmount,
             staffId: effectiveStaffId,
             notes: `Settled by ${effectiveCashierName}`,
+            paymentChannel,
+            referenceNumber,
           });
           realtimeGateway.broadcastPosSync('tab_settled');
         }
@@ -170,7 +176,9 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
     tableId: string,
     paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     cashierName?: string,
-    staffId?: string
+    staffId?: string,
+    paymentChannel?: string,
+    referenceNumber?: string
   ) => {
     const effectiveCashierName =
       cashierName || useAuthStore.getState().currentUser?.displayName || 'Coltrane (Cashier)';
@@ -200,6 +208,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         tax: tax,
         total: grandTotal,
         paymentMethod: paymentMethod,
+        paymentChannel,
+        referenceNumber,
         status: 'paid',
         timestamp: new Date().toLocaleTimeString([], {
           hour: '2-digit',
@@ -332,6 +342,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       cashierName?: string;
       discountAmount?: number;
       staffId?: string;
+      paymentChannel?: string;
+      referenceNumber?: string;
     }
   ) => {
     const completeOrder = Boolean(options?.completeOrder);
@@ -341,6 +353,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       useAuthStore.getState().currentUser?.displayName ||
       'Coltrane (Cashier)';
     const effectiveStaffId = options?.staffId || useAuthStore.getState().currentUser?.id;
+    const paymentChannel = options?.paymentChannel;
+    const referenceNumber = options?.referenceNumber;
 
     let targetOrderRef: TakeoutOrder | undefined;
     let grandTotalPaid = 0;
@@ -369,6 +383,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         tax,
         total: grandTotal,
         paymentMethod,
+        paymentChannel,
+        referenceNumber,
         status: 'paid',
         timestamp: new Date().toLocaleTimeString([], {
           hour: '2-digit',
@@ -412,8 +428,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
           status: completeOrder ? ('completed' as const) : o.status,
           items: completeOrder
             ? o.items.map((i) =>
-              i.status === 'cancelled' ? i : { ...i, status: 'served' as const }
-            )
+                i.status === 'cancelled' ? i : { ...i, status: 'served' as const }
+              )
             : o.items,
         };
       });
@@ -477,6 +493,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
             staffId: effectiveStaffId,
             notes: `Takeout #${targetOrderRef?.ticketNumber || ''} settled by ${effectiveCashierName}`,
             keepOpenForPrep: !completeOrder,
+            paymentChannel,
+            referenceNumber,
           });
           realtimeGateway.broadcastPosSync('takeout_settled');
         }

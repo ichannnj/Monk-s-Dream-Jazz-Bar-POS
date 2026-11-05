@@ -334,10 +334,15 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                           <Text className="text-base font-black text-stone-900">
                             {formatCurrency(chk.total)}
                           </Text>
-                          <View className="mt-1 bg-stone-100 px-2 py-0.5 rounded-md">
+                          <View className="mt-1 bg-stone-100 px-2 py-0.5 rounded-md flex-row items-center gap-1">
                             <Text className="text-base font-bold text-stone-600 uppercase">
-                              {chk.paymentMethod.replace('_', ' ')}
+                              {chk.paymentChannel || chk.paymentMethod.replace('_', ' ')}
                             </Text>
+                            {chk.referenceNumber ? (
+                              <Text className="text-base font-bold text-[#800020] font-mono">
+                                #{chk.referenceNumber}
+                              </Text>
+                            ) : null}
                           </View>
                         </View>
                       </Pressable>
@@ -445,7 +450,13 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                         Tender Captured
                       </Text>
                       <Text className="text-base font-bold text-[#800020] mt-0.5">
-                        {selectedCheck.paymentMethod.replace('_', ' ').toUpperCase()}
+                        {(
+                          selectedCheck.paymentChannel ||
+                          selectedCheck.paymentMethod.replace('_', ' ')
+                        ).toUpperCase()}
+                        {selectedCheck.referenceNumber
+                          ? ` · REF #${selectedCheck.referenceNumber}`
+                          : ''}
                       </Text>
                     </View>
                   </View>
