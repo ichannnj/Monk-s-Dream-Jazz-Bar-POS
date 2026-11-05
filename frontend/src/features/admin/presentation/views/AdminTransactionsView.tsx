@@ -23,9 +23,11 @@ import {
   ChevronLeft,
   ChevronRight,
   FileSpreadsheet,
+  QrCode,
 } from 'lucide-react-native';
 import { ChecksHistoryView } from '@/features/check-history/presentation/ChecksHistoryView';
 import { AdminReadingsView } from './readings/AdminReadingsView';
+import { AdminCashlessTransactionsView } from './transactions/AdminCashlessTransactionsView';
 import { AdminModal } from '../components/AdminModal';
 import { HourlySalesVelocityChart } from './analytics/HourlySalesVelocityChart';
 import { PaymentTenderMixBar } from './analytics/PaymentTenderMixBar';
@@ -123,7 +125,9 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
   analytics: initialAnalytics,
   onRefresh,
 }) => {
-  const [subTab, setSubTab] = useState<'analytics' | 'checks' | 'readings'>('analytics');
+  const [subTab, setSubTab] = useState<'analytics' | 'checks' | 'cashless' | 'readings'>(
+    'analytics'
+  );
   const [selectedPeriod, setSelectedPeriod] = useState<TimeframePeriod>('daily');
   const [selectedStation, setSelectedStation] = useState<StationFilter>('ALL');
   const [selectedMode, setSelectedMode] = useState<ModeFilter>('ALL');
@@ -518,12 +522,18 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
     }
   };
 
-  const subTabOptions: PosDropdownOption<'analytics' | 'checks' | 'readings'>[] = [
+  const subTabOptions: PosDropdownOption<'analytics' | 'checks' | 'cashless' | 'readings'>[] = [
     {
       value: 'analytics',
       label: 'Financial Overview',
       icon: BarChart3,
       description: 'Revenue, COGS, net profit, and dual-mode Cafe/Event analytics',
+    },
+    {
+      value: 'cashless',
+      label: 'Online & Cashless Payments',
+      icon: QrCode,
+      description: 'GCash, Maya, QRPH & Card audit trail with 4-digit reference numbers',
     },
     {
       value: 'checks',
@@ -565,6 +575,15 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
       {subTab === 'readings' ? (
         <View className="flex-1">
           <AdminReadingsView />
+        </View>
+      ) : subTab === 'cashless' ? (
+        <View className="flex-1">
+          <AdminCashlessTransactionsView
+            startDate={dateBounds.startDate}
+            endDate={dateBounds.endDate}
+            timeframeLabel={timeframeDisplayLabel}
+            mode={selectedMode}
+          />
         </View>
       ) : subTab === 'checks' ? (
         <View className="flex-1">

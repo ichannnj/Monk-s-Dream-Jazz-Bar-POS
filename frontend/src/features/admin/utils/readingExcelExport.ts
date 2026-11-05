@@ -765,6 +765,95 @@ export function exportChecksRegisterToExcel(
 }
 
 /**
+ * Generates an executive Excel workbook for Online & Cashless Payment Transactions (GCash, Maya, QRPH, Card).
+ */
+export function exportCashlessRegisterToExcel(
+  transactions: SettledCheckItem[],
+  filterLabel: string = 'All Cashless Transactions'
+): void {
+  const totalAmount = transactions.reduce((acc, t) => acc + (t.total || 0), 0);
+
+  const rows = transactions
+    .map(
+      (tx) => `
+      <Row ss:Height="20">
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(tx.referenceNumber ? `#${tx.referenceNumber}` : 'N/A')}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(tx.paymentChannel || tx.paymentMethod)}</Data></Cell>
+        <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${tx.total}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(tx.checkNumber)}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(tx.operatingMode || 'CAFE')}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${new Date(tx.settledAt).toLocaleDateString()}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${tx.timestamp}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(tx.guestName)}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(tx.tableOrRef)}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(tx.cashierName)}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(tx.notes || '-')}</Data></Cell>
+      </Row>`
+    )
+    .join('');
+
+  const xml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  ${EXCEL_STYLES}
+  <Worksheet ss:Name="Cashless Payments">
+    <Table ss:DefaultColumnWidth="90" ss:DefaultRowHeight="20">
+      <Column ss:Width="110"/>
+      <Column ss:Width="100"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="90"/>
+      <Column ss:Width="70"/>
+      <Column ss:Width="85"/>
+      <Column ss:Width="70"/>
+      <Column ss:Width="130"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="110"/>
+      <Column ss:Width="150"/>
+
+      <Row ss:Height="30">
+        <Cell ss:MergeAcross="10" ss:StyleID="TitleBanner">
+          <Data ss:Type="String">MONK'S DREAM JAZZ BAR — ONLINE &amp; CASHLESS RECONCILIATION LEDGER</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="22">
+        <Cell ss:MergeAcross="10" ss:StyleID="SubtitleBanner">
+          <Data ss:Type="String">Scope: ${escapeXml(filterLabel)} • Exported: ${new Date().toLocaleString()} • ${transactions.length} Transactions • Total: PHP ${formatMoney(totalAmount)}</Data>
+        </Cell>
+      </Row>
+      <Row ss:Height="10"/>
+
+      <Row ss:Height="24">
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Reference #</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Channel / Method</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Amount (PHP)</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Check #</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Mode</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Date</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Time</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Customer / Tab</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Table / Location</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Cashier / Server</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Payment Notes</Data></Cell>
+      </Row>
+      ${rows}
+      <Row ss:Height="24">
+        <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">TOTAL CASHLESS</Data></Cell>
+        <Cell ss:StyleID="TotalLabel"><Data ss:Type="String">${transactions.length} Transactions</Data></Cell>
+        <Cell ss:StyleID="TotalCurrency"><Data ss:Type="Number">${totalAmount}</Data></Cell>
+        <Cell ss:MergeAcross="7" ss:StyleID="TotalLabel"><Data ss:Type="String"></Data></Cell>
+      </Row>
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+  const filename = `CASHLESS_PAYMENTS_${new Date().toISOString().slice(0, 10)}.xls`;
+  triggerDownload(xml, filename);
+}
+
+/**
  * Attendance & Payroll Ledger Excel Export
  */
 export interface AttendanceExportItem {
