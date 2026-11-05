@@ -4,6 +4,7 @@ export type AdminRoute =
   | 'chats'
   | 'menu'
   | 'inventory'
+  | 'events'
   | 'staff'
   | 'sales'
   | 'attendance'

@@ -6,6 +6,7 @@ import { WaiterCashierScreen } from './src/features/floor';
 import { BaristaKdsScreen, KitchenKdsScreen, FohRunnerScreen } from './src/features/kds';
 import { ToastContainer } from './src/features/shared';
 import { LoginScreen, TimeclockKioskScreen, useAuthStore } from './src/features/auth';
+import { PublicEventCalendarScreen } from './src/features/events';
 import { useOrderStore } from './src/features/orders';
 import { useChatStore } from './src/features/chat';
 
@@ -48,6 +49,11 @@ export default function App() {
   }, [currentUser]);
 
   const renderScreen = () => {
+    // Check if running in dedicated Public Event Calendar tab (?mode=events)
+    if (typeof window !== 'undefined' && window.location?.search?.includes('mode=events')) {
+      return <PublicEventCalendarScreen />;
+    }
+
     // Check if running in dedicated Timeclock Kiosk tab (?mode=timeclock)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=timeclock')) {
       return <TimeclockKioskScreen isStandaloneTab />;

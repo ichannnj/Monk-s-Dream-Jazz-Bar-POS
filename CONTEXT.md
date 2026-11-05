@@ -130,6 +130,13 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 - **Event-Driven Real-Time Multi-Subscriber Sync & Live Elapsed Timers:** `RealtimeGateway` (`features/shared/infrastructure/realtime.ts`) multiplexes `pos_global_sync` (`postgres_changes` + `pos_sync_broadcast`) across all active subscribers (`useOrderStore` and `AdminBackOfficeScreen`) with a 400ms debounce so all connected Floor POS, Station KDS, Runner, and Admin screens stay synchronized in real time. All order, table, KDS ticket, runner card, and Admin station turnaround timers (`MM:SS` / `H:MM:SS`) tick live every second from server `created_at` / `opened_at` ISO timestamps via `features/shared/utils/elapsedTime.ts`.
 - **Station Telemetry Metrics:** When a station's active preparation queue is 0, speed strictly displays `'Idle'` instead of synthetic placeholder strings. When active tickets exist, station average turnaround (`avgTicketTime`) and overdue count (`lateTickets`) tick live every second from `activeTicketTimestamps`.
 
+### 8. Event Logistics & Visual Calendar Hub
+
+- **Visual Multi-View Calendar:** Administrators can schedule and manage live performances, guest musicians, and tasting events across Month Grid (with visual hero poster thumbnail cards and showtimes inside day cells), Week Schedule (with hourly timeslots, sound check blocks, and performance banners), and chronological Agenda list view.
+- **Stage Run-of-Show & Logistics Checklist:** Captures event title, date, start/end time, artist/band lineup, genre, hero poster upload (stored in bucket `event-posters`), and backstage checklist (sound check schedule, backline/audio gear requirements, reserved VIP tables, and hospitality rider requests).
+- **Public Read-Only Live Link (`?mode=events`):** Standalone web route for musicians, staff, and guests allowing real-time calendar viewing without POS login. Synchronized reactively via Supabase Realtime (`venue_events`), with 1-click `.ics` iCalendar download and dedicated `@media print` layout for high-contrast printable gig sheets.
+- **Floor & Back-Office Awareness:** Floor POS command bar (`UnifiedCommandBar.tsx`) and Admin Dashboard (`AdminDashboardView.tsx`) render a live "Tonight at Monk's Dream" banner with artist details, showtime, and sound check status when an event is scheduled today.
+
 ---
 
 ## 🗺️ System Topology

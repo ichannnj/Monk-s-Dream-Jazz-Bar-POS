@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { Sparkles, Coffee, Wine, ShoppingBag, Bike, PlusCircle } from 'lucide-react-native';
 import { ChannelCategory, TableStatus } from '../../../types/floor';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
+import { TodaysEventBanner } from '@/features/events';
 
 export type StatusFilter = 'all' | TableStatus;
 
@@ -174,6 +175,9 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           sheetTitle="Filter Floor by Status"
           className="flex-1 sm:flex-initial min-w-[140px]"
         />
+
+        {/* Tonight's Event Quick Indicator */}
+        <TodaysEventBanner compact />
       </View>
 
       {/* Right: + New Order Dropdown, Operating Mode Toggle & Staff Pill */}

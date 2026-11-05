@@ -28,6 +28,7 @@ import { AdminTransactionsView } from './views/AdminTransactionsView';
 import { AdminSettingsView } from './views/AdminSettingsView';
 import { AdminTableLayoutView } from './views/AdminTableLayoutView';
 import { AdminProfileView } from './views/AdminProfileView';
+import { AdminEventsView } from '@/features/events';
 import { ManagerModeSwitchModal } from '@/features/floor/presentation/ManagerModeSwitchModal';
 
 export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> = ({
@@ -185,6 +186,8 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         );
       case 'inventory':
         return <AdminInventoryView inventory={inventory} onRefresh={loadData} />;
+      case 'events':
+        return <AdminEventsView />;
       case 'menu':
         return <AdminRecipesView products={products} onRefresh={loadData} />;
       case 'staff':

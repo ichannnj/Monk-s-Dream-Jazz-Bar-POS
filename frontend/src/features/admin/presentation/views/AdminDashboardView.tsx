@@ -22,6 +22,7 @@ import { PaymentTenderMixBar } from './analytics/PaymentTenderMixBar';
 import { DepartmentSalesBreakdown, DepartmentShare } from './analytics/DepartmentSalesBreakdown';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
 import { useLiveNow, getLiveStationTurnaround } from '@/features/shared/utils/elapsedTime';
+import { TodaysEventBanner } from '@/features/events';
 
 export interface AdminDashboardViewProps {
   telemetry: DashboardTelemetry;
@@ -218,6 +219,9 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
             </Pressable>
           </View>
         </View>
+
+        {/* Tonight's Event Live Highlight */}
+        <TodaysEventBanner />
 
         {/* 4 KPI Cards: Operational Floor Mix */}
         <View className="flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-5">

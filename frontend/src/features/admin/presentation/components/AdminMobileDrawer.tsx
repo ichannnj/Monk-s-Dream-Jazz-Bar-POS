@@ -9,6 +9,7 @@ import {
   Users,
   Receipt,
   Clock,
+  CalendarDays,
   Music,
   Settings,
   Shield,
@@ -72,6 +73,7 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
   const manageItems: NavItem[] = [
     { id: 'menu', label: 'Menu Catalog', icon: Utensils },
     { id: 'inventory', label: 'Inventory Hub', icon: Package },
+    { id: 'events', label: 'Event Logistics', icon: CalendarDays },
     { id: 'tables', label: 'Table Layout', icon: LayoutGrid },
     { id: 'staff', label: 'Staff Roster', icon: Users },
   ];
