@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useOrderStore } from '../../../../orders/application/useOrderStore';
 import { toast } from '../../../../shared/toast/useToastStore';
+import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 import { BarTicket, StockInventoryItem } from '../../barista/types';
 import { getElapsedSeconds, formatElapsedTimer } from '@/features/shared/utils/elapsedTime';
 
@@ -273,7 +274,8 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
         }
       }
 
-      toast.success(`Order Ready: ${ticket.orderNumber} for pickup`);
+      realtimeGateway.broadcastPosSync('kds_ticket_ready');
+      toast.success(`Order Ready: ${ticket.orderNumber} (Inventory updated)`);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to mark ticket ready.', {
         title: 'KDS Action Error',

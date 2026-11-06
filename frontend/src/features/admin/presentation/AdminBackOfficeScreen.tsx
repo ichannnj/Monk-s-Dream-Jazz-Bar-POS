@@ -121,6 +121,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       onProductChange: () => triggerQuietRefresh(),
       onPaymentChange: () => triggerQuietRefresh(),
       onInventoryChange: () => triggerQuietRefresh(),
+      onStockMovementChange: () => triggerQuietRefresh(),
       onWasteLogChange: () => triggerQuietRefresh(),
       onCashDrawerChange: () => triggerQuietRefresh(),
       onAttendanceChange: () => triggerQuietRefresh(),

@@ -84,7 +84,7 @@ Item preparation destination is determined solely by product category, **never**
 
 ### 5. Inventory Depletion, Supply Chain & Recipe BOM Engine
 
-- **Trigger Point:** Depletion occurs at **Order Dispatch** (when staff taps "Send Order").
+- **Trigger Point:** Depletion occurs when an item is marked **READY** in KDS (or **SERVED**) via PostgreSQL trigger `trg_deplete_inventory_on_item_ready` on `public.order_items`. This ensures stock drops precisely when kitchen/bar stations fulfill preparation rather than at initial dispatch, guarded by `is_depleted = false` to strictly prevent double-depletion.
 - **Cancellation Restoral:** If an order item is cancelled before preparation starts, depleted stock is automatically restored to the active inventory ledger (`CANCEL_RESTORE`).
 - **Non-Blocking Orders Invariant & Soft Alerts:** When required raw ingredient stocks drop to or below minimum par alert levels (`min_alert_level`) or reach 0/negative, the system displays soft visual warnings (amber for low stock, red for depleted) on POS cards and fires real-time alerts across terminals and the Buzzout feed without blocking server orders (allowing negative inventory tracking until shipments are checked in).
 - **Executive Inventory Hub:** Features live KPI cards (Total Valuation ₱, In-Par, Below-Par, Depleted), stock health ratio progress bars, 1-tap in-line Quick Stock Count adjustments (`QuickAdjustStockModal.tsx`), and rapid par threshold editing.

@@ -1,5 +1,6 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../../../../shared/infrastructure/supabase';
+import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 import { useOrderStore } from '../../../../orders/application/useOrderStore';
 import { toast } from '../../../../shared/toast/useToastStore';
 import { SEED_MENU_ITEMS } from '../../../../menu/data/menu.mock';
@@ -37,85 +38,87 @@ export function useKdsStock({ stationTarget }: UseKdsStockProps) {
   const addAlert = useOrderStore((state) => state.addAlert);
 
   // Load real inventory items & station products from DB
-  useEffect(() => {
-    let isMounted = true;
-    async function loadDbStock() {
-      try {
-        const [invRes, prodRes] = await Promise.all([
-          supabase
-            .from('inventory_items')
-            .select('id, name, category, unit, current_stock, min_alert_level')
-            .order('name'),
-          supabase
-            .from('products')
-            .select('id, name, station_target, is_available, auto_86')
-            .eq('station_target', stationTarget)
-            .order('name'),
-        ]);
+  const loadDbStock = useCallback(async () => {
+    try {
+      const [invRes, prodRes] = await Promise.all([
+        supabase
+          .from('inventory_items')
+          .select('id, name, category, unit, current_stock, min_alert_level')
+          .order('name'),
+        supabase
+          .from('products')
+          .select('id, name, station_target, is_available, auto_86')
+          .eq('station_target', stationTarget)
+          .order('name'),
+      ]);
 
-        if (isMounted) {
-          if (invRes.data && invRes.data.length > 0) {
-            const allowedCats = stationTarget === 'kitchen' ? KITCHEN_CATEGORIES : BAR_CATEGORIES;
-            const filteredInv = invRes.data.filter((item: any) =>
-              allowedCats.has((item.category || '').toLowerCase())
-            );
-            setInventory(
-              filteredInv.map((item: any) => ({
-                id: item.id,
-                name: item.name,
-                category: (
-                  item.category || (stationTarget === 'kitchen' ? 'produce' : 'spirits')
-                ).toLowerCase(),
-                unit: item.unit,
-                inStockCount: parseFloat(item.current_stock) || 0,
-                lowStockThreshold: parseFloat(item.min_alert_level) || 0,
-                is86: (parseFloat(item.current_stock) || 0) <= 0,
-              }))
-            );
-          }
-
-          if (prodRes.data && prodRes.data.length > 0) {
-            setMenuProducts(
-              prodRes.data.map((p: any) => ({
-                id: p.id,
-                name: p.name,
-                category: stationTarget === 'kitchen' ? 'kitchen' : 'bar',
-                is86: p.auto_86 || !p.is_available,
-              }))
-            );
-          } else {
-            // Local fallback from SEED_MENU_ITEMS
-            const fallbackStationItems = SEED_MENU_ITEMS.filter(
-              (i) => i.stationTarget === stationTarget
-            ).map((i) => ({
-              id: i.id,
-              name: i.name,
-              category: i.category,
-              is86: Boolean(i.auto86 || !i.isAvailable),
-            }));
-            setMenuProducts(fallbackStationItems);
-          }
-        }
-      } catch (err) {
-        console.warn(`Failed to load inventory from DB for ${stationTarget}:`, err);
-        if (isMounted) {
-          const fallbackStationItems = SEED_MENU_ITEMS.filter(
-            (i) => i.stationTarget === stationTarget
-          ).map((i) => ({
-            id: i.id,
-            name: i.name,
-            category: i.category,
-            is86: Boolean(i.auto86 || !i.isAvailable),
-          }));
-          setMenuProducts(fallbackStationItems);
-        }
+      if (invRes.data && invRes.data.length > 0) {
+        const allowedCats = stationTarget === 'kitchen' ? KITCHEN_CATEGORIES : BAR_CATEGORIES;
+        const filteredInv = invRes.data.filter((item: any) =>
+          allowedCats.has((item.category || '').toLowerCase())
+        );
+        setInventory(
+          filteredInv.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            category: (
+              item.category || (stationTarget === 'kitchen' ? 'produce' : 'spirits')
+            ).toLowerCase(),
+            unit: item.unit,
+            inStockCount: parseFloat(item.current_stock) || 0,
+            lowStockThreshold: parseFloat(item.min_alert_level) || 0,
+            is86: (parseFloat(item.current_stock) || 0) <= 0,
+          }))
+        );
       }
+
+      if (prodRes.data && prodRes.data.length > 0) {
+        setMenuProducts(
+          prodRes.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            category: stationTarget === 'kitchen' ? 'kitchen' : 'bar',
+            is86: p.auto_86 || !p.is_available,
+          }))
+        );
+      } else {
+        // Local fallback from SEED_MENU_ITEMS
+        const fallbackStationItems = SEED_MENU_ITEMS.filter(
+          (i) => i.stationTarget === stationTarget
+        ).map((i) => ({
+          id: i.id,
+          name: i.name,
+          category: i.category,
+          is86: Boolean(i.auto86 || !i.isAvailable),
+        }));
+        setMenuProducts(fallbackStationItems);
+      }
+    } catch (err) {
+      console.warn(`Failed to load inventory from DB for ${stationTarget}:`, err);
+      const fallbackStationItems = SEED_MENU_ITEMS.filter(
+        (i) => i.stationTarget === stationTarget
+      ).map((i) => ({
+        id: i.id,
+        name: i.name,
+        category: i.category,
+        is86: Boolean(i.auto86 || !i.isAvailable),
+      }));
+      setMenuProducts(fallbackStationItems);
     }
-    loadDbStock();
-    return () => {
-      isMounted = false;
-    };
   }, [stationTarget]);
+
+  useEffect(() => {
+    loadDbStock();
+  }, [loadDbStock]);
+
+  // Real-time synchronization: refresh inventory stock counts when items are depleted or restocked
+  useEffect(() => {
+    const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
+      onInventoryChange: () => loadDbStock(),
+      onPosSyncNeeded: () => loadDbStock(),
+    });
+    return () => unsub();
+  }, [loadDbStock]);
 
   // Derived products for availability manager (Station menu items + Station pantry/raw inventory)
   const stationProducts: BarProductStock[] = useMemo(() => {

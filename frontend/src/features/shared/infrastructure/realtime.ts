@@ -69,6 +69,7 @@ export interface GlobalRealtimeCallbacks {
   onCashDrawerChange?: (payload: any) => void;
   onPaymentChange?: (payload: any) => void;
   onInventoryChange?: (payload: any) => void;
+  onStockMovementChange?: (payload: any) => void;
   onWasteLogChange?: (payload: any) => void;
   onAttendanceChange?: (payload: any) => void;
   onPosSyncNeeded?: (payload: { reason: string; timestamp: string }) => void;
@@ -295,6 +296,13 @@ export class RealtimeGateway {
           { event: '*', schema: 'public', table: 'inventory_items' },
           (payload) => {
             this.globalPosListeners.forEach((cb) => cb.onInventoryChange?.(payload));
+          }
+        )
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'stock_movements' },
+          (payload) => {
+            this.globalPosListeners.forEach((cb) => cb.onStockMovementChange?.(payload));
           }
         )
         .on(
