@@ -29,7 +29,6 @@
     "doppler:pull:dev": "doppler secrets download --no-file --format env > frontend/.env",
     "doppler:run": "doppler run -- turbo run dev",
     "sync:knowledge": "bash scripts/sync-knowledge.sh",
-    "db:keep-alive": "node scripts/db-keep-alive.js",
     "prepare": "husky"
   },
   "lint-staged": {

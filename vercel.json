@@ -1,9 +1,3 @@
 {
-  "outputDirectory": "frontend/dist",
-  "crons": [
-    {
-      "path": "/api/keep-alive",
-      "schedule": "*/5 * * * *"
-    }
-  ]
+  "outputDirectory": "frontend/dist"
 }
