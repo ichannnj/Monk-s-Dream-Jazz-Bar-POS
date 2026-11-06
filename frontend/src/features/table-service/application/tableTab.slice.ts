@@ -8,6 +8,7 @@ import { useVenueStore } from '../../shared/stores/useVenueStore';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { resolveTableUuid } from '../../floor/data/resolver';
+import { toast } from '../../shared/toast/useToastStore';
 
 export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   openTableTab: (tableId: string, guestName: string, guestCount = 1) => {
@@ -238,6 +239,14 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
               };
             }),
           }));
+          if (res.depletion?.lowStockAlerts && res.depletion.lowStockAlerts.length > 0) {
+            res.depletion.lowStockAlerts.forEach((alt) => {
+              toast.warning(
+                `${alt.ingredientName}: ${Number(alt.currentStock).toFixed(2)} ${alt.unit} remaining (Par: ${alt.minAlertLevel} ${alt.unit})`,
+                { title: alt.isDepleted ? 'Stock Depleted' : 'Low Stock Alert' }
+              );
+            });
+          }
           realtimeGateway.broadcastPosSync('dine_in_order_dispatched');
         }
       })

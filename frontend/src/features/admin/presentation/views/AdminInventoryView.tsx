@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
   Package,
@@ -11,10 +11,17 @@ import {
   Edit,
   ArrowDownRight,
   ArrowUpRight,
-  RotateCcw,
   FileSpreadsheet,
+  CheckCircle2,
+  AlertTriangle,
+  AlertCircle,
+  Sliders,
+  TrendingDown,
+  ShieldCheck,
+  Boxes,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { formatCurrency } from '@monks/shared';
 import {
   adminApi,
   type InventoryItemAdmin,
@@ -26,10 +33,12 @@ import { InventoryItemModal } from './inventory/InventoryItemModal';
 import { SupplierModal } from './inventory/SupplierModal';
 import { StocktakeAuditModal } from './inventory/StocktakeAuditModal';
 import { WasteLoggerModal } from './inventory/WasteLoggerModal';
+import { QuickAdjustStockModal } from './inventory/QuickAdjustStockModal';
 import { AdminModal, AdminInput, AdminNumberInput } from '../components';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
 
 type InventoryTab = 'stock' | 'suppliers' | 'ledger' | 'stocktake' | 'waste';
+type StockStatusFilter = 'ALL' | 'IN_PAR' | 'BELOW_PAR' | 'DEPLETED';
 
 interface AdminInventoryViewProps {
   inventory: InventoryItemAdmin[];
@@ -37,8 +46,7 @@ interface AdminInventoryViewProps {
 }
 
 const CATEGORY_FILTERS = [
-  { key: 'ALL', label: 'All Items' },
-  { key: 'PACKAGING', label: '📦 Disposables & Packaging' },
+  { key: 'ALL', label: 'All Categories' },
   { key: 'COFFEE_TEA', label: '☕ Coffee & Tea' },
   { key: 'SPIRITS_LIQUOR', label: '🥃 Spirits & Liquor' },
   { key: 'WINE_BEER', label: '🍷 Wine & Beer' },
@@ -47,12 +55,14 @@ const CATEGORY_FILTERS = [
   { key: 'KITCHEN_MEAT', label: '🥩 Kitchen Meats' },
   { key: 'PRODUCE', label: '🥬 Fresh Produce' },
   { key: 'DRY_GOODS', label: '🍝 Dry Goods' },
+  { key: 'PACKAGING', label: '📦 Disposables & Packaging' },
 ];
 
 export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventory, onRefresh }) => {
   const [activeTab, setActiveTab] = useState<InventoryTab>('stock');
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
+  const [stockStatusFilter, setStockStatusFilter] = useState<StockStatusFilter>('ALL');
 
   // Supporting entities
   const [suppliers, setSuppliers] = useState<SupplierAdmin[]>([]);
@@ -65,6 +75,9 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
   const [restockInvoice, setRestockInvoice] = useState('');
   const [isSubmittingRestock, setIsSubmittingRestock] = useState(false);
 
+  // Quick In-Line Stock Adjust state
+  const [selectedAdjustItem, setSelectedAdjustItem] = useState<InventoryItemAdmin | null>(null);
+
   // Modals state
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<InventoryItemAdmin | null>(null);
@@ -74,6 +87,33 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
 
   const [isStocktakeModalOpen, setIsStocktakeModalOpen] = useState(false);
   const [isWasteModalOpen, setIsWasteModalOpen] = useState(false);
+
+  // Executive KPI Calculations
+  const totalValuation = useMemo(() => {
+    return inventory.reduce((sum, item) => {
+      const stock = Math.max(0, Number(item.current_stock || 0));
+      const cost = Number(item.unit_cost || 0);
+      return sum + stock * cost;
+    }, 0);
+  }, [inventory]);
+
+  const inParItemsCount = useMemo(() => {
+    return inventory.filter(
+      (item) => Number(item.current_stock || 0) > Number(item.min_alert_level || 0)
+    ).length;
+  }, [inventory]);
+
+  const belowParItemsCount = useMemo(() => {
+    return inventory.filter(
+      (item) =>
+        Number(item.current_stock || 0) <= Number(item.min_alert_level || 0) &&
+        Number(item.current_stock || 0) > 0
+    ).length;
+  }, [inventory]);
+
+  const depletedItemsCount = useMemo(() => {
+    return inventory.filter((item) => Number(item.current_stock || 0) <= 0).length;
+  }, [inventory]);
 
   const loadSupportingData = useCallback(async () => {
     try {
@@ -159,21 +199,38 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
 
   // Filtered Inventory Items
   const filteredInventory = inventory.filter((item) => {
+    const stock = Number(item.current_stock || 0);
+    const par = Number(item.min_alert_level || 0);
+
+    // 1. Text Search
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (item.supplier?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+
+    // 2. Category
     const matchesCat = categoryFilter === 'ALL' || item.category === categoryFilter;
-    return matchesSearch && matchesCat;
+
+    // 3. Status Filter Pill
+    let matchesStatus = true;
+    if (stockStatusFilter === 'IN_PAR') {
+      matchesStatus = stock > par;
+    } else if (stockStatusFilter === 'BELOW_PAR') {
+      matchesStatus = stock <= par && stock > 0;
+    } else if (stockStatusFilter === 'DEPLETED') {
+      matchesStatus = stock <= 0;
+    }
+
+    return matchesSearch && matchesCat && matchesStatus;
   });
 
   const inventoryTabOptions: PosDropdownOption<InventoryTab>[] = [
     {
       value: 'stock',
-      label: 'Stock On-Hand',
+      label: 'Stock On-Hand & Par',
       badge: inventory.length,
       icon: Package,
-      description: 'Live ingredient stock levels and restock intake',
+      description: 'Live ingredient stock levels, alerts, and quick counts',
     },
     {
       value: 'suppliers',
@@ -213,11 +270,17 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
       className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
-      {/* Page Header & View Dropdown */}
-      <View className="mb-5 flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-          Inventory &amp; Costing (MAC)
-        </Text>
+      {/* Top Header & Context Actions */}
+      <View className="mb-6 flex-col lg:flex-row lg:items-center justify-between gap-3">
+        <View>
+          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+            Inventory &amp; Depletion Hub
+          </Text>
+          <Text className="text-sm font-medium text-stone-500 mt-1">
+            Real-time recipe ingredient depletion, non-blocking par safeguards, and weighted MAC
+            valuation
+          </Text>
+        </View>
 
         {/* View Selector Dropdown + Contextual Action Button */}
         <View className="flex-row items-center gap-2.5 flex-wrap">
@@ -225,9 +288,9 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
             options={inventoryTabOptions}
             value={activeTab}
             onChange={setActiveTab}
-            prefixLabel="View:"
+            prefixLabel="Section:"
             sheetTitle="Select Inventory Section"
-            className="flex-1 sm:flex-initial min-w-[195px]"
+            className="flex-1 sm:flex-initial min-w-[210px]"
           />
 
           {/* Export Inventory Valuation Button */}
@@ -247,7 +310,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
             accessibilityLabel="Export Inventory Valuation to Excel"
           >
             <FileSpreadsheet size={18} color="#047857" />
-            <Text className="ml-2 text-base font-bold text-stone-800">Export Excel</Text>
+            <Text className="ml-2 text-sm sm:text-base font-bold text-stone-800">Export Excel</Text>
           </Pressable>
 
           {activeTab === 'stock' && (
@@ -298,17 +361,121 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         </View>
       </View>
 
-      {/* TAB 1: STOCK ON-HAND */}
+      {/* TAB 1: STOCK ON-HAND & REAL-TIME ALERTS */}
       {activeTab === 'stock' && (
-        <View className="space-y-4">
-          {/* Search & Category Dropdown Bar */}
-          <View className="flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <View className="space-y-5">
+          {/* Executive KPI Summary Cards */}
+          <View className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
+            {/* Card 1: Total Valuation */}
+            <View className="rounded-2xl border border-stone-200 bg-white p-4.5 shadow-xs">
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider">
+                  Total Valuation
+                </Text>
+                <View className="h-8 w-8 rounded-lg bg-[#800020]/10 items-center justify-center">
+                  <Boxes size={17} color="#800020" />
+                </View>
+              </View>
+              <Text className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
+                {formatCurrency(totalValuation)}
+              </Text>
+              <Text className="text-xs font-medium text-stone-500 mt-1">
+                {inventory.length} SKUs across all stations
+              </Text>
+            </View>
+
+            {/* Card 2: Healthy In-Par */}
+            <Pressable
+              onPress={() =>
+                setStockStatusFilter(stockStatusFilter === 'IN_PAR' ? 'ALL' : 'IN_PAR')
+              }
+              className={`rounded-2xl border p-4.5 shadow-xs transition-all ${
+                stockStatusFilter === 'IN_PAR'
+                  ? 'border-emerald-600 bg-emerald-50/50'
+                  : 'border-stone-200 bg-white active:bg-stone-50'
+              }`}
+            >
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
+                  In-Par Healthy
+                </Text>
+                <View className="h-8 w-8 rounded-lg bg-emerald-100 items-center justify-center">
+                  <CheckCircle2 size={17} color="#059669" />
+                </View>
+              </View>
+              <Text className="text-xl sm:text-2xl font-black text-emerald-900 tracking-tight">
+                {inParItemsCount}
+              </Text>
+              <Text className="text-xs font-medium text-emerald-700 mt-1">
+                {inventory.length > 0
+                  ? `${Math.round((inParItemsCount / inventory.length) * 100)}% of stock healthy`
+                  : '0%'}
+              </Text>
+            </Pressable>
+
+            {/* Card 3: Below Par Alerts */}
+            <Pressable
+              onPress={() =>
+                setStockStatusFilter(stockStatusFilter === 'BELOW_PAR' ? 'ALL' : 'BELOW_PAR')
+              }
+              className={`rounded-2xl border p-4.5 shadow-xs transition-all ${
+                stockStatusFilter === 'BELOW_PAR'
+                  ? 'border-amber-500 bg-amber-50/50'
+                  : 'border-stone-200 bg-white active:bg-stone-50'
+              }`}
+            >
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-xs font-bold text-amber-800 uppercase tracking-wider">
+                  Below Par (Reorder)
+                </Text>
+                <View className="h-8 w-8 rounded-lg bg-amber-100 items-center justify-center">
+                  <AlertCircle size={17} color="#d97706" />
+                </View>
+              </View>
+              <Text className="text-xl sm:text-2xl font-black text-amber-900 tracking-tight">
+                {belowParItemsCount}
+              </Text>
+              <Text className="text-xs font-medium text-amber-700 mt-1">
+                {belowParItemsCount > 0 ? 'Replenishment recommended' : 'Zero items below par'}
+              </Text>
+            </Pressable>
+
+            {/* Card 4: Depleted / Out of Stock */}
+            <Pressable
+              onPress={() =>
+                setStockStatusFilter(stockStatusFilter === 'DEPLETED' ? 'ALL' : 'DEPLETED')
+              }
+              className={`rounded-2xl border p-4.5 shadow-xs transition-all ${
+                stockStatusFilter === 'DEPLETED'
+                  ? 'border-rose-600 bg-rose-50/50'
+                  : 'border-stone-200 bg-white active:bg-stone-50'
+              }`}
+            >
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-xs font-bold text-rose-800 uppercase tracking-wider">
+                  Depleted / Overdrawn
+                </Text>
+                <View className="h-8 w-8 rounded-lg bg-rose-100 items-center justify-center">
+                  <AlertTriangle size={17} color="#e11d48" />
+                </View>
+              </View>
+              <Text className="text-xl sm:text-2xl font-black text-rose-900 tracking-tight">
+                {depletedItemsCount}
+              </Text>
+              <Text className="text-xs font-medium text-rose-700 mt-1">
+                Orders active (soft warnings)
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Search, Filter Pills & Category Dropdown */}
+          <View className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <View className="flex-1">
               <AdminInput
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                placeholder="Search inventory items, SKUs, or vendors..."
-                leftElement={<Search size={20} color="#78716c" />}
+                placeholder="Search ingredients, SKUs, suppliers..."
+                leftElement={<Search size={19} color="#78716c" />}
               />
             </View>
 
@@ -321,72 +488,190 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
             />
           </View>
 
+          {/* Quick Filter Status Pills */}
+          <View className="flex-row items-center gap-2 flex-wrap">
+            <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mr-1">
+              Status:
+            </Text>
+            <Pressable
+              onPress={() => setStockStatusFilter('ALL')}
+              className={`rounded-xl px-3 py-1.5 border ${
+                stockStatusFilter === 'ALL'
+                  ? 'bg-stone-900 border-stone-900 text-white'
+                  : 'bg-white border-stone-200 active:bg-stone-100'
+              }`}
+            >
+              <Text
+                className={`text-xs font-bold ${stockStatusFilter === 'ALL' ? 'text-white' : 'text-stone-700'}`}
+              >
+                All Items ({inventory.length})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setStockStatusFilter('IN_PAR')}
+              className={`rounded-xl px-3 py-1.5 border ${
+                stockStatusFilter === 'IN_PAR'
+                  ? 'bg-emerald-700 border-emerald-700 text-white'
+                  : 'bg-white border-stone-200 active:bg-stone-100'
+              }`}
+            >
+              <Text
+                className={`text-xs font-bold ${stockStatusFilter === 'IN_PAR' ? 'text-white' : 'text-emerald-800'}`}
+              >
+                🟢 In-Par ({inParItemsCount})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setStockStatusFilter('BELOW_PAR')}
+              className={`rounded-xl px-3 py-1.5 border ${
+                stockStatusFilter === 'BELOW_PAR'
+                  ? 'bg-amber-600 border-amber-600 text-white'
+                  : 'bg-white border-stone-200 active:bg-stone-100'
+              }`}
+            >
+              <Text
+                className={`text-xs font-bold ${stockStatusFilter === 'BELOW_PAR' ? 'text-white' : 'text-amber-800'}`}
+              >
+                🟡 Below Par ({belowParItemsCount})
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setStockStatusFilter('DEPLETED')}
+              className={`rounded-xl px-3 py-1.5 border ${
+                stockStatusFilter === 'DEPLETED'
+                  ? 'bg-rose-700 border-rose-700 text-white'
+                  : 'bg-white border-stone-200 active:bg-stone-100'
+              }`}
+            >
+              <Text
+                className={`text-xs font-bold ${stockStatusFilter === 'DEPLETED' ? 'text-white' : 'text-rose-800'}`}
+              >
+                🔴 Depleted ({depletedItemsCount})
+              </Text>
+            </Pressable>
+          </View>
+
           {/* Inventory Table / Cards */}
-          <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
+          <View className="rounded-2xl border border-stone-200/80 bg-white p-5 sm:p-6 shadow-xs">
             {filteredInventory.length === 0 ? (
-              <View className="py-12 items-center justify-center">
-                <Package size={40} color="#a8a29e" />
-                <Text className="mt-2 text-base text-stone-500">
+              <View className="py-14 items-center justify-center">
+                <Package size={44} color="#a8a29e" />
+                <Text className="mt-3 text-base font-semibold text-stone-600">
                   No inventory items match the current filters.
+                </Text>
+                <Text className="text-xs text-stone-400 mt-1">
+                  Try adjusting search criteria or selecting "All Items".
                 </Text>
               </View>
             ) : (
               <View className="space-y-4">
                 {filteredInventory.map((item) => {
-                  const isBelowPar = item.current_stock <= item.min_alert_level;
-                  const isCritical = item.current_stock <= 0;
+                  const currentStock = Number(item.current_stock || 0);
+                  const minAlert = Number(item.min_alert_level || 0);
+                  const isBelowPar = currentStock <= minAlert && currentStock > 0;
+                  const isCritical = currentStock <= 0;
+                  const unitCost = Number(item.unit_cost || 0);
+                  const itemValuation = Math.max(0, currentStock) * unitCost;
+
+                  // Ratio of current stock to par alert level (0 to 100%+)
+                  const parRatio = minAlert > 0 ? currentStock / minAlert : 1;
+                  const progressPct = Math.min(100, Math.max(0, parRatio * 100));
 
                   return (
                     <View
                       key={item.id}
-                      className="flex-col md:flex-row md:items-center justify-between border-b border-stone-100 pb-4 gap-4"
+                      className="flex-col lg:flex-row lg:items-center justify-between border-b border-stone-100 pb-4.5 gap-4"
                     >
-                      <View className="flex-1 md:pr-4">
+                      {/* Left: Item Name, SKU, Supplier & Category Badges */}
+                      <View className="flex-1 lg:pr-4">
                         <View className="flex-row items-center space-x-2 flex-wrap gap-1.5">
                           <Text className="text-lg font-bold text-stone-900">{item.name}</Text>
+
+                          {/* Status Badge */}
                           {isCritical ? (
-                            <View className="rounded-md bg-rose-100 border border-rose-300 px-2 py-0.5">
-                              <Text className="text-base font-bold text-rose-800">
-                                🔴 Out of Stock
+                            <View className="rounded-md bg-rose-100 border border-rose-300 px-2 py-0.5 flex-row items-center gap-1">
+                              <AlertTriangle size={12} color="#be123c" />
+                              <Text className="text-xs font-bold text-rose-800">
+                                Depleted / Overdrawn
                               </Text>
                             </View>
                           ) : isBelowPar ? (
-                            <View className="rounded-md bg-amber-50 border border-amber-200 px-2 py-0.5">
-                              <Text className="text-base font-bold text-amber-800">
-                                🟡 Below Par
+                            <View className="rounded-md bg-amber-50 border border-amber-300 px-2 py-0.5 flex-row items-center gap-1">
+                              <AlertCircle size={12} color="#b45309" />
+                              <Text className="text-xs font-bold text-amber-800">
+                                Low Stock Alert
                               </Text>
                             </View>
                           ) : (
-                            <View className="rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5">
-                              <Text className="text-base font-bold text-emerald-800">
-                                🟢 In Par
-                              </Text>
+                            <View className="rounded-md bg-emerald-50 border border-emerald-300 px-2 py-0.5 flex-row items-center gap-1">
+                              <CheckCircle2 size={12} color="#047857" />
+                              <Text className="text-xs font-bold text-emerald-800">In Par</Text>
                             </View>
                           )}
-                          {item.category === 'PACKAGING' && (
-                            <View className="rounded-md bg-sky-50 border border-sky-200 px-2 py-0.5">
-                              <Text className="text-base font-bold text-sky-800">
-                                📦 Disposable
-                              </Text>
-                            </View>
-                          )}
+
+                          <View className="rounded-md bg-stone-100 border border-stone-200 px-2 py-0.5">
+                            <Text className="text-xs font-semibold text-stone-600">
+                              {item.category}
+                            </Text>
+                          </View>
                         </View>
 
-                        <Text className="text-base text-stone-500 mt-1">
-                          SKU: {item.sku} • Category: {item.category} • Par Alert:{' '}
-                          {item.min_alert_level} {item.unit}
+                        <Text className="text-xs sm:text-sm text-stone-500 mt-1">
+                          SKU: <Text className="font-mono text-stone-700">{item.sku}</Text> • Par
+                          Threshold:{' '}
+                          <Text className="font-bold text-stone-700">
+                            {minAlert} {item.unit}
+                          </Text>{' '}
+                          • Supplier:{' '}
+                          <Text className="text-stone-700 font-medium">
+                            {item.supplier?.name || item.supplier_name || 'Direct Wholesale'}
+                          </Text>
                         </Text>
-                        <Text className="text-base text-stone-600 mt-0.5">
-                          Supplier:{' '}
-                          {item.supplier?.name || item.supplier_name || 'Direct Wholesale'}
-                        </Text>
+
+                        {/* Visual Par Level Progress Bar */}
+                        <View className="mt-2.5 max-w-md">
+                          <View className="flex-row items-center justify-between text-xs mb-1">
+                            <Text className="text-[11px] font-semibold text-stone-500">
+                              Stock vs Par Level
+                            </Text>
+                            <Text
+                              className={`text-[11px] font-bold ${
+                                isCritical
+                                  ? 'text-rose-700'
+                                  : isBelowPar
+                                    ? 'text-amber-700'
+                                    : 'text-emerald-700'
+                              }`}
+                            >
+                              {isCritical
+                                ? '0% (Depleted)'
+                                : `${(parRatio * 100).toFixed(0)}% of Par Level`}
+                            </Text>
+                          </View>
+                          <View className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden">
+                            <View
+                              className={`h-full rounded-full ${
+                                isCritical
+                                  ? 'bg-rose-500'
+                                  : isBelowPar
+                                    ? 'bg-amber-500'
+                                    : 'bg-emerald-500'
+                              }`}
+                              style={{ width: `${progressPct}%` }}
+                            />
+                          </View>
+                        </View>
                       </View>
 
-                      {/* Stock on Hand & Cost & Actions */}
-                      <View className="flex-col sm:flex-row sm:items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t border-stone-100/70 md:border-t-0">
+                      {/* Right: Stock On-Hand, MAC Valuation & In-Line Actions */}
+                      <View className="flex-col sm:flex-row sm:items-center justify-between lg:justify-end gap-3.5 pt-2 lg:pt-0 border-t border-stone-100/80 lg:border-t-0">
+                        {/* Numerical Stock Count & Valuation */}
                         <View className="flex-row sm:flex-col items-baseline sm:items-end justify-between sm:mr-3">
                           <Text
-                            className={`text-lg font-extrabold ${
+                            className={`text-xl font-black ${
                               isCritical
                                 ? 'text-rose-700'
                                 : isBelowPar
@@ -394,39 +679,59 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
                                   : 'text-stone-900'
                             }`}
                           >
-                            {Number(item.current_stock || 0).toFixed(2)} {item.unit}
+                            {currentStock.toFixed(2)} {item.unit}
                           </Text>
-                          <Text className="text-base text-stone-500">
-                            MAC: ₱{Number(item.unit_cost || 0).toFixed(2)}/{item.unit}
-                          </Text>
+                          <View className="flex-row items-center gap-1.5 mt-0.5">
+                            <Text className="text-xs text-stone-500">
+                              MAC: ₱{unitCost.toFixed(2)}/{item.unit}
+                            </Text>
+                            <Text className="text-xs font-bold text-stone-700">
+                              • Value: {formatCurrency(itemValuation)}
+                            </Text>
+                          </View>
                         </View>
 
+                        {/* In-Line Action Buttons */}
                         <View className="flex-row items-center gap-2">
+                          {/* 1-Tap Quick Count Adjust */}
                           <Pressable
-                            onPress={() => setSelectedRestockItem(item)}
-                            className="flex-1 sm:flex-initial min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-xs"
+                            onPress={() => setSelectedAdjustItem(item)}
+                            className="min-h-[44px] flex-row items-center justify-center rounded-xl bg-stone-100 border border-stone-200 px-3 active:bg-stone-200"
+                            accessibilityLabel={`Quick adjust stock count for ${item.name}`}
                           >
-                            <Plus size={18} color="#ffffff" />
-                            <Text className="ml-1 text-base font-bold text-white">Restock</Text>
+                            <Sliders size={16} color="#44403c" />
+                            <Text className="ml-1 text-xs font-bold text-stone-800">Count</Text>
                           </Pressable>
 
+                          {/* Restock Delivery Intake */}
+                          <Pressable
+                            onPress={() => setSelectedRestockItem(item)}
+                            className="min-h-[44px] flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:opacity-90 shadow-xs"
+                            accessibilityLabel={`Restock intake for ${item.name}`}
+                          >
+                            <Plus size={16} color="#ffffff" />
+                            <Text className="ml-1 text-xs font-bold text-white">Restock</Text>
+                          </Pressable>
+
+                          {/* Edit Full Item */}
                           <Pressable
                             onPress={() => {
                               setEditingItem(item);
                               setIsItemModalOpen(true);
                             }}
-                            className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
-                            accessibilityLabel="Edit inventory item"
+                            className="min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
+                            accessibilityLabel={`Edit full details of ${item.name}`}
                           >
-                            <Edit size={18} color="#44403c" />
+                            <Edit size={16} color="#44403c" />
                           </Pressable>
 
+                          {/* Delete Item */}
                           <Pressable
                             onPress={() => handleDeleteItem(item)}
-                            className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-rose-50 active:bg-rose-100"
-                            accessibilityLabel="Delete inventory item"
+                            className="min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-rose-50 active:bg-rose-100"
+                            accessibilityLabel={`Delete ${item.name} from inventory`}
                           >
-                            <Trash2 size={18} color="#e11d48" />
+                            <Trash2 size={16} color="#e11d48" />
                           </Pressable>
                         </View>
                       </View>
@@ -586,7 +891,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
           <View className="flex-row items-center justify-between mb-6">
             <View>
               <Text className="text-2xl font-bold text-stone-900">
-                Inventory Cycle Counts & Variance Auditing
+                Inventory Cycle Counts &amp; Variance Auditing
               </Text>
               <Text className="text-base text-stone-500 mt-1">
                 Perform weekly or monthly physical counts to reconcile shrinkage, over-pouring, and
@@ -604,14 +909,14 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
 
           <View className="rounded-xl bg-stone-50 p-6 border border-stone-200 space-y-3">
             <Text className="text-base font-bold text-stone-800">
-              Audit Guardrails & Mathematical Verification:
+              Audit Guardrails &amp; Mathematical Verification:
             </Text>
             <Text className="text-base text-stone-600">
               • Expected on-hand stock reflects real-time dispatch depletion and past restocks.
             </Text>
             <Text className="text-base text-stone-600">
-              • System calculates Variance Qty ($Variance = Actual - Expected$) and cost impact
-              ($Cost = Variance \times MAC$).
+              • System calculates Variance Qty (Variance = Actual - Expected) and cost impact (Cost
+              = Variance × MAC).
             </Text>
             <Text className="text-base text-stone-600">
               • Upon confirmation, atomic database transaction commits adjustments directly to the
@@ -627,7 +932,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
           <View className="flex-row items-center justify-between mb-6">
             <View>
               <Text className="text-2xl font-bold text-stone-900">
-                Spillage, Spoilage & Loss Logging
+                Spillage, Spoilage &amp; Loss Logging
               </Text>
               <Text className="text-base text-stone-500 mt-1">
                 Log dropped bottles, expired ingredients, burned dishes, or tasting portions booked
@@ -710,7 +1015,15 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         </View>
       </AdminModal>
 
-      {/* MODALS */}
+      {/* FAST IN-LINE STOCK COUNT ADJUST MODAL */}
+      <QuickAdjustStockModal
+        visible={!!selectedAdjustItem}
+        onClose={() => setSelectedAdjustItem(null)}
+        item={selectedAdjustItem}
+        onSuccess={handleRefreshAll}
+      />
+
+      {/* FULL INVENTORY ITEM CRUD MODAL */}
       <InventoryItemModal
         visible={isItemModalOpen}
         onClose={() => setIsItemModalOpen(false)}
@@ -719,6 +1032,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         suppliers={suppliers}
       />
 
+      {/* FULL SUPPLIER MODAL */}
       <SupplierModal
         visible={isSupplierModalOpen}
         onClose={() => setIsSupplierModalOpen(false)}
@@ -726,6 +1040,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         supplier={editingSupplier}
       />
 
+      {/* STOCKTAKE AUDIT MODAL */}
       <StocktakeAuditModal
         visible={isStocktakeModalOpen}
         onClose={() => setIsStocktakeModalOpen(false)}
@@ -733,6 +1048,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         inventory={inventory}
       />
 
+      {/* WASTE LOGGER MODAL */}
       <WasteLoggerModal
         visible={isWasteModalOpen}
         onClose={() => setIsWasteModalOpen(false)}

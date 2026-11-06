@@ -1,14 +1,26 @@
 import { supabase } from '../../shared/infrastructure/supabase';
 
+export interface LowStockAlertPayload {
+  inventoryItemId: string;
+  ingredientName: string;
+  productName: string;
+  currentStock: number;
+  minAlertLevel: number;
+  unit: string;
+  isDepleted: boolean;
+}
+
 export interface DispatchOrderResult {
   success: boolean;
   orderId?: string;
+  depletedItems?: number;
   depletions?: Array<{
     inventoryItemId: string;
     quantityDeducted: number;
     unit: string;
     newStock: number;
   }>;
+  lowStockAlerts?: LowStockAlertPayload[];
   auto86Triggered?: string[];
   error?: string;
 }

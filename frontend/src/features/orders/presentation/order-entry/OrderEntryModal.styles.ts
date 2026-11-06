@@ -150,6 +150,45 @@ export const styles = StyleSheet.create({
     opacity: 0.7,
     backgroundColor: '#f3f4f6',
   },
+  productCardLowStock: {
+    borderColor: '#f59e0b',
+    borderWidth: 1.5,
+  },
+  productCardDepleted: {
+    borderColor: '#f43f5e',
+    borderWidth: 1.5,
+  },
+  stockWarningBadge: {
+    position: 'absolute',
+    bottom: 6,
+    left: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3.5,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 7,
+  },
+  stockWarningBadgeAmber: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+    borderWidth: 1,
+  },
+  stockWarningBadgeRose: {
+    backgroundColor: '#fff1f2',
+    borderColor: '#fecdd3',
+    borderWidth: 1,
+  },
+  stockWarningBadgeTextAmber: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#b45309',
+  },
+  stockWarningBadgeTextRose: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#be123c',
+  },
   productCardPressed: {
     transform: [{ scale: 0.98 }],
   },

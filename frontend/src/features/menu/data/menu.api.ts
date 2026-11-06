@@ -89,6 +89,17 @@ export class MenuApi {
             id,
             name,
             price_delta
+          ),
+          product_ingredients (
+            amount,
+            conversion_factor,
+            inventory_items (
+              id,
+              name,
+              current_stock,
+              min_alert_level,
+              unit
+            )
           )
         `
         )
@@ -99,27 +110,65 @@ export class MenuApi {
         return [];
       }
 
-      return data.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        imageUrl: p.image_url || undefined,
-        category: (p.categories?.slug || 'coffee') as any,
-        price: parseFloat(p.base_price) || 0,
-        stationTarget: (p.station_target || 'bar') as 'bar' | 'kitchen',
-        description: p.description || '',
-        allergens: Array.isArray(p.allergens) ? p.allergens : [],
-        dietary: Array.isArray(p.dietary) ? p.dietary : [],
-        isAvailable: p.is_available ?? true,
-        auto86: p.auto_86 ?? false,
-        outOfStockReason: p.out_of_stock_reason || undefined,
-        isResoldOutsideFood: p.is_resold_outside_food || false,
-        originalCost: p.original_cost ? parseFloat(p.original_cost) : undefined,
-        modifiers: (p.product_modifiers || []).map((m: any) => ({
-          id: m.id,
-          name: m.name,
-          priceDelta: parseFloat(m.price_delta) || 0,
-        })),
-      }));
+      return data.map((p: any) => {
+        let stockStatus: 'in_stock' | 'low_stock' | 'depleted' = 'in_stock';
+        let stockAlertMessage: string | undefined = undefined;
+        let lowestStockIngredient: any = undefined;
+
+        if (Array.isArray(p.product_ingredients) && p.product_ingredients.length > 0) {
+          for (const ing of p.product_ingredients) {
+            const inv = ing.inventory_items;
+            if (!inv) continue;
+            const stock = parseFloat(inv.current_stock) || 0;
+            const minAlert = parseFloat(inv.min_alert_level) || 0;
+            if (stock <= 0) {
+              stockStatus = 'depleted';
+              stockAlertMessage = `${inv.name} depleted (${stock.toFixed(1)} ${inv.unit})`;
+              lowestStockIngredient = {
+                name: inv.name,
+                currentStock: stock,
+                unit: inv.unit,
+                minAlertLevel: minAlert,
+              };
+              break; // Critical/depleted takes priority
+            } else if (stock <= minAlert && stockStatus === 'in_stock') {
+              stockStatus = 'low_stock';
+              stockAlertMessage = `${inv.name} low (${stock.toFixed(1)} ${inv.unit})`;
+              lowestStockIngredient = {
+                name: inv.name,
+                currentStock: stock,
+                unit: inv.unit,
+                minAlertLevel: minAlert,
+              };
+            }
+          }
+        }
+
+        return {
+          id: p.id,
+          name: p.name,
+          imageUrl: p.image_url || undefined,
+          category: (p.categories?.slug || 'coffee') as any,
+          price: parseFloat(p.base_price) || 0,
+          stationTarget: (p.station_target || 'bar') as 'bar' | 'kitchen',
+          description: p.description || '',
+          allergens: Array.isArray(p.allergens) ? p.allergens : [],
+          dietary: Array.isArray(p.dietary) ? p.dietary : [],
+          isAvailable: p.is_available ?? true,
+          auto86: p.auto_86 ?? false,
+          outOfStockReason: p.out_of_stock_reason || undefined,
+          stockStatus,
+          stockAlertMessage,
+          lowestStockIngredient,
+          isResoldOutsideFood: p.is_resold_outside_food || false,
+          originalCost: p.original_cost ? parseFloat(p.original_cost) : undefined,
+          modifiers: (p.product_modifiers || []).map((m: any) => ({
+            id: m.id,
+            name: m.name,
+            priceDelta: parseFloat(m.price_delta) || 0,
+          })),
+        };
+      });
     } catch (err) {
       console.warn('getMenuItems error:', err);
       return [];

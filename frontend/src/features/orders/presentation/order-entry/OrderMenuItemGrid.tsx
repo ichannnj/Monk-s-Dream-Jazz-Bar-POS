@@ -10,9 +10,11 @@ import {
   Camera,
   Leaf,
   AlertTriangle,
+  AlertCircle,
   Ban,
 } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
+import { toast } from '@/features/shared/toast/useToastStore';
 import { MenuItem } from '../../../../types/floor';
 import { styles } from './OrderEntryModal.styles';
 
@@ -47,21 +49,40 @@ const MenuItemCard: React.FC<{
   onOpenImageEditor: (item: MenuItem) => void;
 }> = ({ item, isAdmin, onItemClick, onOpenImageEditor }) => {
   const [imageFailed, setImageFailed] = useState(false);
-  const isSoldOut = !item.isAvailable || item.auto86;
+  const isExplicitlyDisabled = !item.isAvailable;
+  const isDepleted = item.stockStatus === 'depleted';
+  const isLowStock = item.stockStatus === 'low_stock';
   const CategoryIcon = getCategoryIcon(item.category);
 
   // Step 4.3: Resold outside food +20% locked price calculation
   const displayPrice =
     item.isResoldOutsideFood && item.originalCost ? item.originalCost * 1.2 : item.price;
 
+  const handlePress = () => {
+    if (isExplicitlyDisabled) return;
+    if (isDepleted) {
+      toast.warning(
+        `${item.name}: Ingredient is depleted in inventory (${item.stockAlertMessage || '0 stock'}). Order allowed.`,
+        { title: 'Depleted Stock Warning' }
+      );
+    } else if (isLowStock) {
+      toast.info(`${item.name}: Low ingredient stock (${item.stockAlertMessage}). Order allowed.`, {
+        title: 'Low Stock Notice',
+      });
+    }
+    onItemClick(item);
+  };
+
   return (
     <Pressable
-      onPress={() => onItemClick(item)}
-      disabled={isSoldOut}
+      onPress={handlePress}
+      disabled={isExplicitlyDisabled}
       style={({ pressed }) => [
         styles.productCard,
-        isSoldOut && styles.productCardDisabled,
-        pressed && !isSoldOut && styles.productCardPressed,
+        isExplicitlyDisabled && styles.productCardDisabled,
+        isLowStock && !isExplicitlyDisabled && styles.productCardLowStock,
+        isDepleted && !isExplicitlyDisabled && styles.productCardDepleted,
+        pressed && !isExplicitlyDisabled && styles.productCardPressed,
       ]}
     >
       {/* Top Image Banner (height: 110 with smooth fallback) */}
@@ -97,6 +118,29 @@ const MenuItemCard: React.FC<{
             {item.stationTarget === 'bar' ? '☕ BAR' : '🍳 KITCHEN'}
           </Text>
         </View>
+
+        {/* Soft Non-Blocking Low Stock / Depleted Badge */}
+        {!isExplicitlyDisabled && isDepleted && (
+          <View style={[styles.stockWarningBadge, styles.stockWarningBadgeRose]}>
+            <AlertTriangle size={11} color="#be123c" strokeWidth={2.4} />
+            <Text style={styles.stockWarningBadgeTextRose}>
+              {item.lowestStockIngredient
+                ? `Depleted (${item.lowestStockIngredient.currentStock.toFixed(1)}${item.lowestStockIngredient.unit})`
+                : 'Depleted Stock'}
+            </Text>
+          </View>
+        )}
+
+        {!isExplicitlyDisabled && !isDepleted && isLowStock && (
+          <View style={[styles.stockWarningBadge, styles.stockWarningBadgeAmber]}>
+            <AlertCircle size={11} color="#b45309" strokeWidth={2.4} />
+            <Text style={styles.stockWarningBadgeTextAmber}>
+              {item.lowestStockIngredient
+                ? `Low (${item.lowestStockIngredient.currentStock.toFixed(1)}${item.lowestStockIngredient.unit})`
+                : 'Low Stock'}
+            </Text>
+          </View>
+        )}
 
         {/* Admin Camera / Edit Image Button */}
         {isAdmin && (
@@ -151,12 +195,14 @@ const MenuItemCard: React.FC<{
         </View>
       </View>
 
-      {/* SOLD OUT OVERLAY (86 Safeguard) */}
-      {isSoldOut ? (
+      {/* DISABLED OVERLAY (Only if administratively marked unavailable) */}
+      {isExplicitlyDisabled ? (
         <View style={styles.soldOutOverlay}>
           <Ban size={22} color="#dc2626" strokeWidth={2.4} />
-          <Text style={styles.soldOutTitle}>SOLD OUT (86)</Text>
-          <Text style={styles.soldOutReason}>{item.outOfStockReason || 'Ingredient Depleted'}</Text>
+          <Text style={styles.soldOutTitle}>UNAVAILABLE</Text>
+          <Text style={styles.soldOutReason}>
+            {item.outOfStockReason || 'Temporarily disabled'}
+          </Text>
         </View>
       ) : null}
     </Pressable>

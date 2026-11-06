@@ -821,6 +821,37 @@ export const adminApi = {
   },
 
   /**
+   * Fast In-Line Stock Adjustment RPC (Admin Inventory Hub)
+   */
+  async quickAdjustStock(params: {
+    inventoryItemId: string;
+    newStock: number;
+    reason?: string;
+    adjustedById?: string;
+  }) {
+    const { data, error } = await (supabase.rpc as any)('admin_quick_adjust_inventory_stock', {
+      p_inventory_item_id: params.inventoryItemId,
+      p_new_stock: params.newStock,
+      p_reason: params.reason || 'Manual physical count adjustment',
+      p_adjusted_by_id: params.adjustedById || null,
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  /**
+   * Fast In-Line Par Alert Level Update (Admin Inventory Hub)
+   */
+  async updateParLevel(params: { inventoryItemId: string; newPar: number }) {
+    const { data, error } = await (supabase.rpc as any)('admin_update_inventory_par_level', {
+      p_inventory_item_id: params.inventoryItemId,
+      p_new_par: params.newPar,
+    });
+    if (error) throw error;
+    return data;
+  },
+
+  /**
    * Spillage & Waste Logger
    */
   async logWaste(params: {

@@ -97,6 +97,14 @@ export interface MenuItem {
   isAvailable: boolean;
   auto86: boolean;
   outOfStockReason?: string;
+  stockStatus?: 'in_stock' | 'low_stock' | 'depleted';
+  stockAlertMessage?: string;
+  lowestStockIngredient?: {
+    name: string;
+    currentStock: number;
+    unit: string;
+    minAlertLevel: number;
+  };
   isResoldOutsideFood?: boolean;
   originalCost?: number;
   modifiers: {

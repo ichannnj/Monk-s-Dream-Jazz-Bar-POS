@@ -86,7 +86,8 @@ Item preparation destination is determined solely by product category, **never**
 
 - **Trigger Point:** Depletion occurs at **Order Dispatch** (when staff taps "Send Order").
 - **Cancellation Restoral:** If an order item is cancelled before preparation starts, depleted stock is automatically restored to the active inventory ledger (`CANCEL_RESTORE`).
-- **Auto-86 Safeguard:** POS menu items automatically grey out when required raw ingredient stocks breach critical minimum thresholds.
+- **Non-Blocking Orders Invariant & Soft Alerts:** When required raw ingredient stocks drop to or below minimum par alert levels (`min_alert_level`) or reach 0/negative, the system displays soft visual warnings (amber for low stock, red for depleted) on POS cards and fires real-time alerts across terminals and the Buzzout feed without blocking server orders (allowing negative inventory tracking until shipments are checked in).
+- **Executive Inventory Hub:** Features live KPI cards (Total Valuation ₱, In-Par, Below-Par, Depleted), stock health ratio progress bars, 1-tap in-line Quick Stock Count adjustments (`QuickAdjustStockModal.tsx`), and rapid par threshold editing.
 - **Recipe BOM Units:** Precise measurements (`g`, `ml`, `pcs`, `shots`) defined per menu item in `product_ingredients` with conversion factors to stocking units.
 - **Hierarchical Modifier Groups:** Reusable and product-level modifier groups enforce `min_selections`, `max_selections`, and `is_required` constraints. Modifiers declare explicit inventory deltas (e.g., Oat Milk Swap deducts +200ml oat milk).
 - **Dual Packaging Depletion:** Packaging goods (`PACKAGING` inventory category) can be bound to item recipes or automatically decremented on Takeout/Online Delivery orders.

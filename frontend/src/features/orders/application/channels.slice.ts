@@ -12,6 +12,7 @@ import { tablesApi } from '../../table-service/data/tables.api';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
+import { toast } from '../../shared/toast/useToastStore';
 
 export const createChannelsSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   createTakeoutOrder: (
@@ -129,6 +130,15 @@ export const createChannelsSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
             };
           }),
         }));
+
+        if (res.depletion?.lowStockAlerts && res.depletion.lowStockAlerts.length > 0) {
+          res.depletion.lowStockAlerts.forEach((alt) => {
+            toast.warning(
+              `${alt.ingredientName}: ${Number(alt.currentStock).toFixed(2)} ${alt.unit} remaining (Par: ${alt.minAlertLevel} ${alt.unit})`,
+              { title: alt.isDepleted ? 'Stock Depleted' : 'Low Stock Alert' }
+            );
+          });
+        }
 
         realtimeGateway.broadcastPosSync('takeout_created');
       })

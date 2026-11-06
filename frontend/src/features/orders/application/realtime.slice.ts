@@ -297,6 +297,26 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
           }
         },
 
+        onInventoryChange: (payload) => {
+          if (payload.new) {
+            const item = payload.new;
+            const currentStock = parseFloat(item.current_stock) || 0;
+            const minAlert = parseFloat(item.min_alert_level) || 0;
+            if (currentStock <= minAlert) {
+              const isDepleted = currentStock <= 0;
+              get().addAlert({
+                title: isDepleted ? `🔴 Depleted: ${item.name}` : `🟡 Low Stock: ${item.name}`,
+                description: `${item.name} is down to ${currentStock.toFixed(2)} ${item.unit} (Par: ${minAlert} ${item.unit}). Orders remain active.`,
+                type: 'auto_86',
+                targetRef: item.id,
+              });
+              toast.warning(`${item.name}: ${currentStock.toFixed(2)} ${item.unit} remaining`, {
+                title: isDepleted ? 'Ingredient Depleted' : 'Low Stock Warning',
+              });
+            }
+          }
+        },
+
         onBuzzout: (buzzoutPayload) => {
           get().addAlert({
             title: 'Order Ready for Runner',
