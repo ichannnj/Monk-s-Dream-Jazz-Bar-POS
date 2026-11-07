@@ -178,7 +178,6 @@ const MenuItemCard: React.FC<{
           <Text style={styles.productName} numberOfLines={1}>
             {item.name}
           </Text>
-          <Text style={styles.productPrice}>{formatCurrency(displayPrice)}</Text>
           <Text style={styles.productPrice}>{priceLabel}</Text>
         </View>
 
