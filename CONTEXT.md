@@ -75,6 +75,8 @@ Item preparation destination is determined solely by product category, **never**
 
 ### 4. Financial & Pricing Calculations
 
+- **Beverage Temperature & Size Combination Matrix Pricing (`public.product_variants`):**  
+  Specialty coffee and beverages support multi-attribute matrix pricing across Temperatures (`HOT`, `COLD`) and Sizes (`8oz`, `12oz`, `16oz`, `Regular`, `Large`, `Single`, `Double`, or custom labels). Each valid combination carries an explicit selling price. Single-size items without temperature choices fall back cleanly to `products.base_price`. Ordering opens the Unified Drink Customizer modal (`OrderModifierModal.tsx`) showing visual temperature pills (🔥 Hot / ❄️ Iced), cup size buttons with live price calculation, recipe modifiers, and barista notes. Active lines format as `Drink Name (Hot · 12oz)` across Cart, Receipts, and Checks, while Barista KDS (`BaristaTicketCard.tsx`) highlights color-coded badges (orange for `HOT`, cyan for `ICED`). Granular Variant Recipe BOM in `product_ingredients` (`variant_id`) allows size/temp-specific ingredient depletion upon KDS `READY`, falling back to base product BOM when no variant BOM is defined.
 - **Resold Outside Food Rule:**  
   $$\text{Base Price} = \text{Original Cost} \times 1.20 \quad (\text{fixed locked } +20\% \text{ margin})$$
 - **Corkage Fee Rule:**  

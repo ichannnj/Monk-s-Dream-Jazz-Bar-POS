@@ -237,6 +237,9 @@ export async function createOrderWithItems(params: {
     quantity: number;
     unitPrice: number;
     stationTarget: 'bar' | 'kitchen';
+    variantId?: string;
+    temperature?: string;
+    sizeLabel?: string;
     status?: string;
     modifiers?: string[];
     notes?: string;
@@ -291,6 +294,9 @@ export async function createOrderWithItems(params: {
         return {
           order_id: orderData.id,
           product_id: resolvedProdId || 'e1111111-0000-0000-0000-000000000001',
+          variant_id: item.variantId || null,
+          temperature: item.temperature || null,
+          size_label: item.sizeLabel || null,
           quantity: item.quantity,
           unit_price: item.unitPrice,
           status: itemDbStatus,

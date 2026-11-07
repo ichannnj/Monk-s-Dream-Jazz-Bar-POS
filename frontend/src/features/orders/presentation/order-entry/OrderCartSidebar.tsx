@@ -173,7 +173,7 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
                         : { backgroundColor: '#ea580c' },
                     ]}
                   />
-                  <Text style={styles.cartItemName} numberOfLines={1}>
+                  <Text style={styles.cartItemName} numberOfLines={2}>
                     {cartItem.productName}
                   </Text>
                 </View>

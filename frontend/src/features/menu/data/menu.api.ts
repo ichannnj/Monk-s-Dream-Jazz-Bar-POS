@@ -85,6 +85,15 @@ export class MenuApi {
             name,
             slug
           ),
+          product_variants (
+            id,
+            product_id,
+            temperature,
+            size_label,
+            price,
+            is_available,
+            sort_order
+          ),
           product_modifiers (
             id,
             name,
@@ -167,6 +176,18 @@ export class MenuApi {
             name: m.name,
             priceDelta: parseFloat(m.price_delta) || 0,
           })),
+          variants: (p.product_variants || [])
+            .filter((v: any) => v.is_available)
+            .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+            .map((v: any) => ({
+              id: v.id,
+              productId: v.product_id,
+              temperature: v.temperature || 'NONE',
+              sizeLabel: v.size_label || 'Standard',
+              price: parseFloat(v.price) || 0,
+              isAvailable: v.is_available ?? true,
+              sortOrder: v.sort_order,
+            })),
         };
       });
     } catch (err) {

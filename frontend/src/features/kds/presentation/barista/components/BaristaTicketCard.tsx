@@ -197,26 +197,54 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
           const isVoid = item.isVoided;
           const is86 = item.is86;
 
+          const isHot =
+            item.temperature === 'HOT' || item.productName.toLowerCase().includes('(hot');
+          const isCold =
+            item.temperature === 'COLD' ||
+            item.productName.toLowerCase().includes('(iced') ||
+            item.productName.toLowerCase().includes('(cold');
+
           return (
-            <Pressable
-              key={item.id}
-              onPress={() => onToggleItem?.(ticket.id, item.id)}
-              style={styles.itemRow}
-            >
-              <Text style={[styles.itemQty, isVoid ? styles.itemVoidText : null]}>
-                {item.quantity}×
-              </Text>
-              <Text
-                style={[
-                  styles.itemName,
-                  isVoid ? styles.itemVoidText : null,
-                  isVoid ? styles.itemStrikethrough : null,
-                ]}
-              >
-                {item.productName}
-                {is86 ? <Text style={styles.outOfStockSuffix}> · Out of Stock</Text> : null}
-              </Text>
-            </Pressable>
+            <View key={item.id} style={{ marginBottom: 4 }}>
+              <Pressable onPress={() => onToggleItem?.(ticket.id, item.id)} style={styles.itemRow}>
+                <Text style={[styles.itemQty, isVoid ? styles.itemVoidText : null]}>
+                  {item.quantity}×
+                </Text>
+                <Text
+                  style={[
+                    styles.itemName,
+                    isVoid ? styles.itemVoidText : null,
+                    isVoid ? styles.itemStrikethrough : null,
+                  ]}
+                >
+                  {item.productName}
+                  {is86 ? <Text style={styles.outOfStockSuffix}> · Out of Stock</Text> : null}
+                </Text>
+                {isHot ? (
+                  <View style={styles.itemVariantBadgeHot}>
+                    <Text style={styles.itemVariantTextHot}>🔥 HOT</Text>
+                  </View>
+                ) : isCold ? (
+                  <View style={styles.itemVariantBadgeCold}>
+                    <Text style={styles.itemVariantTextCold}>❄️ ICED</Text>
+                  </View>
+                ) : null}
+              </Pressable>
+
+              {/* Modifiers List */}
+              {item.modifiers && item.modifiers.length > 0 ? (
+                <View style={styles.itemModRow}>
+                  <Text style={styles.itemModText}>+ {item.modifiers.join(', ')}</Text>
+                </View>
+              ) : null}
+
+              {/* Specific Item Prep Notes */}
+              {item.notes ? (
+                <View style={styles.itemModRow}>
+                  <Text style={styles.itemNoteSubText}>"{item.notes}"</Text>
+                </View>
+              ) : null}
+            </View>
           );
         })}
       </View>
@@ -711,5 +739,48 @@ const styles = StyleSheet.create({
   buttonPressed: {
     opacity: 0.85,
     transform: [{ scale: 0.99 }],
+  },
+  itemVariantBadgeHot: {
+    backgroundColor: '#fff7ed',
+    borderColor: '#fdba74',
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    alignSelf: 'center',
+  },
+  itemVariantTextHot: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#c2410c',
+  },
+  itemVariantBadgeCold: {
+    backgroundColor: '#f0f9ff',
+    borderColor: '#7dd3fc',
+    borderWidth: 1,
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    alignSelf: 'center',
+  },
+  itemVariantTextCold: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#0369a1',
+  },
+  itemModRow: {
+    paddingLeft: 20,
+    marginTop: 1,
+    marginBottom: 2,
+  },
+  itemModText: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#4b5563',
+  },
+  itemNoteSubText: {
+    fontSize: 11.5,
+    fontStyle: 'italic',
+    color: '#6b7280',
   },
 });

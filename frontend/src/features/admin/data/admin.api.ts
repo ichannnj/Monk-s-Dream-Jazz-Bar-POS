@@ -114,6 +114,17 @@ export interface ModifierGroupAdmin {
   options?: ProductModifierOptionAdmin[];
 }
 
+export interface ProductVariantAdmin {
+  id?: string;
+  product_id?: string;
+  temperature: 'HOT' | 'COLD' | 'ROOM' | 'NONE';
+  size_label: string;
+  price: number;
+  is_available?: boolean;
+  sku?: string | null;
+  sort_order?: number;
+}
+
 export interface ProductAdmin {
   id: string;
   name: string;
@@ -136,6 +147,7 @@ export interface ProductAdmin {
     name: string;
     slug: string;
   };
+  variants?: ProductVariantAdmin[];
   ingredients?: Array<{
     id: string;
     inventory_item_id: string;
@@ -448,7 +460,7 @@ export const adminApi = {
     const { data, error } = await supabase
       .from('products')
       .select(
-        '*, categories(id, name, slug), product_ingredients(*, inventory_items(name, unit, unit_cost))'
+        '*, categories(id, name, slug), product_ingredients(*, inventory_items(name, unit, unit_cost)), product_variants(*)'
       )
       .order('name', { ascending: true });
 
@@ -456,7 +468,32 @@ export const adminApi = {
     return (data || []).map((p: any) => ({
       ...p,
       ingredients: p.product_ingredients,
+      variants: (p.product_variants || []).sort(
+        (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
+      ),
     })) as ProductAdmin[];
+  },
+
+  async upsertProductVariants(
+    productId: string,
+    variants: ProductVariantAdmin[]
+  ): Promise<boolean> {
+    await (supabase.from as any)('product_variants').delete().eq('product_id', productId);
+    if (!variants || variants.length === 0) return true;
+
+    const toInsert = variants.map((v, idx) => ({
+      product_id: productId,
+      temperature: v.temperature || 'NONE',
+      size_label: v.size_label || 'Standard',
+      price: v.price,
+      is_available: v.is_available !== false,
+      sku: v.sku || null,
+      sort_order: v.sort_order !== undefined ? v.sort_order : idx + 1,
+    }));
+
+    const { error } = await (supabase.from as any)('product_variants').insert(toInsert);
+    if (error) throw error;
+    return true;
   },
 
   async createProduct(params: {
@@ -553,20 +590,29 @@ export const adminApi = {
       amount: number;
       unit: string;
       conversionFactor?: number;
-    }>
+    }>,
+    variantId?: string | null
   ) {
-    // Delete existing recipe BOM, insert new
-    await supabase.from('product_ingredients').delete().eq('product_id', productId);
+    // Delete existing recipe BOM scoped to variant or base product
+    if (variantId) {
+      await (supabase.from as any)('product_ingredients').delete().eq('variant_id', variantId);
+    } else {
+      await (supabase.from as any)('product_ingredients')
+        .delete()
+        .eq('product_id', productId)
+        .is('variant_id', null);
+    }
 
     if (ingredients.length > 0) {
       const rows = ingredients.map((ing) => ({
         product_id: productId,
+        variant_id: variantId || null,
         inventory_item_id: ing.inventoryItemId,
         amount: ing.amount,
         unit: ing.unit,
         conversion_factor: ing.conversionFactor || 1,
       }));
-      const { error } = await supabase.from('product_ingredients').insert(rows);
+      const { error } = await (supabase.from as any)('product_ingredients').insert(rows);
       if (error) throw error;
     }
   },

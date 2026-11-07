@@ -457,10 +457,13 @@ export type Database = {
           order_id: string
           product_id: string
           quantity: number
+          size_label: string | null
           station_target: Database["public"]["Enums"]["station_target"]
           status: Database["public"]["Enums"]["item_status"]
+          temperature: string | null
           unit_price: number
           updated_at: string
+          variant_id: string | null
         }
         Insert: {
           created_at?: string
@@ -471,10 +474,13 @@ export type Database = {
           order_id: string
           product_id: string
           quantity?: number
+          size_label?: string | null
           station_target?: Database["public"]["Enums"]["station_target"]
           status?: Database["public"]["Enums"]["item_status"]
+          temperature?: string | null
           unit_price: number
           updated_at?: string
+          variant_id?: string | null
         }
         Update: {
           created_at?: string
@@ -485,10 +491,13 @@ export type Database = {
           order_id?: string
           product_id?: string
           quantity?: number
+          size_label?: string | null
           station_target?: Database["public"]["Enums"]["station_target"]
           status?: Database["public"]["Enums"]["item_status"]
+          temperature?: string | null
           unit_price?: number
           updated_at?: string
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -1096,6 +1105,53 @@ export type Database = {
           },
           {
             foreignKeyName: "product_modifiers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_variants: {
+        Row: {
+          created_at: string
+          id: string
+          is_available: boolean
+          price: number
+          product_id: string
+          size_label: string
+          sku: string | null
+          sort_order: number
+          temperature: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          price: number
+          product_id: string
+          size_label?: string
+          sku?: string | null
+          sort_order?: number
+          temperature?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_available?: boolean
+          price?: number
+          product_id?: string
+          size_label?: string
+          sku?: string | null
+          sort_order?: number
+          temperature?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_variants_product_id_fkey"
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"

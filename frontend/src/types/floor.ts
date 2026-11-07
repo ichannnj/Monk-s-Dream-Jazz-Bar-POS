@@ -24,6 +24,18 @@ export interface StaffUser {
 export type TableArea = 'bar' | 'cafe';
 export type TableStatus = 'empty' | 'occupied' | 'preparing' | 'ready' | 'served';
 export type ChannelCategory = 'all' | 'cafe' | 'bar' | 'takeout' | 'online';
+export type BeverageTemperature = 'HOT' | 'COLD' | 'ROOM' | 'NONE';
+
+export interface ProductVariant {
+  id: string;
+  productId: string;
+  temperature: BeverageTemperature;
+  sizeLabel: string;
+  price: number;
+  isAvailable: boolean;
+  sku?: string;
+  sortOrder?: number;
+}
 
 export interface OrderLineItem {
   id: string;
@@ -32,6 +44,9 @@ export interface OrderLineItem {
   unitPrice: number;
   quantity: number;
   stationTarget: 'bar' | 'kitchen';
+  variantId?: string;
+  temperature?: BeverageTemperature;
+  sizeLabel?: string;
   modifiers?: string[];
   notes?: string;
   status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
@@ -112,6 +127,7 @@ export interface MenuItem {
     name: string;
     priceDelta: number;
   }[];
+  variants?: ProductVariant[];
 }
 
 export interface TakeoutOrder {

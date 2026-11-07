@@ -40,14 +40,17 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
   inventoryItems,
 }) => {
   const [lines, setLines] = useState<TempBomLine[]>([]);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pickingLineIdx, setPickingLineIdx] = useState<number | null>(null);
   const [ingredientSearch, setIngredientSearch] = useState('');
 
   useEffect(() => {
     if (product && visible) {
+      setSelectedVariantId(null);
+      const filtered = (product.ingredients || []).filter((b: any) => !b.variant_id);
       setLines(
-        (product.ingredients || []).map((b) => ({
+        filtered.map((b) => ({
           id: b.id,
           inventoryItemId: b.inventory_item_id,
           amount: b.amount.toString(),
@@ -61,6 +64,23 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
     setPickingLineIdx(null);
     setIngredientSearch('');
   }, [product, visible]);
+
+  const handleSelectScope = (variantId: string | null) => {
+    setSelectedVariantId(variantId);
+    if (!product) return;
+    const filtered = (product.ingredients || []).filter((b: any) =>
+      variantId ? b.variant_id === variantId : !b.variant_id
+    );
+    setLines(
+      filtered.map((b: any) => ({
+        id: b.id,
+        inventoryItemId: b.inventory_item_id,
+        amount: b.amount.toString(),
+        unit: b.unit,
+        conversionFactor: b.conversion_factor ? b.conversion_factor.toString() : '1',
+      }))
+    );
+  };
 
   const handleAddLine = () => {
     const firstInv = inventoryItems[0];
@@ -133,7 +153,8 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
           amount: parseFloat(l.amount) || 0,
           unit: l.unit.trim(),
           conversionFactor: parseFloat(l.conversionFactor) || 1,
-        }))
+        })),
+        selectedVariantId
       );
 
       toast.success(
@@ -217,6 +238,57 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
               </View>
             </View>
           </View>
+
+          {/* Variant Scope Selector */}
+          {product?.variants && product.variants.length > 0 && (
+            <View className="mb-2">
+              <Text className="text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
+                Recipe Target Scope:
+              </Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+                <Pressable
+                  onPress={() => handleSelectScope(null)}
+                  className={`mr-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${
+                    selectedVariantId === null
+                      ? 'bg-[#800020] border-[#800020]'
+                      : 'bg-white border-stone-200'
+                  }`}
+                >
+                  <Text
+                    className={`text-xs font-bold ${
+                      selectedVariantId === null ? 'text-white' : 'text-stone-700'
+                    }`}
+                  >
+                    Base Recipe (Default)
+                  </Text>
+                </Pressable>
+
+                {product.variants.map((v) => {
+                  const isSelected = selectedVariantId === v.id;
+                  const label = `${
+                    v.temperature === 'HOT' ? '🔥 Hot' : v.temperature === 'COLD' ? '❄️ Iced' : ''
+                  } ${v.size_label || (v as any).sizeLabel}`.trim();
+                  return (
+                    <Pressable
+                      key={v.id || `${v.temperature}-${v.size_label}`}
+                      onPress={() => handleSelectScope(v.id || null)}
+                      className={`mr-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${
+                        isSelected ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-200'
+                      }`}
+                    >
+                      <Text
+                        className={`text-xs font-bold ${
+                          isSelected ? 'text-white' : 'text-stone-700'
+                        }`}
+                      >
+                        {label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
 
           {/* Ingredients Vertical List */}
           <View className="flex-row items-center justify-between mb-1">

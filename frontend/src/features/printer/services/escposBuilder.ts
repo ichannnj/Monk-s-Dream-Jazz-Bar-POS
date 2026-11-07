@@ -167,6 +167,9 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
     const itemTotal = (item.total || (item.price || 0) * (item.quantity || 1)) / 100;
     const priceStr = formatPhp(itemTotal);
     builder.text(padLine(qtyName, priceStr, 48));
+    if (item.modifiers && item.modifiers.length > 0) {
+      builder.line(`   + ${item.modifiers.join(', ')}`);
+    }
     if (item.isCorkage) {
       builder.line('   [Corkage Applied]');
     }
@@ -254,6 +257,9 @@ export function buildRunnerChitBytes(data: any): Uint8Array {
   const items = data.items || [];
   for (const item of items) {
     builder.bold(true).line(`[ ] ${item.quantity}x ${item.name}`).bold(false);
+    if (item.modifiers && item.modifiers.length > 0) {
+      builder.line(`    + ${item.modifiers.join(', ')}`);
+    }
     if (item.station) {
       builder.line(`    Station: ${item.station}`);
     }

@@ -55,8 +55,22 @@ const MenuItemCard: React.FC<{
   const CategoryIcon = getCategoryIcon(item.category);
 
   // Step 4.3: Resold outside food +20% locked price calculation
+  // Resold outside food +20% locked price calculation or variant pricing
+  const hasVariants = Boolean(item.variants && item.variants.length > 0);
+  const minVariantPrice = hasVariants
+    ? Math.min(...(item.variants?.map((v) => v.price) || [item.price]))
+    : item.price;
+  const maxVariantPrice = hasVariants
+    ? Math.max(...(item.variants?.map((v) => v.price) || [item.price]))
+    : item.price;
+  const isMultiPrice = hasVariants && minVariantPrice !== maxVariantPrice;
+
   const displayPrice =
-    item.isResoldOutsideFood && item.originalCost ? item.originalCost * 1.2 : item.price;
+    item.isResoldOutsideFood && item.originalCost ? item.originalCost * 1.2 : minVariantPrice;
+
+  const priceLabel = isMultiPrice
+    ? `From ${formatCurrency(minVariantPrice)}`
+    : formatCurrency(displayPrice);
 
   const handlePress = () => {
     if (isExplicitlyDisabled) return;
@@ -165,6 +179,7 @@ const MenuItemCard: React.FC<{
             {item.name}
           </Text>
           <Text style={styles.productPrice}>{formatCurrency(displayPrice)}</Text>
+          <Text style={styles.productPrice}>{priceLabel}</Text>
         </View>
 
         <Text style={styles.productDesc} numberOfLines={2}>

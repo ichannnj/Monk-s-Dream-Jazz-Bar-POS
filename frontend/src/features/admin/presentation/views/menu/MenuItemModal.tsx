@@ -10,11 +10,22 @@ import {
   Compass,
   ShieldAlert,
   Leaf,
+  Flame,
+  Snowflake,
+  Plus,
+  Trash2,
+  Sliders,
+  Sparkles,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { useAuthStore } from '@/features/auth';
 import { PosDropdown, PosMultiSelectDropdown, type PosDropdownOption } from '@/features/shared';
-import { adminApi, type ProductAdmin, type CategoryAdmin } from '../../../data/admin.api';
+import {
+  adminApi,
+  type ProductAdmin,
+  type CategoryAdmin,
+  type ProductVariantAdmin,
+} from '../../../data/admin.api';
 import { AdminModal } from '../../components/AdminModal';
 import { AdminInput } from '../../components/AdminInput';
 import { AdminNumberInput } from '../../components/AdminNumberInput';
@@ -68,6 +79,23 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
   const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Variant & Matrix Pricing State
+  const [hasVariants, setHasVariants] = useState(false);
+  const [supportedTemps, setSupportedTemps] = useState<('HOT' | 'COLD')[]>(['HOT', 'COLD']);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(['8oz', '12oz', '16oz']);
+  const [variantsMatrix, setVariantsMatrix] = useState<
+    Array<{
+      id?: string;
+      temperature: 'HOT' | 'COLD' | 'ROOM' | 'NONE';
+      size_label: string;
+      price: string;
+      is_available: boolean;
+    }>
+  >([]);
+  const [customSizeInput, setCustomSizeInput] = useState('');
+
+  const PRESET_SIZES = ['8oz', '12oz', '16oz', 'Regular', 'Large', 'Single', 'Double'];
+
   useEffect(() => {
     if (product) {
       setName(product.name);
@@ -81,6 +109,34 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       setDescription(product.description || '');
       setSelectedAllergens(product.allergens || []);
       setSelectedDietary(product.dietary || []);
+
+      if (product.variants && product.variants.length > 0) {
+        setHasVariants(true);
+        const temps = Array.from(
+          new Set(
+            product.variants
+              .map((v) => v.temperature)
+              .filter((t): t is 'HOT' | 'COLD' => t === 'HOT' || t === 'COLD')
+          )
+        );
+        const sizes = Array.from(new Set(product.variants.map((v) => v.size_label)));
+        setSupportedTemps(temps.length > 0 ? temps : ['HOT', 'COLD']);
+        setSelectedSizes(sizes.length > 0 ? sizes : ['8oz', '12oz', '16oz']);
+        setVariantsMatrix(
+          product.variants.map((v) => ({
+            id: v.id,
+            temperature: v.temperature,
+            size_label: v.size_label,
+            price: v.price.toString(),
+            is_available: v.is_available !== false,
+          }))
+        );
+      } else {
+        setHasVariants(false);
+        setSupportedTemps(['HOT', 'COLD']);
+        setSelectedSizes(['8oz', '12oz', '16oz']);
+        setVariantsMatrix([]);
+      }
     } else {
       setName('');
       setCategoryId(categories[0]?.id || '');
@@ -93,8 +149,83 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       setDescription('');
       setSelectedAllergens([]);
       setSelectedDietary([]);
+      setHasVariants(false);
+      setSupportedTemps(['HOT', 'COLD']);
+      setSelectedSizes(['8oz', '12oz', '16oz']);
+      setVariantsMatrix([]);
     }
   }, [product, categories, visible]);
+
+  // Helper to re-generate combination matrix rows while preserving existing prices
+  const regenerateMatrix = (
+    temps: ('HOT' | 'COLD')[],
+    sizes: string[],
+    currentMatrix = variantsMatrix
+  ) => {
+    const defaultP = basePrice.trim() || '180';
+    const newRows: typeof variantsMatrix = [];
+
+    const activeTemps: Array<'HOT' | 'COLD' | 'NONE'> = temps.length > 0 ? temps : ['NONE'];
+    const activeSizes = sizes.length > 0 ? sizes : ['Standard'];
+
+    for (const temp of activeTemps) {
+      for (const size of activeSizes) {
+        const existing = currentMatrix.find((r) => r.temperature === temp && r.size_label === size);
+        if (existing) {
+          newRows.push(existing);
+        } else {
+          newRows.push({
+            temperature: temp,
+            size_label: size,
+            price: defaultP,
+            is_available: true,
+          });
+        }
+      }
+    }
+    setVariantsMatrix(newRows);
+  };
+
+  const handleToggleTemp = (temp: 'HOT' | 'COLD') => {
+    const updated = supportedTemps.includes(temp)
+      ? supportedTemps.filter((t) => t !== temp)
+      : [...supportedTemps, temp];
+    setSupportedTemps(updated);
+    regenerateMatrix(updated, selectedSizes);
+  };
+
+  const handleToggleSize = (size: string) => {
+    const updated = selectedSizes.includes(size)
+      ? selectedSizes.filter((s) => s !== size)
+      : [...selectedSizes, size];
+    setSelectedSizes(updated);
+    regenerateMatrix(supportedTemps, updated);
+  };
+
+  const handleAddCustomSize = () => {
+    const trimmed = customSizeInput.trim();
+    if (!trimmed || selectedSizes.includes(trimmed)) return;
+    const updated = [...selectedSizes, trimmed];
+    setSelectedSizes(updated);
+    setCustomSizeInput('');
+    regenerateMatrix(supportedTemps, updated);
+  };
+
+  const handleUpdateMatrixPrice = (index: number, val: string) => {
+    setVariantsMatrix((prev) => prev.map((r, i) => (i === index ? { ...r, price: val } : r)));
+  };
+
+  const handleToggleMatrixRowAvailability = (index: number) => {
+    setVariantsMatrix((prev) =>
+      prev.map((r, i) => (i === index ? { ...r, is_available: !r.is_available } : r))
+    );
+  };
+
+  const handleApplyBaseToAll = () => {
+    const defaultP = basePrice.trim() || '180';
+    setVariantsMatrix((prev) => prev.map((r) => ({ ...r, price: defaultP })));
+    toast.info('Applied base price to all matrix combinations');
+  };
 
   // Clean up staged blob URL when modal closes or unmounts
   useEffect(() => {
@@ -197,6 +328,23 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
           allergens: selectedAllergens,
           dietary: selectedDietary,
         });
+
+        // Upsert variants
+        if (hasVariants && variantsMatrix.length > 0) {
+          const variantsToSave: ProductVariantAdmin[] = variantsMatrix
+            .filter((v) => v.is_available)
+            .map((v, idx) => ({
+              temperature: v.temperature,
+              size_label: v.size_label,
+              price: parseFloat(v.price) || price,
+              is_available: true,
+              sort_order: idx + 1,
+            }));
+          await adminApi.upsertProductVariants(product.id, variantsToSave);
+        } else {
+          await adminApi.upsertProductVariants(product.id, []);
+        }
+
         toast.success(`Updated "${name}"`, { title: 'Menu Item Saved' });
       } else {
         // 1. Create product row first to obtain authoritative UUID
@@ -226,6 +374,22 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
               uploadRes.error
             );
             toast.error('Product created, but photo upload failed: ' + uploadRes.error);
+          }
+        }
+
+        // Upsert variants for new product
+        if (newProduct?.id) {
+          if (hasVariants && variantsMatrix.length > 0) {
+            const variantsToSave: ProductVariantAdmin[] = variantsMatrix
+              .filter((v) => v.is_available)
+              .map((v, idx) => ({
+                temperature: v.temperature,
+                size_label: v.size_label,
+                price: parseFloat(v.price) || price,
+                is_available: true,
+                sort_order: idx + 1,
+              }));
+            await adminApi.upsertProductVariants(newProduct.id, variantsToSave);
           }
         }
 
@@ -390,6 +554,249 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
             />
           </View>
         )}
+
+        {/* Beverage Sizes & Temperature Matrix Toggle */}
+        <View className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4 space-y-4">
+          <Pressable
+            onPress={() => {
+              const next = !hasVariants;
+              setHasVariants(next);
+              if (next && variantsMatrix.length === 0) {
+                regenerateMatrix(supportedTemps, selectedSizes);
+              }
+            }}
+            className="flex-row items-center justify-between"
+          >
+            <View className="flex-row items-center space-x-3">
+              <View className="h-10 w-10 rounded-xl bg-amber-500/10 items-center justify-center border border-amber-500/20">
+                <Coffee size={20} color="#b45309" />
+              </View>
+              <View className="ml-2">
+                <Text className="text-base font-bold text-stone-900">
+                  Beverage Sizes & Temperature Matrix
+                </Text>
+                <Text className="text-xs text-stone-500">
+                  Separate prices for Hot / Iced and sizes (8oz, 12oz, etc.). If disabled, uses base
+                  price.
+                </Text>
+              </View>
+            </View>
+            <View
+              className={`h-6 w-6 rounded-md items-center justify-center border ${
+                hasVariants ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
+              }`}
+            >
+              {hasVariants && <Check size={16} color="#ffffff" />}
+            </View>
+          </Pressable>
+
+          {/* Expanded Matrix Configuration */}
+          {hasVariants && (
+            <View className="border-t border-stone-200 pt-4 space-y-4">
+              {/* Temperature Selection */}
+              <View>
+                <Text className="text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
+                  1. Supported Temperatures
+                </Text>
+                <View className="flex-row gap-2">
+                  <Pressable
+                    onPress={() => handleToggleTemp('HOT')}
+                    className={`min-h-[44px] flex-1 flex-row items-center justify-center rounded-xl border px-3 py-2 ${
+                      supportedTemps.includes('HOT')
+                        ? 'border-orange-500 bg-orange-50'
+                        : 'border-stone-200 bg-white'
+                    }`}
+                  >
+                    <Flame
+                      size={16}
+                      color={supportedTemps.includes('HOT') ? '#ea580c' : '#78716c'}
+                    />
+                    <Text
+                      className={`ml-2 text-sm font-bold ${
+                        supportedTemps.includes('HOT') ? 'text-orange-700' : 'text-stone-600'
+                      }`}
+                    >
+                      Hot Options
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => handleToggleTemp('COLD')}
+                    className={`min-h-[44px] flex-1 flex-row items-center justify-center rounded-xl border px-3 py-2 ${
+                      supportedTemps.includes('COLD')
+                        ? 'border-sky-500 bg-sky-50'
+                        : 'border-stone-200 bg-white'
+                    }`}
+                  >
+                    <Snowflake
+                      size={16}
+                      color={supportedTemps.includes('COLD') ? '#0284c7' : '#78716c'}
+                    />
+                    <Text
+                      className={`ml-2 text-sm font-bold ${
+                        supportedTemps.includes('COLD') ? 'text-sky-700' : 'text-stone-600'
+                      }`}
+                    >
+                      Iced / Cold Options
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Sizes Selection */}
+              <View>
+                <Text className="text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
+                  2. Offered Cup Sizes & Volumes
+                </Text>
+                <View className="flex-row flex-wrap gap-2 mb-2.5">
+                  {PRESET_SIZES.map((sz) => {
+                    const isSelected = selectedSizes.includes(sz);
+                    return (
+                      <Pressable
+                        key={sz}
+                        onPress={() => handleToggleSize(sz)}
+                        className={`min-h-[40px] px-3.5 py-1.5 rounded-lg border text-xs font-bold items-center justify-center ${
+                          isSelected
+                            ? 'bg-emerald-50 border-emerald-600'
+                            : 'bg-white border-stone-200'
+                        }`}
+                      >
+                        <Text
+                          className={`text-xs font-bold ${
+                            isSelected ? 'text-emerald-700' : 'text-stone-600'
+                          }`}
+                        >
+                          {sz}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+
+                {/* Custom Size Input */}
+                <View className="flex-row gap-2">
+                  <View className="flex-1">
+                    <AdminInput
+                      value={customSizeInput}
+                      onChangeText={setCustomSizeInput}
+                      placeholder="Add custom size (e.g. 20oz, Pitcher)..."
+                    />
+                  </View>
+                  <Pressable
+                    onPress={handleAddCustomSize}
+                    className="min-h-[44px] px-4 rounded-xl bg-stone-800 items-center justify-center active:bg-stone-900"
+                  >
+                    <Text className="text-xs font-bold text-white">+ Add Size</Text>
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Price Matrix Table */}
+              <View>
+                <View className="flex-row items-center justify-between mb-2">
+                  <Text className="text-xs font-bold uppercase tracking-wider text-stone-600">
+                    3. Combination Price Matrix
+                  </Text>
+                  <Pressable
+                    onPress={handleApplyBaseToAll}
+                    className="px-2.5 py-1 rounded-md bg-stone-200 active:bg-stone-300"
+                  >
+                    <Text className="text-xs font-bold text-stone-700">
+                      Apply Base Price to All
+                    </Text>
+                  </Pressable>
+                </View>
+
+                <View className="rounded-xl border border-stone-200 bg-white overflow-hidden divide-y divide-stone-100">
+                  {variantsMatrix.length === 0 ? (
+                    <View className="p-4 items-center justify-center">
+                      <Text className="text-xs text-stone-400">
+                        Select at least one temperature and size above to build pricing matrix.
+                      </Text>
+                    </View>
+                  ) : (
+                    variantsMatrix.map((row, idx) => (
+                      <View
+                        key={`${row.temperature}-${row.size_label}-${idx}`}
+                        className={`p-3 flex-row items-center justify-between gap-3 ${
+                          !row.is_available ? 'opacity-40 bg-stone-50' : ''
+                        }`}
+                      >
+                        {/* Temp & Size Badges */}
+                        <View className="flex-row items-center space-x-2">
+                          <View
+                            className={`px-2 py-1 rounded-md border ${
+                              row.temperature === 'HOT'
+                                ? 'bg-orange-50 border-orange-200'
+                                : row.temperature === 'COLD'
+                                  ? 'bg-sky-50 border-sky-200'
+                                  : 'bg-stone-100 border-stone-200'
+                            }`}
+                          >
+                            <Text
+                              className={`text-xs font-black ${
+                                row.temperature === 'HOT'
+                                  ? 'text-orange-700'
+                                  : row.temperature === 'COLD'
+                                    ? 'text-sky-700'
+                                    : 'text-stone-700'
+                              }`}
+                            >
+                              {row.temperature === 'HOT'
+                                ? '🔥 HOT'
+                                : row.temperature === 'COLD'
+                                  ? '❄️ ICED'
+                                  : 'STD'}
+                            </Text>
+                          </View>
+                          <Text className="text-sm font-bold text-stone-800 ml-1">
+                            {row.size_label}
+                          </Text>
+                        </View>
+
+                        {/* Price Input & Availability */}
+                        <View className="flex-row items-center space-x-2">
+                          <View className="w-28">
+                            <AdminNumberInput
+                              mode="currency"
+                              value={row.price}
+                              onChangeText={(val) => handleUpdateMatrixPrice(idx, val)}
+                              placeholder="0.00"
+                            />
+                          </View>
+                          <Pressable
+                            onPress={() => handleToggleMatrixRowAvailability(idx)}
+                            className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold ${
+                              row.is_available
+                                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                                : 'bg-stone-100 border-stone-300 text-stone-400'
+                            }`}
+                          >
+                            <Text
+                              className={`text-xs font-bold ${
+                                row.is_available ? 'text-emerald-700' : 'text-stone-400'
+                              }`}
+                            >
+                              {row.is_available ? 'Offered' : 'Hidden'}
+                            </Text>
+                          </Pressable>
+                          <Pressable
+                            onPress={() =>
+                              setVariantsMatrix((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                            className="p-1.5 text-stone-400 hover:text-rose-600 rounded-md"
+                          >
+                            <Trash2 size={16} color="#9ca3af" />
+                          </Pressable>
+                        </View>
+                      </View>
+                    ))
+                  )}
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
 
         {/* Product Photo: File Upload & Live Preview */}
         <MenuImageUploadField

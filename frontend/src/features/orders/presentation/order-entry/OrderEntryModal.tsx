@@ -1,7 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, Modal, Pressable, StyleSheet } from 'react-native';
 import { X, ShoppingBag, ChevronLeft } from 'lucide-react-native';
-import { MenuItem, MenuCategory, OrderLineItem } from '@/types/floor';
+import {
+  MenuItem,
+  MenuCategory,
+  OrderLineItem,
+  BeverageTemperature,
+  ProductVariant,
+} from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 
 import { toast } from '@/features/shared/toast/useToastStore';
@@ -56,6 +62,8 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   const [activeCustomizingItem, setActiveCustomizingItem] = useState<MenuItem | null>(null);
   const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
   const [itemNotes, setItemNotes] = useState('');
+  const [selectedTemperature, setSelectedTemperature] = useState<BeverageTemperature>('HOT');
+  const [selectedSize, setSelectedSize] = useState<string>('');
 
   // Fetch real menu items directly from local DB
   useEffect(() => {
@@ -137,18 +145,48 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     return itemsSubtotal + corkageAmount + taxAmount;
   }, [itemsSubtotal, corkageAmount, taxAmount]);
 
-  // Handle item click: Open customizer if has modifiers, else quick-add
+  // Handle item click: Open customizer if has variants or modifiers, else quick-add
   const handleItemClick = (item: MenuItem) => {
-    if (item.modifiers && item.modifiers.length > 0) {
+    const hasVariants = Boolean(item.variants && item.variants.length > 0);
+    const hasModifiers = Boolean(item.modifiers && item.modifiers.length > 0);
+
+    if (hasVariants) {
+      // Pick initial temperature
+      const hasHot = item.variants?.some((v) => v.temperature === 'HOT');
+      const initialTemp: BeverageTemperature = hasHot
+        ? 'HOT'
+        : (item.variants?.[0]?.temperature as BeverageTemperature) || 'HOT';
+
+      // Pick initial size for this temperature
+      const sizeForTemp =
+        item.variants?.find((v) => v.temperature === initialTemp)?.sizeLabel ||
+        item.variants?.[0]?.sizeLabel ||
+        'Standard';
+
+      setSelectedTemperature(initialTemp);
+      setSelectedSize(sizeForTemp);
       setActiveCustomizingItem(item);
       setSelectedModifiers([]);
       setItemNotes('');
       return;
     }
-    addToCartDirect(item, [], '');
+
+    if (hasModifiers) {
+      setActiveCustomizingItem(item);
+      setSelectedModifiers([]);
+      setItemNotes('');
+      return;
+    }
+
+    addToCartDirect(item, undefined, [], '');
   };
 
-  const addToCartDirect = (item: MenuItem, mods: string[], notesStr: string) => {
+  const addToCartDirect = (
+    item: MenuItem,
+    variant?: ProductVariant,
+    mods: string[] = [],
+    notesStr: string = ''
+  ) => {
     setCartItems((prev) => {
       let extraPrice = 0;
       mods.forEach((modName) => {
@@ -156,10 +194,22 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
         if (found) extraPrice += found.priceDelta;
       });
 
-      const effectivePrice = item.price + extraPrice;
+      const baseUnit = variant ? variant.price : item.price;
+      const effectivePrice = baseUnit + extraPrice;
+
+      // Clean item title formatting
+      let formattedName = item.name;
+      if (variant && variant.temperature !== 'NONE') {
+        const tempName = variant.temperature === 'HOT' ? 'Hot' : 'Iced';
+        formattedName = `${item.name} (${tempName} · ${variant.sizeLabel})`;
+      } else if (variant && variant.sizeLabel && variant.sizeLabel !== 'Standard') {
+        formattedName = `${item.name} (${variant.sizeLabel})`;
+      }
+
       const existingIdx = prev.findIndex(
         (i) =>
           i.productId === item.id &&
+          (i.variantId || undefined) === (variant?.id || undefined) &&
           (i.notes || '') === (notesStr || '') &&
           JSON.stringify(i.modifiers?.sort() || []) === JSON.stringify(mods.sort())
       );
@@ -172,8 +222,11 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
         const newItem: OrderLineItem = {
           id: `item-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
           productId: item.id,
-          productName: item.name,
+          productName: formattedName,
           stationTarget: item.stationTarget,
+          variantId: variant?.id,
+          temperature: variant?.temperature,
+          sizeLabel: variant?.sizeLabel,
           unitPrice: effectivePrice,
           quantity: 1,
           status: 'pending',
@@ -191,7 +244,22 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
 
   const handleConfirmCustomize = () => {
     if (!activeCustomizingItem) return;
-    addToCartDirect(activeCustomizingItem, selectedModifiers, itemNotes);
+
+    let matchedVariant: ProductVariant | undefined = undefined;
+    if (activeCustomizingItem.variants && activeCustomizingItem.variants.length > 0) {
+      matchedVariant = activeCustomizingItem.variants.find(
+        (v) =>
+          (v.temperature === selectedTemperature || v.temperature === 'NONE') &&
+          v.sizeLabel === selectedSize
+      );
+      if (!matchedVariant) {
+        matchedVariant =
+          activeCustomizingItem.variants.find((v) => v.temperature === selectedTemperature) ||
+          activeCustomizingItem.variants[0];
+      }
+    }
+
+    addToCartDirect(activeCustomizingItem, matchedVariant, selectedModifiers, itemNotes);
     setActiveCustomizingItem(null);
   };
 
@@ -367,8 +435,12 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
           {/* ITEM CUSTOMIZER SHEET */}
           <OrderModifierModal
             item={activeCustomizingItem}
+            selectedTemperature={selectedTemperature}
+            selectedSize={selectedSize}
             selectedModifiers={selectedModifiers}
             notes={itemNotes}
+            onSelectTemperature={setSelectedTemperature}
+            onSelectSize={setSelectedSize}
             onToggleModifier={handleToggleModifier}
             onChangeNotes={setItemNotes}
             onClose={() => setActiveCustomizingItem(null)}
