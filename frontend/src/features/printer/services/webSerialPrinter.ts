@@ -278,18 +278,36 @@ export class WebSerialPrinterService {
     try {
       await device.claimInterface(targetInterfaceNumber);
     } catch (claimErr: any) {
-      console.error('[WebPrinter] Failed to claim interface:', claimErr);
-      if (
-        claimErr.name === 'NetworkError' ||
-        claimErr.message?.includes('Unable to claim interface') ||
-        claimErr.name === 'SecurityError'
-      ) {
-        throw new Error(
-          `Unable to claim USB interface for "${device.productName || 'Printer'}". The OS print driver or usblp module may have locked it.`,
-          { cause: claimErr }
-        );
+      console.warn(
+        '[WebPrinter] Primary claimInterface failed, attempting device reset & retry:',
+        claimErr
+      );
+
+      // If the interface was locked by previous session, try resetting device and retrying
+      let retrySuccess = false;
+      try {
+        if (typeof device.reset === 'function') {
+          await device.reset();
+          await device.claimInterface(targetInterfaceNumber);
+          retrySuccess = true;
+        }
+      } catch (retryErr) {
+        console.warn('[WebPrinter] Retry after reset failed:', retryErr);
       }
-      throw claimErr;
+
+      if (!retrySuccess) {
+        if (
+          claimErr.name === 'NetworkError' ||
+          claimErr.message?.includes('Unable to claim interface') ||
+          claimErr.name === 'SecurityError'
+        ) {
+          throw new Error(
+            `Unable to claim USB interface for "${device.productName || 'Printer'}". The OS kernel module (usblp) or another process is holding it. Run 'sudo bash scripts/fix-thermal-printer-permissions.sh' to release it permanently.`,
+            { cause: claimErr }
+          );
+        }
+        throw claimErr;
+      }
     }
 
     this.usbDevice = device;
