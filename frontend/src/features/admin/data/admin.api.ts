@@ -111,6 +111,7 @@ export interface ProductModifierOptionAdmin {
   product_id?: string | null;
   name: string;
   price_delta: number;
+  applicable_category?: string;
   inventory_item_id?: string | null;
   amount_delta?: number;
   unit?: string | null;
@@ -124,6 +125,7 @@ export interface ModifierGroupAdmin {
   id: string;
   name: string;
   product_id: string | null;
+  applicable_category?: string;
   min_selections: number;
   max_selections: number;
   is_required: boolean;
@@ -178,6 +180,7 @@ export interface ProductAdmin {
     };
   }>;
   modifier_groups?: ModifierGroupAdmin[];
+  modifiers?: ProductModifierOptionAdmin[];
 }
 
 export interface StockMovementAdmin {
@@ -482,7 +485,7 @@ export const adminApi = {
     const queryWithVariants = await supabase
       .from('products')
       .select(
-        '*, categories(id, name, slug), product_ingredients(*, inventory_items(name, unit, unit_cost)), product_variants(*)'
+        '*, categories(id, name, slug), product_ingredients(*, inventory_items(name, unit, unit_cost)), product_variants(*), product_modifiers(*, inventory_items(name, unit))'
       )
       .order('name', { ascending: true });
 
@@ -492,13 +495,13 @@ export const adminApi = {
       if (!hasWarnedMissingVariants) {
         hasWarnedMissingVariants = true;
         console.info(
-          '[adminApi.getProductsWithBOM] product_variants table not yet present; gracefully serving base menu catalog.'
+          '[adminApi.getProductsWithBOM] product_variants or product_modifiers join fallback; gracefully serving base menu catalog.'
         );
       }
       const queryBase = await supabase
         .from('products')
         .select(
-          '*, categories(id, name, slug), product_ingredients(*, inventory_items(name, unit, unit_cost))'
+          '*, categories(id, name, slug), product_ingredients(*, inventory_items(name, unit, unit_cost)), product_modifiers(*)'
         )
         .order('name', { ascending: true });
 
@@ -509,6 +512,10 @@ export const adminApi = {
     return rawData.map((p: any) => ({
       ...p,
       ingredients: p.product_ingredients,
+      modifiers: (p.product_modifiers || []).map((m: any) => ({
+        ...m,
+        inventory_item: m.inventory_items,
+      })),
       variants: (p.product_variants || []).sort(
         (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
       ),
@@ -798,6 +805,80 @@ export const adminApi = {
         unit: params.unit ?? null,
       });
       if (error) throw error;
+    }
+  },
+
+  async getCatalogModifiers(): Promise<ProductModifierOptionAdmin[]> {
+    try {
+      const { data, error } = await (supabase.from as any)('product_modifiers')
+        .select('*, inventory_items(name, unit)')
+        .is('product_id', null)
+        .order('name', { ascending: true });
+
+      if (error) {
+        console.warn(
+          '[adminApi.getCatalogModifiers] Error fetching template modifiers:',
+          error.message
+        );
+        return [];
+      }
+
+      return (data || []).map((m: any) => ({
+        ...m,
+        inventory_item: m.inventory_items,
+      })) as ProductModifierOptionAdmin[];
+    } catch (err: any) {
+      console.warn('[adminApi.getCatalogModifiers] Failed:', err?.message);
+      return [];
+    }
+  },
+
+  async upsertProductModifiers(
+    productId: string,
+    modifiers: Array<{
+      id?: string;
+      group_id?: string | null;
+      name: string;
+      price_delta: number;
+      applicable_category?: string;
+      inventory_item_id?: string | null;
+      amount_delta?: number;
+      unit?: string | null;
+    }>
+  ): Promise<boolean> {
+    try {
+      const { error: delErr } = await (supabase.from as any)('product_modifiers')
+        .delete()
+        .eq('product_id', productId);
+
+      if (delErr) {
+        console.warn('[adminApi.upsertProductModifiers] delete error:', delErr.message);
+        return false;
+      }
+
+      if (!modifiers || modifiers.length === 0) return true;
+
+      const toInsert = modifiers.map((m) => ({
+        product_id: productId,
+        group_id: m.group_id ?? null,
+        name: m.name.trim(),
+        price_delta: Number(m.price_delta) || 0,
+        applicable_category: m.applicable_category || 'all',
+        inventory_item_id: m.inventory_item_id ?? null,
+        amount_delta: Number(m.amount_delta) || 0,
+        unit: m.unit ?? null,
+      }));
+
+      const { error: insErr } = await (supabase.from as any)('product_modifiers').insert(toInsert);
+      if (insErr) {
+        console.warn('[adminApi.upsertProductModifiers] insert error:', insErr.message);
+        return false;
+      }
+
+      return true;
+    } catch (err: any) {
+      console.warn('[adminApi.upsertProductModifiers] failed:', err?.message);
+      return false;
     }
   },
 

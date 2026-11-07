@@ -25,6 +25,7 @@ import {
   type ProductAdmin,
   type CategoryAdmin,
   type ProductVariantAdmin,
+  type ProductModifierOptionAdmin,
 } from '../../../data/admin.api';
 import { AdminModal } from '../../components/AdminModal';
 import { AdminInput } from '../../components/AdminInput';
@@ -96,6 +97,23 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
 
   const PRESET_SIZES = ['8oz', '12oz', '16oz', 'Regular', 'Large', 'Single', 'Double'];
 
+  // Modifiers & Add-Ons State
+  const [catalogModifiers, setCatalogModifiers] = useState<ProductModifierOptionAdmin[]>([]);
+  const [productModifiers, setProductModifiers] = useState<
+    Array<{
+      id?: string;
+      name: string;
+      price_delta: string;
+      applicable_category: string;
+      inventory_item_id?: string | null;
+      amount_delta?: number;
+      unit?: string | null;
+    }>
+  >([]);
+  const [modifierFilterCategory, setModifierFilterCategory] = useState<string>('all');
+  const [customModName, setCustomModName] = useState('');
+  const [customModPrice, setCustomModPrice] = useState('30.00');
+
   // Track modal open/close and product ID transitions to prevent accidental resets while user edits
   const prevVisibleRef = useRef(false);
   const activeProductIdRef = useRef<string | undefined>(undefined);
@@ -119,6 +137,11 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
 
     activeProductIdRef.current = product?.id;
 
+    // Load Master Catalog Modifiers when modal opens
+    adminApi.getCatalogModifiers().then((mods) => {
+      setCatalogModifiers(mods);
+    });
+
     if (product) {
       setName(product.name);
       setCategoryId(product.category_id);
@@ -131,6 +154,28 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       setDescription(product.description || '');
       setSelectedAllergens(product.allergens || []);
       setSelectedDietary(product.dietary || []);
+
+      // Auto-set category filter tab matching product category
+      const matchedCat = categories.find((c) => c.id === product.category_id);
+      const initialCatSlug = matchedCat?.slug || 'all';
+      setModifierFilterCategory(initialCatSlug);
+
+      // Load existing assigned product modifiers
+      if (product.modifiers && product.modifiers.length > 0) {
+        setProductModifiers(
+          product.modifiers.map((m) => ({
+            id: m.id,
+            name: m.name,
+            price_delta: (m.price_delta || 0).toString(),
+            applicable_category: m.applicable_category || initialCatSlug,
+            inventory_item_id: m.inventory_item_id || null,
+            amount_delta: m.amount_delta || 0,
+            unit: m.unit || null,
+          }))
+        );
+      } else {
+        setProductModifiers([]);
+      }
 
       if (product.variants && product.variants.length > 0) {
         setHasVariants(true);
@@ -175,6 +220,10 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       setSupportedTemps(['HOT', 'COLD']);
       setSelectedSizes(['8oz', '12oz', '16oz']);
       setVariantsMatrix([]);
+
+      const initialCatSlug = categories[0]?.slug || 'all';
+      setModifierFilterCategory(initialCatSlug);
+      setProductModifiers([]);
     }
   }, [visible, product?.id]);
 
@@ -247,6 +296,101 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
     const defaultP = basePrice.trim() || '180';
     setVariantsMatrix((prev) => prev.map((r) => ({ ...r, price: defaultP })));
     toast.info('Applied base price to all matrix combinations');
+  };
+
+  // Modifiers Management Handlers
+  const handleToggleModifierOption = (mod: {
+    id?: string;
+    name: string;
+    price_delta?: number;
+    applicable_category?: string;
+    inventory_item_id?: string | null;
+    amount_delta?: number;
+    unit?: string | null;
+  }) => {
+    setProductModifiers((prev) => {
+      const exists = prev.some((m) => m.name.toLowerCase() === mod.name.toLowerCase());
+      if (exists) {
+        return prev.filter((m) => m.name.toLowerCase() !== mod.name.toLowerCase());
+      } else {
+        return [
+          ...prev,
+          {
+            id: mod.id,
+            name: mod.name,
+            price_delta: (mod.price_delta || 0).toString(),
+            applicable_category: mod.applicable_category || modifierFilterCategory,
+            inventory_item_id: mod.inventory_item_id || null,
+            amount_delta: mod.amount_delta || 0,
+            unit: mod.unit || null,
+          },
+        ];
+      }
+    });
+  };
+
+  const handleUpdateModifierPrice = (modName: string, newPrice: string) => {
+    setProductModifiers((prev) =>
+      prev.map((m) => (m.name === modName ? { ...m, price_delta: newPrice } : m))
+    );
+  };
+
+  const handleAddCustomModifier = () => {
+    const trimmed = customModName.trim();
+    if (!trimmed) {
+      toast.error('Modifier name is required');
+      return;
+    }
+    if (productModifiers.some((m) => m.name.toLowerCase() === trimmed.toLowerCase())) {
+      toast.warning('This modifier is already added');
+      return;
+    }
+    const p = parseFloat(customModPrice) || 0;
+    setProductModifiers((prev) => [
+      ...prev,
+      {
+        name: trimmed,
+        price_delta: p.toFixed(2),
+        applicable_category: modifierFilterCategory,
+      },
+    ]);
+    setCustomModName('');
+    toast.success(`Added modifier "${trimmed}"`);
+  };
+
+  const handleSelectAllCategoryModifiers = (catSlug: string) => {
+    const matchingCatalog = catalogModifiers.filter(
+      (m) =>
+        catSlug === 'all' || m.applicable_category === catSlug || m.applicable_category === 'all'
+    );
+    setProductModifiers((prev) => {
+      const copy = [...prev];
+      for (const m of matchingCatalog) {
+        if (!copy.some((existing) => existing.name.toLowerCase() === m.name.toLowerCase())) {
+          copy.push({
+            id: m.id,
+            name: m.name,
+            price_delta: (m.price_delta || 0).toString(),
+            applicable_category: m.applicable_category || catSlug,
+            inventory_item_id: m.inventory_item_id || null,
+            amount_delta: m.amount_delta || 0,
+            unit: m.unit || null,
+          });
+        }
+      }
+      return copy;
+    });
+    toast.info('Selected all modifiers for ' + catSlug);
+  };
+
+  const handleClearCategoryModifiers = (catSlug: string) => {
+    if (catSlug === 'all') {
+      setProductModifiers([]);
+    } else {
+      setProductModifiers((prev) =>
+        prev.filter((m) => m.applicable_category !== catSlug && m.applicable_category !== 'all')
+      );
+    }
   };
 
   // Clean up staged blob URL when modal closes or unmounts
@@ -367,6 +511,17 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
           await adminApi.upsertProductVariants(product.id, []);
         }
 
+        // Upsert modifiers for existing product
+        const modifiersToSave = productModifiers.map((m) => ({
+          name: m.name,
+          price_delta: parseFloat(m.price_delta) || 0,
+          applicable_category: m.applicable_category,
+          inventory_item_id: m.inventory_item_id || null,
+          amount_delta: m.amount_delta || 0,
+          unit: m.unit || null,
+        }));
+        await adminApi.upsertProductModifiers(product.id, modifiersToSave);
+
         toast.success(`Updated "${name}"`, { title: 'Menu Item Saved' });
       } else {
         // 1. Create product row first to obtain authoritative UUID
@@ -413,6 +568,17 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
               }));
             await adminApi.upsertProductVariants(newProduct.id, variantsToSave);
           }
+
+          // Upsert modifiers for new product
+          const modifiersToSave = productModifiers.map((m) => ({
+            name: m.name,
+            price_delta: parseFloat(m.price_delta) || 0,
+            applicable_category: m.applicable_category,
+            inventory_item_id: m.inventory_item_id || null,
+            amount_delta: m.amount_delta || 0,
+            unit: m.unit || null,
+          }));
+          await adminApi.upsertProductModifiers(newProduct.id, modifiersToSave);
         }
 
         toast.success(`Created "${name}"`, { title: 'Menu Item Created' });
@@ -819,6 +985,282 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
               </View>
             </View>
           )}
+        </View>
+
+        {/* Product Modifiers & Add-Ons Configuration */}
+        <View className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4 space-y-4">
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center space-x-3">
+              <View className="h-10 w-10 rounded-xl bg-purple-500/10 items-center justify-center border border-purple-500/20">
+                <Sliders size={20} color="#7e22ce" />
+              </View>
+              <View className="ml-2">
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-base font-bold text-stone-900">
+                    Product Modifiers & Add-Ons
+                  </Text>
+                  <View className="rounded-md bg-purple-100 border border-purple-200 px-2 py-0.5">
+                    <Text className="text-xs font-bold text-purple-800">
+                      {productModifiers.length} Selected
+                    </Text>
+                  </View>
+                </View>
+                <Text className="text-sm text-stone-500">
+                  Select available add-ons, extra shots, dairy, and custom toppings for this item
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* Category Filter Pills */}
+          <View className="space-y-1.5">
+            <Text className="text-xs font-bold uppercase tracking-wider text-stone-600">
+              Filter Modifiers by Category
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {[
+                { slug: 'all', label: 'All Modifiers' },
+                { slug: 'coffee', label: '☕ Coffee & Espresso' },
+                { slug: 'cocktails_wine', label: '🍸 Cocktails & Liquor' },
+                { slug: 'mains_pasta', label: '🍝 Pasta & Mains' },
+                { slug: 'small_plates', label: '🍢 Small Plates' },
+                { slug: 'desserts', label: '🍰 Desserts' },
+              ].map((catPill) => {
+                const isActive = modifierFilterCategory === catPill.slug;
+                return (
+                  <Pressable
+                    key={catPill.slug}
+                    onPress={() => setModifierFilterCategory(catPill.slug)}
+                    className={`min-h-[40px] px-3.5 py-1.5 rounded-xl border flex-row items-center space-x-1.5 ${
+                      isActive
+                        ? 'bg-purple-900 border-purple-900 shadow-xs'
+                        : 'bg-white border-stone-200 active:bg-stone-100'
+                    }`}
+                  >
+                    <Text
+                      className={`text-xs font-bold ${isActive ? 'text-white' : 'text-stone-700'}`}
+                    >
+                      {catPill.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          {/* Bulk Select / Clear Actions */}
+          <View className="flex-row items-center justify-between border-t border-stone-200 pt-2.5">
+            <Text className="text-xs font-semibold text-stone-500">
+              Showing options for{' '}
+              {modifierFilterCategory === 'all' ? 'all categories' : modifierFilterCategory}
+            </Text>
+            <View className="flex-row items-center gap-2">
+              <Pressable
+                onPress={() => handleSelectAllCategoryModifiers(modifierFilterCategory)}
+                className="px-2.5 py-1.5 rounded-lg bg-stone-200 active:bg-stone-300"
+              >
+                <Text className="text-xs font-bold text-stone-700">+ Select All</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => handleClearCategoryModifiers(modifierFilterCategory)}
+                className="px-2.5 py-1.5 rounded-lg bg-stone-200 active:bg-stone-300"
+              >
+                <Text className="text-xs font-bold text-stone-700">Clear</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Modifiers List Grid */}
+          <View className="rounded-xl border border-stone-200 bg-white overflow-hidden divide-y divide-stone-100">
+            {(() => {
+              // 1. Gather all candidates from catalog and current product
+              const combinedMap = new Map<
+                string,
+                {
+                  id?: string;
+                  name: string;
+                  price_delta: number;
+                  applicable_category: string;
+                  inventory_item_id?: string | null;
+                  amount_delta?: number;
+                  unit?: string | null;
+                  inventory_item?: { name: string; unit: string };
+                }
+              >();
+
+              // Add master catalog items
+              for (const m of catalogModifiers) {
+                combinedMap.set(m.name.toLowerCase(), {
+                  id: m.id,
+                  name: m.name,
+                  price_delta: m.price_delta || 0,
+                  applicable_category: m.applicable_category || 'all',
+                  inventory_item_id: m.inventory_item_id || null,
+                  amount_delta: m.amount_delta || 0,
+                  unit: m.unit || null,
+                  inventory_item: m.inventory_item,
+                });
+              }
+
+              // Add or enrich with product-specific modifiers
+              for (const pm of productModifiers) {
+                const existing = combinedMap.get(pm.name.toLowerCase());
+                if (existing) {
+                  // Keep assigned category if already set
+                  if (pm.applicable_category && pm.applicable_category !== 'all') {
+                    existing.applicable_category = pm.applicable_category;
+                  }
+                } else {
+                  combinedMap.set(pm.name.toLowerCase(), {
+                    id: pm.id || `custom-${pm.name}`,
+                    name: pm.name,
+                    price_delta: parseFloat(pm.price_delta) || 0,
+                    applicable_category: pm.applicable_category || 'all',
+                    inventory_item_id: pm.inventory_item_id || null,
+                    amount_delta: pm.amount_delta || 0,
+                    unit: pm.unit || null,
+                  });
+                }
+              }
+
+              // 2. Filter strictly by selected category tab
+              const allVisibleModifiers = Array.from(combinedMap.values()).filter((m) => {
+                if (modifierFilterCategory === 'all') return true;
+                const cat = (m.applicable_category || '').toLowerCase();
+                if (cat === modifierFilterCategory) return true;
+                if (
+                  modifierFilterCategory === 'cocktails_wine' &&
+                  (cat === 'cocktails' || cat === 'wine')
+                )
+                  return true;
+                return false;
+              });
+
+              if (allVisibleModifiers.length === 0) {
+                return (
+                  <View className="p-4 items-center justify-center">
+                    <Text className="text-xs text-stone-400">
+                      No modifiers found for this category. Use "+ Add Custom Modifier" below to add
+                      one.
+                    </Text>
+                  </View>
+                );
+              }
+
+              return allVisibleModifiers.map((mod) => {
+                const isSelected = productModifiers.some(
+                  (m) => m.name.toLowerCase() === mod.name.toLowerCase()
+                );
+                const assigned = productModifiers.find(
+                  (m) => m.name.toLowerCase() === mod.name.toLowerCase()
+                );
+                const currentPrice = assigned
+                  ? assigned.price_delta
+                  : (mod.price_delta || 0).toString();
+
+                return (
+                  <View
+                    key={mod.id || mod.name}
+                    className={`p-3 flex-row items-center justify-between gap-3 ${
+                      isSelected ? 'bg-purple-50/40' : 'bg-white'
+                    }`}
+                  >
+                    {/* Checkbox & Modifier Name */}
+                    <Pressable
+                      onPress={() => handleToggleModifierOption(mod)}
+                      className="flex-row items-center space-x-3 flex-1"
+                    >
+                      <View
+                        className={`h-5 w-5 rounded-md items-center justify-center border ${
+                          isSelected
+                            ? 'bg-purple-700 border-purple-700'
+                            : 'bg-white border-stone-300'
+                        }`}
+                      >
+                        {isSelected && <Check size={14} color="#ffffff" />}
+                      </View>
+                      <View className="ml-2 flex-1">
+                        <View className="flex-row items-center gap-2">
+                          <Text
+                            className={`text-sm font-bold ${
+                              isSelected ? 'text-purple-950' : 'text-stone-800'
+                            }`}
+                          >
+                            {mod.name}
+                          </Text>
+                          {mod.applicable_category && mod.applicable_category !== 'all' ? (
+                            <View className="rounded px-1.5 py-0.5 bg-stone-100 border border-stone-200">
+                              <Text className="text-[10px] font-semibold text-stone-600 uppercase">
+                                {mod.applicable_category}
+                              </Text>
+                            </View>
+                          ) : null}
+                        </View>
+                        {mod.inventory_item ? (
+                          <Text className="text-xs text-stone-400">
+                            Depletes: {mod.inventory_item.name} (-{mod.amount_delta} {mod.unit})
+                          </Text>
+                        ) : null}
+                      </View>
+                    </Pressable>
+
+                    {/* Price Override Input (Only active if selected) */}
+                    <View className="flex-row items-center space-x-2">
+                      <Text className="text-xs font-semibold text-stone-500 mr-1">+₱</Text>
+                      <View className="w-24">
+                        <AdminNumberInput
+                          mode="currency"
+                          value={currentPrice}
+                          editable={isSelected}
+                          onChangeText={(val) => handleUpdateModifierPrice(mod.name, val)}
+                          placeholder="0.00"
+                          className={!isSelected ? 'opacity-40 bg-stone-100' : ''}
+                        />
+                      </View>
+                      {isSelected ? (
+                        <Pressable
+                          onPress={() => handleToggleModifierOption(mod)}
+                          className="p-1.5 text-stone-400 hover:text-rose-600 rounded-md"
+                        >
+                          <Trash2 size={16} color="#9ca3af" />
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  </View>
+                );
+              });
+            })()}
+          </View>
+
+          {/* Quick Custom Modifier Input Bar */}
+          <View className="space-y-1.5 border-t border-stone-200 pt-3">
+            <Text className="text-xs font-bold uppercase tracking-wider text-stone-600">
+              + Add Custom Modifier / Add-on
+            </Text>
+            <View className="flex-row items-center gap-2">
+              <View className="flex-1">
+                <AdminInput
+                  value={customModName}
+                  onChangeText={setCustomModName}
+                  placeholder="e.g. Extra Rosemary Sprig, Jalapeno Slice..."
+                />
+              </View>
+              <View className="w-28">
+                <AdminNumberInput
+                  mode="currency"
+                  value={customModPrice}
+                  onChangeText={setCustomModPrice}
+                  placeholder="Price"
+                />
+              </View>
+              <Pressable
+                onPress={handleAddCustomModifier}
+                className="min-h-[44px] px-4 rounded-xl bg-purple-900 items-center justify-center active:bg-purple-950"
+              >
+                <Text className="text-xs font-bold text-white">+ Add</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
 
         {/* Product Photo: File Upload & Live Preview */}

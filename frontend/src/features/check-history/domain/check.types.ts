@@ -6,6 +6,7 @@ export interface CheckLineItem {
   quantity: number;
   unitPrice: number;
   subtotal: number;
+  modifiers?: string[];
   notes?: string;
 }
 

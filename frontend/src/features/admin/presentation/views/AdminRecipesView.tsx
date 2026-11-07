@@ -423,6 +423,16 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                           <Text className="text-base font-extrabold text-[#800020]">
                             ₱{Number(prod.base_price || 0).toFixed(2)}
                           </Text>
+                          {prod.modifiers && prod.modifiers.length > 0 ? (
+                            <>
+                              <Text className="text-stone-300">•</Text>
+                              <View className="rounded-md bg-purple-50 border border-purple-200 px-2 py-0.5">
+                                <Text className="text-xs font-bold text-purple-700">
+                                  {prod.modifiers.length} Modifiers
+                                </Text>
+                              </View>
+                            </>
+                          ) : null}
                         </View>
                       </View>
                     </View>

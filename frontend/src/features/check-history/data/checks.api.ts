@@ -86,6 +86,7 @@ export const checksApi = {
                 product_id,
                 quantity,
                 unit_price,
+                modifiers,
                 notes,
                 status,
                 products:product_id (name)
@@ -103,12 +104,24 @@ export const checksApi = {
                 const prodName = it.products?.name || 'Item';
                 const qty = Number(it.quantity) || 1;
                 const price = Number(it.unit_price) || 0;
+                let parsedMods: string[] | undefined = undefined;
+                if (Array.isArray(it.modifiers)) {
+                  parsedMods = it.modifiers;
+                } else if (typeof it.modifiers === 'string') {
+                  try {
+                    const parsed = JSON.parse(it.modifiers);
+                    if (Array.isArray(parsed)) parsedMods = parsed;
+                  } catch (_e) {
+                    // ignore malformed JSON
+                  }
+                }
                 currentList.push({
                   id: it.id,
                   name: prodName,
                   quantity: qty,
                   unitPrice: price,
                   subtotal: qty * price,
+                  modifiers: parsedMods,
                   notes: it.notes || undefined,
                 });
               }

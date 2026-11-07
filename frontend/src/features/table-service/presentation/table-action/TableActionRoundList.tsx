@@ -92,14 +92,26 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                         ) : (
                           <ChefHat size={16} color={isVoided ? '#9ca3af' : '#ea580c'} />
                         )}
-                        <Text
-                          className={`text-base font-medium flex-1 ${
-                            isVoided ? 'line-through text-gray-400' : 'text-gray-800'
-                          }`}
-                          numberOfLines={1}
-                        >
-                          {item.quantity}x {item.productName}
-                        </Text>
+                        <View className="flex-1">
+                          <Text
+                            className={`text-base font-medium ${
+                              isVoided ? 'line-through text-gray-400' : 'text-gray-800'
+                            }`}
+                            numberOfLines={1}
+                          >
+                            {item.quantity}x {item.productName}
+                          </Text>
+                          {item.modifiers && item.modifiers.length > 0 ? (
+                            <Text className="text-xs text-wine-900 font-semibold mt-0.5">
+                              + {item.modifiers.join(', ')}
+                            </Text>
+                          ) : null}
+                          {item.notes ? (
+                            <Text className="text-xs text-gray-500 italic mt-0.5">
+                              "{item.notes}"
+                            </Text>
+                          ) : null}
+                        </View>
 
                         {/* Item Status Badge */}
                         <View

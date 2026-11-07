@@ -109,6 +109,11 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
               <Text style={styles.customizerTitle}>{item.name}</Text>
               <View style={styles.variantBadgeHeader}>
                 <Text style={styles.customizerSub}>Base: {formatCurrency(basePrice)}</Text>
+                {modifiersDelta > 0 ? (
+                  <Text style={[styles.customizerSub, { color: '#800020', fontWeight: '700' }]}>
+                    • Add-ons ({selectedModifiers.length}): +{formatCurrency(modifiersDelta)}
+                  </Text>
+                ) : null}
                 {currentVariant && currentVariant.temperature !== 'NONE' ? (
                   <View
                     style={
@@ -231,19 +236,40 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           {/* Modifiers List (if any) */}
           {item.modifiers && item.modifiers.length > 0 ? (
             <View style={{ marginBottom: 14 }}>
-              <Text style={styles.customizerSectionTitle}>Custom Add-ons & Dairy:</Text>
+              <Text style={styles.customizerSectionTitle}>Custom Add-ons & Modifiers:</Text>
               <View style={styles.modList}>
                 {item.modifiers.map((mod) => {
                   const isSelected = selectedModifiers.includes(mod.name);
                   return (
                     <Pressable
-                      key={mod.id}
+                      key={mod.id || mod.name}
                       onPress={() => onToggleModifier(mod.name)}
                       style={[styles.modRow, isSelected && styles.modRowSelected]}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: isSelected }}
+                      accessibilityLabel={`${mod.name}, +${formatCurrency(mod.priceDelta)}`}
                     >
-                      <Text style={[styles.modName, isSelected && styles.modNameSelected]}>
-                        {mod.name}
-                      </Text>
+                      <View
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 }}
+                      >
+                        <View
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: 6,
+                            borderWidth: 1.5,
+                            borderColor: isSelected ? '#15803d' : '#9ca3af',
+                            backgroundColor: isSelected ? '#15803d' : '#ffffff',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {isSelected && <CheckCircle2 size={14} color="#ffffff" strokeWidth={3} />}
+                        </View>
+                        <Text style={[styles.modName, isSelected && styles.modNameSelected]}>
+                          {mod.name}
+                        </Text>
+                      </View>
                       <Text style={[styles.modPrice, isSelected && styles.modPriceSelected]}>
                         {mod.priceDelta > 0 ? `+${formatCurrency(mod.priceDelta)}` : 'Free'}
                       </Text>

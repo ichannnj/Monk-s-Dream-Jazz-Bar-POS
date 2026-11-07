@@ -500,6 +500,11 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                                 <Text className="text-base font-bold text-stone-900">
                                   {it.name}
                                 </Text>
+                                {it.modifiers && it.modifiers.length > 0 && (
+                                  <Text className="text-xs text-[#800020] font-semibold">
+                                    + {it.modifiers.join(', ')}
+                                  </Text>
+                                )}
                                 {it.notes && (
                                   <Text className="text-base text-amber-800 italic">
                                     {it.notes}
@@ -679,9 +684,16 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                       key={it.id}
                       className="flex-row items-center justify-between py-2 border-b border-stone-100"
                     >
-                      <Text className="text-base font-medium text-stone-900 flex-1">
-                        {it.quantity}x {it.name}
-                      </Text>
+                      <View className="flex-1 pr-2">
+                        <Text className="text-base font-medium text-stone-900">
+                          {it.quantity}x {it.name}
+                        </Text>
+                        {it.modifiers && it.modifiers.length > 0 && (
+                          <Text className="text-xs text-[#800020] font-semibold mt-0.5">
+                            + {it.modifiers.join(', ')}
+                          </Text>
+                        )}
+                      </View>
                       <Text className="text-base font-bold text-stone-900">
                         {formatCurrency(it.subtotal)}
                       </Text>

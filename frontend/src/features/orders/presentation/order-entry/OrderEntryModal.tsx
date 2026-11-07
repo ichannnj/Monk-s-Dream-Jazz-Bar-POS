@@ -251,9 +251,15 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   ) => {
     setCartItems((prev) => {
       let extraPrice = 0;
-      mods.forEach((modName) => {
+      const formattedMods = mods.map((modName) => {
         const found = item.modifiers.find((m) => m.name === modName);
-        if (found) extraPrice += found.priceDelta;
+        if (found) {
+          extraPrice += found.priceDelta;
+          if (found.priceDelta > 0) {
+            return `${found.name} (+${formatCurrency(found.priceDelta)})`;
+          }
+        }
+        return modName;
       });
 
       const baseUnit = variant ? variant.price : item.price;
@@ -273,7 +279,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
           i.productId === item.id &&
           (i.variantId || undefined) === (variant?.id || undefined) &&
           (i.notes || '') === (notesStr || '') &&
-          JSON.stringify(i.modifiers?.sort() || []) === JSON.stringify(mods.sort())
+          JSON.stringify(i.modifiers?.sort() || []) === JSON.stringify(formattedMods.sort())
       );
 
       if (existingIdx >= 0) {
@@ -292,7 +298,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
           unitPrice: effectivePrice,
           quantity: 1,
           status: 'pending',
-          modifiers: mods.length > 0 ? mods : undefined,
+          modifiers: formattedMods.length > 0 ? formattedMods : undefined,
           notes: notesStr ? notesStr : undefined,
         };
         return [...prev, newItem];

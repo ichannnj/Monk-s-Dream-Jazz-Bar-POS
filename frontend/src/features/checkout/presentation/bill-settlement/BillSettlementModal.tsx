@@ -158,6 +158,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         unitPrice: i.unitPrice,
         quantity: i.quantity,
         stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+        modifiers: i.modifiers,
         notes: i.notes,
       }));
     }
@@ -170,6 +171,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
           unitPrice: i.unitPrice,
           quantity: i.quantity,
           stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+          modifiers: i.modifiers,
           notes: i.notes,
         }));
     }
@@ -183,6 +185,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
           unitPrice: i.unitPrice,
           quantity: i.quantity,
           stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+          modifiers: i.modifiers,
           notes: i.notes,
         }));
     }
@@ -705,12 +708,19 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                                       >
                                         {isSelected && <CheckCircle2 size={12} color="#ffffff" />}
                                       </View>
-                                      <Text
-                                        className="text-xs font-bold text-gray-800"
-                                        numberOfLines={1}
-                                      >
-                                        {item.quantity}x {item.productName}
-                                      </Text>
+                                      <View style={{ flex: 1 }}>
+                                        <Text
+                                          className="text-xs font-bold text-gray-800"
+                                          numberOfLines={1}
+                                        >
+                                          {item.quantity}x {item.productName}
+                                        </Text>
+                                        {item.modifiers && item.modifiers.length > 0 ? (
+                                          <Text className="text-[10px] text-wine-900 font-semibold mt-0.5">
+                                            + {item.modifiers.join(', ')}
+                                          </Text>
+                                        ) : null}
+                                      </View>
                                     </View>
                                     <Text className="text-xs font-black text-gray-700">
                                       {formatCurrency(item.unitPrice * item.quantity)}
@@ -1107,6 +1117,13 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                           {formatCurrency(item.unitPrice * item.quantity)}
                         </Text>
                       </View>
+                      {item.modifiers && item.modifiers.length > 0 ? (
+                        <Text
+                          style={[styles.receiptItemNote, { color: '#800020', fontWeight: '600' }]}
+                        >
+                          {'   '}+ {item.modifiers.join(', ')}
+                        </Text>
+                      ) : null}
                       {item.notes ? (
                         <Text style={styles.receiptItemNote}> &gt;&gt; Note: {item.notes}</Text>
                       ) : null}

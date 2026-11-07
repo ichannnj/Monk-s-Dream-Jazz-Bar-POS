@@ -23,9 +23,15 @@ export const RunnerTicketItemList: React.FC<RunnerTicketItemListProps> = ({ item
                   {isBar ? 'BAR' : 'KITCHEN'}
                 </Text>
               </View>
-              <Text style={[styles.itemName, isReady && styles.itemNameReady]}>
-                {item.quantity}x {item.productName}
-              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.itemName, isReady && styles.itemNameReady]}>
+                  {item.quantity}x {item.productName}
+                </Text>
+                {item.modifiers && item.modifiers.length > 0 ? (
+                  <Text style={styles.itemModText}>+ {item.modifiers.join(', ')}</Text>
+                ) : null}
+                {item.notes ? <Text style={styles.itemNoteText}>"{item.notes}"</Text> : null}
+              </View>
             </View>
 
             <View style={[styles.statusChip, isReady && styles.statusChipReady]}>
@@ -76,6 +82,18 @@ const styles = StyleSheet.create({
   itemNameReady: {
     color: '#15803d',
     fontWeight: '700',
+  },
+  itemModText: {
+    fontSize: 14,
+    color: '#800020',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  itemNoteText: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontStyle: 'italic',
+    marginTop: 1,
   },
   statusChip: {
     paddingHorizontal: 8,
