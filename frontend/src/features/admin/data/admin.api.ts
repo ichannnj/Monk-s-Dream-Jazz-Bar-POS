@@ -311,6 +311,8 @@ export interface SalesOverviewFilterParams {
   station?: string;
 }
 
+let hasWarnedMissingVariants = false;
+
 export const adminApi = {
   /**
    * Venue Settings & Operating Mode
@@ -468,10 +470,12 @@ export const adminApi = {
     if (!queryWithVariants.error) {
       rawData = queryWithVariants.data || [];
     } else {
-      console.warn(
-        '[adminApi.getProductsWithBOM] Failed to fetch product_variants (migration pending), falling back to base schema:',
-        queryWithVariants.error.message
-      );
+      if (!hasWarnedMissingVariants) {
+        hasWarnedMissingVariants = true;
+        console.info(
+          '[adminApi.getProductsWithBOM] product_variants table not yet present; gracefully serving base menu catalog.'
+        );
+      }
       const queryBase = await supabase
         .from('products')
         .select(

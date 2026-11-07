@@ -10,6 +10,8 @@ import {
   type PreparedMenuImage,
 } from './imageUpload.service';
 
+let hasWarnedMenuVariantsFallback = false;
+
 export class MenuApi {
   /**
    * Fetch all active menu products, categories, and Auto-86 availability.
@@ -118,10 +120,12 @@ export class MenuApi {
       if (!queryWithVariants.error && queryWithVariants.data) {
         rawProducts = queryWithVariants.data;
       } else {
-        console.warn(
-          'getMenuItems query error with variants (falling back to base schema):',
-          queryWithVariants.error?.message
-        );
+        if (!hasWarnedMenuVariantsFallback) {
+          hasWarnedMenuVariantsFallback = true;
+          console.info(
+            'getMenuItems: product_variants table not yet present; serving base menu catalog.'
+          );
+        }
         const queryBase = await supabase
           .from('products')
           .select(
