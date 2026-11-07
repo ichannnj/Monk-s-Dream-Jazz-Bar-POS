@@ -1,6 +1,11 @@
 /**
- * Web Serial Hardware Printer Driver
+ * Unified Hardware Printer Driver
  * Communicates directly with USB/Serial thermal receipt printers and RJ11 cash drawers.
+ *
+ * Hierarchy:
+ * 1. Local Hardware Bridge (http://127.0.0.1:12111) - Direct zero-prompt access to Linux /dev/usb/lp0
+ * 2. WebUSB (navigator.usb) - for unlocked browser USB devices
+ * 3. Web Serial (navigator.serial) - for virtual COM ports
  */
 
 import { buildCashDrawerKickBytes } from './escposBuilder';
@@ -8,68 +13,139 @@ import { buildCashDrawerKickBytes } from './escposBuilder';
 export interface SerialPortInfo {
   usbVendorId?: number;
   usbProductId?: number;
+  type?: 'bridge' | 'usb' | 'serial';
 }
 
+const BRIDGE_URL = 'http://127.0.0.1:12111';
+
 export class WebSerialPrinterService {
-  private port: any = null;
-  private writer: any = null;
+  private serialPort: any = null;
+  private serialWriter: any = null;
+  private usbDevice: any = null;
+  private usbEndpointOut: number = 1;
   private isConnecting: boolean = false;
   private baudRate: number = 9600;
+  private connectionType: 'none' | 'bridge' | 'serial' | 'usb' = 'none';
 
   /**
-   * Check if Web Serial API is supported in the current browser
+   * Check if any driver mode is supported in the current environment
    */
   public isSupported(): boolean {
-    return typeof navigator !== 'undefined' && 'serial' in navigator;
+    return true;
   }
 
   /**
    * Check if the printer port is currently opened and ready for writing
    */
   public isConnected(): boolean {
-    return this.port !== null && this.port.readable !== null && this.writer !== null;
+    if (this.connectionType === 'bridge') {
+      return true;
+    }
+    if (this.connectionType === 'usb') {
+      return this.usbDevice !== null && this.usbDevice.opened === true;
+    }
+    if (this.connectionType === 'serial') {
+      return this.serialPort !== null && this.serialWriter !== null;
+    }
+    return false;
   }
 
   /**
    * Get USB Vendor/Product information for the active port if available
    */
   public getPortInfo(): SerialPortInfo | null {
-    if (!this.port || typeof this.port.getInfo !== 'function') return null;
-    return this.port.getInfo();
+    if (this.connectionType === 'bridge') {
+      return {
+        usbVendorId: 0x0483,
+        usbProductId: 0x070b,
+        type: 'bridge',
+      };
+    }
+    if (this.connectionType === 'usb' && this.usbDevice) {
+      return {
+        usbVendorId: this.usbDevice.vendorId,
+        usbProductId: this.usbDevice.productId,
+        type: 'usb',
+      };
+    }
+    if (
+      this.connectionType === 'serial' &&
+      this.serialPort &&
+      typeof this.serialPort.getInfo === 'function'
+    ) {
+      const info = this.serialPort.getInfo();
+      return {
+        ...info,
+        type: 'serial',
+      };
+    }
+    return null;
   }
 
   /**
-   * Get previously paired ports that the user granted permission to in prior sessions
+   * Check if the local OS hardware bridge is reachable
    */
-  public async getPairedPorts(): Promise<any[]> {
-    if (!this.isSupported()) return [];
+  public async checkBridge(): Promise<boolean> {
     try {
-      return await (navigator as any).serial.getPorts();
-    } catch (err) {
-      console.warn('[WebSerialPrinter] Failed to query paired ports:', err);
-      return [];
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1200);
+      const res = await fetch(`${BRIDGE_URL}/status`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        return data.status === 'CONNECTED';
+      }
+      return false;
+    } catch {
+      return false;
     }
   }
 
   /**
-   * Attempt to silently reconnect to a previously paired port without showing browser picker
+   * Attempt silent connection
    */
   public async autoConnect(baudRate: number = 9600): Promise<boolean> {
-    if (!this.isSupported() || this.isConnected() || this.isConnecting) {
+    if (this.isConnected() || this.isConnecting) {
       return this.isConnected();
     }
 
     try {
       this.isConnecting = true;
-      const ports = await this.getPairedPorts();
-      if (ports.length > 0) {
-        await this.openPort(ports[0], baudRate);
-        console.log('[WebSerialPrinter] Silently reconnected to previously authorized port');
+
+      // 1. Check local hardware bridge first (Linux native /dev/usb/lp0)
+      const bridgeConnected = await this.checkBridge();
+      if (bridgeConnected) {
+        this.connectionType = 'bridge';
+        console.log('[WebPrinter] Connected via Local Hardware Bridge (/dev/usb/lp0)');
         return true;
       }
-      return false;
-    } catch (err) {
-      console.warn('[WebSerialPrinter] Silent auto-connect failed:', err);
+
+      // 2. Try WebUSB
+      if (typeof navigator !== 'undefined' && 'usb' in navigator) {
+        try {
+          const usbDevices = await (navigator as any).usb.getDevices();
+          if (usbDevices.length > 0) {
+            await this.openUsbDevice(usbDevices[0]);
+            return true;
+          }
+        } catch {
+          // Silent fallback if USB unavailable
+        }
+      }
+
+      // 3. Try Web Serial
+      if (typeof navigator !== 'undefined' && 'serial' in navigator) {
+        try {
+          const serialPorts = await (navigator as any).serial.getPorts();
+          if (serialPorts.length > 0) {
+            await this.openSerialPort(serialPorts[0], baudRate);
+            return true;
+          }
+        } catch {
+          // Silent fallback if Serial unavailable
+        }
+      }
+
       return false;
     } finally {
       this.isConnecting = false;
@@ -77,36 +153,77 @@ export class WebSerialPrinterService {
   }
 
   /**
-   * Prompt user gesture to pick a Serial/USB device and open connection
+   * Connect to device
    */
   public async requestAndConnect(baudRate: number = 9600): Promise<boolean> {
-    if (!this.isSupported()) {
-      throw new Error(
-        'Web Serial API is not supported in this browser. Please use Chrome or Edge.'
-      );
-    }
-
     try {
       this.isConnecting = true;
-      const port = await (navigator as any).serial.requestPort();
-      await this.openPort(port, baudRate);
-      return true;
-    } catch (err: any) {
-      console.error('[WebSerialPrinter] Connection request failed:', err);
-      throw err;
+
+      // 1. Check local hardware bridge
+      const bridgeConnected = await this.checkBridge();
+      if (bridgeConnected) {
+        this.connectionType = 'bridge';
+        return true;
+      }
+
+      // 2. Try WebUSB
+      if (typeof navigator !== 'undefined' && 'usb' in navigator) {
+        try {
+          const device = await (navigator as any).usb.requestDevice({ filters: [] });
+          if (device) {
+            await this.openUsbDevice(device);
+            return true;
+          }
+        } catch (usbErr: any) {
+          if (usbErr.name !== 'NotFoundError') {
+            console.warn('[WebPrinter] WebUSB error:', usbErr);
+          }
+        }
+      }
+
+      // 3. Try Web Serial
+      if (typeof navigator !== 'undefined' && 'serial' in navigator) {
+        const port = await (navigator as any).serial.requestPort();
+        await this.openSerialPort(port, baudRate);
+        return true;
+      }
+
+      throw new Error('Printer hardware bridge or device not available.');
     } finally {
       this.isConnecting = false;
     }
   }
 
-  /**
-   * Open port stream and acquire writer
-   */
-  private async openPort(port: any, baudRate: number): Promise<void> {
-    if (this.port) {
-      await this.disconnect();
+  private async openUsbDevice(device: any): Promise<void> {
+    await this.disconnect();
+    await device.open();
+    if (device.configuration === null) {
+      await device.selectConfiguration(1);
     }
 
+    let interfaceNumber = 0;
+    let endpointOut = 1;
+
+    for (const iface of device.configuration.interfaces) {
+      for (const alt of iface.alternates) {
+        for (const ep of alt.endpoints) {
+          if (ep.direction === 'out') {
+            endpointOut = ep.endpointNumber;
+            interfaceNumber = iface.interfaceNumber;
+            break;
+          }
+        }
+      }
+    }
+
+    await device.claimInterface(interfaceNumber);
+    this.usbDevice = device;
+    this.usbEndpointOut = endpointOut;
+    this.connectionType = 'usb';
+  }
+
+  private async openSerialPort(port: any, baudRate: number): Promise<void> {
+    await this.disconnect();
     this.baudRate = baudRate;
     await port.open({
       baudRate: this.baudRate,
@@ -115,61 +232,87 @@ export class WebSerialPrinterService {
       parity: 'none',
       flowControl: 'none',
     });
-
-    this.port = port;
-    this.writer = port.writable.getWriter();
+    this.serialPort = port;
+    this.serialWriter = port.writable.getWriter();
+    this.connectionType = 'serial';
   }
 
-  /**
-   * Write raw binary ESC/POS byte array to the thermal printer
-   */
   public async writeBytes(bytes: Uint8Array): Promise<boolean> {
     if (!this.isConnected()) {
-      throw new Error('Thermal printer is not connected. Please pair device first.');
+      // Try fast auto-connect via bridge before failing
+      const bridgeConnected = await this.checkBridge();
+      if (bridgeConnected) {
+        this.connectionType = 'bridge';
+      } else {
+        throw new Error('Thermal printer is not connected.');
+      }
     }
 
-    try {
-      await this.writer.write(bytes);
+    if (this.connectionType === 'bridge') {
+      const res = await fetch(`${BRIDGE_URL}/print`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/octet-stream' },
+        body: bytes as any,
+      });
+      const data = await res.json();
+      return data.success === true;
+    }
+
+    if (this.connectionType === 'usb' && this.usbDevice) {
+      await this.usbDevice.transferOut(this.usbEndpointOut, bytes);
       return true;
-    } catch (err) {
-      console.error('[WebSerialPrinter] Write failed:', err);
-      // If writer stream encountered a fatal error, close and release
-      await this.disconnect();
-      throw err;
     }
+
+    if (this.connectionType === 'serial' && this.serialWriter) {
+      await this.serialWriter.write(bytes);
+      return true;
+    }
+
+    return false;
   }
 
-  /**
-   * Kick the physical cash drawer solenoid via RJ11/RJ12 port on thermal printer
-   */
   public async kickCashDrawer(): Promise<boolean> {
-    const kickCommand = buildCashDrawerKickBytes();
-    return this.writeBytes(kickCommand);
+    if (this.connectionType === 'bridge') {
+      try {
+        const res = await fetch(`${BRIDGE_URL}/kick`, { method: 'POST' });
+        const data = await res.json();
+        return data.success === true;
+      } catch {
+        // Silent fallback to local byte pulse
+      }
+    }
+    const kickBytes = buildCashDrawerKickBytes();
+    return this.writeBytes(kickBytes);
   }
 
-  /**
-   * Close port and release writer lock safely
-   */
   public async disconnect(): Promise<void> {
     try {
-      if (this.writer) {
-        await this.writer.close();
-        this.writer.releaseLock();
+      if (this.serialWriter) {
+        try {
+          this.serialWriter.releaseLock();
+        } catch {
+          // Ignore release error
+        }
+        this.serialWriter = null;
       }
-    } catch (err) {
-      console.warn('[WebSerialPrinter] Error closing writer:', err);
-    } finally {
-      this.writer = null;
-    }
-
-    try {
-      if (this.port) {
-        await this.port.close();
+      if (this.serialPort) {
+        try {
+          await this.serialPort.close();
+        } catch {
+          // Ignore close error
+        }
+        this.serialPort = null;
       }
-    } catch (err) {
-      console.warn('[WebSerialPrinter] Error closing port:', err);
+      if (this.usbDevice) {
+        try {
+          await this.usbDevice.close();
+        } catch {
+          // Ignore close error
+        }
+        this.usbDevice = null;
+      }
     } finally {
-      this.port = null;
+      this.connectionType = 'none';
     }
   }
 }

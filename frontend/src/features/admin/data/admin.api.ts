@@ -1522,6 +1522,26 @@ export const adminApi = {
     if (error) throw error;
     return (data as any) || { success: true, closedTabsCount: 0 };
   },
+
+  async resetStationMetrics(
+    pin: string
+  ): Promise<{ success: boolean; reset_at?: string; manager_name?: string; error?: string }> {
+    const { data, error } = await (supabase.rpc as any)('reset_station_turnaround_metrics', {
+      p_manager_pin: pin.trim(),
+    });
+    if (error) {
+      return { success: false, error: error.message || 'Failed to reset station metrics.' };
+    }
+    return (data as any) || { success: true };
+  },
+
+  async clearStationMetricsReset(): Promise<{ success: boolean; error?: string }> {
+    const { data, error } = await (supabase.rpc as any)('clear_station_turnaround_reset');
+    if (error) {
+      return { success: false, error: error.message || 'Failed to clear reset baseline.' };
+    }
+    return (data as any) || { success: true };
+  },
 };
 
 export interface TableAdmin {

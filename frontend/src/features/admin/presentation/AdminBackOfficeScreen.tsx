@@ -48,53 +48,65 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   const [products, setProducts] = useState<ProductAdmin[]>([]);
   const [analytics, setAnalytics] = useState<SalesAnalyticsOverview | null>(null);
 
+  const [isShowingFullDay, setIsShowingFullDay] = useState(false);
+  const isShowingFullDayRef = useRef(false);
+  useEffect(() => {
+    isShowingFullDayRef.current = isShowingFullDay;
+  }, [isShowingFullDay]);
+
   const timeframeRef = useRef<TimeframeFilter>(timeframe);
   useEffect(() => {
     timeframeRef.current = timeframe;
   }, [timeframe]);
 
-  const loadData = useCallback(async (tf?: TimeframeFilter, silent: boolean = false) => {
-    if (!silent) setIsLoading(true);
-    const activeTimeframe = tf ?? timeframeRef.current;
-    try {
-      const [settingsRes, invRes, prodRes, analRes, telemRes] = await Promise.allSettled([
-        adminApi.getVenueSettings(),
-        adminApi.getInventoryItems(),
-        adminApi.getProductsWithBOM(),
-        adminApi.getSalesOverview(),
-        adminTelemetryService.fetchDashboardTelemetry(activeTimeframe),
-      ]);
+  const loadData = useCallback(
+    async (tf?: TimeframeFilter, silent: boolean = false, ignoreReset?: boolean) => {
+      if (!silent) setIsLoading(true);
+      const activeTimeframe = tf ?? timeframeRef.current;
+      const shouldIgnoreReset = ignoreReset ?? isShowingFullDayRef.current;
+      try {
+        const [settingsRes, invRes, prodRes, analRes, telemRes] = await Promise.allSettled([
+          adminApi.getVenueSettings(),
+          adminApi.getInventoryItems(),
+          adminApi.getProductsWithBOM(),
+          adminApi.getSalesOverview(),
+          adminTelemetryService.fetchDashboardTelemetry(activeTimeframe, {
+            ignoreResetBaseline: shouldIgnoreReset,
+          }),
+        ]);
 
-      if (settingsRes.status === 'fulfilled') {
-        setOperatingMode(settingsRes.value.operating_mode);
+        if (settingsRes.status === 'fulfilled') {
+          setOperatingMode(settingsRes.value.operating_mode);
+        }
+        if (invRes.status === 'fulfilled') {
+          setInventory(invRes.value);
+        } else {
+          console.warn('[AdminBackOfficeScreen] Failed to load inventory:', invRes.reason);
+        }
+        if (prodRes.status === 'fulfilled') {
+          setProducts(prodRes.value);
+        } else {
+          console.warn('[AdminBackOfficeScreen] Failed to load products:', prodRes.reason);
+        }
+        if (analRes.status === 'fulfilled') {
+          setAnalytics(analRes.value);
+        }
+        if (telemRes.status === 'fulfilled') {
+          setTelemetry(telemRes.value);
+        } else {
+          console.warn('[AdminBackOfficeScreen] Failed to load telemetry:', telemRes.reason);
+        }
+      } catch (err) {
+        console.error('[AdminBackOfficeScreen] Unexpected error in loadData:', err);
+        if (!silent) {
+          toast.error('Failed to refresh administrative data', { title: 'Admin Notice' });
+        }
+      } finally {
+        if (!silent) setIsLoading(false);
       }
-      if (invRes.status === 'fulfilled') {
-        setInventory(invRes.value);
-      } else {
-        console.warn('[AdminBackOfficeScreen] Failed to load inventory:', invRes.reason);
-      }
-      if (prodRes.status === 'fulfilled') {
-        setProducts(prodRes.value);
-      } else {
-        console.warn('[AdminBackOfficeScreen] Failed to load products:', prodRes.reason);
-      }
-      if (analRes.status === 'fulfilled') {
-        setAnalytics(analRes.value);
-      }
-      if (telemRes.status === 'fulfilled') {
-        setTelemetry(telemRes.value);
-      } else {
-        console.warn('[AdminBackOfficeScreen] Failed to load telemetry:', telemRes.reason);
-      }
-    } catch (err) {
-      console.error('[AdminBackOfficeScreen] Unexpected error in loadData:', err);
-      if (!silent) {
-        toast.error('Failed to refresh administrative data', { title: 'Admin Notice' });
-      }
-    } finally {
-      if (!silent) setIsLoading(false);
-    }
-  }, []);
+    },
+    []
+  );
 
   useEffect(() => {
     loadData();
@@ -206,7 +218,23 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
           />
         );
       case 'stations':
-        return <AdminStationsView telemetry={telemetry} onRefresh={() => loadData(timeframe)} />;
+        return (
+          <AdminStationsView
+            telemetry={telemetry}
+            onRefresh={() => loadData(timeframe)}
+            timeframe={timeframe}
+            onChangeTimeframe={(tf) => {
+              setTimeframe(tf);
+              loadData(tf);
+            }}
+            isShowingFullDay={isShowingFullDay}
+            onToggleIgnoreReset={() => {
+              const next = !isShowingFullDay;
+              setIsShowingFullDay(next);
+              loadData(timeframe, false, next);
+            }}
+          />
+        );
       case 'sales':
         return <AdminTransactionsView analytics={analytics} onRefresh={loadData} />;
       case 'tables':

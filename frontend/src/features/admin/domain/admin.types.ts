@@ -29,9 +29,26 @@ export interface StationTelemetry {
   targetTicketTime: string;
   activeTickets: number;
   avgTicketTime: string;
+  avgTicketSeconds?: number;
+  completedTickets?: number;
+  onTimeRate?: number;
   lateTickets: number;
   stockoutCount: number;
   activeTicketTimestamps?: string[];
+}
+
+export interface TableTurnoverTelemetry {
+  avgMinutes: number;
+  avgFormatted: string;
+  totalTablesTurned: number;
+  activeOccupiedTables: number;
+}
+
+export interface StationsOverviewTelemetry {
+  totalCompletedTickets: number;
+  overallSlaPercent: number;
+  fastestStation: string;
+  busiestStation: string;
 }
 
 export interface CategorySalesItem {
@@ -109,6 +126,9 @@ export interface DashboardTelemetry {
   peakHourLabel: string;
   bestSellers: BestSellerItem[];
   stations: StationTelemetry[];
+  tableTurnover?: TableTurnoverTelemetry;
+  stationsOverview?: StationsOverviewTelemetry;
+  stationMetricsResetAt?: string | null;
   categorySales: CategorySalesItem[];
   alerts: AttentionAlert[];
   lastUpdated: string;

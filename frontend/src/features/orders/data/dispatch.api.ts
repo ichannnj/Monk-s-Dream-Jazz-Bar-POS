@@ -341,9 +341,15 @@ export async function updateOrderItemStatus(
 
   try {
     const dbStatus = status.toUpperCase() as any;
-    const { error } = await supabase
-      .from('order_items')
-      .update({ status: dbStatus, updated_at: new Date().toISOString() })
+    const updatePayload: Record<string, any> = {
+      status: dbStatus,
+      updated_at: new Date().toISOString(),
+    };
+    if (status === 'served') {
+      updatePayload.delivered_at = new Date().toISOString();
+    }
+    const { error } = await (supabase.from as any)('order_items')
+      .update(updatePayload)
       .eq('id', orderItemId);
 
     if (error) {

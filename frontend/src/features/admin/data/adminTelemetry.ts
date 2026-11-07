@@ -7,6 +7,8 @@ import type {
   AttentionAlert,
   HourlySalesPoint,
   TimeframeFilter,
+  TableTurnoverTelemetry,
+  StationsOverviewTelemetry,
 } from '../domain/admin.types';
 
 export function getTimeframeBounds(timeframe: TimeframeFilter): {
@@ -107,7 +109,10 @@ function formatHour(hour: number): string {
 }
 
 export const adminTelemetryService = {
-  async fetchDashboardTelemetry(timeframe: TimeframeFilter = 'today'): Promise<DashboardTelemetry> {
+  async fetchDashboardTelemetry(
+    timeframe: TimeframeFilter = 'today',
+    options?: { ignoreResetBaseline?: boolean }
+  ): Promise<DashboardTelemetry> {
     const bounds = getTimeframeBounds(timeframe);
 
     try {
@@ -140,7 +145,10 @@ export const adminTelemetryService = {
       const [paymentsRes, benchmarkRes, settingsRes, attendanceRes, staffRes] = await Promise.all([
         paymentsQuery,
         bounds.benchmarkStart ? benchmarkQuery : Promise.resolve({ data: [] }),
-        (supabase.from as any)('venue_settings').select('operating_mode').limit(1).maybeSingle(),
+        (supabase.from as any)('venue_settings')
+          .select('operating_mode, station_metrics_reset_at')
+          .limit(1)
+          .maybeSingle(),
         attendanceQuery,
         supabase.from('users').select('id, is_active, is_workflow_staff').eq('is_active', true),
       ]);
@@ -148,6 +156,8 @@ export const adminTelemetryService = {
       const payments = (paymentsRes.data || []) as any[];
       const benchmarkPayments = (benchmarkRes.data || []) as any[];
       const activeOperatingMode = (settingsRes?.data?.operating_mode || 'CAFE') as 'CAFE' | 'EVENT';
+      const stationMetricsResetAt = (settingsRes?.data?.station_metrics_reset_at || null) as
+        string | null;
       const attendanceRows = (attendanceRes.data || []) as any[];
       const activeStaffRows = (staffRes.data || []) as any[];
 
@@ -419,7 +429,7 @@ export const adminTelemetryService = {
         });
       }
 
-      // 5. STATIONS TELEMETRY (Query live active orders strictly from open tabs in DB)
+      // 5. STATIONS TELEMETRY (Query live active orders AND completed items in timeframe)
       const formatDuration = (totalSec: number): string => {
         const m = Math.floor(totalSec / 60);
         const s = Math.floor(totalSec % 60);
@@ -432,7 +442,7 @@ export const adminTelemetryService = {
           id, status, created_at,
           tabs!inner(id, status, customer_name),
           order_items(
-            id, status, station_target, created_at,
+            id, status, station_target, created_at, delivered_at, updated_at,
             products(name, category_id, categories(name))
           )
         `
@@ -443,6 +453,34 @@ export const adminTelemetryService = {
       const openOrders = openOrdersData || [];
       const nowMs = Date.now();
 
+      // 5a. Determine effective start date for station metrics (respecting reset baseline for 'today')
+      let effectiveStationStart = bounds.startDate;
+      if (timeframe === 'today' && stationMetricsResetAt && !options?.ignoreResetBaseline) {
+        effectiveStationStart = stationMetricsResetAt;
+      }
+
+      // 5b. Query completed order items in the timeframe (status = 'SERVED')
+      let completedItemsQuery = (supabase.from as any)('order_items')
+        .select(
+          `
+          id, status, created_at, delivered_at, updated_at, station_target,
+          products(name, category_id, categories(name)),
+          orders!inner(id, status, created_at, tab_id)
+        `
+        )
+        .eq('status', 'SERVED');
+
+      if (effectiveStationStart) {
+        completedItemsQuery = completedItemsQuery.gte('updated_at', effectiveStationStart);
+      }
+      if (bounds.endDate) {
+        completedItemsQuery = completedItemsQuery.lt('updated_at', bounds.endDate);
+      }
+
+      const { data: completedItemsData } = await completedItemsQuery;
+      const completedItems = (completedItemsData || []) as any[];
+
+      // Active In-Flight Tickets & Timestamps
       let barTickets = 0;
       let barElapsedSum = 0;
       let barLate = 0;
@@ -522,7 +560,155 @@ export const adminTelemetryService = {
         }
       }
 
-      // 5b. Query live station online/heartbeat status from DB
+      // Aggregate completed items per station
+      let barDone = 0;
+      let barDoneSec = 0;
+      let barDoneLate = 0;
+
+      let cafeDone = 0;
+      let cafeDoneSec = 0;
+      let cafeDoneLate = 0;
+
+      let kitchenDone = 0;
+      let kitchenDoneSec = 0;
+      let kitchenDoneLate = 0;
+
+      let runnerDone = 0;
+      let runnerDoneSec = 0;
+      let runnerDoneLate = 0;
+
+      for (const item of completedItems) {
+        const cat = (item.products?.categories?.name || '').toLowerCase();
+        const target = item.station_target || '';
+        const endIso = item.delivered_at || item.updated_at || item.created_at;
+        const startIso = item.created_at || item.orders?.created_at || endIso;
+        const durationSec = Math.max(
+          1,
+          Math.floor((new Date(endIso).getTime() - new Date(startIso).getTime()) / 1000)
+        );
+
+        const isBar =
+          target === 'bar' &&
+          !cat.includes('coffee') &&
+          !cat.includes('espresso') &&
+          !cat.includes('tea');
+        const isCafe =
+          target === 'cafe' ||
+          (target === 'bar' &&
+            (cat.includes('coffee') || cat.includes('espresso') || cat.includes('tea')));
+        const isKitchen = target === 'kitchen';
+
+        if (isBar) {
+          barDone++;
+          barDoneSec += durationSec;
+          if (durationSec > 600) barDoneLate++;
+        }
+        if (isCafe) {
+          cafeDone++;
+          cafeDoneSec += durationSec;
+          if (durationSec > 360) cafeDoneLate++;
+        }
+        if (isKitchen) {
+          kitchenDone++;
+          kitchenDoneSec += durationSec;
+          if (durationSec > 900) kitchenDoneLate++;
+        }
+        // Every served item was delivered to guest by Runner
+        runnerDone++;
+        runnerDoneSec += durationSec;
+        if (durationSec > 180) runnerDoneLate++;
+      }
+
+      // 5c. Query Settled Tabs in timeframe to calculate REAL Table Turnover
+      let settledTabsQuery = (supabase.from as any)('tabs')
+        .select('id, table_id, customer_name, order_type, status, created_at, updated_at')
+        .eq('status', 'BILLED');
+
+      if (effectiveStationStart) {
+        settledTabsQuery = settledTabsQuery.gte('updated_at', effectiveStationStart);
+      }
+      if (bounds.endDate) {
+        settledTabsQuery = settledTabsQuery.lt('updated_at', bounds.endDate);
+      }
+
+      const { data: settledTabsData } = await settledTabsQuery;
+      const settledTabs = (settledTabsData || []) as any[];
+
+      let totalDwellMinutes = 0;
+      let turnedTablesCount = 0;
+
+      for (const tab of settledTabs) {
+        if (tab.created_at && tab.updated_at) {
+          const startMs = new Date(tab.created_at).getTime();
+          const endMs = new Date(tab.updated_at).getTime();
+          const dwellMins = Math.max(1, Math.round((endMs - startMs) / 60000));
+          totalDwellMinutes += dwellMins;
+          turnedTablesCount++;
+        }
+      }
+
+      const avgTableTurnoverMinutes =
+        turnedTablesCount > 0 ? Math.round(totalDwellMinutes / turnedTablesCount) : 0;
+
+      const formatTurnover = (mins: number): string => {
+        if (mins === 0) return '0 min';
+        if (mins < 60) return `${mins} min`;
+        const h = Math.floor(mins / 60);
+        const m = mins % 60;
+        return m > 0 ? `${h}h ${m}m` : `${h}h`;
+      };
+
+      const tableTurnover: TableTurnoverTelemetry = {
+        avgMinutes: avgTableTurnoverMinutes,
+        avgFormatted: formatTurnover(avgTableTurnoverMinutes),
+        totalTablesTurned: turnedTablesCount,
+        activeOccupiedTables: occupiedTables,
+      };
+
+      const totalCompletedTickets = barDone + cafeDone + kitchenDone + runnerDone;
+      const totalAllTickets =
+        totalCompletedTickets + barTickets + cafeTickets + kitchenTickets + runnerTickets;
+      const totalAllLate =
+        barDoneLate +
+        barLate +
+        cafeDoneLate +
+        cafeLate +
+        kitchenDoneLate +
+        kitchenLate +
+        runnerDoneLate +
+        runnerLate;
+      const overallSlaPercent =
+        totalAllTickets > 0
+          ? Number((((totalAllTickets - totalAllLate) / totalAllTickets) * 100).toFixed(1))
+          : 100;
+
+      const stationSpeeds = [
+        { name: 'Bar Counter', sec: barDone > 0 ? barDoneSec / barDone : 99999 },
+        { name: 'Barista Espresso', sec: cafeDone > 0 ? cafeDoneSec / cafeDone : 99999 },
+        { name: 'Kitchen Hot Line', sec: kitchenDone > 0 ? kitchenDoneSec / kitchenDone : 99999 },
+        { name: 'FOH Expediter', sec: runnerDone > 0 ? runnerDoneSec / runnerDone : 99999 },
+      ];
+      stationSpeeds.sort((a, b) => a.sec - b.sec);
+      const fastestStation =
+        stationSpeeds[0].sec < 99999 ? stationSpeeds[0].name : 'Barista Espresso';
+
+      const stationLoads = [
+        { name: 'Bar Counter', count: barDone + barTickets },
+        { name: 'Barista Espresso', count: cafeDone + cafeTickets },
+        { name: 'Kitchen Hot Line', count: kitchenDone + kitchenTickets },
+        { name: 'FOH Expediter', count: runnerDone + runnerTickets },
+      ];
+      stationLoads.sort((a, b) => b.count - a.count);
+      const busiestStation = stationLoads[0].count > 0 ? stationLoads[0].name : 'Bar Counter';
+
+      const stationsOverview: StationsOverviewTelemetry = {
+        totalCompletedTickets,
+        overallSlaPercent,
+        fastestStation,
+        busiestStation,
+      };
+
+      // 5d. Query live station online/heartbeat status from DB
       const { data: stationStatusRows } = await (supabase.from as any)('station_status').select(
         '*'
       );
@@ -550,8 +736,21 @@ export const adminTelemetryService = {
           isOnline: isStationReallyOnline('bar'),
           targetTicketTime: '10:00',
           activeTickets: barTickets,
-          avgTicketTime: barTickets > 0 ? formatDuration(barElapsedSum / barTickets) : 'Idle',
-          lateTickets: barLate,
+          avgTicketTime:
+            barDone > 0
+              ? formatDuration(barDoneSec / barDone)
+              : barTickets > 0
+                ? formatDuration(barElapsedSum / barTickets)
+                : 'Idle',
+          avgTicketSeconds: barDone > 0 ? Math.round(barDoneSec / barDone) : 0,
+          completedTickets: barDone,
+          onTimeRate:
+            barDone + barTickets > 0
+              ? Math.round(
+                  ((barDone + barTickets - (barDoneLate + barLate)) / (barDone + barTickets)) * 100
+                )
+              : 100,
+          lateTickets: barDoneLate + barLate,
           activeTicketTimestamps: barTimestamps,
           stockoutCount: lowStockItems.filter(
             (i) =>
@@ -566,8 +765,23 @@ export const adminTelemetryService = {
           isOnline: isStationReallyOnline('cafe'),
           targetTicketTime: '06:00',
           activeTickets: cafeTickets,
-          avgTicketTime: cafeTickets > 0 ? formatDuration(cafeElapsedSum / cafeTickets) : 'Idle',
-          lateTickets: cafeLate,
+          avgTicketTime:
+            cafeDone > 0
+              ? formatDuration(cafeDoneSec / cafeDone)
+              : cafeTickets > 0
+                ? formatDuration(cafeElapsedSum / cafeTickets)
+                : 'Idle',
+          avgTicketSeconds: cafeDone > 0 ? Math.round(cafeDoneSec / cafeDone) : 0,
+          completedTickets: cafeDone,
+          onTimeRate:
+            cafeDone + cafeTickets > 0
+              ? Math.round(
+                  ((cafeDone + cafeTickets - (cafeDoneLate + cafeLate)) /
+                    (cafeDone + cafeTickets)) *
+                    100
+                )
+              : 100,
+          lateTickets: cafeDoneLate + cafeLate,
           activeTicketTimestamps: cafeTimestamps,
           stockoutCount: lowStockItems.filter(
             (i) =>
@@ -583,8 +797,22 @@ export const adminTelemetryService = {
           targetTicketTime: '15:00',
           activeTickets: kitchenTickets,
           avgTicketTime:
-            kitchenTickets > 0 ? formatDuration(kitchenElapsedSum / kitchenTickets) : 'Idle',
-          lateTickets: kitchenLate,
+            kitchenDone > 0
+              ? formatDuration(kitchenDoneSec / kitchenDone)
+              : kitchenTickets > 0
+                ? formatDuration(kitchenElapsedSum / kitchenTickets)
+                : 'Idle',
+          avgTicketSeconds: kitchenDone > 0 ? Math.round(kitchenDoneSec / kitchenDone) : 0,
+          completedTickets: kitchenDone,
+          onTimeRate:
+            kitchenDone + kitchenTickets > 0
+              ? Math.round(
+                  ((kitchenDone + kitchenTickets - (kitchenDoneLate + kitchenLate)) /
+                    (kitchenDone + kitchenTickets)) *
+                    100
+                )
+              : 100,
+          lateTickets: kitchenDoneLate + kitchenLate,
           activeTicketTimestamps: kitchenTimestamps,
           stockoutCount: lowStockItems.filter(
             (i) =>
@@ -600,8 +828,22 @@ export const adminTelemetryService = {
           targetTicketTime: '03:00',
           activeTickets: runnerTickets,
           avgTicketTime:
-            runnerTickets > 0 ? formatDuration(runnerElapsedSum / runnerTickets) : 'Idle',
-          lateTickets: runnerLate,
+            runnerDone > 0
+              ? formatDuration(runnerDoneSec / runnerDone)
+              : runnerTickets > 0
+                ? formatDuration(runnerElapsedSum / runnerTickets)
+                : 'Idle',
+          avgTicketSeconds: runnerDone > 0 ? Math.round(runnerDoneSec / runnerDone) : 0,
+          completedTickets: runnerDone,
+          onTimeRate:
+            runnerDone + runnerTickets > 0
+              ? Math.round(
+                  ((runnerDone + runnerTickets - (runnerDoneLate + runnerLate)) /
+                    (runnerDone + runnerTickets)) *
+                    100
+                )
+              : 100,
+          lateTickets: runnerDoneLate + runnerLate,
           activeTicketTimestamps: runnerTimestamps,
           stockoutCount: 0,
         },
@@ -665,6 +907,9 @@ export const adminTelemetryService = {
         peakHourLabel: peakHour ? `Peak · ${formatHour(peakHour)}` : 'No Sales Yet',
         bestSellers,
         stations,
+        tableTurnover,
+        stationsOverview,
+        stationMetricsResetAt,
         categorySales,
         alerts,
         lastUpdated: new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),

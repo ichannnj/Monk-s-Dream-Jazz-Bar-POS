@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "turbo run dev",
-    "build": "pnpm -F @monks/shared build && cd frontend && npx expo export --platform web && cp -r dist/* ../public/ 2>/dev/null || true",
+    "build": "pnpm -F @monks/shared build && pnpm -F @monks/frontend build && cp -r frontend/dist/* public/ 2>/dev/null || true",
+    "build:render": "bash scripts/render-build.sh",
     "typecheck": "pnpm -r run typecheck",
     "lint": "eslint .",
     "lint:quiet": "eslint . --quiet",
@@ -29,6 +30,7 @@
     "doppler:pull:dev": "doppler secrets download --no-file --format env > frontend/.env",
     "doppler:run": "doppler run -- turbo run dev",
     "sync:knowledge": "bash scripts/sync-knowledge.sh",
+    "printer:daemon": "bash scripts/start-printer-daemon.sh",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -45,6 +47,9 @@
   "license": "ISC",
   "packageManager": "pnpm@12.11.2",
   "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "devDependencies": {
     "@eslint/compat": "^2.1.1",
     "@eslint/js": "^10.0.1",

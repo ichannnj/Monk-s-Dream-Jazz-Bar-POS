@@ -188,6 +188,16 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 
 ---
 
+### 8. Real Station Turnaround & Table Turnover Hub (`AdminStationsView.tsx`)
+
+- **Authoritative Turnaround Timing:** Station fulfillment turnaround time is tracked from order placement (`created_at`) until items are marked delivered to the table (`order_items.delivered_at` set via `trg_set_order_item_delivered_at` upon runner handoff / "Deliver to Table"). If unserved at billing, tab settlement (`settle_tab_and_record_payment`) atomically freezes timing via `delivered_at = now()`.
+- **Table Turnover Dwell Tracking:** Measures guest table dwell duration from tab opening (`tabs.created_at`) to settlement (`tabs.updated_at` / `payments.created_at`).
+- **Timeframe Filtering:** Switchable between **Today (Daily)**, **Yesterday**, **This Week**, and **This Month**.
+- **Manager Shift Baseline Reset:** Gated by 4-digit Manager PIN `9999` (`reset_station_turnaround_metrics`). Stores `station_metrics_reset_at` in `venue_settings` so counters restart fresh for the active service rush while preserving all historical data in PostgreSQL, complete with a "Show Full Day" / "Clear Baseline" toggle.
+- **Executive Overview Header:** Displays Average Table Turnover Time, Total Tables Turned, Overall On-Time Fulfillment SLA %, and Total Completed Orders alongside active in-flight tickets.
+
+---
+
 ## 📚 Related Documentation
 
 - Architecture & File Tree Map: [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)
