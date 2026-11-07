@@ -893,6 +893,7 @@ export function exportAttendancePayrollToExcel(params: {
   const rows = items
     .map((item, idx) => {
       const rowBg = idx % 2 === 0 ? '' : ' ss:StyleID="DataLabel"';
+      const isExempt = item.status.includes('Exempt') || item.role.toLowerCase().includes('admin');
       return `
       <Row ss:Height="20">
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(item.name)}</Data></Cell>
@@ -909,9 +910,19 @@ export function exportAttendancePayrollToExcel(params: {
             : ''
         }
         <Cell ss:StyleID="DataNumber"><Data ss:Type="Number">${item.hoursWorked.toFixed(1)}</Data></Cell>
+        ${
+          isExempt
+            ? `
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">Exempt</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">—</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">Exempt</Data></Cell>
+        `
+            : `
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${item.basePay}</Data></Cell>
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${item.addonPay}</Data></Cell>
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${item.totalPay}</Data></Cell>
+        `
+        }
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(item.notes || '—')}</Data></Cell>
       </Row>`;
     })

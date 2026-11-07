@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, TextInput } from 'react-native';
 import {
   User,
@@ -20,6 +20,7 @@ import {
 import { useAuthStore } from '@/features/auth';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { posApi } from '@/features/shared/infrastructure/api';
+import { realtimeGateway } from '@/features/shared';
 
 export const AdminProfileView: React.FC = () => {
   const { currentUser, updateCurrentUser, logout } = useAuthStore();
@@ -31,6 +32,17 @@ export const AdminProfileView: React.FC = () => {
   const [email, setEmail] = useState(currentUser?.email || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+  // Sync form inputs with currentUser whenever it changes/hydrates
+  useEffect(() => {
+    if (currentUser) {
+      setDisplayName(currentUser.displayName || '');
+      setUsername(currentUser.username || '');
+      setJobTitle(currentUser.jobTitle || 'General Manager');
+      setEmail(currentUser.email || '');
+      setPhone(currentUser.phone || '');
+    }
+  }, [currentUser]);
 
   // 2. Password Change State
   const [currentPassword, setCurrentPassword] = useState('');
@@ -58,6 +70,13 @@ export const AdminProfileView: React.FC = () => {
     passwordHasNumber,
     passwordHasSymbol,
   ].filter(Boolean).length;
+
+  const passwordMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+  const canSubmitPassword =
+    !isUpdatingPassword &&
+    currentPassword.length > 0 &&
+    newPassword.length >= 8 &&
+    newPassword === confirmPassword;
 
   const staffInitials =
     (displayName || currentUser?.displayName || 'Admin')
@@ -92,7 +111,8 @@ export const AdminProfileView: React.FC = () => {
       toast.warning('Display name cannot be empty.');
       return;
     }
-    if (!username.trim()) {
+    const cleanUsername = username.trim().toLowerCase().replace(/^@+/, '').replace(/\s+/g, '_');
+    if (!cleanUsername) {
       toast.warning('Username cannot be empty.');
       return;
     }
@@ -102,7 +122,7 @@ export const AdminProfileView: React.FC = () => {
       const res = await posApi.updateAdminProfile({
         userId: currentUser.id,
         displayName: displayName.trim(),
-        username: username.trim(),
+        username: cleanUsername,
         jobTitle: jobTitle.trim(),
         email: email.trim(),
         phone: phone.trim(),
@@ -116,6 +136,9 @@ export const AdminProfileView: React.FC = () => {
           email: res.user.email,
           phone: res.user.phone,
         });
+        setUsername(res.user.username);
+        setDisplayName(res.user.displayName);
+        realtimeGateway.broadcastPosSync('staff_member_updated');
         toast.success('Admin profile identity updated successfully.');
       }
     } catch (err: any) {
@@ -151,6 +174,7 @@ export const AdminProfileView: React.FC = () => {
         setCurrentPassword('');
         setNewPassword('');
         setConfirmPassword('');
+        realtimeGateway.broadcastPosSync('staff_password_reset');
         toast.success(
           'Admin password updated successfully. Stored as bcrypt Blowfish hash ($2a$10$).'
         );
@@ -192,6 +216,7 @@ export const AdminProfileView: React.FC = () => {
         setPinPasswordVerify('');
         setNewOverridePin('');
         setConfirmOverridePin('');
+        realtimeGateway.broadcastPosSync('staff_pin_reset');
         toast.success('Floor Manager Override PIN rotated successfully. Stored as bcrypt hash.');
       }
     } catch (err: any) {
@@ -269,7 +294,9 @@ export const AdminProfileView: React.FC = () => {
                 <AtSign size={18} color="#78716c" className="mr-2.5" />
                 <TextInput
                   value={username}
-                  onChangeText={setUsername}
+                  onChangeText={(val) =>
+                    setUsername(val.toLowerCase().replace(/^@+/, '').replace(/\s+/g, '_'))
+                  }
                   placeholder="username"
                   placeholderTextColor="#a8a29e"
                   autoCapitalize="none"
@@ -277,6 +304,9 @@ export const AdminProfileView: React.FC = () => {
                   style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
                 />
               </View>
+              <Text className="mt-1 text-xs text-stone-500">
+                Lowercase letters, numbers, and underscores (e.g. miles_manager)
+              </Text>
             </View>
 
             <View>
@@ -488,16 +518,19 @@ export const AdminProfileView: React.FC = () => {
                   style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
                 />
               </View>
+              {passwordMismatch && (
+                <Text className="mt-1 text-xs font-semibold text-rose-600">
+                  Passwords do not match
+                </Text>
+              )}
             </View>
 
             <View className="pt-2">
               <Pressable
                 onPress={handleChangePassword}
-                disabled={isUpdatingPassword || !currentPassword || newPassword.length < 8}
+                disabled={!canSubmitPassword}
                 className={`min-h-[48px] items-center justify-center rounded-xl bg-stone-900 px-6 active:opacity-90 shadow-xs ${
-                  isUpdatingPassword || !currentPassword || newPassword.length < 8
-                    ? 'opacity-50'
-                    : ''
+                  !canSubmitPassword ? 'opacity-50' : ''
                 }`}
               >
                 <Text className="text-base font-bold text-white">

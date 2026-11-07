@@ -248,11 +248,14 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
           ? (rec.shift_status as any) || (rec.is_present ? 'CLOCKED_IN' : 'ABSENT')
           : 'ABSENT';
 
-        const baseDailyPay = rec
-          ? rec.base_daily_pay
-          : parseFloat(String(staff.base_daily_rate)) || PH_MINIMUM_WAGE_DAILY;
-        const addonPay = rec ? rec.addon_pay : 0.0;
-        const totalDayPay = isPresent ? baseDailyPay + addonPay : 0.0;
+        const isAdmin = staff.role === 'admin';
+        const baseDailyPay = isAdmin
+          ? 0.0
+          : rec
+            ? rec.base_daily_pay
+            : parseFloat(String(staff.base_daily_rate)) || PH_MINIMUM_WAGE_DAILY;
+        const addonPay = isAdmin ? 0.0 : rec ? rec.addon_pay : 0.0;
+        const totalDayPay = isPresent && !isAdmin ? baseDailyPay + addonPay : 0.0;
 
         return {
           staff,
@@ -322,11 +325,14 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
       if (!rec.is_present) return;
       const existing = map.get(rec.user_id);
       if (existing) {
+        const isAdmin = existing.staff.role === 'admin';
         existing.shiftsWorked += 1;
         existing.hoursLogged += Number(rec.hours_worked || 8.0);
-        existing.basePaySum += Number(rec.base_daily_pay || 0);
-        existing.bonusSum += Number(rec.addon_pay || 0);
-        existing.totalPaySum += Number(rec.total_day_pay || 0);
+        if (!isAdmin) {
+          existing.basePaySum += Number(rec.base_daily_pay || 0);
+          existing.bonusSum += Number(rec.addon_pay || 0);
+          existing.totalPaySum += Number(rec.total_day_pay || 0);
+        }
       }
     });
 
@@ -345,20 +351,21 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
     });
   }, [dateRange.isSingleDay, staffRoster, attendanceRecords, statusFilter, searchQuery]);
 
-  // Period Totals
+  const adminUserIds = useMemo(() => {
+    return new Set(staffRoster.filter((s) => s.role === 'admin').map((s) => s.id));
+  }, [staffRoster]);
+
+  // Period Totals (Strictly excludes Admin/Management roles from payroll expense sums)
   const periodTotals = useMemo(() => {
     const presentCount = attendanceRecords.filter((r) => r.is_present).length;
     const clockedInCount = attendanceRecords.filter((r) => r.shift_status === 'CLOCKED_IN').length;
     const completedCount = attendanceRecords.filter((r) => r.shift_status === 'COMPLETED').length;
-    const baseTotal = attendanceRecords
-      .filter((r) => r.is_present)
-      .reduce((sum, r) => sum + Number(r.base_daily_pay || 0), 0);
-    const bonusTotal = attendanceRecords
-      .filter((r) => r.is_present)
-      .reduce((sum, r) => sum + Number(r.addon_pay || 0), 0);
-    const grandTotal = attendanceRecords
-      .filter((r) => r.is_present)
-      .reduce((sum, r) => sum + Number(r.total_day_pay || 0), 0);
+    const eligibleRecords = attendanceRecords.filter(
+      (r) => r.is_present && !adminUserIds.has(r.user_id)
+    );
+    const baseTotal = eligibleRecords.reduce((sum, r) => sum + Number(r.base_daily_pay || 0), 0);
+    const bonusTotal = eligibleRecords.reduce((sum, r) => sum + Number(r.addon_pay || 0), 0);
+    const grandTotal = eligibleRecords.reduce((sum, r) => sum + Number(r.total_day_pay || 0), 0);
 
     return {
       presentCount,
@@ -368,7 +375,7 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
       bonusTotal,
       grandTotal,
     };
-  }, [attendanceRecords]);
+  }, [attendanceRecords, adminUserIds]);
 
   // Quick Prev / Next Day Step
   const handleStepDay = (step: -1 | 1) => {
@@ -437,14 +444,15 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
   // Manual Punch / Edit Record Submit
   const handleSaveRecord = async () => {
     if (!editingRecord) return;
-    const parsedBase = parseFloat(editingRecord.baseDailyPay);
-    const parsedAddon = parseFloat(editingRecord.addonPay || '0');
+    const isTargetAdmin = staffRoster.find((s) => s.id === editingRecord.userId)?.role === 'admin';
+    const parsedBase = isTargetAdmin ? 0 : parseFloat(editingRecord.baseDailyPay);
+    const parsedAddon = isTargetAdmin ? 0 : parseFloat(editingRecord.addonPay || '0');
 
-    if (isNaN(parsedBase) || parsedBase < 0) {
+    if (!isTargetAdmin && (isNaN(parsedBase) || parsedBase < 0)) {
       toast.error('Please enter a valid base daily shift rate', { title: 'Validation Error' });
       return;
     }
-    if (isNaN(parsedAddon) || parsedAddon < 0) {
+    if (!isTargetAdmin && (isNaN(parsedAddon) || parsedAddon < 0)) {
       toast.error('Please enter a valid OT / bonus amount', { title: 'Validation Error' });
       return;
     }
@@ -455,12 +463,12 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
         date: editingRecord.date,
         isPresent: editingRecord.isPresent,
         shiftStatus: editingRecord.shiftStatus,
-        baseDailyPay: parsedBase,
-        addonPay: parsedAddon,
+        baseDailyPay: isTargetAdmin ? 0 : parsedBase,
+        addonPay: isTargetAdmin ? 0 : parsedAddon,
         notes: editingRecord.notes.trim() || undefined,
       });
 
-      toast.success(`Updated attendance & pay for ${editingRecord.displayName}`, {
+      toast.success(`Updated attendance for ${editingRecord.displayName}`, {
         title: 'Attendance Saved',
       });
       setEditingRecord(null);
@@ -474,36 +482,48 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
   // Export Data Aggregation Helper
   const exportItems: AttendanceExportItem[] = useMemo(() => {
     return dateRange.isSingleDay
-      ? filteredSingleDayList.map((item) => ({
-          name: item.staff.display_name,
-          username: item.staff.username,
-          role: item.staff.job_title || item.staff.role,
-          isPosUser: item.staff.is_workflow_staff,
-          status:
-            item.shiftStatus === 'CLOCKED_IN'
-              ? 'Clocked In'
-              : item.shiftStatus === 'COMPLETED'
-                ? 'Completed'
-                : 'Absent',
-          clockIn: item.clockInAt ? new Date(item.clockInAt).toLocaleTimeString() : null,
-          clockOut: item.clockOutAt ? new Date(item.clockOutAt).toLocaleTimeString() : null,
-          hoursWorked: item.hoursWorked,
-          basePay: item.baseDailyPay,
-          addonPay: item.addonPay,
-          totalPay: item.totalDayPay,
-          notes: item.notes,
-        }))
-      : multiDayAggregates.map((item) => ({
-          name: item.staff.display_name,
-          username: item.staff.username,
-          role: item.staff.job_title || item.staff.role,
-          isPosUser: item.staff.is_workflow_staff,
-          status: `${item.shiftsWorked} shifts`,
-          hoursWorked: item.hoursLogged,
-          basePay: item.basePaySum,
-          addonPay: item.bonusSum,
-          totalPay: item.totalPaySum,
-        }));
+      ? filteredSingleDayList.map((item) => {
+          const isAdmin = item.staff.role === 'admin';
+          return {
+            name: item.staff.display_name,
+            username: item.staff.username,
+            role: item.staff.job_title || item.staff.role,
+            isPosUser: item.staff.is_workflow_staff,
+            status:
+              item.shiftStatus === 'CLOCKED_IN'
+                ? isAdmin
+                  ? 'Clocked In (Exempt)'
+                  : 'Clocked In'
+                : item.shiftStatus === 'COMPLETED'
+                  ? isAdmin
+                    ? 'Completed (Exempt)'
+                    : 'Completed'
+                  : 'Absent',
+            clockIn: item.clockInAt ? new Date(item.clockInAt).toLocaleTimeString() : null,
+            clockOut: item.clockOutAt ? new Date(item.clockOutAt).toLocaleTimeString() : null,
+            hoursWorked: item.hoursWorked,
+            basePay: isAdmin ? 0 : item.baseDailyPay,
+            addonPay: isAdmin ? 0 : item.addonPay,
+            totalPay: isAdmin ? 0 : item.totalDayPay,
+            notes: item.notes,
+          };
+        })
+      : multiDayAggregates.map((item) => {
+          const isAdmin = item.staff.role === 'admin';
+          return {
+            name: item.staff.display_name,
+            username: item.staff.username,
+            role: item.staff.job_title || item.staff.role,
+            isPosUser: item.staff.is_workflow_staff,
+            status: isAdmin
+              ? `${item.shiftsWorked} shifts (Exempt)`
+              : `${item.shiftsWorked} shifts`,
+            hoursWorked: item.hoursLogged,
+            basePay: isAdmin ? 0 : item.basePaySum,
+            addonPay: isAdmin ? 0 : item.bonusSum,
+            totalPay: isAdmin ? 0 : item.totalPaySum,
+          };
+        });
   }, [dateRange.isSingleDay, filteredSingleDayList, multiDayAggregates]);
 
   // Open Printable Report Modal
@@ -755,7 +775,10 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
           </View>
 
           <View className="flex-1 min-w-[170px] rounded-xl border border-[#800020]/20 bg-[#800020]/5 p-3.5 shadow-xs justify-between">
-            <Text className="text-base font-semibold text-[#800020]">Total Payroll</Text>
+            <View className="flex-row items-center justify-between">
+              <Text className="text-base font-semibold text-[#800020]">Total Staff Payroll</Text>
+              <Text className="text-xs text-[#800020]/70 font-semibold">Excludes Admin</Text>
+            </View>
             <Text className="mt-1 text-2xl font-black text-[#800020]">
               ₱{periodTotals.grandTotal.toFixed(2)}
             </Text>
@@ -876,13 +899,23 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
                       {/* Right: Shift Pay & Actions */}
                       <View className="flex-row items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t border-stone-100 md:border-t-0">
                         <View className="items-start md:items-end mr-1">
-                          <Text className="text-lg font-black text-stone-900">
-                            ₱{item.totalDayPay.toFixed(2)}
-                          </Text>
-                          {item.addonPay > 0 && (
-                            <Text className="text-base font-bold text-emerald-700">
-                              +₱{item.addonPay.toFixed(2)} OT
-                            </Text>
+                          {item.staff.role === 'admin' ? (
+                            <View className="rounded-full bg-stone-100 border border-stone-200 px-2.5 py-0.5">
+                              <Text className="text-xs font-bold text-stone-600">
+                                Payroll Exempt
+                              </Text>
+                            </View>
+                          ) : (
+                            <>
+                              <Text className="text-lg font-black text-stone-900">
+                                ₱{item.totalDayPay.toFixed(2)}
+                              </Text>
+                              {item.addonPay > 0 && (
+                                <Text className="text-base font-bold text-emerald-700">
+                                  +₱{item.addonPay.toFixed(2)} OT
+                                </Text>
+                              )}
+                            </>
                           )}
                         </View>
 
@@ -1023,18 +1056,30 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
                           </Text>
                         </View>
 
-                        <View className="items-start sm:items-end">
-                          <Text className="text-base font-semibold text-stone-700">
-                            Base: ₱{item.basePaySum.toFixed(2)}
-                            {item.bonusSum > 0 ? ` · +₱${item.bonusSum.toFixed(2)} OT` : ''}
-                          </Text>
-                        </View>
+                        {item.staff.role === 'admin' ? (
+                          <View className="items-start sm:items-end min-w-[90px]">
+                            <View className="rounded-full bg-stone-100 border border-stone-200 px-2.5 py-0.5">
+                              <Text className="text-xs font-bold text-stone-600">
+                                Payroll Exempt
+                              </Text>
+                            </View>
+                          </View>
+                        ) : (
+                          <>
+                            <View className="items-start sm:items-end">
+                              <Text className="text-base font-semibold text-stone-700">
+                                Base: ₱{item.basePaySum.toFixed(2)}
+                                {item.bonusSum > 0 ? ` · +₱${item.bonusSum.toFixed(2)} OT` : ''}
+                              </Text>
+                            </View>
 
-                        <View className="items-start sm:items-end min-w-[90px]">
-                          <Text className="text-xl font-black text-[#800020]">
-                            ₱{item.totalPaySum.toFixed(2)}
-                          </Text>
-                        </View>
+                            <View className="items-start sm:items-end min-w-[90px]">
+                              <Text className="text-xl font-black text-[#800020]">
+                                ₱{item.totalPaySum.toFixed(2)}
+                              </Text>
+                            </View>
+                          </>
+                        )}
                       </View>
                     </View>
                   );
@@ -1325,27 +1370,41 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
 
             {editingRecord.isPresent && (
               <>
-                <AdminNumberInput
-                  label="Base Daily Shift Pay"
-                  mode="currency"
-                  value={editingRecord.baseDailyPay}
-                  onChangeText={(val) =>
-                    setEditingRecord((prev) => (prev ? { ...prev, baseDailyPay: val } : null))
-                  }
-                  placeholder="645.00"
-                  helperText="Fixed daily shift rate (₱645.00 baseline)"
-                />
+                {staffRoster.find((s) => s.id === editingRecord.userId)?.role === 'admin' ? (
+                  <View className="rounded-xl border border-stone-200 bg-stone-50 p-4">
+                    <Text className="text-base font-bold text-stone-800">
+                      Management Role · Payroll Exempt
+                    </Text>
+                    <Text className="text-sm text-stone-500 mt-1">
+                      Administrator shifts are tracked for operational attendance without incurring
+                      daily shift payroll costs (₱0.00).
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <AdminNumberInput
+                      label="Base Daily Shift Pay"
+                      mode="currency"
+                      value={editingRecord.baseDailyPay}
+                      onChangeText={(val) =>
+                        setEditingRecord((prev) => (prev ? { ...prev, baseDailyPay: val } : null))
+                      }
+                      placeholder="645.00"
+                      helperText="Fixed daily shift rate (₱645.00 baseline)"
+                    />
 
-                <AdminNumberInput
-                  label="OT / Shift Bonus"
-                  mode="currency"
-                  value={editingRecord.addonPay}
-                  onChangeText={(val) =>
-                    setEditingRecord((prev) => (prev ? { ...prev, addonPay: val } : null))
-                  }
-                  placeholder="0.00"
-                  helperText="Optional overtime or performance bonus"
-                />
+                    <AdminNumberInput
+                      label="OT / Shift Bonus"
+                      mode="currency"
+                      value={editingRecord.addonPay}
+                      onChangeText={(val) =>
+                        setEditingRecord((prev) => (prev ? { ...prev, addonPay: val } : null))
+                      }
+                      placeholder="0.00"
+                      helperText="Optional overtime or performance bonus"
+                    />
+                  </>
+                )}
 
                 <AdminInput
                   label="Notes (Optional)"
@@ -1359,11 +1418,12 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
                 <View className="flex-row items-center justify-between rounded-xl border border-stone-200 bg-stone-50 p-3.5">
                   <Text className="text-base font-bold text-stone-600">Total Shift Pay</Text>
                   <Text className="text-xl font-black text-stone-900">
-                    ₱
-                    {(
-                      (parseFloat(editingRecord.baseDailyPay) || 0) +
-                      (parseFloat(editingRecord.addonPay) || 0)
-                    ).toFixed(2)}
+                    {staffRoster.find((s) => s.id === editingRecord.userId)?.role === 'admin'
+                      ? 'Exempt (₱0.00)'
+                      : `₱${(
+                          (parseFloat(editingRecord.baseDailyPay) || 0) +
+                          (parseFloat(editingRecord.addonPay) || 0)
+                        ).toFixed(2)}`}
                   </Text>
                 </View>
               </>

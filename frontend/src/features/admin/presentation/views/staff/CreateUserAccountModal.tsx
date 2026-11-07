@@ -114,8 +114,8 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
       return;
     }
 
-    const parsedRate = parseFloat(baseDailyRate);
-    if (isNaN(parsedRate) || parsedRate < 0) {
+    const parsedRate = role === 'admin' ? 0 : parseFloat(baseDailyRate);
+    if (role !== 'admin' && (isNaN(parsedRate) || parsedRate < 0)) {
       toast.error('Please enter a valid daily shift rate', { title: 'Validation Error' });
       return;
     }
@@ -127,8 +127,8 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
         username: username.trim(),
         pin: pin.trim(),
         role,
-        job_title: jobTitle.trim() || null,
-        base_daily_rate: parsedRate,
+        job_title: jobTitle.trim() || (role === 'admin' ? 'Administrator' : null),
+        base_daily_rate: role === 'admin' ? 0 : parsedRate,
         phone: phone.trim() || null,
         email: email.trim() || null,
         password: role === 'admin' ? adminPassword : null,
@@ -230,20 +230,34 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
               leftElement={<KeyRound size={16} color="#800020" />}
               helperText={
                 role === 'admin'
-                  ? `${pin.length}/4 digits — For Floor POS overrides`
+                  ? `${pin.length}/4 digits — For Floor POS overrides & supervisor approvals`
                   : `${pin.length}/4 digits — Required for POS login`
               }
             />
           </View>
           <View className="flex-1">
-            <AdminNumberInput
-              label="Base Daily Shift Rate"
-              mode="currency"
-              value={baseDailyRate}
-              onChangeText={setBaseDailyRate}
-              placeholder="645.00"
-              helperText="PH Minimum Wage baseline: ₱645.00 / shift"
-            />
+            {role === 'admin' ? (
+              <View className="rounded-xl border border-stone-200 bg-stone-50 p-3 justify-center min-h-[50px]">
+                <Text className="text-xs font-bold uppercase tracking-wider text-stone-500">
+                  Payroll Status
+                </Text>
+                <Text className="text-sm font-bold text-stone-900 mt-0.5">
+                  Exempt · Salary / Management
+                </Text>
+                <Text className="text-xs text-stone-500 mt-0.5">
+                  Admin accounts do not receive daily shift payroll
+                </Text>
+              </View>
+            ) : (
+              <AdminNumberInput
+                label="Base Daily Shift Rate"
+                mode="currency"
+                value={baseDailyRate}
+                onChangeText={setBaseDailyRate}
+                placeholder="645.00"
+                helperText="PH Minimum Wage baseline: ₱645.00 / shift"
+              />
+            )}
           </View>
         </View>
 

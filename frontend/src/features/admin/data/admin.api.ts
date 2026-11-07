@@ -1131,6 +1131,10 @@ export const adminApi = {
   async getStaffRoster(): Promise<StaffMemberAdmin[]> {
     const normalizeRoster = (rows: any[]): StaffMemberAdmin[] => {
       return rows.map((row) => {
+        // Admin accounts are management/salary roles with strict payroll exemption (base pay 0.00)
+        if (row.role === 'admin') {
+          return { ...row, base_daily_rate: 0 };
+        }
         const rawRate = parseFloat(String(row.base_daily_rate ?? 0));
         // Upgrade only legacy USD-era (< 200) seed values to PH minimum wage baseline (645.00),
         // while preserving any custom base pay set by the Admin.
@@ -1182,8 +1186,11 @@ export const adminApi = {
       throw new Error('A 4-digit numeric PIN is required for POS user accounts.');
     }
 
+    const isRoleAdmin = payload.role === 'admin';
+    const effectiveBaseRate = isRoleAdmin ? 0 : payload.base_daily_rate;
+
     // If password provided for Admin, call atomic RPC
-    if (payload.role === 'admin' && payload.password) {
+    if (isRoleAdmin && payload.password) {
       const { data: rpcRes, error: rpcErr } = await (supabase.rpc as any)(
         'create_staff_account_with_secrets',
         {
@@ -1192,7 +1199,7 @@ export const adminApi = {
           p_pin: cleanPin,
           p_role: payload.role,
           p_job_title: payload.job_title?.trim() || null,
-          p_base_daily_rate: payload.base_daily_rate,
+          p_base_daily_rate: 0,
           p_phone: payload.phone?.trim() || null,
           p_email: payload.email?.trim() || null,
           p_password: payload.password,
@@ -1215,7 +1222,7 @@ export const adminApi = {
       role: payload.role,
       job_title: payload.job_title?.trim() || null,
       is_workflow_staff: true,
-      base_daily_rate: payload.base_daily_rate,
+      base_daily_rate: effectiveBaseRate,
       email: payload.email?.trim() || null,
       phone: payload.phone?.trim() || null,
       avatar_url: payload.avatar_url?.trim() || null,
@@ -1309,11 +1316,19 @@ export const adminApi = {
 
     if (payload.display_name !== undefined) updateData.display_name = payload.display_name.trim();
     if (payload.username !== undefined) {
-      updateData.username = payload.username.trim().toLowerCase().replace(/\s+/g, '_');
+      updateData.username = payload.username
+        .trim()
+        .toLowerCase()
+        .replace(/^@+/, '')
+        .replace(/\s+/g, '_');
     }
     if (payload.role !== undefined) updateData.role = payload.role;
     if (payload.job_title !== undefined) updateData.job_title = payload.job_title?.trim() || null;
-    if (payload.base_daily_rate !== undefined) updateData.base_daily_rate = payload.base_daily_rate;
+    if (payload.role === 'admin') {
+      updateData.base_daily_rate = 0;
+    } else if (payload.base_daily_rate !== undefined) {
+      updateData.base_daily_rate = payload.base_daily_rate;
+    }
     if (payload.email !== undefined) updateData.email = payload.email?.trim() || null;
     if (payload.phone !== undefined) updateData.phone = payload.phone?.trim() || null;
     if (payload.avatar_url !== undefined)
@@ -1343,6 +1358,28 @@ export const adminApi = {
 
     realtimeGateway.broadcastPosSync('staff_member_updated');
     return data as StaffMemberAdmin;
+  },
+
+  /**
+   * Reset password for an Administrator account (callable from Staff Roster by managers)
+   */
+  async resetAdminPassword(targetUserId: string, newPassword: string): Promise<void> {
+    const cleanPass = newPassword.trim();
+    if (cleanPass.length < 8) {
+      throw new Error('Admin password must be at least 8 characters long.');
+    }
+
+    const { data, error } = await (supabase.rpc as any)('admin_reset_user_password', {
+      p_target_user_id: targetUserId,
+      p_new_password: cleanPass,
+    });
+
+    if (error) throw new Error(error.message);
+    if (!data || !(data as any).success) {
+      throw new Error((data as any)?.error || 'Failed to reset admin password.');
+    }
+
+    realtimeGateway.broadcastPosSync('staff_password_reset');
   },
 
   /**

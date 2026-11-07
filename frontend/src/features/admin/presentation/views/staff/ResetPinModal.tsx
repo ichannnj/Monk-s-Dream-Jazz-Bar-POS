@@ -56,12 +56,22 @@ export const ResetPinModal: React.FC<ResetPinModalProps> = ({
 
   if (!staff) return null;
 
+  const isAdmin = staff.role === 'admin';
+
   return (
     <AdminModal
       visible={visible}
       onClose={onClose}
-      title={`Reset Security PIN: ${staff.display_name}`}
-      subtitle={`Login ID: @${staff.username}`}
+      title={
+        isAdmin
+          ? `Reset Override PIN: ${staff.display_name}`
+          : `Reset Security PIN: ${staff.display_name}`
+      }
+      subtitle={
+        isAdmin
+          ? `4-Digit Floor Manager Override PIN (@${staff.username})`
+          : `Login ID: @${staff.username}`
+      }
       icon={<KeyRound size={20} color="#800020" />}
       size="sm"
       footer={
@@ -81,7 +91,7 @@ export const ResetPinModal: React.FC<ResetPinModalProps> = ({
             }`}
           >
             <Text className="text-base font-bold text-white">
-              {isSubmitting ? 'Updating...' : 'Save New PIN'}
+              {isSubmitting ? 'Updating...' : isAdmin ? 'Save Override PIN' : 'Save New PIN'}
             </Text>
           </Pressable>
         </>
@@ -89,7 +99,7 @@ export const ResetPinModal: React.FC<ResetPinModalProps> = ({
     >
       <View className="space-y-4">
         <AdminInput
-          label="New 4-Digit Security PIN"
+          label={isAdmin ? 'New 4-Digit Manager Override PIN' : 'New 4-Digit Security PIN'}
           required
           keyboardType="number-pad"
           maxLength={4}
@@ -97,7 +107,11 @@ export const ResetPinModal: React.FC<ResetPinModalProps> = ({
           value={newPin}
           onChangeText={handlePinChange}
           leftElement={<KeyRound size={16} color="#800020" />}
-          helperText={`${newPin.length}/4 numeric digits`}
+          helperText={
+            isAdmin
+              ? `${newPin.length}/4 digits — For floor manager void & approval overrides`
+              : `${newPin.length}/4 numeric digits — For POS workstation login`
+          }
         />
       </View>
     </AdminModal>

@@ -250,6 +250,7 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
           <View className="space-y-2.5">
             {filteredStaff.map((member) => {
               const isPosUser = member.is_workflow_staff;
+              const isAdmin = member.role === 'admin';
               const roleDisplay = isPosUser
                 ? ROLE_LABELS[member.role] || member.role
                 : member.job_title || 'Support Staff';
@@ -277,14 +278,20 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                   <View className="flex-row items-center space-x-3 flex-1 min-w-0">
                     <View
                       className={`min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border ${
-                        isPosUser
-                          ? 'bg-rose-50 border-rose-200 text-[#800020]'
-                          : 'bg-purple-50 border-purple-200 text-purple-700'
+                        isAdmin
+                          ? 'bg-amber-50 border-amber-300 text-amber-900'
+                          : isPosUser
+                            ? 'bg-rose-50 border-rose-200 text-[#800020]'
+                            : 'bg-purple-50 border-purple-200 text-purple-700'
                       }`}
                     >
                       <Text
                         className={`text-base font-black ${
-                          isPosUser ? 'text-[#800020]' : 'text-purple-700'
+                          isAdmin
+                            ? 'text-amber-900'
+                            : isPosUser
+                              ? 'text-[#800020]'
+                              : 'text-purple-700'
                         }`}
                       >
                         {initials}
@@ -300,14 +307,20 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                         {/* Clean Single Role Badge */}
                         <View
                           className={`rounded-full px-2.5 py-0.5 border ${
-                            isPosUser
-                              ? 'bg-rose-50 border-rose-200'
-                              : 'bg-purple-50 border-purple-200'
+                            isAdmin
+                              ? 'bg-amber-50 border-amber-300'
+                              : isPosUser
+                                ? 'bg-rose-50 border-rose-200'
+                                : 'bg-purple-50 border-purple-200'
                           }`}
                         >
                           <Text
                             className={`text-base font-bold ${
-                              isPosUser ? 'text-[#800020]' : 'text-purple-700'
+                              isAdmin
+                                ? 'text-amber-900'
+                                : isPosUser
+                                  ? 'text-[#800020]'
+                                  : 'text-purple-700'
                             }`}
                           >
                             {roleDisplay}
@@ -323,8 +336,10 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
 
                       {/* Clean Subtitle: Username, Base Daily Rate, Phone */}
                       <Text className="text-base text-stone-500 mt-0.5 truncate">
-                        @{member.username} · ₱
-                        {Number(member.base_daily_rate || PH_MINIMUM_WAGE_DAILY).toFixed(2)}/day
+                        @{member.username} ·{' '}
+                        {isAdmin
+                          ? 'Payroll Exempt'
+                          : `₱${Number(member.base_daily_rate || PH_MINIMUM_WAGE_DAILY).toFixed(2)}/day`}
                         {member.phone ? ` · ${member.phone}` : ''}
                       </Text>
                     </View>
@@ -343,7 +358,11 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                     <Pressable
                       onPress={() => setResetPinStaff(member)}
                       className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-[#800020]/20 bg-[#800020]/5 active:bg-[#800020]/10"
-                      accessibilityLabel={`Reset PIN for ${member.display_name}`}
+                      accessibilityLabel={
+                        isAdmin
+                          ? `Reset Override PIN for ${member.display_name}`
+                          : `Reset PIN for ${member.display_name}`
+                      }
                     >
                       <KeyRound size={16} color="#800020" />
                       <Text className="ml-1.5 text-base font-bold text-[#800020]">PIN</Text>

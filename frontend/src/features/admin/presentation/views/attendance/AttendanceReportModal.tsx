@@ -255,7 +255,9 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
                       </Text>
 
                       <Text className="w-24 text-xs font-medium text-stone-800 text-right">
-                        ₱{item.basePay.toFixed(2)}
+                        {item.status.includes('Exempt') || item.role.toLowerCase().includes('admin')
+                          ? 'Exempt'
+                          : `₱${item.basePay.toFixed(2)}`}
                       </Text>
 
                       <Text
@@ -263,11 +265,17 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
                           item.addonPay > 0 ? 'text-emerald-700 font-bold' : 'text-stone-400'
                         }`}
                       >
-                        {item.addonPay > 0 ? `+₱${item.addonPay.toFixed(2)}` : '₱0.00'}
+                        {item.status.includes('Exempt') || item.role.toLowerCase().includes('admin')
+                          ? '—'
+                          : item.addonPay > 0
+                            ? `+₱${item.addonPay.toFixed(2)}`
+                            : '₱0.00'}
                       </Text>
 
                       <Text className="w-24 text-xs font-bold text-[#800020] text-right">
-                        ₱{item.totalPay.toFixed(2)}
+                        {item.status.includes('Exempt') || item.role.toLowerCase().includes('admin')
+                          ? 'Exempt'
+                          : `₱${item.totalPay.toFixed(2)}`}
                       </Text>
                     </View>
                   ))

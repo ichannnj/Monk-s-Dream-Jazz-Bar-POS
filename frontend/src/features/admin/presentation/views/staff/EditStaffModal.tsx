@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Edit3, Shield, Briefcase, Phone, Mail, AtSign } from 'lucide-react-native';
+import { View, Text, Pressable, TextInput } from 'react-native';
+import {
+  Edit3,
+  Shield,
+  Briefcase,
+  Phone,
+  Mail,
+  AtSign,
+  Lock,
+  Eye,
+  EyeOff,
+} from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type StaffMemberAdmin, type StaffRoleType } from '../../../data/admin.api';
 import { AdminModal } from '../../components/AdminModal';
@@ -30,7 +40,11 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [isActive, setIsActive] = useState(true);
+  const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isAdmin = staff?.role === 'admin';
 
   useEffect(() => {
     if (staff && visible) {
@@ -38,10 +52,14 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
       setUsername(staff.username || '');
       setRole((staff.role as StaffRoleType) || 'waiter');
       setJobTitle(staff.job_title || '');
-      setBaseDailyRate(Number(staff.base_daily_rate ?? 645).toFixed(2));
+      setBaseDailyRate(
+        staff.role === 'admin' ? '0.00' : Number(staff.base_daily_rate ?? 645).toFixed(2)
+      );
       setPhone(staff.phone || '');
       setEmail(staff.email || '');
       setIsActive(staff.is_active ?? true);
+      setAdminPassword('');
+      setShowAdminPassword(false);
     }
   }, [staff, visible]);
 
@@ -52,9 +70,16 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
       return;
     }
 
-    const parsedRate = parseFloat(baseDailyRate);
-    if (isNaN(parsedRate) || parsedRate < 0) {
+    const parsedRate = isAdmin ? 0 : parseFloat(baseDailyRate);
+    if (!isAdmin && (isNaN(parsedRate) || parsedRate < 0)) {
       toast.error('Please enter a valid daily shift rate', { title: 'Validation Error' });
+      return;
+    }
+
+    if (isAdmin && adminPassword.trim().length > 0 && adminPassword.trim().length < 8) {
+      toast.error('New admin password must be at least 8 characters long', {
+        title: 'Password Too Short',
+      });
       return;
     }
 
@@ -63,13 +88,17 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
       await adminApi.updateStaffMember(staff.id, {
         display_name: displayName.trim(),
         username: username.trim() || staff.username,
-        role: staff.is_workflow_staff ? role : (staff.role as StaffRoleType),
+        role: staff.is_workflow_staff ? (isAdmin ? 'admin' : role) : (staff.role as StaffRoleType),
         job_title: jobTitle.trim() || null,
-        base_daily_rate: parsedRate,
+        base_daily_rate: isAdmin ? 0 : parsedRate,
         phone: phone.trim() || null,
         email: email.trim() || null,
         is_active: isActive,
       });
+
+      if (isAdmin && adminPassword.trim().length >= 8) {
+        await adminApi.resetAdminPassword(staff.id, adminPassword.trim());
+      }
 
       toast.success(`Updated profile for ${displayName.trim()}`, {
         title: 'Staff Profile Saved',
@@ -144,7 +173,20 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
           </View>
         </View>
 
-        {staff.is_workflow_staff ? (
+        {isAdmin ? (
+          <View className="rounded-xl border border-rose-200 bg-rose-50/70 p-3.5">
+            <View className="flex-row items-center gap-2">
+              <Shield size={16} color="#800020" />
+              <Text className="text-sm font-bold text-[#800020]">
+                System Role: Administrator / Manager
+              </Text>
+            </View>
+            <Text className="mt-1 text-xs text-stone-600">
+              Privileged account with back-office and supervisor oversight. Role is locked to
+              preserve security credentials.
+            </Text>
+          </View>
+        ) : staff.is_workflow_staff ? (
           <View>
             <View className="mb-2 flex-row items-center">
               <Shield size={16} color="#44403c" />
@@ -153,7 +195,7 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
               </Text>
             </View>
             <View className="flex-row flex-wrap gap-2">
-              {POS_SYSTEM_ROLES.map((item) => {
+              {POS_SYSTEM_ROLES.filter((item) => item.value !== 'admin').map((item) => {
                 const isSelected = role === item.value;
                 return (
                   <Pressable
@@ -220,51 +262,99 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
             />
           </View>
           <View className="flex-1">
-            <AdminNumberInput
-              label="Base Daily Shift Rate"
-              mode="currency"
-              value={baseDailyRate}
-              onChangeText={setBaseDailyRate}
-              helperText="Adjustable per role (PH Min Wage baseline: ₱645.00)"
-            />
+            {isAdmin ? (
+              <View className="rounded-xl border border-stone-200 bg-stone-50 p-3 justify-center min-h-[50px]">
+                <Text className="text-xs font-bold uppercase tracking-wider text-stone-500">
+                  Payroll Status
+                </Text>
+                <Text className="text-sm font-bold text-stone-900 mt-0.5">
+                  Exempt · Salary / Management
+                </Text>
+                <Text className="text-xs text-stone-500 mt-0.5">
+                  Admin accounts do not receive daily shift payroll
+                </Text>
+              </View>
+            ) : (
+              <AdminNumberInput
+                label="Base Daily Shift Rate"
+                mode="currency"
+                value={baseDailyRate}
+                onChangeText={setBaseDailyRate}
+                helperText="Adjustable per role (PH Min Wage baseline: ₱645.00)"
+              />
+            )}
           </View>
         </View>
 
-        {/* Role-Based Base Pay Quick Tiers */}
-        <View>
-          <Text className="mb-1.5 text-xs font-semibold text-stone-500">
-            Quick Role Base Pay Tiers
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {[
-              { label: '₱645 (Min Wage)', value: '645.00' },
-              { label: '₱700 (Barista/Floor)', value: '700.00' },
-              { label: '₱750 (Cashier)', value: '750.00' },
-              { label: '₱850 (Bartender/Tech)', value: '850.00' },
-              { label: '₱1,000 (Head Chef)', value: '1000.00' },
-              { label: '₱1,200 (Manager)', value: '1200.00' },
-            ].map((tier) => {
-              const isSelected = parseFloat(baseDailyRate) === parseFloat(tier.value);
-              return (
-                <Pressable
-                  key={tier.value}
-                  onPress={() => setBaseDailyRate(tier.value)}
-                  className={`rounded-xl border px-3 py-1.5 ${
-                    isSelected
-                      ? 'border-[#800020] bg-[#800020]'
-                      : 'border-stone-200 bg-stone-100 active:bg-stone-200'
-                  }`}
-                >
-                  <Text
-                    className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-stone-700'}`}
+        {/* Role-Based Base Pay Quick Tiers (Non-Admin only) */}
+        {!isAdmin && (
+          <View>
+            <Text className="mb-1.5 text-xs font-semibold text-stone-500">
+              Quick Role Base Pay Tiers
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              {[
+                { label: '₱645 (Min Wage)', value: '645.00' },
+                { label: '₱700 (Barista/Floor)', value: '700.00' },
+                { label: '₱750 (Cashier)', value: '750.00' },
+                { label: '₱850 (Bartender/Tech)', value: '850.00' },
+                { label: '₱1,000 (Head Chef)', value: '1000.00' },
+              ].map((tier) => {
+                const isSelected = parseFloat(baseDailyRate) === parseFloat(tier.value);
+                return (
+                  <Pressable
+                    key={tier.value}
+                    onPress={() => setBaseDailyRate(tier.value)}
+                    className={`rounded-xl border px-3 py-1.5 ${
+                      isSelected
+                        ? 'border-[#800020] bg-[#800020]'
+                        : 'border-stone-200 bg-stone-100 active:bg-stone-200'
+                    }`}
                   >
-                    {tier.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+                    <Text
+                      className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-stone-700'}`}
+                    >
+                      {tier.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-        </View>
+        )}
+
+        {/* Administrator Password Reset Section */}
+        {isAdmin && (
+          <View className="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 space-y-2">
+            <View className="flex-row items-center gap-2">
+              <Lock size={16} color="#b45309" />
+              <Text className="text-sm font-bold text-amber-900">
+                Reset Administrator Password (Optional)
+              </Text>
+            </View>
+            <View className="flex-row items-center rounded-xl border border-amber-300 bg-white px-3.5 h-[50px]">
+              <TextInput
+                value={adminPassword}
+                onChangeText={setAdminPassword}
+                placeholder="Leave blank to keep unchanged, or min 8 chars"
+                placeholderTextColor="#a8a29e"
+                secureTextEntry={!showAdminPassword}
+                autoCapitalize="none"
+                style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+              />
+              <Pressable onPress={() => setShowAdminPassword(!showAdminPassword)} className="p-2">
+                {showAdminPassword ? (
+                  <EyeOff size={18} color="#78716c" />
+                ) : (
+                  <Eye size={18} color="#a8a29e" />
+                )}
+              </Pressable>
+            </View>
+            <Text className="text-xs text-amber-800">
+              Enter at least 8 characters to rotate this Administrator's console login password.
+            </Text>
+          </View>
+        )}
 
         <View className="flex-col sm:flex-row gap-4">
           <View className="flex-1">
