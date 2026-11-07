@@ -23,7 +23,8 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
   const [managerPin, setManagerPin] = useState<string>('');
   const [pinError, setPinError] = useState<string>('');
 
-  const isPostPrep = item.status === 'preparing' || item.status === 'ready';
+  const isPostPrep =
+    item.status === 'preparing' || item.status === 'ready' || item.status === 'served';
 
   const handleConfirm = async () => {
     if (isPostPrep) {

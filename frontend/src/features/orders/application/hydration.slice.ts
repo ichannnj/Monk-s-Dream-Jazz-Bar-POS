@@ -4,6 +4,7 @@ import {
   TakeoutOrder,
   OnlineDeliveryOrder,
   OrderLineItem,
+  DrawerEntry,
 } from '../../../types/floor';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { ordersApi } from '../data/orders.api';
@@ -351,10 +352,40 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
           nowMs - new Date(lo.createdAt || nowMs).getTime() < 8000
       );
 
+      // Fetch active cash drawer transactions for today
+      let mappedDrawer: DrawerEntry[] = [];
+      try {
+        const { data: dbDrawer } = await supabase
+          .from('cash_drawer_transactions')
+          .select(
+            'id, action_type, amount, reason, performed_by_id, drawer_target, created_at, users:performed_by_id(display_name)'
+          )
+          .order('created_at', { ascending: false })
+          .limit(100);
+
+        if (dbDrawer && dbDrawer.length > 0) {
+          mappedDrawer = dbDrawer.map((d: any) => ({
+            id: d.id,
+            type: (d.action_type || 'sale').toLowerCase() as any,
+            amount: parseFloat(d.amount) || 0,
+            reason: d.reason || 'Cash movement',
+            performedBy: d.users?.display_name || 'Staff',
+            timestamp: new Date(d.created_at).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            }),
+            drawerTarget: (d.drawer_target || 'main') as 'main' | 'bar',
+          }));
+        }
+      } catch (drawerErr) {
+        console.warn('Hydration cash drawer notice:', drawerErr);
+      }
+
       set({
         tables: mappedTables,
         takeoutOrders: [...pendingLocalTakeout, ...dbTakeout],
         onlineOrders: [...pendingLocalOnline, ...dbOnline],
+        drawerEntries: mappedDrawer.length > 0 ? mappedDrawer : get().drawerEntries,
         isHydrated: true,
       });
     } catch (err) {

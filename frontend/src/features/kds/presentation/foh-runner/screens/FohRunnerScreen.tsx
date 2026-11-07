@@ -12,6 +12,7 @@ import { useChatStore } from '../../../../chat';
 import { SharedAlertsView } from '../../../../alerts/presentation/SharedAlertsView';
 import { ConfirmationModal } from '../../../../shared/ui/ConfirmationModal';
 import { StationHeader } from '../../common/components/StationHeader';
+import { ChecksHistoryView } from '../../../../check-history';
 import { ConfirmHandoffState } from '../types';
 import { useRunnerTickets } from '../hooks/useRunnerTickets';
 import { RunnerTicketCard } from '../components/RunnerTicketCard';
@@ -107,6 +108,7 @@ export const FohRunnerScreen: React.FC = () => {
         onLogout={handleLogout}
         unreadChatCount={unreadChatCount}
         alertCount={unreadAlertCount}
+        hiddenTabs={['tables', 'drawer']}
       />
 
       <View style={[styles.mainContent, isMobile && styles.mainContentMobile]}>
@@ -118,6 +120,8 @@ export const FohRunnerScreen: React.FC = () => {
           />
         ) : activeTab === 'alerts' ? (
           <SharedAlertsView onBack={() => setActiveTab('board')} />
+        ) : activeTab === 'checks' ? (
+          <ChecksHistoryView />
         ) : (
           <>
             <StationHeader

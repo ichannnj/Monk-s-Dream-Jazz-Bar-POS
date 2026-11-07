@@ -1,5 +1,6 @@
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
+import { DrawerEntry } from '../../../types/floor';
 import { toast } from '../../shared/toast/useToastStore';
 import { playTransferAlertSound } from '../../shared/infrastructure/audio';
 
@@ -361,12 +362,28 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
         onCashDrawerChange: (payload) => {
           if (payload.new) {
             const entry = payload.new;
-            get().addDrawerEntry(
-              (entry.action_type || 'sale').toLowerCase() as any,
-              parseFloat(entry.amount) || 0,
-              entry.reason || 'Cash movement',
-              'Staff'
+            // Prevent double-inserting if already present in state
+            const alreadyExists = get().drawerEntries.some(
+              (d) => d.id === entry.id || (entry.payment_id && d.reason?.includes(entry.payment_id))
             );
+            if (!alreadyExists) {
+              const target = (entry.drawer_target || 'main') as 'main' | 'bar';
+              const newEntry: DrawerEntry = {
+                id: entry.id,
+                type: (entry.action_type || 'sale').toLowerCase() as any,
+                amount: parseFloat(entry.amount) || 0,
+                reason: entry.reason || 'Cash movement',
+                performedBy: 'Staff',
+                timestamp: new Date(entry.created_at || Date.now()).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+                drawerTarget: target,
+              };
+              set((state) => ({
+                drawerEntries: [newEntry, ...state.drawerEntries],
+              }));
+            }
           }
         },
       });

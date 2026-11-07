@@ -134,6 +134,14 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
         : 'USB Thermal Printer';
       get().addLog('success', `${deviceTitle} connected successfully`);
       toast.success(`${deviceTitle} paired and online`, { title: 'Hardware Connected' });
+
+      // Drain any pending jobs queued while disconnected
+      printerApi.getPendingPrintJobs().then((pending) => {
+        for (const job of pending) {
+          get().processJob(job);
+        }
+      });
+
       return true;
     } catch (err: any) {
       if (err.name === 'NotFoundError' || err.message?.includes('No device selected')) {
@@ -161,8 +169,8 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
   processJob: async (job: PrintJobItem) => {
     const { isLeader, autoPrintEnabled, connectionStatus, addLog, playOrderChime } = get();
 
-    // If auto-print is disabled or this tab is not the leader lock holder, do not write
-    if (!autoPrintEnabled || !isLeader) {
+    // If auto-print is disabled, not leader, or physical printer not connected, leave in queue
+    if (!autoPrintEnabled || !isLeader || connectionStatus !== 'CONNECTED') {
       return false;
     }
 
@@ -183,12 +191,28 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       let isCashSettlement = false;
 
       switch (jobType) {
+        case 'DRAWER_KICK': {
+          isCashSettlement = true;
+          bytes = buildCashDrawerKickBytes();
+          break;
+        }
+
         case 'CUSTOMER_RECEIPT':
         case 'RECEIPT': {
-          const method = (rawData.paymentMethod || rawData.payment_method || 'CASH').toUpperCase();
-          // Cash drawer kicks on Cash payment or diagnostic test
-          isCashSettlement = method === 'CASH' || Boolean(rawData.isDiagnosticKick);
-          bytes = buildReceiptBytes(rawData, isCashSettlement);
+          if (rawData.isDiagnosticKick) {
+            // Pure diagnostic kick without printing customer receipt
+            isCashSettlement = true;
+            bytes = buildCashDrawerKickBytes();
+          } else {
+            const method = (
+              rawData.paymentMethod ||
+              rawData.payment_method ||
+              'CASH'
+            ).toUpperCase();
+            // Cash drawer kicks ONLY on real Cash payment settlement (never on reprint or cashless)
+            isCashSettlement = method === 'CASH' && !rawData.isReprint;
+            bytes = buildReceiptBytes(rawData, isCashSettlement);
+          }
           break;
         }
 
@@ -217,8 +241,8 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
           return false;
       }
 
-      // If physical printer is connected, write binary stream
-      if (connectionStatus === 'CONNECTED' && bytes) {
+      // Physical printer is connected, write binary stream
+      if (bytes) {
         await webSerialPrinter.writeBytes(bytes);
 
         if (isCashSettlement) {
@@ -230,12 +254,6 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
         playOrderChime();
         await printerApi.markJobCompleted(job.id);
         addLog('success', `Printed ticket for ${jobType}`);
-      } else {
-        // Printer not paired yet: log warning and leave in queue or alert
-        addLog(
-          'warn',
-          `Printer offline: Queued ticket ${job.id.slice(0, 8)} waiting for connection`
-        );
       }
 
       set({ isProcessing: false });
@@ -409,6 +427,11 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
           if (connected) {
             set({ connectionStatus: 'CONNECTED', portInfo: webSerialPrinter.getPortInfo() });
             get().addLog('success', 'Automatically reconnected to authorized thermal printer');
+            printerApi.getPendingPrintJobs().then((pending) => {
+              for (const job of pending) {
+                get().processJob(job);
+              }
+            });
           }
 
           // Return a hanging Promise that keeps the lock active until unmounted

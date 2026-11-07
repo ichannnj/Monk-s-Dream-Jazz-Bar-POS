@@ -12,6 +12,7 @@ import { tablesApi } from '../../table-service/data/tables.api';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
+import { supabase } from '../../shared/infrastructure/supabase';
 import { toast } from '../../shared/toast/useToastStore';
 
 export const createChannelsSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
@@ -542,6 +543,35 @@ export const createChannelsSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     set((state) => ({
       drawerEntries: [newEntry, ...state.drawerEntries],
     }));
+
+    // If manual till movement, persist to PostgreSQL cash_drawer_transactions
+    if (type === 'cash_in' || type === 'cash_out' || type === 'drop' || type === 'float') {
+      const dbAction =
+        type === 'cash_in'
+          ? 'CASH_IN'
+          : type === 'cash_out'
+            ? 'CASH_OUT'
+            : type === 'drop'
+              ? 'DROP'
+              : 'FLOAT';
+      const staffId = useAuthStore.getState().currentUser?.id;
+      supabase
+        .from('cash_drawer_transactions')
+        .insert({
+          action_type: dbAction as any,
+          amount: amount,
+          reason: reason,
+          performed_by_id: staffId || null,
+          drawer_target: drawerTarget,
+        })
+        .then(({ error }: any) => {
+          if (error) {
+            console.warn('[channels.slice] Failed to persist cash drawer movement:', error);
+          } else {
+            realtimeGateway.broadcastPosSync('cash_drawer_updated');
+          }
+        });
+    }
   },
 
   addChatMessage: (

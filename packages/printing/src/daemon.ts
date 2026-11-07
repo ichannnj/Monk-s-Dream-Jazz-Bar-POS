@@ -93,13 +93,27 @@ export class PrinterStationDaemon {
 
   public async processJob(job: PrintJobRecord): Promise<boolean> {
     try {
-      // Mark as PRINTING
-      await this.client.from('print_jobs').update({ status: 'PRINTING' }).eq('id', job.id);
+      // Optimistically claim job
+      const { data: claimData, error: claimErr } = await this.client
+        .from('print_jobs')
+        .update({ status: 'PRINTING' })
+        .eq('id', job.id)
+        .eq('status', 'PENDING')
+        .select('id');
+
+      if (claimErr || !claimData || claimData.length === 0) {
+        return false;
+      }
 
       const jobType = (job.job_type || '').toUpperCase();
       const rawData = job.receipt_data || {};
 
       switch (jobType) {
+        case 'DRAWER_KICK': {
+          await this.printer.kickCashDrawer();
+          break;
+        }
+
         case 'RUNNER_CHIT': {
           const chitPayload: RunnerChitPayload = {
             orderNumber: rawData.orderNumber || rawData.orderId?.slice(0, 8) || 'N/A',
@@ -118,6 +132,11 @@ export class PrinterStationDaemon {
 
         case 'CUSTOMER_RECEIPT':
         case 'RECEIPT': {
+          if (rawData.isDiagnosticKick) {
+            await this.printer.kickCashDrawer();
+            break;
+          }
+
           const receiptPayload: CustomerReceiptPayload = {
             receiptNumber: rawData.receiptNumber || rawData.paymentId?.slice(0, 8) || 'REC-001',
             tableNumber: rawData.tableNumber,
@@ -149,8 +168,8 @@ export class PrinterStationDaemon {
 
           await this.printer.printReceipt(receiptPayload);
 
-          // Auto-kick cash drawer on CASH payment
-          if (receiptPayload.paymentMethod.toUpperCase() === 'CASH') {
+          // Auto-kick cash drawer on real CASH payment settlement (never on reprint)
+          if (receiptPayload.paymentMethod.toUpperCase() === 'CASH' && !receiptPayload.isReprint) {
             await this.printer.kickCashDrawer();
           }
           break;

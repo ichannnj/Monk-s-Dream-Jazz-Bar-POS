@@ -74,6 +74,10 @@ export interface OrderState {
       seniorPwdId?: string;
       seniorPwdName?: string;
       grossSubtotal?: number;
+      totalAmountDue?: number;
+      corkageAmount?: number;
+      tenderedAmount?: number;
+      shouldPrintReceipt?: boolean;
     }
   ) => void;
   settleTableGroup: (
@@ -82,7 +86,21 @@ export interface OrderState {
     cashierName?: string,
     staffId?: string,
     paymentChannel?: string,
-    referenceNumber?: string
+    referenceNumber?: string,
+    billingDetails?: {
+      serviceCharge?: number;
+      vatableSales?: number;
+      vatAmount?: number;
+      vatExemptSales?: number;
+      discountType?: string;
+      seniorPwdId?: string;
+      seniorPwdName?: string;
+      grossSubtotal?: number;
+      totalAmountDue?: number;
+      corkageAmount?: number;
+      tenderedAmount?: number;
+      shouldPrintReceipt?: boolean;
+    }
   ) => void;
   settleTakeoutOrder: (
     takeoutId: string,
@@ -101,6 +119,9 @@ export interface OrderState {
       discountType?: string;
       seniorPwdId?: string;
       seniorPwdName?: string;
+      totalAmountDue?: number;
+      tenderedAmount?: number;
+      shouldPrintReceipt?: boolean;
     }
   ) => void;
   createTakeoutOrder: (

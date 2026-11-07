@@ -262,6 +262,9 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           discountType: billingDetails?.discountType,
           seniorPwdId: billingDetails?.seniorPwdId,
           seniorPwdName: billingDetails?.seniorPwdName,
+          totalAmountDue: billingDetails?.totalAmountDue,
+          tenderedAmount: _tenderedAmount,
+          shouldPrintReceipt: billingDetails?.shouldPrintReceipt,
         });
 
         toast.success(
@@ -293,7 +296,8 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           currentUser?.displayName,
           currentUser?.id,
           paymentChannel,
-          referenceNumber
+          referenceNumber,
+          billingDetails
         );
         toast.success(
           `Table ${tableCode} settled in full via ${methodName} (${formatCurrency(totalDue)}) • Receipt dispatched to printer station`,

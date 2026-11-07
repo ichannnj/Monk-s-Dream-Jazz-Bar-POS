@@ -256,23 +256,27 @@ export class WebSerialPrinterService {
     let endpointOut = 1;
     let foundEndpoint = false;
 
-    // Scan all interfaces and alternates to find an OUT bulk/interrupt endpoint
+    // Scan all interfaces and alternates to find an OUT bulk endpoint (fallback to interrupt)
     const interfaces = device.configuration?.interfaces || [];
+    let isBulkFound = false;
     for (const iface of interfaces) {
       for (const alt of iface.alternates) {
         for (const ep of alt.endpoints) {
           if (ep.direction === 'out') {
-            endpointOut = ep.endpointNumber;
-            targetInterfaceNumber = iface.interfaceNumber;
-            foundEndpoint = true;
-            if (ep.type === 'bulk') {
-              break;
+            if (!foundEndpoint || ep.type === 'bulk') {
+              endpointOut = ep.endpointNumber;
+              targetInterfaceNumber = iface.interfaceNumber;
+              foundEndpoint = true;
+              if (ep.type === 'bulk') {
+                isBulkFound = true;
+                break;
+              }
             }
           }
         }
-        if (foundEndpoint) break;
+        if (isBulkFound) break;
       }
-      if (foundEndpoint) break;
+      if (isBulkFound) break;
     }
 
     try {

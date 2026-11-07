@@ -104,8 +104,22 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const [isFullscreenQrOpen, setIsFullscreenQrOpen] = useState(false);
   const [isLoadingQrChannels, setIsLoadingQrChannels] = useState(false);
 
+  // Reset all state when opening modal or switching tab
   useEffect(() => {
     if (visible) {
+      setDiscountType('NONE');
+      setSeniorPwdId('');
+      setSeniorPwdName('');
+      setSeniorItemSelectionMode('all');
+      setSelectedSeniorItemIds(new Set());
+      setCustomDiscountValue('');
+      setCustomDiscountMode('percent');
+      setTenderedCash('');
+      setReferenceNumber('');
+      setSettlementMode('single_tab');
+      setSelectedMethod('cash');
+      setShouldPrintReceipt(true);
+
       let isMounted = true;
       setIsLoadingQrChannels(true);
       qrPaymentChannelsApi
@@ -127,10 +141,13 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         isMounted = false;
       };
     }
-  }, [visible]);
+  }, [visible, activeTab?.id, takeoutOrder?.id]);
 
   const isTakeout = Boolean(takeoutOrder);
   if (!table && !takeoutOrder) return null;
+
+  const effectiveOperatingMode =
+    (isTakeout ? takeoutOrder?.operatingMode : activeTab?.operatingMode) || operatingMode || 'CAFE';
 
   // Extract raw order line items
   const rawItems = React.useMemo(() => {
@@ -141,6 +158,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         unitPrice: i.unitPrice,
         quantity: i.quantity,
         stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+        notes: i.notes,
       }));
     }
     if (settlementMode === 'single_tab' && activeTab) {
@@ -152,6 +170,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
           unitPrice: i.unitPrice,
           quantity: i.quantity,
           stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+          notes: i.notes,
         }));
     }
     if (table?.tabs) {
@@ -164,6 +183,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
           unitPrice: i.unitPrice,
           quantity: i.quantity,
           stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+          notes: i.notes,
         }));
     }
     return [];
@@ -188,31 +208,56 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 
   // Statutory Billing Calculation
   const parsedCustomDiscount = parseFloat(customDiscountValue) || 0;
+  const isComp = selectedMethod === 'comp';
+  const tableGroupCorkage = React.useMemo(() => {
+    if (settlementMode === 'entire_table' && table?.tabs) {
+      return table.tabs.reduce((sum, t) => sum + (t.corkageAmount || 0), 0);
+    }
+    return activeTab?.corkageAmount || 0;
+  }, [settlementMode, table?.tabs, activeTab?.corkageAmount]);
+
   const billing = React.useMemo(() => {
-    return calculateTabBilling(pricingItems, {
-      operatingMode,
+    const calculated = calculateTabBilling(pricingItems, {
+      operatingMode: effectiveOperatingMode,
       orderType: isTakeout ? 'TAKEOUT' : 'DINE_IN',
-      serviceChargeEnabled,
+      serviceChargeEnabled: isComp ? false : serviceChargeEnabled,
       cafeFoodServiceChargeRate,
       eventServiceChargeRate,
-      discountType,
-      customDiscountAmount: customDiscountMode === 'fixed' ? parsedCustomDiscount : 0,
-      customDiscountPercent: customDiscountMode === 'percent' ? parsedCustomDiscount : 0,
-      corkageAmount: activeTab?.corkageAmount || 0,
+      discountType: isComp ? 'NONE' : discountType,
+      customDiscountAmount: isComp ? 0 : customDiscountMode === 'fixed' ? parsedCustomDiscount : 0,
+      customDiscountPercent: isComp
+        ? 0
+        : customDiscountMode === 'percent'
+          ? parsedCustomDiscount
+          : 0,
+      corkageAmount: isComp ? 0 : tableGroupCorkage,
       seniorPwdId,
       seniorPwdName,
     });
+
+    if (isComp) {
+      return {
+        ...calculated,
+        totalAmountDue: 0,
+        totalDiscountAmount: calculated.grossSubtotal,
+        customDiscountAmount: calculated.grossSubtotal,
+        serviceCharge: 0,
+      };
+    }
+
+    return calculated;
   }, [
     pricingItems,
-    operatingMode,
+    effectiveOperatingMode,
     isTakeout,
+    isComp,
     serviceChargeEnabled,
     cafeFoodServiceChargeRate,
     eventServiceChargeRate,
     discountType,
     customDiscountMode,
     parsedCustomDiscount,
-    activeTab,
+    tableGroupCorkage,
     seniorPwdId,
     seniorPwdName,
   ]);
@@ -232,9 +277,9 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const isRefNumberValid = /^\d{4}$/.test(referenceNumber.trim());
   const isPaymentValid =
     selectedMethod === 'cash'
-      ? numericTendered >= grandTotal && numericTendered > 0
+      ? grandTotal === 0 || numericTendered >= grandTotal
       : selectedMethod === 'digital_wallet'
-        ? isRefNumberValid
+        ? selectedQrChannel !== null && isRefNumberValid
         : true;
 
   const handleOpenConfirm = () => {
@@ -271,9 +316,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         );
       } else if (selectedMethod === 'digital_wallet') {
         toast.warning(
-          referenceNumber.trim().length === 0
-            ? 'Please enter the last 4 digits of the payment reference number.'
-            : `Reference number must be exactly 4 numeric digits (currently ${referenceNumber.trim().length}/4).`,
+          selectedQrChannel === null
+            ? 'No active QR payment method selected.'
+            : referenceNumber.trim().length === 0
+              ? 'Please enter the last 4 digits of the payment reference number.'
+              : `Reference number must be exactly 4 numeric digits (currently ${referenceNumber.trim().length}/4).`,
           { title: 'Reference Number Required' }
         );
       }
@@ -295,9 +342,12 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         selectedMethod === 'digital_wallet' ? referenceNumber.trim() : undefined,
         {
           ...billing,
-          discountType,
+          discountType: isComp ? 'COMP' : discountType,
           seniorPwdId: seniorPwdId.trim(),
           seniorPwdName: seniorPwdName.trim(),
+          shouldPrintReceipt,
+          tenderedAmount: selectedMethod === 'cash' ? numericTendered : grandTotal,
+          corkageAmount: tableGroupCorkage,
         }
       );
       setTenderedCash('');
@@ -1047,23 +1097,21 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                   <Text style={styles.receiptDivider}>================================</Text>
 
                   {/* Itemized Line Items */}
-                  {(isTakeout ? takeoutOrder?.items || [] : activeTab?.items || [])
-                    .filter((item) => item.status !== 'cancelled')
-                    .map((item, idx) => (
-                      <View key={idx} style={{ marginBottom: 4 }}>
-                        <View style={styles.receiptRow}>
-                          <Text style={styles.receiptItemName}>
-                            {item.quantity}x {item.productName}
-                          </Text>
-                          <Text style={styles.receiptItemPrice}>
-                            {formatCurrency(item.unitPrice * item.quantity)}
-                          </Text>
-                        </View>
-                        {item.notes ? (
-                          <Text style={styles.receiptItemNote}> &gt;&gt; Note: {item.notes}</Text>
-                        ) : null}
+                  {rawItems.map((item, idx) => (
+                    <View key={idx} style={{ marginBottom: 4 }}>
+                      <View style={styles.receiptRow}>
+                        <Text style={styles.receiptItemName}>
+                          {item.quantity}x {item.productName}
+                        </Text>
+                        <Text style={styles.receiptItemPrice}>
+                          {formatCurrency(item.unitPrice * item.quantity)}
+                        </Text>
                       </View>
-                    ))}
+                      {item.notes ? (
+                        <Text style={styles.receiptItemNote}> &gt;&gt; Note: {item.notes}</Text>
+                      ) : null}
+                    </View>
+                  ))}
 
                   <Text style={styles.receiptDivider}>--------------------------------</Text>
 

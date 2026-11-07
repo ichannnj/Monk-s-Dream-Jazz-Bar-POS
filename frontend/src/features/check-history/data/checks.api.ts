@@ -87,6 +87,7 @@ export const checksApi = {
                 quantity,
                 unit_price,
                 notes,
+                status,
                 products:product_id (name)
               )
             `
@@ -98,6 +99,7 @@ export const checksApi = {
               const currentList = itemsByTab.get(order.tab_id) || [];
               const rawItems = order.order_items || [];
               for (const it of rawItems) {
+                if (it.status === 'CANCELLED') continue;
                 const prodName = it.products?.name || 'Item';
                 const qty = Number(it.quantity) || 1;
                 const price = Number(it.unit_price) || 0;
@@ -179,14 +181,17 @@ export const checksApi = {
           storedVat !== null
             ? storedVat
             : Number((netBase - serviceCharge - vatableSales).toFixed(2));
-        const subtotal = netBase + discountAmount;
+        const items = itemsByTab.get(p.tab_id) || [];
+        const computedItemsSubtotal =
+          items.length > 0
+            ? items.reduce((sum, it) => sum + it.subtotal, 0)
+            : Math.max(0, netBase - serviceCharge + discountAmount);
+        const subtotal = computedItemsSubtotal;
 
         const dateObj = new Date(p.created_at);
         const timestamp = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const shortId = p.id.substring(0, 8).toUpperCase();
         const checkNumber = `#${shortId}`;
-
-        const items = itemsByTab.get(p.tab_id) || [];
 
         return {
           id: p.id,
@@ -305,6 +310,10 @@ export const checksApi = {
           serviceCharge: check.serviceCharge,
           vatableSales: check.vatableSales,
           vatAmount: check.vatAmount,
+          vatExemptSales: check.vatExemptSales || 0,
+          discountType: check.discountType,
+          seniorPwdId: check.seniorPwdId,
+          seniorPwdName: check.seniorPwdName,
           total: check.total,
           amount: check.total,
           tendered: check.total,
@@ -313,6 +322,13 @@ export const checksApi = {
           paymentChannel: check.paymentChannel,
           referenceNumber: check.referenceNumber,
           operatingMode: check.operatingMode || 'CAFE',
+          rawItems: (check.items || []).map((it) => ({
+            name: it.name,
+            quantity: it.quantity,
+            price: it.unitPrice,
+            lineTotal: it.subtotal,
+            notes: it.notes,
+          })),
           isReprint: true,
         } as any,
         status: 'PENDING',

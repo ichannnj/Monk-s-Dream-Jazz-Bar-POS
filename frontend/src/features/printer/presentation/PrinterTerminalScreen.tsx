@@ -124,9 +124,11 @@ export const PrinterTerminalScreen: React.FC = () => {
     const title =
       item.job_type === 'RUNNER_CHIT'
         ? `Runner Chit #${rawData.orderNumber || ''} (Table ${rawData.tableNumber || 'Walk-in'})`
-        : item.job_type === 'CUSTOMER_RECEIPT'
+        : item.job_type === 'CUSTOMER_RECEIPT' || item.job_type === 'RECEIPT'
           ? `Receipt #${rawData.receiptNumber || ''} (${rawData.tabName || rawData.customerName || 'Guest'})`
-          : `${item.job_type} - ${rawData.customerName || 'Order'}`;
+          : item.job_type === 'DRAWER_KICK'
+            ? `Cash Drawer Solenoid Pulse (${(rawData.drawerTarget || 'Main').toUpperCase()} Till)`
+            : `${item.job_type} - ${rawData.customerName || 'Order'}`;
 
     return (
       <View className="mb-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
@@ -206,7 +208,8 @@ export const PrinterTerminalScreen: React.FC = () => {
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((j) => {
-      if (jobFilter === 'CUSTOMER_RECEIPT') return j.job_type === 'CUSTOMER_RECEIPT';
+      if (jobFilter === 'CUSTOMER_RECEIPT')
+        return j.job_type === 'CUSTOMER_RECEIPT' || j.job_type === 'RECEIPT';
       if (jobFilter === 'RUNNER_CHIT') return j.job_type === 'RUNNER_CHIT';
       if (jobFilter === 'ISSUES') return j.status === 'FAILED' || j.status === 'PENDING';
       return true;

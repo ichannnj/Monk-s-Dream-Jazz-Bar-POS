@@ -121,6 +121,9 @@ export async function settleTabAndRecordPayment(params: {
   discountType?: string;
   seniorPwdId?: string;
   seniorPwdName?: string;
+  tenderedAmount?: number;
+  drawerTarget?: 'main' | 'bar';
+  shouldPrintReceipt?: boolean;
 }) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     params.tabId
@@ -150,50 +153,30 @@ export async function settleTabAndRecordPayment(params: {
       p_discount_type: (params.discountType || null) as any,
       p_senior_pwd_id: (params.seniorPwdId || null) as any,
       p_senior_pwd_name: (params.seniorPwdName || null) as any,
+      p_tendered_amount: params.tenderedAmount ?? null,
+      p_drawer_target: (params.drawerTarget || null) as any,
+      p_should_print_receipt: params.shouldPrintReceipt !== false,
     };
 
     let { data, error } = await (supabase.rpc as any)('settle_tab_and_record_payment', rpcPayload);
 
     if (
       error &&
-      (error.message?.includes('p_service_charge') ||
-        error.message?.includes('p_vatable_sales') ||
-        error.message?.includes('schema'))
+      (error.message?.includes('p_tendered_amount') ||
+        error.message?.includes('p_drawer_target') ||
+        error.message?.includes('p_service_charge'))
     ) {
-      // Fallback if latest migration not yet applied
+      // Fallback if latest migration parameters not yet updated
       const {
-        p_service_charge: _sc,
-        p_vatable_sales: _vs,
-        p_vat_amount: _va,
-        p_vat_exempt_sales: _ve,
-        p_discount_type: _dt,
-        p_senior_pwd_id: _spid,
-        p_senior_pwd_name: _spnm,
-        ...fallback11Payload
+        p_tendered_amount: _ta,
+        p_drawer_target: _dtg,
+        p_should_print_receipt: _spr,
+        ...restPayload
       } = rpcPayload;
 
-      let retry = await (supabase.rpc as any)('settle_tab_and_record_payment', fallback11Payload);
-      if (retry.error) {
-        const {
-          p_payment_channel: _ch,
-          p_reference_number: _ref,
-          ...legacy1Payload
-        } = fallback11Payload;
-        retry = await supabase.rpc('settle_tab_and_record_payment', legacy1Payload as any);
-      }
+      const retry = await (supabase.rpc as any)('settle_tab_and_record_payment', restPayload);
       data = retry.data;
       error = retry.error;
-    }
-
-    if (!error && params.keepOpenForPrep) {
-      await supabase
-        .from('tabs')
-        .update({ status: 'OPEN', updated_at: new Date().toISOString() })
-        .eq('id', params.tabId);
-      await supabase
-        .from('orders')
-        .update({ status: 'OPEN', updated_at: new Date().toISOString() })
-        .eq('tab_id', params.tabId);
     }
 
     if (error) {

@@ -106,7 +106,7 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
     }
 
     // Auto-kick physical cash drawer on cash operations
-    printerApi.kickCashDrawer().catch((err) => {
+    printerApi.kickCashDrawer(activeDrawer).catch((err) => {
       console.warn('[CashDrawer] Auto-kick drawer signal error:', err);
     });
 
@@ -204,7 +204,7 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
             options={drawerActions}
             onChange={(act) => {
               if (act === 'kick') {
-                printerApi.kickCashDrawer();
+                printerApi.kickCashDrawer(activeDrawer);
                 toast.success('Cash drawer pulse signal sent', { title: 'Drawer Solenoid' });
               } else {
                 setActiveModal(act);

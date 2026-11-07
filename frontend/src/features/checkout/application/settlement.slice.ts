@@ -34,10 +34,15 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       seniorPwdId?: string;
       seniorPwdName?: string;
       grossSubtotal?: number;
+      totalAmountDue?: number;
+      corkageAmount?: number;
+      tenderedAmount?: number;
+      shouldPrintReceipt?: boolean;
     }
   ) => {
     let grandTotalPaid = 0;
     let targetTabRef: CustomerTab | undefined;
+    let computedDrawerTarget: 'main' | 'bar' = 'main';
     const effectiveCashierName =
       cashierName || useAuthStore.getState().currentUser?.displayName || 'Coltrane (Cashier)';
     const effectiveStaffId = staffId || useAuthStore.getState().currentUser?.id;
@@ -67,6 +72,17 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
 
       grandTotalPaid = grandTotal;
 
+      // Determine drawer target based on table area, user role, and cashier
+      const currentUserRole = useAuthStore.getState().currentUser?.role;
+      const isBar =
+        table.area === 'bar' ||
+        currentUserRole === 'station_bar' ||
+        currentUserRole === 'station_cafe' ||
+        effectiveCashierName.toLowerCase().includes('bar') ||
+        effectiveCashierName.toLowerCase().includes('thelonious') ||
+        effectiveCashierName.toLowerCase().includes('bill');
+      computedDrawerTarget = isBar ? 'bar' : 'main';
+
       // Create Check record
       const newCheck: CheckItem = {
         id: `chk-${Date.now()}`,
@@ -94,12 +110,6 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       // If payment is cash, log to drawer (scoped to Bar Till or Main Floor Till)
       let nextDrawer = state.drawerEntries;
       if (paymentMethod === 'cash') {
-        const isBar =
-          effectiveCashierName.toLowerCase().includes('bar') ||
-          effectiveCashierName.toLowerCase().includes('thelonious') ||
-          effectiveCashierName.toLowerCase().includes('bill');
-        const drawerTarget: 'main' | 'bar' = isBar ? 'bar' : 'main';
-
         const cashDrawerEntry: DrawerEntry = {
           id: `drw-${Date.now()}`,
           type: 'sale',
@@ -110,7 +120,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
             hour: '2-digit',
             minute: '2-digit',
           }),
-          drawerTarget,
+          drawerTarget: computedDrawerTarget,
         };
         nextDrawer = [cashDrawerEntry, ...state.drawerEntries];
       }
@@ -195,6 +205,10 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
             discountType: billingDetails?.discountType,
             seniorPwdId: billingDetails?.seniorPwdId,
             seniorPwdName: billingDetails?.seniorPwdName,
+            corkageAmount: billingDetails?.corkageAmount,
+            tenderedAmount: billingDetails?.tenderedAmount,
+            drawerTarget: computedDrawerTarget,
+            shouldPrintReceipt: billingDetails?.shouldPrintReceipt,
           });
           realtimeGateway.broadcastPosSync('tab_settled');
         }
@@ -210,12 +224,28 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
     cashierName?: string,
     staffId?: string,
     paymentChannel?: string,
-    referenceNumber?: string
+    referenceNumber?: string,
+    billingDetails?: {
+      serviceCharge?: number;
+      vatableSales?: number;
+      vatAmount?: number;
+      vatExemptSales?: number;
+      discountType?: string;
+      seniorPwdId?: string;
+      seniorPwdName?: string;
+      grossSubtotal?: number;
+      totalAmountDue?: number;
+      corkageAmount?: number;
+      tenderedAmount?: number;
+      shouldPrintReceipt?: boolean;
+    }
   ) => {
     const effectiveCashierName =
       cashierName || useAuthStore.getState().currentUser?.displayName || 'Coltrane (Cashier)';
     const effectiveStaffId = staffId || useAuthStore.getState().currentUser?.id;
     let tabsToSettle: CustomerTab[] = [];
+    let groupGrandTotal = 0;
+    let computedDrawerTarget: 'main' | 'bar' = 'main';
 
     set((state) => {
       const table = state.tables.find((t) => t.id === tableId);
@@ -226,9 +256,11 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       const allItems: OrderLineItem[] = [];
       table.tabs?.forEach((tab) => allItems.push(...(tab.items || [])));
 
-      const totalCorkage = (table.tabs || []).reduce((acc, tab) => {
-        return acc + (tab.hasCorkageFee ? tab.corkageAmount || 0 : 0);
-      }, 0);
+      const totalCorkage =
+        billingDetails?.corkageAmount ??
+        (table.tabs || []).reduce((acc, tab) => {
+          return acc + (tab.hasCorkageFee ? tab.corkageAmount || 0 : 0);
+        }, 0);
 
       const pricingItems: PricingLineItem[] = allItems.map((it) => ({
         id: it.id,
@@ -247,9 +279,20 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         corkageAmount: totalCorkage,
       });
 
-      const subtotal = billing.grossSubtotal;
-      const tax = billing.vatAmount;
-      const grandTotal = billing.totalAmountDue;
+      const subtotal = billingDetails?.grossSubtotal ?? billing.grossSubtotal;
+      const tax = billingDetails?.vatAmount ?? billing.vatAmount;
+      const grandTotal = billingDetails?.totalAmountDue ?? billing.totalAmountDue;
+      groupGrandTotal = grandTotal;
+
+      const currentUserRole = useAuthStore.getState().currentUser?.role;
+      const isBar =
+        table.area === 'bar' ||
+        currentUserRole === 'station_bar' ||
+        currentUserRole === 'station_cafe' ||
+        effectiveCashierName.toLowerCase().includes('bar') ||
+        effectiveCashierName.toLowerCase().includes('thelonious') ||
+        effectiveCashierName.toLowerCase().includes('bill');
+      computedDrawerTarget = isBar ? 'bar' : 'main';
 
       const newCheck: CheckItem = {
         id: `chk-${Date.now()}`,
@@ -277,12 +320,6 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
 
       let nextDrawer = state.drawerEntries;
       if (paymentMethod === 'cash') {
-        const isBar =
-          effectiveCashierName.toLowerCase().includes('bar') ||
-          effectiveCashierName.toLowerCase().includes('thelonious') ||
-          effectiveCashierName.toLowerCase().includes('bill');
-        const drawerTarget: 'main' | 'bar' = isBar ? 'bar' : 'main';
-
         const cashDrawerEntry: DrawerEntry = {
           id: `drw-${Date.now()}`,
           type: 'sale',
@@ -293,7 +330,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
             hour: '2-digit',
             minute: '2-digit',
           }),
-          drawerTarget,
+          drawerTarget: computedDrawerTarget,
         };
         nextDrawer = [cashDrawerEntry, ...state.drawerEntries];
       }
@@ -329,20 +366,37 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       try {
         const validTableId = await resolveTableUuid(tableId);
 
-        // Settle each known tab on this table
-        for (const tab of tabsToSettle) {
+        // Settle primary tab with full group billing and single receipt/drawer trigger, secondary tabs with 0 amount
+        for (let i = 0; i < tabsToSettle.length; i++) {
+          const tab = tabsToSettle[i];
           const isUuid =
             tab.id &&
             /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tab.id);
-          const tabAmt = (tab.totalAmount || 0) * 1.1;
+          const isPrimary = i === 0;
+
           if (isUuid) {
             await tablesApi
               .settleTabAndRecordPayment({
                 tabId: tab.id,
                 paymentMethod: dbMethod,
-                amount: tabAmt,
+                amount: isPrimary ? groupGrandTotal : 0,
                 staffId: effectiveStaffId,
-                notes: `Group Settle by ${effectiveCashierName}`,
+                notes: `Group Settle by ${effectiveCashierName}${isPrimary ? ' (Primary Group Bill)' : ' (Secondary Tab)'}`,
+                paymentChannel: isPrimary ? paymentChannel : undefined,
+                referenceNumber: isPrimary ? referenceNumber : undefined,
+                serviceCharge: isPrimary ? billingDetails?.serviceCharge : 0,
+                vatableSales: isPrimary ? billingDetails?.vatableSales : 0,
+                vatAmount: isPrimary ? billingDetails?.vatAmount : 0,
+                vatExemptSales: isPrimary ? billingDetails?.vatExemptSales : 0,
+                discountType: isPrimary ? billingDetails?.discountType : undefined,
+                seniorPwdId: isPrimary ? billingDetails?.seniorPwdId : undefined,
+                seniorPwdName: isPrimary ? billingDetails?.seniorPwdName : undefined,
+                corkageAmount: isPrimary ? billingDetails?.corkageAmount : 0,
+                tenderedAmount: isPrimary ? billingDetails?.tenderedAmount : undefined,
+                drawerTarget: computedDrawerTarget,
+                shouldPrintReceipt: isPrimary
+                  ? (billingDetails?.shouldPrintReceipt ?? true)
+                  : false,
               })
               .catch((e) => console.warn('[settleTableGroup] tab settle warn:', e));
           }
@@ -405,6 +459,9 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       discountType?: string;
       seniorPwdId?: string;
       seniorPwdName?: string;
+      totalAmountDue?: number;
+      tenderedAmount?: number;
+      shouldPrintReceipt?: boolean;
     }
   ) => {
     const completeOrder = Boolean(options?.completeOrder);
@@ -433,7 +490,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       // Philippine VAT-inclusive extraction
       const vatableSales = options?.vatableSales ?? Number((netSubtotal / 1.12).toFixed(2));
       const vatAmount = options?.vatAmount ?? Number((netSubtotal - vatableSales).toFixed(2));
-      const grandTotal = netSubtotal;
+      const grandTotal =
+        options?.totalAmountDue !== undefined ? options.totalAmountDue : netSubtotal;
       grandTotalPaid = grandTotal;
 
       const newCheck: CheckItem = {
@@ -566,6 +624,9 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
             discountType: options?.discountType,
             seniorPwdId: options?.seniorPwdId,
             seniorPwdName: options?.seniorPwdName,
+            tenderedAmount: options?.tenderedAmount,
+            drawerTarget: 'main',
+            shouldPrintReceipt: options?.shouldPrintReceipt,
           });
           realtimeGateway.broadcastPosSync('takeout_settled');
         }

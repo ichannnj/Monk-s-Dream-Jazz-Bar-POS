@@ -130,22 +130,17 @@ export const printerApi = {
   },
 
   /**
-   * Enqueue a test manual cash drawer kick diagnostic job
+   * Enqueue a pure cash drawer kick pulse without printing receipts or cutting paper
    */
-  async kickCashDrawer(): Promise<PrintJobItem> {
+  async kickCashDrawer(drawerTarget: 'main' | 'bar' = 'main'): Promise<PrintJobItem> {
     const { data, error } = await supabase
       .from('print_jobs')
       .insert({
-        job_type: 'CUSTOMER_RECEIPT',
+        job_type: 'DRAWER_KICK',
         receipt_data: {
-          receiptNumber: `TEST-DRAWER-${Date.now().toString().slice(-4)}`,
-          paymentMethod: 'CASH',
-          total: 0,
-          tendered: 0,
-          change: 0,
-          items: [],
-          timestamp: new Date().toISOString(),
           isDiagnosticKick: true,
+          drawerTarget,
+          timestamp: new Date().toISOString(),
         },
         status: 'PENDING',
       })
@@ -153,10 +148,17 @@ export const printerApi = {
       .single();
 
     if (error) {
-      console.error('[printerApi.kickCashDrawer] Failed to enqueue drawer test:', error);
+      console.error('[printerApi.kickCashDrawer] Failed to enqueue drawer kick:', error);
       throw error;
     }
 
     return data as PrintJobItem;
+  },
+
+  /**
+   * Revert a claimed job back to PENDING if hardware is offline
+   */
+  async releaseJobToPending(jobId: string): Promise<void> {
+    await supabase.from('print_jobs').update({ status: 'PENDING' }).eq('id', jobId);
   },
 };

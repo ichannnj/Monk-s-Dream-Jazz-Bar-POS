@@ -352,6 +352,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
   ) => {
     let sourceTabUuid: string | undefined;
     let targetTabUuid: string | undefined;
+    let targetTabIndexCaptured: number | undefined;
     const currentStaffId = useAuthStore.getState().currentUser?.id;
 
     set((state) => {
@@ -390,6 +391,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
 
       if (!targetTab) return state;
       targetTabUuid = targetTab.id;
+      targetTabIndexCaptured = effectiveTargetTabIndex;
 
       // Map of transfers
       const transferMap = new Map<string, number>();
@@ -464,7 +466,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     // Background Supabase persistence
     if (sourceTabUuid) {
       try {
-        await tablesApi.transferOrderItemsToTab({
+        const res = await tablesApi.transferOrderItemsToTab({
           sourceTabId: sourceTabUuid,
           targetTabId:
             targetTabUuid && !targetTabUuid.startsWith('tab-') ? targetTabUuid : undefined,
@@ -473,6 +475,21 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
           itemTransfers,
           staffId: currentStaffId,
         });
+
+        const returnedTargetTabId = (res as any)?.target_tab_id || (res as any)?.targetTabId;
+        if (returnedTargetTabId && targetTabIndexCaptured !== undefined) {
+          set((state) => ({
+            tables: state.tables.map((t) => {
+              if (t.id !== tableId) return t;
+              return {
+                ...t,
+                tabs: (t.tabs || []).map((tb) =>
+                  tb.tabIndex === targetTabIndexCaptured ? { ...tb, id: returnedTargetTabId } : tb
+                ),
+              };
+            }),
+          }));
+        }
       } catch (err) {
         console.warn('Background transferOrderItemsToTab notice:', err);
       }

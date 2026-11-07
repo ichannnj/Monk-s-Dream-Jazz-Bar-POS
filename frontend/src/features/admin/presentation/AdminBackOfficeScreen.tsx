@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { SharedChatView } from '@/features/chat/presentation/SharedChatView';
+import { useChatStore } from '@/features/chat';
 import { useResponsive } from '@/features/shared/hooks/useResponsive';
 import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 import { useVenueStore, useWindowVisibilitySync } from '@/features/shared';
@@ -37,6 +38,9 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   const { isMobile, isTablet, isDesktop } = useResponsive();
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>('dashboard');
   const { operatingMode, setOperatingMode } = useVenueStore();
+  const unreadChatCount = useChatStore((state) =>
+    state.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
+  );
   const [timeframe, setTimeframe] = useState<TimeframeFilter>('today');
   const [isLoading, setIsLoading] = useState(true);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -278,7 +282,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       <AdminSidebar
         currentRoute={currentRoute}
         onRouteChange={setCurrentRoute}
-        unreadChatCount={3}
+        unreadChatCount={unreadChatCount}
       />
 
       {/* Main Content Workspace */}
@@ -302,7 +306,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
             currentRoute={currentRoute}
             onRouteChange={setCurrentRoute}
             onOpenDrawer={() => setIsDrawerOpen(true)}
-            unreadChatCount={3}
+            unreadChatCount={unreadChatCount}
           />
         )}
       </View>
@@ -313,14 +317,14 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         onClose={() => setIsDrawerOpen(false)}
         currentRoute={currentRoute}
         onRouteChange={setCurrentRoute}
-        unreadChatCount={3}
+        unreadChatCount={unreadChatCount}
         operatingMode={operatingMode}
         onToggleOperatingMode={handleToggleMode}
         onSwitchToFloor={onSwitchToFloor}
       />
 
       {/* Slide-over Team Chat Trigger Button (Desktop only; on mobile/tablet, Chat is in navigation) */}
-      {isDesktop && currentRoute !== 'chats' && <AdminFloatingChat unreadCount={3} />}
+      {isDesktop && currentRoute !== 'chats' && <AdminFloatingChat unreadCount={unreadChatCount} />}
 
       {/* Operating Mode Switch Confirmation Modal */}
       <ManagerModeSwitchModal

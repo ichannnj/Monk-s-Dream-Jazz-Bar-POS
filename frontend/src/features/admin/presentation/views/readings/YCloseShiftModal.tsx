@@ -151,16 +151,11 @@ export const YCloseShiftModal: React.FC<YCloseShiftModalProps> = ({
         notes: yRecord.notes || undefined,
       };
 
-      // Auto-Print Thermal Slip
+      // Thermal slip is automatically enqueued into public.print_jobs by close_shift_and_generate_y_reading RPC
       if (autoPrintThermal) {
-        try {
-          await readingsApi.enqueueThermalPrintJob(readingData);
-          toast.info('80mm thermal handover slip enqueued successfully.', {
-            title: 'Slip Enqueued',
-          });
-        } catch (printErr: any) {
-          console.warn('[YCloseShiftModal] Thermal auto-print error:', printErr);
-        }
+        toast.info('80mm thermal handover slip enqueued to print station.', {
+          title: 'Slip Enqueued',
+        });
       }
 
       // Auto-Download Excel

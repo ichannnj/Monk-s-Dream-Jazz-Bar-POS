@@ -12,6 +12,7 @@ export interface PricingLineItem {
   unitPrice: number;
   quantity: number;
   stationTarget: 'bar' | 'kitchen';
+  notes?: string;
   /** Whether this specific item is tagged for Senior Citizen / PWD statutory discount */
   isSeniorDiscounted?: boolean;
 }
@@ -126,17 +127,12 @@ export function calculateTabBilling(
   seniorItemsGross = roundPhp(seniorItemsGross);
   serviceCharge = roundPhp(serviceCharge);
 
-  // 2. Compute Philippine VAT breakdown
-  // Regular items: inclusive of 12% VAT
-  const vatableSales = regularItemsGross > 0 ? roundPhp(regularItemsGross / 1.12) : 0;
-  const vatAmount = regularItemsGross > 0 ? roundPhp(regularItemsGross - vatableSales) : 0;
-
+  // 2. Compute Discounts
+  let seniorDiscountAmount = 0;
   // Senior/PWD items: 100% exempt from 12% VAT
   const vatExemptSales = seniorItemsGross > 0 ? roundPhp(seniorItemsGross / 1.12) : 0;
   const zeroRatedSales = 0;
 
-  // 3. Compute Discounts
-  let seniorDiscountAmount = 0;
   if (isSeniorOrPwd && vatExemptSales > 0) {
     // 20% statutory discount applied strictly to the VAT-exempt base
     seniorDiscountAmount = roundPhp(vatExemptSales * 0.2);
@@ -145,13 +141,20 @@ export function calculateTabBilling(
   let finalCustomDiscount = 0;
   if (discountType === 'CUSTOM' || discountType === 'PROMO') {
     if (customDiscountPercent > 0) {
-      finalCustomDiscount = roundPhp(grossSubtotal * (customDiscountPercent / 100));
+      const clampedPct = Math.min(100, Math.max(0, customDiscountPercent));
+      finalCustomDiscount = roundPhp(grossSubtotal * (clampedPct / 100));
     } else if (customDiscountAmount > 0) {
       finalCustomDiscount = roundPhp(Math.min(grossSubtotal, customDiscountAmount));
     }
   }
 
   const totalDiscountAmount = roundPhp(seniorDiscountAmount + finalCustomDiscount);
+
+  // 3. Compute Philippine VAT breakdown
+  // Regular items: inclusive of 12% VAT, reduced by any promo discount allocated to regular items
+  const netRegularGross = Math.max(0, regularItemsGross - finalCustomDiscount);
+  const vatableSales = netRegularGross > 0 ? roundPhp(netRegularGross / 1.12) : 0;
+  const vatAmount = netRegularGross > 0 ? roundPhp(netRegularGross - vatableSales) : 0;
 
   // 4. Compute Final Amount Due
   // Senior net payable = vatExemptSales - seniorDiscountAmount

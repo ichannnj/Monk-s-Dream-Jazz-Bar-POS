@@ -311,6 +311,12 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
     builder.text(padLine('CORKAGE FEE:', formatPhp(corkage), 48));
   }
 
+  const rawVatExempt = toPesos(data.vatExemptSales || data.vat_exempt_sales || 0);
+  if (rawVatExempt > 0 && subtotal > rawVatExempt) {
+    const vatRelief = subtotal - rawVatExempt;
+    builder.text(padLine('LESS: VAT EXEMPTION (12%):', `-${formatPhp(vatRelief)}`, 48));
+  }
+
   const discount = toPesos(data.discountAmount || data.discount || data.discount_amount || 0);
   if (discount > 0) {
     builder.text(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, 48));
@@ -371,9 +377,9 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
   // Statutory SC / PWD signature block if discount was granted
   const seniorId = data.seniorPwdId || data.senior_pwd_id;
   const seniorName = data.seniorPwdName || data.senior_pwd_name;
-  const discountType = data.discountType || data.discount_type;
+  const discountType = (data.discountType || data.discount_type || '').toUpperCase();
 
-  if (seniorId || discount > 0) {
+  if (seniorId || discountType === 'SENIOR_CITIZEN' || discountType === 'PWD') {
     builder.line(divider('-', 48));
     builder.line('SC / PWD BENEFICIARY ACKNOWLEDGMENT:');
     if (discountType === 'PWD') {
@@ -598,32 +604,103 @@ export function buildReadingSlipBytes(reading: any): Uint8Array {
     .bold(false)
     .line(title);
 
-  if (reading.reading_number) {
-    builder.bold(true).line(`#${reading.reading_number}`).bold(false);
+  const readingNum = reading.z_number || reading.y_number || reading.reading_number;
+  if (readingNum) {
+    builder.bold(true).line(`#${readingNum}`).bold(false);
   }
   builder.line(divider('-', 48));
 
   builder.left();
-  builder.line(`Scope:       ${reading.drawer_target || 'Consolidated'}`);
-  builder.line(`Staff:       ${reading.performed_by_name || 'Manager'}`);
+  const scopeLabel = (reading.drawer_target || reading.scope || 'Consolidated').toUpperCase();
+  builder.line(`Scope:       ${scopeLabel} TILL`);
+  builder.line(`Staff:       ${reading.performed_by_name || reading.staff_name || 'Manager'}`);
   builder.line(
-    `Closed At:   ${new Date(reading.closed_at || reading.created_at || Date.now()).toLocaleString()}`
+    `Date/Time:   ${new Date(reading.closed_at || reading.created_at || Date.now()).toLocaleString()}`
+  );
+  if (reading.first_receipt_no && reading.last_receipt_no) {
+    builder.line(`Checks:      ${reading.first_receipt_no} - ${reading.last_receipt_no}`);
+  }
+  builder.line(divider('=', 48));
+
+  // Financial Metrics
+  const gross = toPesos(reading.gross_sales || 0);
+  const discounts = toPesos(reading.discounts || reading.discount_total || 0);
+  const sc = toPesos(reading.service_charge || 0);
+  const netSales = toPesos(reading.net_sales || gross - discounts);
+
+  builder.text(padLine('GROSS SALES:', formatPhp(gross), 48));
+  if (discounts > 0) {
+    builder.text(padLine('LESS: DISCOUNTS:', `-${formatPhp(discounts)}`, 48));
+  }
+  if (sc > 0) {
+    builder.text(padLine('SERVICE CHARGE:', formatPhp(sc), 48));
+  }
+  builder.line(divider('-', 48));
+  builder.bold(true);
+  builder.text(padLine('NET SALES (TOTAL):', `PHP ${formatPhp(netSales)}`, 48));
+  builder.bold(false);
+
+  // Cafe vs Event Split
+  const cafeNet = toPesos(reading.cafe_net_sales || 0);
+  const eventNet = toPesos(reading.event_net_sales || 0);
+  if (cafeNet > 0 || eventNet > 0) {
+    builder.text(padLine('  Daytime Cafe Sales:', formatPhp(cafeNet), 48));
+    builder.text(padLine('  Evening Jazz Sales:', formatPhp(eventNet), 48));
+  }
+
+  // Statutory Tax Breakdown
+  builder.line(divider('-', 48));
+  builder.line('TAX & STATUTORY BREAKDOWN:');
+  builder.text(
+    padLine('  VATable Sales (12%):', formatPhp(toPesos(reading.vatable_sales || 0)), 48)
+  );
+  builder.text(padLine('  VAT Amount (12%):', formatPhp(toPesos(reading.vat_amount || 0)), 48));
+  builder.text(
+    padLine('  VAT-Exempt Sales:', formatPhp(toPesos(reading.vat_exempt_sales || 0)), 48)
+  );
+
+  // Tender Breakdown
+  builder.line(divider('-', 48));
+  builder.line('PAYMENT TENDER BREAKDOWN:');
+  builder.text(padLine('  Cash Tendered:', formatPhp(toPesos(reading.tender_cash || 0)), 48));
+  builder.text(padLine('  Card Terminal:', formatPhp(toPesos(reading.tender_card || 0)), 48));
+  builder.text(
+    padLine('  Digital QR (GCash/Maya):', formatPhp(toPesos(reading.tender_digital || 0)), 48)
+  );
+  builder.text(
+    padLine('  Online Delivery Apps:', formatPhp(toPesos(reading.tender_delivery || 0)), 48)
   );
   builder.line(divider('-', 48));
-
-  const sales = toPesos(reading.gross_sales || reading.net_sales || 0);
   builder.bold(true);
-  builder.text(padLine('NET SALES:', `PHP ${formatPhp(sales)}`, 48));
+  builder.text(
+    padLine('TOTAL TENDER RECONCILED:', formatPhp(toPesos(reading.total_tender || 0)), 48)
+  );
   builder.bold(false);
+
+  // Cash Drawer Movement & Reconciliation
+  builder.line(divider('=', 48));
+  builder.line('CASH DRAWER RECONCILIATION:');
+  builder.text(padLine('  Opening Float:', formatPhp(toPesos(reading.opening_float || 0)), 48));
+  builder.text(padLine('  (+) Cash Sales:', formatPhp(toPesos(reading.tender_cash || 0)), 48));
+  builder.text(padLine('  (+) Cash In / Floats:', formatPhp(toPesos(reading.cash_in || 0)), 48));
+  builder.text(
+    padLine('  (-) Petty Cash Out:', `-${formatPhp(toPesos(reading.cash_out || 0))}`, 48)
+  );
+  builder.text(
+    padLine('  (-) Safe Cash Drops:', `-${formatPhp(toPesos(reading.safe_drops || 0))}`, 48)
+  );
+  builder.line(divider('-', 48));
 
   const cashExpected = toPesos(reading.expected_cash || 0);
   const cashCounted = toPesos(reading.counted_cash || 0);
   const variance = toPesos(reading.variance || 0);
 
-  builder.text(padLine('Expected Cash:', `PHP ${formatPhp(cashExpected)}`, 48));
-  builder.text(padLine('Counted Cash:', `PHP ${formatPhp(cashCounted)}`, 48));
   builder.bold(true);
-  builder.text(padLine('VARIANCE:', `PHP ${formatPhp(variance)}`, 48));
+  builder.text(padLine('EXPECTED DRAWER CASH:', `PHP ${formatPhp(cashExpected)}`, 48));
+  if (type !== 'X_READING') {
+    builder.text(padLine('PHYSICAL CASH COUNTED:', `PHP ${formatPhp(cashCounted)}`, 48));
+    builder.text(padLine('CASH VARIANCE (OVER/SHORT):', `PHP ${formatPhp(variance)}`, 48));
+  }
   builder.bold(false);
 
   builder.line(divider('-', 48));
