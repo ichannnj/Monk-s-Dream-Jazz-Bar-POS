@@ -62,7 +62,8 @@ export class MenuApi {
    */
   async getMenuItems(): Promise<import('../../../types/floor').MenuItem[]> {
     try {
-      const { data, error } = await supabase
+      let rawProducts: any[] = [];
+      const queryWithVariants = await supabase
         .from('products')
         .select(
           `
@@ -114,12 +115,64 @@ export class MenuApi {
         )
         .order('name');
 
-      if (error || !data) {
-        console.warn('getMenuItems query error:', error?.message);
-        return [];
+      if (!queryWithVariants.error && queryWithVariants.data) {
+        rawProducts = queryWithVariants.data;
+      } else {
+        console.warn(
+          'getMenuItems query error with variants (falling back to base schema):',
+          queryWithVariants.error?.message
+        );
+        const queryBase = await supabase
+          .from('products')
+          .select(
+            `
+            id,
+            name,
+            category_id,
+            image_url,
+            base_price,
+            station_target,
+            is_available,
+            auto_86,
+            out_of_stock_reason,
+            description,
+            allergens,
+            dietary,
+            is_resold_outside_food,
+            original_cost,
+            categories (
+              id,
+              name,
+              slug
+            ),
+            product_modifiers (
+              id,
+              name,
+              price_delta
+            ),
+            product_ingredients (
+              amount,
+              conversion_factor,
+              inventory_items (
+                id,
+                name,
+                current_stock,
+                min_alert_level,
+                unit
+              )
+            )
+          `
+          )
+          .order('name');
+
+        if (queryBase.error || !queryBase.data) {
+          console.warn('getMenuItems base fallback failed:', queryBase.error?.message);
+          return [];
+        }
+        rawProducts = queryBase.data;
       }
 
-      return data.map((p: any) => {
+      return rawProducts.map((p: any) => {
         let stockStatus: 'in_stock' | 'low_stock' | 'depleted' = 'in_stock';
         let stockAlertMessage: string | undefined = undefined;
         let lowestStockIngredient: any = undefined;

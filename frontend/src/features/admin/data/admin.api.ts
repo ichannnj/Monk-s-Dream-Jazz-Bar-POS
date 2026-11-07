@@ -457,15 +457,33 @@ export const adminApi = {
    * Menu Products (Catalog) CRUD & BOM
    */
   async getProductsWithBOM(): Promise<ProductAdmin[]> {
-    const { data, error } = await supabase
+    let rawData: any[];
+    const queryWithVariants = await supabase
       .from('products')
       .select(
         '*, categories(id, name, slug), product_ingredients(*, inventory_items(name, unit, unit_cost)), product_variants(*)'
       )
       .order('name', { ascending: true });
 
-    if (error) throw error;
-    return (data || []).map((p: any) => ({
+    if (!queryWithVariants.error) {
+      rawData = queryWithVariants.data || [];
+    } else {
+      console.warn(
+        '[adminApi.getProductsWithBOM] Failed to fetch product_variants (migration pending), falling back to base schema:',
+        queryWithVariants.error.message
+      );
+      const queryBase = await supabase
+        .from('products')
+        .select(
+          '*, categories(id, name, slug), product_ingredients(*, inventory_items(name, unit, unit_cost))'
+        )
+        .order('name', { ascending: true });
+
+      if (queryBase.error) throw queryBase.error;
+      rawData = queryBase.data || [];
+    }
+
+    return rawData.map((p: any) => ({
       ...p,
       ingredients: p.product_ingredients,
       variants: (p.product_variants || []).sort(
@@ -478,22 +496,36 @@ export const adminApi = {
     productId: string,
     variants: ProductVariantAdmin[]
   ): Promise<boolean> {
-    await (supabase.from as any)('product_variants').delete().eq('product_id', productId);
-    if (!variants || variants.length === 0) return true;
+    try {
+      const delRes = await (supabase.from as any)('product_variants')
+        .delete()
+        .eq('product_id', productId);
+      if (delRes.error) {
+        console.warn('[adminApi.upsertProductVariants] table may not exist:', delRes.error.message);
+        return false;
+      }
+      if (!variants || variants.length === 0) return true;
 
-    const toInsert = variants.map((v, idx) => ({
-      product_id: productId,
-      temperature: v.temperature || 'NONE',
-      size_label: v.size_label || 'Standard',
-      price: v.price,
-      is_available: v.is_available !== false,
-      sku: v.sku || null,
-      sort_order: v.sort_order !== undefined ? v.sort_order : idx + 1,
-    }));
+      const toInsert = variants.map((v, idx) => ({
+        product_id: productId,
+        temperature: v.temperature || 'NONE',
+        size_label: v.size_label || 'Standard',
+        price: v.price,
+        is_available: v.is_available !== false,
+        sku: v.sku || null,
+        sort_order: v.sort_order !== undefined ? v.sort_order : idx + 1,
+      }));
 
-    const { error } = await (supabase.from as any)('product_variants').insert(toInsert);
-    if (error) throw error;
-    return true;
+      const { error } = await (supabase.from as any)('product_variants').insert(toInsert);
+      if (error) {
+        console.warn('[adminApi.upsertProductVariants] insert error:', error.message);
+        return false;
+      }
+      return true;
+    } catch (err: any) {
+      console.warn('[adminApi.upsertProductVariants] unexpected error:', err?.message);
+      return false;
+    }
   },
 
   async createProduct(params: {
@@ -595,16 +627,24 @@ export const adminApi = {
   ) {
     // Delete existing recipe BOM scoped to variant or base product
     if (variantId) {
-      await (supabase.from as any)('product_ingredients').delete().eq('variant_id', variantId);
+      try {
+        await (supabase.from as any)('product_ingredients').delete().eq('variant_id', variantId);
+      } catch (err) {
+        console.warn('Could not delete by variant_id:', err);
+      }
     } else {
-      await (supabase.from as any)('product_ingredients')
+      const delScoped = await (supabase.from as any)('product_ingredients')
         .delete()
         .eq('product_id', productId)
         .is('variant_id', null);
+      if (delScoped.error) {
+        // Fallback for schema without variant_id column
+        await (supabase.from as any)('product_ingredients').delete().eq('product_id', productId);
+      }
     }
 
     if (ingredients.length > 0) {
-      const rows = ingredients.map((ing) => ({
+      const rowsWithVariant = ingredients.map((ing) => ({
         product_id: productId,
         variant_id: variantId || null,
         inventory_item_id: ing.inventoryItemId,
@@ -612,8 +652,21 @@ export const adminApi = {
         unit: ing.unit,
         conversion_factor: ing.conversionFactor || 1,
       }));
-      const { error } = await (supabase.from as any)('product_ingredients').insert(rows);
-      if (error) throw error;
+      const { error } = await (supabase.from as any)('product_ingredients').insert(rowsWithVariant);
+      if (error) {
+        // If variant_id column does not exist on schema, retry without it
+        const rowsWithoutVariant = ingredients.map((ing) => ({
+          product_id: productId,
+          inventory_item_id: ing.inventoryItemId,
+          amount: ing.amount,
+          unit: ing.unit,
+          conversion_factor: ing.conversionFactor || 1,
+        }));
+        const retryRes = await (supabase.from as any)('product_ingredients').insert(
+          rowsWithoutVariant
+        );
+        if (retryRes.error) throw retryRes.error;
+      }
     }
   },
 

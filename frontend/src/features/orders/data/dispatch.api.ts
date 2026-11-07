@@ -307,12 +307,29 @@ export async function createOrderWithItems(params: {
       })
     );
 
-    const { data: insertedItems, error: itemsError } = await supabase
+    let insertedItems: any;
+    const { data: initialData, error: itemsError } = await supabase
       .from('order_items')
       .insert(orderItemsToInsert)
       .select('*');
 
-    if (itemsError) throw itemsError;
+    if (itemsError) {
+      console.warn(
+        'order_items insert with variant columns failed, retrying base schema:',
+        itemsError.message
+      );
+      const baseItemsToInsert = orderItemsToInsert.map(
+        ({ variant_id, temperature, size_label, ...rest }) => rest
+      );
+      const retryRes = await supabase
+        .from('order_items')
+        .insert(baseItemsToInsert as any)
+        .select('*');
+      if (retryRes.error) throw retryRes.error;
+      insertedItems = retryRes.data;
+    } else {
+      insertedItems = initialData;
+    }
 
     // 3. Trigger In-Database Recipe Depletion & Auto-86
     let depletionResult: DispatchOrderResult = { success: true, orderId: orderData.id };
