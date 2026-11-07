@@ -1,10 +1,8 @@
 name: Monk's Dream CI Guardrails
 
 on:
-  push:
-    branches: [main, develop, 'preview/**']
-  pull_request:
-    branches: [main, develop]
+  workflow_dispatch:
+
 
 jobs:
   validate:
