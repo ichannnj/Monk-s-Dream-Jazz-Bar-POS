@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Modal, Pressable, StyleSheet, Switch } from 'react-native';
-import { Printer, X, Zap, ShieldCheck, AlertCircle } from 'lucide-react-native';
+import { Printer, X } from 'lucide-react-native';
 import { useDeviceHardwareStation } from '../../application/useDeviceHardwareStation';
 import { usePrinterStationStore } from '../../application/usePrinterStationStore';
 
@@ -16,11 +16,10 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
   const { isHardwareStation, setHardwareStation } = useDeviceHardwareStation();
   const {
     connectionStatus,
-    drawerStatus,
+    portInfo,
     connectDevice,
     disconnectDevice,
     testKickDrawer,
-    testPrintChit,
     isSupported,
   } = usePrinterStationStore();
 
@@ -81,27 +80,50 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
           {isHardwareStation && (
             <View className="space-y-3 mb-4">
               {/* Connection Status Indicator */}
-              <View className="p-3.5 rounded-xl border border-stone-200 bg-white flex-row items-center justify-between">
-                <View className="flex-row items-center space-x-2">
-                  <Printer size={16} color="#78716c" />
-                  <Text className="text-xs font-semibold text-stone-700">
-                    80mm Thermal Printer:
-                  </Text>
+              <View className="p-3.5 rounded-xl border border-stone-200 bg-white">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center space-x-2">
+                    <Printer size={16} color="#78716c" />
+                    <Text className="text-xs font-semibold text-stone-700">
+                      80mm Thermal Printer:
+                    </Text>
+                  </View>
+                  <View className="flex-row items-center">
+                    <View
+                      className={`h-2 w-2 rounded-full mr-1.5 ${
+                        connectionStatus === 'CONNECTED' ? 'bg-emerald-500' : 'bg-rose-500'
+                      }`}
+                    />
+                    <Text
+                      className={`text-xs font-bold ${
+                        connectionStatus === 'CONNECTED' ? 'text-emerald-700' : 'text-rose-700'
+                      }`}
+                    >
+                      {connectionStatus}
+                    </Text>
+                  </View>
                 </View>
-                <View className="flex-row items-center">
-                  <View
-                    className={`h-2 w-2 rounded-full mr-1.5 ${
-                      connectionStatus === 'CONNECTED' ? 'bg-emerald-500' : 'bg-rose-500'
-                    }`}
-                  />
-                  <Text
-                    className={`text-xs font-bold ${
-                      connectionStatus === 'CONNECTED' ? 'text-emerald-700' : 'text-rose-700'
-                    }`}
-                  >
-                    {connectionStatus}
-                  </Text>
-                </View>
+
+                {connectionStatus === 'CONNECTED' && portInfo && (
+                  <View className="mt-2 pt-2 border-t border-stone-100 flex-row items-center justify-between">
+                    <Text
+                      className="text-[11px] font-bold text-stone-800 flex-1 mr-2"
+                      numberOfLines={1}
+                    >
+                      {portInfo.deviceName || 'USB Thermal Printer'}
+                      {portInfo.manufacturerName ? ` • ${portInfo.manufacturerName}` : ''}
+                    </Text>
+                    <View className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200">
+                      <Text className="text-[10px] font-mono font-medium text-stone-600">
+                        {portInfo.type === 'usb'
+                          ? `USB (VID: 0x${portInfo.usbVendorId?.toString(16) || '?'})`
+                          : portInfo.type === 'bridge'
+                            ? 'Linux /dev/usb/lp0'
+                            : 'Serial Port'}
+                      </Text>
+                    </View>
+                  </View>
+                )}
               </View>
 
               {/* Action Buttons */}

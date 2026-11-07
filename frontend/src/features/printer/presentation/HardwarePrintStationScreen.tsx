@@ -2,7 +2,6 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 import {
   Printer,
-  RefreshCw,
   Coins,
   CheckCircle2,
   Clock,
@@ -11,8 +10,6 @@ import {
   RotateCw,
   Volume2,
   VolumeX,
-  Play,
-  Square,
   Zap,
   Terminal,
   ShieldCheck,
@@ -20,13 +17,8 @@ import {
   Sliders,
   ExternalLink,
 } from 'lucide-react-native';
-import { toast } from '@/features/shared/toast/useToastStore';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
-import {
-  usePrinterStationStore,
-  type StationConnectionStatus,
-  type DrawerStatus,
-} from '../application/usePrinterStationStore';
+import { usePrinterStationStore } from '../application/usePrinterStationStore';
 import type { PrintJobItem } from '../data/printer.api';
 
 type PrintJobFilter = 'ALL' | 'CUSTOMER_RECEIPT' | 'RUNNER_CHIT' | 'TAKEOUT_SLIP' | 'READINGS';
@@ -50,7 +42,6 @@ export const HardwarePrintStationScreen: React.FC = () => {
     portInfo,
     recentJobs,
     stationLogs,
-    isProcessing,
     initStation,
     connectDevice,
     disconnectDevice,
@@ -60,7 +51,6 @@ export const HardwarePrintStationScreen: React.FC = () => {
     reprintJob,
     testPrintChit,
     testKickDrawer,
-    playOrderChime,
   } = usePrinterStationStore();
 
   const [filter, setFilter] = useState<PrintJobFilter>('ALL');
@@ -157,7 +147,7 @@ export const HardwarePrintStationScreen: React.FC = () => {
                 MONK'S DREAM <Text className="text-amber-500">HARDWARE STATION</Text>
               </Text>
               <Text className="text-xs font-semibold text-stone-400">
-                Dedicated Web Serial Thermal Printer &amp; Cash Drawer Listener
+                Dedicated WebUSB Thermal Printer &amp; Cash Drawer Listener
               </Text>
             </View>
           </View>
@@ -218,13 +208,20 @@ export const HardwarePrintStationScreen: React.FC = () => {
             </View>
 
             <View className="mt-3">
-              <Text className="text-xs text-stone-400">
-                {connectionStatus === 'CONNECTED'
-                  ? `Connected via Web Serial (${portInfo?.usbVendorId ? `USB VID: 0x${portInfo.usbVendorId.toString(16).toUpperCase()}` : 'Virtual COM'})`
-                  : !isSupported
-                    ? 'Web Serial is not supported in this browser. Please use Chrome or Edge.'
-                    : 'Printer disconnected. Click pair to connect USB cable.'}
-              </Text>
+              <View className="space-y-1">
+                <Text className="text-xs text-stone-300 font-semibold" numberOfLines={1}>
+                  {connectionStatus === 'CONNECTED'
+                    ? portInfo?.deviceName || 'USB Thermal Printer'
+                    : 'No Thermal Printer Connected'}
+                </Text>
+                <Text className="text-[11px] text-stone-500">
+                  {connectionStatus === 'CONNECTED'
+                    ? `${portInfo?.type === 'usb' ? 'Direct WebUSB' : portInfo?.type === 'bridge' ? 'Linux Bridge (/dev/usb/lp0)' : 'Serial Port'}${portInfo?.manufacturerName ? ` • ${portInfo.manufacturerName}` : ''}${portInfo?.usbVendorId ? ` (VID: 0x${portInfo.usbVendorId.toString(16).toUpperCase()})` : ''}`
+                    : !isSupported
+                      ? 'WebUSB is not supported in this browser. Please use Chrome or Edge.'
+                      : 'Printer disconnected. Click Pair USB Device to connect.'}
+                </Text>
+              </View>
 
               <View className="mt-3 flex-row items-center space-x-2">
                 {connectionStatus === 'CONNECTED' ? (
@@ -240,9 +237,7 @@ export const HardwarePrintStationScreen: React.FC = () => {
                     disabled={!isSupported || connectionStatus === 'CONNECTING'}
                     className="flex-1 py-2.5 rounded-xl bg-amber-500 items-center justify-center active:bg-amber-600 disabled:opacity-50"
                   >
-                    <Text className="text-xs font-extrabold text-stone-950">
-                      Pair / Connect USB Printer
-                    </Text>
+                    <Text className="text-xs font-extrabold text-stone-950">Pair USB Device</Text>
                   </Pressable>
                 )}
 

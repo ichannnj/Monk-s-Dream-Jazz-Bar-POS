@@ -14,6 +14,9 @@ export interface SerialPortInfo {
   usbVendorId?: number;
   usbProductId?: number;
   type?: 'bridge' | 'usb' | 'serial';
+  deviceName?: string;
+  manufacturerName?: string;
+  serialNumber?: string;
 }
 
 const BRIDGE_URL = 'http://127.0.0.1:12111';
@@ -31,7 +34,8 @@ export class WebSerialPrinterService {
    * Check if any driver mode is supported in the current environment
    */
   public isSupported(): boolean {
-    return true;
+    if (typeof navigator === 'undefined') return false;
+    return 'usb' in navigator || 'serial' in navigator;
   }
 
   /**
@@ -58,6 +62,8 @@ export class WebSerialPrinterService {
       return {
         usbVendorId: 0x0483,
         usbProductId: 0x070b,
+        deviceName: 'Local Hardware Bridge (/dev/usb/lp0)',
+        manufacturerName: "Monk's Dream Linux Daemon",
         type: 'bridge',
       };
     }
@@ -65,6 +71,9 @@ export class WebSerialPrinterService {
       return {
         usbVendorId: this.usbDevice.vendorId,
         usbProductId: this.usbDevice.productId,
+        deviceName: this.usbDevice.productName || 'USB Thermal Printer',
+        manufacturerName: this.usbDevice.manufacturerName,
+        serialNumber: this.usbDevice.serialNumber,
         type: 'usb',
       };
     }
@@ -76,6 +85,7 @@ export class WebSerialPrinterService {
       const info = this.serialPort.getInfo();
       return {
         ...info,
+        deviceName: 'Serial Thermal Printer',
         type: 'serial',
       };
     }
@@ -102,7 +112,7 @@ export class WebSerialPrinterService {
   }
 
   /**
-   * Attempt silent connection
+   * Attempt silent connection to previously authorized device
    */
   public async autoConnect(baudRate: number = 9600): Promise<boolean> {
     if (this.isConnected() || this.isConnecting) {
@@ -116,24 +126,27 @@ export class WebSerialPrinterService {
       const bridgeConnected = await this.checkBridge();
       if (bridgeConnected) {
         this.connectionType = 'bridge';
-        console.log('[WebPrinter] Connected via Local Hardware Bridge (/dev/usb/lp0)');
+        console.info('[WebPrinter] Connected via Local Hardware Bridge (/dev/usb/lp0)');
         return true;
       }
 
-      // 2. Try WebUSB
+      // 2. Try WebUSB with previously authorized devices
       if (typeof navigator !== 'undefined' && 'usb' in navigator) {
         try {
           const usbDevices = await (navigator as any).usb.getDevices();
           if (usbDevices.length > 0) {
             await this.openUsbDevice(usbDevices[0]);
+            console.info(
+              `[WebPrinter] Silently reconnected to authorized USB device: ${usbDevices[0].productName || 'USB Printer'}`
+            );
             return true;
           }
-        } catch {
-          // Silent fallback if USB unavailable
+        } catch (err) {
+          console.warn('[WebPrinter] WebUSB silent auto-connect failed:', err);
         }
       }
 
-      // 3. Try Web Serial
+      // 3. Fallback to Web Serial if previously paired
       if (typeof navigator !== 'undefined' && 'serial' in navigator) {
         try {
           const serialPorts = await (navigator as any).serial.getPorts();
@@ -153,7 +166,7 @@ export class WebSerialPrinterService {
   }
 
   /**
-   * Connect to device
+   * Connect to USB device via browser chooser (wildcard filter so ANY device can be selected)
    */
   public async requestAndConnect(baudRate: number = 9600): Promise<boolean> {
     try {
@@ -166,26 +179,31 @@ export class WebSerialPrinterService {
         return true;
       }
 
-      // 2. Try WebUSB
+      // 2. Primary: Direct WebUSB Device Chooser
+      // Filters with empty object [{}] matches ANY connected USB device without port prompts
       if (typeof navigator !== 'undefined' && 'usb' in navigator) {
         try {
-          const device = await (navigator as any).usb.requestDevice({ filters: [] });
+          const device = await (navigator as any).usb.requestDevice({ filters: [{}] });
           if (device) {
             await this.openUsbDevice(device);
             return true;
           }
         } catch (usbErr: any) {
-          if (usbErr.name !== 'NotFoundError') {
-            console.warn('[WebPrinter] WebUSB error:', usbErr);
+          if (usbErr.name === 'NotFoundError') {
+            // User cancelled device chooser - do NOT fall into serial prompt
+            console.info('[WebPrinter] USB pairing cancelled by user');
+            throw usbErr;
           }
+          console.warn('[WebPrinter] WebUSB error:', usbErr);
+          throw usbErr;
         }
-      }
-
-      // 3. Try Web Serial
-      if (typeof navigator !== 'undefined' && 'serial' in navigator) {
+      } else if (typeof navigator !== 'undefined' && 'serial' in navigator) {
+        // Fallback for browsers that only support Web Serial
         const port = await (navigator as any).serial.requestPort();
         await this.openSerialPort(port, baudRate);
         return true;
+      } else {
+        throw new Error('WebUSB is not supported in this browser. Please use Chrome or Edge.');
       }
 
       throw new Error('Printer hardware bridge or device not available.');
@@ -196,30 +214,76 @@ export class WebSerialPrinterService {
 
   private async openUsbDevice(device: any): Promise<void> {
     await this.disconnect();
-    await device.open();
-    if (device.configuration === null) {
-      await device.selectConfiguration(1);
+
+    try {
+      await device.open();
+    } catch (err: any) {
+      if (err.name === 'SecurityError' || err.message?.includes('Access denied')) {
+        throw new Error(
+          `Access denied to USB device "${device.productName || 'Printer'}". Another program or OS driver may be using it.`,
+          { cause: err }
+        );
+      }
+      throw err;
     }
 
-    let interfaceNumber = 0;
-    let endpointOut = 1;
+    if (device.configuration === null) {
+      try {
+        await device.selectConfiguration(1);
+      } catch (err: any) {
+        console.warn(
+          '[WebPrinter] Could not select configuration 1, using active configuration:',
+          err
+        );
+      }
+    }
 
-    for (const iface of device.configuration.interfaces) {
+    let targetInterfaceNumber = 0;
+    let endpointOut = 1;
+    let foundEndpoint = false;
+
+    // Scan all interfaces and alternates to find an OUT bulk/interrupt endpoint
+    const interfaces = device.configuration?.interfaces || [];
+    for (const iface of interfaces) {
       for (const alt of iface.alternates) {
         for (const ep of alt.endpoints) {
           if (ep.direction === 'out') {
             endpointOut = ep.endpointNumber;
-            interfaceNumber = iface.interfaceNumber;
-            break;
+            targetInterfaceNumber = iface.interfaceNumber;
+            foundEndpoint = true;
+            if (ep.type === 'bulk') {
+              break;
+            }
           }
         }
+        if (foundEndpoint) break;
       }
+      if (foundEndpoint) break;
     }
 
-    await device.claimInterface(interfaceNumber);
+    try {
+      await device.claimInterface(targetInterfaceNumber);
+    } catch (claimErr: any) {
+      console.error('[WebPrinter] Failed to claim interface:', claimErr);
+      if (
+        claimErr.name === 'NetworkError' ||
+        claimErr.message?.includes('Unable to claim interface') ||
+        claimErr.name === 'SecurityError'
+      ) {
+        throw new Error(
+          `Unable to claim USB interface for "${device.productName || 'Printer'}". The OS print driver or usblp module may have locked it.`,
+          { cause: claimErr }
+        );
+      }
+      throw claimErr;
+    }
+
     this.usbDevice = device;
     this.usbEndpointOut = endpointOut;
     this.connectionType = 'usb';
+    console.info(
+      `[WebPrinter] Connected to USB printer: ${device.productName || 'Device'} (VID: 0x${device.vendorId?.toString(16)}, PID: 0x${device.productId?.toString(16)}) on ep ${endpointOut}`
+    );
   }
 
   private async openSerialPort(port: any, baudRate: number): Promise<void> {

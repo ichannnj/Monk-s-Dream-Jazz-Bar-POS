@@ -80,7 +80,7 @@ function playChimeSound() {
 }
 
 export const usePrinterStationStore = create<PrinterStationState>((set, get) => ({
-  isSupported: typeof navigator !== 'undefined' && 'serial' in navigator,
+  isSupported: typeof navigator !== 'undefined' && ('usb' in navigator || 'serial' in navigator),
   connectionStatus: 'DISCONNECTED',
   drawerStatus: 'IDLE',
   isLeader: false,
@@ -128,13 +128,24 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       await webSerialPrinter.requestAndConnect(get().baudRate);
       const portInfo = webSerialPrinter.getPortInfo();
       set({ connectionStatus: 'CONNECTED', portInfo });
-      get().addLog('success', 'USB Thermal Printer connected successfully');
-      toast.success('Thermal printer paired and online', { title: 'Hardware Connected' });
+      const deviceTitle = portInfo?.deviceName
+        ? `${portInfo.deviceName}${portInfo.manufacturerName ? ` (${portInfo.manufacturerName})` : ''}`
+        : 'USB Thermal Printer';
+      get().addLog('success', `${deviceTitle} connected successfully`);
+      toast.success(`${deviceTitle} paired and online`, { title: 'Hardware Connected' });
       return true;
     } catch (err: any) {
+      if (err.name === 'NotFoundError' || err.message?.includes('No device selected')) {
+        // User deliberately closed or cancelled the device chooser dialog
+        set({ connectionStatus: 'DISCONNECTED' });
+        get().addLog('info', 'Printer pairing cancelled by user');
+        return false;
+      }
+
       set({ connectionStatus: 'ERROR' });
-      get().addLog('error', `Connection failed: ${err.message || 'Access denied'}`);
-      toast.error(err.message || 'Failed to connect to printer', { title: 'Connection Error' });
+      const errorMsg = err.message || 'Access denied or printer unavailable';
+      get().addLog('error', `Connection failed: ${errorMsg}`);
+      toast.error(errorMsg, { title: 'Printer Connection Error' });
       return false;
     }
   },
@@ -305,7 +316,8 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
   },
 
   initStation: () => {
-    const isSupported = typeof navigator !== 'undefined' && 'serial' in navigator;
+    const isSupported =
+      typeof navigator !== 'undefined' && ('usb' in navigator || 'serial' in navigator);
     set({ isSupported });
 
     let activeLockRelease: (() => void) | null = null;
