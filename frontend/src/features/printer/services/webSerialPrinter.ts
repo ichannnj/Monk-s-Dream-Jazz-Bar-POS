@@ -122,15 +122,7 @@ export class WebSerialPrinterService {
     try {
       this.isConnecting = true;
 
-      // 1. Check local hardware bridge first (Linux native /dev/usb/lp0)
-      const bridgeConnected = await this.checkBridge();
-      if (bridgeConnected) {
-        this.connectionType = 'bridge';
-        console.info('[WebPrinter] Connected via Local Hardware Bridge (/dev/usb/lp0)');
-        return true;
-      }
-
-      // 2. Try WebUSB with previously authorized devices
+      // 1. Try WebUSB with previously authorized devices first (zero-prompt, no network errors)
       if (typeof navigator !== 'undefined' && 'usb' in navigator) {
         try {
           const usbDevices = await (navigator as any).usb.getDevices();
@@ -146,7 +138,7 @@ export class WebSerialPrinterService {
         }
       }
 
-      // 3. Fallback to Web Serial if previously paired
+      // 2. Fallback to Web Serial if previously paired
       if (typeof navigator !== 'undefined' && 'serial' in navigator) {
         try {
           const serialPorts = await (navigator as any).serial.getPorts();
@@ -156,6 +148,21 @@ export class WebSerialPrinterService {
           }
         } catch {
           // Silent fallback if Serial unavailable
+        }
+      }
+
+      // 3. Check local hardware bridge ONLY if explicitly enabled or on hardware station screen
+      const isBridgeEnabled =
+        typeof window !== 'undefined' &&
+        (localStorage.getItem('monks_enable_bridge_daemon') === 'true' ||
+          window.location?.search?.includes('mode=printer'));
+
+      if (isBridgeEnabled) {
+        const bridgeConnected = await this.checkBridge();
+        if (bridgeConnected) {
+          this.connectionType = 'bridge';
+          console.info('[WebPrinter] Connected via Local Hardware Bridge (/dev/usb/lp0)');
+          return true;
         }
       }
 
@@ -172,11 +179,18 @@ export class WebSerialPrinterService {
     try {
       this.isConnecting = true;
 
-      // 1. Check local hardware bridge
-      const bridgeConnected = await this.checkBridge();
-      if (bridgeConnected) {
-        this.connectionType = 'bridge';
-        return true;
+      // 1. Check local hardware bridge ONLY if explicitly enabled
+      const isBridgeEnabled =
+        typeof window !== 'undefined' &&
+        (localStorage.getItem('monks_enable_bridge_daemon') === 'true' ||
+          window.location?.search?.includes('mode=printer'));
+
+      if (isBridgeEnabled) {
+        const bridgeConnected = await this.checkBridge();
+        if (bridgeConnected) {
+          this.connectionType = 'bridge';
+          return true;
+        }
       }
 
       // 2. Primary: Direct WebUSB Device Chooser

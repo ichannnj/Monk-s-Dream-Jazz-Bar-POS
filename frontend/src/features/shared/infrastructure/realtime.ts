@@ -101,8 +101,8 @@ export class RealtimeGateway {
         if (oldChannel) {
           try {
             oldChannel.unsubscribe();
-          } catch (err) {
-            console.warn('[RealtimeGateway] Channel unsubscribe notice:', err);
+          } catch {
+            // Ignore normal unsubscribe notice
           }
           this.channels.delete(channelName);
         }
@@ -111,6 +111,23 @@ export class RealtimeGateway {
         listenersCopy.forEach((cb) => this.subscribeGlobalPOSRealtime(cb));
       }
     }, 2500);
+  }
+
+  private async safeSend(
+    channel: RealtimeChannel,
+    message: { type: 'broadcast'; event: string; payload: any }
+  ): Promise<any> {
+    try {
+      if (channel.state === 'joined') {
+        return await channel.send(message);
+      }
+      if (typeof (channel as any).httpSend === 'function') {
+        return await (channel as any).httpSend(message);
+      }
+      return await channel.send(message);
+    } catch {
+      // Non-fatal if offline
+    }
   }
 
   /**
@@ -367,7 +384,7 @@ export class RealtimeGateway {
           this.globalPosListeners.forEach((cb) => cb.onPosSyncNeeded?.(event.payload));
         })
         .subscribe((status, err) => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             console.warn(`[RealtimeGateway] pos_global_sync status: ${status}`, err);
             this.scheduleChannelReconnect(channelName);
           }
@@ -393,7 +410,7 @@ export class RealtimeGateway {
    */
   async broadcastTableTransfer(payload: TableTransferPayload): Promise<void> {
     const channel = this.channels.get('pos_global_sync') || supabase.channel('pos_global_sync');
-    await channel.send({
+    await this.safeSend(channel, {
       type: 'broadcast',
       event: 'station:table_transferred',
       payload,
@@ -411,7 +428,7 @@ export class RealtimeGateway {
         channel.subscribe();
         this.channels.set('pos_global_sync', channel);
       }
-      await channel.send({
+      await this.safeSend(channel, {
         type: 'broadcast',
         event: 'pos:sync_needed',
         payload: { reason, timestamp: new Date().toISOString() },
@@ -426,7 +443,7 @@ export class RealtimeGateway {
    */
   async broadcastBuzzout(payload: BuzzoutPayload): Promise<void> {
     const channel = supabase.channel('foh:runner_buzzout');
-    await channel.send({
+    await this.safeSend(channel, {
       type: 'broadcast',
       event: 'foh:buzzout',
       payload,
@@ -577,15 +594,11 @@ export class RealtimeGateway {
       channel = supabase.channel(channelName);
       this.channels.set(channelName, channel);
     }
-    try {
-      await channel.send({
-        type: 'broadcast',
-        event: 'chat:new_message',
-        payload,
-      });
-    } catch (err) {
-      console.warn('[RealtimeGateway] broadcastChatMessage exception:', err);
-    }
+    await this.safeSend(channel, {
+      type: 'broadcast',
+      event: 'chat:new_message',
+      payload,
+    });
   }
 
   /**
