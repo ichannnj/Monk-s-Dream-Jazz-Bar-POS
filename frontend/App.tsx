@@ -23,8 +23,8 @@ try {
 }
 
 export default function App() {
-  const { currentUser } = useAuthStore();
-  const { initRealtimeSync } = useOrderStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const initRealtimeSync = useOrderStore((s) => s.initRealtimeSync);
   const [adminView, setAdminView] = React.useState<'admin' | 'floor'>('admin');
 
   // Keep all stations synchronized with POS orders, venue settings and Team Chat in real-time

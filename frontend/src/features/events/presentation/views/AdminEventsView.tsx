@@ -24,6 +24,7 @@ import { TodaysEventBanner } from '../components/TodaysEventBanner';
 import { generateMonthScheduleIcs, triggerIcsDownload } from '../../utils/eventIcsExport';
 import { exportEventsScheduleToExcel } from '@/features/admin/utils/readingExcelExport';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { useWindowVisibilitySync } from '@/features/shared';
 
 export const AdminEventsView: React.FC = () => {
   const {
@@ -53,10 +54,18 @@ export const AdminEventsView: React.FC = () => {
     initRealtimeSubscription,
   } = useEventStore();
 
+  useWindowVisibilitySync(loadEvents);
+
   useEffect(() => {
     loadEvents();
+    const interval = setInterval(() => {
+      loadEvents();
+    }, 10000);
     const unsub = initRealtimeSubscription();
-    return () => unsub();
+    return () => {
+      clearInterval(interval);
+      unsub();
+    };
   }, [loadEvents, initRealtimeSubscription]);
 
   const currentPeriodTitle = () => {

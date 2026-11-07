@@ -336,6 +336,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
             .update({ is_occupied: false, updated_at: new Date().toISOString() })
             .eq('id', validTableId);
         }
+        realtimeGateway.broadcastPosSync('tab_closed');
       } catch (err) {
         console.warn('[closeEmptyTab] Background database close notice:', err);
       }

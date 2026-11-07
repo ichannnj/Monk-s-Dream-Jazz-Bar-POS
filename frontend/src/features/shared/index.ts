@@ -10,5 +10,6 @@ export * from './infrastructure/realtime';
 export * from './infrastructure/supabase';
 export * from './infrastructure/system.api';
 export * from './hooks/useResponsive';
+export * from './hooks/useWindowVisibilitySync';
 export * from './stores/useVenueStore';
 export * from './utils/printHelpers';

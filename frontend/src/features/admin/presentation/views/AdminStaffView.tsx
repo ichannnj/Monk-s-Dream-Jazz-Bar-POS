@@ -19,7 +19,12 @@ import { CreateUserAccountModal } from './staff/CreateUserAccountModal';
 import { CreateNonWorkflowStaffModal } from './staff/CreateNonWorkflowStaffModal';
 import { EditStaffModal } from './staff/EditStaffModal';
 import { ResetPinModal } from './staff/ResetPinModal';
-import { PosDropdown, PosDropdownOption } from '@/features/shared';
+import {
+  PosDropdown,
+  PosDropdownOption,
+  realtimeGateway,
+  useWindowVisibilitySync,
+} from '@/features/shared';
 
 interface AdminStaffViewProps {
   onRefresh?: () => void;
@@ -67,8 +72,26 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
     }
   };
 
+  // Auto-refresh when tab/screen is focused
+  useWindowVisibilitySync(loadStaff);
+
   useEffect(() => {
     loadStaff();
+
+    const interval = setInterval(() => {
+      loadStaff();
+    }, 10000);
+
+    const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
+      onUserChange: () => loadStaff(),
+      onAttendanceChange: () => loadStaff(),
+      onPosSyncNeeded: () => loadStaff(),
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsub();
+    };
   }, []);
 
   const handleToggleActiveStatus = async (member: StaffMemberAdmin) => {
@@ -76,6 +99,7 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
       await adminApi.updateStaffMember(member.id, {
         is_active: !member.is_active,
       });
+      realtimeGateway.broadcastPosSync('staff_status_toggled');
       toast.success(
         `${member.display_name} has been ${member.is_active ? 'deactivated' : 'reactivated'}.`,
         { title: 'Staff Status' }

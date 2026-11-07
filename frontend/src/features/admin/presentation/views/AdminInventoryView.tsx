@@ -40,7 +40,7 @@ import { StocktakeAuditModal } from './inventory/StocktakeAuditModal';
 import { WasteLoggerModal } from './inventory/WasteLoggerModal';
 import { QuickAdjustStockModal } from './inventory/QuickAdjustStockModal';
 import { AdminModal, AdminInput, AdminNumberInput } from '../components';
-import { PosDropdown, PosDropdownOption } from '@/features/shared';
+import { PosDropdown, PosDropdownOption, useWindowVisibilitySync } from '@/features/shared';
 import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 
 type InventoryTab = 'stock' | 'suppliers' | 'ledger' | 'stocktake' | 'waste';
@@ -147,8 +147,19 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
     loadSupportingData();
   }, [loadSupportingData]);
 
+  // Auto-refresh when tab/screen is focused
+  useWindowVisibilitySync(() => {
+    loadSupportingData();
+    onRefresh();
+  });
+
   // Real-time synchronization: quiet refresh when items are depleted on KDS ready, restocked, or adjusted
   useEffect(() => {
+    const heartbeat = setInterval(() => {
+      loadSupportingData();
+      onRefresh();
+    }, 10000);
+
     const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
       onInventoryChange: () => {
         loadSupportingData();
@@ -164,7 +175,10 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
       },
     });
 
-    return () => unsub();
+    return () => {
+      clearInterval(heartbeat);
+      unsub();
+    };
   }, [loadSupportingData, onRefresh]);
 
   const handleRefreshAll = () => {

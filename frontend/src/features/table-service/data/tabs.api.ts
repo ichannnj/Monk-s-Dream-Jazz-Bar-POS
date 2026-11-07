@@ -1,5 +1,6 @@
 import { supabase } from '../../shared/infrastructure/supabase';
 import { resolveTableUuid } from '../../floor/data/resolver';
+import { realtimeGateway } from '../../shared/infrastructure/realtime';
 
 export async function openTab(params: {
   tableId: string;
@@ -34,6 +35,8 @@ export async function openTab(params: {
         .update({ is_occupied: true, updated_at: new Date().toISOString() })
         .eq('id', validTableId);
     }
+
+    realtimeGateway.broadcastPosSync('tab_opened');
 
     return {
       id: data.id,
@@ -88,6 +91,8 @@ export async function createTab(params: {
         .update({ is_occupied: true, updated_at: new Date().toISOString() })
         .eq('id', validTableId);
     }
+
+    realtimeGateway.broadcastPosSync('tab_created');
 
     return data;
   } catch (err) {
@@ -169,6 +174,8 @@ export async function settleTabAndRecordPayment(params: {
       throw new Error(error.message || 'Failed to settle tab and record payment.');
     }
 
+    realtimeGateway.broadcastPosSync('payment_settled');
+
     return (data as any) || { success: true };
   } catch (err: any) {
     console.error('settleTabAndRecordPayment error:', err);
@@ -200,9 +207,11 @@ export async function completeOffPremiseTab(params: { tabId: string; staffId?: s
         .from('orders')
         .update({ status: 'COMPLETED', updated_at: new Date().toISOString() })
         .eq('tab_id', params.tabId);
+      realtimeGateway.broadcastPosSync('tab_completed');
       return { success: true };
     }
 
+    realtimeGateway.broadcastPosSync('tab_completed');
     return data || { success: true };
   } catch (err) {
     console.warn('completeOffPremiseTab error:', err);

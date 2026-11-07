@@ -17,6 +17,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { realtimeGateway, useWindowVisibilitySync } from '@/features/shared';
 import {
   adminApi,
   type ProductAdmin,
@@ -112,11 +113,35 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
     }
   }, []);
 
+  // Auto-refresh when tab/screen is focused
+  useWindowVisibilitySync(() => {
+    loadSupportingData();
+    loadProducts();
+  });
+
   useEffect(() => {
     loadSupportingData();
-    if (localProducts.length === 0) {
+    loadProducts();
+
+    const interval = setInterval(() => {
+      loadSupportingData();
       loadProducts();
-    }
+    }, 10000);
+
+    const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
+      onProductChange: () => loadProducts(),
+      onCategoryChange: () => loadSupportingData(),
+      onInventoryChange: () => loadSupportingData(),
+      onPosSyncNeeded: () => {
+        loadSupportingData();
+        loadProducts();
+      },
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsub();
+    };
   }, [loadSupportingData, loadProducts]);
 
   const handleRefreshAll = () => {

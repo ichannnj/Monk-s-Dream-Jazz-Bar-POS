@@ -1,4 +1,5 @@
 import { supabase } from '@/features/shared/infrastructure/supabase';
+import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 import type { Database } from '@monks/shared';
 
 export type OperatingMode = Database['public']['Enums']['operating_mode'];
@@ -374,6 +375,7 @@ export const adminApi = {
       console.error('[adminApi.setOperatingMode] Failed:', error);
       throw error;
     }
+    realtimeGateway.broadcastPosSync('operating_mode_switched');
   },
 
   async updateVenueSettings(updates: Partial<VenueSettings>): Promise<void> {
@@ -386,6 +388,7 @@ export const adminApi = {
       .eq('id', targetId);
 
     if (error) throw error;
+    realtimeGateway.broadcastPosSync('venue_settings_updated');
   },
 
   /**
@@ -1127,11 +1130,13 @@ export const adminApi = {
         delete insertRow.job_title;
         const retry = await (supabase.from('users') as any).insert(insertRow).select().single();
         if (retry.error) throw retry.error;
+        realtimeGateway.broadcastPosSync('staff_user_created');
         return retry.data as StaffMemberAdmin;
       }
       throw error;
     }
 
+    realtimeGateway.broadcastPosSync('staff_user_created');
     return data as StaffMemberAdmin;
   },
 
@@ -1180,9 +1185,11 @@ export const adminApi = {
       }
       const retry = await (supabase.from('users') as any).insert(fallbackRow).select().single();
       if (retry.error) throw retry.error;
+      realtimeGateway.broadcastPosSync('staff_member_created');
       return { ...retry.data, job_title: cleanTitle } as StaffMemberAdmin;
     }
 
+    realtimeGateway.broadcastPosSync('staff_member_created');
     return data as StaffMemberAdmin;
   },
 
@@ -1225,11 +1232,13 @@ export const adminApi = {
           .select()
           .single();
         if (retry.error) throw retry.error;
+        realtimeGateway.broadcastPosSync('staff_member_updated');
         return retry.data as StaffMemberAdmin;
       }
       throw error;
     }
 
+    realtimeGateway.broadcastPosSync('staff_member_updated');
     return data as StaffMemberAdmin;
   },
 
@@ -1251,6 +1260,7 @@ export const adminApi = {
       .eq('id', id);
 
     if (error) throw error;
+    realtimeGateway.broadcastPosSync('staff_pin_reset');
   },
 
   /**
@@ -1494,6 +1504,7 @@ export const adminApi = {
   }): Promise<TableAdmin> {
     const { data, error } = await supabase.from('tables').insert(table).select().single();
     if (error) throw error;
+    realtimeGateway.broadcastPosSync('table_created');
     return data as TableAdmin;
   },
 
@@ -1508,11 +1519,13 @@ export const adminApi = {
   ): Promise<void> {
     const { error } = await supabase.from('tables').update(updates).eq('id', id);
     if (error) throw error;
+    realtimeGateway.broadcastPosSync('table_updated');
   },
 
   async deleteTable(id: string): Promise<void> {
     const { error } = await supabase.from('tables').delete().eq('id', id);
     if (error) throw error;
+    realtimeGateway.broadcastPosSync('table_deleted');
   },
 
   async releaseTable(id: string): Promise<{ success: boolean; closedTabsCount: number }> {
@@ -1520,6 +1533,7 @@ export const adminApi = {
       p_table_id: id,
     });
     if (error) throw error;
+    realtimeGateway.broadcastPosSync('table_released');
     return (data as any) || { success: true, closedTabsCount: 0 };
   },
 

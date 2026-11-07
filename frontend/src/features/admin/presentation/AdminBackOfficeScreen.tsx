@@ -4,7 +4,7 @@ import { toast } from '@/features/shared/toast/useToastStore';
 import { SharedChatView } from '@/features/chat/presentation/SharedChatView';
 import { useResponsive } from '@/features/shared/hooks/useResponsive';
 import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
-import { useVenueStore } from '@/features/shared';
+import { useVenueStore, useWindowVisibilitySync } from '@/features/shared';
 import type { AdminRoute, DashboardTelemetry, TimeframeFilter } from '../domain/admin.types';
 import {
   adminApi,
@@ -112,6 +112,19 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
     loadData();
   }, [loadData]);
 
+  // Instant re-fetch on window focus / tab wake
+  useWindowVisibilitySync(() => {
+    loadData(timeframeRef.current, true);
+  });
+
+  // 10-Second Silent Background Self-Healing Heartbeat
+  useEffect(() => {
+    const heartbeat = setInterval(() => {
+      loadData(timeframeRef.current, true);
+    }, 10000);
+    return () => clearInterval(heartbeat);
+  }, [loadData]);
+
   // Realtime Centralized Event-Driven Sync (tables, tabs, orders, payments, drawer, inventory)
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -121,7 +134,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
     }
     debounceTimerRef.current = setTimeout(() => {
       loadData(timeframeRef.current, true);
-    }, 400);
+    }, 350);
   }, [loadData]);
 
   useEffect(() => {
@@ -131,6 +144,8 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       onOrderChange: () => triggerQuietRefresh(),
       onOrderItemChange: () => triggerQuietRefresh(),
       onProductChange: () => triggerQuietRefresh(),
+      onCategoryChange: () => triggerQuietRefresh(),
+      onUserChange: () => triggerQuietRefresh(),
       onPaymentChange: () => triggerQuietRefresh(),
       onInventoryChange: () => triggerQuietRefresh(),
       onStockMovementChange: () => triggerQuietRefresh(),

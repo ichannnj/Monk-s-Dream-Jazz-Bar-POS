@@ -16,7 +16,7 @@ import {
   FileSpreadsheet,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { printHtmlElement } from '@/features/shared';
+import { printHtmlElement, realtimeGateway, useWindowVisibilitySync } from '@/features/shared';
 import {
   adminApi,
   PH_MINIMUM_WAGE_DAILY,
@@ -208,8 +208,26 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
     }
   };
 
+  // Auto-refresh when tab/screen is focused
+  useWindowVisibilitySync(loadData);
+
   useEffect(() => {
     loadData();
+
+    const interval = setInterval(() => {
+      loadData();
+    }, 10000);
+
+    const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
+      onAttendanceChange: () => loadData(),
+      onUserChange: () => loadData(),
+      onPosSyncNeeded: () => loadData(),
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsub();
+    };
   }, [dateRange.start, dateRange.end]);
 
   // Single-day unified view mapping: merges staff roster with attendance rows

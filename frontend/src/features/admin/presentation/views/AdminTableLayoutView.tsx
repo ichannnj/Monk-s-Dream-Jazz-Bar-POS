@@ -13,7 +13,13 @@ import {
   Unlock,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { ConfirmationModal, PosDropdown, PosDropdownOption } from '@/features/shared';
+import {
+  ConfirmationModal,
+  PosDropdown,
+  PosDropdownOption,
+  realtimeGateway,
+  useWindowVisibilitySync,
+} from '@/features/shared';
 import { adminApi, type TableAdmin } from '../../data/admin.api';
 import { AdminModal, AdminInput, AdminNumberInput } from '../components';
 
@@ -61,8 +67,31 @@ export const AdminTableLayoutView: React.FC = () => {
     }
   };
 
+  // Instant auto-fetch when window/tab is focused or tablet screen wakes up
+  useWindowVisibilitySync(loadTables);
+
   useEffect(() => {
     loadTables();
+
+    // 10-second silent background self-healing heartbeat
+    const interval = setInterval(() => {
+      loadTables();
+    }, 10000);
+
+    // Instant Realtime WebSocket CDC subscription
+    const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
+      onTableChange: () => {
+        loadTables();
+      },
+      onPosSyncNeeded: () => {
+        loadTables();
+      },
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsub();
+    };
   }, [loadTables]);
 
   const handleOpenAdd = () => {

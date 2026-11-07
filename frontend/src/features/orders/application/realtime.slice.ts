@@ -20,28 +20,60 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
       get().hydrateFromSupabase();
       get().drainOfflineQueue();
 
-      // 2. Subscribe to centralized global realtime channels
+      // 2. Resilient Tier 3: 10s Silent Background Self-Healing Heartbeat
+      const heartbeatInterval = setInterval(() => {
+        get().hydrateFromSupabase();
+      }, 10000);
+
+      // 3. Resilient Tier 2: Instant Wakeup & Focus Revalidation (Zero latency on wake / tab return)
+      let removeVisibilityListeners = () => {};
+      if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+        const handleVisibilityOrFocus = () => {
+          if (document.visibilityState === 'visible') {
+            scheduleHydration(100);
+          }
+        };
+        document.addEventListener('visibilitychange', handleVisibilityOrFocus);
+        window.addEventListener('focus', handleVisibilityOrFocus);
+        removeVisibilityListeners = () => {
+          document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
+          window.removeEventListener('focus', handleVisibilityOrFocus);
+        };
+      }
+
+      // 4. Resilient Tier 1: Subscribe to centralized global realtime channels
       const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
         onTableChange: (payload) => {
           if (payload.new) {
             const updatedTable = payload.new;
-            set((state) => ({
-              tables: state.tables.map((t) =>
-                t.id === updatedTable.id || t.code === updatedTable.table_number
-                  ? {
-                      ...t,
-                      status: updatedTable.is_occupied
-                        ? t.status === 'empty'
-                          ? 'occupied'
-                          : t.status
-                        : 'empty',
-                      hasOpenCheck: updatedTable.is_occupied,
-                    }
-                  : t
-              ),
-            }));
+            set((state) => {
+              const tableExists = state.tables.some(
+                (t) => t.id === updatedTable.id || t.code === updatedTable.table_number
+              );
+              if (!tableExists || payload.eventType === 'INSERT') {
+                scheduleHydration(80);
+                return state;
+              }
+              return {
+                tables: state.tables.map((t) =>
+                  t.id === updatedTable.id || t.code === updatedTable.table_number
+                    ? {
+                        ...t,
+                        status: updatedTable.is_occupied
+                          ? t.status === 'empty'
+                            ? 'occupied'
+                            : t.status
+                          : 'empty',
+                        hasOpenCheck: updatedTable.is_occupied,
+                      }
+                    : t
+                ),
+              };
+            });
+          } else if (payload.eventType === 'DELETE') {
+            scheduleHydration(80);
           }
-          scheduleHydration();
+          scheduleHydration(150);
         },
 
         onTabChange: (payload) => {
@@ -341,6 +373,8 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
 
       return () => {
         if (hydrateTimer) clearTimeout(hydrateTimer);
+        clearInterval(heartbeatInterval);
+        removeVisibilityListeners();
         unsub();
       };
     },

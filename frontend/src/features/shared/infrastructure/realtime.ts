@@ -63,6 +63,8 @@ export interface GlobalRealtimeCallbacks {
   onOrderItemChange?: (payload: any) => void;
   onOrderChange?: (payload: any) => void;
   onProductChange?: (payload: any) => void;
+  onCategoryChange?: (payload: any) => void;
+  onUserChange?: (payload: any) => void;
   onTransferLog?: (payload: any) => void;
   onTableTransfer?: (payload: TableTransferPayload) => void;
   onBuzzout?: (payload: any) => void;
@@ -88,6 +90,28 @@ export interface ChatRealtimeCallbacks {
 export class RealtimeGateway {
   private channels: Map<string, RealtimeChannel> = new Map();
   private globalPosListeners: Set<GlobalRealtimeCallbacks> = new Set();
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+  private scheduleChannelReconnect(channelName: string) {
+    if (this.reconnectTimer) return;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      if (this.globalPosListeners.size > 0 && channelName === 'pos_global_sync') {
+        const oldChannel = this.channels.get(channelName);
+        if (oldChannel) {
+          try {
+            oldChannel.unsubscribe();
+          } catch (err) {
+            console.warn('[RealtimeGateway] Channel unsubscribe notice:', err);
+          }
+          this.channels.delete(channelName);
+        }
+        const listenersCopy = Array.from(this.globalPosListeners);
+        this.globalPosListeners.clear();
+        listenersCopy.forEach((cb) => this.subscribeGlobalPOSRealtime(cb));
+      }
+    }, 2500);
+  }
 
   /**
    * Subscribe to station-specific order items (KDS screens).
@@ -254,7 +278,11 @@ export class RealtimeGateway {
 
     if (!this.channels.has(channelName)) {
       const channel = supabase
-        .channel(channelName)
+        .channel(channelName, {
+          config: {
+            broadcast: { self: true },
+          },
+        })
         .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload) => {
           this.globalPosListeners.forEach((cb) => cb.onTableChange?.(payload));
         })
@@ -312,6 +340,16 @@ export class RealtimeGateway {
             this.globalPosListeners.forEach((cb) => cb.onAttendanceChange?.(payload));
           }
         )
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, (payload) => {
+          this.globalPosListeners.forEach((cb) => cb.onUserChange?.(payload));
+        })
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'categories' },
+          (payload) => {
+            this.globalPosListeners.forEach((cb) => cb.onCategoryChange?.(payload));
+          }
+        )
         .on(
           'postgres_changes',
           { event: 'INSERT', schema: 'public', table: 'waste_logs' },
@@ -328,7 +366,12 @@ export class RealtimeGateway {
         .on('broadcast', { event: 'pos:sync_needed' }, (event) => {
           this.globalPosListeners.forEach((cb) => cb.onPosSyncNeeded?.(event.payload));
         })
-        .subscribe();
+        .subscribe((status, err) => {
+          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+            console.warn(`[RealtimeGateway] pos_global_sync status: ${status}`, err);
+            this.scheduleChannelReconnect(channelName);
+          }
+        });
 
       this.channels.set(channelName, channel);
     }
@@ -362,7 +405,12 @@ export class RealtimeGateway {
    */
   async broadcastPosSync(reason: string): Promise<void> {
     try {
-      const channel = this.channels.get('pos_global_sync') || supabase.channel('pos_global_sync');
+      let channel = this.channels.get('pos_global_sync');
+      if (!channel) {
+        channel = supabase.channel('pos_global_sync');
+        channel.subscribe();
+        this.channels.set('pos_global_sync', channel);
+      }
       await channel.send({
         type: 'broadcast',
         event: 'pos:sync_needed',

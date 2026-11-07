@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
   Settings,
@@ -11,6 +11,7 @@ import {
   ExternalLink,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { realtimeGateway, useWindowVisibilitySync } from '@/features/shared';
 import { adminApi, type VenueSettings } from '../../data/admin.api';
 import { AdminInput } from '../components/AdminInput';
 import { AdminNumberInput } from '../components/AdminNumberInput';
@@ -43,38 +44,54 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
   const [kitchenPrinterIp, setKitchenPrinterIp] = useState('192.168.1.102');
   const [runnerPrinterIp, setRunnerPrinterIp] = useState('192.168.1.103');
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setIsLoading(true);
-      try {
-        const s = await adminApi.getVenueSettings();
-        setSettings(s);
-        setVenueName(s.venue_name || "Monk's Dream Jazz Bar");
-        setDailyOverhead((s.daily_overhead_cost || 150).toString());
-        setVatRate((s.vat_rate ?? 12).toString());
-        setVatInclusive(s.vat_inclusive ?? true);
-        setServiceChargeRate((s.service_charge_rate ?? 10).toString());
-        setServiceChargeEnabled(s.service_charge_enabled ?? true);
+  const fetchSettings = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const s = await adminApi.getVenueSettings();
+      setSettings(s);
+      setVenueName(s.venue_name || "Monk's Dream Jazz Bar");
+      setDailyOverhead((s.daily_overhead_cost || 150).toString());
+      setVatRate((s.vat_rate ?? 12).toString());
+      setVatInclusive(s.vat_inclusive ?? true);
+      setServiceChargeRate((s.service_charge_rate ?? 10).toString());
+      setServiceChargeEnabled(s.service_charge_enabled ?? true);
 
-        if (s.discounts_config) {
-          setSeniorPwdPercent((s.discounts_config.senior_pwd_percent ?? 20).toString());
-          setMusicianCompPercent((s.discounts_config.musician_comp_percent ?? 100).toString());
-          setStaffDiscountPercent((s.discounts_config.staff_discount_percent ?? 50).toString());
-        }
-
-        if (s.printer_routing_config) {
-          setBarPrinterIp(s.printer_routing_config.bar_printer_ip || '192.168.1.101');
-          setKitchenPrinterIp(s.printer_routing_config.kitchen_printer_ip || '192.168.1.102');
-          setRunnerPrinterIp(s.printer_routing_config.runner_printer_ip || '192.168.1.103');
-        }
-      } catch {
-        toast.error('Failed to load venue configurations', { title: 'Load Error' });
-      } finally {
-        setIsLoading(false);
+      if (s.discounts_config) {
+        setSeniorPwdPercent((s.discounts_config.senior_pwd_percent ?? 20).toString());
+        setMusicianCompPercent((s.discounts_config.musician_comp_percent ?? 100).toString());
+        setStaffDiscountPercent((s.discounts_config.staff_discount_percent ?? 50).toString());
       }
-    };
-    fetchSettings();
+
+      if (s.printer_routing_config) {
+        setBarPrinterIp(s.printer_routing_config.bar_printer_ip || '192.168.1.101');
+        setKitchenPrinterIp(s.printer_routing_config.kitchen_printer_ip || '192.168.1.102');
+        setRunnerPrinterIp(s.printer_routing_config.runner_printer_ip || '192.168.1.103');
+      }
+    } catch {
+      toast.error('Failed to load venue configurations', { title: 'Load Error' });
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useWindowVisibilitySync(fetchSettings);
+
+  useEffect(() => {
+    fetchSettings();
+
+    const interval = setInterval(() => {
+      fetchSettings();
+    }, 15000);
+
+    const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
+      onPosSyncNeeded: () => fetchSettings(),
+    });
+
+    return () => {
+      clearInterval(interval);
+      unsub();
+    };
+  }, [fetchSettings]);
 
   const handleSaveAll = async () => {
     setIsSaving(true);
