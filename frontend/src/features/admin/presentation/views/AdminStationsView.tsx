@@ -56,16 +56,10 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
     { role: string; icon: any; color: string; defaultTarget: string }
   > = {
     bar: {
-      role: 'Bartender & Cocktail Mixology',
+      role: 'Bartender & Barista (Spirits, Cocktails & Cafe)',
       icon: Wine,
       color: 'bg-amber-600',
-      defaultTarget: '10:00',
-    },
-    cafe: {
-      role: 'Espresso Bar & Teas',
-      icon: Coffee,
-      color: 'bg-stone-700',
-      defaultTarget: '06:00',
+      defaultTarget: '08:00',
     },
     kitchen: {
       role: 'Main Line Chef & Appetizers',
@@ -118,30 +112,14 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
       : [
           {
             id: 'bar',
-            name: 'Bar Counter',
-            role: 'Bartender & Cocktail Mixology',
+            name: 'Bar & Cafe Station',
+            role: 'Bartender & Barista (Spirits, Cocktails & Cafe)',
             icon: Wine,
             color: 'bg-amber-600',
             activeTickets: 0,
             avgTime: 'Idle',
             liveActiveTime: 'Idle',
-            targetTime: '10:00',
-            isOnline: false,
-            lateCount: 0,
-            completedCount: 0,
-            onTimeRate: 100,
-            stockoutCount: 0,
-          },
-          {
-            id: 'cafe',
-            name: 'Barista Espresso',
-            role: 'Espresso Bar & Teas',
-            icon: Coffee,
-            color: 'bg-stone-700',
-            activeTickets: 0,
-            avgTime: 'Idle',
-            liveActiveTime: 'Idle',
-            targetTime: '06:00',
+            targetTime: '08:00',
             isOnline: false,
             lateCount: 0,
             completedCount: 0,
@@ -464,26 +442,6 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
                     {st.lateCount}
                   </Text>
                   <Text className="text-[11px] text-stone-500">{st.onTimeRate}% on-time</Text>
-                </View>
-              </View>
-
-              {/* SLA Health Indicator Bar */}
-              <View className="mb-4">
-                <View className="flex-row items-center justify-between mb-1.5">
-                  <Text className="text-xs font-semibold text-stone-600">SLA Compliance</Text>
-                  <Text className="text-xs font-bold text-stone-800">{st.onTimeRate}%</Text>
-                </View>
-                <View className="h-2 w-full rounded-full bg-stone-200 overflow-hidden">
-                  <View
-                    className={`h-full rounded-full ${
-                      st.onTimeRate >= 90
-                        ? 'bg-emerald-500'
-                        : st.onTimeRate >= 75
-                          ? 'bg-amber-500'
-                          : 'bg-rose-500'
-                    }`}
-                    style={{ width: `${Math.min(100, Math.max(0, st.onTimeRate))}%` }}
-                  />
                 </View>
               </View>
 

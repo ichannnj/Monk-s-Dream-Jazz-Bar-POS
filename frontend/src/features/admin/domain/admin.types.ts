@@ -23,7 +23,7 @@ export interface BestSellerItem {
 }
 
 export interface StationTelemetry {
-  stationKey: 'bar' | 'cafe' | 'kitchen' | 'runner';
+  stationKey: 'bar' | 'kitchen' | 'runner' | 'floor';
   name: string;
   isOnline: boolean;
   targetTicketTime: string;

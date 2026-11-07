@@ -164,7 +164,6 @@ export function getLiveStationTurnaround(
 ): { avgTicketTime: string; liveActiveTime: string; lateTickets: number } {
   const slaSecondsMap: Record<string, number> = {
     runner: 180,
-    cafe: 360,
     bar: 600,
     kitchen: 900,
   };

@@ -495,11 +495,6 @@ export const adminTelemetryService = {
       let barLate = 0;
       const barTimestamps: string[] = [];
 
-      let cafeTickets = 0;
-      let cafeElapsedSum = 0;
-      let cafeLate = 0;
-      const cafeTimestamps: string[] = [];
-
       let kitchenTickets = 0;
       let kitchenElapsedSum = 0;
       let kitchenLate = 0;
@@ -519,25 +514,10 @@ export const adminTelemetryService = {
           (i: any) => i.status !== 'SERVED' && i.status !== 'CANCELLED'
         );
 
+        // Bar Station covers all bar & cafe beverages (cocktails, beers, wines, coffee, espresso, tea)
         const hasBar = activeItems.some((i: any) => {
-          const cat = (i.products?.categories?.name || '').toLowerCase();
           const target = i.station_target || '';
-          return (
-            target === 'bar' &&
-            !cat.includes('coffee') &&
-            !cat.includes('espresso') &&
-            !cat.includes('tea')
-          );
-        });
-
-        const hasCafe = activeItems.some((i: any) => {
-          const cat = (i.products?.categories?.name || '').toLowerCase();
-          const target = i.station_target || '';
-          return (
-            target === 'cafe' ||
-            (target === 'bar' &&
-              (cat.includes('coffee') || cat.includes('espresso') || cat.includes('tea')))
-          );
+          return target === 'bar' || target === 'cafe';
         });
 
         const hasKitchen = activeItems.some((i: any) => i.station_target === 'kitchen');
@@ -547,13 +527,7 @@ export const adminTelemetryService = {
           barTickets++;
           barElapsedSum += elapsedSec;
           barTimestamps.push(orderIso);
-          if (elapsedSec > 600) barLate++; // Target 10:00
-        }
-        if (hasCafe) {
-          cafeTickets++;
-          cafeElapsedSum += elapsedSec;
-          cafeTimestamps.push(orderIso);
-          if (elapsedSec > 360) cafeLate++; // Target 06:00
+          if (elapsedSec > 480) barLate++; // Unified Bar & Cafe Target 08:00
         }
         if (hasKitchen) {
           kitchenTickets++;
@@ -574,10 +548,6 @@ export const adminTelemetryService = {
       let barDoneSec = 0;
       let barDoneLate = 0;
 
-      let cafeDone = 0;
-      let cafeDoneSec = 0;
-      let cafeDoneLate = 0;
-
       let kitchenDone = 0;
       let kitchenDoneSec = 0;
       let kitchenDoneLate = 0;
@@ -587,7 +557,6 @@ export const adminTelemetryService = {
       let runnerDoneLate = 0;
 
       for (const item of completedItems) {
-        const cat = (item.products?.categories?.name || '').toLowerCase();
         const target = item.station_target || '';
         const endIso = item.delivered_at || item.updated_at || item.created_at;
         const startIso = item.created_at || item.orders?.created_at || endIso;
@@ -596,26 +565,13 @@ export const adminTelemetryService = {
           Math.floor((new Date(endIso).getTime() - new Date(startIso).getTime()) / 1000)
         );
 
-        const isBar =
-          target === 'bar' &&
-          !cat.includes('coffee') &&
-          !cat.includes('espresso') &&
-          !cat.includes('tea');
-        const isCafe =
-          target === 'cafe' ||
-          (target === 'bar' &&
-            (cat.includes('coffee') || cat.includes('espresso') || cat.includes('tea')));
+        const isBar = target === 'bar' || target === 'cafe';
         const isKitchen = target === 'kitchen';
 
         if (isBar) {
           barDone++;
           barDoneSec += durationSec;
-          if (durationSec > 600) barDoneLate++;
-        }
-        if (isCafe) {
-          cafeDone++;
-          cafeDoneSec += durationSec;
-          if (durationSec > 360) cafeDoneLate++;
+          if (durationSec > 480) barDoneLate++; // Target 08:00
         }
         if (isKitchen) {
           kitchenDone++;
@@ -674,41 +630,30 @@ export const adminTelemetryService = {
         activeOccupiedTables: occupiedTables,
       };
 
-      const totalCompletedTickets = barDone + cafeDone + kitchenDone + runnerDone;
-      const totalAllTickets =
-        totalCompletedTickets + barTickets + cafeTickets + kitchenTickets + runnerTickets;
+      const totalCompletedTickets = barDone + kitchenDone + runnerDone;
+      const totalAllTickets = totalCompletedTickets + barTickets + kitchenTickets + runnerTickets;
       const totalAllLate =
-        barDoneLate +
-        barLate +
-        cafeDoneLate +
-        cafeLate +
-        kitchenDoneLate +
-        kitchenLate +
-        runnerDoneLate +
-        runnerLate;
+        barDoneLate + barLate + kitchenDoneLate + kitchenLate + runnerDoneLate + runnerLate;
       const overallSlaPercent =
         totalAllTickets > 0
           ? Number((((totalAllTickets - totalAllLate) / totalAllTickets) * 100).toFixed(1))
           : 100;
 
       const stationSpeeds = [
-        { name: 'Bar Counter', sec: barDone > 0 ? barDoneSec / barDone : 99999 },
-        { name: 'Barista Espresso', sec: cafeDone > 0 ? cafeDoneSec / cafeDone : 99999 },
+        { name: 'Bar & Cafe', sec: barDone > 0 ? barDoneSec / barDone : 99999 },
         { name: 'Kitchen Hot Line', sec: kitchenDone > 0 ? kitchenDoneSec / kitchenDone : 99999 },
         { name: 'FOH Expediter', sec: runnerDone > 0 ? runnerDoneSec / runnerDone : 99999 },
       ];
       stationSpeeds.sort((a, b) => a.sec - b.sec);
-      const fastestStation =
-        stationSpeeds[0].sec < 99999 ? stationSpeeds[0].name : 'Barista Espresso';
+      const fastestStation = stationSpeeds[0].sec < 99999 ? stationSpeeds[0].name : 'Bar & Cafe';
 
       const stationLoads = [
-        { name: 'Bar Counter', count: barDone + barTickets },
-        { name: 'Barista Espresso', count: cafeDone + cafeTickets },
+        { name: 'Bar & Cafe', count: barDone + barTickets },
         { name: 'Kitchen Hot Line', count: kitchenDone + kitchenTickets },
         { name: 'FOH Expediter', count: runnerDone + runnerTickets },
       ];
       stationLoads.sort((a, b) => b.count - a.count);
-      const busiestStation = stationLoads[0].count > 0 ? stationLoads[0].name : 'Bar Counter';
+      const busiestStation = stationLoads[0].count > 0 ? stationLoads[0].name : 'Bar & Cafe';
 
       const stationsOverview: StationsOverviewTelemetry = {
         totalCompletedTickets,
@@ -741,9 +686,9 @@ export const adminTelemetryService = {
       const stations: StationTelemetry[] = [
         {
           stationKey: 'bar',
-          name: 'Bar Counter',
-          isOnline: isStationReallyOnline('bar'),
-          targetTicketTime: '10:00',
+          name: 'Bar & Cafe Station',
+          isOnline: isStationReallyOnline('bar') || isStationReallyOnline('cafe'),
+          targetTicketTime: '08:00',
           activeTickets: barTickets,
           avgTicketTime: barDone > 0 ? formatDuration(barDoneSec / barDone) : 'Idle',
           avgTicketSeconds: barDone > 0 ? Math.round(barDoneSec / barDone) : 0,
@@ -760,30 +705,7 @@ export const adminTelemetryService = {
             (i) =>
               i.name.toLowerCase().includes('bourbon') ||
               i.name.toLowerCase().includes('gin') ||
-              i.name.toLowerCase().includes('wine')
-          ).length,
-        },
-        {
-          stationKey: 'cafe',
-          name: 'Barista Espresso',
-          isOnline: isStationReallyOnline('cafe'),
-          targetTicketTime: '06:00',
-          activeTickets: cafeTickets,
-          avgTicketTime: cafeDone > 0 ? formatDuration(cafeDoneSec / cafeDone) : 'Idle',
-          avgTicketSeconds: cafeDone > 0 ? Math.round(cafeDoneSec / cafeDone) : 0,
-          completedTickets: cafeDone,
-          onTimeRate:
-            cafeDone + cafeTickets > 0
-              ? Math.round(
-                  ((cafeDone + cafeTickets - (cafeDoneLate + cafeLate)) /
-                    (cafeDone + cafeTickets)) *
-                    100
-                )
-              : 100,
-          lateTickets: cafeDoneLate + cafeLate,
-          activeTicketTimestamps: cafeTimestamps,
-          stockoutCount: lowStockItems.filter(
-            (i) =>
+              i.name.toLowerCase().includes('wine') ||
               i.name.toLowerCase().includes('milk') ||
               i.name.toLowerCase().includes('bean') ||
               i.name.toLowerCase().includes('syrup')

@@ -87,13 +87,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
 
   // Heartbeat tracking to report real station online status to PostgreSQL
   useEffect(() => {
-    const stationKey =
-      stationTarget === 'kitchen'
-        ? 'kitchen'
-        : (currentUser?.role || '').toLowerCase().includes('cafe') ||
-            (currentUser?.role || '').toLowerCase().includes('barista')
-          ? 'cafe'
-          : 'bar';
+    const stationKey = stationTarget === 'kitchen' ? 'kitchen' : 'bar';
 
     const sendHeartbeat = async (online: boolean) => {
       try {
