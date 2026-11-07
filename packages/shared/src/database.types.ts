@@ -450,6 +450,7 @@ export type Database = {
       order_items: {
         Row: {
           created_at: string
+          delivered_at: string | null
           id: string
           is_depleted: boolean
           modifiers: Json | null
@@ -467,6 +468,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivered_at?: string | null
           id?: string
           is_depleted?: boolean
           modifiers?: Json | null
@@ -484,6 +486,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivered_at?: string | null
           id?: string
           is_depleted?: boolean
           modifiers?: Json | null
@@ -512,6 +515,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -958,6 +968,7 @@ export type Database = {
           inventory_item_id: string
           product_id: string
           unit: string
+          variant_id: string | null
         }
         Insert: {
           amount: number
@@ -967,6 +978,7 @@ export type Database = {
           inventory_item_id: string
           product_id: string
           unit: string
+          variant_id?: string | null
         }
         Update: {
           amount?: number
@@ -976,6 +988,7 @@ export type Database = {
           inventory_item_id?: string
           product_id?: string
           unit?: string
+          variant_id?: string | null
         }
         Relationships: [
           {
@@ -990,6 +1003,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_ingredients_variant_id_fkey"
+            columns: ["variant_id"]
+            isOneToOne: false
+            referencedRelation: "product_variants"
             referencedColumns: ["id"]
           },
         ]
@@ -1788,6 +1808,7 @@ export type Database = {
           printer_routing_config: Json
           service_charge_enabled: boolean
           service_charge_rate: number
+          station_metrics_reset_at: string | null
           updated_at: string
           vat_inclusive: boolean
           vat_rate: number
@@ -1802,6 +1823,7 @@ export type Database = {
           printer_routing_config?: Json
           service_charge_enabled?: boolean
           service_charge_rate?: number
+          station_metrics_reset_at?: string | null
           updated_at?: string
           vat_inclusive?: boolean
           vat_rate?: number
@@ -1816,6 +1838,7 @@ export type Database = {
           printer_routing_config?: Json
           service_charge_enabled?: boolean
           service_charge_rate?: number
+          station_metrics_reset_at?: string | null
           updated_at?: string
           vat_inclusive?: boolean
           vat_rate?: number
@@ -1874,6 +1897,19 @@ export type Database = {
     }
     Functions: {
       admin_force_release_table: { Args: { p_table_id: string }; Returns: Json }
+      admin_quick_adjust_inventory_stock: {
+        Args: {
+          p_adjusted_by_id?: string
+          p_inventory_item_id: string
+          p_new_stock: number
+          p_reason?: string
+        }
+        Returns: Json
+      }
+      admin_update_inventory_par_level: {
+        Args: { p_inventory_item_id: string; p_new_par: number }
+        Returns: Json
+      }
       admin_upsert_attendance_record: {
         Args: {
           p_addon_pay: number
@@ -1896,7 +1932,11 @@ export type Database = {
       }
       authenticate_staff_pin: { Args: { p_pin: string }; Returns: Json }
       cancel_order_item_with_restoral: {
-        Args: { p_order_item_id: string; p_reason: string; p_staff_id: string }
+        Args: {
+          p_order_item_id: string
+          p_reason?: string
+          p_staff_id?: string
+        }
         Returns: Json
       }
       change_admin_override_pin: {
@@ -1916,6 +1956,7 @@ export type Database = {
         Returns: Json
       }
       check_unsettled_tabs: { Args: { p_drawer?: string }; Returns: Json }
+      clear_station_turnaround_reset: { Args: never; Returns: Json }
       close_shift_and_generate_y_reading: {
         Args: {
           p_counted_cash?: number
@@ -1979,6 +2020,7 @@ export type Database = {
         }
         Returns: Json
       }
+      mark_order_items_ready: { Args: { p_item_ids: string[] }; Returns: Json }
       punch_staff_timeclock: {
         Args: { p_action?: string; p_pin: string; p_username: string }
         Returns: Json
@@ -2008,6 +2050,10 @@ export type Database = {
           p_station_key: string
           p_user_id?: string
         }
+        Returns: Json
+      }
+      reset_station_turnaround_metrics: {
+        Args: { p_manager_pin: string }
         Returns: Json
       }
       settle_tab_and_record_payment: {
@@ -2125,6 +2171,7 @@ export type Database = {
         | "SPOILAGE_WASTE"
         | "STOCKTAKE_ADJUST"
         | "CANCEL_RESTORE"
+        | "MANUAL_ADJUST"
       tab_status: "OPEN" | "BILLED" | "CLOSED" | "CANCELLED"
       table_zone: "CAFE_AREA" | "BAR_AREA"
       waste_reason:
@@ -2331,6 +2378,7 @@ export const Constants = {
         "SPOILAGE_WASTE",
         "STOCKTAKE_ADJUST",
         "CANCEL_RESTORE",
+        "MANUAL_ADJUST",
       ],
       tab_status: ["OPEN", "BILLED", "CLOSED", "CANCELLED"],
       table_zone: ["CAFE_AREA", "BAR_AREA"],
