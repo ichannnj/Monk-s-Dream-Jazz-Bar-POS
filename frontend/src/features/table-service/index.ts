@@ -1,4 +1,5 @@
 export * from './presentation/TableActionModal';
+export * from './presentation/TableItemTransferModal';
 export * from './presentation/table-action/TableActionHeader';
 export * from './presentation/table-action/TableActionTabSelector';
 export * from './presentation/table-action/TableActionRoundList';

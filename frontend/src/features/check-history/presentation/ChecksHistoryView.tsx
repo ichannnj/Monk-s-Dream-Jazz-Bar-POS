@@ -547,10 +547,32 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                     {selectedCheck.serviceCharge > 0 && (
                       <View className="flex-row justify-between items-center">
                         <Text className="text-base font-semibold text-stone-600">
-                          10% Service Charge
+                          Service Charge
                         </Text>
                         <Text className="text-base font-bold text-stone-900">
                           {formatCurrency(selectedCheck.serviceCharge)}
+                        </Text>
+                      </View>
+                    )}
+
+                    {Boolean(selectedCheck.vatExemptSales && selectedCheck.vatExemptSales > 0) && (
+                      <View className="flex-row justify-between items-center">
+                        <Text className="text-base font-semibold text-amber-700">
+                          VAT-Exempt Sales (Senior/PWD)
+                        </Text>
+                        <Text className="text-base font-bold text-amber-800">
+                          {formatCurrency(selectedCheck.vatExemptSales || 0)}
+                        </Text>
+                      </View>
+                    )}
+
+                    {Boolean(selectedCheck.seniorPwdId) && (
+                      <View className="flex-row justify-between items-center py-1 px-2.5 bg-amber-50 rounded-lg border border-amber-200">
+                        <Text className="text-sm font-semibold text-amber-900">
+                          ID: {selectedCheck.seniorPwdId}
+                        </Text>
+                        <Text className="text-sm font-bold text-amber-900">
+                          {selectedCheck.seniorPwdName || 'Cardholder'}
                         </Text>
                       </View>
                     )}

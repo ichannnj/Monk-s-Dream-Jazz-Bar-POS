@@ -586,15 +586,23 @@ export type Database = {
           payment_channel: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           reference_number: string | null
+          senior_pwd_id: string | null
+          senior_pwd_name: string | null
+          service_charge: number
           staff_id: string | null
           tab_id: string
           tip_amount: number
+          vat_amount: number
+          vat_exempt_sales: number
+          vatableSales?: number
+          vatable_sales: number
         }
         Insert: {
           amount: number
           corkage_amount?: number
           created_at?: string
           discount_amount?: number
+          discount_type?: string | null
           drawer_target?: string
           id?: string
           notes?: string | null
@@ -602,15 +610,22 @@ export type Database = {
           payment_channel?: string | null
           payment_method: Database["public"]["Enums"]["payment_method"]
           reference_number?: string | null
+          senior_pwd_id?: string | null
+          senior_pwd_name?: string | null
+          service_charge?: number
           staff_id?: string | null
           tab_id: string
           tip_amount?: number
+          vat_amount?: number
+          vat_exempt_sales?: number
+          vatable_sales?: number
         }
         Update: {
           amount?: number
           corkage_amount?: number
           created_at?: string
           discount_amount?: number
+          discount_type?: string | null
           drawer_target?: string
           id?: string
           notes?: string | null
@@ -618,9 +633,15 @@ export type Database = {
           payment_channel?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method"]
           reference_number?: string | null
+          senior_pwd_id?: string | null
+          senior_pwd_name?: string | null
+          service_charge?: number
           staff_id?: string | null
           tab_id?: string
           tip_amount?: number
+          vat_amount?: number
+          vat_exempt_sales?: number
+          vatable_sales?: number
         }
         Relationships: [
           {
@@ -1800,8 +1821,10 @@ export type Database = {
       }
       venue_settings: {
         Row: {
+          cafe_food_service_charge_rate: number
           daily_overhead_cost: number
           discounts_config: Json
+          event_service_charge_rate: number
           id: string
           mode_switched_at: string
           operating_mode: Database["public"]["Enums"]["operating_mode"]
@@ -1815,8 +1838,10 @@ export type Database = {
           venue_name: string
         }
         Insert: {
+          cafe_food_service_charge_rate?: number
           daily_overhead_cost?: number
           discounts_config?: Json
+          event_service_charge_rate?: number
           id?: string
           mode_switched_at?: string
           operating_mode?: Database["public"]["Enums"]["operating_mode"]
@@ -1830,8 +1855,10 @@ export type Database = {
           venue_name?: string
         }
         Update: {
+          cafe_food_service_charge_rate?: number
           daily_overhead_cost?: number
           discounts_config?: Json
+          event_service_charge_rate?: number
           id?: string
           mode_switched_at?: string
           operating_mode?: Database["public"]["Enums"]["operating_mode"]

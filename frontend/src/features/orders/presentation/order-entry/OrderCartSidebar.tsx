@@ -12,7 +12,10 @@ export interface OrderCartSidebarProps {
   hasCorkage: boolean;
   corkageAmount: number;
   itemsSubtotal: number;
-  taxAmount: number;
+  serviceCharge: number;
+  serviceChargeLabel?: string;
+  vatAmount: number;
+  vatableSales?: number;
   grandTotal: number;
   onUpdateQuantity: (index: number, delta: number) => void;
   onToggleCorkage: (val: boolean) => void;
@@ -26,7 +29,10 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
   hasCorkage,
   corkageAmount,
   itemsSubtotal,
-  taxAmount,
+  serviceCharge,
+  serviceChargeLabel,
+  vatAmount,
+  vatableSales,
   grandTotal,
   onUpdateQuantity,
   onToggleCorkage,
@@ -259,9 +265,25 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
           </View>
         ) : null}
 
+        {/* Station & Mode-Aware Service Charge */}
         <View style={styles.summaryLine}>
-          <Text style={styles.summaryLabel}>Tax (10% VAT):</Text>
-          <Text style={styles.summaryValue}>{formatCurrency(taxAmount)}</Text>
+          <Text style={styles.summaryLabel}>{serviceChargeLabel || 'Service Charge:'}</Text>
+          <Text
+            style={[
+              styles.summaryValue,
+              serviceCharge > 0 ? { color: '#15803d', fontWeight: '700' } : null,
+            ]}
+          >
+            {serviceCharge > 0 ? `+${formatCurrency(serviceCharge)}` : formatCurrency(0)}
+          </Text>
+        </View>
+
+        {/* 12% VAT Breakdown (Inclusive Extraction) */}
+        <View style={styles.summaryLine}>
+          <Text style={[styles.summaryLabel, { color: '#64748b' }]}>VAT (12% Included):</Text>
+          <Text style={[styles.summaryValue, { color: '#64748b' }]}>
+            {formatCurrency(vatAmount)}
+          </Text>
         </View>
 
         <View style={[styles.summaryLine, styles.totalLine]}>

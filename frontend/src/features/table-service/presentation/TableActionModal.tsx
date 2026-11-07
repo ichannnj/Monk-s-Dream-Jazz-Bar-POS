@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, Modal, StyleSheet, ScrollView } from 'react-native';
-import { PlusCircle, Repeat, CreditCard, UtensilsCrossed, Trash2 } from 'lucide-react-native';
+import {
+  PlusCircle,
+  Repeat,
+  CreditCard,
+  UtensilsCrossed,
+  Trash2,
+  ArrowRightLeft,
+} from 'lucide-react-native';
 import { TableItem, OrderLineItem } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 import { useAuthStore } from '@/features/auth';
@@ -11,6 +18,7 @@ import { TableActionHeader } from './table-action/TableActionHeader';
 import { TableActionTabSelector } from './table-action/TableActionTabSelector';
 import { TableActionRoundList, RoundGroup } from './table-action/TableActionRoundList';
 import { TableActionVoidModal } from './table-action/TableActionVoidModal';
+import { TableItemTransferModal } from './TableItemTransferModal';
 
 interface TableActionModalProps {
   visible: boolean;
@@ -38,6 +46,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   const [itemToVoid, setItemToVoid] = useState<OrderLineItem | null>(null);
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
   const [isConfirmCloseEmptyOpen, setIsConfirmCloseEmptyOpen] = useState(false);
+  const [isItemTransferModalOpen, setIsItemTransferModalOpen] = useState(false);
 
   useEffect(() => {
     if (table) {
@@ -214,32 +223,44 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                   </Text>
                 </Pressable>
 
-                {/* 2 & 3. TAB MANAGEMENT: Split Tab & Transfer */}
+                {/* 2 & 3. TAB MANAGEMENT: Split Tab, Move Items & Transfer */}
                 <View className="flex-col sm:flex-row gap-2.5">
                   <Pressable
                     onPress={() => {
                       onClose();
                       onOpenNewTab(table);
                     }}
-                    className="flex-1 flex-row items-center justify-center gap-2 py-3 px-4 rounded-2xl border border-emerald-600 bg-emerald-50 active:bg-emerald-100 min-h-[48px]"
+                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-3 rounded-2xl border border-emerald-600 bg-emerald-50 active:bg-emerald-100 min-h-[48px]"
                     accessibilityRole="button"
                     accessibilityLabel="Open Split Tab"
                   >
                     <PlusCircle size={18} color="#15803d" strokeWidth={2.2} />
-                    <Text className="text-base font-bold text-emerald-800">+ Split Tab</Text>
+                    <Text className="text-sm font-bold text-emerald-800">+ Split Tab</Text>
                   </Pressable>
+
+                  {(currentTab?.items.length || 0) > 0 && (
+                    <Pressable
+                      onPress={() => setIsItemTransferModalOpen(true)}
+                      className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-3 rounded-2xl border border-amber-500 bg-amber-50 active:bg-amber-100 min-h-[48px]"
+                      accessibilityRole="button"
+                      accessibilityLabel="Move items to another tab"
+                    >
+                      <ArrowRightLeft size={18} color="#b45309" strokeWidth={2.2} />
+                      <Text className="text-sm font-bold text-amber-900">Move Items</Text>
+                    </Pressable>
+                  )}
 
                   <Pressable
                     onPress={() => {
                       onClose();
                       onTransferTable(table);
                     }}
-                    className="flex-1 flex-row items-center justify-center gap-2 py-3 px-4 rounded-2xl border border-wine-300 bg-wine-50 active:bg-wine-100 min-h-[48px]"
+                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-3 rounded-2xl border border-wine-300 bg-wine-50 active:bg-wine-100 min-h-[48px]"
                     accessibilityRole="button"
                     accessibilityLabel="Transfer Tab or Table"
                   >
                     <Repeat size={18} color="#641b2a" strokeWidth={2.2} />
-                    <Text className="text-base font-bold text-wine-900">Transfer Table</Text>
+                    <Text className="text-sm font-bold text-wine-900">Transfer Table</Text>
                   </Pressable>
                 </View>
 
@@ -291,6 +312,16 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
           onConfirmVoid={handleConfirmVoid}
         />
       ) : null}
+
+      {/* Item Transfer Modal */}
+      {isItemTransferModalOpen && (
+        <TableItemTransferModal
+          visible={isItemTransferModalOpen}
+          table={table}
+          sourceTabIndex={selectedTabIndex}
+          onClose={() => setIsItemTransferModalOpen(false)}
+        />
+      )}
 
       {/* Confirmation Modal for closing empty tab */}
       <ConfirmationModal

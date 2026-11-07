@@ -49,6 +49,13 @@ export interface OrderState {
     reason?: string
   ) => void;
   closeEmptyTab: (tableId: string, tabIndex: number) => void;
+  transferOrderItemsToTab: (
+    tableId: string,
+    sourceTabIndex: number,
+    targetTabIndex: number | 'new',
+    itemTransfers: Array<{ orderItemId: string; quantity: number }>,
+    newTabName?: string
+  ) => Promise<void>;
   settleTab: (
     tableId: string,
     tabIndex: number,
@@ -57,7 +64,17 @@ export interface OrderState {
     discountAmount?: number,
     staffId?: string,
     paymentChannel?: string,
-    referenceNumber?: string
+    referenceNumber?: string,
+    billingDetails?: {
+      serviceCharge?: number;
+      vatableSales?: number;
+      vatAmount?: number;
+      vatExemptSales?: number;
+      discountType?: string;
+      seniorPwdId?: string;
+      seniorPwdName?: string;
+      grossSubtotal?: number;
+    }
   ) => void;
   settleTableGroup: (
     tableId: string,
@@ -77,6 +94,13 @@ export interface OrderState {
       staffId?: string;
       paymentChannel?: string;
       referenceNumber?: string;
+      serviceCharge?: number;
+      vatableSales?: number;
+      vatAmount?: number;
+      vatExemptSales?: number;
+      discountType?: string;
+      seniorPwdId?: string;
+      seniorPwdName?: string;
     }
   ) => void;
   createTakeoutOrder: (

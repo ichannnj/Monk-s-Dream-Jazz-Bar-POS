@@ -57,32 +57,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setIsOnline: (isOnline) => set({ isOnline }),
   setIsTrainingMode: (isTrainingMode) => set({ isTrainingMode }),
   lockTerminal: () => {
-    // Lock screen locally without terminating or pausing attendance shift
+    // End active workstation session locally without mutating attendance
     set({ currentUser: null });
-    toast.info('Terminal locked. Active shift continues in background.', {
-      title: 'Terminal Locked',
+    toast.info('Terminal locked / signed out.', {
+      title: 'Session Ended',
     });
   },
   logout: () => {
-    const user = get().currentUser;
-    // Auto-record punch pause for operational POS users (exempts admin/managers)
-    if (user && user.role !== 'admin') {
-      authApi
-        .recordPosStaffLogoutPunch(user.id)
-        .then((res) => {
-          if (res?.success && !res.exempt) {
-            const hrs = res.totalHours !== undefined ? `${res.totalHours.toFixed(2)}h` : '';
-            toast.info(
-              `Shift paused for ${user.displayName || user.username}. ${hrs ? `Accumulated: ${hrs}` : ''}`,
-              { title: 'Timeclock Paused' }
-            );
-          }
-        })
-        .catch((err) => {
-          console.warn('Auto logout punch error:', err);
-        });
-    }
-
+    // End active workstation session locally without mutating attendance
     set({ currentUser: null });
   },
 }));

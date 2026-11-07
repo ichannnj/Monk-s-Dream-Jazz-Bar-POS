@@ -12,6 +12,9 @@ interface VenueState {
   operatingMode: OperatingMode;
   venueName: string;
   modeSwitchedAt: string | null;
+  cafeFoodServiceChargeRate: number;
+  eventServiceChargeRate: number;
+  serviceChargeEnabled: boolean;
   isInitialized: boolean;
   setOperatingMode: (mode: OperatingMode) => Promise<void>;
   fetchVenueSettings: () => Promise<void>;
@@ -22,6 +25,9 @@ export const useVenueStore = create<VenueState>((set, get) => ({
   operatingMode: 'CAFE',
   venueName: "Monk's Dream Jazz Bar",
   modeSwitchedAt: null,
+  cafeFoodServiceChargeRate: 10,
+  eventServiceChargeRate: 10,
+  serviceChargeEnabled: true,
   isInitialized: false,
 
   setOperatingMode: async (mode: OperatingMode) => {
@@ -45,6 +51,9 @@ export const useVenueStore = create<VenueState>((set, get) => ({
         operatingMode: settings.operating_mode || 'CAFE',
         venueName: settings.venue_name || "Monk's Dream Jazz Bar",
         modeSwitchedAt: settings.mode_switched_at || settings.updated_at || null,
+        cafeFoodServiceChargeRate: settings.cafe_food_service_charge_rate ?? 10,
+        eventServiceChargeRate: settings.event_service_charge_rate ?? 10,
+        serviceChargeEnabled: settings.service_charge_enabled ?? true,
         isInitialized: true,
       });
     } catch (err) {

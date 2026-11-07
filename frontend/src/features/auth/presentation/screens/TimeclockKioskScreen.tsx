@@ -21,6 +21,7 @@ import {
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { posApi } from '@/features/shared/infrastructure/api';
+import { realtimeGateway } from '@/features/shared';
 import { PinCodeInput } from '../components/PinCodeInput';
 
 const JAZZ_HERO_IMAGE = require('../../../../../assets/images/jazz-club-stage.jpg');
@@ -99,6 +100,13 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
       try {
         const res = await posApi.punchStaffTimeclock(cleanUser, cleanPin, 'AUTO');
         setPunchResult(res);
+
+        // Notify all open terminals & admin dashboards in realtime
+        try {
+          realtimeGateway.broadcastPosSync('timeclock_punch');
+        } catch (syncErr) {
+          console.warn('[TimeclockKiosk] Realtime broadcast error:', syncErr);
+        }
 
         const isClockIn = res.actionTaken === 'CLOCKED_IN';
         toast.success(
@@ -284,11 +292,13 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
                       </Text>
                       <Text className="text-sm text-stone-500">
                         {punchResult.actionTaken === 'CLOCKED_IN'
-                          ? `Started: ${new Date(punchResult.clockInAt).toLocaleTimeString()}`
+                          ? `Started: ${new Date(punchResult.clockInAt).toLocaleTimeString()}${punchResult.hoursWorked > 0 ? ` (Resumed · ${punchResult.hoursWorked}h prior)` : ''}`
                           : `Finished: ${new Date(punchResult.clockOutAt).toLocaleTimeString()} (${punchResult.hoursWorked} hrs)`}
                       </Text>
                       <Text className="text-sm font-bold text-stone-800">
-                        Shift Base: ₱{Number(punchResult.baseDailyPay).toFixed(2)}
+                        {punchResult.isAdmin || punchResult.user?.role === 'admin'
+                          ? 'Payroll Exempt'
+                          : `Shift Base: ₱${Number(punchResult.baseDailyPay).toFixed(2)}`}
                       </Text>
                     </View>
                   </View>

@@ -26,6 +26,13 @@ export const checksApi = {
           corkage_amount,
           discount_amount,
           tip_amount,
+          service_charge,
+          vatable_sales,
+          vat_amount,
+          vat_exempt_sales,
+          discount_type,
+          senior_pwd_id,
+          senior_pwd_name,
           notes,
           drawer_target,
           created_at,
@@ -147,12 +154,31 @@ export const checksApi = {
         const discountAmount = Number(p.discount_amount || 0);
         const corkageFee = Number(p.corkage_amount || 0);
 
-        // PH Fiscal Standard: 10% Service Charge on Dine-In, 12% VAT inclusive
+        // Philippine Statutory Tax & Service Charge: Use stored values from settlement, or fall back
+        const storedSc =
+          p.service_charge !== null && p.service_charge !== undefined
+            ? Number(p.service_charge)
+            : null;
+        const storedVat =
+          p.vat_amount !== null && p.vat_amount !== undefined ? Number(p.vat_amount) : null;
+        const storedVatable =
+          p.vatable_sales !== null && p.vatable_sales !== undefined
+            ? Number(p.vatable_sales)
+            : null;
+        const vatExemptSales = Number(p.vat_exempt_sales || 0);
+
         const netBase = Math.max(0, total - corkageFee);
-        const serviceCharge =
+        const fallbackSc =
           orderType === 'dine_in' && total > 0 ? Number(((netBase * 0.1) / 1.1).toFixed(2)) : 0;
-        const vatableSales = Number(((netBase - serviceCharge) / 1.12).toFixed(2));
-        const vatAmount = Number((netBase - serviceCharge - vatableSales).toFixed(2));
+        const serviceCharge = storedSc !== null ? storedSc : fallbackSc;
+        const vatableSales =
+          storedVatable !== null
+            ? storedVatable
+            : Number(((netBase - serviceCharge) / 1.12).toFixed(2));
+        const vatAmount =
+          storedVat !== null
+            ? storedVat
+            : Number((netBase - serviceCharge - vatableSales).toFixed(2));
         const subtotal = netBase + discountAmount;
 
         const dateObj = new Date(p.created_at);
@@ -177,7 +203,11 @@ export const checksApi = {
           corkageFee,
           vatableSales,
           vatAmount,
+          vatExemptSales,
           serviceCharge,
+          discountType: p.discount_type || undefined,
+          seniorPwdId: p.senior_pwd_id || undefined,
+          seniorPwdName: p.senior_pwd_name || undefined,
           total,
           paymentMethod: p.payment_method || 'CASH',
           paymentChannel: p.payment_channel || undefined,

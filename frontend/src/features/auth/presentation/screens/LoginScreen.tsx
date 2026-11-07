@@ -188,7 +188,7 @@ export const LoginScreen: React.FC = () => {
           toast.success(
             `Welcome, ${result.user.displayName}! Role: ${result.user.role.toUpperCase()}`,
             {
-              title: isTraining ? 'Sandbox Mode Active' : 'Staff Clock-In Successful',
+              title: isTraining ? 'Sandbox Mode Active' : 'POS Sign-In Successful',
             }
           );
           return;
@@ -321,7 +321,7 @@ export const LoginScreen: React.FC = () => {
                 <Text style={styles.formTitle}>
                   {authMode === 'admin'
                     ? 'Administrator Back-Office Portal'
-                    : 'Staff Login & Attendance'}
+                    : 'Floor & Station POS Sign-In'}
                 </Text>
               </View>
 
@@ -501,7 +501,7 @@ export const LoginScreen: React.FC = () => {
                     ]}
                     accessibilityRole="button"
                     accessibilityLabel={
-                      authMode === 'admin' ? 'Sign In as Administrator' : 'Clock In'
+                      authMode === 'admin' ? 'Sign In as Administrator' : 'Sign In to POS'
                     }
                   >
                     <Text style={styles.clockInButtonText}>
@@ -509,7 +509,7 @@ export const LoginScreen: React.FC = () => {
                         ? 'Verifying...'
                         : authMode === 'admin'
                           ? 'Sign In to Admin Console'
-                          : 'Clock - In'}
+                          : 'Sign In to POS'}
                     </Text>
                   </Pressable>
                 </Animated.View>

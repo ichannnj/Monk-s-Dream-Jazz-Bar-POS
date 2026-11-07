@@ -9,6 +9,8 @@ import { tablesApi } from '../../table-service/data/tables.api';
 import { deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
+import { useVenueStore } from '../../shared/stores/useVenueStore';
+import { calculateTabBilling, PricingLineItem } from '../utils/taxAndDiscountCalculator';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { resolveTableUuid } from '../../floor/data/resolver';
@@ -22,7 +24,17 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
     discountAmount = 0,
     staffId?: string,
     paymentChannel?: string,
-    referenceNumber?: string
+    referenceNumber?: string,
+    billingDetails?: {
+      serviceCharge?: number;
+      vatableSales?: number;
+      vatAmount?: number;
+      vatExemptSales?: number;
+      discountType?: string;
+      seniorPwdId?: string;
+      seniorPwdName?: string;
+      grossSubtotal?: number;
+    }
   ) => {
     let grandTotalPaid = 0;
     let targetTabRef: CustomerTab | undefined;
@@ -36,10 +48,23 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
 
       const targetTab = table.tabs?.find((t) => t.tabIndex === tabIndex);
       targetTabRef = targetTab;
-      const subtotal = targetTab?.totalAmount || 0;
-      const netSubtotal = Math.max(0, subtotal - discountAmount);
-      const tax = netSubtotal * 0.1;
-      const grandTotal = netSubtotal + tax;
+      const subtotal = billingDetails?.grossSubtotal ?? (targetTab?.totalAmount || 0);
+      const effectiveDiscount = discountAmount > 0 ? discountAmount : 0;
+      const serviceCharge = billingDetails?.serviceCharge || 0;
+
+      // Philippine VAT-inclusive calculation
+      const vatableSales =
+        billingDetails?.vatableSales ?? Number(((subtotal - effectiveDiscount) / 1.12).toFixed(2));
+      const vatAmount =
+        billingDetails?.vatAmount ??
+        Number((subtotal - effectiveDiscount - vatableSales).toFixed(2));
+
+      const grandTotal =
+        billingDetails?.grossSubtotal !== undefined
+          ? ((billingDetails as any).totalAmountDue ??
+            Math.max(0, subtotal - effectiveDiscount + serviceCharge))
+          : Math.max(0, subtotal - effectiveDiscount + serviceCharge);
+
       grandTotalPaid = grandTotal;
 
       // Create Check record
@@ -50,8 +75,8 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         tableOrRef: `Table ${table.code}`,
         guestName: targetTab?.guestName || `Tab #${tabIndex}`,
         itemsCount: targetTab?.items.length || 1,
-        subtotal: netSubtotal,
-        tax: tax,
+        subtotal: subtotal,
+        tax: vatAmount,
         total: grandTotal,
         paymentMethod: paymentMethod,
         paymentChannel,
@@ -163,6 +188,13 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
             notes: `Settled by ${effectiveCashierName}`,
             paymentChannel,
             referenceNumber,
+            serviceCharge: billingDetails?.serviceCharge,
+            vatableSales: billingDetails?.vatableSales,
+            vatAmount: billingDetails?.vatAmount,
+            vatExemptSales: billingDetails?.vatExemptSales,
+            discountType: billingDetails?.discountType,
+            seniorPwdId: billingDetails?.seniorPwdId,
+            seniorPwdName: billingDetails?.seniorPwdName,
           });
           realtimeGateway.broadcastPosSync('tab_settled');
         }
@@ -190,12 +222,34 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       if (!table) return state;
 
       tabsToSettle = [...(table.tabs || [])];
-      const subtotal = table.totalAmount || 0;
-      const tax = subtotal * 0.1;
-      const grandTotal = subtotal + tax;
-
+      const venueState = useVenueStore.getState();
       const allItems: OrderLineItem[] = [];
-      table.tabs?.forEach((tab) => allItems.push(...tab.items));
+      table.tabs?.forEach((tab) => allItems.push(...(tab.items || [])));
+
+      const totalCorkage = (table.tabs || []).reduce((acc, tab) => {
+        return acc + (tab.hasCorkageFee ? tab.corkageAmount || 0 : 0);
+      }, 0);
+
+      const pricingItems: PricingLineItem[] = allItems.map((it) => ({
+        id: it.id,
+        productName: it.productName,
+        unitPrice: it.unitPrice,
+        quantity: it.quantity,
+        stationTarget: it.stationTarget || 'kitchen',
+      }));
+
+      const billing = calculateTabBilling(pricingItems, {
+        operatingMode: venueState.operatingMode || 'CAFE',
+        orderType: 'DINE_IN',
+        serviceChargeEnabled: venueState.serviceChargeEnabled,
+        cafeFoodServiceChargeRate: venueState.cafeFoodServiceChargeRate,
+        eventServiceChargeRate: venueState.eventServiceChargeRate,
+        corkageAmount: totalCorkage,
+      });
+
+      const subtotal = billing.grossSubtotal;
+      const tax = billing.vatAmount;
+      const grandTotal = billing.totalAmountDue;
 
       const newCheck: CheckItem = {
         id: `chk-${Date.now()}`,
@@ -344,6 +398,13 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       staffId?: string;
       paymentChannel?: string;
       referenceNumber?: string;
+      serviceCharge?: number;
+      vatableSales?: number;
+      vatAmount?: number;
+      vatExemptSales?: number;
+      discountType?: string;
+      seniorPwdId?: string;
+      seniorPwdName?: string;
     }
   ) => {
     const completeOrder = Boolean(options?.completeOrder);
@@ -368,8 +429,11 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       targetOrderRef = targetOrder;
       const subtotal = targetOrder.total || 0;
       const netSubtotal = Math.max(0, subtotal - discountAmount);
-      const tax = netSubtotal * 0.1;
-      const grandTotal = netSubtotal + tax;
+
+      // Philippine VAT-inclusive extraction
+      const vatableSales = options?.vatableSales ?? Number((netSubtotal / 1.12).toFixed(2));
+      const vatAmount = options?.vatAmount ?? Number((netSubtotal - vatableSales).toFixed(2));
+      const grandTotal = netSubtotal;
       grandTotalPaid = grandTotal;
 
       const newCheck: CheckItem = {
@@ -380,7 +444,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         guestName: targetOrder.customerName || 'Walk-in Guest',
         itemsCount: targetOrder.items.length || 1,
         subtotal: netSubtotal,
-        tax,
+        tax: vatAmount,
         total: grandTotal,
         paymentMethod,
         paymentChannel,
@@ -495,6 +559,13 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
             keepOpenForPrep: !completeOrder,
             paymentChannel,
             referenceNumber,
+            serviceCharge: options?.serviceCharge,
+            vatableSales: options?.vatableSales,
+            vatAmount: options?.vatAmount,
+            vatExemptSales: options?.vatExemptSales,
+            discountType: options?.discountType,
+            seniorPwdId: options?.seniorPwdId,
+            seniorPwdName: options?.seniorPwdName,
           });
           realtimeGateway.broadcastPosSync('takeout_settled');
         }

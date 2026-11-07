@@ -12,6 +12,11 @@ import { formatCurrency } from '@monks/shared';
 
 import { toast } from '@/features/shared/toast/useToastStore';
 import { useAuthStore } from '@/features/auth';
+import { useVenueStore } from '@/features/shared/stores/useVenueStore';
+import {
+  calculateTabBilling,
+  PricingLineItem,
+} from '@/features/checkout/utils/taxAndDiscountCalculator';
 import { menuApi } from '@/features/menu/data/menu.api';
 import { AdminItemImageModal } from '../admin-item-image/AdminItemImageModal';
 import { ConfirmationModal, useResponsive } from '@/features/shared';
@@ -25,6 +30,7 @@ export interface OrderEntryModalProps {
   visible: boolean;
   title: string; // e.g. "Table B1 • Tab: Miles" or "Takeout #T-105"
   roundNumber?: number;
+  orderType?: 'dine_in' | 'takeout' | 'online';
   initialItems?: OrderLineItem[];
   previousTabItems?: OrderLineItem[];
   hasExistingCorkage?: boolean;
@@ -36,6 +42,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   visible,
   title,
   roundNumber,
+  orderType,
   initialItems = [],
   previousTabItems = [],
   hasExistingCorkage = false,
@@ -128,7 +135,18 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     }
   };
 
-  // Pricing calculations
+  // Pricing calculations (Philippine VAT inclusive + Station-aware service charge)
+  const { operatingMode, serviceChargeEnabled, cafeFoodServiceChargeRate, eventServiceChargeRate } =
+    useVenueStore();
+
+  const isDineIn =
+    orderType === 'dine_in' ||
+    (!orderType &&
+      !title.toLowerCase().includes('takeout') &&
+      !title.toLowerCase().includes('delivery') &&
+      !title.toLowerCase().includes('foodpanda') &&
+      !title.toLowerCase().includes('grabfood'));
+
   const itemsSubtotal = useMemo(() => {
     return cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
   }, [cartItems]);
@@ -137,13 +155,57 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     return hasCorkage ? itemsSubtotal * 0.2 : 0;
   }, [hasCorkage, itemsSubtotal]);
 
-  const taxAmount = useMemo(() => {
-    return (itemsSubtotal + corkageAmount) * 0.1;
-  }, [itemsSubtotal, corkageAmount]);
+  const billingResult = useMemo(() => {
+    const pricingItems: PricingLineItem[] = cartItems.map((ci) => ({
+      id: ci.id,
+      productName: ci.productName,
+      unitPrice: ci.unitPrice,
+      quantity: ci.quantity,
+      stationTarget: ci.stationTarget || 'kitchen',
+    }));
 
-  const grandTotal = useMemo(() => {
-    return itemsSubtotal + corkageAmount + taxAmount;
-  }, [itemsSubtotal, corkageAmount, taxAmount]);
+    return calculateTabBilling(pricingItems, {
+      operatingMode,
+      orderType: isDineIn ? 'DINE_IN' : 'TAKEOUT',
+      serviceChargeEnabled,
+      cafeFoodServiceChargeRate,
+      eventServiceChargeRate,
+      corkageAmount,
+    });
+  }, [
+    cartItems,
+    operatingMode,
+    isDineIn,
+    serviceChargeEnabled,
+    cafeFoodServiceChargeRate,
+    eventServiceChargeRate,
+    corkageAmount,
+  ]);
+
+  const serviceCharge = billingResult.serviceCharge;
+  const vatAmount = billingResult.vatAmount;
+  const vatableSales = billingResult.vatableSales;
+  const grandTotal = billingResult.totalAmountDue;
+
+  const serviceChargeLabel = useMemo(() => {
+    if (!isDineIn) return 'Service Charge (Takeout 0%):';
+    if (!serviceChargeEnabled) return 'Service Charge (Disabled):';
+    if (operatingMode === 'CAFE') {
+      const hasFood = cartItems.some((ci) => ci.stationTarget === 'kitchen');
+      const hasBar = cartItems.some((ci) => ci.stationTarget === 'bar');
+      if (hasFood && !hasBar) return `Service Charge (${cafeFoodServiceChargeRate}% Food):`;
+      if (!hasFood && hasBar) return 'Service Charge (Cafe Drinks 0%):';
+      return `Service Charge (${cafeFoodServiceChargeRate}% Food / 0% Drinks):`;
+    }
+    return `Service Charge (${eventServiceChargeRate}% Event):`;
+  }, [
+    isDineIn,
+    serviceChargeEnabled,
+    operatingMode,
+    cartItems,
+    cafeFoodServiceChargeRate,
+    eventServiceChargeRate,
+  ]);
 
   // Handle item click: Open customizer if has variants or modifiers, else quick-add
   const handleItemClick = (item: MenuItem) => {
@@ -423,7 +485,10 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
                 hasCorkage={hasCorkage}
                 corkageAmount={corkageAmount}
                 itemsSubtotal={itemsSubtotal}
-                taxAmount={taxAmount}
+                serviceCharge={serviceCharge}
+                serviceChargeLabel={serviceChargeLabel}
+                vatAmount={vatAmount}
+                vatableSales={vatableSales}
                 grandTotal={grandTotal}
                 onUpdateQuantity={updateQuantity}
                 onToggleCorkage={handleToggleCorkage}

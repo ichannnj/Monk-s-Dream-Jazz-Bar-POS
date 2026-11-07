@@ -16,6 +16,7 @@ CREATE OR REPLACE FUNCTION public.dispatch_order_round_atomic(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_order RECORD;
@@ -156,6 +157,7 @@ CREATE OR REPLACE FUNCTION public.settle_tab_and_record_payment(
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   v_tab RECORD;

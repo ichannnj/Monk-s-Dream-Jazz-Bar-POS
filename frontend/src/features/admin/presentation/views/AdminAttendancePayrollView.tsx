@@ -19,6 +19,7 @@ import { toast } from '@/features/shared/toast/useToastStore';
 import { printHtmlElement, realtimeGateway, useWindowVisibilitySync } from '@/features/shared';
 import {
   adminApi,
+  getManilaBusinessDateString,
   PH_MINIMUM_WAGE_DAILY,
   type AttendanceRecordAdmin,
   type StaffMemberAdmin,
@@ -72,25 +73,30 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
   const [statusFilter, setStatusFilter] = useState<ShiftStatusFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Selected date / week / month state
+  // Selected date / week / month state (anchored to Manila 6:00 AM business day)
   const [selectedDate, setSelectedDate] = useState<string>(() => {
-    return new Date().toISOString().split('T')[0];
+    return getManilaBusinessDateString();
   });
   const [selectedWeekRange, setSelectedWeekRange] = useState<{ start: string; end: string } | null>(
     null
   );
   const [selectedMonthYear, setSelectedMonthYear] = useState<{ year: number; month: number }>(
     () => {
-      const d = new Date();
-      return { year: d.getFullYear(), month: d.getMonth() };
+      const bDateStr = getManilaBusinessDateString();
+      const [y, m] = bDateStr.split('-').map(Number);
+      return { year: y, month: m - 1 };
     }
   );
 
   // Calendar Picker Modal State
   const [isDatePickerModalOpen, setIsDatePickerModalOpen] = useState(false);
   const [datePickerMode, setDatePickerMode] = useState<'day' | 'week' | 'month'>('day');
-  const [calendarYear, setCalendarYear] = useState<number>(() => new Date().getFullYear());
-  const [calendarMonth, setCalendarMonth] = useState<number>(() => new Date().getMonth());
+  const [calendarYear, setCalendarYear] = useState<number>(() => {
+    return parseInt(getManilaBusinessDateString().split('-')[0], 10);
+  });
+  const [calendarMonth, setCalendarMonth] = useState<number>(() => {
+    return parseInt(getManilaBusinessDateString().split('-')[1], 10) - 1;
+  });
 
   // Roster & Attendance data
   const [staffRoster, setStaffRoster] = useState<StaffMemberAdmin[]>([]);
@@ -114,19 +120,21 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
   // Dedicated Printable Document Modal
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
 
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const todayStr = useMemo(() => getManilaBusinessDateString(), []);
 
   // Compute effective date range from current period filter
   const dateRange = useMemo(() => {
-    const now = new Date();
+    const [todayY, todayM, todayD] = todayStr.split('-').map(Number);
+    const businessNow = new Date(todayY, todayM - 1, todayD);
 
     if (period === 'today') {
       return { start: todayStr, end: todayStr, label: `Today · ${todayStr}`, isSingleDay: true };
     }
 
     if (period === 'yesterday') {
-      const y = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
-      const yStr = y.toISOString().split('T')[0];
+      const y = new Date(businessNow);
+      y.setDate(y.getDate() - 1);
+      const yStr = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, '0')}-${String(y.getDate()).padStart(2, '0')}`;
       return { start: yStr, end: yStr, label: `Yesterday · ${yStr}`, isSingleDay: true };
     }
 
@@ -140,10 +148,11 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
     }
 
     if (period === 'this_week') {
-      const day = now.getDay();
+      const day = businessNow.getDay();
       const dist = (day + 6) % 7;
-      const startW = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dist);
-      const startStr = startW.toISOString().split('T')[0];
+      const startW = new Date(businessNow);
+      startW.setDate(startW.getDate() - dist);
+      const startStr = `${startW.getFullYear()}-${String(startW.getMonth() + 1).padStart(2, '0')}-${String(startW.getDate()).padStart(2, '0')}`;
       return {
         start: startStr,
         end: todayStr,
@@ -162,11 +171,11 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
     }
 
     if (period === 'this_month') {
-      const startM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+      const startM = `${todayStr.slice(0, 7)}-01`;
       return {
         start: startM,
         end: todayStr,
-        label: `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`,
+        label: `${MONTH_NAMES[todayM - 1]} ${todayY}`,
         isSingleDay: false,
       };
     }
@@ -257,6 +266,16 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
         const addonPay = isAdmin ? 0.0 : rec ? rec.addon_pay : 0.0;
         const totalDayPay = isPresent && !isAdmin ? baseDailyPay + addonPay : 0.0;
 
+        // Compute worked hours: if clocked in, accumulate existing hours_worked + live elapsed time since clock_in_at
+        let computedHours = Number(rec?.hours_worked || 0);
+        if (shiftStatus === 'CLOCKED_IN' && rec?.clock_in_at) {
+          const inMillis = new Date(rec.clock_in_at).getTime();
+          const liveElapsed = Math.max(0, (Date.now() - inMillis) / 3600000);
+          computedHours = Math.round((computedHours + liveElapsed) * 10) / 10;
+        } else if (shiftStatus === 'COMPLETED' && computedHours === 0) {
+          computedHours = 8.0;
+        }
+
         return {
           staff,
           rec,
@@ -264,7 +283,7 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
           shiftStatus,
           clockInAt: rec?.clock_in_at || null,
           clockOutAt: rec?.clock_out_at || null,
-          hoursWorked: rec?.hours_worked || (shiftStatus === 'COMPLETED' ? 8.0 : 0.0),
+          hoursWorked: computedHours,
           baseDailyPay,
           addonPay,
           totalDayPay,
@@ -970,6 +989,31 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
                               <Clock size={16} color="#0369a1" />
                               <Text className="ml-1.5 text-base font-bold text-sky-800">
                                 Clock Out
+                              </Text>
+                            </Pressable>
+                          ) : isCompleted ? (
+                            <Pressable
+                              onPress={async () => {
+                                try {
+                                  await adminApi.adminUpsertAttendance({
+                                    userId: item.staff.id,
+                                    date: dateRange.start,
+                                    isPresent: true,
+                                    shiftStatus: 'CLOCKED_IN',
+                                    baseDailyPay: item.baseDailyPay,
+                                    addonPay: item.addonPay,
+                                  });
+                                  toast.success(`Resumed shift for ${item.staff.display_name}`);
+                                  loadData();
+                                } catch (err: any) {
+                                  toast.error(err?.message || 'Resume failed');
+                                }
+                              }}
+                              className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 active:bg-emerald-100"
+                            >
+                              <CheckCircle2 size={16} color="#047857" />
+                              <Text className="ml-1.5 text-base font-bold text-emerald-800">
+                                Resume Shift
                               </Text>
                             </Pressable>
                           ) : null}

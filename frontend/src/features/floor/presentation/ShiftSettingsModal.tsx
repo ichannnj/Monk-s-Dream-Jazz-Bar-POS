@@ -68,30 +68,19 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
 
           <View style={{ flexDirection: 'column', gap: 8, marginTop: 8 }}>
             <Pressable
-              onPress={onLock || onLogout}
+              onPress={onLogout || onLock}
               style={[
                 styles.switchStaffBtn,
-                { backgroundColor: '#f3f4f6', borderColor: '#e5e7eb' },
+                { backgroundColor: '#800020', borderColor: '#600018' },
               ]}
+              accessibilityRole="button"
+              accessibilityLabel="Log Out and Switch Staff"
             >
-              <Lock size={15} color="#4b5563" />
-              <Text style={[styles.switchStaffText, { color: '#374151' }]}>
-                Lock Terminal (Keep Shift Active)
+              <LogOut size={16} color="#ffffff" />
+              <Text style={[styles.switchStaffText, { color: '#ffffff', fontWeight: 'bold' }]}>
+                Log Out / Switch Staff
               </Text>
             </Pressable>
-
-            {onClockOut ? (
-              <Pressable
-                onPress={onClockOut}
-                style={[
-                  styles.switchStaffBtn,
-                  { backgroundColor: '#fef2f2', borderColor: '#fecaca' },
-                ]}
-              >
-                <LogOut size={15} color="#dc2626" />
-                <Text style={styles.switchStaffText}>Clock Out &amp; End Shift (Timeclock)</Text>
-              </Pressable>
-            ) : null}
           </View>
         </View>
 

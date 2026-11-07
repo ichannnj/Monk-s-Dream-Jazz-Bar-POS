@@ -318,7 +318,7 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
 
   const serviceCharge = toPesos(data.serviceCharge || data.service_charge || 0);
   if (serviceCharge > 0) {
-    builder.text(padLine('SERVICE CHARGE (10%):', formatPhp(serviceCharge), 48));
+    builder.text(padLine('SERVICE CHARGE:', formatPhp(serviceCharge), 48));
   }
 
   // Bold Grand Total
@@ -369,11 +369,22 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
   builder.text(padLine('  Zero-Rated Sales:', '0.00', 48));
 
   // Statutory SC / PWD signature block if discount was granted
-  if (discount > 0) {
+  const seniorId = data.seniorPwdId || data.senior_pwd_id;
+  const seniorName = data.seniorPwdName || data.senior_pwd_name;
+  const discountType = data.discountType || data.discount_type;
+
+  if (seniorId || discount > 0) {
     builder.line(divider('-', 48));
     builder.line('SC / PWD BENEFICIARY ACKNOWLEDGMENT:');
-    builder.line('Name:      _________________________________');
-    builder.line('ID Number: _________________________________');
+    if (discountType === 'PWD') {
+      builder.line('Type:      PERSON WITH DISABILITY (PWD)');
+    } else {
+      builder.line('Type:      SENIOR CITIZEN (OSCA)');
+    }
+    builder.line(`ID Number: ${seniorId || '_________________________________'}`);
+    builder.line(
+      `Name:      ${seniorName ? String(seniorName).toUpperCase() : '_________________________________'}`
+    );
     builder.line('Signature: _________________________________');
   }
 

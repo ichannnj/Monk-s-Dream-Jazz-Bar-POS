@@ -115,7 +115,7 @@ Operating Mode Split:
 VATable Sales (12%): ${formatCurrency(reading.vatable_sales)}
 12% VAT Amount:      ${formatCurrency(reading.vat_amount)}
 VAT-Exempt Sales:    ${formatCurrency(reading.vat_exempt_sales)}
-10% Service Charge:  ${formatCurrency(reading.service_charge)}
+Service Charge:     ${formatCurrency(reading.service_charge)}
 
 ------------------------------------------------
 3. TENDER SUMMARY
@@ -370,7 +370,7 @@ Official POS Audit Document
                           </Text>
                         </View>
                         <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">10% House Service Charge</Text>
+                          <Text className="text-sm text-stone-600">House Service Charge</Text>
                           <Text className="text-sm font-bold text-stone-900">
                             {formatCurrency(reading.service_charge)}
                           </Text>

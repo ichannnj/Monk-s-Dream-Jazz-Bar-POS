@@ -32,6 +32,8 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
   const [vatRate, setVatRate] = useState('12.00');
   const [vatInclusive, setVatInclusive] = useState(true);
   const [serviceChargeRate, setServiceChargeRate] = useState('10.00');
+  const [cafeFoodServiceChargeRate, setCafeFoodServiceChargeRate] = useState('10.00');
+  const [eventServiceChargeRate, setEventServiceChargeRate] = useState('10.00');
   const [serviceChargeEnabled, setServiceChargeEnabled] = useState(true);
 
   // Discounts & Comps State
@@ -54,6 +56,8 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
       setVatRate((s.vat_rate ?? 12).toString());
       setVatInclusive(s.vat_inclusive ?? true);
       setServiceChargeRate((s.service_charge_rate ?? 10).toString());
+      setCafeFoodServiceChargeRate((s.cafe_food_service_charge_rate ?? 10).toString());
+      setEventServiceChargeRate((s.event_service_charge_rate ?? 10).toString());
       setServiceChargeEnabled(s.service_charge_enabled ?? true);
 
       if (s.discounts_config) {
@@ -102,6 +106,8 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
         vat_rate: parseFloat(vatRate) || 12,
         vat_inclusive: vatInclusive,
         service_charge_rate: parseFloat(serviceChargeRate) || 10,
+        cafe_food_service_charge_rate: parseFloat(cafeFoodServiceChargeRate) || 10,
+        event_service_charge_rate: parseFloat(eventServiceChargeRate) || 10,
         service_charge_enabled: serviceChargeEnabled,
         discounts_config: {
           senior_pwd_percent: parseFloat(seniorPwdPercent) || 20,
@@ -250,44 +256,56 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
           <View className="flex-col md:flex-row items-start gap-4 pt-2">
             <View className="flex-1 w-full">
               <AdminNumberInput
-                label="Service Charge Rate"
+                label="Cafe Mode Food SC Rate"
                 mode="decimal"
-                value={serviceChargeRate}
-                onChangeText={setServiceChargeRate}
+                value={cafeFoodServiceChargeRate}
+                onChangeText={setCafeFoodServiceChargeRate}
                 placeholder="10.00"
                 suffix="%"
-                helperText="Hospitality staff share"
+                helperText="Applied only to Kitchen food during Cafe Mode (Coffee = 0%)"
               />
             </View>
 
-            <View className="flex-1 w-full md:pt-6">
-              <Pressable
-                onPress={() => setServiceChargeEnabled(!serviceChargeEnabled)}
-                className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
+            <View className="flex-1 w-full">
+              <AdminNumberInput
+                label="Event Mode All-Items SC Rate"
+                mode="decimal"
+                value={eventServiceChargeRate}
+                onChangeText={setEventServiceChargeRate}
+                placeholder="10.00"
+                suffix="%"
+                helperText="Applied to all items (Bar + Kitchen) during Event Night"
+              />
+            </View>
+          </View>
+
+          <View className="pt-2">
+            <Pressable
+              onPress={() => setServiceChargeEnabled(!serviceChargeEnabled)}
+              className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
+                serviceChargeEnabled
+                  ? 'bg-[#800020]/10 border-[#800020]'
+                  : 'bg-stone-50 border-stone-200'
+              }`}
+            >
+              <View>
+                <Text className="text-base font-bold text-stone-900">
+                  Enable Dine-In Service Charge
+                </Text>
+                <Text className="text-sm text-stone-500">
+                  Master toggle: when disabled, 0% service charge is collected across all modes
+                </Text>
+              </View>
+              <View
+                className={`h-6 w-6 rounded-md items-center justify-center border ${
                   serviceChargeEnabled
-                    ? 'bg-[#800020]/10 border-[#800020]'
-                    : 'bg-stone-50 border-stone-200'
+                    ? 'bg-[#800020] border-[#800020]'
+                    : 'bg-white border-stone-400'
                 }`}
               >
-                <View>
-                  <Text className="text-base font-bold text-stone-900">
-                    Apply Service Charge to Dine-In Tabs
-                  </Text>
-                  <Text className="text-base text-stone-500">
-                    Automatically added to floor table settlements
-                  </Text>
-                </View>
-                <View
-                  className={`h-6 w-6 rounded-md items-center justify-center border ${
-                    serviceChargeEnabled
-                      ? 'bg-[#800020] border-[#800020]'
-                      : 'bg-white border-stone-400'
-                  }`}
-                >
-                  {serviceChargeEnabled && <Check size={16} color="#ffffff" />}
-                </View>
-              </Pressable>
-            </View>
+                {serviceChargeEnabled && <Check size={16} color="#ffffff" />}
+              </View>
+            </Pressable>
           </View>
         </View>
 

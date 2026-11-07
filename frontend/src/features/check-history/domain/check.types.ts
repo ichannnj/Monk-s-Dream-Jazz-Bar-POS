@@ -24,7 +24,11 @@ export interface SettledCheckItem {
   corkageFee: number;
   vatableSales: number;
   vatAmount: number;
+  vatExemptSales?: number;
   serviceCharge: number;
+  discountType?: string;
+  seniorPwdId?: string;
+  seniorPwdName?: string;
   total: number;
   paymentMethod: string;
   paymentChannel?: string;

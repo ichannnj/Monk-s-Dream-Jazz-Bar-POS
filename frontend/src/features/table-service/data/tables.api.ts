@@ -4,7 +4,13 @@
  */
 
 import { resolveTableUuid, clearTableUuidCache, tableUuidCache } from '../../floor/data/resolver';
-import { openTab, createTab, settleTabAndRecordPayment, completeOffPremiseTab } from './tabs.api';
+import {
+  openTab,
+  createTab,
+  settleTabAndRecordPayment,
+  completeOffPremiseTab,
+  transferOrderItemsToTab,
+} from './tabs.api';
 import { getTables, transferTableTab, TransferTabParams, TransferTabResult } from './transfer.api';
 
 export class TablesApi {
@@ -12,6 +18,7 @@ export class TablesApi {
   openTab = openTab;
   createTab = createTab;
   transferTableTab = transferTableTab;
+  transferOrderItemsToTab = transferOrderItemsToTab;
   settleTabAndRecordPayment = settleTabAndRecordPayment;
   completeOffPremiseTab = completeOffPremiseTab;
 }
@@ -28,5 +35,6 @@ export {
   completeOffPremiseTab,
   getTables,
   transferTableTab,
+  transferOrderItemsToTab,
 };
 export type { TransferTabParams, TransferTabResult };

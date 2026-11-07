@@ -62,7 +62,7 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
         ) : activeNavTab === 'chat' ? (
           <FloorChatView />
         ) : (
-          <ShiftSettingsModal onLock={handleLockTerminal} onClockOut={logout} />
+          <ShiftSettingsModal onLock={handleLockTerminal} onLogout={logout} />
         )}
       </View>
     </View>

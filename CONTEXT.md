@@ -76,6 +76,30 @@ Item preparation destination is determined solely by product category, **never**
 
 ### 4. Financial & Pricing Calculations
 
+- **Philippine Statutory 12% VAT (Inclusive Extraction per NIRC Sec. 106/108 & BIR RR 16-2005):**  
+  All menu prices at Monk's Dream are legally VAT-inclusive. The system extracts the VAT components without any surcharge:
+  $$\text{VATable Sales} = \frac{\text{Gross Amount}}{1.12}$$
+  $$\text{12\% VAT Amount} = \text{Gross Amount} - \text{VATable Sales}$$
+  Example: An item listed at ₱150.00 yields ₱133.93 VATable Sales and ₱16.07 VAT.
+- **Station-Aware & Mode-Dependent Service Charge (Dine-in Only, RA 11360):**  
+  Service Charge applies exclusively to Dine-In tabs (Takeout and Delivery orders strictly incur 0% Service Charge). Configurable in Admin Back-Office Settings:
+  - **☀️ Daytime Cafe Mode:** Coffee, artisan tea, and bar drinks (`stationTarget: 'bar'`) incur **0% Service Charge**. Kitchen food items (`stationTarget: 'kitchen'`) incur **10% Service Charge** (configurable via `venue_settings.cafe_food_service_charge_rate`).
+  - **🎷 Event Mode:** All items (Bar and Kitchen) incur **10% Service Charge** (configurable via `venue_settings.event_service_charge_rate`).
+  - **Base:** Service Charge is computed directly from gross menu prices ($\text{Gross} \times \text{Rate}$).
+- **Senior Citizen & PWD Statutory Discounts (RA 9994, RA 10754, BIR RR 7-2010):**  
+  Mandatory 2-step statutory formula for eligible food and beverage items:
+  1. **VAT Exemption Step:** Back out the 12% VAT to determine the VAT-exempt selling price:
+     $$\text{VAT-Exempt Base} = \frac{\text{Item Gross Price}}{1.12}$$
+  2. **20% Discount Step:** Apply the statutory 20% discount on the VAT-exempt base:
+     $$\text{Discount Amount} = \text{VAT-Exempt Base} \times 0.20$$
+     $$\text{Discounted Item Net} = \text{VAT-Exempt Base} - \text{Discount Amount} = \text{VAT-Exempt Base} \times 0.80$$
+  - **Service Charge on Senior Food (BIR RMC 38-2012):** Service Charge is not discounted by 20% and is retained in full for staff tip distribution.
+  - **Mandatory Identification:** Applying a Senior or PWD discount strictly requires entering the customer's OSCA / PWD ID number and Cardholder Full Name in `BillSettlementModal`.
+  - **Receipt & ESC/POS Audit:** Customer receipts explicitly print VATable Sales, VAT Amount (12%), VAT-Exempt Sales, Senior/PWD 20% Discount, Net Service Charge, Cardholder Details, and an official customer signature acknowledgment line.
+- **Tab Item Transfer & Split Tab Architecture (`TableItemTransferModal.tsx`):**  
+  To handle tables where only certain diners are Senior Citizens / PWDs, waitstaff can either:
+  1. **Transfer Items to a Dedicated Tab:** Open `TableActionModal` $\rightarrow$ "Move Items", select lines and quantities, and transfer them in 1 tap to an existing tab or create a new dedicated tab (e.g. "Senior Citizen Tab") via atomic PostgreSQL RPC `transfer_order_items_to_tab`.
+  2. **In-Modal Settlement Item Checklist:** In `BillSettlementModal`, toggle "Select specific items for discount" to check off only the senior guest's items, automatically computing the statutory discount on the selected lines while keeping remaining lines at standard VAT-inclusive pricing.
 - **Beverage Temperature & Size Combination Matrix Pricing (`public.product_variants`):**  
   Specialty coffee and beverages support multi-attribute matrix pricing across Temperatures (`HOT`, `COLD`) and Sizes (`8oz`, `12oz`, `16oz`, `Regular`, `Large`, `Single`, `Double`, or custom labels). Each valid combination carries an explicit selling price. Single-size items without temperature choices fall back cleanly to `products.base_price`. Ordering opens the Unified Drink Customizer modal (`OrderModifierModal.tsx`) showing visual temperature pills (🔥 Hot / ❄️ Iced), cup size buttons with live price calculation, recipe modifiers, and barista notes. Active lines format as `Drink Name (Hot · 12oz)` across Cart, Receipts, and Checks, while Barista KDS (`BaristaTicketCard.tsx`) highlights color-coded badges (orange for `HOT`, cyan for `ICED`). Granular Variant Recipe BOM in `product_ingredients` (`variant_id`) allows size/temp-specific ingredient depletion upon KDS `READY`, falling back to base product BOM when no variant BOM is defined.
 - **Resold Outside Food Rule:**  

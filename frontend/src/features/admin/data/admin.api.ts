@@ -13,6 +13,8 @@ export interface VenueSettings {
   vat_inclusive?: boolean;
   service_charge_rate?: number;
   service_charge_enabled?: boolean;
+  cafe_food_service_charge_rate?: number;
+  event_service_charge_rate?: number;
   discounts_config?: {
     senior_pwd_percent: number;
     musician_comp_percent: number;
@@ -42,6 +44,21 @@ export function getLatest6AmCutoff(now: Date = new Date()): Date {
   const yesterday6Am = new Date(today6Am);
   yesterday6Am.setDate(yesterday6Am.getDate() - 1);
   return yesterday6Am;
+}
+
+/**
+ * Returns the active Asia/Manila 6:00 AM business date string (YYYY-MM-DD).
+ * Late-night shifts between 12:00 AM and 5:59 AM belong to the preceding day's business date.
+ */
+export function getManilaBusinessDateString(date: Date = new Date()): string {
+  // Convert target date to Asia/Manila local time
+  const manilaDate = new Date(date.toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+  // Subtract 6 hours for the 6:00 AM business boundary
+  manilaDate.setHours(manilaDate.getHours() - 6);
+  const yyyy = manilaDate.getFullYear();
+  const mm = String(manilaDate.getMonth() + 1).padStart(2, '0');
+  const dd = String(manilaDate.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 /**
@@ -345,6 +362,8 @@ export const adminApi = {
         vat_inclusive: true,
         service_charge_rate: 10,
         service_charge_enabled: true,
+        cafe_food_service_charge_rate: 10,
+        event_service_charge_rate: 10,
         discounts_config: {
           senior_pwd_percent: 20,
           musician_comp_percent: 100,
@@ -1037,15 +1056,25 @@ export const adminApi = {
 
     if (error) throw error;
     return (data || []).map((row: any) => {
+      const isAdmin = row.users?.role === 'admin';
       const userRate = Number(row.users?.base_daily_rate || 0);
       const rawBase = Number(row.base_daily_pay || 0);
-      const resolvedBase =
-        userRate > 200 ? userRate : rawBase > 200 ? rawBase : PH_MINIMUM_WAGE_DAILY;
-      const addon = Number(row.addon_pay || 0);
+
+      // Admin accounts are strictly exempt from daily payroll
+      const resolvedBase = isAdmin
+        ? 0
+        : rawBase > 0
+          ? rawBase
+          : userRate > 0
+            ? userRate
+            : PH_MINIMUM_WAGE_DAILY;
+
+      const addon = isAdmin ? 0 : Number(row.addon_pay || 0);
       return {
         ...row,
         base_daily_pay: resolvedBase,
-        total_day_pay: row.is_present ? resolvedBase + addon : 0,
+        addon_pay: addon,
+        total_day_pay: row.is_present && !isAdmin ? resolvedBase + addon : 0,
         user: row.users,
       };
     }) as AttendanceRecordAdmin[];

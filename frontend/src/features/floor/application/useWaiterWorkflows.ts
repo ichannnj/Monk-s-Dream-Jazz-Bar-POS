@@ -225,7 +225,8 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
     method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     _tenderedAmount?: number,
     paymentChannel?: string,
-    referenceNumber?: string
+    referenceNumber?: string,
+    billingDetails?: any
   ) => {
     if (!checkoutContext) return;
 
@@ -244,7 +245,7 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
       if (mode === 'takeout' || checkoutContext.takeoutOrder) {
         const toOrder = checkoutContext.takeoutOrder;
         if (!toOrder) return;
-        const totalWithTax = (toOrder.total || 0) * 1.1;
+        const totalDue = billingDetails?.totalAmountDue ?? toOrder.total ?? 0;
         const completeOrder = Boolean(checkoutContext.takeoutCollectAfterPay);
 
         settleTakeoutOrder(toOrder.id, method, {
@@ -253,12 +254,20 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           staffId: currentUser?.id,
           paymentChannel,
           referenceNumber,
+          discountAmount: billingDetails?.totalDiscountAmount,
+          serviceCharge: billingDetails?.serviceCharge,
+          vatableSales: billingDetails?.vatableSales,
+          vatAmount: billingDetails?.vatAmount,
+          vatExemptSales: billingDetails?.vatExemptSales,
+          discountType: billingDetails?.discountType,
+          seniorPwdId: billingDetails?.seniorPwdId,
+          seniorPwdName: billingDetails?.seniorPwdName,
         });
 
         toast.success(
           completeOrder
-            ? `Takeout #${toOrder.ticketNumber} settled via ${methodName} (${formatCurrency(totalWithTax)}) & handed off to ${toOrder.customerName}!`
-            : `Takeout #${toOrder.ticketNumber} (${toOrder.customerName}) paid via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt printed`,
+            ? `Takeout #${toOrder.ticketNumber} settled via ${methodName} (${formatCurrency(totalDue)}) & handed off to ${toOrder.customerName}!`
+            : `Takeout #${toOrder.ticketNumber} (${toOrder.customerName}) paid via ${methodName} (${formatCurrency(totalDue)}) • Receipt printed`,
           {
             title: completeOrder
               ? 'Takeout Settled & Collected'
@@ -271,11 +280,11 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
       if (!checkoutContext.table) return;
       const tableCode = checkoutContext.table.code;
       const tabName = checkoutContext.activeTab?.guestName || `Tab #${tabIndex}`;
-      const rawSubtotal =
-        mode === 'single_tab' && checkoutContext.activeTab
+      const totalDue =
+        billingDetails?.totalAmountDue ??
+        (mode === 'single_tab' && checkoutContext.activeTab
           ? checkoutContext.activeTab.totalAmount
-          : checkoutContext.table.totalAmount || 0;
-      const totalWithTax = rawSubtotal * 1.1;
+          : checkoutContext.table.totalAmount || 0);
 
       if (mode === 'entire_table') {
         settleTableGroup(
@@ -287,7 +296,7 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           referenceNumber
         );
         toast.success(
-          `Table ${tableCode} settled in full via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt dispatched to printer station`,
+          `Table ${tableCode} settled in full via ${methodName} (${formatCurrency(totalDue)}) • Receipt dispatched to printer station`,
           { title: 'Table Bill Settled' }
         );
       } else {
@@ -296,13 +305,14 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           tabIndex,
           method,
           currentUser?.displayName,
-          0,
+          billingDetails?.totalDiscountAmount || 0,
           currentUser?.id,
           paymentChannel,
-          referenceNumber
+          referenceNumber,
+          billingDetails
         );
         toast.success(
-          `Tab "${tabName}" on Table ${tableCode} settled via ${methodName} (${formatCurrency(totalWithTax)}) • Receipt dispatched to printer station`,
+          `Tab "${tabName}" on Table ${tableCode} settled via ${methodName} (${formatCurrency(totalDue)}) • Receipt dispatched to printer station`,
           { title: 'Tab Payment Confirmed' }
         );
       }

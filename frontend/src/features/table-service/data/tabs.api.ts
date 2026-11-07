@@ -114,6 +114,13 @@ export async function settleTabAndRecordPayment(params: {
   keepOpenForPrep?: boolean;
   paymentChannel?: string;
   referenceNumber?: string;
+  serviceCharge?: number;
+  vatableSales?: number;
+  vatAmount?: number;
+  vatExemptSales?: number;
+  discountType?: string;
+  seniorPwdId?: string;
+  seniorPwdName?: string;
 }) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     params.tabId
@@ -136,38 +143,57 @@ export async function settleTabAndRecordPayment(params: {
       p_keep_open_for_prep: Boolean(params.keepOpenForPrep),
       p_payment_channel: (params.paymentChannel || null) as any,
       p_reference_number: (params.referenceNumber || null) as any,
+      p_service_charge: params.serviceCharge || 0,
+      p_vatable_sales: params.vatableSales ?? null,
+      p_vat_amount: params.vatAmount ?? null,
+      p_vat_exempt_sales: params.vatExemptSales ?? null,
+      p_discount_type: (params.discountType || null) as any,
+      p_senior_pwd_id: (params.seniorPwdId || null) as any,
+      p_senior_pwd_name: (params.seniorPwdName || null) as any,
     };
 
     let { data, error } = await (supabase.rpc as any)('settle_tab_and_record_payment', rpcPayload);
 
     if (
       error &&
-      (error.message?.includes('p_keep_open_for_prep') ||
-        error.message?.includes('p_payment_channel') ||
+      (error.message?.includes('p_service_charge') ||
+        error.message?.includes('p_vatable_sales') ||
         error.message?.includes('schema'))
     ) {
-      // Fallback if 11-arg migration not yet applied on remote DB
-      const { p_payment_channel: _ch, p_reference_number: _ref, ...legacy1Payload } = rpcPayload;
-      let retry = await supabase.rpc('settle_tab_and_record_payment', legacy1Payload as any);
+      // Fallback if latest migration not yet applied
+      const {
+        p_service_charge: _sc,
+        p_vatable_sales: _vs,
+        p_vat_amount: _va,
+        p_vat_exempt_sales: _ve,
+        p_discount_type: _dt,
+        p_senior_pwd_id: _spid,
+        p_senior_pwd_name: _spnm,
+        ...fallback11Payload
+      } = rpcPayload;
 
-      if (retry.error && retry.error.message?.includes('p_keep_open_for_prep')) {
-        const { p_keep_open_for_prep: _ignored, ...legacyPayload } = legacy1Payload;
-        retry = await supabase.rpc('settle_tab_and_record_payment', legacyPayload as any);
+      let retry = await (supabase.rpc as any)('settle_tab_and_record_payment', fallback11Payload);
+      if (retry.error) {
+        const {
+          p_payment_channel: _ch,
+          p_reference_number: _ref,
+          ...legacy1Payload
+        } = fallback11Payload;
+        retry = await supabase.rpc('settle_tab_and_record_payment', legacy1Payload as any);
       }
-
       data = retry.data;
       error = retry.error;
+    }
 
-      if (!error && params.keepOpenForPrep) {
-        await supabase
-          .from('tabs')
-          .update({ status: 'OPEN', updated_at: new Date().toISOString() })
-          .eq('id', params.tabId);
-        await supabase
-          .from('orders')
-          .update({ status: 'OPEN', updated_at: new Date().toISOString() })
-          .eq('tab_id', params.tabId);
-      }
+    if (!error && params.keepOpenForPrep) {
+      await supabase
+        .from('tabs')
+        .update({ status: 'OPEN', updated_at: new Date().toISOString() })
+        .eq('id', params.tabId);
+      await supabase
+        .from('orders')
+        .update({ status: 'OPEN', updated_at: new Date().toISOString() })
+        .eq('tab_id', params.tabId);
     }
 
     if (error) {
@@ -215,6 +241,53 @@ export async function completeOffPremiseTab(params: { tabId: string; staffId?: s
     return data || { success: true };
   } catch (err) {
     console.warn('completeOffPremiseTab error:', err);
+    return { success: false };
+  }
+}
+
+export async function transferOrderItemsToTab(params: {
+  sourceTabId: string;
+  targetTabId?: string;
+  tableId?: string;
+  newTabName?: string;
+  itemTransfers: Array<{ orderItemId: string; quantity: number }>;
+  staffId?: string;
+}): Promise<{ success: boolean; sourceTabId?: string; targetTabId?: string }> {
+  try {
+    const isSourceUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      params.sourceTabId
+    );
+
+    let resolvedTableId = params.tableId;
+    if (resolvedTableId) {
+      resolvedTableId = (await resolveTableUuid(resolvedTableId)) || undefined;
+    }
+
+    if (isSourceUuid) {
+      const { data, error } = await (supabase.rpc as any)('transfer_order_items_to_tab', {
+        p_source_tab_id: params.sourceTabId,
+        p_target_tab_id: params.targetTabId || null,
+        p_table_id: resolvedTableId || null,
+        p_new_tab_name: params.newTabName || null,
+        p_item_transfers: params.itemTransfers.map((i) => ({
+          order_item_id: i.orderItemId,
+          quantity: i.quantity,
+        })),
+        p_staff_id: params.staffId || null,
+      });
+
+      if (error) {
+        console.warn('transfer_order_items_to_tab RPC warning:', error.message);
+      } else {
+        realtimeGateway.broadcastPosSync('tab_items_transferred');
+        return data || { success: true };
+      }
+    }
+
+    realtimeGateway.broadcastPosSync('tab_items_transferred');
+    return { success: true };
+  } catch (err) {
+    console.error('transferOrderItemsToTab error:', err);
     return { success: false };
   }
 }

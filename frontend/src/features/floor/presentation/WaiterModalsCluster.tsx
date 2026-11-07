@@ -65,6 +65,7 @@ export interface WaiterModalsClusterProps {
   isOrderEntryOpen: boolean;
   orderEntryContext: {
     title: string;
+    type?: 'dine_in' | 'takeout' | 'online';
     roundNumber?: number;
     initialItems?: OrderLineItem[];
     previousTabItems?: OrderLineItem[];
@@ -89,7 +90,8 @@ export interface WaiterModalsClusterProps {
     method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     tenderedAmount?: number,
     paymentChannel?: string,
-    referenceNumber?: string
+    referenceNumber?: string,
+    billingDetails?: any
   ) => void;
 }
 
@@ -193,6 +195,7 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
         visible={isOrderEntryOpen}
         title={orderEntryContext?.title || 'Order Entry'}
         roundNumber={orderEntryContext?.roundNumber}
+        orderType={orderEntryContext?.type}
         initialItems={orderEntryContext?.initialItems || []}
         previousTabItems={orderEntryContext?.previousTabItems || []}
         hasExistingCorkage={orderEntryContext?.hasExistingCorkage || false}

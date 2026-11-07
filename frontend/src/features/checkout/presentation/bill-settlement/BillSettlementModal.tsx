@@ -36,6 +36,11 @@ import {
   useResponsive,
   useVenueStore,
 } from '@/features/shared';
+import {
+  calculateTabBilling,
+  type PricingLineItem,
+  type DiscountType,
+} from '../../utils/taxAndDiscountCalculator';
 import { qrPaymentChannelsApi, type QrPaymentChannel } from '../../data/qrPaymentChannels.api';
 import { FullscreenQrModal } from '../components/FullscreenQrModal';
 import { styles } from './BillSettlementModal.styles';
@@ -56,7 +61,8 @@ interface BillSettlementModalProps {
     method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
     tenderedAmount?: number,
     paymentChannel?: string,
-    referenceNumber?: string
+    referenceNumber?: string,
+    billingDetails?: any
   ) => void;
 }
 
@@ -72,7 +78,8 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 }) => {
   const { isMobile } = useResponsive();
   const { currentUser } = useAuthStore();
-  const { operatingMode } = useVenueStore();
+  const { operatingMode, cafeFoodServiceChargeRate, eventServiceChargeRate, serviceChargeEnabled } =
+    useVenueStore();
   const [settlementMode, setSettlementMode] = useState<'single_tab' | 'entire_table'>('single_tab');
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'digital_wallet' | 'comp'>(
     'cash'
@@ -80,6 +87,15 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const [tenderedCash, setTenderedCash] = useState<string>('');
   const [shouldPrintReceipt, setShouldPrintReceipt] = useState(true);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+
+  // Discount & Privilege State
+  const [discountType, setDiscountType] = useState<DiscountType>('NONE');
+  const [seniorPwdId, setSeniorPwdId] = useState<string>('');
+  const [seniorPwdName, setSeniorPwdName] = useState<string>('');
+  const [seniorItemSelectionMode, setSeniorItemSelectionMode] = useState<'all' | 'select'>('all');
+  const [selectedSeniorItemIds, setSelectedSeniorItemIds] = useState<Set<string>>(new Set());
+  const [customDiscountValue, setCustomDiscountValue] = useState<string>('');
+  const [customDiscountMode, setCustomDiscountMode] = useState<'percent' | 'fixed'>('percent');
 
   // Digital Wallet QR & Reference Number Tracking State
   const [qrChannels, setQrChannels] = useState<QrPaymentChannel[]>([]);
@@ -116,20 +132,97 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   const isTakeout = Boolean(takeoutOrder);
   if (!table && !takeoutOrder) return null;
 
-  // Determine amount
-  const subtotal = isTakeout
-    ? takeoutOrder?.total || 0
-    : settlementMode === 'single_tab' && activeTab
-      ? activeTab.totalAmount
-      : table?.totalAmount || 0;
+  // Extract raw order line items
+  const rawItems = React.useMemo(() => {
+    if (isTakeout && takeoutOrder) {
+      return (takeoutOrder.items || []).map((i) => ({
+        id: i.id,
+        productName: i.productName,
+        unitPrice: i.unitPrice,
+        quantity: i.quantity,
+        stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+      }));
+    }
+    if (settlementMode === 'single_tab' && activeTab) {
+      return (activeTab.items || [])
+        .filter((i) => i.status !== 'cancelled')
+        .map((i) => ({
+          id: i.id,
+          productName: i.productName,
+          unitPrice: i.unitPrice,
+          quantity: i.quantity,
+          stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+        }));
+    }
+    if (table?.tabs) {
+      return table.tabs
+        .flatMap((t) => t.items || [])
+        .filter((i) => i.status !== 'cancelled')
+        .map((i) => ({
+          id: i.id,
+          productName: i.productName,
+          unitPrice: i.unitPrice,
+          quantity: i.quantity,
+          stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+        }));
+    }
+    return [];
+  }, [isTakeout, takeoutOrder, settlementMode, activeTab, table]);
 
-  const tax = subtotal * 0.1;
-  const grandTotal = subtotal + tax;
+  // Map to PricingLineItem with Senior tag
+  const isSeniorOrPwd = discountType === 'SENIOR_CITIZEN' || discountType === 'PWD';
+  const pricingItems: PricingLineItem[] = React.useMemo(() => {
+    return rawItems.map((item) => {
+      const isItemSenior =
+        isSeniorOrPwd && (seniorItemSelectionMode === 'all' || selectedSeniorItemIds.has(item.id));
+      return {
+        id: item.id,
+        productName: item.productName,
+        unitPrice: item.unitPrice,
+        quantity: item.quantity,
+        stationTarget: item.stationTarget || 'bar',
+        isSeniorDiscounted: isItemSenior,
+      };
+    });
+  }, [rawItems, isSeniorOrPwd, seniorItemSelectionMode, selectedSeniorItemIds]);
 
-  // PH Statutory 12% VAT Breakdown
-  const vatableSales = Number((grandTotal / 1.12).toFixed(2));
-  const vatAmount = Number((grandTotal - vatableSales).toFixed(2));
-  const vatExemptSales = 0.0;
+  // Statutory Billing Calculation
+  const parsedCustomDiscount = parseFloat(customDiscountValue) || 0;
+  const billing = React.useMemo(() => {
+    return calculateTabBilling(pricingItems, {
+      operatingMode,
+      orderType: isTakeout ? 'TAKEOUT' : 'DINE_IN',
+      serviceChargeEnabled,
+      cafeFoodServiceChargeRate,
+      eventServiceChargeRate,
+      discountType,
+      customDiscountAmount: customDiscountMode === 'fixed' ? parsedCustomDiscount : 0,
+      customDiscountPercent: customDiscountMode === 'percent' ? parsedCustomDiscount : 0,
+      corkageAmount: activeTab?.corkageAmount || 0,
+      seniorPwdId,
+      seniorPwdName,
+    });
+  }, [
+    pricingItems,
+    operatingMode,
+    isTakeout,
+    serviceChargeEnabled,
+    cafeFoodServiceChargeRate,
+    eventServiceChargeRate,
+    discountType,
+    customDiscountMode,
+    parsedCustomDiscount,
+    activeTab,
+    seniorPwdId,
+    seniorPwdName,
+  ]);
+
+  const grandTotal = billing.totalAmountDue;
+  const subtotal = billing.grossSubtotal;
+  const vatableSales = billing.vatableSales;
+  const vatAmount = billing.vatAmount;
+  const vatExemptSales = billing.vatExemptSales;
+  const serviceCharge = billing.serviceCharge;
 
   // Tendered cash calculation
   const numericTendered = parseFloat(tenderedCash) || 0;
@@ -145,6 +238,29 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         : true;
 
   const handleOpenConfirm = () => {
+    // Senior / PWD validation check
+    if (isSeniorOrPwd) {
+      if (!seniorPwdId.trim()) {
+        toast.warning(
+          `Please enter the ${discountType === 'SENIOR_CITIZEN' ? 'OSCA' : 'PWD'} ID Number (Mandatory under BIR RR 7-2010).`,
+          { title: 'Beneficiary ID Required' }
+        );
+        return;
+      }
+      if (!seniorPwdName.trim()) {
+        toast.warning('Please enter the Cardholder Full Name.', {
+          title: 'Cardholder Name Required',
+        });
+        return;
+      }
+      if (seniorItemSelectionMode === 'select' && selectedSeniorItemIds.size === 0) {
+        toast.warning('Please check off at least one item belonging to the Senior / PWD.', {
+          title: 'No Items Selected',
+        });
+        return;
+      }
+    }
+
     if (!isPaymentValid) {
       if (selectedMethod === 'cash') {
         toast.warning(
@@ -176,7 +292,13 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         selectedMethod === 'digital_wallet'
           ? selectedQrChannel?.name || 'Digital Wallet'
           : undefined,
-        selectedMethod === 'digital_wallet' ? referenceNumber.trim() : undefined
+        selectedMethod === 'digital_wallet' ? referenceNumber.trim() : undefined,
+        {
+          ...billing,
+          discountType,
+          seniorPwdId: seniorPwdId.trim(),
+          seniorPwdName: seniorPwdName.trim(),
+        }
       );
       setTenderedCash('');
       setReferenceNumber('');
@@ -297,7 +419,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             </Pressable>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 8 }}
+            showsVerticalScrollIndicator={false}
+          >
             {/* Settlement Scope Dropdown if multiple tabs on Dine-In */}
             {!isTakeout && activeTabsCount > 1 ? (
               <View className="mb-4">
@@ -321,8 +447,298 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                   <Text style={styles.totalCardLabel}>Balance Due</Text>
                   <Text style={styles.totalCardAmount}>{formatCurrency(grandTotal)}</Text>
                   <Text style={styles.totalCardSub}>
-                    Subtotal: {formatCurrency(subtotal)} + VAT (10%): {formatCurrency(tax)}
+                    Gross: {formatCurrency(subtotal)}
+                    {serviceCharge > 0 ? ` + SC: ${formatCurrency(serviceCharge)}` : ''}
+                    {billing.totalDiscountAmount > 0
+                      ? ` - Disc: ${formatCurrency(billing.totalDiscountAmount)}`
+                      : ''}
                   </Text>
+                </View>
+
+                {/* Discounts & Statutory Privileges Section */}
+                <View style={styles.discountContainer}>
+                  <View style={styles.discountTitleRow}>
+                    <Text style={styles.discountTitle}>Discounts & Privileges</Text>
+                    {billing.totalDiscountAmount > 0 ? (
+                      <View className="bg-rose-100 px-2 py-0.5 rounded-full">
+                        <Text className="text-xs font-black text-rose-700">
+                          -{formatCurrency(billing.totalDiscountAmount)} OFF
+                        </Text>
+                      </View>
+                    ) : null}
+                  </View>
+
+                  {/* Discount Type Pills */}
+                  <View style={styles.discountPillRow}>
+                    <Pressable
+                      onPress={() => setDiscountType('NONE')}
+                      style={[
+                        styles.discountPill,
+                        discountType === 'NONE' && styles.discountPillActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.discountPillText,
+                          discountType === 'NONE' && styles.discountPillTextActive,
+                        ]}
+                      >
+                        No Discount
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => setDiscountType('SENIOR_CITIZEN')}
+                      style={[
+                        styles.discountPill,
+                        discountType === 'SENIOR_CITIZEN' && styles.discountPillActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.discountPillText,
+                          discountType === 'SENIOR_CITIZEN' && styles.discountPillTextActive,
+                        ]}
+                      >
+                        Senior Citizen (20%)
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => setDiscountType('PWD')}
+                      style={[
+                        styles.discountPill,
+                        discountType === 'PWD' && styles.discountPillActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.discountPillText,
+                          discountType === 'PWD' && styles.discountPillTextActive,
+                        ]}
+                      >
+                        PWD (20%)
+                      </Text>
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => setDiscountType('PROMO')}
+                      style={[
+                        styles.discountPill,
+                        discountType === 'PROMO' && styles.discountPillActive,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.discountPillText,
+                          discountType === 'PROMO' && styles.discountPillTextActive,
+                        ]}
+                      >
+                        Custom / Promo
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Senior Citizen / PWD Statutory Fields (BIR RR 7-2010) */}
+                  {(discountType === 'SENIOR_CITIZEN' || discountType === 'PWD') && (
+                    <View style={styles.seniorFieldsBox}>
+                      <View className="flex-row items-center gap-1.5 mb-1">
+                        <ShieldCheck size={16} color="#c2410c" />
+                        <Text style={styles.seniorInputLabel}>
+                          {discountType === 'SENIOR_CITIZEN'
+                            ? 'Senior Citizen OSCA Details'
+                            : 'PWD Beneficiary Details'}{' '}
+                          (Mandatory)
+                        </Text>
+                      </View>
+
+                      <View className="flex-col sm:flex-row gap-2">
+                        <View className="flex-1">
+                          <Text className="text-[11px] font-bold text-gray-600 mb-1">
+                            {discountType === 'SENIOR_CITIZEN'
+                              ? 'OSCA ID Number *'
+                              : 'PWD ID Number *'}
+                          </Text>
+                          <TextInput
+                            value={seniorPwdId}
+                            onChangeText={setSeniorPwdId}
+                            placeholder="e.g. 12-3456-7890"
+                            placeholderTextColor="#9ca3af"
+                            style={styles.seniorInput}
+                          />
+                        </View>
+
+                        <View className="flex-1">
+                          <Text className="text-[11px] font-bold text-gray-600 mb-1">
+                            Cardholder Full Name *
+                          </Text>
+                          <TextInput
+                            value={seniorPwdName}
+                            onChangeText={setSeniorPwdName}
+                            placeholder="e.g. Maria Santos"
+                            placeholderTextColor="#9ca3af"
+                            style={styles.seniorInput}
+                          />
+                        </View>
+                      </View>
+
+                      {/* Scope Selector: All Items on this Tab vs Select Senior Items */}
+                      {rawItems.length > 1 && (
+                        <View className="mt-2 pt-2 border-t border-orange-200">
+                          <Text className="text-[11px] font-extrabold text-gray-700 uppercase mb-1.5">
+                            Items Entitled to 20% Discount & VAT Exemption:
+                          </Text>
+                          <View className="flex-row gap-2 mb-2">
+                            <Pressable
+                              onPress={() => setSeniorItemSelectionMode('all')}
+                              className={`flex-1 py-1.5 px-2.5 rounded-lg border items-center ${
+                                seniorItemSelectionMode === 'all'
+                                  ? 'bg-amber-900 border-amber-900'
+                                  : 'bg-white border-gray-300'
+                              }`}
+                            >
+                              <Text
+                                className={`text-xs font-bold ${
+                                  seniorItemSelectionMode === 'all' ? 'text-white' : 'text-gray-700'
+                                }`}
+                              >
+                                All Items on Tab
+                              </Text>
+                            </Pressable>
+
+                            <Pressable
+                              onPress={() => setSeniorItemSelectionMode('select')}
+                              className={`flex-1 py-1.5 px-2.5 rounded-lg border items-center ${
+                                seniorItemSelectionMode === 'select'
+                                  ? 'bg-amber-900 border-amber-900'
+                                  : 'bg-white border-gray-300'
+                              }`}
+                            >
+                              <Text
+                                className={`text-xs font-bold ${
+                                  seniorItemSelectionMode === 'select'
+                                    ? 'text-white'
+                                    : 'text-gray-700'
+                                }`}
+                              >
+                                Select Specific Items ({selectedSeniorItemIds.size})
+                              </Text>
+                            </Pressable>
+                          </View>
+
+                          {/* Interactive Checklist if 'select' mode */}
+                          {seniorItemSelectionMode === 'select' && (
+                            <View className="gap-1.5 max-h-40">
+                              {rawItems.map((item) => {
+                                const isSelected = selectedSeniorItemIds.has(item.id);
+                                return (
+                                  <Pressable
+                                    key={item.id}
+                                    onPress={() => {
+                                      const next = new Set(selectedSeniorItemIds);
+                                      if (isSelected) next.delete(item.id);
+                                      else next.add(item.id);
+                                      setSelectedSeniorItemIds(next);
+                                    }}
+                                    style={[
+                                      styles.seniorItemRow,
+                                      isSelected && styles.seniorItemRowActive,
+                                    ]}
+                                  >
+                                    <View className="flex-row items-center gap-2 flex-1 mr-2">
+                                      <View
+                                        className={`w-4 h-4 rounded border items-center justify-center ${
+                                          isSelected
+                                            ? 'bg-orange-600 border-orange-600'
+                                            : 'border-gray-400 bg-white'
+                                        }`}
+                                      >
+                                        {isSelected && <CheckCircle2 size={12} color="#ffffff" />}
+                                      </View>
+                                      <Text
+                                        className="text-xs font-bold text-gray-800"
+                                        numberOfLines={1}
+                                      >
+                                        {item.quantity}x {item.productName}
+                                      </Text>
+                                    </View>
+                                    <Text className="text-xs font-black text-gray-700">
+                                      {formatCurrency(item.unitPrice * item.quantity)}
+                                    </Text>
+                                  </Pressable>
+                                );
+                              })}
+                            </View>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )}
+
+                  {/* Custom Promo Discount Input */}
+                  {discountType === 'PROMO' && (
+                    <View className="bg-white rounded-xl p-3 border border-purple-200 gap-2.5">
+                      <Text className="text-xs font-bold text-gray-700 uppercase tracking-wider">
+                        Custom / Promo Discount Value
+                      </Text>
+
+                      {/* Segmented Mode Selector */}
+                      <View className="flex-row rounded-lg bg-gray-100 p-1 gap-1">
+                        <Pressable
+                          onPress={() => setCustomDiscountMode('percent')}
+                          className={`flex-1 py-2 rounded-md items-center justify-center ${
+                            customDiscountMode === 'percent'
+                              ? 'bg-[#641b2a] shadow-sm'
+                              : 'bg-transparent'
+                          }`}
+                        >
+                          <Text
+                            className={`text-xs font-bold ${
+                              customDiscountMode === 'percent' ? 'text-white' : 'text-gray-600'
+                            }`}
+                          >
+                            Percentage (%)
+                          </Text>
+                        </Pressable>
+
+                        <Pressable
+                          onPress={() => setCustomDiscountMode('fixed')}
+                          className={`flex-1 py-2 rounded-md items-center justify-center ${
+                            customDiscountMode === 'fixed'
+                              ? 'bg-[#641b2a] shadow-sm'
+                              : 'bg-transparent'
+                          }`}
+                        >
+                          <Text
+                            className={`text-xs font-bold ${
+                              customDiscountMode === 'fixed' ? 'text-white' : 'text-gray-600'
+                            }`}
+                          >
+                            Fixed Amount (₱)
+                          </Text>
+                        </Pressable>
+                      </View>
+
+                      {/* Full-width Numeric Input */}
+                      <View className="flex-row items-center bg-gray-50 border border-gray-300 rounded-xl px-3 py-1">
+                        <Text className="text-base font-extrabold text-gray-500 mr-2">
+                          {customDiscountMode === 'percent' ? '%' : '₱'}
+                        </Text>
+                        <TextInput
+                          value={customDiscountValue}
+                          onChangeText={setCustomDiscountValue}
+                          placeholder={
+                            customDiscountMode === 'percent'
+                              ? 'Enter discount % (e.g. 10)'
+                              : 'Enter peso discount (e.g. 100)'
+                          }
+                          placeholderTextColor="#9ca3af"
+                          keyboardType="numeric"
+                          className="flex-1 text-base font-bold text-gray-900 py-1.5"
+                        />
+                      </View>
+                    </View>
+                  )}
                 </View>
 
                 {/* Payment Method Dropdown */}
@@ -657,10 +1073,51 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                     <Text style={styles.receiptMeta}>{formatCurrency(subtotal)}</Text>
                   </View>
 
-                  {tax > 0 ? (
+                  {billing.vatExemptSales > 0 ? (
                     <View style={styles.receiptRow}>
-                      <Text style={styles.receiptMeta}>SERVICE CHARGE (10%):</Text>
-                      <Text style={styles.receiptMeta}>{formatCurrency(tax)}</Text>
+                      <Text style={styles.receiptMeta}>LESS: VAT EXEMPTION (12%):</Text>
+                      <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
+                        -{formatCurrency(billing.seniorItemsGross - billing.vatExemptSales)}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  {billing.seniorDiscountAmount > 0 ? (
+                    <View style={styles.receiptRow}>
+                      <Text style={styles.receiptMeta}>
+                        LESS: {discountType === 'SENIOR_CITIZEN' ? 'SC' : 'PWD'} DISCOUNT (20%):
+                      </Text>
+                      <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
+                        -{formatCurrency(billing.seniorDiscountAmount)}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  {billing.customDiscountAmount > 0 ? (
+                    <View style={styles.receiptRow}>
+                      <Text style={styles.receiptMeta}>LESS: PROMO DISCOUNT:</Text>
+                      <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
+                        -{formatCurrency(billing.customDiscountAmount)}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  {serviceCharge > 0 ? (
+                    <View style={styles.receiptRow}>
+                      <Text style={styles.receiptMeta}>
+                        SERVICE CHARGE ({operatingMode === 'EVENT' ? 'EVENT 10%' : 'CAFE FOOD 10%'}
+                        ):
+                      </Text>
+                      <Text style={styles.receiptMeta}>{formatCurrency(serviceCharge)}</Text>
+                    </View>
+                  ) : null}
+
+                  {billing.corkageAmount > 0 ? (
+                    <View style={styles.receiptRow}>
+                      <Text style={styles.receiptMeta}>CORKAGE FEE:</Text>
+                      <Text style={styles.receiptMeta}>
+                        {formatCurrency(billing.corkageAmount)}
+                      </Text>
                     </View>
                   ) : null}
 
@@ -739,6 +1196,32 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                     <Text style={styles.receiptTaxSub}> Zero-Rated Sales:</Text>
                     <Text style={styles.receiptTaxSub}>₱0.00</Text>
                   </View>
+
+                  {billing.vatExemptSales > 0 ? (
+                    <>
+                      <Text style={styles.receiptDivider}>--------------------------------</Text>
+                      <Text style={[styles.receiptMeta, { fontWeight: '700', marginBottom: 2 }]}>
+                        BENEFICIARY INFORMATION:
+                      </Text>
+                      <View style={styles.receiptRow}>
+                        <Text style={styles.receiptTaxSub}> TYPE / ID NO:</Text>
+                        <Text style={[styles.receiptTaxSub, { fontWeight: '700' }]}>
+                          {discountType === 'SENIOR_CITIZEN' ? 'OSCA' : 'PWD'} #
+                          {seniorPwdId || 'REQUIRED'}
+                        </Text>
+                      </View>
+                      <View style={styles.receiptRow}>
+                        <Text style={styles.receiptTaxSub}> NAME:</Text>
+                        <Text style={[styles.receiptTaxSub, { fontWeight: '700' }]}>
+                          {(seniorPwdName || 'REQUIRED').toUpperCase()}
+                        </Text>
+                      </View>
+                      <View style={[styles.receiptRow, { marginTop: 4 }]}>
+                        <Text style={styles.receiptTaxSub}> SIGNATURE:</Text>
+                        <Text style={styles.receiptTaxSub}>______________________</Text>
+                      </View>
+                    </>
+                  ) : null}
 
                   {/* Jazz Club Cultural Quote & Notice */}
                   <Text style={styles.receiptDivider}>--------------------------------</Text>
