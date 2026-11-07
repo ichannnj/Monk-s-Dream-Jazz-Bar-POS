@@ -83,6 +83,8 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
   }, []);
 
   const loadSupportingData = useCallback(async () => {
+    // If user is editing a product, skip background reload of supporting catalogs to avoid re-rendering modals
+    if (isProductModalOpen) return;
     setIsLoadingCatalogs(true);
     try {
       const [catsRes, groupsRes, invRes] = await Promise.allSettled([
@@ -111,7 +113,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
     } finally {
       setIsLoadingCatalogs(false);
     }
-  }, []);
+  }, [isProductModalOpen]);
 
   // Auto-refresh when tab/screen is focused
   useWindowVisibilitySync(() => {

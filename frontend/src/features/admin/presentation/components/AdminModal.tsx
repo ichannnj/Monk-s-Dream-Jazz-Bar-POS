@@ -57,8 +57,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         {/* Modal Card (Stops backdrop click propagation) */}
         <View
           onStartShouldSetResponder={() => true}
+          onTouchEnd={(e) => e.stopPropagation()}
           className={`w-full ${maxWClass} max-h-[92vh] rounded-2xl bg-white shadow-2xl overflow-hidden flex-col border border-stone-200 z-10`}
-          style={Platform.OS === 'web' ? ({ pointerEvents: 'auto' } as any) : undefined}
+          style={
+            Platform.OS === 'web'
+              ? ({ pointerEvents: 'auto', onClick: (e: any) => e.stopPropagation() } as any)
+              : undefined
+          }
         >
           {/* Header */}
           <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-4 sm:px-6 py-3.5 sm:py-4">

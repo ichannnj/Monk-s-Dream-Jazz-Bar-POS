@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import {
   Check,
@@ -96,7 +96,29 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
 
   const PRESET_SIZES = ['8oz', '12oz', '16oz', 'Regular', 'Large', 'Single', 'Double'];
 
+  // Track modal open/close and product ID transitions to prevent accidental resets while user edits
+  const prevVisibleRef = useRef(false);
+  const activeProductIdRef = useRef<string | undefined>(undefined);
+
   useEffect(() => {
+    // Only initialize/reset form values when the modal opens (transitions from hidden to visible)
+    // or when the targeted product ID changes. NEVER reinitialize on background category fetches or re-renders!
+    const isOpening = visible && !prevVisibleRef.current;
+    const isProductChanged = visible && product?.id !== activeProductIdRef.current;
+
+    prevVisibleRef.current = visible;
+
+    if (!visible) {
+      activeProductIdRef.current = undefined;
+      return;
+    }
+
+    if (!isOpening && !isProductChanged) {
+      return;
+    }
+
+    activeProductIdRef.current = product?.id;
+
     if (product) {
       setName(product.name);
       setCategoryId(product.category_id);
@@ -154,7 +176,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       setSelectedSizes(['8oz', '12oz', '16oz']);
       setVariantsMatrix([]);
     }
-  }, [product, categories, visible]);
+  }, [visible, product?.id]);
 
   // Helper to re-generate combination matrix rows while preserving existing prices
   const regenerateMatrix = (
@@ -450,6 +472,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
     <AdminModal
       visible={visible}
       onClose={onClose}
+      closeOnBackdropPress={false}
       title={product ? 'Edit Menu Product' : 'Add New Menu Product'}
       subtitle="Configure pricing, preparation routing station, dietary tags, and BOM links"
       icon={<Utensils size={22} color="#800020" />}
