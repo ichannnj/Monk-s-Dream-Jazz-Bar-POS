@@ -104,11 +104,13 @@ export class PrinterStationDaemon {
           const chitPayload: RunnerChitPayload = {
             orderNumber: rawData.orderNumber || rawData.orderId?.slice(0, 8) || 'N/A',
             tableNumber: rawData.tableNumber,
+            tableLabel: rawData.tableLabel,
             tabName: rawData.tabName,
             roundNumber: rawData.roundNumber,
-            waiterName: rawData.waiterName,
+            waiterName: rawData.waiterName || rawData.staffName || rawData.staff_name,
             timestamp: rawData.timestamp || new Date().toISOString(),
             items: rawData.items || [],
+            isReprint: Boolean(rawData.isReprint),
           };
           await this.printer.printRunnerChit(chitPayload);
           break;
@@ -119,19 +121,30 @@ export class PrinterStationDaemon {
           const receiptPayload: CustomerReceiptPayload = {
             receiptNumber: rawData.receiptNumber || rawData.paymentId?.slice(0, 8) || 'REC-001',
             tableNumber: rawData.tableNumber,
-            tabName: rawData.tabName || rawData.customerName,
-            waiterName: rawData.waiterName,
+            tableLabel: rawData.tableLabel,
+            tabName: rawData.tabName || rawData.customerName || rawData.guestName,
+            waiterName:
+              rawData.waiterName || rawData.cashierName || rawData.staffName || rawData.staff_name,
+            cashierName:
+              rawData.cashierName || rawData.waiterName || rawData.staffName || rawData.staff_name,
+            operatingMode: rawData.operatingMode || rawData.operating_mode || 'CAFE',
             items: rawData.items || [],
             subtotal: rawData.subtotal || rawData.amount || 0,
             corkageFee: rawData.corkageAmount || rawData.corkageFee || 0,
             discount: rawData.discountAmount || rawData.discount || 0,
+            serviceCharge: rawData.serviceCharge || rawData.service_charge || 0,
             total: rawData.total || rawData.amount || 0,
             tendered: rawData.tendered || rawData.amount || 0,
             change: rawData.change || 0,
+            vatableSales: rawData.vatableSales,
+            vatAmount: rawData.vatAmount,
+            vatExemptSales: rawData.vatExemptSales,
             paymentMethod: rawData.payment_method || rawData.paymentMethod || 'CASH',
             paymentChannel: rawData.payment_channel || rawData.paymentChannel,
             referenceNumber: rawData.reference_number || rawData.referenceNumber,
             timestamp: rawData.settledAt || rawData.timestamp || new Date().toISOString(),
+            settledAt: rawData.settledAt,
+            isReprint: Boolean(rawData.isReprint),
           };
 
           await this.printer.printReceipt(receiptPayload);

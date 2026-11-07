@@ -50,12 +50,14 @@ export const HardwarePrintStationScreen: React.FC = () => {
     setBaudRate,
     reprintJob,
     testPrintChit,
+    testPrintReceipt,
     testKickDrawer,
   } = usePrinterStationStore();
 
   const [filter, setFilter] = useState<PrintJobFilter>('ALL');
   const [activeTab, setActiveTab] = useState<'jobs' | 'logs'>('jobs');
   const [isTestingChit, setIsTestingChit] = useState(false);
+  const [isTestingReceipt, setIsTestingReceipt] = useState(false);
   const [isTestingDrawer, setIsTestingDrawer] = useState(false);
   const [reprintingId, setReprintingId] = useState<string | null>(null);
 
@@ -77,6 +79,15 @@ export const HardwarePrintStationScreen: React.FC = () => {
       await testPrintChit();
     } finally {
       setIsTestingChit(false);
+    }
+  };
+
+  const handleTestPrintReceipt = async () => {
+    setIsTestingReceipt(true);
+    try {
+      await testPrintReceipt();
+    } finally {
+      setIsTestingReceipt(false);
     }
   };
 
@@ -357,14 +368,24 @@ export const HardwarePrintStationScreen: React.FC = () => {
               </Pressable>
             </View>
 
-            <View className="mt-2.5">
+            <View className="mt-2.5 flex-row gap-2">
               <Pressable
                 onPress={handleTestPrint}
                 disabled={isTestingChit || connectionStatus !== 'CONNECTED'}
-                className="py-2 rounded-xl bg-stone-800 items-center justify-center active:bg-stone-700 disabled:opacity-40"
+                className="flex-1 py-2 rounded-xl bg-stone-800 items-center justify-center active:bg-stone-700 disabled:opacity-40"
               >
                 <Text className="text-xs font-bold text-stone-300">
-                  {isTestingChit ? 'Printing...' : 'Print Sample Runner Chit'}
+                  {isTestingChit ? 'Printing...' : 'Test Runner Chit'}
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={handleTestPrintReceipt}
+                disabled={isTestingReceipt || connectionStatus !== 'CONNECTED'}
+                className="flex-1 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 items-center justify-center active:bg-amber-500/20 disabled:opacity-40"
+              >
+                <Text className="text-xs font-bold text-amber-400">
+                  {isTestingReceipt ? 'Printing...' : 'Test Customer Receipt'}
                 </Text>
               </Pressable>
             </View>
@@ -534,11 +555,15 @@ export const HardwarePrintStationScreen: React.FC = () => {
                         </View>
                       )}
 
-                      {data.total && (
+                      {data.total != null && (
                         <Text className="text-xs text-stone-300">
                           Total:{' '}
                           <Text className="font-bold text-white">
-                            ₱{(data.total / 100).toFixed(2)}
+                            ₱
+                            {Number(data.total).toLocaleString('en-PH', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            })}
                           </Text>
                         </Text>
                       )}

@@ -1,7 +1,10 @@
 /**
  * Browser-Native Binary ESC/POS Ticket & Receipt Builder
+ * Optimized for Monk's Dream Jazz Bar and Cafe 80mm Thermal Hardware.
  * Uses standard browser Uint8Array and TextEncoder - zero external Node dependencies.
  */
+
+import { getMonksDreamLogoRasterBytes } from '../assets/logoRasterBytes';
 
 const encoder = new TextEncoder();
 
@@ -52,7 +55,7 @@ export class EscPosBuilder {
   }
 
   public feed(lines: number = 1): this {
-    this.chunks.push(encoder.encode('\n'.repeat(lines)));
+    this.chunks.push(encoder.encode('\n'.repeat(Math.max(1, lines))));
     return this;
   }
 
@@ -74,6 +77,37 @@ export class EscPosBuilder {
 
   public doubleSize(enable: boolean = true): this {
     return this.add(enable ? ESCPOS.DOUBLE_SIZE : ESCPOS.NORMAL_SIZE);
+  }
+
+  public doubleHeight(enable: boolean = true): this {
+    return this.add(enable ? ESCPOS.DOUBLE_HEIGHT : ESCPOS.NORMAL_SIZE);
+  }
+
+  public imageRaster(rasterBytes: Uint8Array): this {
+    return this.add(rasterBytes);
+  }
+
+  public qrCode(content: string): this {
+    if (!content) return this;
+    const dataBytes = encoder.encode(content);
+    const storeLen = dataBytes.length + 3;
+    const pL = storeLen % 256;
+    const pH = Math.floor(storeLen / 256);
+
+    // 1. Model 2 QR code: GS ( k 4 0 49 65 50 0
+    this.add(new Uint8Array([0x1d, 0x28, 0x6b, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]));
+    // 2. Module size (4 dots): GS ( k 3 0 49 67 4
+    this.add(new Uint8Array([0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43, 0x04]));
+    // 3. Error correction level M (49): GS ( k 3 0 49 69 49
+    this.add(new Uint8Array([0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x45, 0x31]));
+    // 4. Store data: GS ( k pL pH 49 80 48 ...data
+    const storeHeader = new Uint8Array([0x1d, 0x28, 0x6b, pL, pH, 0x31, 0x50, 0x30]);
+    this.add(storeHeader);
+    this.add(dataBytes);
+    // 5. Print symbol: GS ( k 3 0 49 81 48
+    this.add(new Uint8Array([0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x51, 0x30]));
+    this.feed(1);
+    return this;
   }
 
   public cut(full: boolean = true): this {
@@ -111,6 +145,12 @@ function cleanStaffName(name?: string): string {
   return clean.split(' ')[0] || clean;
 }
 
+function toPesos(amount: any): number {
+  if (amount === null || amount === undefined) return 0;
+  const num = Number(amount);
+  return isNaN(num) ? 0 : num;
+}
+
 function formatPhp(amount: number = 0): string {
   return Number(amount || 0).toLocaleString('en-PH', {
     minimumFractionDigits: 2,
@@ -123,8 +163,43 @@ function padLine(left: string, right: string, cols: number = 48): string {
   return left + ' '.repeat(spaceCount) + right + '\n';
 }
 
+function divider(char: string = '-', cols: number = 48): string {
+  return char.repeat(cols);
+}
+
+function formatDateTime(val?: string | Date): string {
+  if (!val) return new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  const d = new Date(val);
+  return isNaN(d.getTime())
+    ? String(val)
+    : d.toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function formatItemLine(qtyStr: string, name: string, priceStr: string, cols: number = 48): string {
+  // [QTY 4][NAME 32][PRICE 12] = 48 cols
+  const leftPrefix = `${qtyStr}  `;
+  const reservedRight = priceStr.length + 2; // price + 2 padding spaces
+  const maxNameLen = cols - leftPrefix.length - reservedRight;
+
+  if (name.length <= maxNameLen) {
+    const spaceCount = Math.max(1, cols - (leftPrefix.length + name.length) - priceStr.length);
+    return `${leftPrefix}${name}${' '.repeat(spaceCount)}${priceStr}\n`;
+  }
+
+  // Wrap long name to second line
+  const firstLineName = name.slice(0, maxNameLen);
+  const remainingName = name.slice(maxNameLen).trim();
+  const spaceCount = Math.max(
+    1,
+    cols - (leftPrefix.length + firstLineName.length) - priceStr.length
+  );
+  return (
+    `${leftPrefix}${firstLineName}${' '.repeat(spaceCount)}${priceStr}\n` + `    ${remainingName}\n`
+  );
+}
+
 /**
- * Builds standard 80mm ESC/POS Customer Receipt
+ * Builds standard 80mm ESC/POS Customer Receipt for Monk's Dream Jazz Bar and Cafe
  */
 export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false): Uint8Array {
   const builder = new EscPosBuilder();
@@ -134,89 +209,189 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
     builder.bold(true).line('*** REPRINT / DUPLICATE ***').bold(false).line();
   }
 
-  // Header
+  // 1. Bitonal High-Contrast Graphic Logo
+  const logoBytes = getMonksDreamLogoRasterBytes();
+  if (logoBytes && logoBytes.length > 0) {
+    builder.center().imageRaster(logoBytes).feed(1);
+  }
+
+  // 2. Business Header
   builder
-    .doubleSize(true)
     .bold(true)
+    .doubleHeight(true)
     .line("MONK'S DREAM")
-    .line('JAZZ BAR')
-    .doubleSize(false)
+    .line('JAZZ BAR AND CAFE')
+    .doubleHeight(false)
     .bold(false)
-    .line('Digital Operations Platform')
-    .line('------------------------------------------------');
+    .line('Craft Cocktails & Fine Jazz')
+    .line('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz')
+    .line(divider('-', 48));
 
-  // Metadata
+  // 3. Metadata Section
   builder.left();
-  const receiptNo = data.receiptNumber || data.paymentId?.slice(0, 8) || 'REC-001';
-  builder.line(`Receipt #: ${receiptNo}`);
-  builder.line(`Date:      ${data.timestamp || data.settledAt || new Date().toLocaleString()}`);
-  if (data.tableNumber) {
-    builder.line(`Table:     ${data.tableNumber} (${data.tabName || 'Main'})`);
-  } else if (data.tabName) {
-    builder.line(`Tab:       ${data.tabName}`);
-  }
-  if (data.waiterName) {
-    builder.line(`Staff:     ${cleanStaffName(data.waiterName)}`);
-  }
-  builder.line('------------------------------------------------');
+  const receiptNo =
+    data.receiptNumber ||
+    data.checkNumber ||
+    `MD-${(data.paymentId || data.id || '001').slice(0, 8).toUpperCase()}`;
+  const operatingMode = (data.operatingMode || data.operating_mode || 'CAFE').toUpperCase();
+  const modeLabel = operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE';
 
-  // Items
+  builder
+    .bold(true)
+    .text(padLine(`CHECK #: ${receiptNo}`, `MODE: ${modeLabel}`, 48))
+    .bold(false);
+  builder.line(`DATE:    ${formatDateTime(data.settledAt || data.timestamp)}`);
+
+  if (data.tableNumber || data.tableLabel) {
+    const tableStr = data.tableLabel || `Table ${data.tableNumber}`;
+    const tabStr = data.tabName || data.customerName || data.guestName || 'Main Tab';
+    builder.line(`TABLE:   ${tableStr.padEnd(16)} TAB: ${tabStr}`);
+  } else {
+    const tabStr = data.tabName || data.customerName || data.guestName || 'Takeout / Counter';
+    builder.line(`TAB:     ${tabStr}`);
+  }
+
+  const staff = cleanStaffName(data.cashierName || data.waiterName || data.staff_name);
+  builder.line(`STAFF:   ${staff.padEnd(16)} TERMINAL: TILL-1`);
+  builder.line(divider('=', 48));
+
+  // 4. Items Table Header
+  builder
+    .bold(true)
+    .text(padLine('QTY  DESCRIPTION', 'AMOUNT (PHP)', 48))
+    .bold(false);
+  builder.line(divider('=', 48));
+
+  // 5. Line Items
   const items = data.items || [];
   for (const item of items) {
-    const qtyName = `${item.quantity}x ${item.name}`.slice(0, 32);
-    const itemTotal = (item.total || (item.price || 0) * (item.quantity || 1)) / 100;
-    const priceStr = formatPhp(itemTotal);
-    builder.text(padLine(qtyName, priceStr, 48));
-    if (item.modifiers && item.modifiers.length > 0) {
-      builder.line(`   + ${item.modifiers.join(', ')}`);
+    const qtyStr = `${item.quantity || 1}x`.padEnd(3, ' ');
+    let desc = item.name || item.productName || 'Item';
+
+    // Format temperature and cup size if not yet formatted
+    if (item.temperature && item.temperature !== 'NONE' && !desc.includes('(')) {
+      const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
+      const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
+      desc = `${desc} (${temp}${size})`;
+    } else if (item.size && item.size !== 'Standard' && !desc.includes('(')) {
+      desc = `${desc} (${item.size})`;
     }
-    if (item.isCorkage) {
-      builder.line('   [Corkage Applied]');
+
+    const itemTotal = toPesos(
+      item.total ?? toPesos(item.price || item.unit_price) * (item.quantity || 1)
+    );
+    builder.text(formatItemLine(qtyStr, desc, formatPhp(itemTotal), 48));
+
+    // Modifiers
+    if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
+      for (const mod of item.modifiers) {
+        builder.line(`     + ${mod}`);
+      }
     }
-    if (item.notes) {
-      builder.line(`   Note: ${item.notes}`);
+
+    // Customer / Prep Notes
+    if (item.notes && item.notes.trim()) {
+      builder.line(`     >> Note: ${item.notes.trim()}`);
+    }
+
+    // Corkage tag
+    if (item.isCorkage || item.is_corkage) {
+      builder.line(`     [Corkage Applied]`);
     }
   }
-  builder.line('------------------------------------------------');
 
-  // Totals
-  const subtotal = (data.subtotal || data.amount || 0) / 100;
-  builder.text(padLine('Subtotal:', formatPhp(subtotal), 48));
+  builder.line(divider('-', 48));
 
-  if (data.corkageFee && data.corkageFee > 0) {
-    builder.text(padLine('Corkage Fee:', formatPhp(data.corkageFee / 100), 48));
+  // 6. Financial Summary & Totals
+  const subtotal = toPesos(data.subtotal || data.amount || 0);
+  builder.text(padLine('SUBTOTAL (Gross Sales):', formatPhp(subtotal), 48));
+
+  const corkage = toPesos(data.corkageFee || data.corkageAmount || data.corkage_amount || 0);
+  if (corkage > 0) {
+    builder.text(padLine('CORKAGE FEE:', formatPhp(corkage), 48));
   }
-  if (data.discount && data.discount > 0) {
-    builder.text(padLine('Discount:', `-${formatPhp(data.discount / 100)}`, 48));
+
+  const discount = toPesos(data.discountAmount || data.discount || data.discount_amount || 0);
+  if (discount > 0) {
+    builder.text(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, 48));
+  }
+
+  const serviceCharge = toPesos(data.serviceCharge || data.service_charge || 0);
+  if (serviceCharge > 0) {
+    builder.text(padLine('SERVICE CHARGE (10%):', formatPhp(serviceCharge), 48));
   }
 
   // Bold Grand Total
-  builder.bold(true);
-  const total = (data.total || data.amount || 0) / 100;
-  builder.text(padLine('TOTAL:', `PHP ${formatPhp(total)}`, 48));
-  builder.bold(false);
+  builder.line(divider('=', 48));
+  builder.bold(true).doubleHeight(true);
+  const total = toPesos(data.total || data.amount || subtotal + corkage - discount + serviceCharge);
+  builder.text(padLine('TOTAL AMOUNT DUE:', `PHP ${formatPhp(total)}`, 48));
+  builder.doubleHeight(false).bold(false);
+  builder.line(divider('=', 48));
 
-  const tendered = (data.tendered || data.amount || 0) / 100;
-  const change = (data.change || 0) / 100;
-  builder.text(padLine('Tendered:', `PHP ${formatPhp(tendered)}`, 48));
-  builder.text(padLine('Change:', `PHP ${formatPhp(change)}`, 48));
-
+  // 7. Payment Tendered & Change
   const paymentMethod = (data.paymentMethod || data.payment_method || 'CASH').toUpperCase();
   const paymentChannel = data.paymentChannel || data.payment_channel;
-  const paymentLabel = paymentChannel ? `${paymentChannel} QR` : paymentMethod;
-  builder.text(padLine('Payment:', paymentLabel, 48));
+  const paymentLabel = paymentChannel ? `${paymentChannel.toUpperCase()} QR` : paymentMethod;
+  builder.text(padLine('PAYMENT METHOD:', paymentLabel, 48));
 
   const refNo = data.referenceNumber || data.reference_number;
   if (refNo) {
-    builder.text(padLine('Ref #:', `#${refNo}`, 48));
+    builder.text(padLine('REFERENCE NO:', `#${refNo}`, 48));
   }
-  builder.line('------------------------------------------------');
 
-  // Footer
-  builder.center().line('Thank you for listening!').line('See you at the next set.').cut(true);
+  const tendered = toPesos(data.tendered || total);
+  const change = toPesos(
+    data.change || (paymentMethod === 'CASH' ? Math.max(0, tendered - total) : 0)
+  );
 
-  // Pulse cash drawer solenoid if requested (e.g. Cash settlement)
-  if (shouldKickDrawer) {
+  if (paymentMethod === 'CASH') {
+    builder.text(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, 48));
+    builder.text(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, 48));
+  } else {
+    builder.text(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, 48));
+  }
+
+  // 8. Philippine VAT & Statutory Tax Breakdown
+  builder.line(divider('-', 48));
+  builder.line('TAX & STATUTORY BREAKDOWN:');
+  const vatableSales = toPesos(
+    data.vatableSales ?? (discount > 0 ? 0 : Number((total / 1.12).toFixed(2)))
+  );
+  const vatAmount = toPesos(
+    data.vatAmount ?? (discount > 0 ? 0 : Number((total - vatableSales).toFixed(2)))
+  );
+  const vatExempt = toPesos(data.vatExemptSales ?? (discount > 0 ? Number(total.toFixed(2)) : 0));
+
+  builder.text(padLine('  VATable Sales (12%):', formatPhp(vatableSales), 48));
+  builder.text(padLine('  VAT Amount (12%):', formatPhp(vatAmount), 48));
+  builder.text(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), 48));
+  builder.text(padLine('  Zero-Rated Sales:', '0.00', 48));
+
+  // Statutory SC / PWD signature block if discount was granted
+  if (discount > 0) {
+    builder.line(divider('-', 48));
+    builder.line('SC / PWD BENEFICIARY ACKNOWLEDGMENT:');
+    builder.line('Name:      _________________________________');
+    builder.line('ID Number: _________________________________');
+    builder.line('Signature: _________________________________');
+  }
+
+  // 9. Footer: Quote, Live Music Appreciation & Statutory Notice
+  builder.line(divider('-', 48));
+  builder.center();
+  builder.line('"Writing about music is like dancing');
+  builder.line('about architecture."');
+  builder.line('- Thelonious Monk');
+  builder.line();
+  builder.line('Thank you for supporting live music!');
+  builder.line('Please come back for the next set.');
+  builder.line(divider('-', 48));
+  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').bold(false);
+  builder.cut(true);
+
+  // Pulse cash drawer solenoid if requested
+  if (shouldKickDrawer && paymentMethod === 'CASH') {
     builder.kickDrawer();
   }
 
@@ -234,42 +409,64 @@ export function buildRunnerChitBytes(data: any): Uint8Array {
     builder.bold(true).line('*** REPRINT ***').bold(false);
   }
 
-  builder.doubleSize(true).bold(true).line('ORDER DISPATCH SLIP').doubleSize(false).bold(false);
+  builder.doubleHeight(true).bold(true).line('ORDER DISPATCH SLIP').doubleHeight(false).bold(false);
+
+  const roundNum = data.roundNumber || 1;
+  builder.bold(true).line(`*** ROUND ${roundNum} • EXPEDITER ***`).bold(false);
 
   const orderNo = data.orderNumber || data.orderId?.slice(0, 8) || 'N/A';
-  let orderTitle = `Order #${orderNo}`;
-  if (data.roundNumber) {
-    orderTitle += ` [Round ${data.roundNumber}]`;
-  }
-  builder.line(orderTitle).line('------------------------------------------------');
+  builder.line(
+    padLine(`ORDER #: ${orderNo}`, `TIME: ${data.timestamp || new Date().toLocaleTimeString()}`, 48)
+  );
+  builder.line(divider('-', 48));
 
   builder.left();
-  if (data.tableNumber) {
-    builder.line(`Destination: Table ${data.tableNumber} (${data.tabName || 'Main'})`);
+  if (data.tableNumber || data.tableLabel) {
+    const tableStr = data.tableLabel || `Table ${data.tableNumber}`;
+    builder.line(`DESTINATION: ${tableStr.padEnd(16)} TAB: ${data.tabName || 'Main'}`);
   } else {
-    builder.line(`Tab:         ${data.tabName || 'Walk-in'}`);
+    builder.line(`DESTINATION: TAKEOUT / COUNTER  TAB: ${data.tabName || 'Walk-in'}`);
   }
-  builder.line(`Server:      ${cleanStaffName(data.waiterName)}`);
-  builder.line(`Sent At:     ${data.timestamp || new Date().toLocaleTimeString()}`);
-  builder.line('------------------------------------------------');
+  builder.line(`SERVER:      ${cleanStaffName(data.waiterName)}`);
+  builder.line(divider('=', 48));
 
-  // Checklist format for expediter
+  // Checklist format for expediter with station tags & clear notes
   const items = data.items || [];
   for (const item of items) {
-    builder.bold(true).line(`[ ] ${item.quantity}x ${item.name}`).bold(false);
-    if (item.modifiers && item.modifiers.length > 0) {
-      builder.line(`    + ${item.modifiers.join(', ')}`);
+    const qty = item.quantity || 1;
+    let name = item.name || item.productName || 'Item';
+
+    // Add variant specs if available
+    if (item.temperature && item.temperature !== 'NONE' && !name.includes('(')) {
+      const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
+      const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
+      name = `${name} (${temp}${size})`;
+    } else if (item.size && item.size !== 'Standard' && !name.includes('(')) {
+      name = `${name} (${item.size})`;
     }
-    if (item.station) {
-      builder.line(`    Station: ${item.station}`);
+
+    const station = (item.station || item.stationTarget || 'BAR').toUpperCase();
+    const stationTag = `[${station}]`;
+    const itemLeft = `[ ]  ${qty}x  ${name}`;
+
+    builder
+      .bold(true)
+      .text(padLine(itemLeft, stationTag, 48))
+      .bold(false);
+
+    if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
+      for (const mod of item.modifiers) {
+        builder.line(`         + ${mod}`);
+      }
     }
-    if (item.notes) {
-      builder.line(`    Note: ${item.notes}`);
+
+    if (item.notes && item.notes.trim()) {
+      builder.line(`         >> Prep: ${item.notes.trim()}`);
     }
   }
 
   builder
-    .line('------------------------------------------------')
+    .line(divider('=', 48))
     .center()
     .line("Monk's Dream Jazz Bar • Expediter Checklist")
     .cut(true);
@@ -285,13 +482,13 @@ export function buildTakeoutSlipBytes(data: any): Uint8Array {
 
   builder
     .center()
-    .doubleSize(true)
+    .doubleHeight(true)
     .bold(true)
     .line('*** TAKEOUT / TO-GO ***')
     .line(`Order #${data.orderNumber || 'T-001'}`)
-    .doubleSize(false)
+    .doubleHeight(false)
     .bold(false)
-    .line('------------------------------------------------');
+    .line(divider('-', 48));
 
   builder.left();
   builder.line(`Customer:    ${data.customerName || 'Guest'}`);
@@ -300,18 +497,20 @@ export function buildTakeoutSlipBytes(data: any): Uint8Array {
   if (data.notes) {
     builder.line(`Packaging:   ${data.notes}`);
   }
-  builder.line('------------------------------------------------');
+  builder.line(divider('-', 48));
 
   const items = data.items || [];
   for (const item of items) {
-    builder.bold(true).line(`[ ] ${item.quantity}x ${item.name}`).bold(false);
+    const qty = item.quantity || 1;
+    const name = item.name || item.productName || 'Item';
+    builder.bold(true).line(`[ ] ${qty}x ${name}`).bold(false);
     if (item.notes) {
       builder.line(`    Note: ${item.notes}`);
     }
   }
 
   builder
-    .line('------------------------------------------------')
+    .line(divider('-', 48))
     .center()
     .line('Keep with bagged order at Takeout counter.')
     .cut(true);
@@ -327,13 +526,13 @@ export function buildDeliveryTagBytes(data: any): Uint8Array {
 
   builder
     .center()
-    .doubleSize(true)
+    .doubleHeight(true)
     .bold(true)
     .line('*** ONLINE DELIVERY BAG ***')
     .line(`${data.platform || 'DELIVERY'} #${data.platformReference || 'REF-001'}`)
-    .doubleSize(false)
+    .doubleHeight(false)
     .bold(false)
-    .line('------------------------------------------------');
+    .line(divider('-', 48));
 
   builder.left();
   builder.line(`Customer:    ${data.customerName || 'Customer'}`);
@@ -345,17 +544,19 @@ export function buildDeliveryTagBytes(data: any): Uint8Array {
     builder.line(`Address:     ${data.address}`);
   }
   builder.line(`Time:        ${data.timestamp || new Date().toLocaleTimeString()}`);
-  builder.line('------------------------------------------------');
+  builder.line(divider('-', 48));
 
   const items = data.items || [];
   if (items.length > 0) {
     for (const item of items) {
-      builder.bold(true).line(`[ ] ${item.quantity}x ${item.name}`).bold(false);
+      const qty = item.quantity || 1;
+      const name = item.name || item.productName || 'Item';
+      builder.bold(true).line(`[ ] ${qty}x ${name}`).bold(false);
       if (item.notes) {
         builder.line(`    Note: ${item.notes}`);
       }
     }
-    builder.line('------------------------------------------------');
+    builder.line(divider('-', 48));
   }
 
   builder.center().line('Staple or attach to delivery bag exterior.').cut(true);
@@ -378,18 +579,18 @@ export function buildReadingSlipBytes(reading: any): Uint8Array {
 
   builder
     .center()
-    .doubleSize(true)
+    .doubleHeight(true)
     .bold(true)
     .line("MONK'S DREAM")
-    .line('JAZZ BAR')
-    .doubleSize(false)
+    .line('JAZZ BAR AND CAFE')
+    .doubleHeight(false)
     .bold(false)
     .line(title);
 
   if (reading.reading_number) {
     builder.bold(true).line(`#${reading.reading_number}`).bold(false);
   }
-  builder.line('------------------------------------------------');
+  builder.line(divider('-', 48));
 
   builder.left();
   builder.line(`Scope:       ${reading.drawer_target || 'Consolidated'}`);
@@ -397,16 +598,16 @@ export function buildReadingSlipBytes(reading: any): Uint8Array {
   builder.line(
     `Closed At:   ${new Date(reading.closed_at || reading.created_at || Date.now()).toLocaleString()}`
   );
-  builder.line('------------------------------------------------');
+  builder.line(divider('-', 48));
 
-  const sales = (reading.gross_sales || reading.net_sales || 0) / 100;
+  const sales = toPesos(reading.gross_sales || reading.net_sales || 0);
   builder.bold(true);
   builder.text(padLine('NET SALES:', `PHP ${formatPhp(sales)}`, 48));
   builder.bold(false);
 
-  const cashExpected = (reading.expected_cash || 0) / 100;
-  const cashCounted = (reading.counted_cash || 0) / 100;
-  const variance = (reading.variance || 0) / 100;
+  const cashExpected = toPesos(reading.expected_cash || 0);
+  const cashCounted = toPesos(reading.counted_cash || 0);
+  const variance = toPesos(reading.variance || 0);
 
   builder.text(padLine('Expected Cash:', `PHP ${formatPhp(cashExpected)}`, 48));
   builder.text(padLine('Counted Cash:', `PHP ${formatPhp(cashCounted)}`, 48));
@@ -414,7 +615,7 @@ export function buildReadingSlipBytes(reading: any): Uint8Array {
   builder.text(padLine('VARIANCE:', `PHP ${formatPhp(variance)}`, 48));
   builder.bold(false);
 
-  builder.line('------------------------------------------------');
+  builder.line(divider('-', 48));
   builder
     .feed(2)
     .line('Staff Signature:   ____________________________')

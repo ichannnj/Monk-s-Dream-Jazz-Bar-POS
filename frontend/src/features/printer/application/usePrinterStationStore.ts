@@ -45,6 +45,7 @@ interface PrinterStationState {
   processJob: (job: PrintJobItem) => Promise<boolean>;
   reprintJob: (job: PrintJobItem) => Promise<void>;
   testPrintChit: () => Promise<void>;
+  testPrintReceipt: () => Promise<void>;
   testKickDrawer: () => Promise<void>;
   addLog: (level: StationLogItem['level'], message: string) => void;
   playOrderChime: () => void;
@@ -291,6 +292,79 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     } catch (err: any) {
       toast.error(err.message || 'Failed to print test ticket', { title: 'Print Error' });
       addLog('error', `Test print failed: ${err.message}`);
+    }
+  },
+
+  testPrintReceipt: async () => {
+    const { connectionStatus, addLog } = get();
+    if (connectionStatus !== 'CONNECTED') {
+      toast.error('Connect your USB thermal printer first', { title: 'Printer Disconnected' });
+      return;
+    }
+
+    try {
+      const sampleReceipt = {
+        receiptNumber: 'MD-20261107-TEST',
+        operatingMode: 'EVENT',
+        settledAt: new Date().toISOString(),
+        tableNumber: 4,
+        tableLabel: 'Table 4 (Main Lounge)',
+        tabName: 'Marcus Miller',
+        waiterName: 'Sarah K.',
+        items: [
+          {
+            name: 'Americano (Hot · 12oz)',
+            quantity: 2,
+            price: 160.0,
+            total: 320.0,
+            modifiers: ['Extra Espresso Shot (+₱50.00)'],
+            notes: 'Oat milk on the side',
+          },
+          {
+            name: "Monk's Old Fashioned",
+            quantity: 1,
+            price: 480.0,
+            total: 480.0,
+            notes: '1 large clear rock, luxardo cherry',
+          },
+          {
+            name: 'Truffle Mushroom Fettuccine',
+            quantity: 1,
+            price: 550.0,
+            total: 550.0,
+            notes: 'Extra parmesan',
+          },
+          {
+            name: 'Highland Park 12yr (Double)',
+            quantity: 1,
+            price: 850.0,
+            total: 850.0,
+            isCorkage: true,
+          },
+        ],
+        subtotal: 2200.0,
+        corkageFee: 500.0,
+        discount: 250.0,
+        serviceCharge: 220.0,
+        total: 2670.0,
+        paymentMethod: 'GCASH',
+        paymentChannel: 'GCash',
+        referenceNumber: '8492',
+        tendered: 2670.0,
+        change: 0,
+        vatableSales: 1964.29,
+        vatAmount: 235.71,
+        vatExemptSales: 0,
+      };
+
+      const bytes = buildReceiptBytes(sampleReceipt, false);
+      await webSerialPrinter.writeBytes(bytes);
+      get().playOrderChime();
+      addLog('success', 'Printed sample business customer receipt');
+      toast.success('Sample customer receipt printed', { title: 'Hardware Test' });
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to print test receipt', { title: 'Print Error' });
+      addLog('error', `Test receipt print failed: ${err.message}`);
     }
   },
 

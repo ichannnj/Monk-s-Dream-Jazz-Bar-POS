@@ -403,8 +403,15 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
 
                   {/* Print-only Official Header */}
                   <View className="hidden print:block text-center pb-4 mb-4 border-b border-dashed border-stone-400">
-                    <Text className="text-xl font-bold text-center">MONK'S DREAM JAZZ BAR</Text>
-                    <Text className="text-sm text-center">Official Customer Receipt</Text>
+                    <Text className="text-xl font-bold text-center">
+                      MONK'S DREAM JAZZ BAR AND CAFE
+                    </Text>
+                    <Text className="text-xs text-center text-stone-500">
+                      Craft Cocktails &amp; Fine Jazz
+                    </Text>
+                    <Text className="text-xs text-center text-stone-500">
+                      Tel: +63 917 555 1957 · @monksdreamjazz
+                    </Text>
                     <Text className="text-xs text-center mt-1">
                       Check: {selectedCheck.checkNumber} · Date:{' '}
                       {new Date(selectedCheck.settledAt).toLocaleString()}
@@ -576,11 +583,14 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
 
                   {/* Print Footer */}
                   <View className="hidden print:block text-center pt-6 mt-6 border-t border-dashed border-stone-400">
-                    <Text className="text-sm font-bold text-center">
-                      THANK YOU FOR JOINING US AT MONK'S DREAM!
+                    <Text className="text-xs font-bold text-stone-800 tracking-wider">
+                      "WRITING ABOUT MUSIC IS LIKE DANCING ABOUT ARCHITECTURE"
                     </Text>
-                    <Text className="text-xs text-center text-stone-600 mt-1">
-                      This serves as an Official Settlement Copy
+                    <Text className="text-xs text-stone-500 italic mt-0.5">
+                      — THELONIOUS MONK —
+                    </Text>
+                    <Text className="text-xs font-bold text-stone-900 tracking-widest mt-3">
+                      *** THIS IS NOT AN OFFICIAL RECEIPT ***
                     </Text>
                   </View>
                 </View>

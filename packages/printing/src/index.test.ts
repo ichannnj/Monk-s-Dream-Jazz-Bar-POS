@@ -7,7 +7,7 @@ import {
   type CustomerReceiptPayload,
   type DeliveryTagPayload,
   type TakeoutSlipPayload,
-} from './index.ts';
+} from '../dist/index.js';
 
 test('UsbEscPosPrinter renders runner chit with checkboxes and notes', () => {
   const printer = new UsbEscPosPrinter('/dev/null');
@@ -33,12 +33,12 @@ test('UsbEscPosPrinter renders runner chit with checkboxes and notes', () => {
   const text = buffer.toString('utf-8');
 
   assert.ok(text.includes('ORDER DISPATCH SLIP'));
-  assert.ok(text.includes('#1042'));
+  assert.ok(text.includes('1042'));
   assert.ok(text.includes('Table 4'));
   assert.ok(text.includes('Guest: John'));
-  assert.ok(text.includes('[ ] 2x Artisan Pour-Over'));
+  assert.ok(text.includes('2x  Artisan Pour-Over'));
   assert.ok(text.includes('Extra hot oat milk'));
-  assert.ok(text.includes('[ ] 1x Truffle Mushroom Pasta'));
+  assert.ok(text.includes('1x  Truffle Mushroom Pasta'));
 });
 
 test('UsbEscPosPrinter renders customer receipt with branded jazz bar footer', () => {
@@ -50,14 +50,14 @@ test('UsbEscPosPrinter renders customer receipt with branded jazz bar footer', (
     waiterName: 'Sarah',
     timestamp: '2026-10-29 01:30',
     items: [
-      { name: 'Artisan Pour-Over', quantity: 2, price: 25000, total: 50000 },
-      { name: 'Truffle Mushroom Pasta', quantity: 1, price: 45000, total: 45000 },
+      { name: 'Artisan Pour-Over', quantity: 2, price: 250.0, total: 500.0 },
+      { name: 'Truffle Mushroom Pasta', quantity: 1, price: 450.0, total: 450.0 },
     ],
-    subtotal: 95000,
+    subtotal: 950.0,
     corkageFee: 0,
-    total: 95000,
-    tendered: 100000,
-    change: 5000,
+    total: 950.0,
+    tendered: 1000.0,
+    change: 50.0,
     paymentMethod: 'CASH',
   };
 
@@ -65,11 +65,13 @@ test('UsbEscPosPrinter renders customer receipt with branded jazz bar footer', (
   const text = buffer.toString('utf-8');
 
   assert.ok(text.includes("MONK'S DREAM"));
+  assert.ok(text.includes('JAZZ BAR AND CAFE'));
   assert.ok(text.includes('REC-9001'));
   assert.ok(text.includes('950.00'));
-  assert.ok(text.includes('1000.00'));
+  assert.ok(text.includes('1,000.00'));
   assert.ok(text.includes('50.00'));
-  assert.ok(text.includes('See you at the next set.'));
+  assert.ok(text.includes('THIS IS NOT AN OFFICIAL RECEIPT'));
+  assert.ok(text.includes('Please come back for the next set.'));
 });
 
 test('UsbEscPosPrinter renders takeout and delivery tags', () => {

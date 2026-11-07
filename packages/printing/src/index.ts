@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises';
+import { getMonksDreamLogoRasterBytes } from './assets/logoRasterBytes.js';
 
 function cleanStaffName(name?: string): string {
   if (!name || !name.trim()) return 'Staff';
@@ -11,29 +12,85 @@ function cleanStaffName(name?: string): string {
   return clean.split(' ')[0] || clean;
 }
 
+function toPesos(amount: any): number {
+  if (amount === null || amount === undefined) return 0;
+  const num = Number(amount);
+  return isNaN(num) ? 0 : num;
+}
+
+function formatPhp(amount: number = 0): string {
+  return Number(amount || 0).toLocaleString('en-PH', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+function padLine(left: string, right: string, cols: number = 48): string {
+  const spaceCount = Math.max(1, cols - left.length - right.length);
+  return left + ' '.repeat(spaceCount) + right + '\n';
+}
+
+function divider(char: string = '-', cols: number = 48): string {
+  return char.repeat(cols) + '\n';
+}
+
+function formatItemLine(qtyStr: string, name: string, priceStr: string, cols: number = 48): string {
+  const leftPrefix = `${qtyStr}  `;
+  const reservedRight = priceStr.length + 2;
+  const maxNameLen = cols - leftPrefix.length - reservedRight;
+
+  if (name.length <= maxNameLen) {
+    const spaceCount = Math.max(1, cols - (leftPrefix.length + name.length) - priceStr.length);
+    return `${leftPrefix}${name}${' '.repeat(spaceCount)}${priceStr}\n`;
+  }
+
+  const firstLineName = name.slice(0, maxNameLen);
+  const remainingName = name.slice(maxNameLen).trim();
+  const spaceCount = Math.max(
+    1,
+    cols - (leftPrefix.length + firstLineName.length) - priceStr.length
+  );
+  return (
+    `${leftPrefix}${firstLineName}${' '.repeat(spaceCount)}${priceStr}\n` + `    ${remainingName}\n`
+  );
+}
+
 export interface CustomerReceiptPayload {
   receiptNumber: string;
   tableNumber?: number;
+  tableLabel?: string;
   tabName?: string;
   waiterName?: string;
+  cashierName?: string;
+  operatingMode?: string;
   items: Array<{
     name: string;
+    productName?: string;
+    temperature?: string;
+    size?: string;
     quantity: number;
     price?: number;
+    unit_price?: number;
     total: number;
+    modifiers?: string[];
     isCorkage?: boolean;
     notes?: string;
   }>;
   subtotal: number;
   corkageFee?: number;
   discount?: number;
+  serviceCharge?: number;
   total: number;
   tendered: number;
   change: number;
+  vatableSales?: number;
+  vatAmount?: number;
+  vatExemptSales?: number;
   paymentMethod: string;
   paymentChannel?: string;
   referenceNumber?: string;
   timestamp: string;
+  settledAt?: string;
   isReprint?: boolean;
 }
 
@@ -42,14 +99,20 @@ export type PrinterReceiptPayload = CustomerReceiptPayload;
 export interface RunnerChitPayload {
   orderNumber: string;
   tableNumber?: number;
+  tableLabel?: string;
   tabName?: string;
   roundNumber?: number;
   waiterName?: string;
   timestamp: string;
   items: Array<{
     name: string;
+    productName?: string;
+    temperature?: string;
+    size?: string;
     quantity: number;
     station?: string;
+    stationTarget?: string;
+    modifiers?: string[];
     notes?: string;
   }>;
   isReprint?: boolean;
@@ -176,68 +239,177 @@ export class UsbEscPosPrinter implements IPrinterService {
       cmd([0x1b, 0x45, 0x00]);
     }
 
-    // Double height & double width header: GS ! 0x11
-    cmd([0x1d, 0x21, 0x11]);
-    push("MONK'S DREAM\nJAZZ BAR\n");
-    cmd([0x1d, 0x21, 0x00]); // Normal text
-    push('Digital Operations Platform\n');
-    push('------------------------------------------------\n');
-
-    // Left alignment: ESC a 0
-    cmd([0x1b, 0x61, 0x00]);
-    push(`Receipt #: ${payload.receiptNumber}\n`);
-    push(`Date:      ${payload.timestamp}\n`);
-    if (payload.tableNumber) {
-      push(`Table:     ${payload.tableNumber} (${payload.tabName || 'Main'})\n`);
-    } else if (payload.tabName) {
-      push(`Tab:       ${payload.tabName}\n`);
-    }
-    if (payload.waiterName) {
-      push(`Staff:     ${cleanStaffName(payload.waiterName)}\n`);
-    }
-    push('------------------------------------------------\n');
-
-    // Items list
-    for (const item of payload.items) {
-      const nameCol = `${item.quantity}x ${item.name}`.slice(0, 32).padEnd(34, ' ');
-      const priceCol = (item.total / 100).toFixed(2).padStart(12, ' ');
-      push(`${nameCol}${priceCol}\n`);
-      if (item.isCorkage) {
-        push(`   [Corkage 20% Applied]\n`);
-      }
-      if (item.notes) {
-        push(`   Note: ${item.notes}\n`);
-      }
+    // 1. Bitonal High-Contrast Graphic Logo
+    const logoBytes = getMonksDreamLogoRasterBytes();
+    if (logoBytes && logoBytes.length > 0) {
+      parts.push(Buffer.from(logoBytes));
+      push('\n');
     }
 
-    push('------------------------------------------------\n');
-    push(`Subtotal:    ${(payload.subtotal / 100).toFixed(2).padStart(34, ' ')}\n`);
-    if (payload.corkageFee && payload.corkageFee > 0) {
-      push(`Corkage Fee: ${(payload.corkageFee / 100).toFixed(2).padStart(34, ' ')}\n`);
-    }
-    if (payload.discount && payload.discount > 0) {
-      push(`Discount:   -${(payload.discount / 100).toFixed(2).padStart(34, ' ')}\n`);
-    }
+    // 2. Business Header
+    cmd([0x1b, 0x45, 0x01]); // Bold
+    cmd([0x1d, 0x21, 0x01]); // Double height
+    push("MONK'S DREAM\nJAZZ BAR AND CAFE\n");
+    cmd([0x1d, 0x21, 0x00]); // Normal size
+    cmd([0x1b, 0x45, 0x00]); // Normal weight
+    push('Craft Cocktails & Fine Jazz\n');
+    push('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz\n');
+    push(divider('-', 48));
 
-    // Bold Total: ESC E 1
+    // 3. Metadata Section
+    cmd([0x1b, 0x61, 0x00]); // Left
+    const receiptNo = payload.receiptNumber || 'MD-REC-001';
+    const operatingMode = (payload.operatingMode || 'CAFE').toUpperCase();
+    const modeLabel = operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE';
+
     cmd([0x1b, 0x45, 0x01]);
-    push(`TOTAL: PHP ${(payload.total / 100).toFixed(2).padStart(36, ' ')}\n`);
-    cmd([0x1b, 0x45, 0x00]); // Normal
+    push(padLine(`CHECK #: ${receiptNo}`, `MODE: ${modeLabel}`, 48));
+    cmd([0x1b, 0x45, 0x00]);
+    push(`DATE:    ${payload.settledAt || payload.timestamp}\n`);
 
-    push(`Tendered: PHP ${(payload.tendered / 100).toFixed(2).padStart(32, ' ')}\n`);
-    push(`Change:   PHP ${(payload.change / 100).toFixed(2).padStart(32, ' ')}\n`);
-    const paymentLabel = payload.paymentChannel
-      ? `${payload.paymentChannel} QR`
-      : payload.paymentMethod;
-    push(`Payment:     ${paymentLabel.padStart(34, ' ')}\n`);
-    if (payload.referenceNumber) {
-      push(`Ref #:       #${payload.referenceNumber.padStart(33, ' ')}\n`);
+    if (payload.tableNumber || payload.tableLabel) {
+      const tableStr = payload.tableLabel || `Table ${payload.tableNumber}`;
+      const tabStr = payload.tabName || 'Main Tab';
+      push(`TABLE:   ${tableStr.padEnd(16)} TAB: ${tabStr}\n`);
+    } else {
+      push(`TAB:     ${payload.tabName || 'Takeout / Counter'}\n`);
     }
-    push('------------------------------------------------\n');
 
-    // Center alignment: ESC a 1
-    cmd([0x1b, 0x61, 0x01]);
-    push('Thank you for listening!\nSee you at the next set.\n\n\n\n');
+    const staff = cleanStaffName(payload.cashierName || payload.waiterName);
+    push(`STAFF:   ${staff.padEnd(16)} TERMINAL: TILL-1\n`);
+    push(divider('=', 48));
+
+    // 4. Items Table Header
+    cmd([0x1b, 0x45, 0x01]);
+    push(padLine('QTY  DESCRIPTION', 'AMOUNT (PHP)', 48));
+    cmd([0x1b, 0x45, 0x00]);
+    push(divider('=', 48));
+
+    // 5. Line Items
+    for (const item of payload.items) {
+      const qtyStr = `${item.quantity || 1}x`.padEnd(3, ' ');
+      let desc = item.name || item.productName || 'Item';
+
+      if (item.temperature && item.temperature !== 'NONE' && !desc.includes('(')) {
+        const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
+        const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
+        desc = `${desc} (${temp}${size})`;
+      } else if (item.size && item.size !== 'Standard' && !desc.includes('(')) {
+        desc = `${desc} (${item.size})`;
+      }
+
+      const itemTotal = toPesos(
+        item.total ?? toPesos(item.price || item.unit_price) * (item.quantity || 1)
+      );
+      push(formatItemLine(qtyStr, desc, formatPhp(itemTotal), 48));
+
+      if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
+        for (const mod of item.modifiers) {
+          push(`     + ${mod}\n`);
+        }
+      }
+
+      if (item.notes && item.notes.trim()) {
+        push(`     >> Note: ${item.notes.trim()}\n`);
+      }
+
+      if (item.isCorkage) {
+        push(`     [Corkage Applied]\n`);
+      }
+    }
+
+    push(divider('-', 48));
+
+    // 6. Financial Summary & Totals
+    const subtotal = toPesos(payload.subtotal || payload.total || 0);
+    push(padLine('SUBTOTAL (Gross Sales):', formatPhp(subtotal), 48));
+
+    const corkage = toPesos(payload.corkageFee || 0);
+    if (corkage > 0) {
+      push(padLine('CORKAGE FEE:', formatPhp(corkage), 48));
+    }
+
+    const discount = toPesos(payload.discount || 0);
+    if (discount > 0) {
+      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, 48));
+    }
+
+    const serviceCharge = toPesos(payload.serviceCharge || 0);
+    if (serviceCharge > 0) {
+      push(padLine('SERVICE CHARGE (10%):', formatPhp(serviceCharge), 48));
+    }
+
+    // Bold Grand Total
+    push(divider('=', 48));
+    cmd([0x1b, 0x45, 0x01]); // Bold
+    cmd([0x1d, 0x21, 0x01]); // Double height
+    const total = toPesos(payload.total || subtotal + corkage - discount + serviceCharge);
+    push(padLine('TOTAL AMOUNT DUE:', `PHP ${formatPhp(total)}`, 48));
+    cmd([0x1d, 0x21, 0x00]); // Normal size
+    cmd([0x1b, 0x45, 0x00]); // Normal weight
+    push(divider('=', 48));
+
+    // 7. Payment Tendered & Change
+    const paymentMethod = (payload.paymentMethod || 'CASH').toUpperCase();
+    const paymentChannel = payload.paymentChannel;
+    const paymentLabel = paymentChannel ? `${paymentChannel.toUpperCase()} QR` : paymentMethod;
+    push(padLine('PAYMENT METHOD:', paymentLabel, 48));
+
+    if (payload.referenceNumber) {
+      push(padLine('REFERENCE NO:', `#${payload.referenceNumber}`, 48));
+    }
+
+    const tendered = toPesos(payload.tendered || total);
+    const change = toPesos(
+      payload.change || (paymentMethod === 'CASH' ? Math.max(0, tendered - total) : 0)
+    );
+
+    if (paymentMethod === 'CASH') {
+      push(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, 48));
+      push(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, 48));
+    } else {
+      push(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, 48));
+    }
+
+    // 8. Philippine VAT & Statutory Tax Breakdown
+    push(divider('-', 48));
+    push('TAX & STATUTORY BREAKDOWN:\n');
+    const vatableSales = toPesos(
+      payload.vatableSales ?? (discount > 0 ? 0 : Number((total / 1.12).toFixed(2)))
+    );
+    const vatAmount = toPesos(
+      payload.vatAmount ?? (discount > 0 ? 0 : Number((total - vatableSales).toFixed(2)))
+    );
+    const vatExempt = toPesos(
+      payload.vatExemptSales ?? (discount > 0 ? Number(total.toFixed(2)) : 0)
+    );
+
+    push(padLine('  VATable Sales (12%):', formatPhp(vatableSales), 48));
+    push(padLine('  VAT Amount (12%):', formatPhp(vatAmount), 48));
+    push(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), 48));
+    push(padLine('  Zero-Rated Sales:', '0.00', 48));
+
+    if (discount > 0) {
+      push(divider('-', 48));
+      push('SC / PWD BENEFICIARY ACKNOWLEDGMENT:\n');
+      push('Name:      _________________________________\n');
+      push('ID Number: _________________________________\n');
+      push('Signature: _________________________________\n');
+    }
+
+    // 9. Footer: Quote, Appreciation & Statutory Notice
+    push(divider('-', 48));
+    cmd([0x1b, 0x61, 0x01]); // Center
+    push('"Writing about music is like dancing\n');
+    push('about architecture."\n');
+    push('- Thelonious Monk\n\n');
+    push('Thank you for supporting live music!\n');
+    push('Please come back for the next set.\n');
+    push(divider('-', 48));
+    cmd([0x1b, 0x45, 0x01]);
+    push('THIS IS NOT AN OFFICIAL RECEIPT\n');
+    cmd([0x1b, 0x45, 0x00]);
+    push('\n\n\n');
 
     // Cut paper: GS V 0 (full cut)
     cmd([0x1d, 0x56, 0x00]);
@@ -257,41 +429,64 @@ export class UsbEscPosPrinter implements IPrinterService {
       push('*** REPRINT ***\n');
     }
 
-    cmd([0x1d, 0x21, 0x11]); // Double size
+    cmd([0x1b, 0x45, 0x01]); // Bold
+    cmd([0x1d, 0x21, 0x01]); // Double height
     push('ORDER DISPATCH SLIP\n');
     cmd([0x1d, 0x21, 0x00]); // Normal
+    cmd([0x1b, 0x45, 0x00]);
 
-    push(`Order #${payload.orderNumber}`);
-    if (payload.roundNumber) {
-      push(`  [Round ${payload.roundNumber}]`);
-    }
-    push('\n');
-    push('------------------------------------------------\n');
+    const roundNum = payload.roundNumber || 1;
+    cmd([0x1b, 0x45, 0x01]);
+    push(`*** ROUND ${roundNum} • EXPEDITER ***\n`);
+    cmd([0x1b, 0x45, 0x00]);
+
+    const orderNo = payload.orderNumber || 'N/A';
+    push(padLine(`ORDER #: ${orderNo}`, `TIME: ${payload.timestamp}`, 48));
+    push(divider('-', 48));
 
     cmd([0x1b, 0x61, 0x00]); // Left
-    if (payload.tableNumber) {
-      push(`Destination: Table ${payload.tableNumber} (${payload.tabName || 'Main'})\n`);
+    if (payload.tableNumber || payload.tableLabel) {
+      const tableStr = payload.tableLabel || `Table ${payload.tableNumber}`;
+      push(`DESTINATION: ${tableStr.padEnd(16)} TAB: ${payload.tabName || 'Main'}\n`);
     } else {
-      push(`Tab:         ${payload.tabName || 'Walk-in'}\n`);
+      push(`DESTINATION: TAKEOUT / COUNTER  TAB: ${payload.tabName || 'Walk-in'}\n`);
     }
-    push(`Server:      ${cleanStaffName(payload.waiterName)}\n`);
-    push(`Sent At:     ${payload.timestamp}\n`);
-    push('------------------------------------------------\n');
+    push(`SERVER:      ${cleanStaffName(payload.waiterName)}\n`);
+    push(divider('=', 48));
 
-    // Checklist format for FOH Runner
+    // Checklist format for FOH Runner / Expediter
     for (const item of payload.items) {
-      cmd([0x1b, 0x45, 0x01]); // Bold item
-      push(`[ ] ${item.quantity}x ${item.name}\n`);
-      cmd([0x1b, 0x45, 0x00]);
-      if (item.station) {
-        push(`    Station: ${item.station}\n`);
+      const qty = item.quantity || 1;
+      let name = item.name || item.productName || 'Item';
+
+      if (item.temperature && item.temperature !== 'NONE' && !name.includes('(')) {
+        const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
+        const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
+        name = `${name} (${temp}${size})`;
+      } else if (item.size && item.size !== 'Standard' && !name.includes('(')) {
+        name = `${name} (${item.size})`;
       }
-      if (item.notes) {
-        push(`    Note: ${item.notes}\n`);
+
+      const station = (item.station || item.stationTarget || 'BAR').toUpperCase();
+      const stationTag = `[${station}]`;
+      const itemLeft = `[ ]  ${qty}x  ${name}`;
+
+      cmd([0x1b, 0x45, 0x01]);
+      push(padLine(itemLeft, stationTag, 48));
+      cmd([0x1b, 0x45, 0x00]);
+
+      if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
+        for (const mod of item.modifiers) {
+          push(`         + ${mod}\n`);
+        }
+      }
+
+      if (item.notes && item.notes.trim()) {
+        push(`         >> Prep: ${item.notes.trim()}\n`);
       }
     }
 
-    push('------------------------------------------------\n');
+    push(divider('=', 48));
     cmd([0x1b, 0x61, 0x01]); // Center
     push("Monk's Dream Jazz Bar • Expediter Checklist\n\n\n\n");
     cmd([0x1d, 0x56, 0x00]); // Cut

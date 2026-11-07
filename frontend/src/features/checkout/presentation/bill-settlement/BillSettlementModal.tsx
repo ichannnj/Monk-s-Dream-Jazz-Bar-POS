@@ -34,10 +34,13 @@ import {
   PosDropdown,
   PosDropdownOption,
   useResponsive,
+  useVenueStore,
 } from '@/features/shared';
 import { qrPaymentChannelsApi, type QrPaymentChannel } from '../../data/qrPaymentChannels.api';
 import { FullscreenQrModal } from '../components/FullscreenQrModal';
 import { styles } from './BillSettlementModal.styles';
+
+const MONKS_DREAM_LOGO = require('../../../../../assets/Monks Dream Logo files-02.png');
 
 interface BillSettlementModalProps {
   visible: boolean;
@@ -69,6 +72,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 }) => {
   const { isMobile } = useResponsive();
   const { currentUser } = useAuthStore();
+  const { operatingMode } = useVenueStore();
   const [settlementMode, setSettlementMode] = useState<'single_tab' | 'entire_table'>('single_tab');
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'digital_wallet' | 'comp'>(
     'cash'
@@ -121,6 +125,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 
   const tax = subtotal * 0.1;
   const grandTotal = subtotal + tax;
+
+  // PH Statutory 12% VAT Breakdown
+  const vatableSales = Number((grandTotal / 1.12).toFixed(2));
+  const vatAmount = Number((grandTotal - vatableSales).toFixed(2));
+  const vatExemptSales = 0.0;
 
   // Tendered cash calculation
   const numericTendered = parseFloat(tenderedCash) || 0;
@@ -551,94 +560,201 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
               {/* RIGHT COLUMN: THERMAL RECEIPT MOCKUP PREVIEW */}
               <View style={styles.rightCol}>
                 <View style={styles.receiptPaper}>
-                  {/* Receipt Header */}
-                  <Text style={styles.receiptLogo}>MONK'S DREAM JAZZ BAR</Text>
-                  <Text style={styles.receiptTagline}>Specialty Coffee & Jazz Bar</Text>
-                  <Text style={styles.receiptDivider}>--------------------------------</Text>
-
-                  {/* Meta */}
-                  <View style={styles.receiptRow}>
-                    <Text style={styles.receiptMeta}>
-                      {isTakeout
-                        ? `TAKEOUT: #${takeoutOrder?.ticketNumber}`
-                        : `TABLE: Table ${table?.code || ''}`}
-                    </Text>
-                    <Text style={styles.receiptMeta}>
-                      GUEST:{' '}
-                      {isTakeout
-                        ? takeoutOrder?.customerName || 'Walk-in'
-                        : activeTab?.guestName || 'Table Guest'}
+                  {/* Receipt Header with Logo */}
+                  <View style={{ alignItems: 'center', marginBottom: 6 }}>
+                    <Image
+                      source={MONKS_DREAM_LOGO}
+                      style={{ width: 54, height: 54, resizeMode: 'contain', marginBottom: 4 }}
+                    />
+                    <Text style={styles.receiptLogo}>MONK'S DREAM</Text>
+                    <Text style={styles.receiptSubLogo}>JAZZ BAR AND CAFE</Text>
+                    <Text style={styles.receiptTagline}>Craft Cocktails & Fine Jazz</Text>
+                    <Text style={styles.receiptContact}>
+                      Tel: +63 917 555 1957 • IG/FB: @monksdreamjazz
                     </Text>
                   </View>
+                  <Text style={styles.receiptDivider}>--------------------------------</Text>
+
+                  {/* Metadata */}
+                  <View style={styles.receiptRow}>
+                    <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
+                      {isTakeout
+                        ? `CHECK: #${takeoutOrder?.ticketNumber || 'T-001'}`
+                        : `CHECK: #${(activeTab?.id || 'REC-001').slice(0, 8).toUpperCase()}`}
+                    </Text>
+                    <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
+                      MODE: {operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE'}
+                    </Text>
+                  </View>
+
                   <View style={styles.receiptRow}>
                     <Text style={styles.receiptMeta}>
-                      DATE: {new Date().toISOString().slice(0, 10)}
+                      DATE:{' '}
+                      {new Date().toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
                     </Text>
                     <Text style={styles.receiptMeta}>
                       TIME:{' '}
                       {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </Text>
                   </View>
-                  <Text style={styles.receiptMeta}>
-                    CASHIER: {currentUser?.displayName || 'Coltrane'}
-                  </Text>
-                  <Text style={styles.receiptDivider}>--------------------------------</Text>
 
-                  {/* Items */}
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptMeta}>
+                      {isTakeout
+                        ? `TAKEOUT: #${takeoutOrder?.ticketNumber}`
+                        : `TABLE: ${table?.code ? `Table ${table.code}` : 'Floor'}`}
+                    </Text>
+                    <Text style={styles.receiptMeta}>
+                      TAB:{' '}
+                      {isTakeout
+                        ? takeoutOrder?.customerName || 'Walk-in'
+                        : activeTab?.guestName || 'Table Guest'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptMeta}>
+                      STAFF: {currentUser?.displayName || 'Cashier'}
+                    </Text>
+                    <Text style={styles.receiptMeta}>TERMINAL: TILL-1</Text>
+                  </View>
+
+                  <Text style={styles.receiptDivider}>================================</Text>
+                  <View style={styles.receiptRow}>
+                    <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>QTY DESCRIPTION</Text>
+                    <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>AMOUNT (PHP)</Text>
+                  </View>
+                  <Text style={styles.receiptDivider}>================================</Text>
+
+                  {/* Itemized Line Items */}
                   {(isTakeout ? takeoutOrder?.items || [] : activeTab?.items || [])
                     .filter((item) => item.status !== 'cancelled')
-                    .slice(0, 6)
                     .map((item, idx) => (
-                      <View key={idx} style={styles.receiptRow}>
-                        <Text style={styles.receiptItemName}>
-                          {item.quantity}x {item.productName.slice(0, 18)}
-                        </Text>
-                        <Text style={styles.receiptItemPrice}>
-                          {formatCurrency(item.unitPrice * item.quantity)}
-                        </Text>
+                      <View key={idx} style={{ marginBottom: 4 }}>
+                        <View style={styles.receiptRow}>
+                          <Text style={styles.receiptItemName}>
+                            {item.quantity}x {item.productName}
+                          </Text>
+                          <Text style={styles.receiptItemPrice}>
+                            {formatCurrency(item.unitPrice * item.quantity)}
+                          </Text>
+                        </View>
+                        {item.notes ? (
+                          <Text style={styles.receiptItemNote}> &gt;&gt; Note: {item.notes}</Text>
+                        ) : null}
                       </View>
                     ))}
+
                   <Text style={styles.receiptDivider}>--------------------------------</Text>
 
-                  {/* Totals */}
+                  {/* Financial Summary */}
                   <View style={styles.receiptRow}>
-                    <Text style={styles.receiptMeta}>SUBTOTAL:</Text>
+                    <Text style={styles.receiptMeta}>SUBTOTAL (Gross Sales):</Text>
                     <Text style={styles.receiptMeta}>{formatCurrency(subtotal)}</Text>
                   </View>
+
+                  {tax > 0 ? (
+                    <View style={styles.receiptRow}>
+                      <Text style={styles.receiptMeta}>SERVICE CHARGE (10%):</Text>
+                      <Text style={styles.receiptMeta}>{formatCurrency(tax)}</Text>
+                    </View>
+                  ) : null}
+
+                  {/* Bold Grand Total */}
+                  <Text style={styles.receiptDivider}>================================</Text>
                   <View style={styles.receiptRow}>
-                    <Text style={styles.receiptMeta}>TAX (10%):</Text>
-                    <Text style={styles.receiptMeta}>{formatCurrency(tax)}</Text>
+                    <Text style={[styles.receiptBold, { fontSize: 16 }]}>TOTAL AMOUNT DUE:</Text>
+                    <Text style={[styles.receiptBold, { fontSize: 16, color: '#800020' }]}>
+                      {formatCurrency(grandTotal)}
+                    </Text>
                   </View>
+                  <Text style={styles.receiptDivider}>================================</Text>
+
+                  {/* Payment Details */}
                   <View style={styles.receiptRow}>
-                    <Text style={styles.receiptBold}>TOTAL PAID:</Text>
-                    <Text style={styles.receiptBold}>{formatCurrency(grandTotal)}</Text>
+                    <Text style={styles.receiptMeta}>PAYMENT METHOD:</Text>
+                    <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
+                      {selectedMethod === 'digital_wallet'
+                        ? `${(selectedQrChannel?.name || 'DIGITAL WALLET').toUpperCase()} QR`
+                        : selectedMethod.toUpperCase()}
+                    </Text>
                   </View>
 
-                  {/* Payment Tender & Reference Breakdown in Receipt Mockup */}
                   {selectedMethod === 'digital_wallet' ? (
+                    <View style={styles.receiptRow}>
+                      <Text style={styles.receiptMeta}>REFERENCE NO:</Text>
+                      <Text
+                        style={[
+                          styles.receiptMeta,
+                          !isRefNumberValid && { color: '#dc2626', fontWeight: '800' },
+                        ]}
+                      >
+                        {isRefNumberValid ? `#${referenceNumber}` : 'REQUIRED (4-DIGIT)'}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  {selectedMethod === 'cash' ? (
                     <>
                       <View style={styles.receiptRow}>
-                        <Text style={styles.receiptMeta}>PAYMENT:</Text>
-                        <Text style={styles.receiptMeta}>
-                          {(selectedQrChannel?.name || 'DIGITAL WALLET').toUpperCase()}
-                        </Text>
+                        <Text style={styles.receiptMeta}>CASH TENDERED:</Text>
+                        <Text style={styles.receiptMeta}>{formatCurrency(numericTendered)}</Text>
                       </View>
                       <View style={styles.receiptRow}>
-                        <Text style={styles.receiptMeta}>REF #:</Text>
-                        <Text
-                          style={[
-                            styles.receiptMeta,
-                            !isRefNumberValid && { color: '#dc2626', fontWeight: '800' },
-                          ]}
-                        >
-                          {isRefNumberValid ? `****${referenceNumber}` : 'REQUIRED (4-DIGIT)'}
+                        <Text style={styles.receiptMeta}>CHANGE DUE:</Text>
+                        <Text style={[styles.receiptMeta, { fontWeight: '800', color: '#16a34a' }]}>
+                          {formatCurrency(changeDue)}
                         </Text>
                       </View>
                     </>
-                  ) : null}
+                  ) : (
+                    <View style={styles.receiptRow}>
+                      <Text style={styles.receiptMeta}>AMOUNT PAID:</Text>
+                      <Text style={styles.receiptMeta}>{formatCurrency(grandTotal)}</Text>
+                    </View>
+                  )}
 
-                  <Text style={styles.receiptDivider}>================================</Text>
-                  <Text style={styles.receiptFooter}>Thank you for jamming with us!</Text>
+                  {/* Philippine VAT Breakdown */}
+                  <Text style={styles.receiptDivider}>--------------------------------</Text>
+                  <Text style={[styles.receiptMeta, { fontWeight: '700', marginBottom: 2 }]}>
+                    TAX & STATUTORY BREAKDOWN:
+                  </Text>
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptTaxSub}> VATable Sales (12%):</Text>
+                    <Text style={styles.receiptTaxSub}>{formatCurrency(vatableSales)}</Text>
+                  </View>
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptTaxSub}> VAT Amount (12%):</Text>
+                    <Text style={styles.receiptTaxSub}>{formatCurrency(vatAmount)}</Text>
+                  </View>
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptTaxSub}> VAT-Exempt Sales:</Text>
+                    <Text style={styles.receiptTaxSub}>{formatCurrency(vatExemptSales)}</Text>
+                  </View>
+                  <View style={styles.receiptRow}>
+                    <Text style={styles.receiptTaxSub}> Zero-Rated Sales:</Text>
+                    <Text style={styles.receiptTaxSub}>₱0.00</Text>
+                  </View>
+
+                  {/* Jazz Club Cultural Quote & Notice */}
+                  <Text style={styles.receiptDivider}>--------------------------------</Text>
+                  <View style={{ alignItems: 'center', marginVertical: 4 }}>
+                    <Text style={styles.receiptQuote}>"Writing about music is like dancing</Text>
+                    <Text style={styles.receiptQuote}>about architecture."</Text>
+                    <Text style={[styles.receiptQuote, { fontWeight: '700', marginTop: 1 }]}>
+                      - Thelonious Monk
+                    </Text>
+                    <Text style={[styles.receiptFooter, { marginTop: 4 }]}>
+                      Thank you for supporting live music!
+                    </Text>
+                    <Text style={styles.receiptFooter}>Please come back for the next set.</Text>
+                  </View>
+                  <Text style={styles.receiptDivider}>--------------------------------</Text>
+                  <Text style={styles.receiptNotOfficial}>THIS IS NOT AN OFFICIAL RECEIPT</Text>
                 </View>
               </View>
             </View>

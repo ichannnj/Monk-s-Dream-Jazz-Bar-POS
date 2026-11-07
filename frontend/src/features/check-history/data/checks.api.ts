@@ -37,9 +37,9 @@ export const checksApi = {
             operating_mode,
             corkage_amount,
             tables:table_id (table_number),
-            opened_by:opened_by_id (name)
+            opened_by:opened_by_id (display_name)
           ),
-          users:staff_id (name)
+          users:staff_id (display_name)
         `
         )
         .order('created_at', { ascending: false });
@@ -137,7 +137,12 @@ export const checksApi = {
         }
 
         const guestName = tab.customer_name || tab.guest_name || 'Guest Tab';
-        const cashierName = p.users?.name || tab.opened_by?.name || 'Cashier';
+        const cashierName =
+          p.users?.display_name ||
+          tab.opened_by?.display_name ||
+          p.users?.name ||
+          tab.opened_by?.name ||
+          'Cashier';
         const total = Number(p.amount) || 0;
         const discountAmount = Number(p.discount_amount || 0);
         const corkageFee = Number(p.corkage_amount || 0);
@@ -251,19 +256,34 @@ export const checksApi = {
       const { error } = await supabase.from('print_jobs').insert({
         job_type: 'CUSTOMER_RECEIPT',
         receipt_data: {
+          receiptNumber: check.checkNumber,
           checkNumber: check.checkNumber,
           guestName: check.guestName,
-          tableOrRef: check.tableOrRef,
+          customerName: check.guestName,
+          tabName: check.guestName,
+          tableLabel: check.tableOrRef,
           cashierName: check.cashierName,
+          waiterName: check.cashierName,
           settledAt: check.settledAt,
+          timestamp: check.timestamp || check.settledAt,
           items: check.items,
           subtotal: check.subtotal,
+          corkageFee: check.corkageFee || 0,
+          corkageAmount: check.corkageFee || 0,
+          discount: check.discountAmount,
           discountAmount: check.discountAmount,
           serviceCharge: check.serviceCharge,
           vatableSales: check.vatableSales,
           vatAmount: check.vatAmount,
           total: check.total,
+          amount: check.total,
+          tendered: check.total,
+          change: 0,
           paymentMethod: check.paymentMethod,
+          paymentChannel: check.paymentChannel,
+          referenceNumber: check.referenceNumber,
+          operatingMode: check.operatingMode || 'CAFE',
+          isReprint: true,
         } as any,
         status: 'PENDING',
       });
