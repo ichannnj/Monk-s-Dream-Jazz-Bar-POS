@@ -34,7 +34,7 @@ import { ManagerModeSwitchModal } from '@/features/floor/presentation/ManagerMod
 export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> = ({
   onSwitchToFloor,
 }) => {
-  const { isMobile, isTablet } = useResponsive();
+  const { isMobile, isTablet, isDesktop } = useResponsive();
   const [currentRoute, setCurrentRoute] = useState<AdminRoute>('dashboard');
   const { operatingMode, setOperatingMode } = useVenueStore();
   const [timeframe, setTimeframe] = useState<TimeframeFilter>('today');
@@ -319,8 +319,8 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         onSwitchToFloor={onSwitchToFloor}
       />
 
-      {/* Slide-over Team Chat Trigger Button (Desktop only; on mobile, Chat is in bottom bar) */}
-      {!isMobile && currentRoute !== 'chats' && <AdminFloatingChat unreadCount={3} />}
+      {/* Slide-over Team Chat Trigger Button (Desktop only; on mobile/tablet, Chat is in navigation) */}
+      {isDesktop && currentRoute !== 'chats' && <AdminFloatingChat unreadCount={3} />}
 
       {/* Operating Mode Switch Confirmation Modal */}
       <ManagerModeSwitchModal

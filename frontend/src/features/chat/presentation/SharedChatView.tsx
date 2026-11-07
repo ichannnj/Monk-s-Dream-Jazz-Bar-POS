@@ -33,6 +33,8 @@ export interface SharedChatViewProps {
   title?: string;
   onBack?: () => void;
   backLabel?: string;
+  hideHeader?: boolean;
+  compact?: boolean;
 }
 
 export const SharedChatView: React.FC<SharedChatViewProps> = ({
@@ -42,6 +44,8 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
   title = 'Team Chats',
   onBack,
   backLabel = 'Back',
+  hideHeader = false,
+  compact = false,
 }) => {
   const { currentUser } = useAuthStore();
   const conversations = useChatStore((s) => s.conversations);
@@ -58,6 +62,7 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
   const trackCurrentPresence = useChatStore((s) => s.trackCurrentPresence);
 
   const { isMobile } = useResponsive();
+  const isCompact = isMobile || compact;
   const [mobileView, setMobileView] = useState<'list' | 'thread'>(() => {
     return defaultChannel && defaultChannel !== 'all' ? 'thread' : 'list';
   });
@@ -450,73 +455,75 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
       '11111111-1111-1111-1111-111111111111'; // Miles (Manager) default fallback
 
     await openDirectMessageWithColleague(effectiveUserId, colleague);
-    if (isMobile) {
+    if (isCompact) {
       setMobileView('thread');
     }
   };
 
   const handleSelectConversation = (id: string) => {
     setActiveConversation(id, currentUser?.id);
-    if (isMobile) {
+    if (isCompact) {
       setMobileView('thread');
     }
   };
 
-  const showList = !isMobile || mobileView === 'list';
-  const showThread = !isMobile || mobileView === 'thread';
+  const showList = !isCompact || mobileView === 'list';
+  const showThread = !isCompact || mobileView === 'thread';
 
   return (
-    <View className="flex-1 bg-[#FAF5F5] p-2 sm:p-4 lg:p-6">
+    <View className={`flex-1 bg-[#FAF5F5] ${isCompact ? 'p-2 sm:p-3' : 'p-2 sm:p-4 lg:p-6'}`}>
       {/* 1. Top Header Bar Card - Displayed on desktop/tablet OR on mobile when in 'list' view */}
-      {(!isMobile || mobileView === 'list') && (
-        <View className="flex-row items-center justify-between bg-white rounded-2xl px-4 sm:px-6 py-3 sm:py-3.5 mb-3 sm:mb-4 shadow-sm border border-neutral-100">
-          <View className="flex-row items-center flex-1 mr-2">
+      {!hideHeader && (!isCompact || mobileView === 'list') && (
+        <View className="flex-row items-center justify-between bg-white rounded-2xl px-4 sm:px-6 py-3 sm:py-3.5 mb-3 sm:mb-4 shadow-sm border border-neutral-100 flex-wrap sm:flex-nowrap gap-2">
+          <View className="flex-row items-center flex-1 min-w-0 mr-2">
             {onBack && (
               <Pressable
                 onPress={onBack}
-                className="flex-row items-center mr-3 px-3 py-2 rounded-xl bg-neutral-100 active:opacity-80 min-h-[48px] min-w-[48px] justify-center"
+                className="flex-row items-center mr-3 px-3 py-2 rounded-xl bg-neutral-100 active:opacity-80 min-h-[44px] justify-center shrink-0"
               >
                 <ArrowLeft size={18} color="#431621" />
-                <Text className="ml-1.5 text-base font-bold text-[#431621]">{backLabel}</Text>
+                <Text className="ml-1.5 text-sm sm:text-base font-bold text-[#431621]">
+                  {backLabel}
+                </Text>
               </Pressable>
             )}
 
             <Text
-              className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight"
+              className="text-lg sm:text-2xl font-bold text-neutral-900 tracking-tight shrink min-w-0"
               numberOfLines={1}
             >
               {title}
             </Text>
 
-            <View className="flex-row items-center bg-emerald-50 border border-emerald-200 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full ml-3 sm:ml-4">
+            <View className="flex-row items-center bg-emerald-50 border border-emerald-200 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full ml-2 sm:ml-4 shrink-0">
               <View className="w-2 sm:w-2.5 h-2 sm:h-2.5 rounded-full bg-emerald-500 mr-1.5 sm:mr-2" />
-              <Text className="text-sm sm:text-base font-semibold text-emerald-800">
+              <Text className="text-xs sm:text-sm font-semibold text-emerald-800">
                 {isMobile ? 'Live' : 'Online · Live DB'}
               </Text>
             </View>
           </View>
 
-          <View className="flex-row items-center">
+          <View className="flex-row items-center shrink-0">
             {!isMobile && (
-              <Text className="text-base font-medium text-neutral-500 mr-5">
+              <Text className="hidden md:flex text-sm sm:text-base font-medium text-neutral-500 mr-4">
                 {currentDateTime || 'Live Service'}
               </Text>
             )}
 
             <View
-              className={`flex-row items-center ${!isMobile ? 'pl-4 border-l border-neutral-200' : ''}`}
+              className={`flex-row items-center ${!isMobile ? 'pl-3 sm:pl-4 border-l border-neutral-200' : ''}`}
             >
-              <View className="w-10 sm:w-11 h-10 sm:h-11 rounded-full bg-[#FCE4EC] items-center justify-center border border-[#F8BBD0] mr-2 sm:mr-3">
-                <Text className="text-sm sm:text-base font-bold text-[#800020]">
+              <View className="w-9 sm:w-11 h-9 sm:h-11 rounded-full bg-[#FCE4EC] items-center justify-center border border-[#F8BBD0] mr-2 sm:mr-3">
+                <Text className="text-xs sm:text-base font-bold text-[#800020]">
                   {userInitials}
                 </Text>
               </View>
               {!isMobile && (
-                <View>
-                  <Text className="text-base font-bold text-neutral-900 leading-tight">
+                <View className="hidden sm:flex">
+                  <Text className="text-sm sm:text-base font-bold text-neutral-900 leading-tight">
                     {currentSenderName}
                   </Text>
-                  <Text className="text-base font-medium text-neutral-500 leading-tight">
+                  <Text className="text-xs sm:text-sm font-medium text-neutral-500 leading-tight">
                     {currentSenderRole}
                   </Text>
                 </View>
@@ -526,13 +533,13 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
         </View>
       )}
 
-      {/* 2. Main Two-Column Tablet/Desktop or Single-Column Mobile Layout */}
+      {/* 2. Main Two-Column Tablet/Desktop or Single-Column Mobile/Compact Layout */}
       <View className="flex-1 flex-row gap-4">
         {/* Left Column: Messages List (Channels & Direct Messages) */}
         {showList && (
           <View
             className={`${
-              isMobile ? 'w-full flex-1' : 'w-72 lg:w-80'
+              isCompact ? 'w-full flex-1' : 'w-72 lg:w-80'
             } bg-white rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm border border-neutral-100 flex-col`}
           >
             <Text className="text-xl font-bold text-neutral-900 mb-3 px-2">Conversations</Text>
@@ -704,21 +711,23 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
           <View className="flex-1 bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-neutral-100 flex-col overflow-hidden relative">
             {/* Thread Header */}
             <View className="px-4 sm:px-6 py-3 sm:py-4 border-b border-neutral-100 flex-row items-center justify-between">
-              <View className="flex-row items-center flex-1 mr-2">
-                {isMobile && (
+              <View className="flex-row items-center flex-1 min-w-0 mr-2">
+                {isCompact && (
                   <Pressable
                     onPress={() => setMobileView('list')}
-                    className="flex-row items-center mr-2.5 px-2.5 py-2 -ml-1 rounded-xl bg-neutral-100 active:bg-neutral-200 min-h-[48px] min-w-[48px] justify-center"
+                    className="flex-row items-center mr-2.5 px-2.5 py-1.5 -ml-1 rounded-xl bg-neutral-100 active:bg-neutral-200 min-h-[40px] justify-center shrink-0"
                     accessibilityRole="button"
                     accessibilityLabel="Back to conversations list"
                   >
-                    <ArrowLeft size={20} color="#431621" />
-                    <Text className="ml-1 text-base font-bold text-[#431621]">Chats</Text>
+                    <ArrowLeft size={18} color="#431621" />
+                    <Text className="ml-1 text-sm sm:text-base font-bold text-[#431621]">
+                      Chats
+                    </Text>
                   </Pressable>
                 )}
-                <View className="flex-1">
+                <View className="flex-1 min-w-0">
                   <Text
-                    className="text-xl sm:text-2xl font-bold text-neutral-900 tracking-tight"
+                    className="text-lg sm:text-2xl font-bold text-neutral-900 tracking-tight shrink min-w-0"
                     numberOfLines={1}
                   >
                     {activeConversation.title}
@@ -759,7 +768,10 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
                           </View>
                         );
                       })()}
-                    <Text className="text-base font-medium text-neutral-500">
+                    <Text
+                      className="text-xs sm:text-base font-medium text-neutral-500 shrink min-w-0"
+                      numberOfLines={1}
+                    >
                       {activeConversation.subtitle ||
                         (activeConversation.type === 'channel'
                           ? `${activeConversation.title} · Staff Channel`

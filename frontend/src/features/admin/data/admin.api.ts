@@ -1205,13 +1205,23 @@ export const adminApi = {
           p_password: payload.password,
         }
       );
-      if (!rpcErr && rpcRes && rpcRes.success) {
-        const { data: createdUser } = await supabase
+      if (rpcErr) {
+        throw new Error(rpcErr.message || 'Failed to create admin user with credentials');
+      }
+      if (rpcRes && !rpcRes.success) {
+        throw new Error(rpcRes.error || 'Failed to create admin user account');
+      }
+      if (rpcRes && rpcRes.success) {
+        const { data: createdUser, error: userErr } = await supabase
           .from('users')
           .select('*')
           .eq('id', rpcRes.userId)
           .single();
-        if (createdUser) return createdUser as StaffMemberAdmin;
+        if (userErr) throw userErr;
+        if (createdUser) {
+          realtimeGateway.broadcastPosSync('staff_user_created');
+          return createdUser as StaffMemberAdmin;
+        }
       }
     }
 

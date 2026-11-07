@@ -543,7 +543,7 @@ BEGIN
     v_pass_hash,
     CASE WHEN v_pass_hash IS NOT NULL THEN now() ELSE NULL END,
     CASE WHEN v_pin_hash IS NOT NULL THEN now() ELSE NULL END,
-    v_clean_role::user_role,
+    v_clean_role::public.role,
     NULLIF(trim(COALESCE(p_job_title, '')), ''),
     COALESCE(p_base_daily_rate, 645.00),
     NULLIF(trim(COALESCE(p_phone, '')), ''),
