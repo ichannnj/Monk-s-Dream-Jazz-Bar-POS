@@ -436,7 +436,14 @@ export const adminTelemetryService = {
         return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
       };
 
-      const { data: openOrdersData } = await (supabase.from as any)('orders')
+      // 5a. Determine effective start date for station metrics (respecting reset baseline for 'today')
+      let effectiveStationStart = bounds.startDate;
+      if (timeframe === 'today' && stationMetricsResetAt && !options?.ignoreResetBaseline) {
+        effectiveStationStart = stationMetricsResetAt;
+      }
+
+      // Query active open orders scoped to active operating shift / timeframe
+      let openOrdersQuery = (supabase.from as any)('orders')
         .select(
           `
           id, status, created_at,
@@ -450,14 +457,16 @@ export const adminTelemetryService = {
         .in('status', ['OPEN', 'IN_PREPARATION'])
         .eq('tabs.status', 'OPEN');
 
+      if (effectiveStationStart) {
+        openOrdersQuery = openOrdersQuery.gte('created_at', effectiveStationStart);
+      }
+      if (bounds.endDate) {
+        openOrdersQuery = openOrdersQuery.lt('created_at', bounds.endDate);
+      }
+
+      const { data: openOrdersData } = await openOrdersQuery;
       const openOrders = openOrdersData || [];
       const nowMs = Date.now();
-
-      // 5a. Determine effective start date for station metrics (respecting reset baseline for 'today')
-      let effectiveStationStart = bounds.startDate;
-      if (timeframe === 'today' && stationMetricsResetAt && !options?.ignoreResetBaseline) {
-        effectiveStationStart = stationMetricsResetAt;
-      }
 
       // 5b. Query completed order items in the timeframe (status = 'SERVED')
       let completedItemsQuery = (supabase.from as any)('order_items')
@@ -736,12 +745,7 @@ export const adminTelemetryService = {
           isOnline: isStationReallyOnline('bar'),
           targetTicketTime: '10:00',
           activeTickets: barTickets,
-          avgTicketTime:
-            barDone > 0
-              ? formatDuration(barDoneSec / barDone)
-              : barTickets > 0
-                ? formatDuration(barElapsedSum / barTickets)
-                : 'Idle',
+          avgTicketTime: barDone > 0 ? formatDuration(barDoneSec / barDone) : 'Idle',
           avgTicketSeconds: barDone > 0 ? Math.round(barDoneSec / barDone) : 0,
           completedTickets: barDone,
           onTimeRate:
@@ -765,12 +769,7 @@ export const adminTelemetryService = {
           isOnline: isStationReallyOnline('cafe'),
           targetTicketTime: '06:00',
           activeTickets: cafeTickets,
-          avgTicketTime:
-            cafeDone > 0
-              ? formatDuration(cafeDoneSec / cafeDone)
-              : cafeTickets > 0
-                ? formatDuration(cafeElapsedSum / cafeTickets)
-                : 'Idle',
+          avgTicketTime: cafeDone > 0 ? formatDuration(cafeDoneSec / cafeDone) : 'Idle',
           avgTicketSeconds: cafeDone > 0 ? Math.round(cafeDoneSec / cafeDone) : 0,
           completedTickets: cafeDone,
           onTimeRate:
@@ -796,12 +795,7 @@ export const adminTelemetryService = {
           isOnline: isStationReallyOnline('kitchen'),
           targetTicketTime: '15:00',
           activeTickets: kitchenTickets,
-          avgTicketTime:
-            kitchenDone > 0
-              ? formatDuration(kitchenDoneSec / kitchenDone)
-              : kitchenTickets > 0
-                ? formatDuration(kitchenElapsedSum / kitchenTickets)
-                : 'Idle',
+          avgTicketTime: kitchenDone > 0 ? formatDuration(kitchenDoneSec / kitchenDone) : 'Idle',
           avgTicketSeconds: kitchenDone > 0 ? Math.round(kitchenDoneSec / kitchenDone) : 0,
           completedTickets: kitchenDone,
           onTimeRate:
@@ -827,12 +821,7 @@ export const adminTelemetryService = {
           isOnline: isStationReallyOnline('runner'),
           targetTicketTime: '03:00',
           activeTickets: runnerTickets,
-          avgTicketTime:
-            runnerDone > 0
-              ? formatDuration(runnerDoneSec / runnerDone)
-              : runnerTickets > 0
-                ? formatDuration(runnerElapsedSum / runnerTickets)
-                : 'Idle',
+          avgTicketTime: runnerDone > 0 ? formatDuration(runnerDoneSec / runnerDone) : 'Idle',
           avgTicketSeconds: runnerDone > 0 ? Math.round(runnerDoneSec / runnerDone) : 0,
           completedTickets: runnerDone,
           onTimeRate:

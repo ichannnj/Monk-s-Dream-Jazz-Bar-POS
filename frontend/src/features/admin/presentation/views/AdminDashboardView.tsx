@@ -94,7 +94,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   const [alerts, setAlerts] = useState(telemetry.alerts || []);
 
   const hasActiveTickets = Boolean(
-    telemetry?.stations?.some((s) => (s.activeTicketTimestamps?.length || 0) > 0)
+    telemetry?.stations?.some((s) => s.isOnline && (s.activeTicketTimestamps?.length || 0) > 0)
   );
   const nowMs = useLiveNow(hasActiveTickets);
 
@@ -926,7 +926,8 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                     station.activeTicketTimestamps,
                     station.avgTicketTime,
                     station.lateTickets,
-                    nowMs
+                    nowMs,
+                    station.isOnline
                   );
                   return (
                     <View
@@ -959,13 +960,29 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
                             {station.activeTickets}
                           </Text>
                           <Text className="text-base text-stone-500 mt-0.5">Active</Text>
+                          {station.activeTickets > 0 && (
+                            <Text
+                              className={`text-[10px] font-semibold mt-0.5 ${
+                                station.isOnline ? 'text-amber-600' : 'text-stone-400'
+                              }`}
+                            >
+                              {station.isOnline
+                                ? `Live: ${liveStats.liveActiveTime}`
+                                : 'Queued (Offline)'}
+                            </Text>
+                          )}
                         </View>
 
                         <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
                           <Text className="text-xl font-black text-stone-900">
-                            {liveStats.avgTicketTime}
+                            {station.avgTicketTime || 'Idle'}
                           </Text>
                           <Text className="text-base text-stone-500 mt-0.5">Avg time</Text>
+                          <Text className="text-[10px] text-stone-400 mt-0.5">
+                            {station.completedTickets && station.completedTickets > 0
+                              ? `${station.completedTickets} fulfilled`
+                              : 'No orders yet'}
+                          </Text>
                         </View>
 
                         <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">

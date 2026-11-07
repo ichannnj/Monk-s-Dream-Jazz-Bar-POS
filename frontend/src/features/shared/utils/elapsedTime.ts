@@ -150,23 +150,18 @@ export function getTimerUrgency(
 }
 
 /**
- * Computes real-time ticking station average turnaround time and overdue ticket count
- * from active ticket ISO timestamps.
+ * Computes real-time ticking station average turnaround time, live active queue timer,
+ * and overdue ticket count from active ticket ISO timestamps.
+ * If the station is offline or has no active tickets, live active timers do not tick.
  */
 export function getLiveStationTurnaround(
   stationKey: string,
   activeTicketTimestamps?: string[],
   fallbackAvg: string = 'Idle',
   fallbackLate: number = 0,
-  nowMs: number = Date.now()
-): { avgTicketTime: string; lateTickets: number } {
-  if (!activeTicketTimestamps || activeTicketTimestamps.length === 0) {
-    return {
-      avgTicketTime: fallbackAvg || 'Idle',
-      lateTickets: fallbackLate || 0,
-    };
-  }
-
+  nowMs: number = Date.now(),
+  isStationOnline: boolean = true
+): { avgTicketTime: string; liveActiveTime: string; lateTickets: number } {
   const slaSecondsMap: Record<string, number> = {
     runner: 180,
     cafe: 360,
@@ -174,6 +169,15 @@ export function getLiveStationTurnaround(
     kitchen: 900,
   };
   const slaThreshold = slaSecondsMap[stationKey] || 600;
+
+  // When offline or no tickets exist, preserve completed turnaround and stop live active ticking
+  if (!isStationOnline || !activeTicketTimestamps || activeTicketTimestamps.length === 0) {
+    return {
+      avgTicketTime: fallbackAvg || 'Idle',
+      liveActiveTime: 'Idle',
+      lateTickets: fallbackLate || 0,
+    };
+  }
 
   let elapsedSum = 0;
   let lateCount = 0;
@@ -186,8 +190,11 @@ export function getLiveStationTurnaround(
     }
   }
 
+  const liveActiveTime = formatElapsedTimer(elapsedSum / activeTicketTimestamps.length);
+
   return {
-    avgTicketTime: formatElapsedTimer(elapsedSum / activeTicketTimestamps.length),
+    avgTicketTime: fallbackAvg || 'Idle',
+    liveActiveTime,
     lateTickets: lateCount,
   };
 }

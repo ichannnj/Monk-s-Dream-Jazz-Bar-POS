@@ -47,7 +47,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
   const [isClearingReset, setIsClearingReset] = useState(false);
 
   const hasActiveTickets = Boolean(
-    telemetry?.stations?.some((s) => (s.activeTicketTimestamps?.length || 0) > 0)
+    telemetry?.stations?.some((s) => s.isOnline && (s.activeTicketTimestamps?.length || 0) > 0)
   );
   const nowMs = useLiveNow(hasActiveTickets);
 
@@ -95,7 +95,8 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
             st.activeTicketTimestamps,
             st.avgTicketTime,
             st.lateTickets,
-            nowMs
+            nowMs,
+            st.isOnline
           );
           return {
             id: st.stationKey,
@@ -104,11 +105,11 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
             icon: meta.icon,
             color: meta.color,
             activeTickets: st.activeTickets,
-            avgTime: st.avgTicketTime || liveStats.avgTicketTime,
-            liveActiveTime: liveStats.avgTicketTime,
+            avgTime: st.avgTicketTime || 'Idle',
+            liveActiveTime: liveStats.liveActiveTime,
             targetTime: st.targetTicketTime || meta.defaultTarget,
             isOnline: st.isOnline,
-            lateCount: st.lateTickets,
+            lateCount: liveStats.lateTickets,
             completedCount: st.completedTickets ?? 0,
             onTimeRate: st.onTimeRate ?? 100,
             stockoutCount: st.stockoutCount,
@@ -429,8 +430,12 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
                   <Text className="text-xs font-medium text-stone-500">Active Queue</Text>
                   <Text className="text-2xl font-black text-stone-900">{st.activeTickets}</Text>
                   {st.activeTickets > 0 && (
-                    <Text className="text-[11px] font-semibold text-amber-600">
-                      Live: {st.liveActiveTime}
+                    <Text
+                      className={`text-[11px] font-semibold ${
+                        st.isOnline ? 'text-amber-600' : 'text-stone-400'
+                      }`}
+                    >
+                      {st.isOnline ? `Live: ${st.liveActiveTime}` : 'Queued (Offline)'}
                     </Text>
                   )}
                 </View>
