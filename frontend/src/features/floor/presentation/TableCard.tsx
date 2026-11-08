@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { Plus, Utensils, Receipt } from 'lucide-react-native';
+import { View, Text, Pressable } from 'react-native';
+import { Plus, Utensils } from 'lucide-react-native';
 import { TableItem } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
 import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
+import { styles } from './TableCard.styles';
 
 interface TableCardProps {
   table: TableItem;
@@ -46,7 +47,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
   }, [table.tabs, isEmpty, hasOpenCheck]);
 
   // Status configuration badge
-  const getStatusBadge = () => {
+  const statusConfig = useMemo(() => {
     switch (status) {
       case 'ready':
         return {
@@ -85,9 +86,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
           dotColor: '#9ca3af',
         };
     }
-  };
-
-  const statusConfig = getStatusBadge();
+  }, [status]);
 
   // Format amount with Philippine Peso symbol and commas
   const formattedAmount =
@@ -133,7 +132,15 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
         {/* 1. Top Row: Table Identifier + Status Badge */}
         <View style={styles.cardHeader}>
           <View style={styles.codeCol}>
-            <Text style={[styles.tableCodeText, isEmpty && styles.tableCodeTextEmpty]}>
+            <Text
+              style={[
+                styles.tableCodeText,
+                isEmpty && styles.tableCodeTextEmpty,
+                displayName.length > 10 && styles.tableCodeTextLong,
+              ]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {displayName}
             </Text>
           </View>
@@ -201,181 +208,3 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
 });
 
 TableCard.displayName = 'TableCard';
-
-const styles = StyleSheet.create({
-  cardContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#eee8e3',
-    padding: 15,
-    shadowColor: '#2b0f16',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    justifyContent: 'space-between',
-    minHeight: 152,
-  },
-  cardOccupied: {
-    backgroundColor: '#ffffff',
-    borderColor: '#fad4db',
-  },
-  cardReady: {
-    backgroundColor: '#fbfdfc',
-    borderColor: '#bbf7d0',
-  },
-  cardPrep: {
-    backgroundColor: '#ffffff',
-    borderColor: '#fef3c7',
-  },
-  cardServed: {
-    backgroundColor: '#ffffff',
-    borderColor: '#fecdd3',
-  },
-  cardEmpty: {
-    backgroundColor: '#fcfbfa',
-    borderColor: '#e8e2dc',
-  },
-  mainPressableArea: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  cardPressed: {
-    transform: [{ scale: 0.985 }],
-    opacity: 0.92,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  codeCol: {
-    justifyContent: 'center',
-  },
-  tableCodeText: {
-    fontSize: 26,
-    fontWeight: '900',
-    color: '#111827',
-    letterSpacing: -0.3,
-  },
-  tableCodeTextEmpty: {
-    color: '#374151',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  statusText: {
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  timeText: {
-    fontSize: 13,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  midRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.06)',
-    gap: 12,
-  },
-  itemsSummaryText: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: 22,
-    color: '#374151',
-    fontWeight: '600',
-  },
-  itemsSummaryTextEmpty: {
-    color: '#9ca3af',
-    fontStyle: 'italic',
-    fontWeight: '500',
-  },
-  amountCol: {
-    alignItems: 'flex-end',
-  },
-  amountText: {
-    fontSize: 22,
-    fontWeight: '900',
-    color: '#111827',
-    fontVariant: ['tabular-nums'],
-  },
-  amountTextEmpty: {
-    color: '#9ca3af',
-    fontWeight: '700',
-  },
-  tagWine: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#832238',
-    marginTop: 2,
-    letterSpacing: 0.3,
-  },
-  tagEmpty: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#9ca3af',
-    marginTop: 2,
-    letterSpacing: 0.3,
-  },
-  actionRow: {
-    paddingTop: 10,
-  },
-  actionBtnOpenTab: {
-    backgroundColor: '#832238',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 52,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    shadowColor: '#832238',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  actionBtnOpenTabText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  actionBtnManage: {
-    backgroundColor: '#fdf2f4',
-    borderWidth: 1,
-    borderColor: '#fad4db',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 52,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-  },
-  actionBtnManageText: {
-    color: '#832238',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-});

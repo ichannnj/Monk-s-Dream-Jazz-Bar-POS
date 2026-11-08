@@ -1,6 +1,15 @@
-import React, { useMemo } from 'react';
-import { View, Text, Pressable, TextInput, StyleSheet, ScrollView } from 'react-native';
-import { X, CheckCircle2, Flame, Snowflake } from 'lucide-react-native';
+import React, { useMemo, useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
+import { X, CheckCircle2, Flame, Snowflake, ChevronDown } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { MenuItem, ProductVariant, BeverageTemperature } from '../../../../types/floor';
 import { styles } from './OrderEntryModal.styles';
@@ -36,7 +45,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
 
   const hasVariants = Boolean(item.variants && item.variants.length > 0);
 
-  // Determine available temperatures
+  // Available temperatures & sizes
   const availableTemperatures = useMemo<BeverageTemperature[]>(() => {
     if (!hasVariants || !item.variants) return [];
     const temps = new Set<BeverageTemperature>();
@@ -48,26 +57,15 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
     return Array.from(temps);
   }, [hasVariants, item.variants]);
 
-  // Determine sizes available for the currently selected temperature
   const availableSizes = useMemo<
     { sizeLabel: string; price: number; variant: ProductVariant }[]
   >(() => {
     if (!hasVariants || !item.variants) return [];
-    const matches = item.variants.filter((v) => {
-      if (availableTemperatures.length > 0) {
-        return v.temperature === selectedTemperature;
-      }
-      return true;
-    });
-
-    return matches.map((v) => ({
-      sizeLabel: v.sizeLabel,
-      price: v.price,
-      variant: v,
-    }));
+    return item.variants
+      .filter((v) => availableTemperatures.length === 0 || v.temperature === selectedTemperature)
+      .map((v) => ({ sizeLabel: v.sizeLabel, price: v.price, variant: v }));
   }, [hasVariants, item.variants, availableTemperatures, selectedTemperature]);
 
-  // Current active variant matched
   const currentVariant = useMemo<ProductVariant | undefined>(() => {
     if (!hasVariants || !item.variants) return undefined;
     return (
@@ -80,10 +78,8 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
     );
   }, [hasVariants, item.variants, availableTemperatures, selectedTemperature, selectedSize]);
 
-  // Base price computation: variant price or product base price
   const basePrice = currentVariant ? currentVariant.price : item.price;
 
-  // Add-on modifiers price delta
   const modifiersDelta = useMemo(() => {
     if (!item.modifiers) return 0;
     return selectedModifiers.reduce((acc, modName) => {
@@ -94,6 +90,30 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
 
   const totalEffectivePrice = basePrice + modifiersDelta;
 
+  const [canScrollDown, setCanScrollDown] = useState(false);
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
+    const paddingToBottom = 15;
+    const isCloseToBottom =
+      layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
+    setCanScrollDown(!isCloseToBottom);
+  };
+
+  const handleContentSizeChange = (_contentWidth: number, contentHeight: number) => {
+    // Check initial scrollability on content layout (if content > card body height ~320px)
+    if (contentHeight > 340) {
+      setCanScrollDown(true);
+    } else {
+      setCanScrollDown(false);
+    }
+  };
+
+  const handleScrollDownPress = () => {
+    scrollViewRef.current?.scrollTo({ y: 180, animated: true });
+  };
+
   return (
     <View style={styles.customizerBackdrop}>
       <Pressable
@@ -102,8 +122,8 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
         accessibilityLabel="Close customizer"
       />
       <View style={styles.customizerCard}>
-        <ScrollView showsVerticalScrollIndicator={false} bounces={false}>
-          {/* Header */}
+        {/* Fixed Header */}
+        <View style={styles.customizerHeaderWrapper}>
           <View style={styles.customizerHeader}>
             <View style={{ flex: 1, paddingRight: 8 }}>
               <Text style={styles.customizerTitle}>{item.name}</Text>
@@ -145,7 +165,18 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
               <X size={20} color="#4b5563" />
             </Pressable>
           </View>
+        </View>
 
+        {/* Scrollable Body with Scroll Indicator */}
+        <ScrollView
+          ref={scrollViewRef}
+          showsVerticalScrollIndicator={true}
+          bounces={true}
+          onScroll={handleScroll}
+          onContentSizeChange={handleContentSizeChange}
+          scrollEventThrottle={16}
+          contentContainerStyle={styles.customizerScrollContent}
+        >
           {/* Temperature Selector (Hot / Cold) */}
           {availableTemperatures.length > 1 ? (
             <View style={{ marginBottom: 14 }}>
@@ -289,15 +320,31 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
             value={notes}
             onChangeText={onChangeNotes}
           />
+        </ScrollView>
 
-          {/* Confirm Button with Dynamic Price */}
+        {/* Fixed Footer with Scroll Down Affordance & Confirm Button */}
+        <View style={styles.customizerFooterWrapper}>
+          {canScrollDown && (
+            <Pressable
+              onPress={handleScrollDownPress}
+              style={styles.scrollAffordanceHint}
+              accessibilityRole="button"
+              accessibilityLabel="Scroll down for more options"
+            >
+              <Text style={styles.scrollAffordanceText}>
+                Scroll down for instructions & add-ons
+              </Text>
+              <ChevronDown size={14} color="#800020" strokeWidth={2.5} />
+            </Pressable>
+          )}
+
           <Pressable onPress={onConfirm} style={styles.confirmCustomizeBtn}>
             <CheckCircle2 size={18} color="#ffffff" strokeWidth={2.4} />
             <Text style={styles.confirmCustomizeBtnText}>
               Add to Cart • {formatCurrency(totalEffectivePrice)}
             </Text>
           </Pressable>
-        </ScrollView>
+        </View>
       </View>
     </View>
   );
