@@ -65,14 +65,36 @@ export class RealtimeGateway {
     }
   }
 
+  private ensureChannelCleaned(channelName: string) {
+    const existing = this.channels.get(channelName);
+    if (existing) {
+      try {
+        existing.unsubscribe();
+      } catch {
+        // Channel may already be unsubscribed
+      }
+      supabase.removeChannel(existing);
+      this.channels.delete(channelName);
+    }
+    const matched = supabase
+      .getChannels()
+      .find((c) => c.topic === `realtime:${channelName}` || c.topic === channelName);
+    if (matched) {
+      try {
+        matched.unsubscribe();
+      } catch {
+        // Channel may already be unsubscribed
+      }
+      supabase.removeChannel(matched);
+    }
+  }
+
   subscribeStationOrders(
     station: 'bar' | 'kitchen',
     onOrderChange: (payload: any) => void
   ): () => void {
     const channelName = `kds:station_${station}`;
-    if (this.channels.has(channelName)) {
-      this.channels.get(channelName)?.unsubscribe();
-    }
+    this.ensureChannelCleaned(channelName);
 
     const channel = supabase
       .channel(channelName)
@@ -93,7 +115,12 @@ export class RealtimeGateway {
     this.channels.set(channelName, channel);
 
     return () => {
-      channel.unsubscribe();
+      try {
+        channel.unsubscribe();
+      } catch {
+        // Ignore unsubscribe error
+      }
+      supabase.removeChannel(channel);
       this.channels.delete(channelName);
     };
   }
@@ -103,9 +130,7 @@ export class RealtimeGateway {
     onItemReady?: (payload: any) => void
   ): () => void {
     const channelName = 'foh:runner_buzzout';
-    if (this.channels.has(channelName)) {
-      this.channels.get(channelName)?.unsubscribe();
-    }
+    this.ensureChannelCleaned(channelName);
 
     const channel = supabase
       .channel(channelName)
@@ -129,7 +154,12 @@ export class RealtimeGateway {
     this.channels.set(channelName, channel);
 
     return () => {
-      channel.unsubscribe();
+      try {
+        channel.unsubscribe();
+      } catch {
+        // Ignore unsubscribe error
+      }
+      supabase.removeChannel(channel);
       this.channels.delete(channelName);
     };
   }
@@ -139,9 +169,7 @@ export class RealtimeGateway {
     onTabTransfer?: (payload: any) => void
   ): () => void {
     const channelName = 'floor:tables_occupancy';
-    if (this.channels.has(channelName)) {
-      this.channels.get(channelName)?.unsubscribe();
-    }
+    this.ensureChannelCleaned(channelName);
 
     const channel = supabase
       .channel(channelName)
@@ -160,16 +188,19 @@ export class RealtimeGateway {
     this.channels.set(channelName, channel);
 
     return () => {
-      channel.unsubscribe();
+      try {
+        channel.unsubscribe();
+      } catch {
+        // Ignore unsubscribe error
+      }
+      supabase.removeChannel(channel);
       this.channels.delete(channelName);
     };
   }
 
   subscribeAuto86(onProductChange: (payload: any) => void): () => void {
     const channelName = 'catalog:auto_86';
-    if (this.channels.has(channelName)) {
-      this.channels.get(channelName)?.unsubscribe();
-    }
+    this.ensureChannelCleaned(channelName);
 
     const channel = supabase
       .channel(channelName)
@@ -189,7 +220,12 @@ export class RealtimeGateway {
     this.channels.set(channelName, channel);
 
     return () => {
-      channel.unsubscribe();
+      try {
+        channel.unsubscribe();
+      } catch {
+        // Ignore unsubscribe error
+      }
+      supabase.removeChannel(channel);
       this.channels.delete(channelName);
     };
   }

@@ -4,7 +4,7 @@ import { SafeAreaView, StatusBar, View } from 'react-native';
 import { rem } from 'nativewind';
 import { WaiterCashierScreen } from './src/features/floor';
 import { BaristaKdsScreen, KitchenKdsScreen, FohRunnerScreen } from './src/features/kds';
-import { ToastContainer } from './src/features/shared';
+import { ToastContainer, ErrorBoundary } from './src/features/shared';
 import { LoginScreen, TimeclockKioskScreen, useAuthStore } from './src/features/auth';
 import { PublicEventCalendarScreen } from './src/features/events';
 import { HardwarePrintStationScreen, useDeviceHardwareStation } from './src/features/printer';
@@ -109,12 +109,14 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f6f0ed" />
-      <View style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
-        {renderScreen()}
-        <ToastContainer />
-      </View>
-    </SafeAreaView>
+    <ErrorBoundary>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
+        <StatusBar barStyle="dark-content" backgroundColor="#f6f0ed" />
+        <View style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
+          {renderScreen()}
+          <ToastContainer />
+        </View>
+      </SafeAreaView>
+    </ErrorBoundary>
   );
 }

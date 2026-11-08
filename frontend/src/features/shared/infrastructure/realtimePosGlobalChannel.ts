@@ -12,6 +12,20 @@ export const subscribeGlobalPOSRealtimeChannel = (
   globalPosListeners.add(callbacks);
 
   if (!channels.has(channelName)) {
+    // If the Supabase client already holds a subscribed channel for this topic (e.g. from fast-refresh),
+    // remove it first to prevent "cannot add postgres_changes callbacks after subscribe()"
+    const matched = supabase
+      .getChannels()
+      .find((c) => c.topic === `realtime:${channelName}` || c.topic === channelName);
+    if (matched) {
+      try {
+        matched.unsubscribe();
+      } catch {
+        // Channel may already be unsubscribed
+      }
+      supabase.removeChannel(matched);
+    }
+
     const channel = supabase
       .channel(channelName, {
         config: { broadcast: { self: true } },
@@ -106,7 +120,12 @@ export const subscribeGlobalPOSRealtimeChannel = (
     if (globalPosListeners.size === 0) {
       const existingChannel = channels.get(channelName);
       if (existingChannel) {
-        existingChannel.unsubscribe();
+        try {
+          existingChannel.unsubscribe();
+        } catch {
+          // Channel may already be unsubscribed
+        }
+        supabase.removeChannel(existingChannel);
         channels.delete(channelName);
       }
     }

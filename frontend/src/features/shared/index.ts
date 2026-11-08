@@ -12,5 +12,6 @@ export * from './infrastructure/system.api';
 export * from './hooks/useResponsive';
 export * from './hooks/useWindowVisibilitySync';
 export * from './stores/useVenueStore';
+export * from './presentation/ErrorBoundary';
 export * from './utils/printHelpers';
 export * from './utils/businessDay';
