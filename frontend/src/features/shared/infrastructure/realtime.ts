@@ -18,7 +18,10 @@ import {
   trackChatPresenceOnChannel,
   broadcastChatMessageOnChannel,
 } from './realtimeChatChannel';
-import { subscribeGlobalPOSRealtimeChannel } from './realtimePosGlobalChannel';
+import {
+  subscribeGlobalPOSRealtimeChannel,
+  ensureGlobalPOSRealtimeChannel,
+} from './realtimePosGlobalChannel';
 
 export * from './realtime.types';
 
@@ -240,7 +243,11 @@ export class RealtimeGateway {
   }
 
   async broadcastTableTransfer(payload: TableTransferPayload): Promise<void> {
-    const channel = this.channels.get('pos_global_sync') || supabase.channel('pos_global_sync');
+    const channel = ensureGlobalPOSRealtimeChannel(
+      this.channels,
+      this.globalPosListeners,
+      (channelName) => this.scheduleChannelReconnect(channelName)
+    );
     await this.safeSend(channel, {
       type: 'broadcast',
       event: 'station:table_transferred',
@@ -250,12 +257,11 @@ export class RealtimeGateway {
 
   async broadcastPosSync(reason: string): Promise<void> {
     try {
-      let channel = this.channels.get('pos_global_sync');
-      if (!channel) {
-        channel = supabase.channel('pos_global_sync');
-        channel.subscribe();
-        this.channels.set('pos_global_sync', channel);
-      }
+      const channel = ensureGlobalPOSRealtimeChannel(
+        this.channels,
+        this.globalPosListeners,
+        (channelName) => this.scheduleChannelReconnect(channelName)
+      );
       await this.safeSend(channel, {
         type: 'broadcast',
         event: 'pos:sync_needed',
