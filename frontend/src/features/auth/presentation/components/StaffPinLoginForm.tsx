@@ -9,6 +9,7 @@ interface StaffPinLoginFormProps {
   isError: boolean;
   onClearErrors: () => void;
   onComplete: (completedPin: string) => void;
+  isTablet?: boolean;
 }
 
 export const StaffPinLoginForm: React.FC<StaffPinLoginFormProps> = ({
@@ -17,10 +18,13 @@ export const StaffPinLoginForm: React.FC<StaffPinLoginFormProps> = ({
   isError,
   onClearErrors,
   onComplete,
+  isTablet = true,
 }) => {
   return (
-    <View style={styles.inputGroup}>
-      <Text style={styles.inputLabel}>4-Digit Staff PIN</Text>
+    <View style={[styles.inputGroup, !isTablet && styles.inputGroupMobile]}>
+      <Text style={[styles.inputLabel, !isTablet && styles.inputLabelMobile]}>
+        4-Digit Staff PIN
+      </Text>
       <PinCodeInput
         value={pin}
         length={4}

@@ -9,7 +9,11 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
+  },
+  scrollContentMobile: {
+    padding: 12,
+    justifyContent: 'flex-start',
   },
   outerCanvas: {
     width: '100%',
@@ -34,6 +38,11 @@ export const styles = StyleSheet.create({
   },
   cardMobile: {
     flexDirection: 'column',
+    borderRadius: 24,
+    maxWidth: 480,
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 6,
   },
   // ---------------- Left Pane ----------------
   leftPane: {
@@ -47,7 +56,7 @@ export const styles = StyleSheet.create({
   },
   leftPaneMobile: {
     width: '100%',
-    height: 380,
+    height: 180,
   },
   imageOverlayTop: {
     ...StyleSheet.absoluteFill,
@@ -63,8 +72,15 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     zIndex: 2,
   },
+  leftContentMobile: {
+    padding: 20,
+    justifyContent: 'flex-end',
+  },
   brandTitleBlock: {
     marginTop: 10,
+  },
+  brandTitleBlockMobile: {
+    marginTop: 0,
   },
   heroTitleLine: {
     color: '#ffffff',
@@ -78,12 +94,31 @@ export const styles = StyleSheet.create({
     lineHeight: 48,
     letterSpacing: 0.8,
   },
+  heroTitleMobile: {
+    color: '#ffffff',
+    fontSize: 26,
+    fontWeight: '400',
+    fontFamily: Platform.select({
+      web: '"Raconteur NF", "Playfair Display", Georgia, serif',
+      ios: 'Raconteur NF',
+      default: 'Raconteur NF',
+    }),
+    lineHeight: 30,
+    letterSpacing: 0.6,
+  },
   heroAccentDash: {
     width: 44,
     height: 3.5,
     backgroundColor: '#b93a52',
     borderRadius: 2,
     marginTop: 12,
+  },
+  heroAccentDashMobile: {
+    width: 32,
+    height: 3,
+    backgroundColor: '#b93a52',
+    borderRadius: 2,
+    marginTop: 6,
   },
   leftBottomBlock: {
     marginBottom: 6,
@@ -128,6 +163,11 @@ export const styles = StyleSheet.create({
     fontSize: 11.5,
     fontWeight: '500',
   },
+  portalBadgeTextMobile: {
+    color: '#f3c7d0',
+    fontSize: 11,
+    fontWeight: '600',
+  },
   // ---------------- Right Pane ----------------
   rightPane: {
     backgroundColor: '#ffffff',
@@ -140,11 +180,15 @@ export const styles = StyleSheet.create({
   },
   rightPaneMobile: {
     width: '100%',
-    padding: 24,
+    paddingVertical: 20,
+    paddingHorizontal: 16,
   },
   rightHeader: {
     alignItems: 'center',
     marginBottom: 16,
+  },
+  rightHeaderMobile: {
+    marginBottom: 14,
   },
   modeToggleContainer: {
     flexDirection: 'row',
@@ -154,6 +198,11 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
     width: '100%',
   },
+  modeToggleContainerMobile: {
+    borderRadius: 12,
+    padding: 3,
+    marginBottom: 16,
+  },
   modeToggleTab: {
     flex: 1,
     flexDirection: 'row',
@@ -162,6 +211,11 @@ export const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 10,
     borderRadius: 10,
+  },
+  modeToggleTabMobile: {
+    paddingVertical: 8,
+    gap: 4,
+    borderRadius: 8,
   },
   modeToggleTabActive: {
     backgroundColor: '#ffffff',
@@ -176,6 +230,10 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#6b7280',
   },
+  modeToggleTextMobile: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
   modeToggleTextActive: {
     color: '#641b2a',
   },
@@ -189,12 +247,20 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 14,
     height: 52,
   },
+  passwordInputWrapperMobile: {
+    height: 48,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+  },
   passwordInput: {
     flex: 1,
     fontSize: 15,
     fontWeight: '500',
     color: '#111827',
     paddingVertical: 0,
+  },
+  passwordInputMobile: {
+    fontSize: 14,
   },
   passwordEyeButton: {
     padding: 6,
@@ -214,14 +280,25 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: 'center',
   },
+  rightBrandNameMobile: {
+    fontSize: 19,
+    marginBottom: 6,
+  },
   logoWrapper: {
     marginBottom: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  logoWrapperMobile: {
+    marginBottom: 6,
+  },
   officialBarLogo: {
     width: 90,
     height: 90,
+  },
+  officialBarLogoMobile: {
+    width: 68,
+    height: 68,
   },
   formTitle: {
     color: '#1a1a1e',
@@ -232,6 +309,9 @@ export const styles = StyleSheet.create({
       web: 'Plus Jakarta Sans, Inter, sans-serif',
       default: 'sans-serif',
     }),
+  },
+  formTitleMobile: {
+    fontSize: 13,
   },
   errorBanner: {
     flexDirection: 'row',
@@ -257,6 +337,9 @@ export const styles = StyleSheet.create({
   inputGroup: {
     marginBottom: 18,
   },
+  inputGroupMobile: {
+    marginBottom: 14,
+  },
   inputLabel: {
     fontSize: 13.5,
     fontWeight: '700',
@@ -266,6 +349,10 @@ export const styles = StyleSheet.create({
       web: 'Plus Jakarta Sans, Inter, sans-serif',
       default: 'sans-serif',
     }),
+  },
+  inputLabelMobile: {
+    fontSize: 12.5,
+    marginBottom: 6,
   },
   textInput: {
     height: 52,
@@ -278,10 +365,20 @@ export const styles = StyleSheet.create({
     color: '#111827',
     backgroundColor: '#ffffff',
   },
+  textInputMobile: {
+    height: 48,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    fontSize: 14,
+  },
   clockInButtonWrapper: {
     width: '100%',
     marginTop: 8,
     marginBottom: 20,
+  },
+  clockInButtonWrapperMobile: {
+    marginTop: 6,
+    marginBottom: 16,
   },
   clockInButton: {
     width: '100%',
@@ -296,6 +393,10 @@ export const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  clockInButtonMobile: {
+    height: 48,
+    borderRadius: 12,
+  },
   clockInButtonDisabled: {
     opacity: 0.45,
     backgroundColor: '#7a3b47',
@@ -306,29 +407,48 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
+  clockInButtonTextMobile: {
+    fontSize: 14.5,
+  },
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingTop: 4,
   },
+  controlsRowMobile: {
+    paddingTop: 0,
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   trainingModeGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  trainingModeGroupMobile: {
+    gap: 8,
   },
   trainingModeLabel: {
     fontSize: 13.5,
     fontWeight: '600',
     color: '#1a1a1e',
   },
+  trainingModeLabelMobile: {
+    fontSize: 12.5,
+  },
   forgotPinPressable: {
     paddingVertical: 6,
     paddingHorizontal: 4,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   forgotPinText: {
     fontSize: 13.5,
     fontWeight: '700',
     color: '#641b2a',
+  },
+  forgotPinTextMobile: {
+    fontSize: 12.5,
   },
 });

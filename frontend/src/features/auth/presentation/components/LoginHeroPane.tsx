@@ -22,26 +22,42 @@ export const LoginHeroPane: React.FC<LoginHeroPaneProps> = ({ isTablet }) => {
       <View style={styles.imageOverlayTop} />
       <View style={styles.imageOverlayBottom} />
 
-      <View style={styles.leftContent}>
-        <View style={styles.brandTitleBlock}>
-          <Text style={styles.heroTitleLine}>Monk's</Text>
-          <Text style={styles.heroTitleLine}>Dream</Text>
-          <Text style={styles.heroTitleLine}>Jazz Bar</Text>
-          <View style={styles.heroAccentDash} />
+      <View style={[styles.leftContent, !isTablet && styles.leftContentMobile]}>
+        <View style={[styles.brandTitleBlock, !isTablet && styles.brandTitleBlockMobile]}>
+          {isTablet ? (
+            <>
+              <Text style={styles.heroTitleLine}>Monk's</Text>
+              <Text style={styles.heroTitleLine}>Dream</Text>
+              <Text style={styles.heroTitleLine}>Jazz Bar</Text>
+              <View style={styles.heroAccentDash} />
+            </>
+          ) : (
+            <>
+              <Text style={styles.heroTitleMobile}>Monk's Dream Jazz Bar</Text>
+              <View style={styles.heroAccentDashMobile} />
+            </>
+          )}
         </View>
 
-        <View style={styles.leftBottomBlock}>
-          <Text style={styles.welcomeHeading}>Welcome back to the club.</Text>
-          <Text style={styles.welcomeDescription}>
-            Clock in, track your shift, and get back to what you do best. Built for every member of
-            the team.
-          </Text>
-          <View style={styles.heroDivider} />
+        {isTablet ? (
+          <View style={styles.leftBottomBlock}>
+            <Text style={styles.welcomeHeading}>Welcome back to the club.</Text>
+            <Text style={styles.welcomeDescription}>
+              Clock in, track your shift, and get back to what you do best. Built for every member
+              of the team.
+            </Text>
+            <View style={styles.heroDivider} />
+            <View style={styles.portalBadgeRow}>
+              <View style={styles.redStatusDot} />
+              <Text style={styles.portalBadgeText}>Secure staff portal · Shift attendance</Text>
+            </View>
+          </View>
+        ) : (
           <View style={styles.portalBadgeRow}>
             <View style={styles.redStatusDot} />
-            <Text style={styles.portalBadgeText}>Secure staff portal · Shift attendance</Text>
+            <Text style={styles.portalBadgeTextMobile}>Secure Staff Portal</Text>
           </View>
-        </View>
+        )}
       </View>
     </View>
   );

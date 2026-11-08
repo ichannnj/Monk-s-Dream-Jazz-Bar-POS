@@ -10,6 +10,7 @@ interface AdminPasswordLoginFormProps {
   setShowPassword: (val: boolean) => void;
   onClearErrors: () => void;
   onSubmit: () => void;
+  isTablet?: boolean;
 }
 
 export const AdminPasswordLoginForm: React.FC<AdminPasswordLoginFormProps> = ({
@@ -19,11 +20,12 @@ export const AdminPasswordLoginForm: React.FC<AdminPasswordLoginFormProps> = ({
   setShowPassword,
   onClearErrors,
   onSubmit,
+  isTablet = true,
 }) => {
   return (
-    <View style={styles.inputGroup}>
-      <Text style={styles.inputLabel}>Admin Password</Text>
-      <View style={styles.passwordInputWrapper}>
+    <View style={[styles.inputGroup, !isTablet && styles.inputGroupMobile]}>
+      <Text style={[styles.inputLabel, !isTablet && styles.inputLabelMobile]}>Admin Password</Text>
+      <View style={[styles.passwordInputWrapper, !isTablet && styles.passwordInputWrapperMobile]}>
         <TextInput
           value={adminPassword}
           onChangeText={(val) => {
@@ -36,7 +38,7 @@ export const AdminPasswordLoginForm: React.FC<AdminPasswordLoginFormProps> = ({
           autoCapitalize="none"
           autoCorrect={false}
           onSubmitEditing={onSubmit}
-          style={styles.passwordInput}
+          style={[styles.passwordInput, !isTablet && styles.passwordInputMobile]}
         />
         <Pressable
           onPress={() => setShowPassword(!showPassword)}

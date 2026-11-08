@@ -217,7 +217,7 @@ export const LoginScreen: React.FC = () => {
       style={styles.keyboardContainer}
     >
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, !isTablet && styles.scrollContentMobile]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -234,6 +234,7 @@ export const LoginScreen: React.FC = () => {
                 authMode={authMode}
                 setAuthMode={setAuthMode}
                 onClearErrors={clearErrors}
+                isTablet={isTablet}
               />
 
               {/* Error Banner */}
@@ -246,8 +247,8 @@ export const LoginScreen: React.FC = () => {
 
               <View style={styles.formBody}>
                 {/* Username / Staff ID */}
-                <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>
+                <View style={[styles.inputGroup, !isTablet && styles.inputGroupMobile]}>
+                  <Text style={[styles.inputLabel, !isTablet && styles.inputLabelMobile]}>
                     {authMode === 'admin' ? 'Admin Username or Email' : 'Username'}
                   </Text>
                   <TextInput
@@ -262,7 +263,7 @@ export const LoginScreen: React.FC = () => {
                     placeholderTextColor="#9ca3af"
                     autoCapitalize="none"
                     autoCorrect={false}
-                    style={styles.textInput}
+                    style={[styles.textInput, !isTablet && styles.textInputMobile]}
                   />
                 </View>
 
@@ -274,6 +275,7 @@ export const LoginScreen: React.FC = () => {
                     setShowPassword={setShowPassword}
                     onClearErrors={clearErrors}
                     onSubmit={() => handleClockIn()}
+                    isTablet={isTablet}
                   />
                 ) : (
                   <StaffPinLoginForm
@@ -282,23 +284,39 @@ export const LoginScreen: React.FC = () => {
                     isError={isError}
                     onClearErrors={clearErrors}
                     onComplete={handlePinComplete}
+                    isTablet={isTablet}
                   />
                 )}
 
                 {/* Primary CTA */}
-                <Animated.View style={[styles.clockInButtonWrapper, buttonAnimatedStyle]}>
+                <Animated.View
+                  style={[
+                    styles.clockInButtonWrapper,
+                    !isTablet && styles.clockInButtonWrapperMobile,
+                    buttonAnimatedStyle,
+                  ]}
+                >
                   <Pressable
                     onPress={() => handleClockIn()}
                     onPressIn={handlePressIn}
                     onPressOut={handlePressOut}
                     disabled={isCtaDisabled}
-                    style={[styles.clockInButton, isCtaDisabled && styles.clockInButtonDisabled]}
+                    style={[
+                      styles.clockInButton,
+                      !isTablet && styles.clockInButtonMobile,
+                      isCtaDisabled && styles.clockInButtonDisabled,
+                    ]}
                     accessibilityRole="button"
                     accessibilityLabel={
                       authMode === 'admin' ? 'Sign In as Administrator' : 'Sign In to POS'
                     }
                   >
-                    <Text style={styles.clockInButtonText}>
+                    <Text
+                      style={[
+                        styles.clockInButtonText,
+                        !isTablet && styles.clockInButtonTextMobile,
+                      ]}
+                    >
                       {isSubmitting
                         ? 'Verifying...'
                         : authMode === 'admin'
@@ -309,9 +327,18 @@ export const LoginScreen: React.FC = () => {
                 </Animated.View>
 
                 {/* Bottom Row Controls */}
-                <View style={styles.controlsRow}>
-                  <View style={styles.trainingModeGroup}>
-                    <Text style={styles.trainingModeLabel}>Training Mode</Text>
+                <View style={[styles.controlsRow, !isTablet && styles.controlsRowMobile]}>
+                  <View
+                    style={[styles.trainingModeGroup, !isTablet && styles.trainingModeGroupMobile]}
+                  >
+                    <Text
+                      style={[
+                        styles.trainingModeLabel,
+                        !isTablet && styles.trainingModeLabelMobile,
+                      ]}
+                    >
+                      Training Mode
+                    </Text>
                     <TrainingModeSwitch
                       value={isTraining}
                       onValueChange={(val) => {
@@ -335,7 +362,9 @@ export const LoginScreen: React.FC = () => {
                     style={styles.forgotPinPressable}
                     accessibilityRole="link"
                   >
-                    <Text style={styles.forgotPinText}>Forgot PIN?</Text>
+                    <Text style={[styles.forgotPinText, !isTablet && styles.forgotPinTextMobile]}>
+                      Forgot PIN?
+                    </Text>
                   </Pressable>
                 </View>
               </View>

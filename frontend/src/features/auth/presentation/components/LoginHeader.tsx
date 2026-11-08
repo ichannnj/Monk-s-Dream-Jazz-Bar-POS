@@ -10,26 +10,30 @@ interface LoginHeaderProps {
   authMode: 'staff' | 'admin' | 'timeclock';
   setAuthMode: (mode: 'staff' | 'admin' | 'timeclock') => void;
   onClearErrors: () => void;
+  isTablet?: boolean;
 }
 
 export const LoginHeader: React.FC<LoginHeaderProps> = ({
   authMode,
   setAuthMode,
   onClearErrors,
+  isTablet = true,
 }) => {
   return (
     <>
-      <View style={styles.rightHeader}>
-        <Text style={styles.rightBrandName}>Monk's Dream Jazz Bar</Text>
-        <View style={styles.logoWrapper}>
+      <View style={[styles.rightHeader, !isTablet && styles.rightHeaderMobile]}>
+        <Text style={[styles.rightBrandName, !isTablet && styles.rightBrandNameMobile]}>
+          Monk's Dream Jazz Bar
+        </Text>
+        <View style={[styles.logoWrapper, !isTablet && styles.logoWrapperMobile]}>
           <ExpoImage
             source={MONKS_DREAM_LOGO}
-            style={styles.officialBarLogo}
+            style={isTablet ? styles.officialBarLogo : styles.officialBarLogoMobile}
             contentFit="contain"
             priority="high"
           />
         </View>
-        <Text style={styles.formTitle}>
+        <Text style={[styles.formTitle, !isTablet && styles.formTitleMobile]}>
           {authMode === 'admin'
             ? 'Administrator Back-Office Portal'
             : 'Floor & Station POS Sign-In'}
@@ -37,19 +41,27 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({
       </View>
 
       {/* Mode Toggle */}
-      <View style={styles.modeToggleContainer}>
+      <View style={[styles.modeToggleContainer, !isTablet && styles.modeToggleContainerMobile]}>
         <Pressable
           onPress={() => {
             setAuthMode('staff');
             onClearErrors();
           }}
-          style={[styles.modeToggleTab, authMode === 'staff' && styles.modeToggleTabActive]}
+          style={[
+            styles.modeToggleTab,
+            !isTablet && styles.modeToggleTabMobile,
+            authMode === 'staff' && styles.modeToggleTabActive,
+          ]}
           accessibilityRole="tab"
           accessibilityLabel="Staff Clock-In Mode"
         >
-          <Users size={16} color={authMode === 'staff' ? '#641b2a' : '#6b7280'} />
+          <Users size={isTablet ? 16 : 14} color={authMode === 'staff' ? '#641b2a' : '#6b7280'} />
           <Text
-            style={[styles.modeToggleText, authMode === 'staff' && styles.modeToggleTextActive]}
+            style={[
+              styles.modeToggleText,
+              !isTablet && styles.modeToggleTextMobile,
+              authMode === 'staff' && styles.modeToggleTextActive,
+            ]}
           >
             Floor POS
           </Text>
@@ -60,13 +72,21 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({
             setAuthMode('admin');
             onClearErrors();
           }}
-          style={[styles.modeToggleTab, authMode === 'admin' && styles.modeToggleTabActive]}
+          style={[
+            styles.modeToggleTab,
+            !isTablet && styles.modeToggleTabMobile,
+            authMode === 'admin' && styles.modeToggleTabActive,
+          ]}
           accessibilityRole="tab"
           accessibilityLabel="Admin Portal Login Mode"
         >
-          <Shield size={16} color={authMode === 'admin' ? '#641b2a' : '#6b7280'} />
+          <Shield size={isTablet ? 16 : 14} color={authMode === 'admin' ? '#641b2a' : '#6b7280'} />
           <Text
-            style={[styles.modeToggleText, authMode === 'admin' && styles.modeToggleTextActive]}
+            style={[
+              styles.modeToggleText,
+              !isTablet && styles.modeToggleTextMobile,
+              authMode === 'admin' && styles.modeToggleTextActive,
+            ]}
           >
             Admin Portal
           </Text>
@@ -77,23 +97,25 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({
             setAuthMode('timeclock');
             onClearErrors();
           }}
-          style={styles.modeToggleTab}
+          style={[styles.modeToggleTab, !isTablet && styles.modeToggleTabMobile]}
           accessibilityRole="tab"
           accessibilityLabel="Timeclock Kiosk Mode"
         >
-          <Clock size={16} color="#6b7280" />
-          <Text style={styles.modeToggleText}>Timeclock</Text>
+          <Clock size={isTablet ? 16 : 14} color="#6b7280" />
+          <Text style={[styles.modeToggleText, !isTablet && styles.modeToggleTextMobile]}>
+            Timeclock
+          </Text>
         </Pressable>
       </View>
 
       {/* Standalone Tab Launcher */}
       {Platform.OS === 'web' && (
-        <View className="mb-4 flex-row items-center justify-end">
+        <View className="mb-3.5 flex-row items-center justify-end">
           <Pressable
             onPress={() => window.open('?mode=timeclock', '_blank')}
-            className="flex-row items-center py-1 px-2.5 rounded-lg active:bg-stone-100"
+            className="flex-row items-center py-1.5 px-2.5 rounded-lg active:bg-stone-100 min-h-[36px]"
           >
-            <ExternalLink size={13} color="#800020" />
+            <ExternalLink size={12} color="#800020" />
             <Text className="ml-1 text-xs font-bold text-[#800020]">
               Open Timeclock in New Tab ↗
             </Text>
