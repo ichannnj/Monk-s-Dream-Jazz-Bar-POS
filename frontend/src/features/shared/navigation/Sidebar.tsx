@@ -16,7 +16,7 @@ import {
 import { useResponsive } from '../hooks/useResponsive';
 import { PosDropdown, PosDropdownOption } from '../ui/PosDropdown';
 
-const MONKS_DREAM_LOGO = require('../../../../assets/Monks Dream Logo files-02.png');
+const MONKS_DREAM_LOGO = require('/home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/frontend/assets/images/logo-white-bg.jpeg');
 
 export type NavTabId =
   'tables' | 'board' | 'chat' | 'checks' | 'drawer' | 'printer' | 'alerts' | 'settings';
