@@ -14,11 +14,11 @@ interface WasteLoggerModalProps {
 }
 
 const WASTE_REASONS = [
-  { key: 'DROPPED_SPILL', label: '🍾 Dropped Bottle / Spill' },
-  { key: 'EXPIRED', label: '⏳ Expired / Spoiled' },
-  { key: 'PREPARATION_ERROR', label: '🍳 Kitchen Prep Error' },
-  { key: 'CUSTOMER_RETURN', label: '↩️ Customer Return' },
-  { key: 'STAFF_TASTING', label: '🍷 Staff Tasting / Training' },
+  { key: 'DROPPED_SPILL', label: 'Dropped Bottle / Spill' },
+  { key: 'EXPIRED', label: 'Expired / Spoiled' },
+  { key: 'PREPARATION_ERROR', label: 'Kitchen Prep Error' },
+  { key: 'CUSTOMER_RETURN', label: 'Customer Return' },
+  { key: 'STAFF_TASTING', label: 'Staff Tasting / Training' },
 ];
 
 export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({

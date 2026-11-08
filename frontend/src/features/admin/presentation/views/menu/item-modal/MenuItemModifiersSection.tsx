@@ -112,11 +112,11 @@ export const MenuItemModifiersSection: React.FC<MenuItemModifiersSectionProps> =
         <View className="flex-row flex-wrap gap-2">
           {[
             { slug: 'all', label: 'All Modifiers' },
-            { slug: 'coffee', label: '☕ Coffee & Espresso' },
-            { slug: 'cocktails_wine', label: '🍸 Cocktails & Liquor' },
-            { slug: 'mains_pasta', label: '🍝 Pasta & Mains' },
-            { slug: 'small_plates', label: '🍢 Small Plates' },
-            { slug: 'desserts', label: '🍰 Desserts' },
+            { slug: 'coffee', label: 'Coffee & Espresso' },
+            { slug: 'cocktails_wine', label: 'Cocktails & Liquor' },
+            { slug: 'mains_pasta', label: 'Pasta & Mains' },
+            { slug: 'small_plates', label: 'Small Plates' },
+            { slug: 'desserts', label: 'Desserts' },
           ].map((catPill) => {
             const isActive = modifierFilterCategory === catPill.slug;
             return (

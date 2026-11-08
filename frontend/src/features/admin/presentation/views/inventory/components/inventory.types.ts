@@ -14,15 +14,15 @@ export interface AdminInventoryViewProps {
 
 export const CATEGORY_FILTERS = [
   { key: 'ALL', label: 'All Categories' },
-  { key: 'COFFEE_TEA', label: '☕ Coffee & Tea' },
-  { key: 'SPIRITS_LIQUOR', label: '🥃 Spirits & Liquor' },
-  { key: 'WINE_BEER', label: '🍷 Wine & Beer' },
-  { key: 'DAIRY_PLANT', label: '🥛 Dairy & Milks' },
-  { key: 'SYRUPS_MIXERS', label: '🍯 Syrups & Mixers' },
-  { key: 'KITCHEN_MEAT', label: '🥩 Kitchen Meats' },
-  { key: 'PRODUCE', label: '🥬 Fresh Produce' },
-  { key: 'DRY_GOODS', label: '🍝 Dry Goods' },
-  { key: 'PACKAGING', label: '📦 Disposables & Packaging' },
+  { key: 'COFFEE_TEA', label: 'Coffee & Tea' },
+  { key: 'SPIRITS_LIQUOR', label: 'Spirits & Liquor' },
+  { key: 'WINE_BEER', label: 'Wine & Beer' },
+  { key: 'DAIRY_PLANT', label: 'Dairy & Milks' },
+  { key: 'SYRUPS_MIXERS', label: 'Syrups & Mixers' },
+  { key: 'KITCHEN_MEAT', label: 'Kitchen Meats' },
+  { key: 'PRODUCE', label: 'Fresh Produce' },
+  { key: 'DRY_GOODS', label: 'Dry Goods' },
+  { key: 'PACKAGING', label: 'Disposables & Packaging' },
 ];
 
 export interface InventoryValuationMetrics {

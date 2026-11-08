@@ -162,7 +162,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
               sheetTitle="Select Dietary Tags"
               options={DIETARY_OPTIONS.map((diet) => ({
                 value: diet,
-                label: `🌿 ${diet}`,
+                label: diet,
               }))}
               selectedValues={ctrl.selectedDietary}
               onChange={ctrl.setSelectedDietary}

@@ -1,26 +1,9 @@
 import React from 'react';
 import { View, Text, Pressable, ScrollView, Modal, Platform } from 'react-native';
-import {
-  LayoutGrid,
-  Activity,
-  MessageSquare,
-  Utensils,
-  Package,
-  Users,
-  Receipt,
-  Clock,
-  CalendarDays,
-  Music,
-  Settings,
-  Shield,
-  X,
-  LogOut,
-  Layers,
-  Flame,
-  Sun,
-} from 'lucide-react-native';
+import { X, LogOut, Layers, Flame, Sun } from 'lucide-react-native';
 import { useAuthStore } from '@/features/auth';
 import type { AdminRoute } from '../../domain/admin.types';
+import { ADMIN_NAV_GROUPS, ADMIN_NAVIGATION_ITEMS } from './adminNavigation.config';
 
 interface AdminMobileDrawerProps {
   visible: boolean;
@@ -31,13 +14,6 @@ interface AdminMobileDrawerProps {
   operatingMode: 'CAFE' | 'EVENT';
   onToggleOperatingMode: () => void;
   onSwitchToFloor?: () => void;
-}
-
-interface NavItem {
-  id: AdminRoute;
-  label: string;
-  icon: React.FC<{ size: number; color: string }>;
-  badgeCount?: number;
 }
 
 export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
@@ -64,181 +40,174 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
     ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)
     : 'Admin / Manager';
 
-  const operationsItems: NavItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
-    { id: 'stations', label: 'Live Stations', icon: Activity },
-    { id: 'chats', label: 'Team Chats', icon: MessageSquare, badgeCount: unreadChatCount },
-  ];
-
-  const manageItems: NavItem[] = [
-    { id: 'menu', label: 'Menu Catalog', icon: Utensils },
-    { id: 'inventory', label: 'Inventory Hub', icon: Package },
-    { id: 'events', label: 'Event Logistics', icon: CalendarDays },
-    { id: 'tables', label: 'Table Layout', icon: LayoutGrid },
-    { id: 'staff', label: 'Staff Roster', icon: Users },
-  ];
-
-  const reportItems: NavItem[] = [
-    { id: 'sales', label: 'Sales & Transactions', icon: Receipt },
-    { id: 'attendance', label: 'Attendance & Payroll', icon: Clock },
-    { id: 'settings', label: 'Venue Settings', icon: Settings },
-    { id: 'profile', label: 'My Profile & Security', icon: Shield },
-  ];
-
-  const handleSelectRoute = (route: AdminRoute) => {
-    onRouteChange(route);
-    onClose();
-  };
-
-  const renderNavGroup = (title: string, items: NavItem[]) => (
-    <View className="mb-6">
-      <Text className="mb-2.5 px-3 text-base font-bold tracking-widest text-white/60 uppercase">
-        {title}
-      </Text>
-      <View className="space-y-1.5">
-        {items.map((item) => {
-          const isActive = currentRoute === item.id;
-          const IconComponent = item.icon;
-          return (
-            <Pressable
-              key={item.id}
-              onPress={() => handleSelectRoute(item.id)}
-              className={`min-h-[48px] flex-row items-center justify-between rounded-xl px-3.5 py-3 transition-all ${
-                isActive ? 'bg-white/20 shadow-sm' : 'active:bg-white/10'
-              }`}
-            >
-              <View className="flex-row items-center space-x-3">
-                <IconComponent size={22} color={isActive ? '#ffffff' : '#f5d5dc'} />
-                <Text
-                  className={`ml-3 text-base ${
-                    isActive ? 'font-bold text-white' : 'font-medium text-white/90'
-                  }`}
-                >
-                  {item.label}
-                </Text>
-              </View>
-
-              {item.badgeCount && item.badgeCount > 0 ? (
-                <View className="rounded-full bg-rose-600 px-2.5 py-0.5">
-                  <Text className="text-base font-bold text-white">{item.badgeCount}</Text>
-                </View>
-              ) : null}
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
+  if (!visible) return null;
 
   return (
-    <Modal visible={visible} animationType="fade" transparent={true} onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View className="flex-1 flex-row bg-black/60">
-        {/* Drawer Card */}
+        <Pressable
+          className="flex-1"
+          onPress={onClose}
+          accessibilityLabel="Close navigation drawer"
+        />
+
         <View
-          className="w-[85%] max-w-[340px] h-full flex-col justify-between border-r border-white/15 p-5 shadow-2xl z-20"
-          style={{ backgroundColor: '#4A1020' }}
+          className="w-80 max-w-[85%] h-full flex-col justify-between border-l border-[#3a0b17] shadow-2xl"
+          style={{ backgroundColor: '#210c14' }}
         >
-          {/* Header & Navigation */}
-          <View className="flex-1">
-            {/* Top Bar inside Drawer: Brand + Close button */}
-            <View className="mb-6 flex-row items-center justify-between pt-1">
-              <View className="flex-row items-center">
-                <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/20 p-2 border border-white/25">
-                  <Music size={22} color="#ffffff" />
-                </View>
-                <View className="ml-3">
-                  <Text className="font-serif text-lg font-bold tracking-tight text-white">
-                    Monk's Dream
-                  </Text>
-                  <Text className="text-base font-medium text-white/70">Admin Console</Text>
-                </View>
+          {/* Header */}
+          <View className="flex-row items-center justify-between px-5 py-4 border-b border-white/10">
+            <View className="flex-row items-center gap-3">
+              <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#6e1d2c] border border-amber-500/30">
+                <Text className="text-base font-bold text-amber-300">MD</Text>
               </View>
-
-              <Pressable
-                onPress={onClose}
-                className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-white/10 active:bg-white/20"
-                accessibilityLabel="Close Drawer"
-              >
-                <X size={22} color="#ffffff" />
-              </Pressable>
+              <View>
+                <Text className="text-base font-bold text-white tracking-wider">MONK'S DREAM</Text>
+                <Text className="text-xs font-semibold text-amber-400/80 uppercase tracking-widest">
+                  Admin Navigation
+                </Text>
+              </View>
             </View>
-
-            {/* Staff Card (Clickable to Profile) */}
             <Pressable
-              onPress={() => handleSelectRoute('profile')}
-              className="mb-5 flex-row items-center rounded-xl bg-white/10 p-3 border border-white/15 active:bg-white/20"
-              accessibilityLabel="View Profile & Security"
+              onPress={onClose}
+              className="h-10 w-10 items-center justify-center rounded-xl bg-white/10 active:bg-white/20"
+              accessibilityRole="button"
+              accessibilityLabel="Close navigation"
             >
-              <View className="h-11 w-11 items-center justify-center rounded-full bg-black/30 border border-white/25">
-                <Text className="text-base font-black text-white">{staffInitials}</Text>
-              </View>
-              <View className="ml-3 flex-1">
-                <Text className="text-base font-bold text-white">{staffName}</Text>
-                <Text className="text-base font-medium text-white/75">{staffRole}</Text>
-              </View>
+              <X size={20} color="#ffffff" />
             </Pressable>
-
-            {/* Scrollable Nav Items */}
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-              {renderNavGroup('Operations', operationsItems)}
-              {renderNavGroup('Manage', manageItems)}
-              {renderNavGroup('Reports', reportItems)}
-            </ScrollView>
           </View>
 
-          {/* Bottom Actions Footer */}
-          <View className="border-t border-white/15 pt-4 space-y-2.5">
-            {/* Operating Mode Switcher */}
+          {/* Quick Actions Strip */}
+          <View className="p-3 border-b border-white/10 space-y-2">
             <Pressable
-              onPress={onToggleOperatingMode}
-              className={`min-h-[48px] flex-row items-center justify-center rounded-xl px-4 py-2.5 active:opacity-85 ${
-                operatingMode === 'EVENT' ? 'bg-amber-600' : 'bg-sky-600'
+              onPress={() => {
+                onClose();
+                onToggleOperatingMode();
+              }}
+              className={`min-h-[48px] flex-row items-center justify-between px-4 py-2.5 rounded-xl border ${
+                operatingMode === 'EVENT'
+                  ? 'bg-amber-600/30 border-amber-500/40 text-amber-200'
+                  : 'bg-stone-800/80 border-stone-700 text-stone-200'
               }`}
             >
-              {operatingMode === 'EVENT' ? (
-                <Flame size={20} color="#ffffff" />
-              ) : (
-                <Sun size={20} color="#ffffff" />
-              )}
-              <Text className="ml-2 text-base font-bold text-white">
-                {operatingMode === 'EVENT' ? 'Switch to Cafe Mode' : 'Switch to Event Mode'}
-              </Text>
+              <View className="flex-row items-center gap-2.5">
+                {operatingMode === 'EVENT' ? (
+                  <Flame size={18} color="#fbbf24" />
+                ) : (
+                  <Sun size={18} color="#94a3b8" />
+                )}
+                <Text className="text-base font-bold text-white">
+                  {operatingMode === 'EVENT' ? 'Event Mode' : 'Cafe Mode'}
+                </Text>
+              </View>
+              <Text className="text-xs font-semibold text-amber-300">Switch</Text>
             </Pressable>
 
-            {/* Switch to Floor Workspace POS */}
             {onSwitchToFloor && (
               <Pressable
                 onPress={() => {
                   onClose();
                   onSwitchToFloor();
                 }}
-                className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 active:bg-white/20"
+                className="min-h-[48px] flex-row items-center justify-between px-4 py-2.5 rounded-xl bg-white/10 active:bg-white/20 border border-white/10"
               >
-                <Layers size={20} color="#ffffff" />
-                <Text className="ml-2 text-base font-bold text-white">Switch to Floor POS</Text>
+                <View className="flex-row items-center gap-2.5">
+                  <Layers size={18} color="#ffffff" />
+                  <Text className="text-base font-bold text-white">Floor POS</Text>
+                </View>
+                <Text className="text-xs font-semibold text-stone-300">Launch</Text>
               </Pressable>
             )}
+          </View>
 
-            {/* Log Out */}
+          {/* Nav Links */}
+          <ScrollView className="flex-1 px-3 py-3" showsVerticalScrollIndicator={false}>
+            {ADMIN_NAV_GROUPS.map((group) => {
+              const items = ADMIN_NAVIGATION_ITEMS.filter((item) => item.group === group.key);
+              if (items.length === 0) return null;
+
+              return (
+                <View key={group.key} className="mb-4">
+                  <Text className="mb-1.5 px-3 text-xs font-bold tracking-widest text-stone-400 uppercase">
+                    {group.title}
+                  </Text>
+                  <View className="space-y-0.5">
+                    {items.map((item) => {
+                      const isActive = currentRoute === item.id;
+                      const Icon = item.icon;
+                      const badge = item.badgeKey === 'unreadChats' ? unreadChatCount : undefined;
+
+                      return (
+                        <Pressable
+                          key={item.id}
+                          onPress={() => {
+                            onRouteChange(item.id);
+                            onClose();
+                          }}
+                          className={`min-h-[48px] flex-row items-center justify-between px-3.5 py-2.5 rounded-xl transition-all ${
+                            isActive ? 'bg-[#6e1d2c] text-white shadow-xs' : 'active:bg-white/10'
+                          }`}
+                        >
+                          <View className="flex-row items-center gap-3">
+                            <Icon size={19} color={isActive ? '#ffffff' : '#a8a29e'} />
+                            <Text
+                              className={`text-base font-semibold ${
+                                isActive ? 'text-white font-bold' : 'text-stone-300'
+                              }`}
+                            >
+                              {item.label}
+                            </Text>
+                          </View>
+
+                          {badge && badge > 0 ? (
+                            <View className="h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-600 px-1.5">
+                              <Text className="text-xs font-bold text-white">{badge}</Text>
+                            </View>
+                          ) : null}
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })}
+          </ScrollView>
+
+          {/* Footer User Info & Logout */}
+          <View className="p-3 border-t border-white/10 flex-row items-center justify-between gap-2">
+            <Pressable
+              onPress={() => {
+                onRouteChange('profile');
+                onClose();
+              }}
+              className="flex-1 flex-row items-center gap-2.5 p-2 rounded-xl active:bg-white/10"
+            >
+              <View className="h-9 w-9 items-center justify-center rounded-full bg-[#6e1d2c] border border-amber-400/30">
+                <Text className="text-xs font-black text-amber-200">{staffInitials}</Text>
+              </View>
+              <View className="flex-1 justify-center">
+                <Text className="text-base font-bold text-white leading-tight" numberOfLines={1}>
+                  {staffName}
+                </Text>
+                <Text className="text-xs font-semibold text-stone-400" numberOfLines={1}>
+                  {staffRole}
+                </Text>
+              </View>
+            </Pressable>
+
             <Pressable
               onPress={() => {
                 onClose();
                 logout();
               }}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-red-600/30 border border-red-400/40 px-4 py-2.5 active:bg-red-600/40"
+              className="h-11 w-11 items-center justify-center rounded-xl bg-rose-950/60 border border-rose-800/40 active:bg-rose-900"
+              accessibilityLabel="Log out"
             >
-              <LogOut size={20} color="#fca5a5" />
-              <Text className="ml-2 text-base font-bold text-red-200">Log Out</Text>
+              <LogOut size={18} color="#f87171" />
             </Pressable>
           </View>
         </View>
-
-        {/* Backdrop Press Dismiss */}
-        <Pressable
-          className="flex-1"
-          onPress={onClose}
-          accessibilityLabel="Dismiss menu backdrop"
-        />
       </View>
     </Modal>
   );

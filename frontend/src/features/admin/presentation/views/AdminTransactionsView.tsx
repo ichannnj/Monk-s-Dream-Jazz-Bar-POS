@@ -117,8 +117,8 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
 
   const modeFilterOptions: PosDropdownOption<ModeFilter>[] = [
     { value: 'ALL', label: 'All Modes', icon: Sparkles },
-    { value: 'CAFE', label: '☀️ Cafe Mode', icon: Coffee },
-    { value: 'EVENT', label: '🎷 Event Mode', icon: Sparkles },
+    { value: 'CAFE', label: 'Cafe Mode', icon: Coffee },
+    { value: 'EVENT', label: 'Event Mode', icon: Sparkles },
   ];
 
   return (

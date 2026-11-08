@@ -176,9 +176,9 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
     await setOperatingMode(nextMode);
     toast.success(
       nextMode === 'EVENT'
-        ? '🎷 Event Mode Activated! Orders tagged for Live Jazz Set (auto-reverts to Cafe Mode at 6:00 AM).'
-        : '☀️ Daytime Cafe Mode Activated!',
-      { title: 'Operating Mode Updated' }
+        ? 'Event mode enabled. Orders tagged for Live Jazz Set (auto-reverts to Cafe Mode at 6:00 AM).'
+        : 'Cafe mode enabled.',
+      { title: 'Operating Mode' }
     );
   };
 

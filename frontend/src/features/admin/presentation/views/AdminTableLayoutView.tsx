@@ -412,7 +412,7 @@ export const AdminTableLayoutView: React.FC = () => {
                     zone === 'BAR_AREA' ? 'text-white' : 'text-stone-700'
                   }`}
                 >
-                  🍸 Bar / Stage
+                  Bar / Stage
                 </Text>
               </Pressable>
             </View>

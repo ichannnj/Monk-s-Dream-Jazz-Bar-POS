@@ -270,12 +270,12 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
               {telemetry.activeOperatingMode === 'EVENT' ? (
                 <>
                   <Sparkles size={14} color="#d97706" />
-                  <Text className="text-base font-bold text-amber-700">🎷 Event Mode</Text>
+                  <Text className="text-base font-bold text-amber-700">Event Mode</Text>
                 </>
               ) : (
                 <>
                   <Coffee size={14} color="#0284c7" />
-                  <Text className="text-base font-bold text-sky-700">☀️ Cafe Mode</Text>
+                  <Text className="text-base font-bold text-sky-700">Cafe Mode</Text>
                 </>
               )}
             </View>
@@ -315,7 +315,7 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
               <View className="flex-row items-center justify-between flex-wrap gap-2">
                 <View className="flex-row items-center gap-2 flex-1 min-w-[140px]">
                   <Coffee size={18} color="#0284c7" />
-                  <Text className="text-base font-bold text-sky-900">☀️ Cafe Mode Sales</Text>
+                  <Text className="text-base font-bold text-sky-900">Cafe Mode Sales</Text>
                 </View>
                 <View className="px-2 py-0.5 rounded-md bg-sky-100 border border-sky-300 shrink-0">
                   <Text className="text-base font-bold text-sky-800">
@@ -346,7 +346,7 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
               <View className="flex-row items-center justify-between flex-wrap gap-2">
                 <View className="flex-row items-center gap-2 flex-1 min-w-[140px]">
                   <Sparkles size={18} color="#d97706" />
-                  <Text className="text-base font-bold text-amber-900">🎷 Event Mode Sales</Text>
+                  <Text className="text-base font-bold text-amber-900">Event Mode Sales</Text>
                 </View>
                 <View className="px-2 py-0.5 rounded-md bg-amber-100 border border-amber-300 shrink-0">
                   <Text className="text-base font-bold text-amber-800">

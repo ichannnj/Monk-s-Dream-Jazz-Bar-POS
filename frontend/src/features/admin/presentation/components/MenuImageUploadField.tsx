@@ -149,7 +149,7 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
         {/* Station Target Tag */}
         <View className="absolute bottom-2.5 left-2.5 rounded-lg bg-stone-900/80 px-2.5 py-1 backdrop-blur-md">
           <Text className="text-xs font-bold tracking-wide text-white uppercase">
-            {stationTarget === 'bar' ? '🍸 BAR' : '🍳 KITCHEN'}
+            {stationTarget === 'bar' ? 'BAR' : 'KITCHEN'}
           </Text>
         </View>
 

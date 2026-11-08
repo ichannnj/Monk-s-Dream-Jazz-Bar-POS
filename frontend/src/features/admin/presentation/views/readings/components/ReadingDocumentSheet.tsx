@@ -108,7 +108,7 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
                   <View className="flex-row justify-between py-1">
                     <View className="flex-row items-center gap-1.5">
                       <View className="w-2 h-2 rounded-full bg-[#800020]" />
-                      <Text className="text-xs text-stone-700 font-semibold">🎷 Event Mode</Text>
+                      <Text className="text-xs text-stone-700 font-semibold">Event Mode</Text>
                       {reading.event_tx_count !== undefined && (
                         <Text className="text-[11px] text-stone-400">
                           ({reading.event_tx_count})

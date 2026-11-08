@@ -105,7 +105,7 @@ export function exportFinancialOverviewToExcel(
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${analytics.modeBreakdown?.cafePercent || 0}%</Data></Cell>
       </Row>
       <Row ss:Height="20">
-        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">🎷 Event Mode</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">Event Mode</Data></Cell>
         <Cell ss:StyleID="DataNumber"><Data ss:Type="Number">${analytics.modeBreakdown?.eventOrderCount || 0}</Data></Cell>
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${analytics.modeBreakdown?.eventSales || 0}</Data></Cell>
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${analytics.modeBreakdown?.eventPercent || 0}%</Data></Cell>

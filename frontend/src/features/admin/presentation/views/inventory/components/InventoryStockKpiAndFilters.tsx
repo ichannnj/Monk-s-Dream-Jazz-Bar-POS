@@ -189,11 +189,11 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
                 }`}
               >
                 <Text
-                  className={`text-xs font-bold ${
+                  className={`text-base font-bold ${
                     stockStatusFilter === 'IN_PAR' ? 'text-white' : 'text-emerald-800'
                   }`}
                 >
-                  🟢 In-Par ({inParItemsCount})
+                  In par ({inParItemsCount})
                 </Text>
               </Pressable>
 
@@ -206,11 +206,11 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
                 }`}
               >
                 <Text
-                  className={`text-xs font-bold ${
+                  className={`text-base font-bold ${
                     stockStatusFilter === 'BELOW_PAR' ? 'text-white' : 'text-amber-800'
                   }`}
                 >
-                  🟡 Below Par ({belowParItemsCount})
+                  Below par ({belowParItemsCount})
                 </Text>
               </Pressable>
 
@@ -223,11 +223,11 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
                 }`}
               >
                 <Text
-                  className={`text-xs font-bold ${
+                  className={`text-base font-bold ${
                     stockStatusFilter === 'DEPLETED' ? 'text-white' : 'text-rose-800'
                   }`}
                 >
-                  🔴 Depleted ({depletedItemsCount})
+                  Depleted ({depletedItemsCount})
                 </Text>
               </Pressable>
             </View>

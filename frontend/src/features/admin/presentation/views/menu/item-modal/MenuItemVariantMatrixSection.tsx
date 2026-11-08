@@ -218,9 +218,9 @@ export const MenuItemVariantMatrixSection: React.FC<MenuItemVariantMatrixSection
                           }`}
                         >
                           {row.temperature === 'HOT'
-                            ? '🔥 HOT'
+                            ? 'HOT'
                             : row.temperature === 'COLD'
-                              ? '❄️ ICED'
+                              ? 'ICED'
                               : 'STD'}
                         </Text>
                       </View>

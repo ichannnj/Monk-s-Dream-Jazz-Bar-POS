@@ -248,7 +248,7 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
                 {product.variants.map((v) => {
                   const isSelected = selectedVariantId === v.id;
                   const label = `${
-                    v.temperature === 'HOT' ? '🔥 Hot' : v.temperature === 'COLD' ? '❄️ Iced' : ''
+                    v.temperature === 'HOT' ? 'Hot' : v.temperature === 'COLD' ? 'Iced' : ''
                   } ${v.size_label || (v as any).sizeLabel}`.trim();
                   return (
                     <Pressable

@@ -110,9 +110,9 @@ export const FinancialOverviewModeAndKpi: React.FC<FinancialOverviewModeAndKpiPr
                 }`}
               >
                 {selectedMode === 'EVENT'
-                  ? '🎷 Event Mode Only'
+                  ? 'Event Mode Only'
                   : selectedMode === 'CAFE'
-                    ? '☀️ Cafe Mode Only'
+                    ? 'Cafe Mode Only'
                     : 'All Modes (Consolidated)'}
               </Text>
             </View>
@@ -152,7 +152,7 @@ export const FinancialOverviewModeAndKpi: React.FC<FinancialOverviewModeAndKpiPr
           <View className="p-4 rounded-xl border border-sky-200 bg-sky-50/50 justify-between">
             <View>
               <View className="flex-row items-center justify-between">
-                <Text className="text-base font-bold text-sky-900">☀️ Cafe Mode Sales</Text>
+                <Text className="text-base font-bold text-sky-900">Cafe Mode Sales</Text>
                 <View className="px-2 py-0.5 rounded-md bg-sky-100 border border-sky-300">
                   <Text className="text-base font-bold text-sky-800">
                     {effectiveAnalytics?.modeBreakdown?.cafePercent || 0}%
@@ -175,7 +175,7 @@ export const FinancialOverviewModeAndKpi: React.FC<FinancialOverviewModeAndKpiPr
           <View className="p-4 rounded-xl border border-amber-200 bg-amber-50/50 justify-between">
             <View>
               <View className="flex-row items-center justify-between">
-                <Text className="text-base font-bold text-amber-900">🎷 Event Mode Sales</Text>
+                <Text className="text-base font-bold text-amber-900">Event Mode Sales</Text>
                 <View className="px-2 py-0.5 rounded-md bg-amber-100 border border-amber-300">
                   <Text className="text-base font-bold text-amber-800">
                     {effectiveAnalytics?.modeBreakdown?.eventPercent || 0}%
