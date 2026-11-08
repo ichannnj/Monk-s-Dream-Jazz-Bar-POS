@@ -1,8 +1,11 @@
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
 import { DrawerEntry } from '../../../types/floor';
-import { toast } from '../../shared/toast/useToastStore';
-import { playTransferAlertSound } from '../../shared/infrastructure/audio';
+import {
+  handleRealtimeTableTransferAlert,
+  handleRealtimeInventoryAlert,
+} from './realtimeNotificationHelpers';
+import { applyTableTransferToLocalTables } from './realtimeTableTransfer';
 
 export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
   let hydrateTimer: ReturnType<typeof setTimeout> | null = null;
@@ -17,16 +20,13 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
 
   return {
     initRealtimeSync: () => {
-      // 1. Initial live hydration and offline queue drain
       get().hydrateFromSupabase();
       get().drainOfflineQueue();
 
-      // 2. Resilient Tier 3: 10s Silent Background Self-Healing Heartbeat
       const heartbeatInterval = setInterval(() => {
         get().hydrateFromSupabase();
       }, 10000);
 
-      // 3. Resilient Tier 2: Instant Wakeup & Focus Revalidation (Zero latency on wake / tab return)
       let removeVisibilityListeners = () => {};
       if (typeof window !== 'undefined' && typeof document !== 'undefined') {
         const handleVisibilityOrFocus = () => {
@@ -42,7 +42,6 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
         };
       }
 
-      // 4. Resilient Tier 1: Subscribe to centralized global realtime channels
       const unsub = realtimeGateway.subscribeGlobalPOSRealtime({
         onTableChange: (payload) => {
           if (payload.new) {
@@ -125,7 +124,6 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
           const newStatus = (item.status || 'pending').toLowerCase() as any;
 
           set((state) => {
-            // A. Update in Tables
             const updatedTables = state.tables.map((table) => {
               let tableModified = false;
               const updatedTabs = (table.tabs || []).map((tab) => {
@@ -160,7 +158,6 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
               };
             });
 
-            // B. Update in Takeout
             const updatedTakeout = state.takeoutOrders.map((order) => {
               const itemIdx = order.items.findIndex((i) => i.id === itemId);
               if (itemIdx >= 0) {
@@ -177,7 +174,6 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
               return order;
             });
 
-            // C. Update in Online
             const updatedOnline = state.onlineOrders.map((order) => {
               const itemIdx = order.items.findIndex((i) => i.id === itemId);
               if (itemIdx >= 0) {
@@ -201,7 +197,6 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
             };
           });
 
-          // Re-hydrate on item changes to ensure multi-station & takeout/online states stay synchronized
           scheduleHydration();
         },
 
@@ -222,89 +217,10 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
         },
 
         onTableTransfer: (payload) => {
-          playTransferAlertSound();
-          const guestSuffix = payload.guestName ? ` · "${payload.guestName}"` : '';
-          const prepSuffix =
-            payload.prepItemsCount > 0
-              ? ` (${payload.prepItemsCount} item${payload.prepItemsCount === 1 ? '' : 's'} in prep)`
-              : '';
-          toast.info(
-            `🔁 ${payload.originTableCode} ➔ ${payload.targetTableCode}${guestSuffix}${prepSuffix}`,
-            {
-              title: 'Table Relocated',
-              duration: 7000,
-            }
-          );
-          get().addAlert({
-            title: `🔁 Table Transferred: ${payload.originTableCode} ➔ ${payload.targetTableCode}`,
-            description: `Customer relocated to ${payload.targetTableCode}. Reason: ${
-              payload.reason || 'Guest relocation request'
-            }`,
-            type: 'transfer',
-            targetRef: payload.targetTableCode,
-          });
-
-          // Apply transfer to local state if not already updated on this station
-          const currentTables = get().tables;
-          const originTbl = currentTables.find(
-            (t) => t.id === payload.originTableId || t.code === payload.originTableCode
-          );
-          const targetTbl = currentTables.find(
-            (t) => t.id === payload.targetTableId || t.code === payload.targetTableCode
-          );
-
-          if (originTbl && targetTbl && (originTbl.tabs || []).length > 0) {
-            const tabsToMove =
-              payload.mode === 'tab' && payload.tabIndex
-                ? (originTbl.tabs || []).filter((tb) => tb.tabIndex === payload.tabIndex)
-                : originTbl.tabs || [];
-
-            if (tabsToMove.length > 0) {
-              const nowTime = new Date(payload.timestamp || Date.now()).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              });
-
-              const adjustedTabs = tabsToMove.map((tb) => ({
-                ...tb,
-                transferredFrom: {
-                  tableCode: originTbl.code,
-                  transferredAt: nowTime,
-                },
-              }));
-
-              const remainingOriginTabs = (originTbl.tabs || []).filter(
-                (tb) => !tabsToMove.some((mt) => mt.id === tb.id)
-              );
-
-              set((state) => ({
-                tables: state.tables.map((t) => {
-                  if (t.id === originTbl.id || t.code === originTbl.code) {
-                    const isEmptyNow = remainingOriginTabs.length === 0;
-                    return {
-                      ...t,
-                      status: isEmptyNow ? ('empty' as const) : t.status,
-                      guests: isEmptyNow ? 0 : t.guests,
-                      hasOpenCheck: !isEmptyNow,
-                      activeTabs: remainingOriginTabs.map((tb) => tb.tabIndex),
-                      tabs: remainingOriginTabs,
-                      elapsedTime: isEmptyNow ? '0m' : t.elapsedTime,
-                    };
-                  }
-                  if (t.id === targetTbl.id || t.code === targetTbl.code) {
-                    return {
-                      ...t,
-                      status: 'occupied' as const,
-                      hasOpenCheck: true,
-                      tabs: [...(t.tabs || []), ...adjustedTabs],
-                      activeTabs: [...t.activeTabs, ...adjustedTabs.map((tb) => tb.tabIndex)],
-                    };
-                  }
-                  return t;
-                }),
-              }));
-            }
-          }
+          handleRealtimeTableTransferAlert(payload, get().addAlert);
+          set((state) => ({
+            tables: applyTableTransferToLocalTables(state.tables, payload),
+          }));
         },
 
         onTransferLog: (payload) => {
@@ -332,21 +248,7 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
 
         onInventoryChange: (payload) => {
           if (payload.new) {
-            const item = payload.new;
-            const currentStock = parseFloat(item.current_stock) || 0;
-            const minAlert = parseFloat(item.min_alert_level) || 0;
-            if (currentStock <= minAlert) {
-              const isDepleted = currentStock <= 0;
-              get().addAlert({
-                title: isDepleted ? `🔴 Depleted: ${item.name}` : `🟡 Low Stock: ${item.name}`,
-                description: `${item.name} is down to ${currentStock.toFixed(2)} ${item.unit} (Par: ${minAlert} ${item.unit}). Orders remain active.`,
-                type: 'auto_86',
-                targetRef: item.id,
-              });
-              toast.warning(`${item.name}: ${currentStock.toFixed(2)} ${item.unit} remaining`, {
-                title: isDepleted ? 'Ingredient Depleted' : 'Low Stock Warning',
-              });
-            }
+            handleRealtimeInventoryAlert(payload.new, get().addAlert);
           }
         },
 
@@ -362,7 +264,6 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
         onCashDrawerChange: (payload) => {
           if (payload.new) {
             const entry = payload.new;
-            // Prevent double-inserting if already present in state
             const alreadyExists = get().drawerEntries.some(
               (d) => d.id === entry.id || (entry.payment_id && d.reason?.includes(entry.payment_id))
             );

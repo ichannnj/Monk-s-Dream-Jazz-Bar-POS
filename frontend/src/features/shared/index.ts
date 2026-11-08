@@ -13,3 +13,4 @@ export * from './hooks/useResponsive';
 export * from './hooks/useWindowVisibilitySync';
 export * from './stores/useVenueStore';
 export * from './utils/printHelpers';
+export * from './utils/businessDay';

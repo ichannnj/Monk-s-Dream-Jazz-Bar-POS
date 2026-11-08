@@ -5,10 +5,10 @@ import { posHlc, deriveTabTotal, deriveTableStatus } from '../../orders/applicat
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
-import { supabase } from '../../shared/infrastructure/supabase';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
-import { resolveTableUuid } from '../../floor/data/resolver';
 import { toast } from '../../shared/toast/useToastStore';
+import { transferOrderItemsToTabAction } from './tableTransferAndVoidActions';
+import { closeEmptyTabAction } from './closeEmptyTabAction';
 
 export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   openTableTab: (tableId: string, guestName: string, guestCount = 1) => {
@@ -63,7 +63,6 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       return { tables: updatedTables };
     });
 
-    // Asynchronously insert new tab into Supabase so it has a real DB UUID immediately
     const currentUserId = useAuthStore.getState().currentUser?.id;
     tablesApi
       .createTab({
@@ -104,7 +103,6 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     hasCorkageFee = false,
     corkageAmount = 0
   ) => {
-    // 1. Calculate sequential per-tab round number
     const existingTable = get().tables.find((t) => t.id === tableId);
     const existingTab = existingTable?.tabs?.find((t) => t.tabIndex === tabIndex);
     const existingItems = existingTab?.items || [];
@@ -143,7 +141,6 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
           return updatedTab;
         });
 
-        // Compute total amount on table across all active non-cancelled items
         const tableTotal = updatedTabs.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
 
         return {
@@ -154,7 +151,6 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         };
       });
 
-      // Add station notification with explicit table and tab references
       const targetTable = state.tables.find((t) => t.id === tableId);
       const guestDisplayName = existingTab?.guestName || `Tab #${tabIndex}`;
       const newAlert: FloorAlert = {
@@ -173,7 +169,6 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       };
     });
 
-    // Background asynchronous Supabase persistence
     const currentTable = get().tables.find((t) => t.id === tableId);
     const currentTab = currentTable?.tabs?.find((t) => t.tabIndex === tabIndex);
     const mutationId = `mut-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
@@ -203,7 +198,6 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       })
       .then((res) => {
         if (res.items && res.items.length > 0) {
-          // Map returned database item UUIDs cleanly onto newly added items
           const newlyAddedMap = new Map<string, { id: string; createdAt?: string }>();
           const dbOrderCreatedAt = (res.order as any)?.created_at;
           res.items.forEach((dbIt: any, idx: number) => {
@@ -268,79 +262,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
   },
 
   closeEmptyTab: (tableId: string, tabIndex: number) => {
-    let targetTabRef: CustomerTab | undefined;
-    let isTableEmptyResult = false;
-
-    set((state) => {
-      const table = state.tables.find((t) => t.id === tableId);
-      if (!table) return state;
-
-      targetTabRef = (table.tabs || []).find((t) => t.tabIndex === tabIndex);
-      const remainingTabs = (table.tabs || []).filter((t) => t.tabIndex !== tabIndex);
-      const remainingActiveTabs = (table.activeTabs || []).filter((num) => num !== tabIndex);
-      const remainingAmount = remainingTabs.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
-      const isTableEmpty = remainingActiveTabs.length === 0 || remainingTabs.length === 0;
-      isTableEmptyResult = isTableEmpty;
-      const nextTableStatus = isTableEmpty ? 'empty' : deriveTableStatus(true, remainingTabs);
-
-      const updatedTables = state.tables.map((t) => {
-        if (t.id !== tableId) return t;
-
-        return {
-          ...t,
-          activeTabs: isTableEmpty ? [] : remainingActiveTabs,
-          tabs: isTableEmpty ? [] : remainingTabs,
-          status: isTableEmpty ? ('empty' as const) : nextTableStatus,
-          hasOpenCheck: !isTableEmpty,
-          totalAmount: isTableEmpty ? undefined : remainingAmount,
-          guests: isTableEmpty ? 0 : Math.max(1, t.guests - 1),
-          elapsedTime: isTableEmpty ? '0m' : t.elapsedTime,
-        };
-      });
-
-      return { tables: updatedTables };
-    });
-
-    // Asynchronously close tab and free table in Supabase
-    (async () => {
-      try {
-        const validTableId = await resolveTableUuid(tableId);
-        const isUuid =
-          targetTabRef?.id &&
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(targetTabRef.id);
-
-        if (isUuid && targetTabRef) {
-          await supabase
-            .from('tabs')
-            .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
-            .eq('id', targetTabRef.id);
-        } else if (validTableId) {
-          // Fallback: close the matching open tab on this table
-          const { data: openTabs } = await supabase
-            .from('tabs')
-            .select('id')
-            .eq('table_id', validTableId)
-            .eq('status', 'OPEN')
-            .limit(1);
-          if (openTabs && openTabs.length > 0) {
-            await supabase
-              .from('tabs')
-              .update({ status: 'CLOSED', updated_at: new Date().toISOString() })
-              .eq('id', openTabs[0].id);
-          }
-        }
-
-        if (isTableEmptyResult && validTableId) {
-          await supabase
-            .from('tables')
-            .update({ is_occupied: false, updated_at: new Date().toISOString() })
-            .eq('id', validTableId);
-        }
-        realtimeGateway.broadcastPosSync('tab_closed');
-      } catch (err) {
-        console.warn('[closeEmptyTab] Background database close notice:', err);
-      }
-    })();
+    closeEmptyTabAction(set, tableId, tabIndex);
   },
 
   transferOrderItemsToTab: async (
@@ -350,149 +272,13 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     itemTransfers: Array<{ orderItemId: string; quantity: number }>,
     newTabName?: string
   ) => {
-    let sourceTabUuid: string | undefined;
-    let targetTabUuid: string | undefined;
-    let targetTabIndexCaptured: number | undefined;
-    const currentStaffId = useAuthStore.getState().currentUser?.id;
-
-    set((state) => {
-      const table = state.tables.find((t) => t.id === tableId);
-      if (!table) return state;
-
-      const sourceTab = table.tabs?.find((t) => t.tabIndex === sourceTabIndex);
-      if (!sourceTab) return state;
-      sourceTabUuid = sourceTab.id;
-
-      let effectiveTargetTabIndex: number;
-      let targetTab: CustomerTab | undefined;
-      const nextTabs = [...(table.tabs || [])];
-
-      if (targetTabIndex === 'new') {
-        const existingIndices = [...(table.activeTabs || []), ...nextTabs.map((tb) => tb.tabIndex)];
-        effectiveTargetTabIndex = existingIndices.length > 0 ? Math.max(...existingIndices) + 1 : 1;
-        const finalName = newTabName?.trim() || `Senior Tab #${effectiveTargetTabIndex}`;
-        const newLocalTab: CustomerTab = {
-          id: `tab-${tableId}-${effectiveTargetTabIndex}`,
-          tabIndex: effectiveTargetTabIndex,
-          guestName: finalName,
-          status: 'open',
-          totalAmount: 0,
-          items: [],
-          openedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          openedAtIso: new Date().toISOString(),
-          operatingMode: useVenueStore.getState().operatingMode,
-        };
-        nextTabs.push(newLocalTab);
-        targetTab = newLocalTab;
-      } else {
-        effectiveTargetTabIndex = targetTabIndex;
-        targetTab = nextTabs.find((t) => t.tabIndex === effectiveTargetTabIndex);
-      }
-
-      if (!targetTab) return state;
-      targetTabUuid = targetTab.id;
-      targetTabIndexCaptured = effectiveTargetTabIndex;
-
-      // Map of transfers
-      const transferMap = new Map<string, number>();
-      itemTransfers.forEach((it) => {
-        transferMap.set(it.orderItemId, it.quantity);
-      });
-
-      // Update source tab items
-      const updatedSourceItems: OrderLineItem[] = [];
-      const transferredItemsToAdd: OrderLineItem[] = [];
-
-      sourceTab.items.forEach((item) => {
-        const qtyToMove = transferMap.get(item.id) || 0;
-        if (qtyToMove <= 0) {
-          updatedSourceItems.push(item);
-        } else if (qtyToMove >= item.quantity) {
-          // Move entire item
-          transferredItemsToAdd.push(item);
-        } else {
-          // Split item
-          const remainingQty = item.quantity - qtyToMove;
-          updatedSourceItems.push({
-            ...item,
-            quantity: remainingQty,
-          });
-          transferredItemsToAdd.push({
-            ...item,
-            id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-            quantity: qtyToMove,
-          });
-        }
-      });
-
-      // Update source and target tabs in state
-      const updatedTabs = nextTabs.map((tb) => {
-        if (tb.tabIndex === sourceTabIndex) {
-          const newTotal = deriveTabTotal({ ...tb, items: updatedSourceItems });
-          return {
-            ...tb,
-            items: updatedSourceItems,
-            totalAmount: newTotal,
-          };
-        }
-        if (tb.tabIndex === effectiveTargetTabIndex) {
-          const mergedItems = [...(tb.items || []), ...transferredItemsToAdd];
-          const newTotal = deriveTabTotal({ ...tb, items: mergedItems });
-          return {
-            ...tb,
-            items: mergedItems,
-            totalAmount: newTotal,
-          };
-        }
-        return tb;
-      });
-
-      const nextActiveTabs = Array.from(
-        new Set([...(table.activeTabs || []), effectiveTargetTabIndex])
-      );
-
-      const updatedTables = state.tables.map((t) => {
-        if (t.id !== tableId) return t;
-        return {
-          ...t,
-          tabs: updatedTabs,
-          activeTabs: nextActiveTabs,
-        };
-      });
-
-      return { tables: updatedTables };
-    });
-
-    // Background Supabase persistence
-    if (sourceTabUuid) {
-      try {
-        const res = await tablesApi.transferOrderItemsToTab({
-          sourceTabId: sourceTabUuid,
-          targetTabId:
-            targetTabUuid && !targetTabUuid.startsWith('tab-') ? targetTabUuid : undefined,
-          tableId,
-          newTabName,
-          itemTransfers,
-          staffId: currentStaffId,
-        });
-
-        const returnedTargetTabId = (res as any)?.target_tab_id || (res as any)?.targetTabId;
-        if (returnedTargetTabId && targetTabIndexCaptured !== undefined) {
-          set((state) => ({
-            tables: state.tables.map((t) => {
-              if (t.id !== tableId) return t;
-              return {
-                ...t,
-                tabs: (t.tabs || []).map((tb) =>
-                  tb.tabIndex === targetTabIndexCaptured ? { ...tb, id: returnedTargetTabId } : tb
-                ),
-              };
-            }),
-          }));
-        }
-      } catch (err) {
-        console.warn('Background transferOrderItemsToTab notice:', err);
-      }
-    }
+    return transferOrderItemsToTabAction(
+      set,
+      tableId,
+      sourceTabIndex,
+      targetTabIndex,
+      itemTransfers,
+      newTabName
+    );
   },
 });

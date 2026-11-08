@@ -1,19 +1,12 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, Pressable, ScrollView, Platform } from 'react-native';
-import {
-  X,
-  Printer,
-  Download,
-  Receipt,
-  FileText,
-  CheckCircle2,
-  FileSpreadsheet,
-} from 'lucide-react-native';
-import { formatCurrency } from '@monks/shared';
+import { X, Printer, Download, Receipt, FileText, FileSpreadsheet } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { printHtmlElement } from '@/features/shared';
 import { readingsApi, type ReadingData } from '../../../data/readings.api';
 import { exportSingleReadingToExcel } from '../../../utils/readingExcelExport';
+import { ReadingDocumentSheet } from './components/ReadingDocumentSheet';
+import { ReadingThermalSheet } from './components/ReadingThermalSheet';
 
 interface ReadingReportModalProps {
   visible: boolean;
@@ -99,51 +92,20 @@ Staff:        ${reading.outgoing_staff_name || reading.performed_by_name || 'Man
 Invoice Range: ${reading.first_receipt_no} - ${reading.last_receipt_no}
 Transactions: ${reading.transaction_count}
 
-------------------------------------------------
-1. FINANCIAL SUMMARY
-------------------------------------------------
-Gross Sales:        ${formatCurrency(reading.gross_sales)}
-Discounts & Comps: -${formatCurrency(reading.discount_total)}
-Net Sales:          ${formatCurrency(reading.net_sales)}
-Operating Mode Split:
-  • Cafe Mode:      ${formatCurrency(reading.cafe_sales || 0)} (${reading.cafe_tx_count || 0} tabs)
-  • Event Mode:     ${formatCurrency(reading.event_sales || 0)} (${reading.event_tx_count || 0} tabs)
+GROSS SALES:      ${reading.gross_sales.toFixed(2)}
+DISCOUNTS:       -${reading.discount_total.toFixed(2)}
+NET SALES:        ${reading.net_sales.toFixed(2)}
 
-------------------------------------------------
-2. TAX & CHARGES BREAKDOWN
-------------------------------------------------
-VATable Sales (12%): ${formatCurrency(reading.vatable_sales)}
-12% VAT Amount:      ${formatCurrency(reading.vat_amount)}
-VAT-Exempt Sales:    ${formatCurrency(reading.vat_exempt_sales)}
-Service Charge:     ${formatCurrency(reading.service_charge)}
+CASH TENDER:      ${reading.tender_cash.toFixed(2)}
+CARD TENDER:      ${reading.tender_card.toFixed(2)}
+DIGITAL TENDER:   ${reading.tender_digital.toFixed(2)}
+DELIVERY TENDER:  ${reading.tender_delivery.toFixed(2)}
+TOTAL TENDER:     ${reading.total_tender.toFixed(2)}
 
-------------------------------------------------
-3. TENDER SUMMARY
-------------------------------------------------
-Cash Sales:         ${formatCurrency(reading.tender_cash)}
-Credit/Debit Card:  ${formatCurrency(reading.tender_card)}
-Digital Wallets:    ${formatCurrency(reading.tender_digital)}
-Delivery Apps:      ${formatCurrency(reading.tender_delivery)}
-Total Tender:       ${formatCurrency(reading.total_tender)}
-
-------------------------------------------------
-4. CASH DRAWER RECONCILIATION
-------------------------------------------------
-Opening Float:      ${formatCurrency(reading.opening_float)}
-Cash Sales Intake:  +${formatCurrency(reading.tender_cash)}
-Cash In (+):        ${formatCurrency(reading.cash_in)}
-Petty Cash Out (-): ${formatCurrency(reading.cash_out)}
-Safe Drops (-):     ${formatCurrency(reading.safe_drops)}
-Expected Cash:      ${formatCurrency(reading.expected_cash)}
-${
-  reading.counted_cash !== undefined
-    ? `Actual Counted Cash: ${formatCurrency(reading.counted_cash)}
-Variance:            ${reading.variance && reading.variance > 0 ? '+' : ''}${formatCurrency(reading.variance || 0)}`
-    : ''
-}
-================================================
-Official POS Audit Document
-`;
+STARTING FLOAT:   ${reading.opening_float.toFixed(2)}
+EXPECTED CASH:    ${reading.expected_cash.toFixed(2)}
+${reading.counted_cash !== undefined ? `COUNTED CASH:     ${reading.counted_cash.toFixed(2)}\nVARIANCE:         ${(reading.variance || 0).toFixed(2)}` : ''}
+================================================`;
 
     const blob = new Blob([reportText], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -186,7 +148,6 @@ Official POS Audit Document
             </View>
 
             <View className="flex-row items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
-              {/* Format Toggle */}
               <View className="flex-row bg-stone-200/80 p-1 rounded-xl">
                 <Pressable
                   onPress={() => setViewMode('document')}
@@ -235,481 +196,19 @@ Official POS Audit Document
             showsVerticalScrollIndicator={false}
           >
             {viewMode === 'document' ? (
-              /* Minimalist Document Sheet View - Printable Area */
-              <View
-                nativeID="monks-reading-print-area"
-                {...({ id: 'monks-reading-print-area' } as any)}
-                className="bg-white rounded-2xl border border-stone-200 p-3 sm:p-5 shadow-xs max-w-4xl mx-auto w-full"
-              >
-                {/* Brand Header */}
-                <View className="items-center pb-2.5 border-b-2 border-stone-800 mb-3 print-avoid-break">
-                  <Text className="text-[11px] font-bold tracking-widest text-[#800020] uppercase">
-                    Monk's Dream Jazz Bar &amp; Bistro
-                  </Text>
-                  <Text className="text-xl sm:text-2xl font-black text-stone-900 mt-0.5">
-                    {title}
-                  </Text>
-                  <Text className="text-xs sm:text-sm font-medium text-stone-500 mt-0.5">
-                    Official POS Terminal Audit &amp; Fiscal Balancing Slip
-                  </Text>
-
-                  <View className="flex-row items-center gap-2.5 mt-1.5 flex-wrap justify-center">
-                    <Text className="text-xs sm:text-sm text-stone-700 font-bold">
-                      Scope: {drawerLabel}
-                    </Text>
-                    <Text className="text-xs text-stone-400">•</Text>
-                    <Text className="text-xs sm:text-sm text-stone-700 font-bold">
-                      Staff:{' '}
-                      {reading.outgoing_staff_name || reading.performed_by_name || 'Shift Cashier'}
-                    </Text>
-                    <Text className="text-xs text-stone-400">•</Text>
-                    <Text className="text-xs sm:text-sm text-stone-500 font-medium">
-                      Period:{' '}
-                      {new Date(reading.opened_at).toLocaleTimeString([], {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}{' '}
-                      -{' '}
-                      {new Date(
-                        reading.generated_at || reading.closed_at || Date.now()
-                      ).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* 2-Column Responsive / Print Grid */}
-                <View className="report-grid-2col flex-col md:flex-row gap-3 mb-3">
-                  {/* Column 1: Sales, Operating Mode, Tax */}
-                  <View className="flex-1 space-y-3">
-                    {/* Section 1: Financial Summary */}
-                    <View className="print-avoid-break bg-stone-50/60 p-3 rounded-xl border border-stone-200">
-                      <Text className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#800020] mb-1.5">
-                        1. Sales &amp; Revenue
-                      </Text>
-                      <View className="divide-y divide-stone-200">
-                        <View className="flex-row justify-between py-1">
-                          <Text className="text-sm text-stone-600">Gross Sales</Text>
-                          <Text className="text-sm font-bold text-stone-900">
-                            {formatCurrency(reading.gross_sales)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">Discounts &amp; Comps</Text>
-                          <Text className="text-sm font-bold text-amber-700">
-                            -{formatCurrency(reading.discount_total)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-2 bg-stone-100 px-2 rounded-lg mt-1">
-                          <Text className="text-sm font-black text-stone-900">Net Sales</Text>
-                          <Text className="text-base font-black text-[#800020]">
-                            {formatCurrency(reading.net_sales)}
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Operating Mode Split */}
-                      {(reading.cafe_sales !== undefined || reading.event_sales !== undefined) && (
-                        <View className="mt-2.5 pt-2 border-t border-dashed border-stone-300">
-                          <Text className="text-[11px] font-bold text-stone-500 uppercase tracking-wider mb-1.5">
-                            Operating Mode Revenue Split
-                          </Text>
-                          <View className="space-y-1">
-                            <View className="flex-row justify-between py-1">
-                              <View className="flex-row items-center gap-1.5">
-                                <View className="w-2 h-2 rounded-full bg-amber-500" />
-                                <Text className="text-xs text-stone-700 font-semibold">
-                                  ☀️ Cafe Mode
-                                </Text>
-                                {reading.cafe_tx_count !== undefined && (
-                                  <Text className="text-[11px] text-stone-400">
-                                    ({reading.cafe_tx_count})
-                                  </Text>
-                                )}
-                              </View>
-                              <Text className="text-xs font-bold text-stone-900">
-                                {formatCurrency(reading.cafe_sales || 0)}
-                              </Text>
-                            </View>
-                            <View className="flex-row justify-between py-1">
-                              <View className="flex-row items-center gap-1.5">
-                                <View className="w-2 h-2 rounded-full bg-[#800020]" />
-                                <Text className="text-xs text-stone-700 font-semibold">
-                                  🎷 Event Mode
-                                </Text>
-                                {reading.event_tx_count !== undefined && (
-                                  <Text className="text-[11px] text-stone-400">
-                                    ({reading.event_tx_count})
-                                  </Text>
-                                )}
-                              </View>
-                              <Text className="text-xs font-bold text-stone-900">
-                                {formatCurrency(reading.event_sales || 0)}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      )}
-                    </View>
-
-                    {/* Section 2: Tax & Surcharges */}
-                    <View className="print-avoid-break bg-stone-50/60 p-3.5 rounded-xl border border-stone-200">
-                      <Text className="text-sm font-extrabold uppercase tracking-wider text-[#800020] mb-2">
-                        2. Tax &amp; Service Charge (BIR)
-                      </Text>
-                      <View className="divide-y divide-stone-200">
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">VATable Sales</Text>
-                          <Text className="text-sm font-bold text-stone-900">
-                            {formatCurrency(reading.vatable_sales)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">12% VAT</Text>
-                          <Text className="text-sm font-bold text-stone-900">
-                            {formatCurrency(reading.vat_amount)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">House Service Charge</Text>
-                          <Text className="text-sm font-bold text-stone-900">
-                            {formatCurrency(reading.service_charge)}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-
-                  {/* Column 2: Tender Breakdown & Cash Drawer */}
-                  <View className="flex-1 space-y-4">
-                    {/* Section 3: Tender Breakdown */}
-                    <View className="print-avoid-break bg-stone-50/60 p-3.5 rounded-xl border border-stone-200">
-                      <Text className="text-sm font-extrabold uppercase tracking-wider text-[#800020] mb-2">
-                        3. Payment Tender Breakdown
-                      </Text>
-                      <View className="divide-y divide-stone-200">
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">Cash Payments</Text>
-                          <Text className="text-sm font-bold text-stone-900">
-                            {formatCurrency(reading.tender_cash)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">Credit / Debit Card</Text>
-                          <Text className="text-sm font-bold text-stone-900">
-                            {formatCurrency(reading.tender_card)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">GCash / Maya Digital</Text>
-                          <Text className="text-sm font-bold text-stone-900">
-                            {formatCurrency(reading.tender_digital)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">Grab / Foodpanda</Text>
-                          <Text className="text-sm font-bold text-stone-900">
-                            {formatCurrency(reading.tender_delivery)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-2 bg-stone-100 px-2 rounded-lg mt-1">
-                          <Text className="text-sm font-black text-stone-900">Total Tender</Text>
-                          <Text className="text-base font-black text-stone-900">
-                            {formatCurrency(reading.total_tender)}
-                          </Text>
-                        </View>
-                      </View>
-                    </View>
-
-                    {/* Section 4: Cash Drawer Audit */}
-                    <View className="print-avoid-break bg-stone-50/60 p-3.5 rounded-xl border border-stone-200">
-                      <Text className="text-sm font-extrabold uppercase tracking-wider text-[#800020] mb-2">
-                        4. Cash Drawer Reconciliation
-                      </Text>
-                      <View className="divide-y divide-stone-200">
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">Starting Float</Text>
-                          <Text className="text-sm font-bold text-stone-900">
-                            {formatCurrency(reading.opening_float)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">Cash Sales Intake (+)</Text>
-                          <Text className="text-sm font-bold text-emerald-700">
-                            +{formatCurrency(reading.tender_cash)}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-1.5">
-                          <Text className="text-sm text-stone-600">Cash In / Out / Safe</Text>
-                          <Text className="text-sm font-bold text-stone-700">
-                            {formatCurrency(
-                              reading.cash_in - reading.cash_out - reading.safe_drops
-                            )}
-                          </Text>
-                        </View>
-                        <View className="flex-row justify-between py-2 bg-stone-100 px-2 rounded-lg mt-1">
-                          <Text className="text-sm font-black text-stone-900">Expected Cash</Text>
-                          <Text className="text-base font-black text-stone-900">
-                            {formatCurrency(reading.expected_cash)}
-                          </Text>
-                        </View>
-
-                        {reading.counted_cash !== undefined && (
-                          <View className="mt-2 pt-2 border-t border-stone-300">
-                            <View className="flex-row justify-between py-1">
-                              <Text className="text-sm font-bold text-stone-800">
-                                Physical Counted Cash
-                              </Text>
-                              <Text className="text-sm font-black text-stone-900">
-                                {formatCurrency(reading.counted_cash)}
-                              </Text>
-                            </View>
-                            <View
-                              className={`flex-row justify-between py-1.5 px-2.5 rounded-lg mt-1 ${
-                                reading.variance === 0
-                                  ? 'bg-emerald-50 text-emerald-800'
-                                  : reading.variance && reading.variance > 0
-                                    ? 'bg-amber-50 text-amber-800'
-                                    : 'bg-red-50 text-red-800'
-                              }`}
-                            >
-                              <Text className="text-xs font-black">
-                                {reading.variance === 0
-                                  ? '✓ Balanced'
-                                  : reading.variance && reading.variance > 0
-                                    ? '▲ Surplus (Over)'
-                                    : '▼ Discrepancy (Short)'}
-                              </Text>
-                              <Text className="text-xs font-black">
-                                {reading.variance && reading.variance > 0 ? '+' : ''}
-                                {formatCurrency(reading.variance || 0)}
-                              </Text>
-                            </View>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-                </View>
-
-                {/* Audit Reference Trailer */}
-                <View className="bg-stone-50 rounded-xl p-3 border border-stone-200 flex-row justify-between items-center mb-4 print-avoid-break">
-                  <View>
-                    <Text className="text-xs font-bold text-stone-600">
-                      Invoice Reference Range:{' '}
-                      <Text className="text-stone-900 font-semibold">
-                        {reading.first_receipt_no || 'N/A'} - {reading.last_receipt_no || 'N/A'}
-                      </Text>
-                    </Text>
-                  </View>
-                  <View className="items-end">
-                    <Text className="text-xs font-bold text-stone-600">
-                      Total Settled Transactions:{' '}
-                      <Text className="text-stone-900 font-black">
-                        {reading.transaction_count} tabs
-                      </Text>
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Handover Signatures for Y-Reading / Z-Reading */}
-                <View className="p-4 rounded-xl border border-stone-200 bg-stone-50/70 print-avoid-break">
-                  <Text className="text-xs font-extrabold uppercase tracking-wider text-[#800020] mb-2.5">
-                    {isYReading
-                      ? 'Staff Handover Acknowledgment'
-                      : 'Fiscal Closeout Acknowledgment'}
-                  </Text>
-                  <View className="report-grid-2col flex-col sm:flex-row gap-3">
-                    <View className="flex-1 p-2.5 bg-white rounded-lg border border-stone-200">
-                      <Text className="text-xs font-semibold text-stone-500">
-                        {isYReading
-                          ? 'Handed Over By (Outgoing Cashier):'
-                          : 'Prepared By (Cashier):'}
-                      </Text>
-                      <Text className="text-sm font-bold text-stone-900 mt-0.5">
-                        {reading.outgoing_staff_name ||
-                          reading.performed_by_name ||
-                          'Shift Cashier'}
-                      </Text>
-                      <View className="mt-5 pt-1 border-t border-stone-300">
-                        <Text className="text-[11px] text-stone-400">
-                          Signature: __________________________
-                        </Text>
-                      </View>
-                    </View>
-                    <View className="flex-1 p-2.5 bg-white rounded-lg border border-stone-200">
-                      <Text className="text-xs font-semibold text-stone-500">
-                        {isYReading
-                          ? 'Received By (Incoming Cashier):'
-                          : 'Verified By (Duty Manager):'}
-                      </Text>
-                      <Text className="text-sm font-bold text-stone-900 mt-0.5">
-                        {reading.incoming_staff_name || 'Duty Manager'}
-                      </Text>
-                      <View className="mt-5 pt-1 border-t border-stone-300">
-                        <Text className="text-[11px] text-stone-400">
-                          Signature: __________________________
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              </View>
+              <ReadingDocumentSheet
+                reading={reading}
+                title={title}
+                drawerLabel={drawerLabel}
+                isYReading={isYReading}
+              />
             ) : (
-              /* 80mm Thermal Monospace View */
-              <View
-                nativeID="monks-reading-thermal-area"
-                {...({ id: 'monks-reading-thermal-area' } as any)}
-                className="bg-white rounded-2xl border border-stone-300 p-6 shadow-md max-w-sm mx-auto w-full font-mono"
-              >
-                <View className="items-center border-b border-dashed border-stone-400 pb-4 mb-4">
-                  <Text className="text-base font-black tracking-widest text-center">
-                    MONK'S DREAM JAZZ BAR
-                  </Text>
-                  <Text className="text-xs text-stone-600 text-center uppercase tracking-wider">
-                    POS TERMINAL FISCAL REPORT
-                  </Text>
-                  <Text className="text-base font-black mt-2 text-center">{title}</Text>
-                  <Text className="text-xs text-stone-500 mt-1">{drawerLabel}</Text>
-                  <Text className="text-xs text-stone-500">
-                    {new Date(
-                      reading.generated_at || reading.closed_at || Date.now()
-                    ).toLocaleString()}
-                  </Text>
-                </View>
-
-                <View className="border-b border-dashed border-stone-400 pb-3 mb-3 space-y-1">
-                  <View className="flex-row justify-between">
-                    <Text className="text-xs font-mono">GROSS SALES</Text>
-                    <Text className="text-xs font-mono font-bold">
-                      {formatCurrency(reading.gross_sales)}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-xs font-mono">DISCOUNTS</Text>
-                    <Text className="text-xs font-mono font-bold">
-                      -{formatCurrency(reading.discount_total)}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between border-t border-stone-200 pt-1">
-                    <Text className="text-xs font-mono font-bold">NET SALES</Text>
-                    <Text className="text-xs font-mono font-bold">
-                      {formatCurrency(reading.net_sales)}
-                    </Text>
-                  </View>
-                  {(reading.cafe_sales !== undefined || reading.event_sales !== undefined) && (
-                    <View className="border-t border-stone-200 pt-1 mt-1 space-y-0.5">
-                      <View className="flex-row justify-between">
-                        <Text className="text-[10px] font-mono text-stone-600">
-                          CAFE MODE SALES
-                        </Text>
-                        <Text className="text-[10px] font-mono font-bold">
-                          {formatCurrency(reading.cafe_sales || 0)}
-                        </Text>
-                      </View>
-                      <View className="flex-row justify-between">
-                        <Text className="text-[10px] font-mono text-stone-600">
-                          EVENT MODE SALES
-                        </Text>
-                        <Text className="text-[10px] font-mono font-bold">
-                          {formatCurrency(reading.event_sales || 0)}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                </View>
-
-                <View className="border-b border-dashed border-stone-400 pb-3 mb-3 space-y-1">
-                  <View className="flex-row justify-between">
-                    <Text className="text-xs font-mono">VATABLE SALES</Text>
-                    <Text className="text-xs font-mono">
-                      {formatCurrency(reading.vatable_sales)}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-xs font-mono">12% VAT</Text>
-                    <Text className="text-xs font-mono">{formatCurrency(reading.vat_amount)}</Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-xs font-mono">10% SERV CHG</Text>
-                    <Text className="text-xs font-mono">
-                      {formatCurrency(reading.service_charge)}
-                    </Text>
-                  </View>
-                </View>
-
-                <View className="border-b border-dashed border-stone-400 pb-3 mb-3 space-y-1">
-                  <View className="flex-row justify-between">
-                    <Text className="text-xs font-mono">CASH TENDER</Text>
-                    <Text className="text-xs font-mono font-bold">
-                      {formatCurrency(reading.tender_cash)}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-xs font-mono">CARD TENDER</Text>
-                    <Text className="text-xs font-mono font-bold">
-                      {formatCurrency(reading.tender_card)}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between">
-                    <Text className="text-xs font-mono">DIGITAL WALLET</Text>
-                    <Text className="text-xs font-mono font-bold">
-                      {formatCurrency(reading.tender_digital)}
-                    </Text>
-                  </View>
-                  <View className="flex-row justify-between border-t border-stone-200 pt-1">
-                    <Text className="text-xs font-mono font-bold">TOTAL TENDER</Text>
-                    <Text className="text-xs font-mono font-bold">
-                      {formatCurrency(reading.total_tender)}
-                    </Text>
-                  </View>
-                </View>
-
-                <View className="pb-3 space-y-1">
-                  <View className="flex-row justify-between">
-                    <Text className="text-xs font-mono">EXPECTED CASH</Text>
-                    <Text className="text-xs font-mono font-bold">
-                      {formatCurrency(reading.expected_cash)}
-                    </Text>
-                  </View>
-                  {reading.counted_cash !== undefined && (
-                    <>
-                      <View className="flex-row justify-between">
-                        <Text className="text-xs font-mono">COUNTED CASH</Text>
-                        <Text className="text-xs font-mono font-bold">
-                          {formatCurrency(reading.counted_cash)}
-                        </Text>
-                      </View>
-                      <View className="flex-row justify-between border-t border-stone-300 pt-1">
-                        <Text className="text-xs font-mono font-bold">VARIANCE</Text>
-                        <Text className="text-xs font-mono font-bold">
-                          {reading.variance && reading.variance > 0 ? '+' : ''}
-                          {formatCurrency(reading.variance || 0)}
-                        </Text>
-                      </View>
-                    </>
-                  )}
-                </View>
-
-                {isYReading && (
-                  <View className="border-t border-dashed border-stone-400 pt-3 pb-2 space-y-2">
-                    <Text className="text-xs font-mono font-bold">STAFF HANDOVER</Text>
-                    <Text className="text-[10px] font-mono">
-                      OUT: {reading.outgoing_staff_name || reading.performed_by_name || 'Staff'}
-                    </Text>
-                    <Text className="text-[10px] font-mono">SIG: _____________________</Text>
-                    <Text className="text-[10px] font-mono">
-                      IN: {reading.incoming_staff_name || 'Incoming Staff'}
-                    </Text>
-                    <Text className="text-[10px] font-mono">SIG: _____________________</Text>
-                  </View>
-                )}
-
-                <View className="items-center border-t border-dashed border-stone-400 pt-3 mt-2">
-                  <Text className="text-[10px] text-stone-500 uppercase tracking-widest text-center">
-                    *** END OF REPORT ***
-                  </Text>
-                </View>
-              </View>
+              <ReadingThermalSheet
+                reading={reading}
+                title={title}
+                drawerLabel={drawerLabel}
+                isYReading={isYReading}
+              />
             )}
           </ScrollView>
 

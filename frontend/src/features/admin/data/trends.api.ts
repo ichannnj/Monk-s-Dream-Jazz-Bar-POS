@@ -1,4 +1,6 @@
 import { supabase } from '@/features/shared/infrastructure/supabase';
+import { toBusinessDate } from '@/features/shared/utils/businessDay';
+import { stationMatches } from './api/financialSummary.api';
 import type {
   SalesTrendsReport,
   SalesTrendsFilterParams,
@@ -48,7 +50,7 @@ export const trendsApi = {
 
     // 1. Build Payments Query for Financial Trends
     let paymentsQuery = (supabase.from as any)('payments').select(
-      'id, amount, payment_method, operating_mode, created_at, drawer_target, tab_id, tabs(order_channel, operating_mode)'
+      'id, amount, discount_amount, payment_method, operating_mode, created_at, drawer_target, tab_id, tabs(order_channel, operating_mode)'
     );
 
     if (filterOptions.startDate) {
@@ -60,7 +62,7 @@ export const trendsApi = {
 
     // 2. Build Order Items Query for Best Sellers & Product Demand
     let orderItemsQuery = (supabase.from as any)('order_items').select(
-      'id, product_id, quantity, unit_price, status, created_at, products(id, name, base_price, categories(id, name))'
+      'id, product_id, quantity, unit_price, status, created_at, orders(status, tabs(status)), products(id, name, base_price, categories(id, name))'
     );
 
     if (filterOptions.startDate) {
@@ -93,72 +95,70 @@ export const trendsApi = {
 
     // Filter payments by operating mode and station if specified
     const filteredPayments = rawPayments.filter((p) => {
-      if (filterOptions.filterMode && filterOptions.filterMode !== 'ALL') {
-        const mode = p.operating_mode || p.tabs?.operating_mode;
-        if (mode !== filterOptions.filterMode) return false;
+      const mode = (p.operating_mode || p.tabs?.operating_mode || 'CAFE').toUpperCase();
+      if (
+        filterOptions.filterMode &&
+        filterOptions.filterMode !== 'ALL' &&
+        mode !== filterOptions.filterMode
+      ) {
+        return false;
       }
-      if (filterOptions.station && filterOptions.station !== 'ALL') {
-        const channel = (p.tabs?.order_channel || '').toUpperCase();
-        const drawer = (p.drawer_target || '').toUpperCase();
-        if (filterOptions.station === 'CAFE_AREA') {
-          return drawer.includes('BAR') || channel.includes('CAFE');
-        }
-        if (filterOptions.station === 'BAR_AREA') {
-          return drawer.includes('BAR') || channel.includes('BAR');
-        }
-        if (filterOptions.station === 'TAKEOUT_COUNTER') {
-          return channel.includes('TAKEOUT');
-        }
-        if (filterOptions.station === 'GRAB_FOOD') {
-          return channel.includes('GRAB');
-        }
-      }
-      return true;
+      return stationMatches(filterOptions.station || 'ALL', p.tabs?.order_channel, p.drawer_target);
     });
 
-    // Compute Totals
+    // Compute Totals — gross includes discounts, and a tab split across
+    // multiple tenders counts once (distinct tab_id).
     let totalGrossSales = 0;
-    const totalOrders = filteredPayments.length;
+    let totalNetSales = 0;
+    const orderTabs = new Set<string>();
 
     // Day of Week Accumulators: index 0 to 6
-    const dayOfWeekData = Array.from({ length: 7 }, (_, i) => ({
+    const dayOfWeekData = Array.from({ length: 7 }, () => ({
       sales: 0,
-      count: 0,
+      tabs: new Set<string>(),
       datesSeen: new Set<string>(),
     }));
 
     // Timeline Maps
-    const dailyMap = new Map<string, { date: Date; sales: number; count: number }>();
+    const dailyMap = new Map<string, { date: Date; sales: number; tabs: Set<string> }>();
     const weeklyMap = new Map<
       string,
-      { label: string; shortLabel: string; date: Date; sales: number; count: number }
+      { label: string; shortLabel: string; date: Date; sales: number; tabs: Set<string> }
     >();
     const monthlyMap = new Map<
       string,
-      { label: string; shortLabel: string; date: Date; sales: number; count: number }
+      { label: string; shortLabel: string; date: Date; sales: number; tabs: Set<string> }
     >();
 
     for (const p of filteredPayments) {
       const amt = Number(p.amount) || 0;
-      totalGrossSales += amt;
+      const grossAmt = amt + (Number(p.discount_amount) || 0);
+      totalGrossSales += grossAmt;
+      totalNetSales += amt;
+      if (p.tab_id) orderTabs.add(p.tab_id);
 
-      const pDate = new Date(p.created_at);
+      // Attribute to the Manila 6:00 AM business date, never the device day.
+      const dateKey = toBusinessDate(p.created_at);
+      const pDate = new Date(`${dateKey}T12:00:00`);
       if (isNaN(pDate.getTime())) continue;
 
       const dayIdx = pDate.getDay(); // 0-6
-      const dateKey = pDate.toISOString().split('T')[0]; // "YYYY-MM-DD"
-      const monthKey = `${pDate.getFullYear()}-${String(pDate.getMonth() + 1).padStart(2, '0')}`;
+      const monthKey = dateKey.slice(0, 7); // "YYYY-MM"
       const weekInfo = getIsoWeekLabel(pDate);
 
       // Accumulate Day of Week
-      dayOfWeekData[dayIdx].sales += amt;
-      dayOfWeekData[dayIdx].count += 1;
+      dayOfWeekData[dayIdx].sales += grossAmt;
+      if (p.tab_id) dayOfWeekData[dayIdx].tabs.add(p.tab_id);
       dayOfWeekData[dayIdx].datesSeen.add(dateKey);
 
       // Accumulate Daily Timeline
-      const curDaily = dailyMap.get(dateKey) || { date: pDate, sales: 0, count: 0 };
-      curDaily.sales += amt;
-      curDaily.count += 1;
+      const curDaily = dailyMap.get(dateKey) || {
+        date: pDate,
+        sales: 0,
+        tabs: new Set<string>(),
+      };
+      curDaily.sales += grossAmt;
+      if (p.tab_id) curDaily.tabs.add(p.tab_id);
       dailyMap.set(dateKey, curDaily);
 
       // Accumulate Weekly Timeline
@@ -167,10 +167,10 @@ export const trendsApi = {
         shortLabel: weekInfo.shortLabel,
         date: pDate,
         sales: 0,
-        count: 0,
+        tabs: new Set<string>(),
       };
-      curWeekly.sales += amt;
-      curWeekly.count += 1;
+      curWeekly.sales += grossAmt;
+      if (p.tab_id) curWeekly.tabs.add(p.tab_id);
       weeklyMap.set(weekInfo.key, curWeekly);
 
       // Accumulate Monthly Timeline
@@ -181,14 +181,15 @@ export const trendsApi = {
         shortLabel: monthShort,
         date: pDate,
         sales: 0,
-        count: 0,
+        tabs: new Set<string>(),
       };
-      curMonthly.sales += amt;
-      curMonthly.count += 1;
+      curMonthly.sales += grossAmt;
+      if (p.tab_id) curMonthly.tabs.add(p.tab_id);
       monthlyMap.set(monthKey, curMonthly);
     }
 
-    const averageTicket = totalOrders > 0 ? totalGrossSales / totalOrders : 0;
+    const totalOrders = orderTabs.size;
+    const averageTicket = totalOrders > 0 ? totalNetSales / totalOrders : 0;
 
     // Build Day of Week Trends in restaurant order (Mon -> Sun)
     let maxDaySales = 0;
@@ -208,7 +209,7 @@ export const trendsApi = {
         dayName: DAY_NAMES[dayIdx],
         shortName: DAY_SHORT_NAMES[dayIdx],
         totalSales: raw.sales,
-        orderCount: raw.count,
+        orderCount: raw.tabs.size,
         averageSales: avgSales,
         isBestDay,
         percentageOfWeeklyTotal: Math.round(pctOfWeekly * 10) / 10,
@@ -237,8 +238,8 @@ export const trendsApi = {
         label,
         shortLabel,
         sales: d.sales,
-        orderCount: d.count,
-        averageTicket: d.count > 0 ? d.sales / d.count : 0,
+        orderCount: d.tabs.size,
+        averageTicket: d.tabs.size > 0 ? d.sales / d.tabs.size : 0,
         isPeak,
         periodType: 'day',
       };
@@ -259,8 +260,8 @@ export const trendsApi = {
         label: w.label,
         shortLabel: w.shortLabel,
         sales: w.sales,
-        orderCount: w.count,
-        averageTicket: w.count > 0 ? w.sales / w.count : 0,
+        orderCount: w.tabs.size,
+        averageTicket: w.tabs.size > 0 ? w.sales / w.tabs.size : 0,
         isPeak,
         periodType: 'week',
       };
@@ -281,8 +282,8 @@ export const trendsApi = {
         label: m.label,
         shortLabel: m.shortLabel,
         sales: m.sales,
-        orderCount: m.count,
-        averageTicket: m.count > 0 ? m.sales / m.count : 0,
+        orderCount: m.tabs.size,
+        averageTicket: m.tabs.size > 0 ? m.sales / m.tabs.size : 0,
         isPeak,
         periodType: 'month',
       };

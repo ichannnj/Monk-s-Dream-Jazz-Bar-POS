@@ -66,7 +66,15 @@ export const useVenueStore = create<VenueState>((set, get) => ({
     // 1. Fetch initial settings (also runs 6:00 AM reconciliation)
     get().fetchVenueSettings();
 
-    // 2. Subscribe to venue_settings changes across all devices
+    // 2. Clean up any existing channel with the same name before subscribing to prevent duplicate handler collisions
+    const existingChannel = supabase
+      .getChannels()
+      .find((ch) => ch.topic === 'realtime:pos_venue_settings_sync');
+    if (existingChannel) {
+      supabase.removeChannel(existingChannel);
+    }
+
+    // Subscribe to venue_settings changes across all devices
     const channel = supabase
       .channel('pos_venue_settings_sync')
       .on(

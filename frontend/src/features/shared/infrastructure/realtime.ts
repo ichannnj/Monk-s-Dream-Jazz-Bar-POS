@@ -1,91 +1,26 @@
 /**
  * Realtime Subscriptions & Station Event Gateway
  * Monk's Dream Jazz Bar POS (Supabase BaaS)
- *
- * Provides real-time subscriptions for:
- * - Station routing (bar & kitchen KDS)
- * - FOH buzzout alerts (order complete / ready to serve)
- * - Auto-86 product availability broadcasts
- * - Floor table occupancy and tab transfer notifications
- * - Cash drawer transactions
  */
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabase';
+import {
+  StationOrderPayload,
+  TableOccupancyPayload,
+  Auto86Payload,
+  BuzzoutPayload,
+  TableTransferPayload,
+  GlobalRealtimeCallbacks,
+  ChatRealtimeCallbacks,
+} from './realtime.types';
+import {
+  subscribeChatMessagesChannel,
+  trackChatPresenceOnChannel,
+  broadcastChatMessageOnChannel,
+} from './realtimeChatChannel';
+import { subscribeGlobalPOSRealtimeChannel } from './realtimePosGlobalChannel';
 
-export interface StationOrderPayload {
-  orderItemId: string;
-  orderId: string;
-  productId: string;
-  quantity: number;
-  stationTarget: 'bar' | 'kitchen';
-  status: string;
-  notes?: string;
-}
-
-export interface TableOccupancyPayload {
-  tableId: string;
-  tableNumber: string;
-  isOccupied: boolean;
-}
-
-export interface Auto86Payload {
-  productId: string;
-  name: string;
-  auto86: boolean;
-  outOfStockReason?: string;
-}
-
-export interface BuzzoutPayload {
-  orderId: string;
-  tableNumber?: string;
-  customerName?: string;
-  orderType: string;
-  readyItemsCount: number;
-  totalItemsCount: number;
-}
-
-export interface TableTransferPayload {
-  originTableId: string;
-  originTableCode: string;
-  targetTableId: string;
-  targetTableCode: string;
-  mode: 'entire' | 'tab';
-  tabIndex?: number;
-  guestName?: string;
-  prepItemsCount: number;
-  reason?: string;
-  timestamp: string;
-}
-
-export interface GlobalRealtimeCallbacks {
-  onTableChange?: (payload: any) => void;
-  onTabChange?: (payload: any) => void;
-  onOrderItemChange?: (payload: any) => void;
-  onOrderChange?: (payload: any) => void;
-  onProductChange?: (payload: any) => void;
-  onCategoryChange?: (payload: any) => void;
-  onUserChange?: (payload: any) => void;
-  onTransferLog?: (payload: any) => void;
-  onTableTransfer?: (payload: TableTransferPayload) => void;
-  onBuzzout?: (payload: any) => void;
-  onCashDrawerChange?: (payload: any) => void;
-  onPaymentChange?: (payload: any) => void;
-  onInventoryChange?: (payload: any) => void;
-  onStockMovementChange?: (payload: any) => void;
-  onWasteLogChange?: (payload: any) => void;
-  onAttendanceChange?: (payload: any) => void;
-  onPosSyncNeeded?: (payload: { reason: string; timestamp: string }) => void;
-}
-
-export interface ChatRealtimeCallbacks {
-  onInsert: (msg: any) => void;
-  onUpdate: (msg: any) => void;
-  onConversationUpdate?: (conv: any) => void;
-  onParticipantInsert?: (participant: any) => void;
-  onUserUpdate?: (user: any) => void;
-  onPresenceSync?: (onlineUserIds: string[]) => void;
-  onStatusChange?: (status: string) => void;
-}
+export * from './realtime.types';
 
 export class RealtimeGateway {
   private channels: Map<string, RealtimeChannel> = new Map();
@@ -130,11 +65,6 @@ export class RealtimeGateway {
     }
   }
 
-  /**
-   * Subscribe to station-specific order items (KDS screens).
-   * @param station 'bar' | 'kitchen'
-   * @param onOrderChange Callback invoked on INSERT/UPDATE/DELETE
-   */
   subscribeStationOrders(
     station: 'bar' | 'kitchen',
     onOrderChange: (payload: any) => void
@@ -168,9 +98,6 @@ export class RealtimeGateway {
     };
   }
 
-  /**
-   * Subscribe to FOH Runner Buzzout broadcast and ready order notifications.
-   */
   subscribeRunnerBuzzout(
     onBuzzout: (payload: any) => void,
     onItemReady?: (payload: any) => void
@@ -207,9 +134,6 @@ export class RealtimeGateway {
     };
   }
 
-  /**
-   * Subscribe to Table occupancy and floor transfer events.
-   */
   subscribeFloorTables(
     onTableChange: (payload: any) => void,
     onTabTransfer?: (payload: any) => void
@@ -221,24 +145,12 @@ export class RealtimeGateway {
 
     const channel = supabase
       .channel(channelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload) => {
+        onTableChange(payload);
+      })
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tables',
-        },
-        (payload) => {
-          onTableChange(payload);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'table_transfer_logs',
-        },
+        { event: 'INSERT', schema: 'public', table: 'table_transfer_logs' },
         (payload) => {
           if (onTabTransfer) onTabTransfer(payload);
         }
@@ -253,9 +165,6 @@ export class RealtimeGateway {
     };
   }
 
-  /**
-   * Subscribe to Auto-86 product availability updates across all floor tablets.
-   */
   subscribeAuto86(onProductChange: (payload: any) => void): () => void {
     const channelName = 'catalog:auto_86';
     if (this.channels.has(channelName)) {
@@ -285,129 +194,15 @@ export class RealtimeGateway {
     };
   }
 
-  /**
-   * Subscribe to all Floor POS and station events across all tablets simultaneously.
-   * Single websocket connection multiplexed across multiple subscribers for optimal performance.
-   */
   subscribeGlobalPOSRealtime(callbacks: GlobalRealtimeCallbacks): () => void {
-    const channelName = 'pos_global_sync';
-    this.globalPosListeners.add(callbacks);
-
-    if (!this.channels.has(channelName)) {
-      const channel = supabase
-        .channel(channelName, {
-          config: {
-            broadcast: { self: true },
-          },
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload) => {
-          this.globalPosListeners.forEach((cb) => cb.onTableChange?.(payload));
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'tabs' }, (payload) => {
-          this.globalPosListeners.forEach((cb) => cb.onTabChange?.(payload));
-        })
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-          this.globalPosListeners.forEach((cb) => cb.onOrderChange?.(payload));
-        })
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'order_items' },
-          (payload) => {
-            this.globalPosListeners.forEach((cb) => cb.onOrderItemChange?.(payload));
-          }
-        )
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, (payload) => {
-          this.globalPosListeners.forEach((cb) => cb.onProductChange?.(payload));
-        })
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'table_transfer_logs' },
-          (payload) => {
-            this.globalPosListeners.forEach((cb) => cb.onTransferLog?.(payload));
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'cash_drawer_transactions' },
-          (payload) => {
-            this.globalPosListeners.forEach((cb) => cb.onCashDrawerChange?.(payload));
-          }
-        )
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, (payload) => {
-          this.globalPosListeners.forEach((cb) => cb.onPaymentChange?.(payload));
-        })
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'inventory_items' },
-          (payload) => {
-            this.globalPosListeners.forEach((cb) => cb.onInventoryChange?.(payload));
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'stock_movements' },
-          (payload) => {
-            this.globalPosListeners.forEach((cb) => cb.onStockMovementChange?.(payload));
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'attendance_records' },
-          (payload) => {
-            this.globalPosListeners.forEach((cb) => cb.onAttendanceChange?.(payload));
-          }
-        )
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'users' }, (payload) => {
-          this.globalPosListeners.forEach((cb) => cb.onUserChange?.(payload));
-        })
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'categories' },
-          (payload) => {
-            this.globalPosListeners.forEach((cb) => cb.onCategoryChange?.(payload));
-          }
-        )
-        .on(
-          'postgres_changes',
-          { event: 'INSERT', schema: 'public', table: 'waste_logs' },
-          (payload) => {
-            this.globalPosListeners.forEach((cb) => cb.onWasteLogChange?.(payload));
-          }
-        )
-        .on('broadcast', { event: 'foh:buzzout' }, (event) => {
-          this.globalPosListeners.forEach((cb) => cb.onBuzzout?.(event.payload));
-        })
-        .on('broadcast', { event: 'station:table_transferred' }, (event) => {
-          this.globalPosListeners.forEach((cb) => cb.onTableTransfer?.(event.payload));
-        })
-        .on('broadcast', { event: 'pos:sync_needed' }, (event) => {
-          this.globalPosListeners.forEach((cb) => cb.onPosSyncNeeded?.(event.payload));
-        })
-        .subscribe((status, err) => {
-          if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
-            console.warn(`[RealtimeGateway] pos_global_sync status: ${status}`, err);
-            this.scheduleChannelReconnect(channelName);
-          }
-        });
-
-      this.channels.set(channelName, channel);
-    }
-
-    return () => {
-      this.globalPosListeners.delete(callbacks);
-      if (this.globalPosListeners.size === 0) {
-        const existingChannel = this.channels.get(channelName);
-        if (existingChannel) {
-          existingChannel.unsubscribe();
-          this.channels.delete(channelName);
-        }
-      }
-    };
+    return subscribeGlobalPOSRealtimeChannel(
+      this.channels,
+      this.globalPosListeners,
+      callbacks,
+      (channelName) => this.scheduleChannelReconnect(channelName)
+    );
   }
 
-  /**
-   * Broadcast a table relocation event across all stations (KDS, Runner, Floor).
-   */
   async broadcastTableTransfer(payload: TableTransferPayload): Promise<void> {
     const channel = this.channels.get('pos_global_sync') || supabase.channel('pos_global_sync');
     await this.safeSend(channel, {
@@ -417,9 +212,6 @@ export class RealtimeGateway {
     });
   }
 
-  /**
-   * Broadcast an instant POS sync signal so all connected workstations hydrate immediately.
-   */
   async broadcastPosSync(reason: string): Promise<void> {
     try {
       let channel = this.channels.get('pos_global_sync');
@@ -438,9 +230,6 @@ export class RealtimeGateway {
     }
   }
 
-  /**
-   * Broadcast an FOH buzzout notification when all items on an order reach READY status.
-   */
   async broadcastBuzzout(payload: BuzzoutPayload): Promise<void> {
     const channel = supabase.channel('foh:runner_buzzout');
     await this.safeSend(channel, {
@@ -450,160 +239,22 @@ export class RealtimeGateway {
     });
   }
 
-  /**
-   * Subscribe to realtime chat messages across all POS and KDS stations.
-   */
   subscribeChatMessages(callbacks: ChatRealtimeCallbacks): () => void {
-    const channelName = 'pos_chat_sync';
-    const existing = this.channels.get(channelName);
-    if (existing) {
-      existing.unsubscribe();
-      supabase.removeChannel(existing);
-      this.channels.delete(channelName);
-    }
-    // Also remove any existing channel with the same name from supabase client cache
-    const matched = supabase
-      .getChannels()
-      .find((c) => c.topic === `realtime:${channelName}` || c.topic === channelName);
-    if (matched) {
-      matched.unsubscribe();
-      supabase.removeChannel(matched);
-    }
-
-    const channel = supabase
-      .channel(channelName)
-      .on('broadcast', { event: 'chat:new_message' }, (event) => {
-        if (event.payload) {
-          callbacks.onInsert(event.payload);
-        }
-      })
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-        },
-        (payload) => {
-          callbacks.onInsert(payload.new);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'chat_messages',
-        },
-        (payload) => {
-          callbacks.onUpdate(payload.new);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_conversations',
-        },
-        (payload) => {
-          callbacks.onConversationUpdate?.(payload.new);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_participants',
-        },
-        (payload) => {
-          callbacks.onParticipantInsert?.(payload.new);
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'users',
-        },
-        (payload) => {
-          callbacks.onUserUpdate?.(payload.new);
-        }
-      )
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const ids: string[] = [];
-        Object.values(state).forEach((presences: any) => {
-          if (Array.isArray(presences)) {
-            presences.forEach((p) => {
-              if (p?.user_id) ids.push(p.user_id);
-            });
-          }
-        });
-        callbacks.onPresenceSync?.(Array.from(new Set(ids)));
-      })
-      .subscribe((status, err) => {
-        if (err) {
-          console.warn('[RealtimeGateway] pos_chat_sync error:', err);
-        }
-        callbacks.onStatusChange?.(status);
-      });
-
-    this.channels.set(channelName, channel);
-
-    return () => {
-      channel.unsubscribe();
-      supabase.removeChannel(channel);
-      this.channels.delete(channelName);
-    };
+    return subscribeChatMessagesChannel(this.channels, callbacks);
   }
 
-  /**
-   * Track staff online presence across connected terminals
-   */
   async trackChatPresence(user: {
     id: string;
     displayName?: string;
     role?: string;
   }): Promise<void> {
-    const channelName = 'pos_chat_sync';
-    const channel = this.channels.get(channelName);
-    if (channel && user?.id) {
-      try {
-        await channel.track({
-          user_id: user.id,
-          display_name: user.displayName || 'Staff',
-          role: user.role || 'Staff',
-          online_at: new Date().toISOString(),
-        });
-      } catch (err) {
-        console.warn('[RealtimeGateway] trackChatPresence exception:', err);
-      }
-    }
+    return trackChatPresenceOnChannel(this.channels, user);
   }
 
-  /**
-   * Broadcast a chat message directly to all connected terminals for 0ms latency delivery
-   */
   async broadcastChatMessage(payload: any): Promise<void> {
-    const channelName = 'pos_chat_sync';
-    let channel = this.channels.get(channelName);
-    if (!channel) {
-      channel = supabase.channel(channelName);
-      this.channels.set(channelName, channel);
-    }
-    await this.safeSend(channel, {
-      type: 'broadcast',
-      event: 'chat:new_message',
-      payload,
-    });
+    return broadcastChatMessageOnChannel(this.channels, this.safeSend.bind(this), payload);
   }
 
-  /**
-   * Unsubscribe from all active channels.
-   */
   unsubscribeAll(): void {
     this.channels.forEach((channel) => {
       channel.unsubscribe();

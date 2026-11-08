@@ -67,88 +67,91 @@ All frontend business logic, views, stores, and API clients live strictly under 
 
 ## 🎯 Task-to-File Fast Router
 
-| If your task is...                    | Read THIS file first                                                                            | DO NOT read in full         |
-| :------------------------------------ | :---------------------------------------------------------------------------------------------- | :-------------------------- |
-| **Floor POS Main Screen**             | `frontend/src/features/floor/presentation/WaiterCashierScreen.tsx`                              | Full screen files           |
-| **Floor POS Workspace (Shared)**      | `frontend/src/features/floor/presentation/FloorWorkspaceView.tsx`                               | Monolithic views            |
-| **Floor & Waiter Workflows**          | `frontend/src/features/floor/application/useWaiterWorkflows.ts`                                 | Monolithic stores           |
-| **Floor Grid & Tables**               | `frontend/src/features/floor/presentation/FloorGridView.tsx`                                    | `WaiterCashierScreen.tsx`   |
-| **Table Actions & Tabs**              | `frontend/src/features/table-service/presentation/TableActionModal.tsx`                         | Monolithic modals           |
-| **Table Transfer / Move**             | `frontend/src/features/table-service/presentation/table-transfer/TableTransferModal.tsx`        | `REQUIREMENTS.md`           |
-| **Order Entry & Cart**                | `frontend/src/features/orders/presentation/order-entry/OrderEntryModal.tsx`                     | Monolithic modals           |
-| **Order Store / State**               | `frontend/src/features/orders/application/useOrderStore.ts`                                     | All slice files             |
-| **Orders API & Dispatch**             | `frontend/src/features/orders/data/orders.api.ts`                                               | Monolithic APIs             |
-| **Tables API & Tabs API**             | `frontend/src/features/table-service/data/tables.api.ts`                                        | Monolithic files            |
-| **Checkout & Settlement**             | `frontend/src/features/checkout/presentation/bill-settlement/BillSettlementModal.tsx`           | Monolithic store            |
-| **Tax, VAT & Discount Calculator**    | `frontend/src/features/checkout/utils/taxAndDiscountCalculator.ts`                              | Monolithic utils            |
-| **Table Item Transfer / Split Tab**   | `frontend/src/features/table-service/presentation/TableItemTransferModal.tsx`                   | Monolithic modals           |
-| **Fullscreen Guest QR Modal**         | `frontend/src/features/checkout/presentation/components/FullscreenQrModal.tsx`                  | Monolithic modals           |
-| **QR Payment Channels API**           | `frontend/src/features/checkout/data/qrPaymentChannels.api.ts`                                  | Monolithic APIs             |
-| **Admin QR Payment Manager**          | `frontend/src/features/admin/presentation/components/AdminQrPaymentManager.tsx`                 | Monolithic components       |
-| **Sales & Product Trends Report**     | `frontend/src/features/admin/presentation/views/trends/AdminTrendsReportView.tsx`               | Monolithic views            |
-| **Sales Trends API & Domain**         | `frontend/src/features/admin/data/trends.api.ts`                                                | Monolithic APIs             |
-| **Trends Visual Graphs**              | `frontend/src/features/admin/presentation/views/trends/DayOfWeekTrendChart.tsx`                 | Monolithic charts           |
-| **Check History / Audit**             | `frontend/src/features/check-history/presentation/ChecksHistoryView.tsx`                        | Full history view           |
-| **Checks API & Database**             | `frontend/src/features/check-history/data/checks.api.ts`                                        | Monolithic files            |
-| **Checks Domain Types**               | `frontend/src/features/check-history/domain/check.types.ts`                                     | Full types files            |
-| **Takeout Orders**                    | `frontend/src/features/takeout/presentation/NewTakeoutModal.tsx`                                | Monolithic waiter view      |
-| **Delivery Orders**                   | `frontend/src/features/delivery/presentation/OnlineDeliveryModal.tsx`                           | Full screen files           |
-| **Cash Drawer Operations**            | `frontend/src/features/cash-drawer/presentation/CashDrawerModalView.tsx`                        | Monolithic views            |
-| **Menu & Auto-86 Catalog**            | `frontend/src/features/menu/data/menu.api.ts`                                                   | Monolithic mock files       |
-| **Menu Image Upload & Storage**       | `frontend/src/features/menu/data/imageUpload.service.ts`                                        | Monolithic services         |
-| **Menu Image Field & Live Preview**   | `frontend/src/features/admin/presentation/components/MenuImageUploadField.tsx`                  | Monolithic components       |
-| **Station KDS (Bar/Kitchen)**         | `frontend/src/features/kds/presentation/common/UnifiedKdsScreen.tsx`                            | Entire KDS folder           |
-| **FOH Runner Expediter**              | `frontend/src/features/kds/presentation/foh-runner/screens/FohRunnerScreen.tsx`                 | Full runner views           |
-| **Alerts & Call Bells**               | `frontend/src/features/alerts/presentation/SharedAlertsView.tsx`                                | Large modal trees           |
-| **Inter-station Chat**                | `frontend/src/features/chat/presentation/SharedChatView.tsx`                                    | Full chat view              |
-| **Team Chat State / Store**           | `frontend/src/features/chat/application/useChatStore.ts`                                        | Monolithic store files      |
-| **Team Chat API & Database**          | `frontend/src/features/chat/data/chat.api.ts`                                                   | Monolithic mock files       |
-| **Staff Auth & PINs**                 | `frontend/src/features/auth/application/useAuthStore.ts`                                        | Full login views            |
-| **Staff Identity & Name Helpers**     | `frontend/src/features/shared/utils/staffHelpers.ts`                                            | Monolithic utils            |
-| **Real-Time Elapsed Timer Engine**    | `frontend/src/features/shared/utils/elapsedTime.ts`                                             | Monolithic utils            |
-| **Realtime Gateway & Multi-Sync**     | `frontend/src/features/shared/infrastructure/realtime.ts`                                       | Full client trees           |
-| **Shared Infrastructure**             | `frontend/src/features/shared/infrastructure/api.ts`                                            | Full client trees           |
-| **Toast Notifications**               | `frontend/src/features/shared/toast/useToastStore.ts`                                           | Toast container trees       |
-| **Thermal Printing Daemon**           | `packages/printing/src/daemon.ts`                                                               | `REQUIREMENTS.md` Section 6 |
-| **Hardware Print & Drawer Station**   | `frontend/src/features/printer/presentation/HardwarePrintStationScreen.tsx`                     | Full screen files           |
-| **Printer Web Serial Driver**         | `frontend/src/features/printer/services/webSerialPrinter.ts`                                    | Monolithic files            |
-| **ESC/POS Binary Builder**            | `frontend/src/features/printer/services/escposBuilder.ts`                                       | Monolithic files            |
-| **Printer Station Store**             | `frontend/src/features/printer/application/usePrinterStationStore.ts`                           | Monolithic stores           |
-| **Thermal Printing Monitor UI**       | `frontend/src/features/printer/presentation/PrinterTerminalScreen.tsx`                          | Full screen files           |
-| **Admin Console & Dashboard**         | `frontend/src/features/admin/presentation/views/AdminDashboardView.tsx`                         | Full screen files           |
-| **Admin Back-Office Hub**             | `frontend/src/features/admin/presentation/AdminBackOfficeScreen.tsx`                            | Monolithic views            |
-| **Cashless & Online Payments Ledger** | `frontend/src/features/admin/presentation/views/transactions/AdminCashlessTransactionsView.tsx` | Full screen files           |
-| **Admin Mobile Drawer**               | `frontend/src/features/admin/presentation/components/AdminMobileDrawer.tsx`                     | Full screen files           |
-| **Admin Bottom Navigation**           | `frontend/src/features/admin/presentation/components/AdminBottomNav.tsx`                        | Full screen files           |
-| **Responsive Layout Hook**            | `frontend/src/features/shared/hooks/useResponsive.ts`                                           | Monolithic hooks            |
-| **Universal POS Dropdown UI**         | `frontend/src/features/shared/ui/PosDropdown.tsx`                                               | Monolithic UI trees         |
-| **Operational Sidebar / Top Bar**     | `frontend/src/features/shared/navigation/Sidebar.tsx`                                           | Full screen files           |
-| **Admin Modals & Styled Inputs**      | `frontend/src/features/admin/presentation/components/index.ts`                                  | Monolithic components       |
-| **Admin Menu Catalog & BOM**          | `frontend/src/features/admin/presentation/views/AdminRecipesView.tsx`                           | Monolithic views            |
-| **Admin Inventory Hub & Ledger**      | `frontend/src/features/admin/presentation/views/AdminInventoryView.tsx`                         | Monolithic views            |
-| **Event Logistics & Calendar View**   | `frontend/src/features/events/presentation/views/AdminEventsView.tsx`                           | Monolithic views            |
-| **Public Live Event Calendar**        | `frontend/src/features/events/presentation/screens/PublicEventCalendarScreen.tsx`               | Full screen files           |
-| **Event State & Realtime Store**      | `frontend/src/features/events/application/useEventStore.ts`                                     | Monolithic stores           |
-| **Event API & Poster Storage**        | `frontend/src/features/events/data/events.api.ts`                                               | Monolithic APIs             |
-| **Venue Store & Mode State**          | `frontend/src/features/shared/stores/useVenueStore.ts`                                          | Full store files            |
-| **Floor Manager Mode Modal**          | `frontend/src/features/floor/presentation/ManagerModeSwitchModal.tsx`                           | Monolithic modals           |
-| **Admin Venue Settings & Routing**    | `frontend/src/features/admin/presentation/views/AdminSettingsView.tsx`                          | Full screen files           |
-| **Admin Profile & Security View**     | `frontend/src/features/admin/presentation/views/AdminProfileView.tsx`                           | Full screen files           |
-| **Admin Staff Directory & Roster**    | `frontend/src/features/admin/presentation/views/AdminStaffView.tsx`                             | Monolithic views            |
-| **Admin Attendance & Payroll Ledger** | `frontend/src/features/admin/presentation/views/AdminAttendancePayrollView.tsx`                 | Monolithic views            |
-| **Universal Staff Timeclock Kiosk**   | `frontend/src/features/auth/presentation/screens/TimeclockKioskScreen.tsx`                      | Full screen files           |
-| **Admin Staff Creation Modals**       | `frontend/src/features/admin/presentation/views/staff/`                                         | Full modal trees            |
-| **Admin Table Layout Config**         | `frontend/src/features/admin/presentation/views/AdminTableLayoutView.tsx`                       | Full screen files           |
-| **Live Stations Operations Hub**      | `frontend/src/features/admin/presentation/views/AdminStationsView.tsx`                          | Monolithic views            |
-| **Reset Baseline Modal**              | `frontend/src/features/admin/presentation/views/stations/ResetStationBaselineModal.tsx`         | Monolithic modals           |
-| **Sales & Transactions View**         | `frontend/src/features/admin/presentation/views/AdminTransactionsView.tsx`                      | Monolithic views            |
-| **Admin Telemetry & Live DB Data**    | `frontend/src/features/admin/data/adminTelemetry.ts`                                            | Monolithic files            |
-| **X-Y-Z Shift Readings**              | `frontend/src/features/admin/presentation/views/readings/AdminReadingsView.tsx`                 | Monolithic files            |
-| **Cash Denomination Counter**         | `frontend/src/features/admin/presentation/views/readings/CashDenominationCounter.tsx`           | Monolithic views            |
-| **Excel Spreadsheet Generator**       | `frontend/src/features/admin/utils/readingExcelExport.ts`                                       | Monolithic utils            |
-| **Visual Graphs & Analytics**         | `frontend/src/features/admin/presentation/views/analytics/`                                     | Full screen files           |
-| **Readings API & DB Calculations**    | `frontend/src/features/admin/data/readings.api.ts`                                              | Monolithic APIs             |
-| **Database Migrations**               | `supabase/migrations/` (check latest migration)                                                 | Full `database.types.ts`    |
+| If your task is...                     | Read THIS file first                                                                                               | DO NOT read in full         |
+| :------------------------------------- | :----------------------------------------------------------------------------------------------------------------- | :-------------------------- |
+| **Floor POS Main Screen**              | `frontend/src/features/floor/presentation/WaiterCashierScreen.tsx`                                                 | Full screen files           |
+| **Floor POS Workspace (Shared)**       | `frontend/src/features/floor/presentation/FloorWorkspaceView.tsx`                                                  | Monolithic views            |
+| **Floor & Waiter Workflows**           | `frontend/src/features/floor/application/useWaiterWorkflows.ts`                                                    | Monolithic stores           |
+| **Floor Grid & Tables**                | `frontend/src/features/floor/presentation/FloorGridView.tsx`                                                       | `WaiterCashierScreen.tsx`   |
+| **Table Actions & Tabs**               | `frontend/src/features/table-service/presentation/TableActionModal.tsx`                                            | Monolithic modals           |
+| **Table Transfer / Move**              | `frontend/src/features/table-service/presentation/table-transfer/TableTransferModal.tsx`                           | `REQUIREMENTS.md`           |
+| **Order Entry & Cart**                 | `frontend/src/features/orders/presentation/order-entry/OrderEntryModal.tsx`                                        | Monolithic modals           |
+| **Order Store / State**                | `frontend/src/features/orders/application/useOrderStore.ts`                                                        | All slice files             |
+| **Orders API & Dispatch**              | `frontend/src/features/orders/data/dispatch.api.ts` (delegates to `tabLifecycle.api.ts`)                           | Monolithic APIs             |
+| **Takeout & Delivery Order Actions**   | `frontend/src/features/orders/application/takeoutOrderActions.ts`                                                  | Monolithic slice files      |
+| **Tables API & Tabs API**              | `frontend/src/features/table-service/data/tables.api.ts`                                                           | Monolithic files            |
+| **Table Tab Slices & Transfers**       | `frontend/src/features/table-service/application/tableTab.slice.ts` (delegates to transfer actions)                | Monolithic slices           |
+| **Checkout & Settlement**              | `frontend/src/features/checkout/presentation/bill-settlement/BillSettlementModal.tsx`                              | Monolithic store            |
+| **Tax, VAT & Discount Calculator**     | `frontend/src/features/checkout/utils/taxAndDiscountCalculator.ts`                                                 | Monolithic utils            |
+| **Table Item Transfer / Split Tab**    | `frontend/src/features/table-service/presentation/TableItemTransferModal.tsx`                                      | Monolithic modals           |
+| **Fullscreen Guest QR Modal**          | `frontend/src/features/checkout/presentation/components/FullscreenQrModal.tsx`                                     | Monolithic modals           |
+| **QR Payment Channels API**            | `frontend/src/features/checkout/data/qrPaymentChannels.api.ts`                                                     | Monolithic APIs             |
+| **Admin QR Payment Manager**           | `frontend/src/features/admin/presentation/components/AdminQrPaymentManager.tsx`                                    | Monolithic components       |
+| **Sales & Product Trends Report**      | `frontend/src/features/admin/presentation/views/trends/AdminTrendsReportView.tsx`                                  | Monolithic views            |
+| **Sales Trends API & Domain**          | `frontend/src/features/admin/data/trends.api.ts`                                                                   | Monolithic APIs             |
+| **Trends Visual Graphs**               | `frontend/src/features/admin/presentation/views/trends/DayOfWeekTrendChart.tsx`                                    | Monolithic charts           |
+| **Check History / Audit**              | `frontend/src/features/check-history/presentation/ChecksHistoryView.tsx`                                           | Full history view           |
+| **Checks API & Database**              | `frontend/src/features/check-history/data/checks.api.ts` (with `checkMapper.ts`)                                   | Monolithic files            |
+| **Checks Domain Types**                | `frontend/src/features/check-history/domain/check.types.ts`                                                        | Full types files            |
+| **Takeout Orders**                     | `frontend/src/features/takeout/presentation/NewTakeoutModal.tsx`                                                   | Monolithic waiter view      |
+| **Delivery Orders**                    | `frontend/src/features/delivery/presentation/OnlineDeliveryModal.tsx`                                              | Full screen files           |
+| **Cash Drawer Operations**             | `frontend/src/features/cash-drawer/presentation/CashDrawerModalView.tsx`                                           | Monolithic views            |
+| **Menu & Auto-86 Catalog**             | `frontend/src/features/menu/data/menu.api.ts` (with `menuMapper.ts`)                                               | Monolithic mock files       |
+| **Menu Image Upload & Storage**        | `frontend/src/features/menu/data/imageUpload.service.ts`                                                           | Monolithic services         |
+| **Menu Image Field & Live Preview**    | `frontend/src/features/admin/presentation/components/MenuImageUploadField.tsx`                                     | Monolithic components       |
+| **Station KDS (Bar/Kitchen)**          | `frontend/src/features/kds/presentation/common/UnifiedKdsScreen.tsx`                                               | Entire KDS folder           |
+| **FOH Runner Expediter**               | `frontend/src/features/kds/presentation/foh-runner/screens/FohRunnerScreen.tsx`                                    | Full runner views           |
+| **Alerts & Call Bells**                | `frontend/src/features/alerts/presentation/SharedAlertsView.tsx`                                                   | Large modal trees           |
+| **Inter-station Chat**                 | `frontend/src/features/chat/presentation/SharedChatView.tsx`                                                       | Full chat view              |
+| **Team Chat State / Store**            | `frontend/src/features/chat/application/useChatStore.ts`                                                           | Monolithic store files      |
+| **Team Chat API & Database**           | `frontend/src/features/chat/data/chat.api.ts`                                                                      | Monolithic mock files       |
+| **Staff Auth & PINs**                  | `frontend/src/features/auth/application/useAuthStore.ts`                                                           | Full login views            |
+| **Staff Login Screen & Subcomponents** | `frontend/src/features/auth/presentation/screens/LoginScreen.tsx` (`StaffPinLoginForm`, etc.)                      | Full login views            |
+| **Staff Identity & Name Helpers**      | `frontend/src/features/shared/utils/staffHelpers.ts`                                                               | Monolithic utils            |
+| **Real-Time Elapsed Timer Engine**     | `frontend/src/features/shared/utils/elapsedTime.ts`                                                                | Monolithic utils            |
+| **Realtime Gateway & Multi-Sync**      | `frontend/src/features/shared/infrastructure/realtime.ts` (with `realtimeChatChannel`, `realtimePosGlobalChannel`) | Full client trees           |
+| **Shared Infrastructure**              | `frontend/src/features/shared/infrastructure/api.ts`                                                               | Full client trees           |
+| **Toast Notifications**                | `frontend/src/features/shared/toast/useToastStore.ts`                                                              | Toast container trees       |
+| **Thermal Printing Daemon**            | `packages/printing/src/daemon.ts`                                                                                  | `REQUIREMENTS.md` Section 6 |
+| **Hardware Print & Drawer Station**    | `frontend/src/features/printer/presentation/HardwarePrintStationScreen.tsx`                                        | Full screen files           |
+| **Printer Web Serial Driver**          | `frontend/src/features/printer/services/webSerialPrinter.ts`                                                       | Monolithic files            |
+| **ESC/POS Binary Builder**             | `frontend/src/features/printer/services/escposBuilder.ts` (with `escposSpecialSlips.ts`)                           | Monolithic files            |
+| **Printer Station Store**              | `frontend/src/features/printer/application/usePrinterStationStore.ts`                                              | Monolithic stores           |
+| **Thermal Printing Monitor UI**        | `frontend/src/features/printer/presentation/PrinterTerminalScreen.tsx`                                             | Full screen files           |
+| **Admin Console & Dashboard**          | `frontend/src/features/admin/presentation/views/AdminDashboardView.tsx`                                            | Full screen files           |
+| **Admin Back-Office Hub**              | `frontend/src/features/admin/presentation/AdminBackOfficeScreen.tsx`                                               | Monolithic views            |
+| **Cashless & Online Payments Ledger**  | `frontend/src/features/admin/presentation/views/transactions/AdminCashlessTransactionsView.tsx`                    | Full screen files           |
+| **Admin Mobile Drawer**                | `frontend/src/features/admin/presentation/components/AdminMobileDrawer.tsx`                                        | Full screen files           |
+| **Admin Bottom Navigation**            | `frontend/src/features/admin/presentation/components/AdminBottomNav.tsx`                                           | Full screen files           |
+| **Responsive Layout Hook**             | `frontend/src/features/shared/hooks/useResponsive.ts`                                                              | Monolithic hooks            |
+| **Universal POS Dropdown UI**          | `frontend/src/features/shared/ui/PosDropdown.tsx`                                                                  | Monolithic UI trees         |
+| **Operational Sidebar / Top Bar**      | `frontend/src/features/shared/navigation/Sidebar.tsx`                                                              | Full screen files           |
+| **Admin Modals & Styled Inputs**       | `frontend/src/features/admin/presentation/components/index.ts`                                                     | Monolithic components       |
+| **Admin Menu Catalog & BOM**           | `frontend/src/features/admin/presentation/views/AdminRecipesView.tsx` (with BOM sub-components)                    | Monolithic views            |
+| **Admin Inventory Hub & Ledger**       | `frontend/src/features/admin/presentation/views/AdminInventoryView.tsx`                                            | Monolithic views            |
+| **Event Logistics & Calendar View**    | `frontend/src/features/events/presentation/views/AdminEventsView.tsx`                                              | Monolithic views            |
+| **Public Live Event Calendar**         | `frontend/src/features/events/presentation/screens/PublicEventCalendarScreen.tsx`                                  | Full screen files           |
+| **Event State & Realtime Store**       | `frontend/src/features/events/application/useEventStore.ts`                                                        | Monolithic stores           |
+| **Event API & Poster Storage**         | `frontend/src/features/events/data/events.api.ts`                                                                  | Monolithic APIs             |
+| **Venue Store & Mode State**           | `frontend/src/features/shared/stores/useVenueStore.ts`                                                             | Full store files            |
+| **Floor Manager Mode Modal**           | `frontend/src/features/floor/presentation/ManagerModeSwitchModal.tsx`                                              | Monolithic modals           |
+| **Admin Venue Settings & Routing**     | `frontend/src/features/admin/presentation/views/AdminSettingsView.tsx`                                             | Full screen files           |
+| **Admin Profile & Security View**      | `frontend/src/features/admin/presentation/views/AdminProfileView.tsx` (with `profile/` cards)                      | Full screen files           |
+| **Admin Staff Directory & Roster**     | `frontend/src/features/admin/presentation/views/AdminStaffView.tsx`                                                | Monolithic views            |
+| **Admin Attendance & Payroll Ledger**  | `frontend/src/features/admin/presentation/views/AdminAttendancePayrollView.tsx`                                    | Monolithic views            |
+| **Universal Staff Timeclock Kiosk**    | `frontend/src/features/auth/presentation/screens/TimeclockKioskScreen.tsx`                                         | Full screen files           |
+| **Admin Staff Creation Modals**        | `frontend/src/features/admin/presentation/views/staff/`                                                            | Full modal trees            |
+| **Admin Table Layout Config**          | `frontend/src/features/admin/presentation/views/AdminTableLayoutView.tsx`                                          | Full screen files           |
+| **Live Stations Operations Hub**       | `frontend/src/features/admin/presentation/views/AdminStationsView.tsx`                                             | Monolithic views            |
+| **Reset Baseline Modal**               | `frontend/src/features/admin/presentation/views/stations/ResetStationBaselineModal.tsx`                            | Monolithic modals           |
+| **Sales & Transactions View**          | `frontend/src/features/admin/presentation/views/AdminTransactionsView.tsx`                                         | Monolithic views            |
+| **Admin Telemetry & Live DB Data**     | `frontend/src/features/admin/data/adminTelemetry.ts`                                                               | Monolithic files            |
+| **X-Y-Z Shift Readings**               | `frontend/src/features/admin/presentation/views/readings/AdminReadingsView.tsx`                                    | Monolithic files            |
+| **Cash Denomination Counter**          | `frontend/src/features/admin/presentation/views/readings/CashDenominationCounter.tsx`                              | Monolithic views            |
+| **Excel Spreadsheet Generator**        | `frontend/src/features/admin/utils/readingExcelExport.ts`                                                          | Monolithic utils            |
+| **Visual Graphs & Analytics**          | `frontend/src/features/admin/presentation/views/analytics/`                                                        | Full screen files           |
+| **Readings API & DB Calculations**     | `frontend/src/features/admin/data/readings.api.ts` (with `readings.types.ts`)                                      | Monolithic APIs             |
+| **Database Migrations**                | `supabase/migrations/` (check latest migration)                                                                    | Full `database.types.ts`    |
 
 ---
 

@@ -1,20 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import {
-  Plus,
-  Trash2,
-  Layers,
-  DollarSign,
-  ChevronDown,
-  Check,
-  Search,
-  X,
-} from 'lucide-react-native';
+import { Plus, Layers, DollarSign } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type ProductAdmin, type InventoryItemAdmin } from '../../../data/admin.api';
 import { AdminModal } from '../../components/AdminModal';
-import { AdminInput } from '../../components/AdminInput';
-import { AdminNumberInput } from '../../components/AdminNumberInput';
+import { IngredientPickerDialog } from './IngredientPickerDialog';
+import { RecipeBomLineCard, type TempBomLine } from './RecipeBomLineCard';
 
 interface RecipeBomModalProps {
   visible: boolean;
@@ -22,14 +13,6 @@ interface RecipeBomModalProps {
   onSuccess: () => void;
   product?: ProductAdmin | null;
   inventoryItems: InventoryItemAdmin[];
-}
-
-interface TempBomLine {
-  id?: string;
-  inventoryItemId: string;
-  amount: string;
-  unit: string;
-  conversionFactor: string;
 }
 
 export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
@@ -115,7 +98,6 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
     );
   };
 
-  // Live total COGS calculation
   const totalCogs = lines.reduce((acc, line) => {
     const item = inventoryItems.find((inv) => inv.id === line.inventoryItemId);
     if (!item) return acc;
@@ -315,157 +297,42 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
             </View>
           ) : (
             <View className="space-y-3">
-              {lines.map((line, idx) => {
-                const currentItem = inventoryItems.find((inv) => inv.id === line.inventoryItemId);
-                const lineCost = currentItem
-                  ? (parseFloat(line.amount) || 0) *
-                    (parseFloat(line.conversionFactor) || 1) *
-                    Number(currentItem.unit_cost || 0)
-                  : 0;
-
-                return (
-                  <View
-                    key={idx}
-                    className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs space-y-3"
-                  >
-                    {/* Header Row: Ingredient Selector & Remove */}
-                    <View className="flex-row items-center justify-between">
-                      <Pressable
-                        onPress={() => {
-                          setPickingLineIdx(idx);
-                          setIngredientSearch('');
-                        }}
-                        className="min-h-[48px] flex-1 mr-3 flex-row items-center justify-between rounded-xl border border-stone-300 bg-stone-50 px-4 active:bg-stone-100"
-                      >
-                        <View className="flex-row items-center space-x-2">
-                          <Text className="text-base font-bold text-stone-900">
-                            {currentItem ? currentItem.name : 'Select Raw Ingredient...'}
-                          </Text>
-                          {currentItem && (
-                            <Text className="text-base text-stone-500 ml-2">
-                              • ₱{Number(currentItem.unit_cost || 0).toFixed(2)} /{' '}
-                              {currentItem.unit}
-                            </Text>
-                          )}
-                        </View>
-                        <ChevronDown size={18} color="#78716c" />
-                      </Pressable>
-
-                      <Pressable
-                        onPress={() => handleRemoveLine(idx)}
-                        className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-rose-50 border border-rose-200 active:bg-rose-100"
-                      >
-                        <Trash2 size={18} color="#e11d48" />
-                      </Pressable>
-                    </View>
-
-                    {/* Inputs Row: Quantity, Unit, Line Cost */}
-                    <View className="flex-row items-center space-x-4">
-                      <View className="flex-1">
-                        <AdminNumberInput
-                          label="Amount per Order"
-                          mode="decimal"
-                          value={line.amount}
-                          onChangeText={(v) => handleLineChange(idx, 'amount', v)}
-                          placeholder="e.g. 1"
-                        />
-                      </View>
-
-                      <View className="w-36">
-                        <AdminInput
-                          label="Unit"
-                          value={line.unit}
-                          onChangeText={(v) => handleLineChange(idx, 'unit', v)}
-                          placeholder="g, L, pcs"
-                        />
-                      </View>
-
-                      <View className="w-36 items-end justify-center pt-5">
-                        <Text className="text-sm text-stone-500">Portion Cost</Text>
-                        <Text className="text-base font-bold text-stone-900">
-                          ₱{lineCost.toFixed(2)}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                );
-              })}
+              {lines.map((line, idx) => (
+                <RecipeBomLineCard
+                  key={idx}
+                  line={line}
+                  index={idx}
+                  inventoryItems={inventoryItems}
+                  onOpenPicker={(i) => {
+                    setPickingLineIdx(i);
+                    setIngredientSearch('');
+                  }}
+                  onRemove={handleRemoveLine}
+                  onChange={handleLineChange}
+                />
+              ))}
             </View>
           )}
         </View>
       </AdminModal>
 
-      {/* INGREDIENT PICKER DIALOG */}
-      {pickingLineIdx !== null && (
-        <View className="absolute inset-0 items-center justify-center bg-black/60 p-6 z-50">
-          <Pressable
-            className="absolute inset-0"
-            onPress={() => setPickingLineIdx(null)}
-            accessibilityRole="button"
-            accessibilityLabel="Close ingredient picker"
-          />
-          <View className="w-full max-w-lg max-h-[85%] rounded-2xl bg-white shadow-2xl overflow-hidden flex-col z-10">
-            <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-5 py-4">
-              <Text className="text-lg font-bold text-stone-900">Select Raw Ingredient</Text>
-              <Pressable
-                onPress={() => setPickingLineIdx(null)}
-                className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200"
-              >
-                <X size={20} color="#57534e" />
-              </Pressable>
-            </View>
-
-            <View className="p-4 border-b border-stone-200 bg-white">
-              <AdminInput
-                value={ingredientSearch}
-                onChangeText={setIngredientSearch}
-                placeholder="Search by name, category, or SKU..."
-                leftElement={<Search size={18} color="#78716c" />}
-                autoFocus
-              />
-            </View>
-
-            <ScrollView className="p-4 space-y-2" showsVerticalScrollIndicator={true}>
-              {filteredPickerItems.length === 0 ? (
-                <View className="py-8 items-center justify-center">
-                  <Text className="text-base text-stone-500">No ingredients match search.</Text>
-                </View>
-              ) : (
-                filteredPickerItems.map((inv) => {
-                  const isSelected = lines[pickingLineIdx]?.inventoryItemId === inv.id;
-                  return (
-                    <Pressable
-                      key={inv.id}
-                      onPress={() => {
-                        handleLineChange(pickingLineIdx, 'inventoryItemId', inv.id);
-                        setPickingLineIdx(null);
-                      }}
-                      className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-3.5 border transition-all ${
-                        isSelected
-                          ? 'bg-[#800020]/10 border-[#800020]'
-                          : 'bg-white border-stone-200 active:bg-stone-50'
-                      }`}
-                    >
-                      <View className="flex-1 pr-3">
-                        <Text className="text-base font-bold text-stone-900">{inv.name}</Text>
-                        <Text className="text-base text-stone-500 mt-0.5">
-                          {inv.category} • Current Stock: {inv.current_stock} {inv.unit}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center space-x-2">
-                        <Text className="text-base font-extrabold text-[#800020]">
-                          ₱{Number(inv.unit_cost || 0).toFixed(2)}/{inv.unit}
-                        </Text>
-                        {isSelected && <Check size={18} color="#800020" />}
-                      </View>
-                    </Pressable>
-                  );
-                })
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      )}
+      {/* Ingredient Picker Dialog */}
+      <IngredientPickerDialog
+        visible={pickingLineIdx !== null}
+        search={ingredientSearch}
+        onSearchChange={setIngredientSearch}
+        items={filteredPickerItems}
+        selectedItemId={
+          pickingLineIdx !== null ? lines[pickingLineIdx]?.inventoryItemId : undefined
+        }
+        onSelect={(inv) => {
+          if (pickingLineIdx !== null) {
+            handleLineChange(pickingLineIdx, 'inventoryItemId', inv.id);
+            setPickingLineIdx(null);
+          }
+        }}
+        onClose={() => setPickingLineIdx(null)}
+      />
     </>
   );
 };

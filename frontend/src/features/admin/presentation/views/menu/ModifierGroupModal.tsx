@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Plus, Trash2, Sliders, Check } from 'lucide-react-native';
+import { Plus, Sliders, Check } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import {
   adminApi,
@@ -10,6 +10,7 @@ import {
 import { AdminModal } from '../../components/AdminModal';
 import { AdminInput } from '../../components/AdminInput';
 import { AdminNumberInput } from '../../components/AdminNumberInput';
+import { ModifierOptionRow, type TempOption } from './ModifierOptionRow';
 
 interface ModifierGroupModalProps {
   visible: boolean;
@@ -17,15 +18,6 @@ interface ModifierGroupModalProps {
   onSuccess: () => void;
   group?: ModifierGroupAdmin | null;
   inventoryItems: InventoryItemAdmin[];
-}
-
-interface TempOption {
-  id?: string;
-  name: string;
-  price_delta: string;
-  inventory_item_id: string;
-  amount_delta: string;
-  unit: string;
 }
 
 export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
@@ -134,7 +126,6 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
         groupId = created.id;
       }
 
-      // Save options
       if (groupId) {
         for (const opt of options) {
           if (opt.name.trim()) {
@@ -192,7 +183,6 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
       footer={footer}
     >
       <View className="space-y-5">
-        {/* Title */}
         <AdminInput
           label="Modifier Group Title"
           required
@@ -201,7 +191,6 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
           placeholder="e.g. Milk Selection, Sweetness Level, Single Malt Upgrade"
         />
 
-        {/* Min & Max Selections */}
         <View className="flex-col sm:flex-row gap-4">
           <View className="flex-1">
             <AdminNumberInput
@@ -225,7 +214,6 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
           </View>
         </View>
 
-        {/* Required Toggle */}
         <Pressable
           onPress={() => setIsRequired(!isRequired)}
           className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
@@ -249,7 +237,6 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
           </View>
         </Pressable>
 
-        {/* Options List */}
         <View className="pt-2">
           <View className="flex-row items-center justify-between mb-3">
             <Text className="text-base font-bold text-stone-900">
@@ -266,96 +253,14 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
 
           <View className="space-y-3">
             {options.map((opt, idx) => (
-              <View
+              <ModifierOptionRow
                 key={idx}
-                className="rounded-xl border border-stone-200 bg-stone-50/70 p-4 space-y-3"
-              >
-                <View className="flex-col sm:flex-row items-start sm:items-center gap-3">
-                  <View className="flex-1 w-full">
-                    <AdminInput
-                      label="Option Label"
-                      value={opt.name}
-                      onChangeText={(v) => handleOptionChange(idx, 'name', v)}
-                      placeholder="e.g. Barista Oat Milk Swap"
-                    />
-                  </View>
-                  <View className="w-full sm:w-36">
-                    <AdminNumberInput
-                      label="Price Delta"
-                      mode="currency"
-                      value={opt.price_delta}
-                      onChangeText={(v) => handleOptionChange(idx, 'price_delta', v)}
-                      placeholder="+35.00"
-                    />
-                  </View>
-                  <Pressable
-                    onPress={() => handleRemoveOption(idx)}
-                    className="self-end sm:self-auto sm:mt-7 min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-rose-100 hover:bg-rose-100 transition-colors"
-                  >
-                    <Trash2 size={20} color="#e11d48" />
-                  </Pressable>
-                </View>
-
-                {/* Inventory Ingredient Delta Mapping */}
-                <View className="border-t border-stone-200 pt-3">
-                  <Text className="text-base font-semibold text-stone-600 mb-2">
-                    Stock Delta Binding (Optional deduction on prep)
-                  </Text>
-                  <View className="flex-row flex-wrap gap-2 mb-2">
-                    <Pressable
-                      onPress={() => handleOptionChange(idx, 'inventory_item_id', '')}
-                      className={`min-h-[48px] px-3.5 items-center justify-center rounded-xl border transition-all ${
-                        !opt.inventory_item_id
-                          ? 'bg-stone-800 border-stone-800'
-                          : 'bg-white border-stone-300 active:bg-stone-100'
-                      }`}
-                    >
-                      <Text
-                        className={`text-base font-semibold ${
-                          !opt.inventory_item_id ? 'text-white' : 'text-stone-700'
-                        }`}
-                      >
-                        No Stock Depletion
-                      </Text>
-                    </Pressable>
-                    {inventoryItems.map((inv) => {
-                      const isSel = opt.inventory_item_id === inv.id;
-                      return (
-                        <Pressable
-                          key={inv.id}
-                          onPress={() => handleOptionChange(idx, 'inventory_item_id', inv.id)}
-                          className={`min-h-[48px] px-3.5 items-center justify-center rounded-xl border transition-all ${
-                            isSel
-                              ? 'bg-[#800020] border-[#800020]'
-                              : 'bg-white border-stone-300 active:bg-stone-100'
-                          }`}
-                        >
-                          <Text
-                            className={`text-base font-semibold ${
-                              isSel ? 'text-white' : 'text-stone-700'
-                            }`}
-                          >
-                            {inv.name} ({inv.unit})
-                          </Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-
-                  {opt.inventory_item_id ? (
-                    <View className="w-56">
-                      <AdminNumberInput
-                        label="Deduct Amount"
-                        mode="decimal"
-                        value={opt.amount_delta}
-                        onChangeText={(v) => handleOptionChange(idx, 'amount_delta', v)}
-                        placeholder="e.g. 200"
-                        suffix={opt.unit}
-                      />
-                    </View>
-                  ) : null}
-                </View>
-              </View>
+                opt={opt}
+                index={idx}
+                inventoryItems={inventoryItems}
+                onChange={handleOptionChange}
+                onRemove={handleRemoveOption}
+              />
             ))}
           </View>
         </View>

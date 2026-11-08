@@ -1,25 +1,17 @@
 /**
  * Unified Hardware Printer Driver
  * Communicates directly with USB/Serial thermal receipt printers and RJ11 cash drawers.
- *
- * Hierarchy:
- * 1. Local Hardware Bridge (http://127.0.0.1:12111) - Direct zero-prompt access to Linux /dev/usb/lp0
- * 2. WebUSB (navigator.usb) - for unlocked browser USB devices
- * 3. Web Serial (navigator.serial) - for virtual COM ports
  */
 
 import { buildCashDrawerKickBytes } from './escposBuilder';
+import {
+  type SerialPortInfo,
+  BRIDGE_URL,
+  checkHardwareBridge,
+  findUsbOutEndpoint,
+} from './webPrinterTransport';
 
-export interface SerialPortInfo {
-  usbVendorId?: number;
-  usbProductId?: number;
-  type?: 'bridge' | 'usb' | 'serial';
-  deviceName?: string;
-  manufacturerName?: string;
-  serialNumber?: string;
-}
-
-const BRIDGE_URL = 'http://127.0.0.1:12111';
+export * from './webPrinterTransport';
 
 export class WebSerialPrinterService {
   private serialPort: any = null;
@@ -30,33 +22,20 @@ export class WebSerialPrinterService {
   private baudRate: number = 9600;
   private connectionType: 'none' | 'bridge' | 'serial' | 'usb' = 'none';
 
-  /**
-   * Check if any driver mode is supported in the current environment
-   */
   public isSupported(): boolean {
     if (typeof navigator === 'undefined') return false;
     return 'usb' in navigator || 'serial' in navigator;
   }
 
-  /**
-   * Check if the printer port is currently opened and ready for writing
-   */
   public isConnected(): boolean {
-    if (this.connectionType === 'bridge') {
-      return true;
-    }
-    if (this.connectionType === 'usb') {
+    if (this.connectionType === 'bridge') return true;
+    if (this.connectionType === 'usb')
       return this.usbDevice !== null && this.usbDevice.opened === true;
-    }
-    if (this.connectionType === 'serial') {
+    if (this.connectionType === 'serial')
       return this.serialPort !== null && this.serialWriter !== null;
-    }
     return false;
   }
 
-  /**
-   * Get USB Vendor/Product information for the active port if available
-   */
   public getPortInfo(): SerialPortInfo | null {
     if (this.connectionType === 'bridge') {
       return {
@@ -92,28 +71,10 @@ export class WebSerialPrinterService {
     return null;
   }
 
-  /**
-   * Check if the local OS hardware bridge is reachable
-   */
   public async checkBridge(): Promise<boolean> {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1200);
-      const res = await fetch(`${BRIDGE_URL}/status`, { signal: controller.signal });
-      clearTimeout(timeoutId);
-      if (res.ok) {
-        const data = await res.json();
-        return data.status === 'CONNECTED';
-      }
-      return false;
-    } catch {
-      return false;
-    }
+    return checkHardwareBridge();
   }
 
-  /**
-   * Attempt silent connection to previously authorized device
-   */
   public async autoConnect(baudRate: number = 9600): Promise<boolean> {
     if (this.isConnected() || this.isConnecting) {
       return this.isConnected();
@@ -122,7 +83,6 @@ export class WebSerialPrinterService {
     try {
       this.isConnecting = true;
 
-      // 1. Try WebUSB with previously authorized devices first (zero-prompt, no network errors)
       if (typeof navigator !== 'undefined' && 'usb' in navigator) {
         try {
           const usbDevices = await (navigator as any).usb.getDevices();
@@ -138,7 +98,6 @@ export class WebSerialPrinterService {
         }
       }
 
-      // 2. Fallback to Web Serial if previously paired
       if (typeof navigator !== 'undefined' && 'serial' in navigator) {
         try {
           const serialPorts = await (navigator as any).serial.getPorts();
@@ -147,11 +106,10 @@ export class WebSerialPrinterService {
             return true;
           }
         } catch {
-          // Silent fallback if Serial unavailable
+          // Silent fallback
         }
       }
 
-      // 3. Check local hardware bridge ONLY if explicitly enabled or on hardware station screen
       const isBridgeEnabled =
         typeof window !== 'undefined' &&
         (localStorage.getItem('monks_enable_bridge_daemon') === 'true' ||
@@ -172,14 +130,10 @@ export class WebSerialPrinterService {
     }
   }
 
-  /**
-   * Connect to USB device via browser chooser (wildcard filter so ANY device can be selected)
-   */
   public async requestAndConnect(baudRate: number = 9600): Promise<boolean> {
     try {
       this.isConnecting = true;
 
-      // 1. Check local hardware bridge ONLY if explicitly enabled
       const isBridgeEnabled =
         typeof window !== 'undefined' &&
         (localStorage.getItem('monks_enable_bridge_daemon') === 'true' ||
@@ -193,8 +147,6 @@ export class WebSerialPrinterService {
         }
       }
 
-      // 2. Primary: Direct WebUSB Device Chooser
-      // Filters with empty object [{}] matches ANY connected USB device without port prompts
       if (typeof navigator !== 'undefined' && 'usb' in navigator) {
         try {
           const device = await (navigator as any).usb.requestDevice({ filters: [{}] });
@@ -204,7 +156,6 @@ export class WebSerialPrinterService {
           }
         } catch (usbErr: any) {
           if (usbErr.name === 'NotFoundError') {
-            // User cancelled device chooser - do NOT fall into serial prompt
             console.info('[WebPrinter] USB pairing cancelled by user');
             throw usbErr;
           }
@@ -212,7 +163,6 @@ export class WebSerialPrinterService {
           throw usbErr;
         }
       } else if (typeof navigator !== 'undefined' && 'serial' in navigator) {
-        // Fallback for browsers that only support Web Serial
         const port = await (navigator as any).serial.requestPort();
         await this.openSerialPort(port, baudRate);
         return true;
@@ -252,47 +202,21 @@ export class WebSerialPrinterService {
       }
     }
 
-    let targetInterfaceNumber = 0;
-    let endpointOut = 1;
-    let foundEndpoint = false;
-
-    // Scan all interfaces and alternates to find an OUT bulk endpoint (fallback to interrupt)
-    const interfaces = device.configuration?.interfaces || [];
-    let isBulkFound = false;
-    for (const iface of interfaces) {
-      for (const alt of iface.alternates) {
-        for (const ep of alt.endpoints) {
-          if (ep.direction === 'out') {
-            if (!foundEndpoint || ep.type === 'bulk') {
-              endpointOut = ep.endpointNumber;
-              targetInterfaceNumber = iface.interfaceNumber;
-              foundEndpoint = true;
-              if (ep.type === 'bulk') {
-                isBulkFound = true;
-                break;
-              }
-            }
-          }
-        }
-        if (isBulkFound) break;
-      }
-      if (isBulkFound) break;
-    }
+    const { endpointOut, interfaceNumber } = findUsbOutEndpoint(device);
 
     try {
-      await device.claimInterface(targetInterfaceNumber);
+      await device.claimInterface(interfaceNumber);
     } catch (claimErr: any) {
       console.warn(
         '[WebPrinter] Primary claimInterface failed, attempting device reset & retry:',
         claimErr
       );
 
-      // If the interface was locked by previous session, try resetting device and retrying
       let retrySuccess = false;
       try {
         if (typeof device.reset === 'function') {
           await device.reset();
-          await device.claimInterface(targetInterfaceNumber);
+          await device.claimInterface(interfaceNumber);
           retrySuccess = true;
         }
       } catch (retryErr) {
@@ -339,7 +263,6 @@ export class WebSerialPrinterService {
 
   public async writeBytes(bytes: Uint8Array): Promise<boolean> {
     if (!this.isConnected()) {
-      // Try fast auto-connect via bridge before failing
       const bridgeConnected = await this.checkBridge();
       if (bridgeConnected) {
         this.connectionType = 'bridge';
@@ -378,7 +301,7 @@ export class WebSerialPrinterService {
         const data = await res.json();
         return data.success === true;
       } catch {
-        // Silent fallback to local byte pulse
+        // Silent fallback
       }
     }
     const kickBytes = buildCashDrawerKickBytes();
@@ -391,7 +314,7 @@ export class WebSerialPrinterService {
         try {
           this.serialWriter.releaseLock();
         } catch {
-          // Ignore release error
+          // Ignore
         }
         this.serialWriter = null;
       }
@@ -399,7 +322,7 @@ export class WebSerialPrinterService {
         try {
           await this.serialPort.close();
         } catch {
-          // Ignore close error
+          // Ignore
         }
         this.serialPort = null;
       }
@@ -407,7 +330,7 @@ export class WebSerialPrinterService {
         try {
           await this.usbDevice.close();
         } catch {
-          // Ignore close error
+          // Ignore
         }
         this.usbDevice = null;
       }

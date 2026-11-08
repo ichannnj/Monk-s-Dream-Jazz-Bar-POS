@@ -1,63 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import {
-  Check,
-  Utensils,
-  AlertTriangle,
-  Wine,
-  Coffee,
-  FolderPlus,
-  Compass,
-  ShieldAlert,
-  Leaf,
-  Flame,
-  Snowflake,
-  Plus,
-  Trash2,
-  Sliders,
-  Sparkles,
-} from 'lucide-react-native';
-import { toast } from '@/features/shared/toast/useToastStore';
-import { useAuthStore } from '@/features/auth';
-import { PosDropdown, PosMultiSelectDropdown, type PosDropdownOption } from '@/features/shared';
-import {
-  adminApi,
-  type ProductAdmin,
-  type CategoryAdmin,
-  type ProductVariantAdmin,
-  type ProductModifierOptionAdmin,
-} from '../../../data/admin.api';
+import { Utensils, ShieldAlert, Leaf } from 'lucide-react-native';
+import { PosMultiSelectDropdown } from '@/features/shared';
 import { AdminModal } from '../../components/AdminModal';
 import { AdminInput } from '../../components/AdminInput';
-import { AdminNumberInput } from '../../components/AdminNumberInput';
 import { MenuImageUploadField } from '../../components/MenuImageUploadField';
 import {
-  uploadAndRecordProductImage,
-  cleanupStorageObject,
-  type PreparedMenuImage,
-} from '@/features/menu/data/imageUpload.service';
-
-interface MenuItemModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onSuccess: () => void;
-  product?: ProductAdmin | null;
-  categories: CategoryAdmin[];
-}
-
-const ALLERGEN_OPTIONS = [
-  'DAIRY',
-  'GLUTEN',
-  'PEANUTS',
-  'TREE_NUTS',
-  'SHELLFISH',
-  'EGGS',
-  'SOY',
-  'FISH',
-  'SESAME',
-];
-
-const DIETARY_OPTIONS = ['VEGAN', 'VEGETARIAN', 'GLUTEN_FREE', 'HALAL', 'KETO'];
+  MenuItemModalProps,
+  ALLERGEN_OPTIONS,
+  DIETARY_OPTIONS,
+} from './item-modal/menuItemModal.types';
+import { useMenuItemModalController } from './item-modal/useMenuItemModalController';
+import { MenuItemBasicInfoSection } from './item-modal/MenuItemBasicInfoSection';
+import { MenuItemVariantMatrixSection } from './item-modal/MenuItemVariantMatrixSection';
+import { MenuItemModifiersSection } from './item-modal/MenuItemModifiersSection';
 
 export const MenuItemModal: React.FC<MenuItemModalProps> = ({
   visible,
@@ -66,569 +22,30 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
   product,
   categories,
 }) => {
-  const { currentUser } = useAuthStore();
-  const [name, setName] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [basePrice, setBasePrice] = useState('');
-  const [stationTarget, setStationTarget] = useState<'bar' | 'kitchen'>('bar');
-  const [isResoldOutsideFood, setIsResoldOutsideFood] = useState(false);
-  const [originalCost, setOriginalCost] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
-  const [stagedImage, setStagedImage] = useState<PreparedMenuImage | null>(null);
-  const [description, setDescription] = useState('');
-  const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
-  const [selectedDietary, setSelectedDietary] = useState<string[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Variant & Matrix Pricing State
-  const [hasVariants, setHasVariants] = useState(false);
-  const [supportedTemps, setSupportedTemps] = useState<('HOT' | 'COLD')[]>(['HOT', 'COLD']);
-  const [selectedSizes, setSelectedSizes] = useState<string[]>(['8oz', '12oz', '16oz']);
-  const [variantsMatrix, setVariantsMatrix] = useState<
-    Array<{
-      id?: string;
-      temperature: 'HOT' | 'COLD' | 'ROOM' | 'NONE';
-      size_label: string;
-      price: string;
-      is_available: boolean;
-    }>
-  >([]);
-  const [customSizeInput, setCustomSizeInput] = useState('');
-
-  const PRESET_SIZES = ['8oz', '12oz', '16oz', 'Regular', 'Large', 'Single', 'Double'];
-
-  // Modifiers & Add-Ons State
-  const [catalogModifiers, setCatalogModifiers] = useState<ProductModifierOptionAdmin[]>([]);
-  const [productModifiers, setProductModifiers] = useState<
-    Array<{
-      id?: string;
-      name: string;
-      price_delta: string;
-      applicable_category: string;
-      inventory_item_id?: string | null;
-      amount_delta?: number;
-      unit?: string | null;
-    }>
-  >([]);
-  const [modifierFilterCategory, setModifierFilterCategory] = useState<string>('all');
-  const [customModName, setCustomModName] = useState('');
-  const [customModPrice, setCustomModPrice] = useState('30.00');
-
-  // Track modal open/close and product ID transitions to prevent accidental resets while user edits
-  const prevVisibleRef = useRef(false);
-  const activeProductIdRef = useRef<string | undefined>(undefined);
-
-  useEffect(() => {
-    // Only initialize/reset form values when the modal opens (transitions from hidden to visible)
-    // or when the targeted product ID changes. NEVER reinitialize on background category fetches or re-renders!
-    const isOpening = visible && !prevVisibleRef.current;
-    const isProductChanged = visible && product?.id !== activeProductIdRef.current;
-
-    prevVisibleRef.current = visible;
-
-    if (!visible) {
-      activeProductIdRef.current = undefined;
-      return;
-    }
-
-    if (!isOpening && !isProductChanged) {
-      return;
-    }
-
-    activeProductIdRef.current = product?.id;
-
-    // Load Master Catalog Modifiers when modal opens
-    adminApi.getCatalogModifiers().then((mods) => {
-      setCatalogModifiers(mods);
-    });
-
-    if (product) {
-      setName(product.name);
-      setCategoryId(product.category_id);
-      setBasePrice(product.base_price.toString());
-      setStationTarget((product.station_target as any) === 'kitchen' ? 'kitchen' : 'bar');
-      setIsResoldOutsideFood(product.is_resold_outside_food);
-      setOriginalCost(product.original_cost ? product.original_cost.toString() : '');
-      setImageUrl(product.image_url || '');
-      setStagedImage(null);
-      setDescription(product.description || '');
-      setSelectedAllergens(product.allergens || []);
-      setSelectedDietary(product.dietary || []);
-
-      // Auto-set category filter tab matching product category
-      const matchedCat = categories.find((c) => c.id === product.category_id);
-      const initialCatSlug = matchedCat?.slug || 'all';
-      setModifierFilterCategory(initialCatSlug);
-
-      // Load existing assigned product modifiers
-      if (product.modifiers && product.modifiers.length > 0) {
-        setProductModifiers(
-          product.modifiers.map((m) => ({
-            id: m.id,
-            name: m.name,
-            price_delta: (m.price_delta || 0).toString(),
-            applicable_category: m.applicable_category || initialCatSlug,
-            inventory_item_id: m.inventory_item_id || null,
-            amount_delta: m.amount_delta || 0,
-            unit: m.unit || null,
-          }))
-        );
-      } else {
-        setProductModifiers([]);
-      }
-
-      if (product.variants && product.variants.length > 0) {
-        setHasVariants(true);
-        const temps = Array.from(
-          new Set(
-            product.variants
-              .map((v) => v.temperature)
-              .filter((t): t is 'HOT' | 'COLD' => t === 'HOT' || t === 'COLD')
-          )
-        );
-        const sizes = Array.from(new Set(product.variants.map((v) => v.size_label)));
-        setSupportedTemps(temps.length > 0 ? temps : ['HOT', 'COLD']);
-        setSelectedSizes(sizes.length > 0 ? sizes : ['8oz', '12oz', '16oz']);
-        setVariantsMatrix(
-          product.variants.map((v) => ({
-            id: v.id,
-            temperature: v.temperature,
-            size_label: v.size_label,
-            price: v.price.toString(),
-            is_available: v.is_available !== false,
-          }))
-        );
-      } else {
-        setHasVariants(false);
-        setSupportedTemps(['HOT', 'COLD']);
-        setSelectedSizes(['8oz', '12oz', '16oz']);
-        setVariantsMatrix([]);
-      }
-    } else {
-      setName('');
-      setCategoryId(categories[0]?.id || '');
-      setBasePrice('');
-      setStationTarget('bar');
-      setIsResoldOutsideFood(false);
-      setOriginalCost('');
-      setImageUrl('');
-      setStagedImage(null);
-      setDescription('');
-      setSelectedAllergens([]);
-      setSelectedDietary([]);
-      setHasVariants(false);
-      setSupportedTemps(['HOT', 'COLD']);
-      setSelectedSizes(['8oz', '12oz', '16oz']);
-      setVariantsMatrix([]);
-
-      const initialCatSlug = categories[0]?.slug || 'all';
-      setModifierFilterCategory(initialCatSlug);
-      setProductModifiers([]);
-    }
-  }, [visible, product?.id]);
-
-  // Helper to re-generate combination matrix rows while preserving existing prices
-  const regenerateMatrix = (
-    temps: ('HOT' | 'COLD')[],
-    sizes: string[],
-    currentMatrix = variantsMatrix
-  ) => {
-    const defaultP = basePrice.trim() || '180';
-    const newRows: typeof variantsMatrix = [];
-
-    const activeTemps: Array<'HOT' | 'COLD' | 'NONE'> = temps.length > 0 ? temps : ['NONE'];
-    const activeSizes = sizes.length > 0 ? sizes : ['Standard'];
-
-    for (const temp of activeTemps) {
-      for (const size of activeSizes) {
-        const existing = currentMatrix.find((r) => r.temperature === temp && r.size_label === size);
-        if (existing) {
-          newRows.push(existing);
-        } else {
-          newRows.push({
-            temperature: temp,
-            size_label: size,
-            price: defaultP,
-            is_available: true,
-          });
-        }
-      }
-    }
-    setVariantsMatrix(newRows);
-  };
-
-  const handleToggleTemp = (temp: 'HOT' | 'COLD') => {
-    const updated = supportedTemps.includes(temp)
-      ? supportedTemps.filter((t) => t !== temp)
-      : [...supportedTemps, temp];
-    setSupportedTemps(updated);
-    regenerateMatrix(updated, selectedSizes);
-  };
-
-  const handleToggleSize = (size: string) => {
-    const updated = selectedSizes.includes(size)
-      ? selectedSizes.filter((s) => s !== size)
-      : [...selectedSizes, size];
-    setSelectedSizes(updated);
-    regenerateMatrix(supportedTemps, updated);
-  };
-
-  const handleAddCustomSize = () => {
-    const trimmed = customSizeInput.trim();
-    if (!trimmed || selectedSizes.includes(trimmed)) return;
-    const updated = [...selectedSizes, trimmed];
-    setSelectedSizes(updated);
-    setCustomSizeInput('');
-    regenerateMatrix(supportedTemps, updated);
-  };
-
-  const handleUpdateMatrixPrice = (index: number, val: string) => {
-    setVariantsMatrix((prev) => prev.map((r, i) => (i === index ? { ...r, price: val } : r)));
-  };
-
-  const handleToggleMatrixRowAvailability = (index: number) => {
-    setVariantsMatrix((prev) =>
-      prev.map((r, i) => (i === index ? { ...r, is_available: !r.is_available } : r))
-    );
-  };
-
-  const handleApplyBaseToAll = () => {
-    const defaultP = basePrice.trim() || '180';
-    setVariantsMatrix((prev) => prev.map((r) => ({ ...r, price: defaultP })));
-    toast.info('Applied base price to all matrix combinations');
-  };
-
-  // Modifiers Management Handlers
-  const handleToggleModifierOption = (mod: {
-    id?: string;
-    name: string;
-    price_delta?: number;
-    applicable_category?: string;
-    inventory_item_id?: string | null;
-    amount_delta?: number;
-    unit?: string | null;
-  }) => {
-    setProductModifiers((prev) => {
-      const exists = prev.some((m) => m.name.toLowerCase() === mod.name.toLowerCase());
-      if (exists) {
-        return prev.filter((m) => m.name.toLowerCase() !== mod.name.toLowerCase());
-      } else {
-        return [
-          ...prev,
-          {
-            id: mod.id,
-            name: mod.name,
-            price_delta: (mod.price_delta || 0).toString(),
-            applicable_category: mod.applicable_category || modifierFilterCategory,
-            inventory_item_id: mod.inventory_item_id || null,
-            amount_delta: mod.amount_delta || 0,
-            unit: mod.unit || null,
-          },
-        ];
-      }
-    });
-  };
-
-  const handleUpdateModifierPrice = (modName: string, newPrice: string) => {
-    setProductModifiers((prev) =>
-      prev.map((m) => (m.name === modName ? { ...m, price_delta: newPrice } : m))
-    );
-  };
-
-  const handleAddCustomModifier = () => {
-    const trimmed = customModName.trim();
-    if (!trimmed) {
-      toast.error('Modifier name is required');
-      return;
-    }
-    if (productModifiers.some((m) => m.name.toLowerCase() === trimmed.toLowerCase())) {
-      toast.warning('This modifier is already added');
-      return;
-    }
-    const p = parseFloat(customModPrice) || 0;
-    setProductModifiers((prev) => [
-      ...prev,
-      {
-        name: trimmed,
-        price_delta: p.toFixed(2),
-        applicable_category: modifierFilterCategory,
-      },
-    ]);
-    setCustomModName('');
-    toast.success(`Added modifier "${trimmed}"`);
-  };
-
-  const handleSelectAllCategoryModifiers = (catSlug: string) => {
-    const matchingCatalog = catalogModifiers.filter(
-      (m) =>
-        catSlug === 'all' || m.applicable_category === catSlug || m.applicable_category === 'all'
-    );
-    setProductModifiers((prev) => {
-      const copy = [...prev];
-      for (const m of matchingCatalog) {
-        if (!copy.some((existing) => existing.name.toLowerCase() === m.name.toLowerCase())) {
-          copy.push({
-            id: m.id,
-            name: m.name,
-            price_delta: (m.price_delta || 0).toString(),
-            applicable_category: m.applicable_category || catSlug,
-            inventory_item_id: m.inventory_item_id || null,
-            amount_delta: m.amount_delta || 0,
-            unit: m.unit || null,
-          });
-        }
-      }
-      return copy;
-    });
-    toast.info('Selected all modifiers for ' + catSlug);
-  };
-
-  const handleClearCategoryModifiers = (catSlug: string) => {
-    if (catSlug === 'all') {
-      setProductModifiers([]);
-    } else {
-      setProductModifiers((prev) =>
-        prev.filter((m) => m.applicable_category !== catSlug && m.applicable_category !== 'all')
-      );
-    }
-  };
-
-  // Clean up staged blob URL when modal closes or unmounts
-  useEffect(() => {
-    return () => {
-      if (stagedImage?.previewUri && stagedImage.previewUri.startsWith('blob:')) {
-        URL.revokeObjectURL(stagedImage.previewUri);
-      }
-    };
-  }, [stagedImage]);
-
-  const handleToggleOutsideFood = () => {
-    const nextVal = !isResoldOutsideFood;
-    setIsResoldOutsideFood(nextVal);
-    if (nextVal) {
-      const cost = parseFloat(originalCost) || 0;
-      setBasePrice((cost * 1.2).toFixed(2));
-    }
-  };
-
-  const handleOriginalCostChange = (val: string) => {
-    setOriginalCost(val);
-    const cost = parseFloat(val) || 0;
-    setBasePrice((cost * 1.2).toFixed(2));
-  };
-
-  const toggleAllergen = (alg: string) => {
-    setSelectedAllergens((prev) =>
-      prev.includes(alg) ? prev.filter((a) => a !== alg) : [...prev, alg]
-    );
-  };
-
-  const toggleDietary = (diet: string) => {
-    setSelectedDietary((prev) =>
-      prev.includes(diet) ? prev.filter((d) => d !== diet) : [...prev, diet]
-    );
-  };
-
-  const handleSubmit = async () => {
-    if (!name.trim()) {
-      toast.error('Product name is required', { title: 'Validation Error' });
-      return;
-    }
-    if (!categoryId) {
-      toast.error('Select a category for this product', { title: 'Validation Error' });
-      return;
-    }
-
-    const price = parseFloat(basePrice);
-    if (isNaN(price) || price < 0) {
-      toast.error('Valid base selling price is required', { title: 'Validation Error' });
-      return;
-    }
-
-    if (isResoldOutsideFood) {
-      const orig = parseFloat(originalCost);
-      if (isNaN(orig) || orig <= 0) {
-        toast.error('Original vendor cost is required for outside food (+20%)', {
-          title: 'Validation Error',
-        });
-        return;
-      }
-    }
-
-    setIsSubmitting(true);
-    try {
-      let finalImageUrl: string | null = imageUrl.trim() || null;
-      let finalStoragePath: string | null = product?.image_storage_path || null;
-
-      if (product) {
-        // If user staged a new local file, upload it now
-        if (stagedImage) {
-          const uploadRes = await uploadAndRecordProductImage(
-            product.id,
-            stagedImage,
-            currentUser?.id
-          );
-          if (!uploadRes.success) {
-            toast.error(uploadRes.error || 'Failed to upload photo to storage');
-            setIsSubmitting(false);
-            return;
-          }
-          finalImageUrl = uploadRes.publicUrl || null;
-          finalStoragePath = uploadRes.storagePath || null;
-        } else if (!finalImageUrl && product.image_storage_path) {
-          // User cleared the photo
-          cleanupStorageObject(product.image_storage_path);
-          finalStoragePath = null;
-        }
-
-        await adminApi.updateProduct(product.id, {
-          name: name.trim(),
-          category_id: categoryId,
-          base_price: price,
-          station_target: stationTarget,
-          is_resold_outside_food: isResoldOutsideFood,
-          original_cost: isResoldOutsideFood ? parseFloat(originalCost) || null : null,
-          image_url: finalImageUrl,
-          image_storage_path: finalStoragePath,
-          description: description.trim(),
-          allergens: selectedAllergens,
-          dietary: selectedDietary,
-        });
-
-        // Upsert variants
-        if (hasVariants && variantsMatrix.length > 0) {
-          const variantsToSave: ProductVariantAdmin[] = variantsMatrix
-            .filter((v) => v.is_available)
-            .map((v, idx) => ({
-              temperature: v.temperature,
-              size_label: v.size_label,
-              price: parseFloat(v.price) || price,
-              is_available: true,
-              sort_order: idx + 1,
-            }));
-          await adminApi.upsertProductVariants(product.id, variantsToSave);
-        } else {
-          await adminApi.upsertProductVariants(product.id, []);
-        }
-
-        // Upsert modifiers for existing product
-        const modifiersToSave = productModifiers.map((m) => ({
-          name: m.name,
-          price_delta: parseFloat(m.price_delta) || 0,
-          applicable_category: m.applicable_category,
-          inventory_item_id: m.inventory_item_id || null,
-          amount_delta: m.amount_delta || 0,
-          unit: m.unit || null,
-        }));
-        await adminApi.upsertProductModifiers(product.id, modifiersToSave);
-
-        toast.success(`Updated "${name}"`, { title: 'Menu Item Saved' });
-      } else {
-        // 1. Create product row first to obtain authoritative UUID
-        const newProduct = await adminApi.createProduct({
-          name: name.trim(),
-          category_id: categoryId,
-          base_price: price,
-          station_target: stationTarget,
-          is_resold_outside_food: isResoldOutsideFood,
-          original_cost: isResoldOutsideFood ? parseFloat(originalCost) || null : null,
-          image_url: stagedImage ? null : finalImageUrl,
-          description: description.trim(),
-          allergens: selectedAllergens,
-          dietary: selectedDietary,
-        });
-
-        // 2. If a local file was staged, upload to newly created product's folder
-        if (stagedImage && newProduct?.id) {
-          const uploadRes = await uploadAndRecordProductImage(
-            newProduct.id,
-            stagedImage,
-            currentUser?.id
-          );
-          if (!uploadRes.success) {
-            console.warn(
-              '[MenuItemModal] Image upload failed after product creation:',
-              uploadRes.error
-            );
-            toast.error('Product created, but photo upload failed: ' + uploadRes.error);
-          }
-        }
-
-        // Upsert variants for new product
-        if (newProduct?.id) {
-          if (hasVariants && variantsMatrix.length > 0) {
-            const variantsToSave: ProductVariantAdmin[] = variantsMatrix
-              .filter((v) => v.is_available)
-              .map((v, idx) => ({
-                temperature: v.temperature,
-                size_label: v.size_label,
-                price: parseFloat(v.price) || price,
-                is_available: true,
-                sort_order: idx + 1,
-              }));
-            await adminApi.upsertProductVariants(newProduct.id, variantsToSave);
-          }
-
-          // Upsert modifiers for new product
-          const modifiersToSave = productModifiers.map((m) => ({
-            name: m.name,
-            price_delta: parseFloat(m.price_delta) || 0,
-            applicable_category: m.applicable_category,
-            inventory_item_id: m.inventory_item_id || null,
-            amount_delta: m.amount_delta || 0,
-            unit: m.unit || null,
-          }));
-          await adminApi.upsertProductModifiers(newProduct.id, modifiersToSave);
-        }
-
-        toast.success(`Created "${name}"`, { title: 'Menu Item Created' });
-      }
-      onSuccess();
-      onClose();
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to save menu product', { title: 'Error' });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const stationOptions: PosDropdownOption<'bar' | 'kitchen'>[] = [
-    {
-      value: 'bar',
-      label: 'Bar Station (Cocktails, Wine & Espresso)',
-      description: 'Chits and tickets route to Barista & Bartender KDS',
-      icon: Wine,
-    },
-    {
-      value: 'kitchen',
-      label: 'Kitchen Station (Hot Food & Pastas)',
-      description: 'Chits and tickets route to Kitchen Chef KDS',
-      icon: Utensils,
-    },
-  ];
-
-  const categoryOptions: PosDropdownOption<string>[] = categories.map((c) => ({
-    value: c.id,
-    label: c.name,
-    icon: FolderPlus,
-  }));
+  const ctrl = useMenuItemModalController({
+    visible,
+    product,
+    categories,
+    onClose,
+    onSuccess,
+  });
 
   const footer = (
     <>
       <Pressable
         onPress={onClose}
-        disabled={isSubmitting}
+        disabled={ctrl.isSubmitting}
         className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
       >
         <Text className="text-base font-bold text-stone-700">Cancel</Text>
       </Pressable>
       <Pressable
-        onPress={handleSubmit}
-        disabled={isSubmitting}
+        onPress={ctrl.handleSubmit}
+        disabled={ctrl.isSubmitting}
         className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
       >
         <Text className="text-base font-bold text-white">
-          {isSubmitting ? 'Saving...' : product ? 'Save Changes' : 'Create Product'}
+          {ctrl.isSubmitting ? 'Saving...' : product ? 'Save Changes' : 'Create Product'}
         </Text>
       </Pressable>
     </>
@@ -646,650 +63,81 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       footer={footer}
     >
       <View className="space-y-5">
-        {/* Name */}
-        <AdminInput
-          label="Product Name"
-          required
-          value={name}
-          onChangeText={setName}
-          placeholder="e.g. Monk's Signature Old Fashioned"
+        <MenuItemBasicInfoSection
+          name={ctrl.name}
+          setName={ctrl.setName}
+          categoryId={ctrl.categoryId}
+          setCategoryId={ctrl.setCategoryId}
+          categories={categories}
+          stationTarget={ctrl.stationTarget}
+          setStationTarget={ctrl.setStationTarget}
+          isResoldOutsideFood={ctrl.isResoldOutsideFood}
+          onToggleOutsideFood={ctrl.handleToggleOutsideFood}
+          originalCost={ctrl.originalCost}
+          onOriginalCostChange={ctrl.handleOriginalCostChange}
+          basePrice={ctrl.basePrice}
+          setBasePrice={ctrl.setBasePrice}
         />
 
-        {/* Category & Target Station Dropdowns */}
-        <View className="flex-col sm:flex-row gap-4">
-          <View className="flex-1">
-            <Text className="text-base font-semibold text-stone-800 mb-2">Category</Text>
-            <PosDropdown
-              options={categoryOptions}
-              value={categoryId}
-              onChange={setCategoryId}
-              sheetTitle="Select Menu Category"
-              className="w-full"
-            />
-          </View>
+        <MenuItemVariantMatrixSection
+          hasVariants={ctrl.hasVariants}
+          setHasVariants={ctrl.setHasVariants}
+          supportedTemps={ctrl.supportedTemps}
+          onToggleTemp={ctrl.handleToggleTemp}
+          selectedSizes={ctrl.selectedSizes}
+          onToggleSize={ctrl.handleToggleSize}
+          customSizeInput={ctrl.customSizeInput}
+          setCustomSizeInput={ctrl.setCustomSizeInput}
+          onAddCustomSize={ctrl.handleAddCustomSize}
+          variantsMatrix={ctrl.variantsMatrix}
+          setVariantsMatrix={ctrl.setVariantsMatrix}
+          onUpdateMatrixPrice={ctrl.handleUpdateMatrixPrice}
+          onToggleMatrixRowAvailability={ctrl.handleToggleMatrixRowAvailability}
+          onApplyBaseToAll={ctrl.handleApplyBaseToAll}
+          onRegenerateMatrix={ctrl.regenerateMatrix}
+        />
 
-          <View className="flex-1">
-            <Text className="text-base font-semibold text-stone-800 mb-2">Target Station</Text>
-            <PosDropdown
-              options={stationOptions}
-              value={stationTarget}
-              onChange={setStationTarget}
-              sheetTitle="Select KDS Routing Station"
-              className="w-full"
-            />
-          </View>
-        </View>
+        <MenuItemModifiersSection
+          catalogModifiers={ctrl.catalogModifiers}
+          productModifiers={ctrl.productModifiers}
+          modifierFilterCategory={ctrl.modifierFilterCategory}
+          setModifierFilterCategory={ctrl.setModifierFilterCategory}
+          onToggleModifierOption={ctrl.handleToggleModifierOption}
+          onUpdateModifierPrice={ctrl.handleUpdateModifierPrice}
+          onSelectAllCategoryModifiers={ctrl.handleSelectAllCategoryModifiers}
+          onClearCategoryModifiers={ctrl.handleClearCategoryModifiers}
+          customModName={ctrl.customModName}
+          setCustomModName={ctrl.setCustomModName}
+          customModPrice={ctrl.customModPrice}
+          setCustomModPrice={ctrl.setCustomModPrice}
+          onAddCustomModifier={ctrl.handleAddCustomModifier}
+        />
 
-        {/* Outside Food +20% Pricing Rule Toggle */}
-        <Pressable
-          onPress={handleToggleOutsideFood}
-          className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
-            isResoldOutsideFood
-              ? 'bg-amber-50 border-amber-300'
-              : 'bg-stone-50 border-stone-200 active:bg-stone-100'
-          }`}
-        >
-          <View className="flex-row items-center space-x-3">
-            <AlertTriangle size={22} color={isResoldOutsideFood ? '#b45309' : '#78716c'} />
-            <View className="ml-2">
-              <Text className="text-base font-bold text-stone-900">
-                Resold Outside Food (+20% Fixed Markup)
-              </Text>
-              <Text className="text-base text-stone-500">
-                Mandatory formula: Selling Price = Vendor Cost × 1.20
-              </Text>
-            </View>
-          </View>
-          <View
-            className={`h-6 w-6 rounded-md items-center justify-center border ${
-              isResoldOutsideFood ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
-            }`}
-          >
-            {isResoldOutsideFood && <Check size={16} color="#ffffff" />}
-          </View>
-        </Pressable>
-
-        {/* Pricing Input Fields */}
-        {isResoldOutsideFood ? (
-          <View className="flex-col sm:flex-row gap-3">
-            <View className="flex-1">
-              <AdminNumberInput
-                label="Vendor Cost (₱)"
-                mode="currency"
-                value={originalCost}
-                onChangeText={handleOriginalCostChange}
-                placeholder="e.g. 100.00"
-              />
-            </View>
-            <View className="flex-1">
-              <AdminNumberInput
-                label="Selling Price (+20% Locked)"
-                mode="currency"
-                value={basePrice}
-                editable={false}
-                className="bg-amber-50 text-amber-900 font-black border-amber-300"
-              />
-            </View>
-          </View>
-        ) : (
-          <View>
-            <AdminNumberInput
-              label="Selling Base Price"
-              required
-              mode="currency"
-              value={basePrice}
-              onChangeText={setBasePrice}
-              placeholder="e.g. 380.00"
-            />
-          </View>
-        )}
-
-        {/* Beverage Sizes & Temperature Matrix Toggle */}
-        <View className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4 space-y-4">
-          <Pressable
-            onPress={() => {
-              const next = !hasVariants;
-              setHasVariants(next);
-              if (next && variantsMatrix.length === 0) {
-                regenerateMatrix(supportedTemps, selectedSizes);
-              }
-            }}
-            className="flex-row items-center justify-between"
-          >
-            <View className="flex-row items-center space-x-3">
-              <View className="h-10 w-10 rounded-xl bg-amber-500/10 items-center justify-center border border-amber-500/20">
-                <Coffee size={20} color="#b45309" />
-              </View>
-              <View className="ml-2">
-                <Text className="text-base font-bold text-stone-900">
-                  Beverage Sizes & Temperature Matrix
-                </Text>
-                <Text className="text-xs text-stone-500">
-                  Separate prices for Hot / Iced and sizes (8oz, 12oz, etc.). If disabled, uses base
-                  price.
-                </Text>
-              </View>
-            </View>
-            <View
-              className={`h-6 w-6 rounded-md items-center justify-center border ${
-                hasVariants ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
-              }`}
-            >
-              {hasVariants && <Check size={16} color="#ffffff" />}
-            </View>
-          </Pressable>
-
-          {/* Expanded Matrix Configuration */}
-          {hasVariants && (
-            <View className="border-t border-stone-200 pt-4 space-y-4">
-              {/* Temperature Selection */}
-              <View>
-                <Text className="text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
-                  1. Supported Temperatures
-                </Text>
-                <View className="flex-row gap-2">
-                  <Pressable
-                    onPress={() => handleToggleTemp('HOT')}
-                    className={`min-h-[44px] flex-1 flex-row items-center justify-center rounded-xl border px-3 py-2 ${
-                      supportedTemps.includes('HOT')
-                        ? 'border-orange-500 bg-orange-50'
-                        : 'border-stone-200 bg-white'
-                    }`}
-                  >
-                    <Flame
-                      size={16}
-                      color={supportedTemps.includes('HOT') ? '#ea580c' : '#78716c'}
-                    />
-                    <Text
-                      className={`ml-2 text-sm font-bold ${
-                        supportedTemps.includes('HOT') ? 'text-orange-700' : 'text-stone-600'
-                      }`}
-                    >
-                      Hot Options
-                    </Text>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => handleToggleTemp('COLD')}
-                    className={`min-h-[44px] flex-1 flex-row items-center justify-center rounded-xl border px-3 py-2 ${
-                      supportedTemps.includes('COLD')
-                        ? 'border-sky-500 bg-sky-50'
-                        : 'border-stone-200 bg-white'
-                    }`}
-                  >
-                    <Snowflake
-                      size={16}
-                      color={supportedTemps.includes('COLD') ? '#0284c7' : '#78716c'}
-                    />
-                    <Text
-                      className={`ml-2 text-sm font-bold ${
-                        supportedTemps.includes('COLD') ? 'text-sky-700' : 'text-stone-600'
-                      }`}
-                    >
-                      Iced / Cold Options
-                    </Text>
-                  </Pressable>
-                </View>
-              </View>
-
-              {/* Sizes Selection */}
-              <View>
-                <Text className="text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
-                  2. Offered Cup Sizes & Volumes
-                </Text>
-                <View className="flex-row flex-wrap gap-2 mb-2.5">
-                  {PRESET_SIZES.map((sz) => {
-                    const isSelected = selectedSizes.includes(sz);
-                    return (
-                      <Pressable
-                        key={sz}
-                        onPress={() => handleToggleSize(sz)}
-                        className={`min-h-[40px] px-3.5 py-1.5 rounded-lg border text-xs font-bold items-center justify-center ${
-                          isSelected
-                            ? 'bg-emerald-50 border-emerald-600'
-                            : 'bg-white border-stone-200'
-                        }`}
-                      >
-                        <Text
-                          className={`text-xs font-bold ${
-                            isSelected ? 'text-emerald-700' : 'text-stone-600'
-                          }`}
-                        >
-                          {sz}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-
-                {/* Custom Size Input */}
-                <View className="flex-row gap-2">
-                  <View className="flex-1">
-                    <AdminInput
-                      value={customSizeInput}
-                      onChangeText={setCustomSizeInput}
-                      placeholder="Add custom size (e.g. 20oz, Pitcher)..."
-                    />
-                  </View>
-                  <Pressable
-                    onPress={handleAddCustomSize}
-                    className="min-h-[44px] px-4 rounded-xl bg-stone-800 items-center justify-center active:bg-stone-900"
-                  >
-                    <Text className="text-xs font-bold text-white">+ Add Size</Text>
-                  </Pressable>
-                </View>
-              </View>
-
-              {/* Price Matrix Table */}
-              <View>
-                <View className="flex-row items-center justify-between mb-2">
-                  <Text className="text-xs font-bold uppercase tracking-wider text-stone-600">
-                    3. Combination Price Matrix
-                  </Text>
-                  <Pressable
-                    onPress={handleApplyBaseToAll}
-                    className="px-2.5 py-1 rounded-md bg-stone-200 active:bg-stone-300"
-                  >
-                    <Text className="text-xs font-bold text-stone-700">
-                      Apply Base Price to All
-                    </Text>
-                  </Pressable>
-                </View>
-
-                <View className="rounded-xl border border-stone-200 bg-white overflow-hidden divide-y divide-stone-100">
-                  {variantsMatrix.length === 0 ? (
-                    <View className="p-4 items-center justify-center">
-                      <Text className="text-xs text-stone-400">
-                        Select at least one temperature and size above to build pricing matrix.
-                      </Text>
-                    </View>
-                  ) : (
-                    variantsMatrix.map((row, idx) => (
-                      <View
-                        key={`${row.temperature}-${row.size_label}-${idx}`}
-                        className={`p-3 flex-row items-center justify-between gap-3 ${
-                          !row.is_available ? 'opacity-40 bg-stone-50' : ''
-                        }`}
-                      >
-                        {/* Temp & Size Badges */}
-                        <View className="flex-row items-center space-x-2">
-                          <View
-                            className={`px-2 py-1 rounded-md border ${
-                              row.temperature === 'HOT'
-                                ? 'bg-orange-50 border-orange-200'
-                                : row.temperature === 'COLD'
-                                  ? 'bg-sky-50 border-sky-200'
-                                  : 'bg-stone-100 border-stone-200'
-                            }`}
-                          >
-                            <Text
-                              className={`text-xs font-black ${
-                                row.temperature === 'HOT'
-                                  ? 'text-orange-700'
-                                  : row.temperature === 'COLD'
-                                    ? 'text-sky-700'
-                                    : 'text-stone-700'
-                              }`}
-                            >
-                              {row.temperature === 'HOT'
-                                ? '🔥 HOT'
-                                : row.temperature === 'COLD'
-                                  ? '❄️ ICED'
-                                  : 'STD'}
-                            </Text>
-                          </View>
-                          <Text className="text-sm font-bold text-stone-800 ml-1">
-                            {row.size_label}
-                          </Text>
-                        </View>
-
-                        {/* Price Input & Availability */}
-                        <View className="flex-row items-center space-x-2">
-                          <View className="w-28">
-                            <AdminNumberInput
-                              mode="currency"
-                              value={row.price}
-                              onChangeText={(val) => handleUpdateMatrixPrice(idx, val)}
-                              placeholder="0.00"
-                            />
-                          </View>
-                          <Pressable
-                            onPress={() => handleToggleMatrixRowAvailability(idx)}
-                            className={`px-2.5 py-1.5 rounded-lg border text-xs font-bold ${
-                              row.is_available
-                                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                                : 'bg-stone-100 border-stone-300 text-stone-400'
-                            }`}
-                          >
-                            <Text
-                              className={`text-xs font-bold ${
-                                row.is_available ? 'text-emerald-700' : 'text-stone-400'
-                              }`}
-                            >
-                              {row.is_available ? 'Offered' : 'Hidden'}
-                            </Text>
-                          </Pressable>
-                          <Pressable
-                            onPress={() =>
-                              setVariantsMatrix((prev) => prev.filter((_, i) => i !== idx))
-                            }
-                            className="p-1.5 text-stone-400 hover:text-rose-600 rounded-md"
-                          >
-                            <Trash2 size={16} color="#9ca3af" />
-                          </Pressable>
-                        </View>
-                      </View>
-                    ))
-                  )}
-                </View>
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* Product Modifiers & Add-Ons Configuration */}
-        <View className="rounded-2xl border border-stone-200 bg-stone-50/70 p-4 space-y-4">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center space-x-3">
-              <View className="h-10 w-10 rounded-xl bg-purple-500/10 items-center justify-center border border-purple-500/20">
-                <Sliders size={20} color="#7e22ce" />
-              </View>
-              <View className="ml-2">
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-base font-bold text-stone-900">
-                    Product Modifiers & Add-Ons
-                  </Text>
-                  <View className="rounded-md bg-purple-100 border border-purple-200 px-2 py-0.5">
-                    <Text className="text-xs font-bold text-purple-800">
-                      {productModifiers.length} Selected
-                    </Text>
-                  </View>
-                </View>
-                <Text className="text-sm text-stone-500">
-                  Select available add-ons, extra shots, dairy, and custom toppings for this item
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Category Filter Pills */}
-          <View className="space-y-1.5">
-            <Text className="text-xs font-bold uppercase tracking-wider text-stone-600">
-              Filter Modifiers by Category
-            </Text>
-            <View className="flex-row flex-wrap gap-2">
-              {[
-                { slug: 'all', label: 'All Modifiers' },
-                { slug: 'coffee', label: '☕ Coffee & Espresso' },
-                { slug: 'cocktails_wine', label: '🍸 Cocktails & Liquor' },
-                { slug: 'mains_pasta', label: '🍝 Pasta & Mains' },
-                { slug: 'small_plates', label: '🍢 Small Plates' },
-                { slug: 'desserts', label: '🍰 Desserts' },
-              ].map((catPill) => {
-                const isActive = modifierFilterCategory === catPill.slug;
-                return (
-                  <Pressable
-                    key={catPill.slug}
-                    onPress={() => setModifierFilterCategory(catPill.slug)}
-                    className={`min-h-[40px] px-3.5 py-1.5 rounded-xl border flex-row items-center space-x-1.5 ${
-                      isActive
-                        ? 'bg-purple-900 border-purple-900 shadow-xs'
-                        : 'bg-white border-stone-200 active:bg-stone-100'
-                    }`}
-                  >
-                    <Text
-                      className={`text-xs font-bold ${isActive ? 'text-white' : 'text-stone-700'}`}
-                    >
-                      {catPill.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Bulk Select / Clear Actions */}
-          <View className="flex-row items-center justify-between border-t border-stone-200 pt-2.5">
-            <Text className="text-xs font-semibold text-stone-500">
-              Showing options for{' '}
-              {modifierFilterCategory === 'all' ? 'all categories' : modifierFilterCategory}
-            </Text>
-            <View className="flex-row items-center gap-2">
-              <Pressable
-                onPress={() => handleSelectAllCategoryModifiers(modifierFilterCategory)}
-                className="px-2.5 py-1.5 rounded-lg bg-stone-200 active:bg-stone-300"
-              >
-                <Text className="text-xs font-bold text-stone-700">+ Select All</Text>
-              </Pressable>
-              <Pressable
-                onPress={() => handleClearCategoryModifiers(modifierFilterCategory)}
-                className="px-2.5 py-1.5 rounded-lg bg-stone-200 active:bg-stone-300"
-              >
-                <Text className="text-xs font-bold text-stone-700">Clear</Text>
-              </Pressable>
-            </View>
-          </View>
-
-          {/* Modifiers List Grid */}
-          <View className="rounded-xl border border-stone-200 bg-white overflow-hidden divide-y divide-stone-100">
-            {(() => {
-              // 1. Gather all candidates from catalog and current product
-              const combinedMap = new Map<
-                string,
-                {
-                  id?: string;
-                  name: string;
-                  price_delta: number;
-                  applicable_category: string;
-                  inventory_item_id?: string | null;
-                  amount_delta?: number;
-                  unit?: string | null;
-                  inventory_item?: { name: string; unit: string };
-                }
-              >();
-
-              // Add master catalog items
-              for (const m of catalogModifiers) {
-                combinedMap.set(m.name.toLowerCase(), {
-                  id: m.id,
-                  name: m.name,
-                  price_delta: m.price_delta || 0,
-                  applicable_category: m.applicable_category || 'all',
-                  inventory_item_id: m.inventory_item_id || null,
-                  amount_delta: m.amount_delta || 0,
-                  unit: m.unit || null,
-                  inventory_item: m.inventory_item,
-                });
-              }
-
-              // Add or enrich with product-specific modifiers
-              for (const pm of productModifiers) {
-                const existing = combinedMap.get(pm.name.toLowerCase());
-                if (existing) {
-                  // Keep assigned category if already set
-                  if (pm.applicable_category && pm.applicable_category !== 'all') {
-                    existing.applicable_category = pm.applicable_category;
-                  }
-                } else {
-                  combinedMap.set(pm.name.toLowerCase(), {
-                    id: pm.id || `custom-${pm.name}`,
-                    name: pm.name,
-                    price_delta: parseFloat(pm.price_delta) || 0,
-                    applicable_category: pm.applicable_category || 'all',
-                    inventory_item_id: pm.inventory_item_id || null,
-                    amount_delta: pm.amount_delta || 0,
-                    unit: pm.unit || null,
-                  });
-                }
-              }
-
-              // 2. Filter strictly by selected category tab
-              const allVisibleModifiers = Array.from(combinedMap.values()).filter((m) => {
-                if (modifierFilterCategory === 'all') return true;
-                const cat = (m.applicable_category || '').toLowerCase();
-                if (cat === modifierFilterCategory) return true;
-                if (
-                  modifierFilterCategory === 'cocktails_wine' &&
-                  (cat === 'cocktails' || cat === 'wine')
-                )
-                  return true;
-                return false;
-              });
-
-              if (allVisibleModifiers.length === 0) {
-                return (
-                  <View className="p-4 items-center justify-center">
-                    <Text className="text-xs text-stone-400">
-                      No modifiers found for this category. Use "+ Add Custom Modifier" below to add
-                      one.
-                    </Text>
-                  </View>
-                );
-              }
-
-              return allVisibleModifiers.map((mod) => {
-                const isSelected = productModifiers.some(
-                  (m) => m.name.toLowerCase() === mod.name.toLowerCase()
-                );
-                const assigned = productModifiers.find(
-                  (m) => m.name.toLowerCase() === mod.name.toLowerCase()
-                );
-                const currentPrice = assigned
-                  ? assigned.price_delta
-                  : (mod.price_delta || 0).toString();
-
-                return (
-                  <View
-                    key={mod.id || mod.name}
-                    className={`p-3 flex-row items-center justify-between gap-3 ${
-                      isSelected ? 'bg-purple-50/40' : 'bg-white'
-                    }`}
-                  >
-                    {/* Checkbox & Modifier Name */}
-                    <Pressable
-                      onPress={() => handleToggleModifierOption(mod)}
-                      className="flex-row items-center space-x-3 flex-1"
-                    >
-                      <View
-                        className={`h-5 w-5 rounded-md items-center justify-center border ${
-                          isSelected
-                            ? 'bg-purple-700 border-purple-700'
-                            : 'bg-white border-stone-300'
-                        }`}
-                      >
-                        {isSelected && <Check size={14} color="#ffffff" />}
-                      </View>
-                      <View className="ml-2 flex-1">
-                        <View className="flex-row items-center gap-2">
-                          <Text
-                            className={`text-sm font-bold ${
-                              isSelected ? 'text-purple-950' : 'text-stone-800'
-                            }`}
-                          >
-                            {mod.name}
-                          </Text>
-                          {mod.applicable_category && mod.applicable_category !== 'all' ? (
-                            <View className="rounded px-1.5 py-0.5 bg-stone-100 border border-stone-200">
-                              <Text className="text-[10px] font-semibold text-stone-600 uppercase">
-                                {mod.applicable_category}
-                              </Text>
-                            </View>
-                          ) : null}
-                        </View>
-                        {mod.inventory_item ? (
-                          <Text className="text-xs text-stone-400">
-                            Depletes: {mod.inventory_item.name} (-{mod.amount_delta} {mod.unit})
-                          </Text>
-                        ) : null}
-                      </View>
-                    </Pressable>
-
-                    {/* Price Override Input (Only active if selected) */}
-                    <View className="flex-row items-center space-x-2">
-                      <Text className="text-xs font-semibold text-stone-500 mr-1">+₱</Text>
-                      <View className="w-24">
-                        <AdminNumberInput
-                          mode="currency"
-                          value={currentPrice}
-                          editable={isSelected}
-                          onChangeText={(val) => handleUpdateModifierPrice(mod.name, val)}
-                          placeholder="0.00"
-                          className={!isSelected ? 'opacity-40 bg-stone-100' : ''}
-                        />
-                      </View>
-                      {isSelected ? (
-                        <Pressable
-                          onPress={() => handleToggleModifierOption(mod)}
-                          className="p-1.5 text-stone-400 hover:text-rose-600 rounded-md"
-                        >
-                          <Trash2 size={16} color="#9ca3af" />
-                        </Pressable>
-                      ) : null}
-                    </View>
-                  </View>
-                );
-              });
-            })()}
-          </View>
-
-          {/* Quick Custom Modifier Input Bar */}
-          <View className="space-y-1.5 border-t border-stone-200 pt-3">
-            <Text className="text-xs font-bold uppercase tracking-wider text-stone-600">
-              + Add Custom Modifier / Add-on
-            </Text>
-            <View className="flex-row items-center gap-2">
-              <View className="flex-1">
-                <AdminInput
-                  value={customModName}
-                  onChangeText={setCustomModName}
-                  placeholder="e.g. Extra Rosemary Sprig, Jalapeno Slice..."
-                />
-              </View>
-              <View className="w-28">
-                <AdminNumberInput
-                  mode="currency"
-                  value={customModPrice}
-                  onChangeText={setCustomModPrice}
-                  placeholder="Price"
-                />
-              </View>
-              <Pressable
-                onPress={handleAddCustomModifier}
-                className="min-h-[44px] px-4 rounded-xl bg-purple-900 items-center justify-center active:bg-purple-950"
-              >
-                <Text className="text-xs font-bold text-white">+ Add</Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-
-        {/* Product Photo: File Upload & Live Preview */}
         <MenuImageUploadField
           currentImageUrl={product?.image_url}
           currentStoragePath={product?.image_storage_path}
-          stagedImage={stagedImage}
-          onStagedImageChange={setStagedImage}
-          urlValue={imageUrl}
-          onUrlValueChange={setImageUrl}
+          stagedImage={ctrl.stagedImage}
+          onStagedImageChange={ctrl.setStagedImage}
+          urlValue={ctrl.imageUrl}
+          onUrlValueChange={ctrl.setImageUrl}
           onClearPhoto={() => {
-            setImageUrl('');
-            setStagedImage(null);
+            ctrl.setImageUrl('');
+            ctrl.setStagedImage(null);
           }}
-          productName={name}
-          stationTarget={stationTarget}
+          productName={ctrl.name}
+          stationTarget={ctrl.stationTarget}
         />
 
         <AdminInput
           label="Description / Tasting Notes"
-          value={description}
-          onChangeText={setDescription}
+          value={ctrl.description}
+          onChangeText={ctrl.setDescription}
           multiline
           numberOfLines={2}
           placeholder="Rich smoked bourbon with house bitters and orange oils..."
           className="min-h-[72px] py-2"
         />
 
-        {/* Dropdowns for Allergens & Dietary (Clean, Compact Dropdown View) */}
         <View className="flex-col sm:flex-row gap-4">
           <View className="flex-1">
             <PosMultiSelectDropdown
@@ -1300,8 +148,8 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
                 value: alg,
                 label: `⚠️ ${alg}`,
               }))}
-              selectedValues={selectedAllergens}
-              onChange={setSelectedAllergens}
+              selectedValues={ctrl.selectedAllergens}
+              onChange={ctrl.setSelectedAllergens}
               variant="danger"
               icon={ShieldAlert}
             />
@@ -1316,8 +164,8 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
                 value: diet,
                 label: `🌿 ${diet}`,
               }))}
-              selectedValues={selectedDietary}
-              onChange={setSelectedDietary}
+              selectedValues={ctrl.selectedDietary}
+              onChange={ctrl.setSelectedDietary}
               variant="success"
               icon={Leaf}
             />
@@ -1327,3 +175,4 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
     </AdminModal>
   );
 };
+export default MenuItemModal;

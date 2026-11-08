@@ -1,0 +1,332 @@
+import { useState, useMemo, useEffect } from 'react';
+import {
+  MenuItem,
+  MenuCategory,
+  OrderLineItem,
+  BeverageTemperature,
+  ProductVariant,
+} from '@/types/floor';
+import { toast } from '@/features/shared/toast/useToastStore';
+import { useAuthStore } from '@/features/auth';
+import { useVenueStore } from '@/features/shared/stores/useVenueStore';
+import {
+  calculateTabBilling,
+  PricingLineItem,
+} from '@/features/checkout/utils/taxAndDiscountCalculator';
+import { menuApi } from '@/features/menu/data/menu.api';
+import {
+  appendOrIncrementCartItem,
+  computeServiceChargeLabel,
+  resolveInitialCustomizerState,
+  findMatchingVariant,
+} from './orderEntryHelpers';
+
+export interface UseOrderEntryControllerProps {
+  visible: boolean;
+  title: string;
+  orderType?: 'dine_in' | 'takeout' | 'online';
+  initialItems?: OrderLineItem[];
+  hasExistingCorkage?: boolean;
+  onClose: () => void;
+  onSendOrder: (items: OrderLineItem[], hasCorkageFee: boolean, corkageAmount: number) => void;
+}
+
+export function useOrderEntryController({
+  visible,
+  title,
+  orderType,
+  initialItems = [],
+  hasExistingCorkage = false,
+  onClose,
+  onSendOrder,
+}: UseOrderEntryControllerProps) {
+  const { currentUser } = useAuthStore();
+  const isAdmin = currentUser?.role === 'admin';
+
+  const [selectedCategory, setSelectedCategory] = useState<MenuCategory>('coffee');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [cartItems, setCartItems] = useState<OrderLineItem[]>(initialItems);
+  const [hasCorkage, setHasCorkage] = useState(hasExistingCorkage);
+  const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>([]);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+
+  const [editingImageItem, setEditingImageItem] = useState<MenuItem | null>(null);
+  const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
+  const [isConfirmDispatchOpen, setIsConfirmDispatchOpen] = useState<boolean>(false);
+
+  const [activeCustomizingItem, setActiveCustomizingItem] = useState<MenuItem | null>(null);
+  const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
+  const [itemNotes, setItemNotes] = useState('');
+  const [selectedTemperature, setSelectedTemperature] = useState<BeverageTemperature>('HOT');
+  const [selectedSize, setSelectedSize] = useState<string>('');
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadDbMenuItems() {
+      try {
+        const items = await menuApi.getMenuItems();
+        if (isMounted && items.length > 0) {
+          setMenuItemsList(items);
+        }
+      } catch (err) {
+        console.warn('Failed to load DB menu items in OrderEntryModal:', err);
+      }
+    }
+
+    if (visible) {
+      loadDbMenuItems();
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [visible]);
+
+  useEffect(() => {
+    setCartItems(initialItems);
+    setHasCorkage(hasExistingCorkage);
+  }, [initialItems, hasExistingCorkage, visible]);
+
+  const filteredMenuItems = useMemo(() => {
+    return menuItemsList.filter((item) => {
+      if (searchQuery.trim().length > 0) {
+        return item.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
+      }
+      return item.category === selectedCategory;
+    });
+  }, [menuItemsList, selectedCategory, searchQuery]);
+
+  const handleOpenImageEditor = (item: MenuItem) => {
+    setEditingImageItem(item);
+    setIsImageModalOpen(true);
+  };
+
+  const handleSaveProductImage = async (itemId: string, newImageUrl: string) => {
+    try {
+      const res = await menuApi.updateProductImage(itemId, newImageUrl);
+      if (res && res.success) {
+        setMenuItemsList((prev) =>
+          prev.map((i) => (i.id === itemId ? { ...i, imageUrl: newImageUrl } : i))
+        );
+        toast.success(`Photo updated for item!`, { title: 'Product Updated' });
+        return true;
+      }
+      toast.error('Failed to update product photo in database.');
+      return false;
+    } catch (e: any) {
+      toast.error(e?.message || 'Error updating product photo.');
+      return false;
+    }
+  };
+
+  const { operatingMode, serviceChargeEnabled, cafeFoodServiceChargeRate, eventServiceChargeRate } =
+    useVenueStore();
+
+  const isDineIn =
+    orderType === 'dine_in' ||
+    (!orderType &&
+      !title.toLowerCase().includes('takeout') &&
+      !title.toLowerCase().includes('delivery') &&
+      !title.toLowerCase().includes('foodpanda') &&
+      !title.toLowerCase().includes('grabfood'));
+
+  const itemsSubtotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+  }, [cartItems]);
+
+  const corkageAmount = useMemo(() => {
+    return hasCorkage ? itemsSubtotal * 0.2 : 0;
+  }, [hasCorkage, itemsSubtotal]);
+
+  const billingResult = useMemo(() => {
+    const pricingItems: PricingLineItem[] = cartItems.map((ci) => ({
+      id: ci.id,
+      productName: ci.productName,
+      unitPrice: ci.unitPrice,
+      quantity: ci.quantity,
+      stationTarget: ci.stationTarget || 'kitchen',
+    }));
+
+    return calculateTabBilling(pricingItems, {
+      operatingMode,
+      orderType: isDineIn ? 'DINE_IN' : 'TAKEOUT',
+      serviceChargeEnabled,
+      cafeFoodServiceChargeRate,
+      eventServiceChargeRate,
+      corkageAmount,
+    });
+  }, [
+    cartItems,
+    operatingMode,
+    isDineIn,
+    serviceChargeEnabled,
+    cafeFoodServiceChargeRate,
+    eventServiceChargeRate,
+    corkageAmount,
+  ]);
+
+  const serviceCharge = billingResult.serviceCharge;
+  const vatAmount = billingResult.vatAmount;
+  const vatableSales = billingResult.vatableSales;
+  const grandTotal = billingResult.totalAmountDue;
+
+  const serviceChargeLabel = useMemo(() => {
+    return computeServiceChargeLabel(
+      isDineIn,
+      serviceChargeEnabled,
+      operatingMode,
+      cartItems,
+      cafeFoodServiceChargeRate,
+      eventServiceChargeRate
+    );
+  }, [
+    isDineIn,
+    serviceChargeEnabled,
+    operatingMode,
+    cartItems,
+    cafeFoodServiceChargeRate,
+    eventServiceChargeRate,
+  ]);
+
+  const addToCartDirect = (
+    item: MenuItem,
+    variant?: ProductVariant,
+    mods: string[] = [],
+    notesStr: string = ''
+  ) => {
+    setCartItems((prev) => appendOrIncrementCartItem(prev, item, variant, mods, notesStr));
+    toast.success(`Added ${item.name} to order basket`, { title: 'Item Added' });
+  };
+
+  const handleItemClick = (item: MenuItem) => {
+    const hasVariants = Boolean(item.variants && item.variants.length > 0);
+    const hasModifiers = Boolean(item.modifiers && item.modifiers.length > 0);
+
+    if (hasVariants) {
+      const { initialTemp, initialSize } = resolveInitialCustomizerState(item);
+      setSelectedTemperature(initialTemp);
+      setSelectedSize(initialSize);
+      setActiveCustomizingItem(item);
+      setSelectedModifiers([]);
+      setItemNotes('');
+      return;
+    }
+
+    if (hasModifiers) {
+      setActiveCustomizingItem(item);
+      setSelectedModifiers([]);
+      setItemNotes('');
+      return;
+    }
+
+    addToCartDirect(item, undefined, [], '');
+  };
+
+  const handleConfirmCustomize = () => {
+    if (!activeCustomizingItem) return;
+    const matched = findMatchingVariant(activeCustomizingItem, selectedTemperature, selectedSize);
+    addToCartDirect(activeCustomizingItem, matched, selectedModifiers, itemNotes);
+    setActiveCustomizingItem(null);
+  };
+
+  const handleToggleModifier = (modName: string) => {
+    setSelectedModifiers((prev) =>
+      prev.includes(modName) ? prev.filter((m) => m !== modName) : [...prev, modName]
+    );
+  };
+
+  const updateQuantity = (index: number, delta: number) => {
+    setCartItems((prev) => {
+      const copy = [...prev];
+      const newQty = copy[index].quantity + delta;
+      if (newQty <= 0) {
+        copy.splice(index, 1);
+      } else {
+        copy[index].quantity = newQty;
+      }
+      return copy;
+    });
+  };
+
+  const handleToggleCorkage = (val: boolean) => {
+    setHasCorkage(val);
+    if (val) {
+      toast.info('20% corkage fee applied for outside beverage/food.', {
+        title: 'Corkage Fee Added',
+      });
+    } else {
+      toast.info('Corkage fee removed.', { title: 'Corkage Removed' });
+    }
+  };
+
+  const handleOpenConfirm = () => {
+    if (cartItems.length === 0) {
+      toast.warning('Cart is empty. Please select menu items to dispatch.', {
+        title: 'Empty Order',
+      });
+      return;
+    }
+    setIsConfirmDispatchOpen(true);
+  };
+
+  const handleExecuteDispatch = () => {
+    try {
+      onSendOrder(cartItems, hasCorkage, corkageAmount);
+      setIsConfirmDispatchOpen(false);
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to dispatch order. Check station connectivity.', {
+        title: 'Dispatch Error',
+      });
+    }
+  };
+
+  const totalCartQty = useMemo(
+    () => cartItems.reduce((acc, i) => acc + i.quantity, 0),
+    [cartItems]
+  );
+
+  return {
+    isAdmin,
+    selectedCategory,
+    setSelectedCategory,
+    searchQuery,
+    setSearchQuery,
+    cartItems,
+    hasCorkage,
+    filteredMenuItems,
+    isMobileCartOpen,
+    setIsMobileCartOpen,
+    editingImageItem,
+    setEditingImageItem,
+    isImageModalOpen,
+    setIsImageModalOpen,
+    isConfirmDispatchOpen,
+    setIsConfirmDispatchOpen,
+    activeCustomizingItem,
+    setActiveCustomizingItem,
+    selectedModifiers,
+    itemNotes,
+    setItemNotes,
+    selectedTemperature,
+    setSelectedTemperature,
+    selectedSize,
+    setSelectedSize,
+    itemsSubtotal,
+    corkageAmount,
+    serviceCharge,
+    serviceChargeLabel,
+    vatAmount,
+    vatableSales,
+    grandTotal,
+    totalCartQty,
+    handleOpenImageEditor,
+    handleSaveProductImage,
+    handleItemClick,
+    handleConfirmCustomize,
+    handleToggleModifier,
+    updateQuantity,
+    handleToggleCorkage,
+    handleOpenConfirm,
+    handleExecuteDispatch,
+  };
+}

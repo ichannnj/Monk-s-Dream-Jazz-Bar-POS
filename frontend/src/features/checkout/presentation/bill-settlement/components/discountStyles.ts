@@ -1,0 +1,92 @@
+import { StyleSheet } from 'react-native';
+
+export const discountStyles = StyleSheet.create({
+  discountContainer: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 12,
+    marginBottom: 16,
+    gap: 10,
+  },
+  discountTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  discountTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#334155',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  discountPillRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  discountPill: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    backgroundColor: '#ffffff',
+    minHeight: 40,
+    justifyContent: 'center',
+  },
+  discountPillActive: {
+    borderColor: '#641b2a',
+    backgroundColor: '#641b2a',
+  },
+  discountPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  discountPillTextActive: {
+    color: '#ffffff',
+  },
+  seniorFieldsBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#fed7aa',
+    padding: 12,
+    gap: 8,
+  },
+  seniorInputLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9a3412',
+    textTransform: 'uppercase',
+  },
+  seniorInput: {
+    minHeight: 40,
+    backgroundColor: '#fff7ed',
+    borderWidth: 1,
+    borderColor: '#fdba74',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1e293b',
+  },
+  seniorItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
+  },
+  seniorItemRowActive: {
+    borderColor: '#f97316',
+    backgroundColor: '#fff7ed',
+  },
+});

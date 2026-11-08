@@ -1,0 +1,161 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  ticketCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    padding: 18,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+    gap: 14,
+  },
+  ticketCardReady: {
+    borderColor: '#22c55e',
+    backgroundColor: '#f0fdf4',
+    borderWidth: 2,
+    shadowColor: '#22c55e',
+    shadowOpacity: 0.15,
+  },
+  buzzoutBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#16a34a',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  buzzoutBannerText: {
+    color: '#ffffff',
+    fontWeight: '800',
+    fontSize: 16,
+    letterSpacing: 0.3,
+  },
+  relocatedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#fef3c7',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  relocatedBannerText: {
+    color: '#b45309',
+    fontWeight: '800',
+    fontSize: 16,
+  },
+  ticketHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  headerLeft: {
+    gap: 2,
+  },
+  sourceText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  guestText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  timerPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  timerText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  progressContainer: {
+    gap: 6,
+  },
+  progressBarBg: {
+    height: 8,
+    backgroundColor: '#e5e7eb',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: '#3b82f6',
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  partialActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  btnPartialAction: {
+    flex: 1,
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  btnPartialText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  btnDeliverDrinks: {
+    backgroundColor: '#e0f2fe',
+    borderColor: '#bae6fd',
+  },
+  btnDeliverDrinksText: {
+    color: '#0284c7',
+  },
+  btnDeliverFood: {
+    backgroundColor: '#fef3c7',
+    borderColor: '#fde68a',
+  },
+  btnDeliverFoodText: {
+    color: '#d97706',
+  },
+  handoffBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    minHeight: 48,
+    borderRadius: 12,
+    backgroundColor: '#4b5563',
+  },
+  handoffBtnReady: {
+    backgroundColor: '#16a34a',
+  },
+  handoffBtnText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  btnPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.98 }],
+  },
+});

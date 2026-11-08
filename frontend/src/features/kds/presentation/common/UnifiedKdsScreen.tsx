@@ -1,16 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MessageSquare } from 'lucide-react-native';
-import { supabase } from '../../../shared/infrastructure/supabase';
-import { useAuthStore } from '../../../auth/application/useAuthStore';
-import { useOrderStore } from '../../../orders/application/useOrderStore';
 import { toast } from '../../../shared/toast/useToastStore';
-import { Sidebar, NavTabId } from '../../../shared/navigation/Sidebar';
+import { Sidebar } from '../../../shared/navigation/Sidebar';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { BaristaKanbanColumn } from '../barista/components/BaristaKanbanColumn';
-import { BarTicket } from '../barista/types';
 import { KdsModals } from './components/KdsModals';
-import { KdsToolbar, KdsStageFilter } from './components/KdsToolbar';
+import { KdsToolbar } from './components/KdsToolbar';
 import { SharedChatView } from '../../../chat/presentation/SharedChatView';
 import { useChatStore } from '../../../chat';
 import { SharedAlertsView } from '../../../alerts/presentation/SharedAlertsView';
@@ -20,6 +16,7 @@ import { CashDrawerModalView } from '../../../cash-drawer';
 import { useKdsStock } from './hooks/useKdsStock';
 import { useKdsTickets } from './hooks/useKdsTickets';
 import { useKdsArrivals } from './hooks/useKdsArrivals';
+import { useKdsWorkstationController } from './useKdsWorkstationController';
 
 export interface UnifiedKdsScreenProps {
   stationTarget: 'bar' | 'kitchen';
@@ -42,24 +39,37 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
   chatSenderRole,
   chatDefaultChannel,
 }) => {
-  const { currentUser, logout, isOnline, setIsOnline } = useAuthStore();
   const { isMobile } = useResponsive();
-  const alerts = useOrderStore((state) => state.alerts);
-  const addAlert = useOrderStore((state) => state.addAlert);
 
-  const [activeSidebarTab, setActiveSidebarTab] = useState<NavTabId>('board');
-  const [mobileStage, setMobileStage] = useState<KdsStageFilter>('new');
-  const [audioChimes, setAudioChimes] = useState(true);
-  const [stationFilter, setStationFilter] = useState(true);
+  const {
+    currentUser,
+    logout,
+    isOnline,
+    setIsOnline,
+    activeSidebarTab,
+    setActiveSidebarTab,
+    mobileStage,
+    setMobileStage,
+    audioChimes,
+    setAudioChimes,
+    stationFilter,
+    setStationFilter,
+    isAvailabilityModalOpen,
+    setIsAvailabilityModalOpen,
+    isOutOfStockListModalOpen,
+    setIsOutOfStockListModalOpen,
+    isStockModalOpen,
+    setIsStockModalOpen,
+    isSettingsModalOpen,
+    setIsSettingsModalOpen,
+    fohModalTicket,
+    setFohModalTicket,
+    unreadAlertCount,
+    handleSendSubstitutionRequest,
+    handleForceUnblock,
+    handleSelectSidebarTab,
+  } = useKdsWorkstationController({ stationTarget, stationName });
 
-  // Modals visibility
-  const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
-  const [isOutOfStockListModalOpen, setIsOutOfStockListModalOpen] = useState(false);
-  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
-  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [fohModalTicket, setFohModalTicket] = useState<BarTicket | null>(null);
-
-  // Modular Stock Hook
   const {
     inventory,
     stationProducts,
@@ -68,7 +78,6 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
     handleUpdateStockCount,
   } = useKdsStock({ stationTarget });
 
-  // Modular Tickets Hook
   const {
     allTickets,
     newTickets,
@@ -82,73 +91,13 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
     handleToggleItem,
   } = useKdsTickets({ stationTarget, inventory });
 
-  // Audio chimes & arrival notifications
   useKdsArrivals({ newTickets, audioChimes, stationName });
 
-  // Heartbeat tracking to report real station online status to PostgreSQL
-  useEffect(() => {
-    const stationKey = stationTarget === 'kitchen' ? 'kitchen' : 'bar';
-
-    const sendHeartbeat = async (online: boolean) => {
-      try {
-        await (supabase.rpc as any)('report_station_heartbeat', {
-          p_station_key: stationKey,
-          p_user_id: (currentUser?.id || null) as any,
-          p_is_online: online,
-        });
-      } catch (e) {
-        console.warn('Failed to report station heartbeat:', e);
-      }
-    };
-
-    if (isOnline) {
-      sendHeartbeat(true);
-      const timer = setInterval(() => sendHeartbeat(true), 60000);
-      return () => {
-        clearInterval(timer);
-        sendHeartbeat(false);
-      };
-    } else {
-      sendHeartbeat(false);
-    }
-  }, [stationTarget, currentUser?.role, currentUser?.id, isOnline]);
-
-  const unreadAlertCount = alerts.filter((a) => !a.isRead).length;
   const unreadChatCount = useChatStore((state) =>
     state.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
   );
 
-  const handleSendSubstitutionRequest = (ticketId: string, suggestion: string) => {
-    const ticket = allTickets.find((t) => t.id === ticketId);
-    if (!ticket) return;
-
-    const icon = stationTarget === 'kitchen' ? '🍳' : '🍸';
-    addAlert({
-      title: `${icon} ${stationName} Substitution Needed: ${ticket.tableOrSource}`,
-      description: `Ticket ${ticket.orderNumber}: ${suggestion}. Waiter alerted.`,
-      type: 'station_ready',
-      targetRef: ticket.tableOrSource,
-    });
-
-    toast.success(`Prompt sent to waiter for ${ticket.tableOrSource}`);
-  };
-
-  const handleForceUnblock = (_ticketId: string) => {
-    toast.success('Order unblocked. Proceeding with preparation.');
-  };
-
-  const handleSelectSidebarTab = (tab: NavTabId) => {
-    if (tab === 'settings') {
-      setIsSettingsModalOpen(true);
-    } else if (stationTarget === 'kitchen' && (tab === 'tables' || tab === 'drawer')) {
-      setActiveSidebarTab('board');
-    } else {
-      setActiveSidebarTab(tab);
-    }
-  };
-
   const staffDisplayName = currentUser?.displayName || defaultStaffName;
-  const staffDisplayRole = currentUser?.role?.toUpperCase() || defaultStaffRole;
   const staffInitials =
     staffDisplayName
       .split(' ')
@@ -202,7 +151,6 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           <SharedAlertsView onBack={() => setActiveSidebarTab('board')} />
         ) : (
           <>
-            {/* Unified Station Header & Action Toolbar */}
             <KdsToolbar
               stationName={stationName}
               isOnline={isOnline}
@@ -222,7 +170,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
               onOpenStockAdjust={() => setIsStockModalOpen(true)}
             />
 
-            {/* 3. Kanban Board (Single Stage on Mobile <768px | Three Columns on >=768px) */}
+            {/* 3. Kanban Board */}
             <View style={styles.kanbanBoard}>
               {(!isMobile || mobileStage === 'new') && (
                 <BaristaKanbanColumn
@@ -298,7 +246,12 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
         onUpdateStockCount={handleUpdateStockCount}
         fohModalTicket={fohModalTicket}
         onCloseFohModal={() => setFohModalTicket(null)}
-        onSendSubstitutionRequest={handleSendSubstitutionRequest}
+        onSendSubstitutionRequest={(id, sug) =>
+          handleSendSubstitutionRequest(
+            allTickets.find((t) => t.id === id),
+            sug
+          )
+        }
         onForceUnblock={handleForceUnblock}
         isSettingsModalOpen={isSettingsModalOpen}
         onCloseSettings={() => setIsSettingsModalOpen(false)}
@@ -349,7 +302,6 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     paddingBottom: 0,
   },
-
   kanbanBoard: {
     flex: 1,
     flexDirection: 'row',

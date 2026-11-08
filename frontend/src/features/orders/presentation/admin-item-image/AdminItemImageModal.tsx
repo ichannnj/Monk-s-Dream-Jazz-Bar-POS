@@ -1,22 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   Modal,
   Pressable,
-  TextInput,
   ScrollView,
   ActivityIndicator,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import { Image } from 'expo-image';
 import {
   X,
   Camera,
   Check,
-  Link,
-  Sparkles,
   UtensilsCrossed,
   UploadCloud,
   FileImage,
@@ -24,15 +20,9 @@ import {
 } from 'lucide-react-native';
 import { MenuItem } from '../../../../types/floor';
 import { formatCurrency } from '@monks/shared';
-import { IMAGE_PRESETS } from './presets';
 import { styles } from './AdminItemImageModal.styles';
-import {
-  validateMenuImageFile,
-  prepareMenuImageForUpload,
-  uploadAndRecordProductImage,
-  type PreparedMenuImage,
-} from '@/features/menu/data/imageUpload.service';
-import { useAuthStore } from '@/features/auth';
+import { useAdminItemImageController } from './useAdminItemImageController';
+import { AdminItemPresetsTab } from './AdminItemPresetsTab';
 
 export interface AdminItemImageModalProps {
   visible: boolean;
@@ -47,98 +37,29 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
   onClose,
   onSaveImage,
 }) => {
-  const { currentUser } = useAuthStore();
-  const [imageUrl, setImageUrl] = useState<string>('');
-  const [stagedImage, setStagedImage] = useState<PreparedMenuImage | null>(null);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [hasImageLoadError, setHasImageLoadError] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'upload' | 'url'>('upload');
-
-  const triggerFileBrowser = () => {
-    if (typeof document !== 'undefined') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/jpeg,image/png,image/webp';
-      input.style.display = 'none';
-      input.onchange = (e: any) => {
-        const f = e.target?.files?.[0];
-        if (f) handleFileSelection(f);
-      };
-      document.body.appendChild(input);
-      input.click();
-      document.body.removeChild(input);
-    }
-  };
-
-  useEffect(() => {
-    if (item) {
-      setImageUrl(item.imageUrl || '');
-      setStagedImage(null);
-      setHasImageLoadError(false);
-      setErrorMessage(null);
-    }
-  }, [item, visible]);
-
-  useEffect(() => {
-    return () => {
-      if (stagedImage?.previewUri && stagedImage.previewUri.startsWith('blob:')) {
-        URL.revokeObjectURL(stagedImage.previewUri);
-      }
-    };
-  }, [stagedImage]);
+  const {
+    imageUrl,
+    setImageUrl,
+    stagedImage,
+    isSaving,
+    hasImageLoadError,
+    setHasImageLoadError,
+    errorMessage,
+    activeTab,
+    setActiveTab,
+    displayUri,
+    triggerFileBrowser,
+    handleSave,
+    clearImage,
+    selectPreset,
+  } = useAdminItemImageController({
+    visible,
+    item,
+    onClose,
+    onSaveImage,
+  });
 
   if (!item) return null;
-
-  const handleFileSelection = async (file: File | Blob) => {
-    setErrorMessage(null);
-    setHasImageLoadError(false);
-
-    const validation = validateMenuImageFile(file);
-    if (!validation.valid) {
-      setErrorMessage(validation.error || 'Invalid file');
-      return;
-    }
-
-    try {
-      const prepared = await prepareMenuImageForUpload(file, item.name);
-      setStagedImage(prepared);
-      setImageUrl('');
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Failed to process image');
-    }
-  };
-
-  const handleSave = async () => {
-    if (isSaving) return;
-    setIsSaving(true);
-    setErrorMessage(null);
-
-    try {
-      let finalUrl = imageUrl.trim();
-
-      if (stagedImage) {
-        const uploadRes = await uploadAndRecordProductImage(item.id, stagedImage, currentUser?.id);
-        if (!uploadRes.success) {
-          setErrorMessage(uploadRes.error || 'Failed to upload image');
-          setIsSaving(false);
-          return;
-        }
-        finalUrl = uploadRes.publicUrl || '';
-      }
-
-      const success = await onSaveImage(item.id, finalUrl);
-      if (success) {
-        onClose();
-      }
-    } catch (err: any) {
-      setErrorMessage(err?.message || 'Failed to save product image');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const displayUri = stagedImage ? stagedImage.previewUri : imageUrl;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -215,11 +136,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
 
                 {displayUri ? (
                   <Pressable
-                    onPress={() => {
-                      setImageUrl('');
-                      setStagedImage(null);
-                      setHasImageLoadError(false);
-                    }}
+                    onPress={clearImage}
                     style={{
                       position: 'absolute',
                       top: 10,
@@ -376,83 +293,15 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
 
             {/* TAB 2: Direct Image URL & Presets */}
             {activeTab === 'url' && (
-              <>
-                <View style={styles.section}>
-                  <View style={styles.inputLabelRow}>
-                    <Link size={14} color="#4b5563" />
-                    <Text style={styles.sectionLabel}>PHOTO URL</Text>
-                  </View>
-                  <View style={styles.inputWrapper}>
-                    <TextInput
-                      value={imageUrl}
-                      onChangeText={(txt) => {
-                        setImageUrl(txt);
-                        setStagedImage(null);
-                        setHasImageLoadError(false);
-                      }}
-                      placeholder="https://images.unsplash.com/..."
-                      placeholderTextColor="#9ca3af"
-                      style={styles.urlInput}
-                      autoCapitalize="none"
-                      autoCorrect={false}
-                    />
-                    {imageUrl.length > 0 && (
-                      <Pressable
-                        onPress={() => {
-                          setImageUrl('');
-                          setHasImageLoadError(false);
-                        }}
-                        style={styles.clearBtn}
-                      >
-                        <X size={15} color="#9ca3af" />
-                      </Pressable>
-                    )}
-                  </View>
-                </View>
-
-                {/* Quick Photo Presets */}
-                <View style={styles.section}>
-                  <View style={styles.inputLabelRow}>
-                    <Sparkles size={14} color="#832238" />
-                    <Text style={styles.sectionLabel}>CURATED PRESETS</Text>
-                  </View>
-
-                  <View style={styles.presetsGrid}>
-                    {IMAGE_PRESETS.map((preset) => {
-                      const isSelected = imageUrl === preset.url;
-                      return (
-                        <Pressable
-                          key={preset.label}
-                          onPress={() => {
-                            setImageUrl(preset.url);
-                            setStagedImage(null);
-                            setHasImageLoadError(false);
-                          }}
-                          style={[styles.presetCard, isSelected && styles.presetCardSelected]}
-                        >
-                          <Image
-                            source={{ uri: preset.url }}
-                            style={styles.presetThumb}
-                            contentFit="cover"
-                            transition={150}
-                          />
-                          <View style={styles.presetInfo}>
-                            <Text style={styles.presetName} numberOfLines={1}>
-                              {preset.label}
-                            </Text>
-                            <Text style={styles.presetCategory}>{preset.category}</Text>
-                          </View>
-                          {isSelected && (
-                            <View style={styles.selectedBadge}>
-                              <Check size={12} color="#ffffff" strokeWidth={3} />
-                            </View>
-                          )}
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                </View>
-              </>
+              <AdminItemPresetsTab
+                imageUrl={imageUrl}
+                onSelectPreset={selectPreset}
+                onClearImage={clearImage}
+                onChangeUrl={(txt) => {
+                  clearImage();
+                  setImageUrl(txt);
+                }}
+              />
             )}
           </ScrollView>
 

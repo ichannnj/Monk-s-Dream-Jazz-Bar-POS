@@ -41,15 +41,8 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
 
   const handleExportExcel = () => {
     try {
-      exportAttendancePayrollToExcel({
-        dateRangeLabel,
-        isSingleDay,
-        items,
-        totals,
-      });
-      toast.success('Attendance report exported to Excel (.xls)', {
-        title: 'Excel Export Ready',
-      });
+      exportAttendancePayrollToExcel({ dateRangeLabel, isSingleDay, items, totals });
+      toast.success('Attendance report exported to Excel (.xls)', { title: 'Excel Export Ready' });
     } catch (err: any) {
       console.error('[AttendanceReportModal] Excel export error:', err);
       toast.error('Failed to export report to Excel', { title: 'Export Error' });

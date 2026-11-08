@@ -1,33 +1,24 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, Text, Pressable, ScrollView, FlatList, ActivityIndicator } from 'react-native';
-import {
-  Printer,
-  Coins,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  FileText,
-  RotateCw,
-  Volume2,
-  VolumeX,
-  Zap,
-  Terminal,
-  ShieldCheck,
-  Radio,
-  Sliders,
-  ExternalLink,
-} from 'lucide-react-native';
+import { View, Text, Pressable, ScrollView, FlatList } from 'react-native';
+import { Printer, FileText, Terminal, ShieldCheck, Clock, ExternalLink } from 'lucide-react-native';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
 import { usePrinterStationStore } from '../application/usePrinterStationStore';
 import type { PrintJobItem } from '../data/printer.api';
+import { HardwareStationTelemetryCards } from './components/HardwareStationTelemetryCards';
+import { PrintJobRowCard } from './components/PrintJobRowCard';
 
 type PrintJobFilter = 'ALL' | 'CUSTOMER_RECEIPT' | 'RUNNER_CHIT' | 'TAKEOUT_SLIP' | 'READINGS';
 
-const BAUD_RATE_OPTIONS: PosDropdownOption<string>[] = [
-  { value: '9600', label: '9600 baud', description: 'Standard ESC/POS thermal printers (Default)' },
-  { value: '19200', label: '19200 baud', description: 'Medium speed thermal printers' },
-  { value: '38400', label: '38400 baud', description: 'High speed serial printers' },
-  { value: '115200', label: '115200 baud', description: 'Ultra high speed USB-VCP printers' },
+const filterOptions: PosDropdownOption<PrintJobFilter>[] = [
+  { value: 'ALL', label: 'All Print Jobs', description: 'Show all receipts, chits, and slips' },
+  {
+    value: 'CUSTOMER_RECEIPT',
+    label: 'Receipts Only',
+    description: 'Cashier & customer receipts',
+  },
+  { value: 'RUNNER_CHIT', label: 'Runner Chits', description: 'Food & cocktail kitchen chits' },
+  { value: 'TAKEOUT_SLIP', label: 'Takeout / Delivery', description: 'Pickup & delivery tags' },
+  { value: 'READINGS', label: 'Fiscal Readings', description: 'X, Y, and Z shift closing slips' },
 ];
 
 export const HardwarePrintStationScreen: React.FC = () => {
@@ -61,7 +52,6 @@ export const HardwarePrintStationScreen: React.FC = () => {
   const [isTestingDrawer, setIsTestingDrawer] = useState(false);
   const [reprintingId, setReprintingId] = useState<string | null>(null);
 
-  // Initialize station lifecycle, Web Locks leader election, and Supabase CDC on mount
   useEffect(() => {
     const cleanup = initStation();
     return () => {
@@ -132,18 +122,6 @@ export const HardwarePrintStationScreen: React.FC = () => {
     });
   }, [recentJobs, filter]);
 
-  const filterOptions: PosDropdownOption<PrintJobFilter>[] = [
-    { value: 'ALL', label: 'All Print Jobs', description: 'Show all receipts, chits, and slips' },
-    {
-      value: 'CUSTOMER_RECEIPT',
-      label: 'Receipts Only',
-      description: 'Cashier & customer receipts',
-    },
-    { value: 'RUNNER_CHIT', label: 'Runner Chits', description: 'Food & cocktail kitchen chits' },
-    { value: 'TAKEOUT_SLIP', label: 'Takeout / Delivery', description: 'Pickup & delivery tags' },
-    { value: 'READINGS', label: 'Fiscal Readings', description: 'X, Y, and Z shift closing slips' },
-  ];
-
   return (
     <View className="flex-1 bg-stone-900">
       {/* 1. Header Bar */}
@@ -163,7 +141,6 @@ export const HardwarePrintStationScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* Leader Lock Status */}
           <View className="flex-row items-center space-x-2">
             {isLeader ? (
               <View className="flex-row items-center rounded-full bg-emerald-950 border border-emerald-600/50 px-3 py-1">
@@ -189,209 +166,26 @@ export const HardwarePrintStationScreen: React.FC = () => {
       </View>
 
       {/* 2. Top Hardware Telemetry Cards */}
-      <View className="p-4 sm:p-6 pb-2">
-        <View className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1: Printer Status */}
-          <View className="rounded-2xl border border-stone-800 bg-stone-950/80 p-4">
-            <View className="flex-row items-center justify-between pb-3 border-b border-stone-800/80">
-              <View className="flex-row items-center space-x-2">
-                <Printer size={18} color="#94a3b8" />
-                <Text className="text-sm font-bold text-stone-300 uppercase tracking-wider">
-                  80mm Thermal Printer
-                </Text>
-              </View>
-              {connectionStatus === 'CONNECTED' ? (
-                <View className="flex-row items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5">
-                  <View className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <Text className="ml-1.5 text-xs font-bold text-emerald-400">ONLINE</Text>
-                </View>
-              ) : connectionStatus === 'CONNECTING' ? (
-                <View className="flex-row items-center rounded-full bg-sky-500/10 border border-sky-500/30 px-2.5 py-0.5">
-                  <ActivityIndicator size="small" color="#38bdf8" />
-                  <Text className="ml-1.5 text-xs font-bold text-sky-400">CONNECTING</Text>
-                </View>
-              ) : (
-                <View className="flex-row items-center rounded-full bg-rose-500/10 border border-rose-500/30 px-2.5 py-0.5">
-                  <View className="h-2 w-2 rounded-full bg-rose-500" />
-                  <Text className="ml-1.5 text-xs font-bold text-rose-400">OFFLINE</Text>
-                </View>
-              )}
-            </View>
-
-            <View className="mt-3">
-              <View className="space-y-1">
-                <Text className="text-xs text-stone-300 font-semibold" numberOfLines={1}>
-                  {connectionStatus === 'CONNECTED'
-                    ? portInfo?.deviceName || 'USB Thermal Printer'
-                    : 'No Thermal Printer Connected'}
-                </Text>
-                <Text className="text-[11px] text-stone-500">
-                  {connectionStatus === 'CONNECTED'
-                    ? `${portInfo?.type === 'usb' ? 'Direct WebUSB' : portInfo?.type === 'bridge' ? 'Linux Bridge (/dev/usb/lp0)' : 'Serial Port'}${portInfo?.manufacturerName ? ` • ${portInfo.manufacturerName}` : ''}${portInfo?.usbVendorId ? ` (VID: 0x${portInfo.usbVendorId.toString(16).toUpperCase()})` : ''}`
-                    : !isSupported
-                      ? 'WebUSB is not supported in this browser. Please use Chrome or Edge.'
-                      : 'Printer disconnected. Click Pair USB Device to connect.'}
-                </Text>
-              </View>
-
-              <View className="mt-3 flex-row items-center space-x-2">
-                {connectionStatus === 'CONNECTED' ? (
-                  <Pressable
-                    onPress={disconnectDevice}
-                    className="flex-1 py-2 rounded-xl bg-stone-800 items-center justify-center active:bg-stone-700"
-                  >
-                    <Text className="text-xs font-bold text-stone-300">Disconnect</Text>
-                  </Pressable>
-                ) : (
-                  <Pressable
-                    onPress={handleConnect}
-                    disabled={!isSupported || connectionStatus === 'CONNECTING'}
-                    className="flex-1 py-2.5 rounded-xl bg-amber-500 items-center justify-center active:bg-amber-600 disabled:opacity-50"
-                  >
-                    <Text className="text-xs font-extrabold text-stone-950">Pair USB Device</Text>
-                  </Pressable>
-                )}
-
-                <View className="w-32">
-                  <PosDropdown
-                    options={BAUD_RATE_OPTIONS}
-                    value={String(baudRate)}
-                    onChange={(rate) => setBaudRate(Number(rate))}
-                    sheetTitle="Baud Rate"
-                    className="h-[36px]"
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Card 2: Cash Drawer Status */}
-          <View className="rounded-2xl border border-stone-800 bg-stone-950/80 p-4">
-            <View className="flex-row items-center justify-between pb-3 border-b border-stone-800/80">
-              <View className="flex-row items-center space-x-2">
-                <Coins size={18} color="#f59e0b" />
-                <Text className="text-sm font-bold text-stone-300 uppercase tracking-wider">
-                  Cash Drawer (RJ11/12)
-                </Text>
-              </View>
-              {drawerStatus === 'KICKING' ? (
-                <View className="flex-row items-center rounded-full bg-amber-500/20 border border-amber-500 px-2.5 py-0.5 animate-pulse">
-                  <Zap size={12} color="#f59e0b" />
-                  <Text className="ml-1 text-xs font-bold text-amber-400">PULSING</Text>
-                </View>
-              ) : (
-                <View className="flex-row items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5">
-                  <CheckCircle2 size={12} color="#10b981" />
-                  <Text className="ml-1 text-xs font-bold text-emerald-400">READY</Text>
-                </View>
-              )}
-            </View>
-
-            <View className="mt-3">
-              <Text className="text-xs text-stone-400">
-                Connected to Printer DK Port (ESC p 0 25 250). Auto-kicks on Cash settlement &amp;
-                manual till operations.
-              </Text>
-
-              <View className="mt-3">
-                <Pressable
-                  onPress={handleTestKick}
-                  disabled={isTestingDrawer || connectionStatus !== 'CONNECTED'}
-                  className="py-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 items-center justify-center active:bg-amber-500/20 disabled:opacity-40"
-                >
-                  <Text className="text-xs font-bold text-amber-400">
-                    {isTestingDrawer ? 'Firing Solenoid...' : '⚡ Test Kick Cash Drawer'}
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-
-          {/* Card 3: Automation & Audio Engine */}
-          <View className="rounded-2xl border border-stone-800 bg-stone-950/80 p-4">
-            <View className="flex-row items-center justify-between pb-3 border-b border-stone-800/80">
-              <View className="flex-row items-center space-x-2">
-                <Radio size={18} color="#38bdf8" />
-                <Text className="text-sm font-bold text-stone-300 uppercase tracking-wider">
-                  Automation &amp; Sound
-                </Text>
-              </View>
-              <View className="flex-row items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-0.5">
-                <View className="h-2 w-2 rounded-full bg-emerald-500" />
-                <Text className="ml-1.5 text-xs font-bold text-emerald-400">CDC SYNCED</Text>
-              </View>
-            </View>
-
-            <View className="mt-3 flex-row items-center justify-between gap-2">
-              <Pressable
-                onPress={toggleAutoPrint}
-                className={`flex-1 flex-row items-center justify-center py-2.5 rounded-xl border ${
-                  autoPrintEnabled
-                    ? 'border-emerald-600/40 bg-emerald-950/40 text-emerald-400'
-                    : 'border-stone-800 bg-stone-900 text-stone-400'
-                }`}
-              >
-                {autoPrintEnabled ? (
-                  <CheckCircle2 size={14} color="#10b981" />
-                ) : (
-                  <Clock size={14} color="#78716c" />
-                )}
-                <Text
-                  className={`ml-1.5 text-xs font-bold ${
-                    autoPrintEnabled ? 'text-emerald-400' : 'text-stone-400'
-                  }`}
-                >
-                  Auto-Print: {autoPrintEnabled ? 'ON' : 'OFF'}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={toggleChime}
-                className={`flex-1 flex-row items-center justify-center py-2.5 rounded-xl border ${
-                  chimeEnabled
-                    ? 'border-sky-600/40 bg-sky-950/40 text-sky-400'
-                    : 'border-stone-800 bg-stone-900 text-stone-400'
-                }`}
-              >
-                {chimeEnabled ? (
-                  <Volume2 size={14} color="#38bdf8" />
-                ) : (
-                  <VolumeX size={14} color="#78716c" />
-                )}
-                <Text
-                  className={`ml-1.5 text-xs font-bold ${
-                    chimeEnabled ? 'text-sky-400' : 'text-stone-400'
-                  }`}
-                >
-                  Chime: {chimeEnabled ? 'ON' : 'MUTED'}
-                </Text>
-              </Pressable>
-            </View>
-
-            <View className="mt-2.5 flex-row gap-2">
-              <Pressable
-                onPress={handleTestPrint}
-                disabled={isTestingChit || connectionStatus !== 'CONNECTED'}
-                className="flex-1 py-2 rounded-xl bg-stone-800 items-center justify-center active:bg-stone-700 disabled:opacity-40"
-              >
-                <Text className="text-xs font-bold text-stone-300">
-                  {isTestingChit ? 'Printing...' : 'Test Runner Chit'}
-                </Text>
-              </Pressable>
-
-              <Pressable
-                onPress={handleTestPrintReceipt}
-                disabled={isTestingReceipt || connectionStatus !== 'CONNECTED'}
-                className="flex-1 py-2 rounded-xl bg-amber-500/10 border border-amber-500/30 items-center justify-center active:bg-amber-500/20 disabled:opacity-40"
-              >
-                <Text className="text-xs font-bold text-amber-400">
-                  {isTestingReceipt ? 'Printing...' : 'Test Customer Receipt'}
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        </View>
-      </View>
+      <HardwareStationTelemetryCards
+        connectionStatus={connectionStatus}
+        drawerStatus={drawerStatus}
+        isSupported={isSupported}
+        portInfo={portInfo}
+        baudRate={baudRate}
+        autoPrintEnabled={autoPrintEnabled}
+        chimeEnabled={chimeEnabled}
+        isTestingChit={isTestingChit}
+        isTestingReceipt={isTestingReceipt}
+        isTestingDrawer={isTestingDrawer}
+        onConnect={handleConnect}
+        onDisconnect={disconnectDevice}
+        onSetBaudRate={setBaudRate}
+        onToggleAutoPrint={toggleAutoPrint}
+        onToggleChime={toggleChime}
+        onTestPrintChit={handleTestPrint}
+        onTestPrintReceipt={handleTestPrintReceipt}
+        onTestKickDrawer={handleTestKick}
+      />
 
       {/* 3. Section Bar & Filter Tabs */}
       <View className="px-4 sm:px-6 py-3 flex-row flex-wrap items-center justify-between border-b border-stone-800 gap-3">
@@ -463,142 +257,16 @@ export const HardwarePrintStationScreen: React.FC = () => {
               data={filteredJobs}
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ paddingBottom: 24 }}
-              renderItem={({ item }) => {
-                const data = item.receipt_data || {};
-                const isReceipt =
-                  item.job_type === 'CUSTOMER_RECEIPT' || item.job_type === 'RECEIPT';
-                const isRunner = item.job_type === 'RUNNER_CHIT';
-                const paymentMethod = (
-                  data.paymentMethod ||
-                  data.payment_method ||
-                  'CASH'
-                ).toUpperCase();
-                const isCash = paymentMethod === 'CASH';
-
-                const title = isRunner
-                  ? `Runner Chit #${data.orderNumber || ''} (Table ${data.tableNumber || 'Walk-in'})`
-                  : isReceipt
-                    ? `Receipt #${data.receiptNumber || ''} (${data.tabName || data.customerName || 'Guest'})`
-                    : `${item.job_type} - ${data.customerName || 'Ticket'}`;
-
-                return (
-                  <View className="mb-3 rounded-2xl border border-stone-800 bg-stone-950/70 p-4">
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-row items-center space-x-2.5">
-                        <View className="p-2 rounded-xl bg-stone-900 border border-stone-800">
-                          {isReceipt ? (
-                            <Coins size={18} color="#f59e0b" />
-                          ) : isRunner ? (
-                            <FileText size={18} color="#38bdf8" />
-                          ) : (
-                            <Sliders size={18} color="#a8a29e" />
-                          )}
-                        </View>
-                        <View>
-                          <Text className="text-base font-bold text-white">{title}</Text>
-                          <Text className="text-xs text-stone-400">
-                            {new Date(item.created_at).toLocaleTimeString()} • Type:{' '}
-                            <Text className="font-semibold text-stone-300">{item.job_type}</Text>
-                          </Text>
-                        </View>
-                      </View>
-
-                      {/* Status Badge */}
-                      <View>
-                        {item.status === 'COMPLETED' ? (
-                          <View className="flex-row items-center rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1">
-                            <CheckCircle2 size={14} color="#10b981" />
-                            <Text className="ml-1 text-xs font-bold text-emerald-400">PRINTED</Text>
-                          </View>
-                        ) : item.status === 'PRINTING' ? (
-                          <View className="flex-row items-center rounded-full bg-sky-500/10 border border-sky-500/30 px-2.5 py-1">
-                            <ActivityIndicator size="small" color="#38bdf8" />
-                            <Text className="ml-1 text-xs font-bold text-sky-400">PRINTING</Text>
-                          </View>
-                        ) : item.status === 'FAILED' ? (
-                          <View className="flex-row items-center rounded-full bg-rose-500/10 border border-rose-500/30 px-2.5 py-1">
-                            <AlertCircle size={14} color="#f43f5e" />
-                            <Text className="ml-1 text-xs font-bold text-rose-400">FAILED</Text>
-                          </View>
-                        ) : (
-                          <View className="flex-row items-center rounded-full bg-amber-500/10 border border-amber-500/30 px-2.5 py-1">
-                            <Clock size={14} color="#f59e0b" />
-                            <Text className="ml-1 text-xs font-bold text-amber-400">QUEUED</Text>
-                          </View>
-                        )}
-                      </View>
-                    </View>
-
-                    {/* Metadata & Items Preview */}
-                    <View className="mt-3 flex-row flex-wrap items-center gap-3 border-t border-stone-800/80 pt-3 text-xs text-stone-400">
-                      {isReceipt && (
-                        <View className="flex-row items-center">
-                          <Text className="text-stone-500 mr-1.5">Payment:</Text>
-                          <View
-                            className={`rounded-md px-2 py-0.5 border ${
-                              isCash
-                                ? 'bg-amber-500/10 border-amber-500/30 text-amber-400'
-                                : 'bg-stone-800 border-stone-700 text-stone-300'
-                            }`}
-                          >
-                            <Text
-                              className={`text-xs font-bold ${
-                                isCash ? 'text-amber-400' : 'text-stone-300'
-                              }`}
-                            >
-                              {data.paymentChannel
-                                ? `${data.paymentChannel} QR`
-                                : data.paymentMethod || 'CASH'}
-                              {isCash ? ' (DRAWER KICK)' : ''}
-                            </Text>
-                          </View>
-                        </View>
-                      )}
-
-                      {data.total != null && (
-                        <Text className="text-xs text-stone-300">
-                          Total:{' '}
-                          <Text className="font-bold text-white">
-                            ₱
-                            {Number(data.total).toLocaleString('en-PH', {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            })}
-                          </Text>
-                        </Text>
-                      )}
-
-                      {data.items && data.items.length > 0 && (
-                        <Text className="text-xs text-stone-400">
-                          {data.items.length} items (
-                          {data.items
-                            .slice(0, 2)
-                            .map((i: any) => `${i.quantity}x ${i.name}`)
-                            .join(', ')}
-                          {data.items.length > 2 ? '...' : ''})
-                        </Text>
-                      )}
-
-                      <View className="ml-auto">
-                        <Pressable
-                          onPress={() => handleReprint(item)}
-                          disabled={reprintingId === item.id}
-                          className="flex-row items-center rounded-xl bg-stone-800 px-3 py-1.5 active:bg-stone-700"
-                        >
-                          <RotateCw size={13} color="#d6d3d1" />
-                          <Text className="ml-1.5 text-xs font-semibold text-stone-300">
-                            {reprintingId === item.id ? 'Queuing...' : 'Reprint'}
-                          </Text>
-                        </Pressable>
-                      </View>
-                    </View>
-                  </View>
-                );
-              }}
+              renderItem={({ item }) => (
+                <PrintJobRowCard
+                  item={item}
+                  isReprinting={reprintingId === item.id}
+                  onReprint={handleReprint}
+                />
+              )}
             />
           )
         ) : (
-          /* Logs Terminal Console */
           <View className="flex-1 rounded-2xl border border-stone-800 bg-stone-950 p-4 font-mono">
             <View className="flex-row items-center justify-between pb-3 border-b border-stone-800">
               <View className="flex-row items-center space-x-2">

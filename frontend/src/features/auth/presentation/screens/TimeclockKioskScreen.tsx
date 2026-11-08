@@ -11,21 +11,14 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
-import {
-  Clock,
-  ShieldCheck,
-  ArrowLeft,
-  ExternalLink,
-  AlertCircle,
-  CheckCircle2,
-} from 'lucide-react-native';
+import { Clock, ShieldCheck, ArrowLeft, ExternalLink, AlertCircle } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { posApi } from '@/features/shared/infrastructure/api';
 import { realtimeGateway } from '@/features/shared';
 import { PinCodeInput } from '../components/PinCodeInput';
+import { PunchResultBanner } from '../components/PunchResultBanner';
 
 const JAZZ_HERO_IMAGE = require('../../../../../assets/images/jazz-club-stage.jpg');
-const MONKS_DREAM_LOGO = require('../../../../../assets/Monks Dream Logo files-02.png');
 
 interface TimeclockKioskScreenProps {
   isStandaloneTab?: boolean;
@@ -36,7 +29,7 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
   isStandaloneTab = false,
   onBackToLogin,
 }) => {
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const { width: windowWidth } = useWindowDimensions();
   const isTablet = windowWidth >= 768;
 
   const [currentTimeStr, setCurrentTimeStr] = useState('');
@@ -48,7 +41,6 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [punchResult, setPunchResult] = useState<any | null>(null);
 
-  // Live Clock Ticker
   useEffect(() => {
     const updateTime = () => {
       const now = new Date();
@@ -101,7 +93,6 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
         const res = await posApi.punchStaffTimeclock(cleanUser, cleanPin, 'AUTO');
         setPunchResult(res);
 
-        // Notify all open terminals & admin dashboards in realtime
         try {
           realtimeGateway.broadcastPosSync('timeclock_punch');
         } catch (syncErr) {
@@ -116,11 +107,9 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
           }
         );
 
-        // Reset inputs
         setUsername('');
         setPin('');
 
-        // Auto-clear result badge after 5 seconds
         setTimeout(() => {
           setPunchResult(null);
         }, 5000);
@@ -165,7 +154,7 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
               isTablet ? 'md:flex-row' : ''
             }`}
           >
-            {/* LEFT HERO & LIVE DIGITAL CLOCK PANE */}
+            {/* Left Hero Pane */}
             <View
               className={`relative p-8 flex-col justify-between overflow-hidden ${
                 isTablet ? 'md:w-5/12 min-h-[580px]' : 'min-h-[260px]'
@@ -180,7 +169,6 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
               <View className="absolute inset-0 bg-[#4A1020]/90" />
               <View className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
 
-              {/* Top Brand Block */}
               <View className="relative z-10">
                 <View className="flex-row items-center space-x-3 mb-3">
                   <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/20 border border-white/30">
@@ -204,7 +192,6 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
                 )}
               </View>
 
-              {/* Center Live Clock */}
               <View className="relative z-10 my-6">
                 <Text className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-white font-mono">
                   {currentTimeStr || '00:00:00'}
@@ -215,7 +202,6 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
                 <View className="mt-3 h-0.5 w-16 bg-rose-400/80 rounded-full" />
               </View>
 
-              {/* Bottom Instructions */}
               <View className="relative z-10 pt-4 border-t border-white/20">
                 <Text className="text-xs font-semibold text-white/90">
                   Universal Venue Punch System
@@ -227,10 +213,9 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
               </View>
             </View>
 
-            {/* RIGHT TIMECLOCK FORM PANE */}
+            {/* Right Form Pane */}
             <View className="flex-1 bg-white p-6 sm:p-8 lg:p-10 flex-col justify-between">
               <View>
-                {/* Top Header & Back/New Tab navigation */}
                 <View className="flex-row items-center justify-between pb-4 border-b border-stone-100 mb-6">
                   <View>
                     <Text className="text-2xl font-black text-stone-900">Staff Clock-In / Out</Text>
@@ -261,48 +246,7 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
                 </View>
 
                 {/* Success Card Confirmation Banner */}
-                {punchResult && (
-                  <View
-                    className={`mb-6 rounded-2xl p-4 border ${
-                      punchResult.actionTaken === 'CLOCKED_IN'
-                        ? 'bg-emerald-50 border-emerald-200'
-                        : 'bg-amber-50 border-amber-200'
-                    }`}
-                  >
-                    <View className="flex-row items-center space-x-2">
-                      <CheckCircle2
-                        size={22}
-                        color={punchResult.actionTaken === 'CLOCKED_IN' ? '#047857' : '#b45309'}
-                      />
-                      <Text
-                        className={`text-lg font-black ml-2 ${
-                          punchResult.actionTaken === 'CLOCKED_IN'
-                            ? 'text-emerald-900'
-                            : 'text-amber-900'
-                        }`}
-                      >
-                        {punchResult.user.displayName} (
-                        {punchResult.actionTaken === 'CLOCKED_IN' ? 'Clocked In' : 'Clocked Out'})
-                      </Text>
-                    </View>
-
-                    <View className="mt-2 flex-row flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-                      <Text className="text-sm font-semibold text-stone-700">
-                        Role: {punchResult.user.jobTitle || punchResult.user.role}
-                      </Text>
-                      <Text className="text-sm text-stone-500">
-                        {punchResult.actionTaken === 'CLOCKED_IN'
-                          ? `Started: ${new Date(punchResult.clockInAt).toLocaleTimeString()}${punchResult.hoursWorked > 0 ? ` (Resumed · ${punchResult.hoursWorked}h prior)` : ''}`
-                          : `Finished: ${new Date(punchResult.clockOutAt).toLocaleTimeString()} (${punchResult.hoursWorked} hrs)`}
-                      </Text>
-                      <Text className="text-sm font-bold text-stone-800">
-                        {punchResult.isAdmin || punchResult.user?.role === 'admin'
-                          ? 'Payroll Exempt'
-                          : `Shift Base: ₱${Number(punchResult.baseDailyPay).toFixed(2)}`}
-                      </Text>
-                    </View>
-                  </View>
-                )}
+                <PunchResultBanner punchResult={punchResult} />
 
                 {/* Error Banner */}
                 {errorMessage && (
@@ -367,7 +311,6 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
                 </Pressable>
               </View>
 
-              {/* Bottom Security Note */}
               <View className="pt-6 border-t border-stone-100 flex-row items-center justify-center space-x-2">
                 <ShieldCheck size={16} color="#78716c" />
                 <Text className="text-xs text-stone-500 ml-1.5">
