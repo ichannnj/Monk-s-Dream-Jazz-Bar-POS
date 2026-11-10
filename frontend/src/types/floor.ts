@@ -37,6 +37,37 @@ export interface ProductVariant {
   sortOrder?: number;
 }
 
+export interface ProductVariantOption {
+  id: string;
+  groupId: string;
+  code: string;
+  name: string;
+  priceDelta: number;
+  isDefault?: boolean;
+  isAvailable?: boolean;
+  sortOrder?: number;
+}
+
+export interface ProductVariantGroup {
+  id: string;
+  code: string;
+  name: string;
+  minSelections: number;
+  maxSelections: number;
+  isRequired: boolean;
+  allowsDuplicates: boolean;
+  sortOrder: number;
+  options: ProductVariantOption[];
+}
+
+export interface OrderItemVariantSelection {
+  groupId: string;
+  optionId: string;
+  groupNameSnapshot?: string;
+  optionNameSnapshot?: string;
+  priceDeltaSnapshot?: number;
+}
+
 export interface OrderLineItem {
   id: string;
   productId: string;
@@ -53,6 +84,7 @@ export interface OrderLineItem {
   roundNumber?: number;
   voidReason?: string;
   createdAt?: string;
+  variantSelections?: OrderItemVariantSelection[];
 }
 
 export interface CustomerTab {
@@ -128,6 +160,7 @@ export interface MenuItem {
     priceDelta: number;
   }[];
   variants?: ProductVariant[];
+  variantGroups?: ProductVariantGroup[];
 }
 
 export interface TakeoutOrder {

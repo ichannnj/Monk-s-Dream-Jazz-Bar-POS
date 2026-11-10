@@ -13,6 +13,7 @@ import {
 import { useMenuItemModalController } from './item-modal/useMenuItemModalController';
 import { MenuItemBasicInfoSection } from './item-modal/MenuItemBasicInfoSection';
 import { MenuItemVariantMatrixSection } from './item-modal/MenuItemVariantMatrixSection';
+import { MenuItemFlavorOptionsSection } from './item-modal/MenuItemFlavorOptionsSection';
 import { MenuItemModifiersSection } from './item-modal/MenuItemModifiersSection';
 
 export const MenuItemModal: React.FC<MenuItemModalProps> = ({
@@ -95,6 +96,15 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
           onToggleMatrixRowAvailability={ctrl.handleToggleMatrixRowAvailability}
           onApplyBaseToAll={ctrl.handleApplyBaseToAll}
           onRegenerateMatrix={ctrl.regenerateMatrix}
+        />
+
+        <MenuItemFlavorOptionsSection
+          hasFlavorGroup={ctrl.hasFlavorGroup}
+          onToggleFlavorGroup={ctrl.handleToggleFlavorGroup}
+          flavorOptions={ctrl.flavorOptions}
+          onToggleOptionAssignment={ctrl.handleToggleOptionAssignment}
+          onUpdateOptionPriceDelta={ctrl.handleUpdateOptionPriceDelta}
+          onSetDefaultOption={ctrl.handleSetDefaultOption}
         />
 
         <MenuItemModifiersSection

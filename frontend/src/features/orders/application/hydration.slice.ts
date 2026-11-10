@@ -8,7 +8,11 @@ import { mapHydratedTables, mapHydratedOffPremiseTabs } from './hydrationMappers
 export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   hydrateFromSupabase: async () => {
     try {
-      const { data: dbTables, error } = await supabase
+      let dbTables: any[] | null = null;
+      let error: any = null;
+
+      // First try hydrating with normalized order_item_variant_selections
+      const fullRes = await supabase
         .from('tables')
         .select(
           `
@@ -37,6 +41,9 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
               order_items (
                 id,
                 product_id,
+                variant_id,
+                temperature,
+                size_label,
                 quantity,
                 unit_price,
                 status,
@@ -44,6 +51,13 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
                 modifiers,
                 notes,
                 created_at,
+                order_item_variant_selections (
+                  group_id,
+                  option_id,
+                  group_name_snapshot,
+                  option_name_snapshot,
+                  price_delta_snapshot
+                ),
                 products (
                   name,
                   base_price,
@@ -56,6 +70,66 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
         `
         )
         .order('table_number', { ascending: true });
+
+      if (fullRes.error && fullRes.error.message?.includes('order_item_variant_selections')) {
+        // Fallback query without order_item_variant_selections if table is not yet in schema cache
+        const fallbackRes = await supabase
+          .from('tables')
+          .select(
+            `
+            id,
+            table_number,
+            zone,
+            capacity,
+            is_occupied,
+            tabs (
+              id,
+              customer_name,
+              status,
+              order_type,
+              operating_mode,
+              corkage_amount,
+              has_corkage_fee,
+              transferred_from_table_code,
+              transferred_at,
+              created_at,
+              orders (
+                id,
+                order_number,
+                round_number,
+                status,
+                created_at,
+                order_items (
+                  id,
+                  product_id,
+                  variant_id,
+                  temperature,
+                  size_label,
+                  quantity,
+                  unit_price,
+                  status,
+                  station_target,
+                  modifiers,
+                  notes,
+                  created_at,
+                  products (
+                    name,
+                    base_price,
+                    station_target,
+                    image_url
+                  )
+                )
+              )
+            )
+          `
+          )
+          .order('table_number', { ascending: true });
+        dbTables = fallbackRes.data;
+        error = fallbackRes.error;
+      } else {
+        dbTables = fullRes.data;
+        error = fullRes.error;
+      }
 
       if (error || !dbTables || dbTables.length === 0) {
         console.warn('Hydration skipped / database empty, keeping baseline state:', error?.message);
@@ -77,7 +151,8 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
         nowMs
       );
 
-      const { data: nonDineInTabs } = await (supabase.from as any)('tabs')
+      let nonDineInTabs: any[] | null = null;
+      const fullNonDineIn = await (supabase.from as any)('tabs')
         .select(
           `
           *,
@@ -90,6 +165,9 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
             order_items (
               id,
               product_id,
+              variant_id,
+              temperature,
+              size_label,
               quantity,
               unit_price,
               status,
@@ -97,6 +175,13 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
               modifiers,
               notes,
               created_at,
+              order_item_variant_selections (
+                group_id,
+                option_id,
+                group_name_snapshot,
+                option_name_snapshot,
+                price_delta_snapshot
+              ),
               products (
                 name,
                 base_price,
@@ -115,8 +200,57 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
         .eq('status', 'OPEN')
         .order('created_at', { ascending: false });
 
+      if (
+        fullNonDineIn.error &&
+        fullNonDineIn.error.message?.includes('order_item_variant_selections')
+      ) {
+        const fallbackNonDineIn = await (supabase.from as any)('tabs')
+          .select(
+            `
+            *,
+            orders (
+              id,
+              order_number,
+              round_number,
+              status,
+              created_at,
+              order_items (
+                id,
+                product_id,
+                variant_id,
+                temperature,
+                size_label,
+                quantity,
+                unit_price,
+                status,
+                station_target,
+                modifiers,
+                notes,
+                created_at,
+                products (
+                  name,
+                  base_price,
+                  station_target,
+                  image_url
+                )
+              )
+            ),
+            payments (
+              id,
+              payment_method
+            )
+          `
+          )
+          .in('order_type', ['TAKEOUT', 'ONLINE_DELIVERY'])
+          .eq('status', 'OPEN')
+          .order('created_at', { ascending: false });
+        nonDineInTabs = fallbackNonDineIn.data;
+      } else {
+        nonDineInTabs = fullNonDineIn.data;
+      }
+
       const { dbTakeout, dbOnline } = mapHydratedOffPremiseTabs(
-        nonDineInTabs,
+        nonDineInTabs || [],
         get().takeoutOrders,
         nowMs
       );

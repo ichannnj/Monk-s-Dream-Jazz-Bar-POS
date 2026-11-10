@@ -80,11 +80,16 @@ export const checksApi = {
               order_items (
                 id,
                 product_id,
+                temperature,
+                size_label,
                 quantity,
                 unit_price,
                 modifiers,
                 notes,
                 status,
+                order_item_variant_selections (
+                  option_name_snapshot
+                ),
                 products:product_id (name)
               )
             `
@@ -97,7 +102,22 @@ export const checksApi = {
               const rawItems = order.order_items || [];
               for (const it of rawItems) {
                 if (it.status === 'CANCELLED') continue;
-                const prodName = it.products?.name || 'Item';
+                let prodName = it.products?.name || 'Item';
+
+                const descParts: string[] = [];
+                (it.order_item_variant_selections || []).forEach((s: any) => {
+                  if (s.option_name_snapshot) descParts.push(s.option_name_snapshot);
+                });
+                if (it.temperature && it.temperature !== 'NONE') {
+                  descParts.push(it.temperature === 'HOT' ? 'Hot' : 'Iced');
+                }
+                if (it.size_label && it.size_label !== 'Standard') {
+                  descParts.push(it.size_label);
+                }
+                if (descParts.length > 0) {
+                  prodName = `${prodName} (${descParts.join(' · ')})`;
+                }
+
                 const qty = Number(it.quantity) || 1;
                 const price = Number(it.unit_price) || 0;
                 let parsedMods: string[] | undefined = undefined;

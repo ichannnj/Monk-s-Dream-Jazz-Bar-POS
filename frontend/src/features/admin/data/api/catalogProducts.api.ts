@@ -98,33 +98,70 @@ export const catalogProductsApi = {
     variants: ProductVariantAdmin[]
   ): Promise<boolean> {
     try {
-      const delRes = await (supabase.from as any)('product_variants')
-        .delete()
+      // Fetch existing variants to preserve IDs and avoid cascade-nulling historical references
+      const { data: existing, error: fetchErr } = await (supabase.from as any)('product_variants')
+        .select('id, temperature, size_label')
         .eq('product_id', productId);
-      if (delRes.error) {
+
+      if (fetchErr) {
         console.warn(
           '[catalogProductsApi.upsertProductVariants] table may not exist:',
-          delRes.error.message
+          fetchErr.message
         );
         return false;
       }
-      if (!variants || variants.length === 0) return true;
 
-      const toInsert = variants.map((v, idx) => ({
-        product_id: productId,
-        temperature: v.temperature || 'NONE',
-        size_label: v.size_label || 'Standard',
-        price: v.price,
-        is_available: v.is_available !== false,
-        sku: v.sku || null,
-        sort_order: v.sort_order !== undefined ? v.sort_order : idx + 1,
-      }));
+      const existingMap = new Map<string, string>();
+      (existing || []).forEach((row: any) => {
+        existingMap.set(`${row.temperature}:${row.size_label}`, row.id);
+      });
 
-      const { error } = await (supabase.from as any)('product_variants').insert(toInsert);
-      if (error) {
-        console.warn('[catalogProductsApi.upsertProductVariants] insert error:', error.message);
-        return false;
+      const touchedIds = new Set<string>();
+
+      for (let idx = 0; idx < (variants || []).length; idx++) {
+        const v = variants[idx];
+        const key = `${v.temperature || 'NONE'}:${v.size_label || 'Standard'}`;
+        const existingId = existingMap.get(key);
+
+        if (existingId) {
+          touchedIds.add(existingId);
+          await (supabase.from as any)('product_variants')
+            .update({
+              price: v.price,
+              is_available: v.is_available !== false,
+              sku: v.sku || null,
+              sort_order: v.sort_order !== undefined ? v.sort_order : idx + 1,
+              updated_at: new Date().toISOString(),
+            })
+            .eq('id', existingId);
+        } else {
+          const { data: inserted } = await (supabase.from as any)('product_variants')
+            .insert({
+              product_id: productId,
+              temperature: v.temperature || 'NONE',
+              size_label: v.size_label || 'Standard',
+              price: v.price,
+              is_available: v.is_available !== false,
+              sku: v.sku || null,
+              sort_order: v.sort_order !== undefined ? v.sort_order : idx + 1,
+            })
+            .select('id')
+            .single();
+          if (inserted?.id) {
+            touchedIds.add(inserted.id);
+          }
+        }
       }
+
+      // Mark removed variants as unavailable instead of deleting them to preserve historical order lines
+      const toDeactivate = (existing || []).filter((row: any) => !touchedIds.has(row.id));
+      if (toDeactivate.length > 0) {
+        const deactivateIds = toDeactivate.map((r: any) => r.id);
+        await (supabase.from as any)('product_variants')
+          .update({ is_available: false, updated_at: new Date().toISOString() })
+          .in('id', deactivateIds);
+      }
+
       return true;
     } catch (err: any) {
       console.warn('[catalogProductsApi.upsertProductVariants] unexpected error:', err?.message);

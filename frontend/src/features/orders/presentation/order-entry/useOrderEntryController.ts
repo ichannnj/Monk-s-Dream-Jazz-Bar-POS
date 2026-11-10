@@ -56,6 +56,7 @@ export function useOrderEntryController({
 
   const [activeCustomizingItem, setActiveCustomizingItem] = useState<MenuItem | null>(null);
   const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
+  const [selectedVariantOptions, setSelectedVariantOptions] = useState<Record<string, string>>({});
   const [itemNotes, setItemNotes] = useState('');
   const [selectedTemperature, setSelectedTemperature] = useState<BeverageTemperature>('HOT');
   const [selectedSize, setSelectedSize] = useState<string>('');
@@ -191,40 +192,92 @@ export function useOrderEntryController({
     item: MenuItem,
     variant?: ProductVariant,
     mods: string[] = [],
-    notesStr: string = ''
+    notesStr: string = '',
+    variantSelections: import('@/types/floor').OrderItemVariantSelection[] = []
   ) => {
-    setCartItems((prev) => appendOrIncrementCartItem(prev, item, variant, mods, notesStr));
+    setCartItems((prev) =>
+      appendOrIncrementCartItem(prev, item, variant, mods, notesStr, variantSelections)
+    );
     toast.success(`Added ${item.name} to order basket`, { title: 'Item Added' });
   };
 
   const handleItemClick = (item: MenuItem) => {
     const hasVariants = Boolean(item.variants && item.variants.length > 0);
     const hasModifiers = Boolean(item.modifiers && item.modifiers.length > 0);
+    const hasVariantGroups = Boolean(item.variantGroups && item.variantGroups.length > 0);
 
-    if (hasVariants) {
-      const { initialTemp, initialSize } = resolveInitialCustomizerState(item);
-      setSelectedTemperature(initialTemp);
-      setSelectedSize(initialSize);
+    if (hasVariants || hasModifiers || hasVariantGroups) {
+      if (hasVariants) {
+        const { initialTemp, initialSize } = resolveInitialCustomizerState(item);
+        setSelectedTemperature(initialTemp);
+        setSelectedSize(initialSize);
+      }
+      // Populate default variant options if any
+      const initialOptions: Record<string, string> = {};
+      if (hasVariantGroups && item.variantGroups) {
+        item.variantGroups.forEach((grp) => {
+          const defaultOpt = grp.options.find((o) => o.isDefault);
+          if (defaultOpt) {
+            initialOptions[grp.id] = defaultOpt.id;
+          }
+        });
+      }
+      setSelectedVariantOptions(initialOptions);
       setActiveCustomizingItem(item);
       setSelectedModifiers([]);
       setItemNotes('');
       return;
     }
 
-    if (hasModifiers) {
-      setActiveCustomizingItem(item);
-      setSelectedModifiers([]);
-      setItemNotes('');
-      return;
-    }
+    addToCartDirect(item, undefined, [], '', []);
+  };
 
-    addToCartDirect(item, undefined, [], '');
+  const handleSelectVariantOption = (groupId: string, optionId: string) => {
+    setSelectedVariantOptions((prev) => {
+      const copy = { ...prev };
+      if (!optionId) {
+        delete copy[groupId];
+      } else {
+        copy[groupId] = optionId;
+      }
+      return copy;
+    });
   };
 
   const handleConfirmCustomize = () => {
     if (!activeCustomizingItem) return;
+
+    // Build OrderItemVariantSelection array
+    const variantSelections: import('@/types/floor').OrderItemVariantSelection[] = [];
+    if (activeCustomizingItem.variantGroups) {
+      for (const grp of activeCustomizingItem.variantGroups) {
+        const chosenOptId = selectedVariantOptions[grp.id];
+        if (chosenOptId) {
+          const opt = grp.options.find((o) => o.id === chosenOptId);
+          if (opt) {
+            variantSelections.push({
+              groupId: grp.id,
+              optionId: opt.id,
+              groupNameSnapshot: grp.name,
+              optionNameSnapshot: opt.name,
+              priceDeltaSnapshot: opt.priceDelta,
+            });
+          }
+        } else if (grp.isRequired) {
+          toast.warning(`Please select an option for ${grp.name}`, { title: 'Required Selection' });
+          return;
+        }
+      }
+    }
+
     const matched = findMatchingVariant(activeCustomizingItem, selectedTemperature, selectedSize);
-    addToCartDirect(activeCustomizingItem, matched, selectedModifiers, itemNotes);
+    addToCartDirect(
+      activeCustomizingItem,
+      matched,
+      selectedModifiers,
+      itemNotes,
+      variantSelections
+    );
     setActiveCustomizingItem(null);
   };
 
@@ -305,6 +358,7 @@ export function useOrderEntryController({
     activeCustomizingItem,
     setActiveCustomizingItem,
     selectedModifiers,
+    selectedVariantOptions,
     itemNotes,
     setItemNotes,
     selectedTemperature,
@@ -323,6 +377,7 @@ export function useOrderEntryController({
     handleSaveProductImage,
     handleItemClick,
     handleConfirmCustomize,
+    handleSelectVariantOption,
     handleToggleModifier,
     updateQuantity,
     handleToggleCorkage,

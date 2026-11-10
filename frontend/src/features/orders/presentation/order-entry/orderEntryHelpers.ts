@@ -1,11 +1,18 @@
-import { MenuItem, OrderLineItem, ProductVariant, BeverageTemperature } from '@/types/floor';
+import {
+  MenuItem,
+  OrderLineItem,
+  ProductVariant,
+  BeverageTemperature,
+  OrderItemVariantSelection,
+} from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 
 export function createOrderLineItem(
   item: MenuItem,
   variant: ProductVariant | undefined,
   mods: string[] = [],
-  notesStr: string = ''
+  notesStr: string = '',
+  variantSelections: OrderItemVariantSelection[] = []
 ): {
   effectivePrice: number;
   formattedName: string;
@@ -14,7 +21,7 @@ export function createOrderLineItem(
 } {
   let extraPrice = 0;
   const formattedMods = mods.map((modName) => {
-    const found = item.modifiers.find((m) => m.name === modName);
+    const found = item.modifiers?.find((m) => m.name === modName);
     if (found) {
       extraPrice += found.priceDelta;
       if (found.priceDelta > 0) {
@@ -24,15 +31,37 @@ export function createOrderLineItem(
     return modName;
   });
 
+  // Calculate variant option deltas
+  let optionsDelta = 0;
+  const flavorNames: string[] = [];
+  if (variantSelections && variantSelections.length > 0) {
+    variantSelections.forEach((sel) => {
+      const grp = item.variantGroups?.find((g) => g.id === sel.groupId);
+      const opt = grp?.options.find((o) => o.id === sel.optionId);
+      const delta = opt?.priceDelta ?? sel.priceDeltaSnapshot ?? 0;
+      optionsDelta += delta;
+      const optName = opt?.name ?? sel.optionNameSnapshot;
+      if (optName) flavorNames.push(optName);
+    });
+  }
+
   const baseUnit = variant ? variant.price : item.price;
-  const effectivePrice = baseUnit + extraPrice;
+  const effectivePrice = baseUnit + extraPrice + optionsDelta;
+
+  const descParts: string[] = [];
+  if (flavorNames.length > 0) {
+    descParts.push(flavorNames.join(', '));
+  }
+  if (variant && variant.temperature !== 'NONE') {
+    descParts.push(variant.temperature === 'HOT' ? 'Hot' : 'Iced');
+  }
+  if (variant && variant.sizeLabel && variant.sizeLabel !== 'Standard') {
+    descParts.push(variant.sizeLabel);
+  }
 
   let formattedName = item.name;
-  if (variant && variant.temperature !== 'NONE') {
-    const tempName = variant.temperature === 'HOT' ? 'Hot' : 'Iced';
-    formattedName = `${item.name} (${tempName} · ${variant.sizeLabel})`;
-  } else if (variant && variant.sizeLabel && variant.sizeLabel !== 'Standard') {
-    formattedName = `${item.name} (${variant.sizeLabel})`;
+  if (descParts.length > 0) {
+    formattedName = `${item.name} (${descParts.join(' · ')})`;
   }
 
   const newItem: OrderLineItem = {
@@ -48,6 +77,7 @@ export function createOrderLineItem(
     status: 'pending',
     modifiers: formattedMods.length > 0 ? formattedMods : undefined,
     notes: notesStr ? notesStr : undefined,
+    variantSelections: variantSelections.length > 0 ? variantSelections : undefined,
   };
 
   return { effectivePrice, formattedName, formattedMods, newItem };
@@ -58,15 +88,31 @@ export function appendOrIncrementCartItem(
   item: MenuItem,
   variant: ProductVariant | undefined,
   mods: string[] = [],
-  notesStr: string = ''
+  notesStr: string = '',
+  variantSelections: OrderItemVariantSelection[] = []
 ): OrderLineItem[] {
-  const { formattedMods, newItem } = createOrderLineItem(item, variant, mods, notesStr);
+  const { formattedMods, newItem } = createOrderLineItem(
+    item,
+    variant,
+    mods,
+    notesStr,
+    variantSelections
+  );
+
+  const normalizeSelections = (sels?: OrderItemVariantSelection[]) =>
+    (sels || [])
+      .map((s) => `${s.groupId}:${s.optionId}`)
+      .sort()
+      .join('|');
+
+  const incomingSelectionsKey = normalizeSelections(variantSelections);
 
   const existingIdx = prev.findIndex(
     (i) =>
       i.productId === item.id &&
       (i.variantId || undefined) === (variant?.id || undefined) &&
       (i.notes || '') === (notesStr || '') &&
+      normalizeSelections(i.variantSelections) === incomingSelectionsKey &&
       JSON.stringify(i.modifiers?.sort() || []) === JSON.stringify(formattedMods.sort())
   );
 

@@ -101,6 +101,14 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                           >
                             {item.quantity}x {item.productName}
                           </Text>
+                          {item.variantSelections && item.variantSelections.length > 0 ? (
+                            <Text className="text-xs text-amber-800 font-bold mt-0.5">
+                              {item.variantSelections
+                                .map((s) => s.optionNameSnapshot)
+                                .filter(Boolean)
+                                .join(', ')}
+                            </Text>
+                          ) : null}
                           {item.modifiers && item.modifiers.length > 0 ? (
                             <Text className="text-xs text-wine-900 font-semibold mt-0.5">
                               + {item.modifiers.join(', ')}

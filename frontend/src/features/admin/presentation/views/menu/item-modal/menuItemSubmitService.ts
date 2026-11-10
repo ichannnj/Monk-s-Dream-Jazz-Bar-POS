@@ -1,11 +1,16 @@
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, ProductAdmin, ProductVariantAdmin } from '../../../../data/admin.api';
+import { supabase } from '@/features/shared/infrastructure/supabase';
 import {
   uploadAndRecordProductImage,
   cleanupStorageObject,
   type PreparedMenuImage,
 } from '@/features/menu/data/imageUpload.service';
-import { ProductModifierStateItem, VariantMatrixRow } from './menuItemModal.types';
+import {
+  ProductModifierStateItem,
+  VariantMatrixRow,
+  ProductFlavorOptionStateItem,
+} from './menuItemModal.types';
 
 export interface SubmitProductParams {
   product?: ProductAdmin | null;
@@ -22,6 +27,8 @@ export interface SubmitProductParams {
   selectedDietary: string[];
   hasVariants: boolean;
   variantsMatrix: VariantMatrixRow[];
+  hasFlavorGroup?: boolean;
+  flavorOptions?: ProductFlavorOptionStateItem[];
   productModifiers: ProductModifierStateItem[];
   currentUserId?: string;
   onSuccess: () => void;
@@ -44,6 +51,8 @@ export async function executeProductSubmit({
   selectedDietary,
   hasVariants,
   variantsMatrix,
+  hasFlavorGroup = false,
+  flavorOptions = [],
   productModifiers,
   currentUserId,
   onSuccess,
@@ -131,6 +140,10 @@ export async function executeProductSubmit({
         unit: m.unit || null,
       }));
       await adminApi.upsertProductModifiers(product.id, modifiersToSave);
+
+      // Save Flavor Group & Options
+      await saveFlavorAssignments(product.id, hasFlavorGroup, flavorOptions);
+
       toast.success(`Updated "${name}"`, { title: 'Menu Item Saved' });
     } else {
       const newProduct = await adminApi.createProduct({
@@ -181,6 +194,9 @@ export async function executeProductSubmit({
           unit: m.unit || null,
         }));
         await adminApi.upsertProductModifiers(newProduct.id, modifiersToSave);
+
+        // Save Flavor Group & Options
+        await saveFlavorAssignments(newProduct.id, hasFlavorGroup, flavorOptions);
       }
       toast.success(`Created "${name}"`, { title: 'Menu Item Created' });
     }
@@ -190,5 +206,64 @@ export async function executeProductSubmit({
     toast.error(err?.message || 'Failed to save menu product', { title: 'Error' });
   } finally {
     setIsSubmitting(false);
+  }
+}
+
+async function saveFlavorAssignments(
+  productId: string,
+  hasFlavorGroup: boolean,
+  flavorOptions: ProductFlavorOptionStateItem[]
+) {
+  try {
+    if (!flavorOptions || flavorOptions.length === 0) return;
+    const groupId = flavorOptions[0].groupId;
+
+    if (!hasFlavorGroup) {
+      // Deactivate group assignment
+      const { error } = await (supabase.from as any)('product_variant_group_assignments')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .match({ product_id: productId, group_id: groupId });
+      if (error)
+        console.info('Note: variant group assignments table not yet present:', error.message);
+      return;
+    }
+
+    // Upsert group assignment
+    const { error: grpErr } = await (supabase.from as any)(
+      'product_variant_group_assignments'
+    ).upsert({
+      product_id: productId,
+      group_id: groupId,
+      is_active: true,
+      min_selections: 0,
+      max_selections: 1,
+      is_required: false,
+      sort_order: 1,
+      updated_at: new Date().toISOString(),
+    });
+    if (grpErr) {
+      console.info('Note: variant group assignments table not yet present:', grpErr.message);
+      return;
+    }
+
+    // Upsert options
+    for (const opt of flavorOptions) {
+      if (opt.is_assigned) {
+        await (supabase.from as any)('product_variant_option_assignments').upsert({
+          product_id: productId,
+          option_id: opt.id,
+          price_delta: parseFloat(opt.price_delta) || 0,
+          is_default: opt.is_default,
+          is_available: true,
+          updated_at: new Date().toISOString(),
+        });
+      } else {
+        await (supabase.from as any)('product_variant_option_assignments')
+          .update({ is_available: false, updated_at: new Date().toISOString() })
+          .match({ product_id: productId, option_id: opt.id });
+      }
+    }
+  } catch (err) {
+    console.warn('[saveFlavorAssignments] Error updating flavor options:', err);
   }
 }

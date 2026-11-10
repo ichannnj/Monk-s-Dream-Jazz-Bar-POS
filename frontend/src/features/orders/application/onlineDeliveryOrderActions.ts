@@ -86,8 +86,12 @@ export const createOnlineOrderAction = (
         unitPrice: i.unitPrice,
         stationTarget: i.stationTarget,
         status: i.status,
+        variantId: i.variantId,
+        temperature: i.temperature,
+        sizeLabel: i.sizeLabel,
         modifiers: i.modifiers,
         notes: i.notes,
+        variantSelections: i.variantSelections,
       })),
     })
     .then((res) => {
@@ -190,8 +194,12 @@ export const addItemsToOnlineOrderAction = (
         unitPrice: i.unitPrice,
         stationTarget: i.stationTarget,
         status: i.status,
+        variantId: i.variantId,
+        temperature: i.temperature,
+        sizeLabel: i.sizeLabel,
         modifiers: i.modifiers,
         notes: i.notes,
+        variantSelections: i.variantSelections,
       })),
     })
     .then((res) => {

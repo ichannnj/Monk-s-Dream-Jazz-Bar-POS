@@ -26,6 +26,17 @@ export interface VariantMatrixRow {
   is_available: boolean;
 }
 
+export interface ProductFlavorOptionStateItem {
+  id: string; // option_id
+  groupId: string;
+  code: string;
+  name: string;
+  price_delta: string;
+  is_assigned: boolean;
+  is_available: boolean;
+  is_default: boolean;
+}
+
 export const ALLERGEN_OPTIONS = [
   'DAIRY',
   'GLUTEN',

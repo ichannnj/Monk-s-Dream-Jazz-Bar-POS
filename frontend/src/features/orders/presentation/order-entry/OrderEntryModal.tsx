@@ -58,6 +58,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     activeCustomizingItem,
     setActiveCustomizingItem,
     selectedModifiers,
+    selectedVariantOptions,
     itemNotes,
     setItemNotes,
     selectedTemperature,
@@ -76,6 +77,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     handleSaveProductImage,
     handleItemClick,
     handleConfirmCustomize,
+    handleSelectVariantOption,
     handleToggleModifier,
     updateQuantity,
     handleToggleCorkage,
@@ -164,10 +166,12 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
             selectedTemperature={selectedTemperature}
             selectedSize={selectedSize}
             selectedModifiers={selectedModifiers}
+            selectedVariantOptions={selectedVariantOptions}
             notes={itemNotes}
             onSelectTemperature={setSelectedTemperature}
             onSelectSize={setSelectedSize}
             onToggleModifier={handleToggleModifier}
+            onSelectVariantOption={handleSelectVariantOption}
             onChangeNotes={setItemNotes}
             onClose={() => setActiveCustomizingItem(null)}
             onConfirm={handleConfirmCustomize}

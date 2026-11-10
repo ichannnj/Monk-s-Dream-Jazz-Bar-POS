@@ -28,20 +28,52 @@ export const mapHydratedTables = (
         (a: any, b: any) => (a.round_number || 1) - (b.round_number || 1)
       );
       const lineItems: OrderLineItem[] = rawOrders.flatMap((o: any) =>
-        (o.order_items || []).map((oi: any) => ({
-          id: oi.id,
-          productId: oi.product_id,
-          productName: oi.products?.name || 'Menu Item',
-          unitPrice: parseFloat(oi.unit_price) || 0,
-          quantity: oi.quantity || 1,
-          stationTarget: (oi.station_target || oi.products?.station_target || 'bar') as
-            'bar' | 'kitchen',
-          modifiers: Array.isArray(oi.modifiers) ? oi.modifiers : [],
-          notes: oi.notes || undefined,
-          status: (oi.status || 'PENDING').toLowerCase() as any,
-          roundNumber: o.round_number || 1,
-          createdAt: oi.created_at || o.created_at || tb.created_at,
-        }))
+        (o.order_items || []).map((oi: any) => {
+          const sels: import('@/types/floor').OrderItemVariantSelection[] = (
+            oi.order_item_variant_selections || []
+          ).map((s: any) => ({
+            groupId: s.group_id,
+            optionId: s.option_id,
+            groupNameSnapshot: s.group_name_snapshot,
+            optionNameSnapshot: s.option_name_snapshot,
+            priceDeltaSnapshot: Number(s.price_delta_snapshot || 0),
+          }));
+
+          const descParts: string[] = [];
+          sels.forEach((s) => {
+            if (s.optionNameSnapshot) descParts.push(s.optionNameSnapshot);
+          });
+          if (oi.temperature && oi.temperature !== 'NONE') {
+            descParts.push(oi.temperature === 'HOT' ? 'Hot' : 'Iced');
+          }
+          if (oi.size_label && oi.size_label !== 'Standard') {
+            descParts.push(oi.size_label);
+          }
+
+          let formattedName = oi.products?.name || 'Menu Item';
+          if (descParts.length > 0) {
+            formattedName = `${formattedName} (${descParts.join(' · ')})`;
+          }
+
+          return {
+            id: oi.id,
+            productId: oi.product_id,
+            productName: formattedName,
+            unitPrice: parseFloat(oi.unit_price) || 0,
+            quantity: oi.quantity || 1,
+            stationTarget: (oi.station_target || oi.products?.station_target || 'bar') as
+              'bar' | 'kitchen',
+            variantId: oi.variant_id || undefined,
+            temperature: oi.temperature || undefined,
+            sizeLabel: oi.size_label || undefined,
+            modifiers: Array.isArray(oi.modifiers) ? oi.modifiers : [],
+            notes: oi.notes || undefined,
+            status: (oi.status || 'PENDING').toLowerCase() as any,
+            roundNumber: o.round_number || 1,
+            createdAt: oi.created_at || o.created_at || tb.created_at,
+            variantSelections: sels.length > 0 ? sels : undefined,
+          };
+        })
       );
 
       const activeItems = lineItems.filter((i) => i.status !== 'cancelled');
@@ -146,20 +178,52 @@ export const mapHydratedOffPremiseTabs = (
       (a: any, b: any) => (a.round_number || 1) - (b.round_number || 1)
     );
     const lineItems: OrderLineItem[] = rawOrders.flatMap((o: any) =>
-      (o.order_items || []).map((oi: any) => ({
-        id: oi.id,
-        productId: oi.product_id,
-        productName: oi.products?.name || 'Menu Item',
-        unitPrice: parseFloat(oi.unit_price) || 0,
-        quantity: oi.quantity || 1,
-        stationTarget: (oi.station_target || oi.products?.station_target || 'bar') as
-          'bar' | 'kitchen',
-        modifiers: Array.isArray(oi.modifiers) ? oi.modifiers : [],
-        notes: oi.notes || undefined,
-        status: (oi.status || 'PENDING').toLowerCase() as any,
-        roundNumber: o.round_number || 1,
-        createdAt: oi.created_at || o.created_at || t.created_at,
-      }))
+      (o.order_items || []).map((oi: any) => {
+        const sels: import('@/types/floor').OrderItemVariantSelection[] = (
+          oi.order_item_variant_selections || []
+        ).map((s: any) => ({
+          groupId: s.group_id,
+          optionId: s.option_id,
+          groupNameSnapshot: s.group_name_snapshot,
+          optionNameSnapshot: s.option_name_snapshot,
+          priceDeltaSnapshot: Number(s.price_delta_snapshot || 0),
+        }));
+
+        const descParts: string[] = [];
+        sels.forEach((s) => {
+          if (s.optionNameSnapshot) descParts.push(s.optionNameSnapshot);
+        });
+        if (oi.temperature && oi.temperature !== 'NONE') {
+          descParts.push(oi.temperature === 'HOT' ? 'Hot' : 'Iced');
+        }
+        if (oi.size_label && oi.size_label !== 'Standard') {
+          descParts.push(oi.size_label);
+        }
+
+        let formattedName = oi.products?.name || 'Menu Item';
+        if (descParts.length > 0) {
+          formattedName = `${formattedName} (${descParts.join(' · ')})`;
+        }
+
+        return {
+          id: oi.id,
+          productId: oi.product_id,
+          productName: formattedName,
+          unitPrice: parseFloat(oi.unit_price) || 0,
+          quantity: oi.quantity || 1,
+          stationTarget: (oi.station_target || oi.products?.station_target || 'bar') as
+            'bar' | 'kitchen',
+          variantId: oi.variant_id || undefined,
+          temperature: oi.temperature || undefined,
+          sizeLabel: oi.size_label || undefined,
+          modifiers: Array.isArray(oi.modifiers) ? oi.modifiers : [],
+          notes: oi.notes || undefined,
+          status: (oi.status || 'PENDING').toLowerCase() as any,
+          roundNumber: o.round_number || 1,
+          createdAt: oi.created_at || o.created_at || t.created_at,
+          variantSelections: sels.length > 0 ? sels : undefined,
+        };
+      })
     );
 
     const activeItems = lineItems.filter((i) => i.status !== 'cancelled');

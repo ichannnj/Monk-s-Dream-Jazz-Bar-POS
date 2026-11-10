@@ -9,9 +9,14 @@ import {
   NativeSyntheticEvent,
   NativeScrollEvent,
 } from 'react-native';
-import { X, CheckCircle2, Flame, Snowflake, ChevronDown } from 'lucide-react-native';
+import { X, CheckCircle2, Flame, Snowflake, ChevronDown, Check } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
-import { MenuItem, ProductVariant, BeverageTemperature } from '../../../../types/floor';
+import {
+  MenuItem,
+  ProductVariant,
+  BeverageTemperature,
+  OrderItemVariantSelection,
+} from '../../../../types/floor';
 import { styles } from './OrderEntryModal.styles';
 
 export interface OrderModifierModalProps {
@@ -19,10 +24,12 @@ export interface OrderModifierModalProps {
   selectedTemperature?: BeverageTemperature;
   selectedSize?: string;
   selectedModifiers: string[];
+  selectedVariantOptions?: Record<string, string>; // groupId -> optionId
   notes: string;
   onSelectTemperature: (temp: BeverageTemperature) => void;
   onSelectSize: (size: string) => void;
   onToggleModifier: (modName: string) => void;
+  onSelectVariantOption?: (groupId: string, optionId: string) => void;
   onChangeNotes: (notes: string) => void;
   onClose: () => void;
   onConfirm: () => void;
@@ -33,10 +40,12 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
   selectedTemperature = 'HOT',
   selectedSize,
   selectedModifiers,
+  selectedVariantOptions = {},
   notes,
   onSelectTemperature,
   onSelectSize,
   onToggleModifier,
+  onSelectVariantOption,
   onChangeNotes,
   onClose,
   onConfirm,
@@ -44,6 +53,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
   if (!item) return null;
 
   const hasVariants = Boolean(item.variants && item.variants.length > 0);
+  const variantGroups = item.variantGroups || [];
 
   // Available temperatures & sizes
   const availableTemperatures = useMemo<BeverageTemperature[]>(() => {
@@ -80,6 +90,19 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
 
   const basePrice = currentVariant ? currentVariant.price : item.price;
 
+  // Options delta (Flavor, etc.)
+  const optionsDelta = useMemo(() => {
+    let delta = 0;
+    variantGroups.forEach((grp) => {
+      const selectedOptId = selectedVariantOptions[grp.id];
+      if (selectedOptId) {
+        const opt = grp.options.find((o) => o.id === selectedOptId);
+        if (opt) delta += opt.priceDelta;
+      }
+    });
+    return delta;
+  }, [variantGroups, selectedVariantOptions]);
+
   const modifiersDelta = useMemo(() => {
     if (!item.modifiers) return 0;
     return selectedModifiers.reduce((acc, modName) => {
@@ -88,7 +111,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
     }, 0);
   }, [item.modifiers, selectedModifiers]);
 
-  const totalEffectivePrice = basePrice + modifiersDelta;
+  const totalEffectivePrice = basePrice + optionsDelta + modifiersDelta;
 
   const [canScrollDown, setCanScrollDown] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -102,7 +125,6 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
   };
 
   const handleContentSizeChange = (_contentWidth: number, contentHeight: number) => {
-    // Check initial scrollability on content layout (if content > card body height ~320px)
     if (contentHeight > 340) {
       setCanScrollDown(true);
     } else {
@@ -113,6 +135,16 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
   const handleScrollDownPress = () => {
     scrollViewRef.current?.scrollTo({ y: 180, animated: true });
   };
+
+  // Required group validation
+  const missingRequiredGroup = useMemo(() => {
+    for (const grp of variantGroups) {
+      if (grp.isRequired && !selectedVariantOptions[grp.id]) {
+        return grp.name;
+      }
+    }
+    return null;
+  }, [variantGroups, selectedVariantOptions]);
 
   return (
     <View style={styles.customizerBackdrop}>
@@ -129,6 +161,11 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
               <Text style={styles.customizerTitle}>{item.name}</Text>
               <View style={styles.variantBadgeHeader}>
                 <Text style={styles.customizerSub}>Base: {formatCurrency(basePrice)}</Text>
+                {optionsDelta > 0 ? (
+                  <Text style={[styles.customizerSub, { color: '#b45309', fontWeight: '700' }]}>
+                    • Flavor: +{formatCurrency(optionsDelta)}
+                  </Text>
+                ) : null}
                 {modifiersDelta > 0 ? (
                   <Text style={[styles.customizerSub, { color: '#800020', fontWeight: '700' }]}>
                     • Add-ons ({selectedModifiers.length}): +{formatCurrency(modifiersDelta)}
@@ -177,6 +214,101 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           scrollEventThrottle={16}
           contentContainerStyle={styles.customizerScrollContent}
         >
+          {/* Variant Groups (e.g., Flavor - Single Select Radio) */}
+          {variantGroups.map((grp) => {
+            const currentSelectedOptId = selectedVariantOptions[grp.id];
+            return (
+              <View key={grp.id} style={{ marginBottom: 14 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 6,
+                  }}
+                >
+                  <Text style={styles.customizerSectionTitle}>{grp.name}:</Text>
+                  <Text
+                    style={{
+                      fontSize: 11,
+                      fontWeight: '700',
+                      color: grp.isRequired ? '#dc2626' : '#6b7280',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {grp.isRequired ? 'Required · Single Choice' : 'Optional · Single Choice'}
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {grp.options.map((opt) => {
+                    const isSelected = currentSelectedOptId === opt.id;
+                    return (
+                      <Pressable
+                        key={opt.id}
+                        onPress={() => onSelectVariantOption?.(grp.id, isSelected ? '' : opt.id)}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingVertical: 10,
+                          paddingHorizontal: 14,
+                          borderRadius: 10,
+                          borderWidth: 1.5,
+                          borderColor: isSelected ? '#800020' : '#e5e7eb',
+                          backgroundColor: isSelected ? '#fff1f2' : '#ffffff',
+                          gap: 8,
+                        }}
+                        accessibilityRole="radio"
+                        accessibilityState={{ checked: isSelected }}
+                      >
+                        <View
+                          style={{
+                            width: 18,
+                            height: 18,
+                            borderRadius: 9,
+                            borderWidth: 1.5,
+                            borderColor: isSelected ? '#800020' : '#9ca3af',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: isSelected ? '#800020' : '#ffffff',
+                          }}
+                        >
+                          {isSelected && (
+                            <View
+                              style={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: 3,
+                                backgroundColor: '#ffffff',
+                              }}
+                            />
+                          )}
+                        </View>
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: isSelected ? '700' : '600',
+                            color: isSelected ? '#800020' : '#1f2937',
+                          }}
+                        >
+                          {opt.name}
+                        </Text>
+                        <Text
+                          style={{
+                            fontSize: 12,
+                            fontWeight: '600',
+                            color: isSelected ? '#800020' : '#6b7280',
+                          }}
+                        >
+                          {opt.priceDelta > 0 ? `+${formatCurrency(opt.priceDelta)}` : 'Standard'}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            );
+          })}
+
           {/* Temperature Selector (Hot / Cold) */}
           {availableTemperatures.length > 1 ? (
             <View style={{ marginBottom: 14 }}>
@@ -264,10 +396,29 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
             </View>
           ) : null}
 
-          {/* Modifiers List (if any) */}
+          {/* Modifiers List (Multi-Select Add-ons) */}
           {item.modifiers && item.modifiers.length > 0 ? (
             <View style={{ marginBottom: 14 }}>
-              <Text style={styles.customizerSectionTitle}>Custom Add-ons & Modifiers:</Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 6,
+                }}
+              >
+                <Text style={styles.customizerSectionTitle}>Custom Add-ons & Modifiers:</Text>
+                <Text
+                  style={{
+                    fontSize: 11,
+                    fontWeight: '700',
+                    color: '#6b7280',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  Multi-Select Add-ons
+                </Text>
+              </View>
               <View style={styles.modList}>
                 {item.modifiers.map((mod) => {
                   const isSelected = selectedModifiers.includes(mod.name);
@@ -338,7 +489,23 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
             </Pressable>
           )}
 
-          <Pressable onPress={onConfirm} style={styles.confirmCustomizeBtn}>
+          {missingRequiredGroup ? (
+            <View
+              style={{ backgroundColor: '#fee2e2', padding: 8, borderRadius: 8, marginBottom: 8 }}
+            >
+              <Text
+                style={{ color: '#991b1b', fontSize: 12, fontWeight: '700', textAlign: 'center' }}
+              >
+                Please select an option for {missingRequiredGroup}
+              </Text>
+            </View>
+          ) : null}
+
+          <Pressable
+            onPress={missingRequiredGroup ? undefined : onConfirm}
+            style={[styles.confirmCustomizeBtn, missingRequiredGroup && { opacity: 0.5 }]}
+            disabled={Boolean(missingRequiredGroup)}
+          >
             <CheckCircle2 size={18} color="#ffffff" strokeWidth={2.4} />
             <Text style={styles.confirmCustomizeBtnText}>
               Add to Cart • {formatCurrency(totalEffectivePrice)}

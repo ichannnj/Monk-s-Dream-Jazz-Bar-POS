@@ -89,12 +89,18 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
     const qtyStr = `${item.quantity || 1}x`.padEnd(3, ' ');
     let desc = item.name || item.productName || 'Item';
 
-    if (item.temperature && item.temperature !== 'NONE' && !desc.includes('(')) {
-      const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
-      const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
-      desc = `${desc} (${temp}${size})`;
-    } else if (item.size && item.size !== 'Standard' && !desc.includes('(')) {
-      desc = `${desc} (${item.size})`;
+    if (!desc.includes('(')) {
+      const parts: string[] = [];
+      if (item.flavor) parts.push(item.flavor);
+      if (item.temperature && item.temperature !== 'NONE') {
+        parts.push(item.temperature === 'HOT' ? 'Hot' : 'Iced');
+      }
+      if (item.size && item.size !== 'Standard') {
+        parts.push(item.size);
+      }
+      if (parts.length > 0) {
+        desc = `${desc} (${parts.join(' · ')})`;
+      }
     }
 
     const itemTotal = toPesos(

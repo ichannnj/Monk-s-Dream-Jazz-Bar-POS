@@ -69,5 +69,6 @@ export function mapRawProductToMenuItem(p: any): MenuItem {
         isAvailable: v.is_available ?? true,
         sortOrder: v.sort_order,
       })),
+    variantGroups: Array.isArray(p.variant_groups) ? p.variant_groups : undefined,
   };
 }

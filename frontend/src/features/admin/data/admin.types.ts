@@ -100,6 +100,40 @@ export interface ProductVariantAdmin {
   sort_order?: number;
 }
 
+export interface ProductVariantOptionAdmin {
+  id: string;
+  group_id: string;
+  code: string;
+  name: string;
+  default_price_delta: number;
+  price_delta?: number;
+  is_default?: boolean;
+  is_available?: boolean;
+  is_active?: boolean;
+  sort_order?: number;
+  ingredients?: Array<{
+    id?: string;
+    inventory_item_id: string;
+    amount: number;
+    unit: string;
+    conversion_factor?: number;
+  }>;
+}
+
+export interface ProductVariantGroupAdmin {
+  id: string;
+  code: string;
+  name: string;
+  min_selections: number;
+  max_selections: number;
+  is_required: boolean;
+  allows_duplicates: boolean;
+  is_active: boolean;
+  sort_order: number;
+  options?: ProductVariantOptionAdmin[];
+  is_assigned?: boolean;
+}
+
 export interface ProductAdmin {
   id: string;
   name: string;

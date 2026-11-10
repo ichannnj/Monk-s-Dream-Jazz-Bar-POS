@@ -185,6 +185,16 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
                 </View>
 
                 {/* Modifiers & Notes */}
+                {cartItem.variantSelections && cartItem.variantSelections.length > 0 ? (
+                  <Text style={{ fontSize: 13, color: '#b45309', fontWeight: '700', marginTop: 2 }}>
+                    Flavor:{' '}
+                    {cartItem.variantSelections
+                      .map((s) => s.optionNameSnapshot)
+                      .filter(Boolean)
+                      .join(', ')}
+                  </Text>
+                ) : null}
+
                 {cartItem.modifiers && cartItem.modifiers.length > 0 ? (
                   <Text style={styles.cartItemModText}>+ {cartItem.modifiers.join(', ')}</Text>
                 ) : null}

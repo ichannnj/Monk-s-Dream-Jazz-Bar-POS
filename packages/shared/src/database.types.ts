@@ -215,6 +215,47 @@ isOneToOne: false
       referencedColumns: ["id"]
     }
                   ]
+                },"order_item_variant_selections": {
+                  Row: {
+                    "created_at": string,"group_id": string,"group_name_snapshot": string,"id": string,"option_id": string,"option_name_snapshot": string,"order_item_id": string,"price_delta_snapshot": number,"product_id": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"group_id": string,"group_name_snapshot": string,"id"?: string,"option_id": string,"option_name_snapshot": string,"order_item_id": string,"price_delta_snapshot"?: number,"product_id": string
+                  }
+                  Update: {
+                    "created_at"?: string,"group_id"?: string,"group_name_snapshot"?: string,"id"?: string,"option_id"?: string,"option_name_snapshot"?: string,"order_item_id"?: string,"price_delta_snapshot"?: number,"product_id"?: string
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "order_item_variant_selections_group_id_fkey"
+                      columns: ["group_id"]
+                      isOneToOne: false
+                      referencedRelation: "product_variant_groups"
+                      referencedColumns: ["id"]
+                    },
+                    {
+                      foreignKeyName: "order_item_variant_selections_option_id_fkey"
+                      columns: ["option_id"]
+                      isOneToOne: false
+                      referencedRelation: "product_variant_options"
+                      referencedColumns: ["id"]
+                    },
+                    {
+                      foreignKeyName: "order_item_variant_selections_order_item_id_fkey"
+                      columns: ["order_item_id"]
+                      isOneToOne: false
+                      referencedRelation: "order_items"
+                      referencedColumns: ["id"]
+                    },
+                    {
+                      foreignKeyName: "order_item_variant_selections_product_id_fkey"
+                      columns: ["product_id"]
+                      isOneToOne: false
+                      referencedRelation: "products"
+                      referencedColumns: ["id"]
+                    }
+                  ]
                 },"order_items": {
                   Row: {
                     "created_at": string,"delivered_at": string | null,"id": string,"is_depleted": boolean,"modifiers": Json | null,"notes": string | null,"order_id": string,"product_id": string,"quantity": number,"size_label": string | null,"station_target": Database["public"]['Enums']["station_target"],"status": Database["public"]['Enums']["item_status"],"temperature": string | null,"unit_price": number,"updated_at": string,"variant_id": string | null
@@ -460,6 +501,126 @@ isOneToOne: false
       referencedRelation: "products"
       referencedColumns: ["id"]
     }
+                  ]
+                },"product_variant_group_assignments": {
+                  Row: {
+                    "created_at": string,"group_id": string,"is_active": boolean,"is_required": boolean | null,"max_selections": number | null,"min_selections": number | null,"product_id": string,"sort_order": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"group_id": string,"is_active"?: boolean,"is_required"?: boolean | null,"max_selections"?: number | null,"min_selections"?: number | null,"product_id": string,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"group_id"?: string,"is_active"?: boolean,"is_required"?: boolean | null,"max_selections"?: number | null,"min_selections"?: number | null,"product_id"?: string,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "product_variant_group_assignments_group_id_fkey"
+                      columns: ["group_id"]
+                      isOneToOne: false
+                      referencedRelation: "product_variant_groups"
+                      referencedColumns: ["id"]
+                    },
+                    {
+                      foreignKeyName: "product_variant_group_assignments_product_id_fkey"
+                      columns: ["product_id"]
+                      isOneToOne: false
+                      referencedRelation: "products"
+                      referencedColumns: ["id"]
+                    }
+                  ]
+                },"product_variant_groups": {
+                  Row: {
+                    "allows_duplicates": boolean,"code": string,"created_at": string,"id": string,"is_active": boolean,"is_required": boolean,"max_selections": number,"min_selections": number,"name": string,"sort_order": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "allows_duplicates"?: boolean,"code": string,"created_at"?: string,"id"?: string,"is_active"?: boolean,"is_required"?: boolean,"max_selections"?: number,"min_selections"?: number,"name": string,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "allows_duplicates"?: boolean,"code"?: string,"created_at"?: string,"id"?: string,"is_active"?: boolean,"is_required"?: boolean,"max_selections"?: number,"min_selections"?: number,"name"?: string,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Relationships: []
+                },"product_variant_option_assignments": {
+                  Row: {
+                    "created_at": string,"is_available": boolean,"is_default": boolean,"option_id": string,"price_delta": number,"product_id": string,"sort_order": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"is_available"?: boolean,"is_default"?: boolean,"option_id": string,"price_delta"?: number,"product_id": string,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"is_available"?: boolean,"is_default"?: boolean,"option_id"?: string,"price_delta"?: number,"product_id"?: string,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "product_variant_option_assignments_option_id_fkey"
+                      columns: ["option_id"]
+                      isOneToOne: false
+                      referencedRelation: "product_variant_options"
+                      referencedColumns: ["id"]
+                    },
+                    {
+                      foreignKeyName: "product_variant_option_assignments_product_id_fkey"
+                      columns: ["product_id"]
+                      isOneToOne: false
+                      referencedRelation: "products"
+                      referencedColumns: ["id"]
+                    }
+                  ]
+                },"product_variant_option_ingredients": {
+                  Row: {
+                    "amount": number,"conversion_factor": number,"created_at": string,"id": string,"inventory_item_id": string,"option_id": string,"product_id": string,"unit": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "amount": number,"conversion_factor"?: number,"created_at"?: string,"id"?: string,"inventory_item_id": string,"option_id": string,"product_id": string,"unit": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "amount"?: number,"conversion_factor"?: number,"created_at"?: string,"id"?: string,"inventory_item_id"?: string,"option_id"?: string,"product_id"?: string,"unit"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "product_variant_option_ingredients_inventory_item_id_fkey"
+                      columns: ["inventory_item_id"]
+                      isOneToOne: false
+                      referencedRelation: "inventory_items"
+                      referencedColumns: ["id"]
+                    },
+                    {
+                      foreignKeyName: "product_variant_option_ingredients_option_id_fkey"
+                      columns: ["option_id"]
+                      isOneToOne: false
+                      referencedRelation: "product_variant_options"
+                      referencedColumns: ["id"]
+                    },
+                    {
+                      foreignKeyName: "product_variant_option_ingredients_product_id_fkey"
+                      columns: ["product_id"]
+                      isOneToOne: false
+                      referencedRelation: "products"
+                      referencedColumns: ["id"]
+                    }
+                  ]
+                },"product_variant_options": {
+                  Row: {
+                    "code": string,"created_at": string,"default_price_delta": number,"group_id": string,"id": string,"is_active": boolean,"name": string,"sort_order": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "code": string,"created_at"?: string,"default_price_delta"?: number,"group_id": string,"id"?: string,"is_active"?: boolean,"name": string,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "code"?: string,"created_at"?: string,"default_price_delta"?: number,"group_id"?: string,"id"?: string,"is_active"?: boolean,"name"?: string,"sort_order"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+                      foreignKeyName: "product_variant_options_group_id_fkey"
+                      columns: ["group_id"]
+                      isOneToOne: false
+                      referencedRelation: "product_variant_groups"
+                      referencedColumns: ["id"]
+                    }
                   ]
                 },"product_variants": {
                   Row: {

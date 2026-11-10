@@ -39,6 +39,13 @@ export async function createOrderWithItems(params: {
     status?: string;
     modifiers?: string[];
     notes?: string;
+    variantSelections?: Array<{
+      groupId: string;
+      optionId: string;
+      groupNameSnapshot?: string;
+      optionNameSnapshot?: string;
+      priceDeltaSnapshot?: number;
+    }>;
   }>;
 }) {
   try {
@@ -76,8 +83,8 @@ export async function createOrderWithItems(params: {
 
     if (orderError) throw orderError;
 
-    // 2. Prepare and Insert Order Items
-    const orderItemsToInsert = await Promise.all(
+    // 2. Prepare and Insert Order Items via authoritative RPC or atomic insert
+    const preparedItems = await Promise.all(
       params.items.map(async (item) => {
         const resolvedProdId =
           (await resolveProductId(item.productId)) ||
@@ -88,7 +95,7 @@ export async function createOrderWithItems(params: {
             ? (item.status.toUpperCase() as any)
             : ('PENDING' as const);
         return {
-          order_id: orderData.id,
+          id: item.id || undefined,
           product_id: resolvedProdId || 'e1111111-0000-0000-0000-000000000001',
           variant_id: item.variantId || null,
           temperature: item.temperature || null,
@@ -97,38 +104,40 @@ export async function createOrderWithItems(params: {
           unit_price: item.unitPrice,
           status: itemDbStatus,
           station_target: item.stationTarget,
-          // Pass the array straight through: supabase-js encodes it as jsonb.
-          // JSON.stringify() here double-encoded the value into a JSON scalar
-          // string (e.g. "[\"Extra Shot\"]"), which broke jsonb_array_length()
-          // in the inventory depletion trigger during KDS READY / settlement.
           modifiers: (Array.isArray(item.modifiers) ? item.modifiers : []) as any,
           notes: item.notes || null,
+          variant_selections: (item.variantSelections || []).map((s) => ({
+            group_id: s.groupId,
+            option_id: s.optionId,
+          })),
         };
       })
     );
 
-    let insertedItems: any;
-    const { data: initialData, error: itemsError } = await supabase
-      .from('order_items')
-      .insert(orderItemsToInsert)
-      .select('*');
+    let insertedItems: any[] = [];
+    const rpcRes = await (supabase.rpc as any)('dispatch_order_with_selections', {
+      p_order_id: orderData.id,
+      p_items: preparedItems,
+    });
 
-    if (itemsError) {
-      console.warn(
-        'order_items insert with variant columns failed, retrying base schema:',
-        itemsError.message
-      );
-      const baseItemsToInsert = orderItemsToInsert.map(
-        ({ variant_id, temperature, size_label, ...rest }) => rest
-      );
-      const retryRes = await supabase
-        .from('order_items')
-        .insert(baseItemsToInsert as any)
-        .select('*');
-      if (retryRes.error) throw retryRes.error;
-      insertedItems = retryRes.data;
+    if (!rpcRes.error && rpcRes.data?.items) {
+      insertedItems = rpcRes.data.items;
     } else {
-      insertedItems = initialData;
+      console.warn('dispatch_order_with_selections RPC fallback or error:', rpcRes.error?.message);
+      // Direct insertion fallback if RPC is not present
+      const orderItemsToInsert = preparedItems.map(({ variant_selections, ...rest }) => ({
+        ...rest,
+        order_id: orderData.id,
+      }));
+      const { data: initialData, error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItemsToInsert as any)
+        .select('*');
+
+      if (itemsError) {
+        throw itemsError;
+      }
+      insertedItems = initialData || [];
     }
 
     // 3. Trigger In-Database Recipe Depletion & Auto-86
