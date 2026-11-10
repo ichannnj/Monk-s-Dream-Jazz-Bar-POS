@@ -80,7 +80,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         ]);
 
         if (settingsRes.status === 'fulfilled') {
-          setOperatingMode(settingsRes.value.operating_mode);
+          useVenueStore.getState().fetchVenueSettings();
         }
         if (invRes.status === 'fulfilled') {
           setInventory(invRes.value);

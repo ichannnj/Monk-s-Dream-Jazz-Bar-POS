@@ -94,9 +94,7 @@ export const venueSettingsApi = {
   },
 
   async setOperatingMode(mode: OperatingMode): Promise<void> {
-    const current = await venueSettingsApi.getVenueSettings();
-    const targetId =
-      current?.id && current.id !== 'default' ? current.id : '00000000-0000-0000-0000-000000000001';
+    const targetId = '00000000-0000-0000-0000-000000000001';
     const nowIso = new Date().toISOString();
 
     const { error } = await (supabase.from as any)('venue_settings')
