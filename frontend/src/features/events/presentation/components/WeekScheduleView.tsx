@@ -1,7 +1,14 @@
 import React, { useMemo } from 'react';
-import { View, Text, Pressable, Image, ScrollView } from 'react-native';
-import { Clock, Music, Wrench, Users, Plus, Mic } from 'lucide-react-native';
+import { View, Text, Pressable, ScrollView, Platform } from 'react-native';
+import { Plus } from 'lucide-react-native';
 import type { VenueEvent } from '../../domain/event.types';
+import { useResponsive } from '@/features/shared';
+import {
+  getManilaTodayDateString,
+  formatShowtimeRange,
+  formatShortDate,
+} from '../utils/eventFormatters';
+import { EventSummaryCard } from './EventSummaryCard';
 
 interface WeekScheduleViewProps {
   currentDate: Date;
@@ -20,13 +27,15 @@ export const WeekScheduleView: React.FC<WeekScheduleViewProps> = ({
   onAddEvent,
   isAdmin = false,
 }) => {
+  const { isMobile } = useResponsive();
+  const todayStr = getManilaTodayDateString();
+
   const weekDays = useMemo(() => {
     const d = new Date(currentDate);
     const dayOfWeek = d.getDay();
     const sunday = new Date(d);
     sunday.setDate(d.getDate() - dayOfWeek);
 
-    const todayStr = new Date().toISOString().slice(0, 10);
     const days = [];
 
     const eventsByDate = new Map<string, VenueEvent[]>();
@@ -51,181 +60,179 @@ export const WeekScheduleView: React.FC<WeekScheduleViewProps> = ({
     }
 
     return days;
-  }, [currentDate, events]);
+  }, [currentDate, events, todayStr]);
 
-  const formatTime = (timeStr?: string | null) => {
-    if (!timeStr) return '';
-    const [h, m] = timeStr.split(':');
-    const hour = parseInt(h, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${m} ${ampm}`;
-  };
+  // Mobile Phone: 1-column responsive list grouped by day of week
+  if (isMobile) {
+    return (
+      <View className="space-y-4">
+        {weekDays.map((col) => {
+          const hasEvents = col.events.length > 0;
+          const canAddHere = isAdmin && onAddEvent;
 
+          return (
+            <View
+              key={col.dateString}
+              className={`rounded-2xl border p-4 shadow-xs space-y-3 ${
+                col.isToday ? 'border-[#800020]/40 bg-rose-50/15' : 'border-stone-200/90 bg-white'
+              }`}
+            >
+              {/* Day Header */}
+              <View className="flex-row items-center justify-between pb-2 border-b border-stone-100">
+                <View className="flex-row items-center gap-2">
+                  <Text
+                    className={`text-sm font-bold uppercase tracking-wider ${
+                      col.isToday ? 'text-[#800020]' : 'text-stone-700'
+                    }`}
+                  >
+                    {col.dayOfWeekName}
+                  </Text>
+                  <Text className="text-sm font-semibold text-stone-500">
+                    {formatShortDate(col.dateString)}
+                  </Text>
+                  {col.isToday && (
+                    <View className="bg-[#800020] rounded-md px-1.5 py-0.2">
+                      <Text className="text-[10px] font-bold text-white uppercase">Today</Text>
+                    </View>
+                  )}
+                </View>
+
+                {canAddHere ? (
+                  <Pressable
+                    onPress={() => onAddEvent(col.dateString)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Add event on ${col.dayOfWeekName}`}
+                    className="flex-row items-center gap-1 rounded-lg bg-stone-100 hover:bg-stone-200 active:bg-stone-300 px-2.5 py-1"
+                  >
+                    <Plus size={13} color="#44403c" aria-hidden={true} />
+                    <Text className="text-xs font-semibold text-stone-700">Add</Text>
+                  </Pressable>
+                ) : null}
+              </View>
+
+              {/* Day's Events */}
+              {!hasEvents ? (
+                <Text className="text-xs text-stone-400 py-1">No scheduled performances</Text>
+              ) : (
+                <View className="space-y-2">
+                  {col.events.map((ev) => (
+                    <EventSummaryCard
+                      key={ev.id}
+                      event={ev}
+                      onPress={onSelectEvent}
+                      showDate={false}
+                      isAdmin={isAdmin}
+                      compact={true}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          );
+        })}
+      </View>
+    );
+  }
+
+  // Tablet & Desktop: 7-column Week Board
   return (
     <View className="overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-xs">
-      <ScrollView horizontal showsHorizontalScrollIndicator={true} className="w-full">
-        <View className="flex flex-row divide-x divide-stone-200/70 min-w-[1050px]">
-          {weekDays.map((col) => {
-            const canAddHere = isAdmin && onAddEvent;
+      <View className="flex-row divide-x divide-stone-200/70">
+        {weekDays.map((col) => {
+          const canAddHere = isAdmin && onAddEvent;
 
-            return (
-              <Pressable
-                key={col.dateString}
-                onPress={() => {
-                  if (canAddHere) {
-                    onAddEvent(col.dateString);
-                  }
-                }}
-                disabled={!canAddHere}
-                className={`flex-1 min-w-[150px] flex-col p-3.5 transition-colors ${
-                  canAddHere ? 'cursor-pointer hover:bg-stone-50/80' : ''
-                } ${col.isToday ? 'bg-rose-50/20' : 'bg-white'}`}
-              >
-                {/* Day Header */}
-                <View className="mb-4 pb-3 border-b border-stone-100 flex flex-row items-center justify-between pointer-events-none">
-                  <View>
-                    <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider">
-                      {col.dayOfWeekName.slice(0, 3)}
+          return (
+            <View
+              key={col.dateString}
+              className={`flex-1 min-w-0 p-3 flex-col justify-between min-h-[300px] ${
+                col.isToday ? 'bg-rose-50/15' : 'bg-white'
+              }`}
+            >
+              {/* Day Header */}
+              <View className="mb-3 pb-2 border-b border-stone-100 flex-row items-center justify-between">
+                <View>
+                  <Text className="text-[11px] font-bold text-stone-500 uppercase tracking-wider">
+                    {col.dayOfWeekName.slice(0, 3)}
+                  </Text>
+                  <View className="flex-row items-center gap-1.5 mt-0.5">
+                    <Text
+                      className={`text-lg font-extrabold ${
+                        col.isToday ? 'text-[#800020]' : 'text-stone-900'
+                      }`}
+                    >
+                      {col.dayOfMonth}
                     </Text>
-                    <View className="flex flex-row items-center gap-1.5 mt-0.5">
-                      <Text
-                        className={`text-xl font-extrabold ${
-                          col.isToday ? 'text-[#800020]' : 'text-stone-900'
-                        }`}
-                      >
-                        {col.dayOfMonth}
-                      </Text>
-                      {col.isToday && (
-                        <View className="bg-rose-100 rounded-full px-1.5 py-0.5">
-                          <Text className="text-[9px] font-bold text-[#800020] uppercase">
-                            Today
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-
-                  {canAddHere && (
-                    <View className="h-6 w-6 rounded-md bg-stone-100 flex items-center justify-center text-stone-400 group-hover:bg-[#800020] group-hover:text-white transition-colors">
-                      <Plus size={14} color="currentColor" />
-                    </View>
-                  )}
-                </View>
-
-                {/* Gigs & Logistics for this day */}
-                <View className="flex-1 space-y-3">
-                  {col.events.length === 0 ? (
-                    <View className="h-44 border border-dashed border-stone-200 rounded-xl flex items-center justify-center p-3 text-center bg-stone-50/50">
-                      <Music size={20} color="#a8a29e" style={{ marginBottom: 4 }} />
-                      <Text className="text-xs text-stone-400 font-medium">No Gigs Scheduled</Text>
-                      {canAddHere && (
-                        <Text className="text-[11px] text-[#800020] font-bold mt-1">
-                          Click box to add
+                    {col.isToday && (
+                      <View className="bg-rose-100 rounded-md px-1 py-0.2">
+                        <Text className="text-[9px] font-black text-[#800020] uppercase">
+                          Today
                         </Text>
-                      )}
-                    </View>
-                  ) : (
-                    col.events.map((ev) => (
-                      <Pressable
-                        key={ev.id}
-                        onPress={(e) => {
-                          e.stopPropagation?.();
-                          onSelectEvent(ev);
-                        }}
-                        className="group/week relative rounded-xl border border-stone-200 bg-white overflow-hidden shadow-xs hover:border-[#800020] transition-all hover:scale-[1.01]"
-                      >
-                        {/* Hero Image Poster */}
-                        {ev.poster_url && (
-                          <View className="h-28 w-full relative overflow-hidden bg-stone-100">
-                            <Image
-                              source={{ uri: ev.poster_url }}
-                              className="h-full w-full object-cover group-hover/week:scale-105 transition-transform duration-300"
-                              resizeMode="cover"
-                            />
-                            <View className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                            <View className="absolute bottom-2 left-2 right-2">
-                              <Text
-                                numberOfLines={2}
-                                className="text-xs font-bold text-white drop-shadow leading-tight"
-                              >
-                                {ev.title}
-                              </Text>
-                            </View>
-                          </View>
-                        )}
-
-                        <View className="p-3 space-y-2">
-                          {!ev.poster_url && (
-                            <Text numberOfLines={2} className="text-xs font-bold text-stone-900">
-                              {ev.title}
-                            </Text>
-                          )}
-
-                          {/* Performer / Genre */}
-                          {ev.performer_name && (
-                            <View className="flex flex-row items-center gap-1.5">
-                              <Mic size={12} color="#800020" />
-                              <Text
-                                numberOfLines={1}
-                                className="text-[11px] font-bold text-[#800020]"
-                              >
-                                {ev.performer_name}
-                              </Text>
-                            </View>
-                          )}
-
-                          {/* Showtime Badge */}
-                          <View className="flex flex-row items-center justify-between bg-stone-50 rounded-md px-2 py-1 border border-stone-200">
-                            <View className="flex flex-row items-center gap-1">
-                              <Clock size={11} color="#800020" />
-                              <Text className="text-[10px] font-bold text-[#800020]">
-                                {formatTime(ev.start_time)}
-                                {ev.end_time ? ` – ${formatTime(ev.end_time)}` : ''}
-                              </Text>
-                            </View>
-                            {ev.genre && (
-                              <Text
-                                numberOfLines={1}
-                                className="text-[9px] text-stone-500 font-medium"
-                              >
-                                {ev.genre}
-                              </Text>
-                            )}
-                          </View>
-
-                          {/* Backstage Sound Check Block */}
-                          {ev.sound_check_time && (
-                            <View className="bg-rose-50/70 border border-rose-200 rounded-md px-2 py-1 flex flex-row items-center gap-1.5">
-                              <Wrench size={10} color="#800020" />
-                              <Text className="text-[10px] text-stone-700">
-                                Sound Check:{' '}
-                                <Text className="font-bold text-[#800020]">
-                                  {formatTime(ev.sound_check_time)}
-                                </Text>
-                              </Text>
-                            </View>
-                          )}
-
-                          {/* Reserved Tables */}
-                          {ev.reserved_tables && (
-                            <View className="flex flex-row items-center gap-1.5 px-0.5">
-                              <Users size={10} color="#78716c" />
-                              <Text numberOfLines={1} className="text-[10px] text-stone-500">
-                                {ev.reserved_tables}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                      </Pressable>
-                    ))
-                  )}
+                      </View>
+                    )}
+                  </View>
                 </View>
-              </Pressable>
-            );
-          })}
-        </View>
-      </ScrollView>
+
+                {canAddHere ? (
+                  <Pressable
+                    onPress={() => onAddEvent(col.dateString)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Add event on ${col.dateString}`}
+                    className="h-6 w-6 items-center justify-center rounded hover:bg-stone-100 text-stone-400 hover:text-stone-700"
+                  >
+                    <Plus size={13} color="#78716c" aria-hidden={true} />
+                  </Pressable>
+                ) : null}
+              </View>
+
+              {/* Day Events Column */}
+              <View className="flex-1 space-y-2">
+                {col.events.map((ev) => {
+                  const showtime = formatShowtimeRange(ev.start_time, ev.end_time);
+
+                  return (
+                    <Pressable
+                      key={ev.id}
+                      onPress={() => onSelectEvent(ev)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`View ${ev.title}`}
+                      className="rounded-xl border border-stone-200/90 bg-stone-50/60 p-2.5 hover:bg-rose-50/70 hover:border-rose-200 active:bg-rose-100 transition-colors"
+                      style={
+                        Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined
+                      }
+                    >
+                      <Text
+                        numberOfLines={1}
+                        className="text-xs font-bold text-stone-900 leading-tight"
+                      >
+                        {ev.title}
+                      </Text>
+
+                      {ev.performer_name ? (
+                        <Text
+                          numberOfLines={1}
+                          className="text-[11px] font-medium text-stone-600 mt-0.5"
+                        >
+                          {ev.performer_name}
+                        </Text>
+                      ) : null}
+
+                      {showtime ? (
+                        <Text className="text-[10px] font-bold text-[#800020] mt-1">
+                          {showtime}
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  );
+                })}
+
+                {col.events.length === 0 ? (
+                  <Text className="text-[11px] text-stone-400 pt-1 text-center">No events</Text>
+                ) : null}
+              </View>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 };

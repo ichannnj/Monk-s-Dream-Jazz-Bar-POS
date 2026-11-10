@@ -1,18 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import {
-  CalendarDays,
-  Plus,
-  Share2,
-  Printer,
-  Download,
-  ChevronLeft,
-  ChevronRight,
-  List,
-  Columns,
-  Sparkles,
-  FileSpreadsheet,
-} from 'lucide-react-native';
+import { View, Text, Pressable, Platform } from 'react-native';
+import { CalendarDays, Plus } from 'lucide-react-native';
 import { useEventStore } from '../../application/useEventStore';
 import { MonthCalendarGrid } from '../components/MonthCalendarGrid';
 import { WeekScheduleView } from '../components/WeekScheduleView';
@@ -21,12 +9,17 @@ import { EventDetailModal } from '../components/EventDetailModal';
 import { CreateEditEventModal } from '../components/CreateEditEventModal';
 import { ShareCalendarModal } from '../components/ShareCalendarModal';
 import { TodaysEventBanner } from '../components/TodaysEventBanner';
+import { EventCalendarShell } from '../components/EventCalendarShell';
+import { EventCalendarControls } from '../components/EventCalendarControls';
+import { EventActionMenu } from '../components/EventActionMenu';
 import { generateMonthScheduleIcs, triggerIcsDownload } from '../../utils/eventIcsExport';
 import { exportEventsScheduleToExcel } from '@/features/admin/utils/readingExcelExport';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { useWindowVisibilitySync } from '@/features/shared';
+import { useWindowVisibilitySync, useResponsive } from '@/features/shared';
+import { formatMonthYearTitle, formatWeekPeriodTitle } from '../utils/eventFormatters';
 
 export const AdminEventsView: React.FC = () => {
+  const { isMobile } = useResponsive();
   const {
     events,
     currentDate,
@@ -37,6 +30,7 @@ export const AdminEventsView: React.FC = () => {
     isDetailModalOpen,
     isShareModalOpen,
     initialCreateDate,
+    isLoading,
     loadEvents,
     nextPeriod,
     prevPeriod,
@@ -70,13 +64,9 @@ export const AdminEventsView: React.FC = () => {
 
   const currentPeriodTitle = () => {
     if (viewMode === 'week') {
-      const start = new Date(currentDate);
-      start.setDate(currentDate.getDate() - currentDate.getDay());
-      const end = new Date(start);
-      end.setDate(start.getDate() + 6);
-      return `${start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+      return formatWeekPeriodTitle(currentDate);
     }
-    return currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return formatMonthYearTitle(currentDate);
   };
 
   const handlePrint = () => {
@@ -86,223 +76,119 @@ export const AdminEventsView: React.FC = () => {
   };
 
   const handleExportMonthIcs = () => {
-    const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const monthYear = formatMonthYearTitle(currentDate);
     const ics = generateMonthScheduleIcs(events, `Monk's Dream Jazz Calendar - ${monthYear}`);
     triggerIcsDownload(ics, `Monks_Dream_Calendar_${monthYear.replace(/\s+/g, '_')}.ics`);
     toast.success(`Downloaded ${monthYear} schedule (.ics)`);
   };
 
-  return (
-    <ScrollView
-      className="flex-1 min-w-0 bg-[#fcf9f9] p-3 sm:p-6 lg:p-8"
-      showsVerticalScrollIndicator={false}
-    >
-      <View className="w-full min-w-0 max-w-7xl mx-auto space-y-4 sm:space-y-6 pb-12">
-        {/* Today's Event Live Highlight Banner */}
-        <TodaysEventBanner />
+  const handleExportExcel = () => {
+    try {
+      exportEventsScheduleToExcel(events, currentPeriodTitle());
+      toast.success('Event run-of-show exported to Excel (.xls)', {
+        title: 'Excel export ready',
+      });
+    } catch (err) {
+      console.error('[AdminEventsView] Excel export error:', err);
+      toast.error('Failed to export event spreadsheet', { title: 'Export error' });
+    }
+  };
 
-        {/* View Header & Toolbar Card */}
-        <View className="flex flex-col gap-3.5 border-b border-stone-200/80 pb-4 sm:pb-5">
-          {/* Top Row: Title + Main CTA */}
-          <View className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <View className="flex flex-row items-center gap-3">
-              <View className="h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-2xl bg-[#800020] shadow-sm flex-shrink-0">
-                <CalendarDays size={20} color="#ffffff" />
+  const handleOpenLiveView = () => {
+    if (typeof window !== 'undefined') {
+      window.open('?mode=events', '_blank');
+    }
+  };
+
+  return (
+    <EventCalendarShell
+      isLoading={isLoading && events.length === 0}
+      bannerSlot={<TodaysEventBanner />}
+      headerSlot={
+        <View className="border-b border-stone-200/80 bg-white px-4 py-3 sm:px-6 sm:py-4 shadow-xs">
+          <View className="max-w-7xl mx-auto flex-row items-center justify-between gap-3">
+            <View className="flex-row items-center gap-3 min-w-0">
+              <View className="h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-[#800020] shadow-xs flex-shrink-0">
+                <CalendarDays size={20} color="#ffffff" aria-hidden={true} />
               </View>
-              <View className="flex-1 min-w-0">
+              <View className="min-w-0">
                 <Text
-                  className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-stone-900"
+                  className="text-lg sm:text-2xl font-extrabold tracking-tight text-stone-900 leading-tight"
                   numberOfLines={1}
                 >
-                  Event Logistics & Calendar
+                  Event logistics & calendar
                 </Text>
-                <Text className="text-xs sm:text-sm text-stone-500" numberOfLines={1}>
-                  Schedule gigs, manage artist line-ups, hero posters, and run-of-show.
+                <Text
+                  className="text-xs sm:text-sm text-stone-500 hidden sm:flex"
+                  numberOfLines={1}
+                >
+                  Schedule gigs, artist line-ups, posters, and run-of-show.
                 </Text>
               </View>
             </View>
 
-            {/* Schedule Event Button (Prominent) */}
+            {/* Primary Action: Schedule Event */}
             <Pressable
               onPress={() => openCreateModal()}
-              className="flex flex-row items-center justify-center gap-2 rounded-xl bg-[#800020] px-4 py-2.5 sm:py-2 text-white font-bold hover:bg-[#66001a] transition-colors shadow-xs active:opacity-90"
+              accessibilityRole="button"
+              accessibilityLabel="Schedule new event"
+              style={Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined}
+              className="flex-row items-center justify-center gap-1.5 rounded-xl bg-[#800020] px-3.5 py-2 sm:px-4 sm:py-2.5 text-white active:bg-[#66001a] shadow-xs"
             >
-              <Plus size={16} color="#ffffff" />
-              <Text className="text-xs sm:text-sm font-bold text-white">Schedule Event</Text>
+              <Plus size={16} color="#ffffff" aria-hidden={true} />
+              <Text className="text-xs sm:text-sm font-bold text-white">Schedule event</Text>
             </Pressable>
           </View>
-
-          {/* Controls Bar: Navigation + Views + Tools */}
-          <View className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-            {/* Left Controls: Date Nav + View Switcher */}
-            <View className="flex flex-row flex-wrap items-center gap-2">
-              {/* Date Navigation Strip */}
-              <View className="flex flex-row items-center rounded-xl border border-stone-200 bg-white p-1 shadow-xs">
-                <Pressable
-                  onPress={prevPeriod}
-                  className="h-8 w-8 rounded-lg bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-700 transition-colors"
-                  accessibilityLabel="Previous Period"
-                >
-                  <ChevronLeft size={16} color="#44403c" />
-                </Pressable>
-
-                <Pressable
-                  onPress={goToToday}
-                  className="px-2.5 py-1 rounded-lg hover:bg-stone-100 transition-colors"
-                >
-                  <Text className="text-xs font-bold text-stone-700">Today</Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={nextPeriod}
-                  className="h-8 w-8 rounded-lg bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-700 transition-colors"
-                  accessibilityLabel="Next Period"
-                >
-                  <ChevronRight size={16} color="#44403c" />
-                </Pressable>
-
-                <Text className="px-2 text-xs sm:text-sm font-bold text-stone-900 whitespace-nowrap">
-                  {currentPeriodTitle()}
-                </Text>
-              </View>
-
-              {/* View Mode Switcher */}
-              <View className="flex flex-row rounded-xl border border-stone-200 bg-white p-1 shadow-xs">
-                <Pressable
-                  onPress={() => setViewMode('month')}
-                  className={`flex flex-row items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors ${
-                    viewMode === 'month'
-                      ? 'bg-[#800020] text-white shadow-xs'
-                      : 'text-stone-600 hover:bg-stone-50'
-                  }`}
-                >
-                  <CalendarDays size={14} color={viewMode === 'month' ? '#ffffff' : '#57534e'} />
-                  <Text
-                    className={`text-xs font-bold ${
-                      viewMode === 'month' ? 'text-white' : 'text-stone-600'
-                    }`}
-                  >
-                    Month
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setViewMode('week')}
-                  className={`flex flex-row items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors ${
-                    viewMode === 'week'
-                      ? 'bg-[#800020] text-white shadow-xs'
-                      : 'text-stone-600 hover:bg-stone-50'
-                  }`}
-                >
-                  <Columns size={14} color={viewMode === 'week' ? '#ffffff' : '#57534e'} />
-                  <Text
-                    className={`text-xs font-bold ${
-                      viewMode === 'week' ? 'text-white' : 'text-stone-600'
-                    }`}
-                  >
-                    Week
-                  </Text>
-                </Pressable>
-
-                <Pressable
-                  onPress={() => setViewMode('agenda')}
-                  className={`flex flex-row items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors ${
-                    viewMode === 'agenda'
-                      ? 'bg-[#800020] text-white shadow-xs'
-                      : 'text-stone-600 hover:bg-stone-50'
-                  }`}
-                >
-                  <List size={14} color={viewMode === 'agenda' ? '#ffffff' : '#57534e'} />
-                  <Text
-                    className={`text-xs font-bold ${
-                      viewMode === 'agenda' ? 'text-white' : 'text-stone-600'
-                    }`}
-                  >
-                    Agenda
-                  </Text>
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Right Tools: Print, Excel Export, ICS, Share */}
-            <View className="flex flex-row items-center gap-2 self-start sm:self-auto">
-              {/* Print Calendar */}
-              <Pressable
-                onPress={handlePrint}
-                className="flex flex-row items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-1.5 sm:py-2 text-stone-700 hover:bg-stone-50 transition-colors shadow-xs"
-              >
-                <Printer size={14} color="#57534e" />
-                <Text className="text-xs font-semibold text-stone-700">Print</Text>
-              </Pressable>
-
-              {/* Export Excel (.xls) */}
-              <Pressable
-                onPress={() => {
-                  try {
-                    exportEventsScheduleToExcel(events, currentPeriodTitle());
-                    toast.success('Event run-of-show exported to Excel (.xls)', {
-                      title: 'Excel Export Ready',
-                    });
-                  } catch (err) {
-                    console.error('[AdminEventsView] Excel export error:', err);
-                    toast.error('Failed to export event spreadsheet', { title: 'Export Error' });
-                  }
-                }}
-                className="flex flex-row items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-1.5 sm:py-2 text-emerald-800 hover:bg-emerald-100 transition-colors shadow-xs"
-                accessibilityLabel="Export Event Schedule to Excel"
-              >
-                <FileSpreadsheet size={14} color="#047857" />
-                <Text className="text-xs font-bold text-emerald-800">Excel</Text>
-              </Pressable>
-
-              {/* Export .ICS */}
-              <Pressable
-                onPress={handleExportMonthIcs}
-                className="flex flex-row items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-1.5 sm:py-2 text-stone-700 hover:bg-stone-50 transition-colors shadow-xs"
-              >
-                <Download size={14} color="#57534e" />
-                <Text className="text-xs font-semibold text-stone-700">iCal</Text>
-              </Pressable>
-
-              {/* Share Live Link */}
-              <Pressable
-                onPress={openShareModal}
-                className="flex flex-row items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/80 px-3 py-1.5 sm:py-2 text-[#800020] hover:bg-rose-100 transition-colors shadow-xs"
-              >
-                <Share2 size={14} color="#800020" />
-                <Text className="text-xs font-bold text-[#800020]">Share</Text>
-              </Pressable>
-            </View>
-          </View>
         </View>
+      }
+      controlsSlot={
+        <EventCalendarControls
+          currentPeriodTitle={currentPeriodTitle()}
+          viewMode={viewMode}
+          onPrevPeriod={prevPeriod}
+          onNextPeriod={nextPeriod}
+          onGoToToday={goToToday}
+          onSetViewMode={setViewMode}
+          actionMenuSlot={
+            <EventActionMenu
+              onPrint={handlePrint}
+              onExportExcel={handleExportExcel}
+              onExportIcs={handleExportMonthIcs}
+              onShare={openShareModal}
+              onOpenLiveView={handleOpenLiveView}
+              showExcel={true}
+              showLiveView={true}
+            />
+          }
+        />
+      }
+    >
+      {/* Calendar View Body */}
+      {viewMode === 'month' && (
+        <MonthCalendarGrid
+          currentDate={currentDate}
+          events={events}
+          onSelectEvent={openEventDetail}
+          onAddEvent={(dateStr) => openCreateModal(dateStr)}
+          isAdmin={true}
+        />
+      )}
 
-        {/* Calendar View Area */}
-        {viewMode === 'month' && (
-          <MonthCalendarGrid
-            currentDate={currentDate}
-            events={events}
-            onSelectEvent={openEventDetail}
-            onAddEvent={(dateStr) => openCreateModal(dateStr)}
-            isAdmin={true}
-          />
-        )}
+      {viewMode === 'week' && (
+        <WeekScheduleView
+          currentDate={currentDate}
+          events={events}
+          onSelectEvent={openEventDetail}
+          onAddEvent={(dateStr) => openCreateModal(dateStr)}
+          isAdmin={true}
+        />
+      )}
 
-        {viewMode === 'week' && (
-          <WeekScheduleView
-            currentDate={currentDate}
-            events={events}
-            onSelectEvent={openEventDetail}
-            onAddEvent={(dateStr) => openCreateModal(dateStr)}
-            isAdmin={true}
-          />
-        )}
+      {viewMode === 'agenda' && (
+        <AgendaListView events={events} onSelectEvent={openEventDetail} isAdmin={true} />
+      )}
 
-        {viewMode === 'agenda' && (
-          <AgendaListView events={events} onSelectEvent={openEventDetail} isAdmin={true} />
-        )}
-      </View>
-
-      {/* Modals */}
+      {/* Modals & Dialogs */}
       <CreateEditEventModal
         isOpen={isCreateModalOpen}
         event={editingEvent}
@@ -326,6 +212,6 @@ export const AdminEventsView: React.FC = () => {
         events={events}
         currentDate={currentDate}
       />
-    </ScrollView>
+    </EventCalendarShell>
   );
 };

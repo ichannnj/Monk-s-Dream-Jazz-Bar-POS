@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, Text, Pressable, Image } from 'react-native';
-import { Clock, Music, Calendar, Wrench, Users, ChevronRight } from 'lucide-react-native';
+import { View, Text, Pressable, Image, Platform } from 'react-native';
+import { Clock, Music, Calendar } from 'lucide-react-native';
 import type { VenueEvent } from '../../domain/event.types';
+import { formatFullDate, formatShowtimeRange } from '../utils/eventFormatters';
 
 interface AgendaListViewProps {
   events: VenueEvent[];
@@ -10,146 +11,152 @@ interface AgendaListViewProps {
 }
 
 export const AgendaListView: React.FC<AgendaListViewProps> = ({ events, onSelectEvent }) => {
-  const formatFullDate = (dateStr: string) => {
-    try {
-      const [y, m, d] = dateStr.split('-');
-      const date = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
-      return date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
-  const formatTime = (timeStr?: string | null) => {
-    if (!timeStr) return '';
-    const [h, m] = timeStr.split(':');
-    const hour = parseInt(h, 10);
-    const ampm = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = hour % 12 || 12;
-    return `${hour12}:${m} ${ampm}`;
-  };
-
   if (events.length === 0) {
     return (
-      <View className="rounded-2xl border border-stone-200/90 bg-white p-12 text-center flex items-center justify-center shadow-xs">
-        <Calendar size={40} color="#a8a29e" style={{ marginBottom: 12 }} />
-        <Text className="text-lg font-bold text-stone-800">No Events Scheduled</Text>
-        <Text className="text-sm text-stone-500 mt-1 max-w-sm text-center">
-          There are no upcoming jazz gigs or special tasting nights scheduled for this period.
+      <View className="rounded-2xl border border-stone-200/90 bg-white p-8 sm:p-12 items-center justify-center shadow-xs">
+        <Calendar size={36} color="#a8a29e" aria-hidden={true} style={{ marginBottom: 12 }} />
+        <Text className="text-base sm:text-lg font-bold text-stone-800">No events scheduled</Text>
+        <Text className="text-xs sm:text-sm text-stone-500 mt-1 max-w-sm text-center">
+          There are no upcoming jazz gigs or tasting sessions scheduled for this period.
         </Text>
       </View>
     );
   }
 
+  // Group events by date
+  const eventsByDate = React.useMemo(() => {
+    const map = new Map<string, VenueEvent[]>();
+    events.forEach((ev) => {
+      const list = map.get(ev.event_date) || [];
+      list.push(ev);
+      map.set(ev.event_date, list);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
+  }, [events]);
+
   return (
     <View className="space-y-4">
-      {events.map((ev) => (
-        <Pressable
-          key={ev.id}
-          onPress={() => onSelectEvent(ev)}
-          className="group overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-xs hover:border-[#800020] transition-all flex flex-col md:flex-row cursor-pointer"
-        >
-          {/* Hero Image Poster */}
-          <View className="w-full md:w-64 h-48 md:h-auto relative overflow-hidden bg-stone-100 flex-shrink-0">
-            {ev.poster_url ? (
-              <Image
-                source={{ uri: ev.poster_url }}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                resizeMode="cover"
-              />
-            ) : (
-              <View className="w-full h-full flex items-center justify-center bg-rose-50/50">
-                <Music size={36} color="#800020" />
-              </View>
-            )}
-            <View className="absolute top-3 left-3 bg-[#800020] text-white font-black text-xs px-2.5 py-1 rounded-full uppercase tracking-wider shadow-xs">
-              <Text className="text-[10px] font-black text-white uppercase tracking-wider">
-                {ev.status}
-              </Text>
-            </View>
+      {eventsByDate.map(([dateStr, dateEvents]) => (
+        <View key={dateStr} className="space-y-2">
+          {/* Date Section Header */}
+          <View className="flex-row items-center gap-2 px-1">
+            <Calendar size={14} color="#800020" aria-hidden={true} />
+            <Text className="text-xs font-bold text-[#800020] uppercase tracking-wide">
+              {formatFullDate(dateStr)}
+            </Text>
+            <View className="h-px flex-1 bg-stone-200/80" />
           </View>
 
-          {/* Event Content & Logistics Summary */}
-          <View className="flex-1 p-5 flex flex-col justify-between">
-            <View>
-              {/* Date & Genre Line */}
-              <View className="flex flex-row items-center justify-between gap-2 mb-2">
-                <View className="flex flex-row items-center gap-1.5">
-                  <Calendar size={14} color="#800020" />
-                  <Text className="text-xs font-bold text-[#800020] uppercase tracking-wide">
-                    {formatFullDate(ev.event_date)}
-                  </Text>
-                </View>
+          {/* List of Events for this Date */}
+          <View className="space-y-2">
+            {dateEvents.map((ev) => {
+              const showtime = formatShowtimeRange(ev.start_time, ev.end_time);
 
-                {ev.genre && (
-                  <View className="bg-stone-100 border border-stone-200 rounded-full px-2.5 py-0.5">
-                    <Text className="text-[11px] font-semibold text-stone-600">{ev.genre}</Text>
+              return (
+                <Pressable
+                  key={ev.id}
+                  onPress={() => onSelectEvent(ev)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Event details for ${ev.title}${ev.performer_name ? `, by ${ev.performer_name}` : ''}`}
+                  style={
+                    Platform.OS === 'web'
+                      ? ({
+                          cursor: 'pointer',
+                          touchAction: 'manipulation',
+                        } as any)
+                      : undefined
+                  }
+                  className="group overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-xs hover:border-[#800020]/60 active:bg-stone-50 transition-colors flex-col sm:flex-row"
+                >
+                  {/* Poster Thumbnail */}
+                  <View className="w-full sm:w-40 sm:min-w-[160px] h-36 sm:h-auto relative overflow-hidden bg-stone-100 flex-shrink-0">
+                    {ev.poster_url ? (
+                      <Image
+                        source={{ uri: ev.poster_url }}
+                        className="w-full h-full object-cover"
+                        resizeMode="cover"
+                        accessibilityLabel={`${ev.title} poster`}
+                      />
+                    ) : (
+                      <View className="w-full h-full min-h-[110px] items-center justify-center bg-rose-50/50">
+                        <Music size={28} color="#800020" aria-hidden={true} />
+                      </View>
+                    )}
+
+                    {ev.status !== 'scheduled' && (
+                      <View className="absolute top-2.5 left-2.5 bg-black/75 px-2 py-0.5 rounded-md">
+                        <Text className="text-[10px] font-bold text-white uppercase tracking-wider">
+                          {ev.status.replace('_', ' ')}
+                        </Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </View>
 
-              {/* Title & Performer */}
-              <Text className="text-xl font-bold text-stone-900 group-hover:text-[#800020] transition-colors mb-1">
-                {ev.title}
-              </Text>
-              {ev.performer_name && (
-                <Text className="text-sm font-semibold text-[#800020] mb-2">
-                  {ev.performer_name}
-                </Text>
-              )}
+                  {/* Body Content */}
+                  <View className="flex-1 p-3.5 sm:p-4 justify-between flex-col">
+                    <View>
+                      <View className="flex-row items-center justify-between gap-2 mb-1">
+                        {ev.genre ? (
+                          <View className="bg-stone-100 border border-stone-200/80 rounded px-2 py-0.5">
+                            <Text
+                              className="text-[10px] font-semibold text-stone-600"
+                              numberOfLines={1}
+                            >
+                              {ev.genre}
+                            </Text>
+                          </View>
+                        ) : (
+                          <View />
+                        )}
 
-              {/* Description */}
-              {ev.description && (
-                <Text numberOfLines={2} className="text-xs text-stone-500 leading-relaxed mb-4">
-                  {ev.description}
-                </Text>
-              )}
-            </View>
+                        {showtime ? (
+                          <View className="flex-row items-center gap-1 bg-stone-50 border border-stone-200 px-2 py-0.5 rounded-md">
+                            <Clock size={11} color="#800020" aria-hidden={true} />
+                            <Text className="text-xs font-bold text-stone-800">{showtime}</Text>
+                          </View>
+                        ) : null}
+                      </View>
 
-            {/* Run-of-Show Logistics Chips */}
-            <View className="pt-3 border-t border-stone-100 flex flex-wrap flex-row items-center gap-3">
-              {/* Showtime */}
-              <View className="flex flex-row items-center gap-1.5 bg-stone-50 px-2.5 py-1 rounded-lg border border-stone-200">
-                <Clock size={13} color="#800020" />
-                <Text className="text-xs font-bold text-[#800020]">
-                  Show: {formatTime(ev.start_time)}
-                  {ev.end_time ? ` – ${formatTime(ev.end_time)}` : ''}
-                </Text>
-              </View>
+                      <Text
+                        numberOfLines={1}
+                        className="text-base sm:text-lg font-bold text-stone-900 group-hover:text-[#800020] transition-colors"
+                      >
+                        {ev.title}
+                      </Text>
 
-              {/* Sound Check */}
-              {ev.sound_check_time && (
-                <View className="flex flex-row items-center gap-1.5 bg-rose-50/70 px-2.5 py-1 rounded-lg border border-rose-200">
-                  <Wrench size={13} color="#800020" />
-                  <Text className="text-xs text-stone-700">
-                    Sound Check:{' '}
-                    <Text className="font-bold text-[#800020]">
-                      {formatTime(ev.sound_check_time)}
-                    </Text>
-                  </Text>
-                </View>
-              )}
+                      {ev.performer_name ? (
+                        <Text
+                          numberOfLines={1}
+                          className="text-xs font-semibold text-[#800020] mt-0.5"
+                        >
+                          {ev.performer_name}
+                        </Text>
+                      ) : null}
 
-              {/* Reserved Tables */}
-              {ev.reserved_tables && (
-                <View className="flex flex-row items-center gap-1.5 bg-stone-50 px-2.5 py-1 rounded-lg border border-stone-200">
-                  <Users size={13} color="#78716c" />
-                  <Text className="text-xs text-stone-600">{ev.reserved_tables}</Text>
-                </View>
-              )}
+                      {ev.description ? (
+                        <Text
+                          numberOfLines={2}
+                          className="text-xs text-stone-500 leading-relaxed mt-1.5"
+                        >
+                          {ev.description}
+                        </Text>
+                      ) : null}
+                    </View>
 
-              <View className="ml-auto flex flex-row items-center gap-1 text-[#800020] group-hover:translate-x-0.5 transition-transform">
-                <Text className="text-xs font-bold text-[#800020]">Details & Logistics</Text>
-                <ChevronRight size={14} color="#800020" />
-              </View>
-            </View>
+                    <View className="pt-2 sm:pt-3 border-t border-stone-100 flex-row items-center justify-between mt-2">
+                      <Text className="text-xs font-semibold text-[#800020]">View details</Text>
+                      {ev.sound_check_time ? (
+                        <Text className="text-[11px] text-stone-400">
+                          Sound check: {ev.sound_check_time.slice(0, 5)}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
+                </Pressable>
+              );
+            })}
           </View>
-        </Pressable>
+        </View>
       ))}
     </View>
   );

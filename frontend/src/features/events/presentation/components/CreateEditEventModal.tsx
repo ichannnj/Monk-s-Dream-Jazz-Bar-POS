@@ -8,8 +8,9 @@ import {
   ScrollView,
   Modal,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
-import { X, Upload, Calendar, Clock, Mic, Music, Wrench, Users, Check } from 'lucide-react-native';
+import { X, Upload, Calendar, Clock, Mic, Check, Trash2 } from 'lucide-react-native';
 import type {
   VenueEvent,
   CreateEventInput,
@@ -18,6 +19,7 @@ import type {
 } from '../../domain/event.types';
 import { eventsApi } from '../../data/events.api';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { getManilaTodayDateString } from '../utils/eventFormatters';
 
 interface CreateEditEventModalProps {
   isOpen: boolean;
@@ -40,7 +42,7 @@ const GENRE_PRESETS = [
 
 const STATUS_OPTIONS: { id: EventStatus; label: string }[] = [
   { id: 'scheduled', label: 'Scheduled' },
-  { id: 'in_progress', label: 'In Progress' },
+  { id: 'in_progress', label: 'In progress' },
   { id: 'completed', label: 'Completed' },
   { id: 'cancelled', label: 'Cancelled' },
 ];
@@ -61,7 +63,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
   const [performerName, setPerformerName] = useState('');
   const [genre, setGenre] = useState('Hard Bop');
   const [description, setDescription] = useState('');
-  const [soundCheckTime, setSoundCheckTime] = useState('18:00');
+  const [soundCheckTime, setSoundCheckTime] = useState('');
   const [gearRequirements, setGearRequirements] = useState('');
   const [reservedTables, setReservedTables] = useState('');
   const [specialRequests, setSpecialRequests] = useState('');
@@ -70,6 +72,9 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
   const [activeTab, setActiveTab] = useState<'info' | 'poster' | 'logistics'>('info');
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<{ title?: string; eventDate?: string; startTime?: string }>(
+    {}
+  );
 
   useEffect(() => {
     if (event) {
@@ -82,13 +87,13 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
       setPerformerName(event.performer_name || '');
       setGenre(event.genre || 'Hard Bop');
       setDescription(event.description || '');
-      setSoundCheckTime(event.sound_check_time ? event.sound_check_time.slice(0, 5) : '18:00');
+      setSoundCheckTime(event.sound_check_time ? event.sound_check_time.slice(0, 5) : '');
       setGearRequirements(event.gear_requirements || '');
       setReservedTables(event.reserved_tables || '');
       setSpecialRequests(event.special_requests || '');
       setStatus(event.status || 'scheduled');
     } else {
-      const defaultDate = initialDate || new Date().toISOString().slice(0, 10);
+      const defaultDate = initialDate || getManilaTodayDateString();
       setTitle('');
       setEventDate(defaultDate);
       setStartTime('20:00');
@@ -98,12 +103,14 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
       setPerformerName('');
       setGenre('Hard Bop');
       setDescription('');
-      setSoundCheckTime('18:00');
-      setGearRequirements('Yamaha Baby Grand Piano, Bass Amp, Drum Kit, 2x Vocal Mics');
-      setReservedTables('Tables T1, T2 reserved for guest list');
+      // Clean defaults: no fabricated gear or reserved table notes
+      setSoundCheckTime('');
+      setGearRequirements('');
+      setReservedTables('');
       setSpecialRequests('');
       setStatus('scheduled');
     }
+    setErrors({});
     setActiveTab('info');
   }, [event, initialDate, isOpen]);
 
@@ -123,7 +130,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
             const result = await eventsApi.uploadEventPoster(file);
             setPosterUrl(result.publicUrl);
             setPosterStoragePath(result.storagePath);
-            toast.success('Event poster uploaded successfully');
+            toast.success('Event poster uploaded');
           } catch (err: any) {
             console.error('Failed to upload poster:', err);
             toast.error('Failed to upload poster image');
@@ -138,52 +145,64 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
     }
   };
 
-  const handleSubmit = async () => {
+  const handleRemovePoster = () => {
+    setPosterUrl('');
+    setPosterStoragePath(null);
+  };
+
+  const validate = () => {
+    const newErrors: { title?: string; eventDate?: string; startTime?: string } = {};
     if (!title.trim()) {
-      toast.error('Please enter an event title');
-      setActiveTab('info');
-      return;
+      newErrors.title = 'Title is required';
     }
-    if (!eventDate.trim()) {
-      toast.error('Please select an event date');
-      setActiveTab('info');
-      return;
+    if (!eventDate.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(eventDate.trim())) {
+      newErrors.eventDate = 'Valid date required (YYYY-MM-DD)';
     }
     if (!startTime.trim()) {
-      toast.error('Please enter a start time');
+      newErrors.startTime = 'Start time is required';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) {
       setActiveTab('info');
+      toast.error('Please complete required fields');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await onSave(
-        {
-          title: title.trim(),
-          event_date: eventDate.trim(),
-          start_time:
-            startTime.includes(':') && startTime.length === 5 ? `${startTime}:00` : startTime,
-          end_time: endTime ? (endTime.length === 5 ? `${endTime}:00` : endTime) : null,
-          poster_url: posterUrl.trim() || null,
-          poster_storage_path: posterStoragePath,
-          performer_name: performerName.trim() || null,
-          genre: genre.trim() || null,
-          description: description.trim() || null,
-          sound_check_time: soundCheckTime
-            ? soundCheckTime.length === 5
-              ? `${soundCheckTime}:00`
-              : soundCheckTime
-            : null,
-          gear_requirements: gearRequirements.trim() || null,
-          reserved_tables: reservedTables.trim() || null,
-          special_requests: specialRequests.trim() || null,
-          status,
-        },
-        event?.id
-      );
+      const payload: CreateEventInput = {
+        title: title.trim(),
+        event_date: eventDate.trim(),
+        start_time: startTime.trim().length === 5 ? `${startTime.trim()}:00` : startTime.trim(),
+        end_time: endTime.trim()
+          ? endTime.trim().length === 5
+            ? `${endTime.trim()}:00`
+            : endTime.trim()
+          : null,
+        poster_url: posterUrl || null,
+        poster_storage_path: posterStoragePath || null,
+        performer_name: performerName.trim() || null,
+        genre: genre.trim() || null,
+        description: description.trim() || null,
+        sound_check_time: soundCheckTime.trim()
+          ? soundCheckTime.trim().length === 5
+            ? `${soundCheckTime.trim()}:00`
+            : soundCheckTime.trim()
+          : null,
+        gear_requirements: gearRequirements.trim() || null,
+        reserved_tables: reservedTables.trim() || null,
+        special_requests: specialRequests.trim() || null,
+        status,
+      };
+
+      await onSave(payload, event?.id);
       onClose();
     } catch {
-      // error handled by store
+      // Error handled by store
     } finally {
       setIsSubmitting(false);
     }
@@ -191,419 +210,426 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
 
   return (
     <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 items-center justify-center bg-black/50 p-4">
-        <View className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-2xl">
+      <View className="flex-1 items-center justify-end sm:justify-center bg-black/60 p-0 sm:p-4">
+        <Pressable
+          className="absolute inset-0"
+          onPress={onClose}
+          accessibilityLabel="Dismiss event form"
+        />
+
+        <View
+          className="relative max-h-[94vh] sm:max-h-[88vh] w-full max-w-xl overflow-hidden rounded-t-3xl sm:rounded-3xl border border-stone-200 bg-white shadow-2xl flex-col"
+          style={Platform.OS === 'web' ? ({ overscrollBehavior: 'contain' } as any) : undefined}
+        >
           {/* Header */}
-          <View className="flex flex-row items-center justify-between border-b border-stone-200 bg-white px-6 py-4">
-            <View className="flex flex-row items-center gap-3">
-              <View className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#800020] text-white">
-                <Music size={20} color="#ffffff" />
-              </View>
-              <View>
-                <Text className="text-base font-extrabold text-stone-900">
-                  {event ? 'Edit Jazz Event & Logistics' : 'Schedule New Event / Gig'}
-                </Text>
-                <Text className="text-xs text-stone-500">
-                  Configure performance details, hero poster, and stage run-of-show
-                </Text>
-              </View>
+          <View className="p-4 sm:p-5 border-b border-stone-200 flex-row items-center justify-between">
+            <View>
+              <Text className="text-lg font-bold text-stone-900">
+                {event ? 'Edit event' : 'Schedule event'}
+              </Text>
+              <Text className="text-xs text-stone-500">
+                {event
+                  ? 'Update event details and run-of-show'
+                  : 'Add new jazz gig or venue performance'}
+              </Text>
             </View>
 
             <Pressable
               onPress={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-stone-500 hover:text-stone-900"
+              accessibilityRole="button"
+              accessibilityLabel="Close dialog"
+              className="h-8 w-8 items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200 active:bg-stone-300"
             >
-              <X size={16} color="#57534e" />
+              <X size={16} color="#44403c" aria-hidden={true} />
             </Pressable>
           </View>
 
-          {/* Navigation Tabs */}
-          <View className="flex flex-row border-b border-stone-200 bg-stone-50/50 px-6">
+          {/* Section Tabs */}
+          <View className="flex-row border-b border-stone-100 bg-stone-50/70 px-4 pt-2">
             <Pressable
               onPress={() => setActiveTab('info')}
-              className={`border-b-2 py-3 px-4 transition-colors ${
-                activeTab === 'info' ? 'border-[#800020]' : 'border-transparent'
+              accessibilityRole="tab"
+              accessibilityLabel="General details tab"
+              className={`pb-2.5 px-3 border-b-2 mr-2 ${
+                activeTab === 'info'
+                  ? 'border-[#800020] text-[#800020]'
+                  : 'border-transparent text-stone-500'
               }`}
             >
               <Text
-                className={`text-xs font-bold uppercase tracking-wider ${
-                  activeTab === 'info' ? 'text-[#800020]' : 'text-stone-500'
+                className={`text-xs font-bold ${
+                  activeTab === 'info' ? 'text-[#800020]' : 'text-stone-600'
                 }`}
               >
-                1. General Details
+                General details
               </Text>
             </Pressable>
 
             <Pressable
               onPress={() => setActiveTab('poster')}
-              className={`border-b-2 py-3 px-4 transition-colors ${
-                activeTab === 'poster' ? 'border-[#800020]' : 'border-transparent'
+              accessibilityRole="tab"
+              accessibilityLabel="Poster artwork tab"
+              className={`pb-2.5 px-3 border-b-2 mr-2 ${
+                activeTab === 'poster'
+                  ? 'border-[#800020] text-[#800020]'
+                  : 'border-transparent text-stone-500'
               }`}
             >
               <Text
-                className={`text-xs font-bold uppercase tracking-wider ${
-                  activeTab === 'poster' ? 'text-[#800020]' : 'text-stone-500'
+                className={`text-xs font-bold ${
+                  activeTab === 'poster' ? 'text-[#800020]' : 'text-stone-600'
                 }`}
               >
-                2. Hero Poster / Photo
+                Poster artwork
               </Text>
             </Pressable>
 
             <Pressable
               onPress={() => setActiveTab('logistics')}
-              className={`border-b-2 py-3 px-4 transition-colors ${
-                activeTab === 'logistics' ? 'border-[#800020]' : 'border-transparent'
+              accessibilityRole="tab"
+              accessibilityLabel="Production and logistics tab"
+              className={`pb-2.5 px-3 border-b-2 ${
+                activeTab === 'logistics'
+                  ? 'border-[#800020] text-[#800020]'
+                  : 'border-transparent text-stone-500'
               }`}
             >
               <Text
-                className={`text-xs font-bold uppercase tracking-wider ${
-                  activeTab === 'logistics' ? 'text-[#800020]' : 'text-stone-500'
+                className={`text-xs font-bold ${
+                  activeTab === 'logistics' ? 'text-[#800020]' : 'text-stone-600'
                 }`}
               >
-                3. Backstage Logistics
+                Production notes
               </Text>
             </Pressable>
           </View>
 
-          {/* Tab Content */}
-          <ScrollView className="flex-1 p-6">
-            {/* TAB 1: GENERAL INFO */}
+          {/* Form Body */}
+          <ScrollView className="flex-1 p-4 sm:p-5 space-y-4" showsVerticalScrollIndicator={false}>
             {activeTab === 'info' && (
-              <View className="space-y-4">
+              <View className="space-y-3.5">
+                {/* Event Title */}
                 <View>
-                  <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                    Event Title *
+                  <Text className="text-xs font-bold text-stone-700 mb-1">
+                    Event title <Text className="text-rose-600">*</Text>
                   </Text>
                   <TextInput
                     value={title}
                     onChangeText={setTitle}
-                    placeholder="e.g. The Monk's Dream Quintet: Miles & Monk Tribute"
+                    placeholder="e.g., Thelonious Monk Birthday Set"
                     placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2.5 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    accessibilityLabel="Event title"
+                  />
+                  {errors.title ? (
+                    <Text className="text-xs text-rose-600 mt-1">{errors.title}</Text>
+                  ) : null}
+                </View>
+
+                {/* Performer / Ensemble */}
+                <View>
+                  <Text className="text-xs font-bold text-stone-700 mb-1">Performer or band</Text>
+                  <TextInput
+                    value={performerName}
+                    onChangeText={setPerformerName}
+                    placeholder="e.g., Manila Bebop Collective"
+                    placeholderTextColor="#a8a29e"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    accessibilityLabel="Performer or band name"
                   />
                 </View>
 
-                <View className="flex flex-col sm:flex-row gap-3">
+                {/* Date & Showtime Row */}
+                <View className="flex-col sm:flex-row gap-3">
                   <View className="flex-1">
-                    <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                      Event Date (YYYY-MM-DD) *
+                    <Text className="text-xs font-bold text-stone-700 mb-1">
+                      Event date <Text className="text-rose-600">*</Text>
                     </Text>
                     <TextInput
                       value={eventDate}
                       onChangeText={setEventDate}
-                      placeholder="2026-11-15"
+                      placeholder="YYYY-MM-DD"
                       placeholderTextColor="#a8a29e"
-                      className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2.5 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
+                      className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                      accessibilityLabel="Event date in YYYY-MM-DD format"
                     />
+                    {errors.eventDate ? (
+                      <Text className="text-xs text-rose-600 mt-1">{errors.eventDate}</Text>
+                    ) : null}
                   </View>
 
                   <View className="flex-1">
-                    <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                      Show Start (HH:MM) *
+                    <Text className="text-xs font-bold text-stone-700 mb-1">
+                      Start time <Text className="text-rose-600">*</Text>
                     </Text>
                     <TextInput
                       value={startTime}
                       onChangeText={setStartTime}
-                      placeholder="20:00"
+                      placeholder="HH:MM (e.g. 20:00)"
                       placeholderTextColor="#a8a29e"
-                      className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2.5 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
+                      className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                      accessibilityLabel="Start time in 24-hour format"
                     />
+                    {errors.startTime ? (
+                      <Text className="text-xs text-rose-600 mt-1">{errors.startTime}</Text>
+                    ) : null}
                   </View>
 
                   <View className="flex-1">
-                    <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                      End Time (HH:MM)
-                    </Text>
+                    <Text className="text-xs font-bold text-stone-700 mb-1">End time</Text>
                     <TextInput
                       value={endTime}
                       onChangeText={setEndTime}
-                      placeholder="23:30"
+                      placeholder="HH:MM (e.g. 23:30)"
                       placeholderTextColor="#a8a29e"
-                      className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2.5 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
+                      className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                      accessibilityLabel="End time in 24-hour format"
                     />
                   </View>
                 </View>
 
-                <View className="flex flex-col sm:flex-row gap-3">
-                  <View className="flex-1">
-                    <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                      Performer / Band Lineup
-                    </Text>
-                    <TextInput
-                      value={performerName}
-                      onChangeText={setPerformerName}
-                      placeholder="e.g. Maya Rivera Trio"
-                      placeholderTextColor="#a8a29e"
-                      className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2.5 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
-                    />
-                  </View>
-
-                  <View className="flex-1">
-                    <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                      Genre / Style
-                    </Text>
-                    <TextInput
-                      value={genre}
-                      onChangeText={setGenre}
-                      placeholder="e.g. Vocal Jazz"
-                      placeholderTextColor="#a8a29e"
-                      className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2.5 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
-                    />
-                  </View>
-                </View>
-
-                {/* Genre presets */}
-                <View className="flex flex-wrap flex-row gap-1.5">
-                  {GENRE_PRESETS.map((p) => (
-                    <Pressable
-                      key={p}
-                      onPress={() => setGenre(p)}
-                      className={`rounded-full px-2.5 py-1 border transition-colors ${
-                        genre === p
-                          ? 'bg-[#800020] border-[#800020]'
-                          : 'bg-stone-100 border-stone-200 hover:border-stone-300'
-                      }`}
-                    >
-                      <Text
-                        className={`text-[11px] font-bold ${
-                          genre === p ? 'text-white' : 'text-stone-600'
-                        }`}
-                      >
-                        {p}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-
+                {/* Genre Selector */}
                 <View>
-                  <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                    Description & Public Run-of-Show Notes
-                  </Text>
-                  <TextInput
-                    value={description}
-                    onChangeText={setDescription}
-                    multiline
-                    numberOfLines={3}
-                    placeholder="Brief background on the music, repertoire, guest sit-ins, and door opening schedule..."
-                    placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2.5 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
-                  />
+                  <Text className="text-xs font-bold text-stone-700 mb-1.5">Musical style</Text>
+                  <View className="flex-row flex-wrap gap-1.5">
+                    {GENRE_PRESETS.map((p) => {
+                      const isSel = genre === p;
+                      return (
+                        <Pressable
+                          key={p}
+                          onPress={() => setGenre(p)}
+                          className={`rounded-lg px-2.5 py-1 border text-xs font-medium ${
+                            isSel
+                              ? 'bg-[#800020] border-[#800020] text-white'
+                              : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
+                          }`}
+                        >
+                          <Text
+                            className={`text-xs ${
+                              isSel ? 'text-white font-bold' : 'text-stone-700'
+                            }`}
+                          >
+                            {p}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
                 </View>
-              </View>
-            )}
 
-            {/* TAB 2: POSTER PHOTO */}
-            {activeTab === 'poster' && (
-              <View className="space-y-4">
-                <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide">
-                  Hero Poster / Artist Photo
-                </Text>
-
-                {/* Upload Trigger Area */}
-                <Pressable
-                  onPress={triggerFileBrowser}
-                  disabled={isUploading}
-                  className="relative rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50/80 p-6 text-center hover:border-[#800020] transition-colors flex flex-col items-center justify-center cursor-pointer"
-                >
-                  {isUploading ? (
-                    <View className="py-4 flex items-center">
-                      <ActivityIndicator size="small" color="#800020" />
-                      <Text className="text-xs text-[#800020] mt-2 font-medium">
-                        Optimizing & uploading poster...
-                      </Text>
-                    </View>
-                  ) : (
-                    <View className="flex flex-col items-center">
-                      <View className="h-12 w-12 rounded-2xl bg-rose-50 flex items-center justify-center text-[#800020] mb-2 border border-rose-200">
-                        <Upload size={22} color="#800020" />
-                      </View>
-                      <Text className="text-sm font-bold text-stone-800">
-                        Click to select image file
-                      </Text>
-                      <Text className="text-xs text-stone-500 mt-1 text-center">
-                        JPG, PNG, or WebP. Auto-compressed up to 1200px for crisp hero banners.
-                      </Text>
-                    </View>
-                  )}
-                </Pressable>
-
-                {/* Direct URL Fallback */}
+                {/* Status Selector */}
                 <View>
-                  <Text className="text-xs font-bold text-stone-600 uppercase tracking-wide mb-1.5">
-                    Or Enter Image URL
-                  </Text>
-                  <TextInput
-                    value={posterUrl}
-                    onChangeText={setPosterUrl}
-                    placeholder="https://images.unsplash.com/photo-..."
-                    placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2 text-xs text-stone-900 focus:bg-white focus:border-[#800020]"
-                  />
-                </View>
-
-                {/* Live Preview */}
-                {posterUrl ? (
-                  <View className="rounded-2xl border border-stone-200 bg-stone-50 p-2 overflow-hidden shadow-xs">
-                    <Text className="text-[11px] font-bold text-stone-500 uppercase px-2 py-1">
-                      Hero Poster Preview
-                    </Text>
-                    <View className="h-52 w-full rounded-xl overflow-hidden relative bg-stone-100">
-                      <Image
-                        source={{ uri: posterUrl }}
-                        className="h-full w-full object-cover"
-                        resizeMode="cover"
-                      />
-                      <View className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-transparent" />
-                      <View className="absolute bottom-3 left-3 right-3">
-                        <Text className="text-base font-extrabold text-white drop-shadow">
-                          {title || 'Event Title Preview'}
-                        </Text>
-                        <Text className="text-xs font-bold text-rose-200">
-                          {performerName || 'Performer Name'}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                ) : null}
-              </View>
-            )}
-
-            {/* TAB 3: BACKSTAGE LOGISTICS */}
-            {activeTab === 'logistics' && (
-              <View className="space-y-4">
-                <View className="flex flex-col sm:flex-row gap-3">
-                  <View className="flex-1">
-                    <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                      Sound Check Time (HH:MM)
-                    </Text>
-                    <TextInput
-                      value={soundCheckTime}
-                      onChangeText={setSoundCheckTime}
-                      placeholder="18:00"
-                      placeholderTextColor="#a8a29e"
-                      className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
-                    />
-                  </View>
-
-                  <View className="flex-1">
-                    <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                      Event Status
-                    </Text>
-                    <View className="flex flex-row flex-wrap gap-1.5">
-                      {STATUS_OPTIONS.map((opt) => (
+                  <Text className="text-xs font-bold text-stone-700 mb-1.5">Status</Text>
+                  <View className="flex-row gap-2">
+                    {STATUS_OPTIONS.map((opt) => {
+                      const isSel = status === opt.id;
+                      return (
                         <Pressable
                           key={opt.id}
                           onPress={() => setStatus(opt.id)}
-                          className={`rounded-xl px-3 py-2 border transition-colors ${
-                            status === opt.id
-                              ? 'bg-[#800020] border-[#800020]'
-                              : 'bg-stone-50 border-stone-200 hover:bg-stone-100'
+                          className={`flex-1 items-center justify-center py-2 rounded-xl border ${
+                            isSel
+                              ? 'bg-rose-50 border-[#800020] text-[#800020]'
+                              : 'bg-white border-stone-200 text-stone-700'
                           }`}
                         >
                           <Text
                             className={`text-xs font-bold ${
-                              status === opt.id ? 'text-white' : 'text-stone-700'
+                              isSel ? 'text-[#800020]' : 'text-stone-700'
                             }`}
                           >
                             {opt.label}
                           </Text>
                         </Pressable>
-                      ))}
-                    </View>
+                      );
+                    })}
                   </View>
                 </View>
 
+                {/* Description */}
                 <View>
-                  <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                    Audio Gear & Backline Requirements
+                  <Text className="text-xs font-bold text-stone-700 mb-1">Event summary / bio</Text>
+                  <TextInput
+                    value={description}
+                    onChangeText={setDescription}
+                    placeholder="Short description of the performance or tasting evening…"
+                    placeholderTextColor="#a8a29e"
+                    multiline
+                    numberOfLines={3}
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    accessibilityLabel="Event description"
+                  />
+                </View>
+              </View>
+            )}
+
+            {activeTab === 'poster' && (
+              <View className="space-y-4">
+                <Text className="text-xs text-stone-500">
+                  Upload an event flyer or stage poster. Recommended aspect ratio 16:9 or 4:3.
+                </Text>
+
+                {posterUrl ? (
+                  <View className="space-y-3">
+                    <View className="h-48 w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100">
+                      <Image
+                        source={{ uri: posterUrl }}
+                        className="h-full w-full object-cover"
+                        resizeMode="cover"
+                        accessibilityLabel="Current poster preview"
+                      />
+                    </View>
+                    <View className="flex-row items-center justify-between">
+                      <Pressable
+                        onPress={triggerFileBrowser}
+                        disabled={isUploading}
+                        className="flex-row items-center gap-1.5 rounded-xl border border-stone-200 bg-white px-3 py-2"
+                      >
+                        <Upload size={14} color="#44403c" aria-hidden={true} />
+                        <Text className="text-xs font-semibold text-stone-700">Change image</Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={handleRemovePoster}
+                        className="flex-row items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-rose-700"
+                      >
+                        <Trash2 size={14} color="#e11d48" aria-hidden={true} />
+                        <Text className="text-xs font-bold text-rose-700">Remove poster</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={triggerFileBrowser}
+                    disabled={isUploading}
+                    className="h-44 w-full rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50 items-center justify-center p-6 hover:bg-stone-100 active:bg-stone-200 transition-colors"
+                  >
+                    {isUploading ? (
+                      <View className="items-center gap-2">
+                        <ActivityIndicator color="#800020" />
+                        <Text className="text-xs font-semibold text-stone-600">
+                          Uploading poster…
+                        </Text>
+                      </View>
+                    ) : (
+                      <View className="items-center gap-2">
+                        <View className="h-10 w-10 rounded-full bg-stone-200 items-center justify-center">
+                          <Upload size={18} color="#57534e" aria-hidden={true} />
+                        </View>
+                        <Text className="text-xs font-bold text-stone-800">
+                          Click to select poster image
+                        </Text>
+                        <Text className="text-[11px] text-stone-400">
+                          JPEG, PNG, or WebP up to 5&nbsp;MB
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                )}
+              </View>
+            )}
+
+            {activeTab === 'logistics' && (
+              <View className="space-y-3.5">
+                <Text className="text-xs text-stone-500">
+                  Optional production and backstage details for staff and sound engineers.
+                </Text>
+
+                {/* Sound check time */}
+                <View>
+                  <Text className="text-xs font-bold text-stone-700 mb-1">
+                    Sound check call time
+                  </Text>
+                  <TextInput
+                    value={soundCheckTime}
+                    onChangeText={setSoundCheckTime}
+                    placeholder="HH:MM (e.g. 18:00)"
+                    placeholderTextColor="#a8a29e"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    accessibilityLabel="Sound check time"
+                  />
+                </View>
+
+                {/* Gear / Backline */}
+                <View>
+                  <Text className="text-xs font-bold text-stone-700 mb-1">
+                    Backline & gear requirements
                   </Text>
                   <TextInput
                     value={gearRequirements}
                     onChangeText={setGearRequirements}
+                    placeholder="e.g. Grand Piano, drum kit, 2x vocal mics…"
+                    placeholderTextColor="#a8a29e"
                     multiline
                     numberOfLines={2}
-                    placeholder="e.g. Yamaha Grand Piano (tuned), Ampeg bass amp, Twin Reverb, 4x SM58..."
-                    placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    accessibilityLabel="Backline and gear requirements"
                   />
                 </View>
 
+                {/* Reserved tables */}
                 <View>
-                  <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                    Reserved Tables / Seating Notes
+                  <Text className="text-xs font-bold text-stone-700 mb-1">
+                    Reserved VIP tables / Guest list
                   </Text>
                   <TextInput
                     value={reservedTables}
                     onChangeText={setReservedTables}
-                    placeholder="e.g. Tables T1, T2 reserved for VIP press and artist guests"
+                    placeholder="e.g. T1 and T2 reserved for artist guests…"
                     placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    accessibilityLabel="Reserved tables note"
                   />
                 </View>
 
+                {/* Special requests */}
                 <View>
-                  <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide mb-1.5">
-                    Hospitality & Special Rider Requests
+                  <Text className="text-xs font-bold text-stone-700 mb-1">
+                    Hospitality rider & special requests
                   </Text>
                   <TextInput
                     value={specialRequests}
                     onChangeText={setSpecialRequests}
+                    placeholder="e.g. Sparkling water, bourbon on ice during sound check…"
+                    placeholderTextColor="#a8a29e"
                     multiline
                     numberOfLines={2}
-                    placeholder="e.g. Sparkling water, hot lemon tea, dark espresso backstage..."
-                    placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-200 bg-stone-50/60 px-4 py-2 text-sm text-stone-900 focus:bg-white focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    accessibilityLabel="Hospitality rider or special requests"
                   />
                 </View>
               </View>
             )}
           </ScrollView>
 
-          {/* Footer */}
-          <View className="flex flex-row items-center justify-between border-t border-stone-200 bg-stone-50 px-6 py-4">
+          {/* Footer Action Buttons */}
+          <View className="p-4 border-t border-stone-200 bg-stone-50/80 flex-row items-center justify-end gap-2.5">
             <Pressable
               onPress={onClose}
-              className="rounded-xl border border-stone-200 bg-white px-5 py-2.5 text-stone-700 hover:bg-stone-100 shadow-xs"
+              disabled={isSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel editing"
+              className="px-4 py-2.5 rounded-xl border border-stone-300 bg-white active:bg-stone-100"
             >
-              <Text className="text-xs font-bold text-stone-700">Cancel</Text>
+              <Text className="text-xs font-semibold text-stone-700">Cancel</Text>
             </Pressable>
 
-            <View className="flex flex-row items-center gap-2">
-              {activeTab !== 'info' && (
-                <Pressable
-                  onPress={() => setActiveTab(activeTab === 'logistics' ? 'poster' : 'info')}
-                  className="rounded-xl border border-stone-200 bg-white px-4 py-2.5 text-stone-700 shadow-xs"
-                >
-                  <Text className="text-xs font-bold text-stone-700">Back</Text>
-                </Pressable>
-              )}
-
-              {activeTab !== 'logistics' ? (
-                <Pressable
-                  onPress={() => setActiveTab(activeTab === 'info' ? 'poster' : 'logistics')}
-                  className="rounded-xl bg-[#800020] px-5 py-2.5 text-white font-bold hover:bg-[#66001a] shadow-xs"
-                >
-                  <Text className="text-xs font-bold text-white">Next Step</Text>
-                </Pressable>
+            <Pressable
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel={event ? 'Save changes' : 'Schedule event'}
+              className="flex-row items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#800020] text-white active:bg-[#66001a] shadow-xs"
+            >
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#ffffff" />
               ) : (
-                <Pressable
-                  onPress={handleSubmit}
-                  disabled={isSubmitting}
-                  className="flex flex-row items-center gap-2 rounded-xl bg-[#800020] px-6 py-2.5 text-white font-bold hover:bg-[#66001a] shadow-xs"
-                >
-                  {isSubmitting ? (
-                    <ActivityIndicator size="small" color="#ffffff" />
-                  ) : (
-                    <>
-                      <Check size={16} color="#ffffff" />
-                      <Text className="text-xs font-bold text-white">
-                        {event ? 'Save Changes' : 'Schedule Event'}
-                      </Text>
-                    </>
-                  )}
-                </Pressable>
+                <Check size={16} color="#ffffff" aria-hidden={true} />
               )}
-            </View>
+              <Text className="text-xs font-bold text-white">
+                {isSubmitting ? 'Saving…' : event ? 'Save changes' : 'Schedule event'}
+              </Text>
+            </Pressable>
           </View>
         </View>
       </View>

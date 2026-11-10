@@ -1,18 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Pressable, Modal } from 'react-native';
-import {
-  X,
-  Share2,
-  Copy,
-  Check,
-  ExternalLink,
-  Printer,
-  Download,
-  Globe,
-} from 'lucide-react-native';
+import { View, Text, TextInput, Pressable, Modal, Platform } from 'react-native';
+import { X, Share2, Copy, Check, ExternalLink, Printer, Download } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import type { VenueEvent } from '../../domain/event.types';
 import { generateMonthScheduleIcs, triggerIcsDownload } from '../../utils/eventIcsExport';
+import { formatMonthYearTitle } from '../utils/eventFormatters';
 
 interface ShareCalendarModalProps {
   isOpen: boolean;
@@ -45,7 +37,7 @@ export const ShareCalendarModal: React.FC<ShareCalendarModalProps> = ({
       if (typeof navigator !== 'undefined' && navigator.clipboard) {
         await navigator.clipboard.writeText(shareUrl);
         setCopied(true);
-        toast.success('Live calendar link copied to clipboard!');
+        toast.success('Live calendar link copied');
         setTimeout(() => setCopied(false), 2500);
       }
     } catch {
@@ -66,7 +58,7 @@ export const ShareCalendarModal: React.FC<ShareCalendarModalProps> = ({
   };
 
   const handleDownloadMonthIcs = () => {
-    const monthYear = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const monthYear = formatMonthYearTitle(currentDate);
     const ics = generateMonthScheduleIcs(events, `Monk's Dream Jazz Calendar - ${monthYear}`);
     triggerIcsDownload(ics, `Monks_Dream_Calendar_${monthYear.replace(/\s+/g, '_')}.ics`);
     toast.success(`Downloaded ${monthYear} calendar (.ics)`);
@@ -74,113 +66,105 @@ export const ShareCalendarModal: React.FC<ShareCalendarModalProps> = ({
 
   return (
     <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 items-center justify-center bg-black/50 p-4">
-        <View className="flex w-full max-w-lg flex-col overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-2xl">
+      <View className="flex-1 items-center justify-end sm:justify-center bg-black/60 p-0 sm:p-4">
+        <Pressable
+          className="absolute inset-0"
+          onPress={onClose}
+          accessibilityLabel="Dismiss share dialog"
+        />
+
+        <View
+          className="relative w-full max-w-md overflow-hidden rounded-t-3xl sm:rounded-3xl border border-stone-200 bg-white p-5 shadow-2xl space-y-4"
+          style={Platform.OS === 'web' ? ({ overscrollBehavior: 'contain' } as any) : undefined}
+        >
           {/* Header */}
-          <View className="flex flex-row items-center justify-between border-b border-stone-200 bg-white px-6 py-4">
-            <View className="flex flex-row items-center gap-3">
-              <View className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-50 border border-rose-200 text-[#800020]">
-                <Share2 size={18} color="#800020" />
+          <View className="flex-row items-center justify-between pb-3 border-b border-stone-100">
+            <View className="flex-row items-center gap-2.5">
+              <View className="h-9 w-9 rounded-xl bg-rose-50 border border-rose-200 items-center justify-center">
+                <Share2 size={16} color="#800020" aria-hidden={true} />
               </View>
               <View>
-                <Text className="text-base font-extrabold text-stone-900">Share Live Calendar</Text>
-                <Text className="text-xs text-stone-500">
-                  Public view-only link, printing, and iCal export
-                </Text>
+                <Text className="text-base font-bold text-stone-900">Share calendar</Text>
+                <Text className="text-xs text-stone-500">Public link & exports for guests</Text>
               </View>
             </View>
 
             <Pressable
               onPress={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-stone-500 hover:text-stone-900"
+              accessibilityRole="button"
+              accessibilityLabel="Close share dialog"
+              className="h-8 w-8 items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200"
             >
-              <X size={16} color="#57534e" />
+              <X size={15} color="#44403c" aria-hidden={true} />
             </Pressable>
           </View>
 
-          {/* Body */}
-          <View className="p-6 space-y-5">
-            {/* Live Link Box */}
-            <View>
-              <View className="flex flex-row items-center justify-between mb-1.5">
-                <Text className="text-xs font-bold text-stone-700 uppercase tracking-wide">
-                  Live View-Only Link
-                </Text>
-                <View className="flex flex-row items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                  <View className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                  <Text className="text-[10px] font-bold text-emerald-700">Real-time sync</Text>
-                </View>
-              </View>
-
-              <View className="flex flex-row items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 p-2">
-                <Globe size={16} color="#800020" style={{ marginLeft: 6 }} />
-                <TextInput
-                  editable={false}
-                  selectTextOnFocus
-                  value={shareUrl}
-                  className="flex-1 bg-transparent text-xs text-stone-900 outline-none font-medium"
-                />
-                <Pressable
-                  onPress={handleCopy}
-                  className="flex flex-row items-center gap-1.5 rounded-lg bg-[#800020] px-3.5 py-1.5 text-xs font-bold text-white hover:bg-[#66001a] transition-colors shadow-xs"
-                >
-                  {copied ? (
-                    <Check size={14} color="#ffffff" />
-                  ) : (
-                    <Copy size={14} color="#ffffff" />
-                  )}
-                  <Text className="text-xs font-bold text-white">{copied ? 'Copied' : 'Copy'}</Text>
-                </Pressable>
-              </View>
-
-              <Text className="text-[11px] text-stone-500 mt-2 leading-relaxed">
-                Musicians, staff, and guests can open this link on any phone, tablet, or laptop to
-                view the interactive monthly calendar, hero posters, and showtimes without logging
-                in.
-              </Text>
-            </View>
-
-            {/* Actions Grid */}
-            <View className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-stone-200">
-              {/* Open in new tab */}
+          {/* Primary Action: Read-only URL Field with labeled Copy Button */}
+          <View className="space-y-1.5">
+            <Text className="text-xs font-semibold text-stone-700">Public guest link</Text>
+            <View className="flex-row items-center gap-2">
+              <TextInput
+                value={shareUrl}
+                editable={false}
+                selectTextOnFocus
+                className="flex-1 rounded-xl border border-stone-300 bg-stone-50 px-3 py-2 text-xs text-stone-700"
+                accessibilityLabel="Public calendar URL"
+              />
               <Pressable
-                onPress={handleOpenLiveTab}
-                className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-stone-200 bg-stone-50/60 p-3.5 hover:border-[#800020] hover:bg-stone-50 transition-colors text-center shadow-xs"
+                onPress={handleCopy}
+                accessibilityRole="button"
+                accessibilityLabel="Copy calendar link"
+                className="flex-row items-center gap-1.5 rounded-xl bg-[#800020] px-3.5 py-2 text-white active:bg-[#66001a]"
               >
-                <ExternalLink size={20} color="#800020" />
-                <Text className="text-xs font-bold text-stone-900">Open Live Tab</Text>
-                <Text className="text-[10px] text-stone-500">Preview public view</Text>
-              </Pressable>
-
-              {/* Print Calendar */}
-              <Pressable
-                onPress={handlePrint}
-                className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-stone-200 bg-stone-50/60 p-3.5 hover:border-[#800020] hover:bg-stone-50 transition-colors text-center shadow-xs"
-              >
-                <Printer size={20} color="#800020" />
-                <Text className="text-xs font-bold text-stone-900">Print Poster</Text>
-                <Text className="text-[10px] text-stone-500">A4 / Tabloid paper</Text>
-              </Pressable>
-
-              {/* Download Month .ICS */}
-              <Pressable
-                onPress={handleDownloadMonthIcs}
-                className="flex flex-col items-center justify-center gap-1.5 rounded-2xl border border-stone-200 bg-stone-50/60 p-3.5 hover:border-[#800020] hover:bg-stone-50 transition-colors text-center shadow-xs"
-              >
-                <Download size={20} color="#800020" />
-                <Text className="text-xs font-bold text-stone-900">Download .ICS</Text>
-                <Text className="text-[10px] text-stone-500">Apple / Google Cal</Text>
+                {copied ? (
+                  <Check size={14} color="#ffffff" aria-hidden={true} />
+                ) : (
+                  <Copy size={14} color="#ffffff" aria-hidden={true} />
+                )}
+                <Text className="text-xs font-bold text-white">{copied ? 'Copied' : 'Copy'}</Text>
               </Pressable>
             </View>
           </View>
 
-          {/* Footer */}
-          <View className="flex flex-row justify-end border-t border-stone-200 bg-stone-50 px-6 py-3.5">
+          {/* Secondary Actions: Open Live, Print, Download ICS */}
+          <View className="pt-2 border-t border-stone-100 space-y-1">
             <Pressable
-              onPress={onClose}
-              className="rounded-xl border border-stone-200 bg-white px-5 py-2 text-stone-700 font-semibold hover:bg-stone-100 shadow-xs"
+              onPress={handleOpenLiveTab}
+              accessibilityRole="button"
+              accessibilityLabel="Open public live view in new tab"
+              className="flex-row items-center justify-between p-2.5 rounded-xl hover:bg-stone-50 active:bg-stone-100"
             >
-              <Text className="text-xs font-bold text-stone-700">Done</Text>
+              <View className="flex-row items-center gap-2.5">
+                <ExternalLink size={15} color="#57534e" aria-hidden={true} />
+                <Text className="text-xs font-medium text-stone-800">Open guest view</Text>
+              </View>
+              <Text className="text-xs text-stone-400">New tab</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleDownloadMonthIcs}
+              accessibilityRole="button"
+              accessibilityLabel="Download monthly iCal (.ics)"
+              className="flex-row items-center justify-between p-2.5 rounded-xl hover:bg-stone-50 active:bg-stone-100"
+            >
+              <View className="flex-row items-center gap-2.5">
+                <Download size={15} color="#57534e" aria-hidden={true} />
+                <Text className="text-xs font-medium text-stone-800">Download calendar (.ics)</Text>
+              </View>
+              <Text className="text-xs text-stone-400">iCal</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handlePrint}
+              accessibilityRole="button"
+              accessibilityLabel="Print current month calendar"
+              className="flex-row items-center justify-between p-2.5 rounded-xl hover:bg-stone-50 active:bg-stone-100"
+            >
+              <View className="flex-row items-center gap-2.5">
+                <Printer size={15} color="#57534e" aria-hidden={true} />
+                <Text className="text-xs font-medium text-stone-800">Print schedule</Text>
+              </View>
+              <Text className="text-xs text-stone-400">A4 / PDF</Text>
             </Pressable>
           </View>
         </View>
