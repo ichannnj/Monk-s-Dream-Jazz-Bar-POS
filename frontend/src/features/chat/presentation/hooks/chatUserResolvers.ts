@@ -24,7 +24,6 @@ export function resolveSenderRole(propRole: string | undefined, role: string | u
       case 'station_food':
         return 'Kitchen Chef';
       case 'foh_runner':
-        return 'FOH Runner';
       case 'waiter':
         return 'Waiter';
       case 'cashier':

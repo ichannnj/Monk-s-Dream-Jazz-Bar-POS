@@ -207,7 +207,6 @@ export type StaffRoleType =
   | 'station_bar'
   | 'station_cafe'
   | 'station_food'
-  | 'foh_runner'
   | 'printer_station';
 
 export interface StaffMemberAdmin {

@@ -225,6 +225,15 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 
 ---
 
+### 10. Minimalist Admin Dashboard & Centered Header System (`AdminDashboardView.tsx` & `AdminHeader.tsx`)
+
+- **Strict 3-Color Hierarchy:** Decluttered visual design anchored by Warm Sand/Cream (`#FAF8F5`) for surfaces and neutral borders, Deep Charcoal (`#1C1917`) for high-contrast typography, and Monk's Wine Burgundy (`#800020`) for emphasis, primary metrics, active pills, and progress meters. Saturated rainbow cards (clashing blues, emeralds, and purples) are eliminated.
+- **Centered Top Bar with Subtitle Stripping (`AdminHeader.tsx`):** Header eliminates left-side title/subtitle text clutter across all admin screens, centering a sleek active view breadcrumb while right-aligning clock, mode toggle, floor switch, profile, and logout actions.
+- **Non-Blocking Slow Connection Telemetry (`useNetworkLatency.ts`):** Monitors roundtrip latency and online events, gracefully displaying a non-intrusive `Slow connection` pill in the header when roundtrip exceeds 2,500ms or connection degrades.
+- **Event-Driven Zero-Manual-Refresh:** Eliminates manual refresh buttons in favor of continuous real-time CDC updates, backed by an initial skeleton pulse loading state (`DashboardSkeleton.tsx`).
+
+---
+
 ## 📚 Related Documentation
 
 - Architecture & File Tree Map: [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)

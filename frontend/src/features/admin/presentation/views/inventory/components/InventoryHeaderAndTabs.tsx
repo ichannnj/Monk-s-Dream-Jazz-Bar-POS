@@ -67,14 +67,10 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
             <View className="h-8 w-8 rounded-lg bg-[#800020]/10 items-center justify-center">
               <Boxes size={18} color="#800020" />
             </View>
-            <Text className="text-2xl sm:text-3xl font-black tracking-tight text-stone-900">
-              Inventory &amp; Depletion Hub
+            <Text className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
+              Inventory Hub
             </Text>
           </View>
-          <Text className="text-sm font-medium text-stone-500">
-            Real-time recipe depletion on KDS ready, non-blocking par safeguards, and weighted MAC
-            valuation
-          </Text>
         </View>
 
         {/* Global Hub Action Buttons */}

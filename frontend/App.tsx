@@ -100,7 +100,6 @@ export default function App() {
       case 'kitchen':
         return <KitchenKdsScreen />;
       case 'foh_runner':
-        return <FohRunnerScreen />;
       case 'cashier':
       case 'waiter':
       default:

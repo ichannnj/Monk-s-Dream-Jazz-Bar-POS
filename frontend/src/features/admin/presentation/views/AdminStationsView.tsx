@@ -199,11 +199,8 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
       {/* 1. Header & Title */}
       <View className="mb-6 flex-col md:flex-row md:items-center justify-between gap-4">
         <View className="flex-1">
-          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-            Live Stations Operations & Turnaround Hub
-          </Text>
-          <Text className="mt-1 text-sm sm:text-base text-stone-500">
-            Real-time fulfillment telemetry across Bar, Cafe, Kitchen Line, and Expediter Runner.
+          <Text className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
+            Live Stations
           </Text>
         </View>
 

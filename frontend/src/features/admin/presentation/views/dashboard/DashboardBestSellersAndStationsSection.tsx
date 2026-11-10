@@ -23,7 +23,6 @@ export const DashboardBestSellersAndStationsSection: React.FC<
   DashboardBestSellersAndStationsSectionProps
 > = ({
   telemetry,
-  activeTimeframeOption,
   bestSellerFilter,
   setBestSellerFilter,
   selectedCategory,
@@ -38,32 +37,26 @@ export const DashboardBestSellersAndStationsSection: React.FC<
       {/* Left: Best Sellers Card */}
       <View className="w-full lg:flex-[1.35] min-w-0 rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
         <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
-          <View className="flex-1 min-w-[180px]">
-            <Text className="text-xl font-bold tracking-tight text-stone-900">Best Sellers</Text>
-            <Text className="text-base font-medium text-stone-500 mt-1">
-              {activeTimeframeOption.label} · {selectedCategory} · Top {visibleBestSellers.length}{' '}
-              items
-            </Text>
-          </View>
-          <View className="rounded-full bg-stone-100 border border-stone-200 px-3.5 py-1.5 shrink-0">
-            <Text className="text-base font-bold text-stone-700">By Quantity</Text>
+          <Text className="text-lg font-bold tracking-tight text-stone-900">Best Sellers</Text>
+          <View className="rounded-full bg-[#FAF8F5] border border-stone-200 px-3 py-1 shrink-0">
+            <Text className="text-xs font-bold text-stone-700">By Quantity</Text>
           </View>
         </View>
 
-        <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-2.5">
+        <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-3 mb-3 gap-2.5">
           <PosDropdown
             options={
               [
-                { value: 'top3', label: 'Top 3 Items' },
-                { value: 'top5', label: 'Top 5 Items' },
-                { value: 'top10', label: 'Top 10 Items' },
-                { value: 'all', label: 'All Ranked Items' },
+                { value: 'top3', label: 'Top 3' },
+                { value: 'top5', label: 'Top 5' },
+                { value: 'top10', label: 'Top 10' },
+                { value: 'all', label: 'All Ranked' },
               ] as PosDropdownOption<BestSellerFilter>[]
             }
             value={bestSellerFilter}
             onChange={setBestSellerFilter}
             prefixLabel="Show:"
-            sheetTitle="Select Best Seller Limit"
+            sheetTitle="Select Limit"
             className="flex-1"
           />
 
@@ -80,82 +73,70 @@ export const DashboardBestSellersAndStationsSection: React.FC<
           />
         </View>
 
-        <View className="space-y-4">
+        <View className="space-y-3">
           {visibleBestSellers.length === 0 ? (
-            <View className="py-10 items-center justify-center">
-              <Text className="text-base text-stone-500 font-medium text-center">
-                No items sold for "{selectedCategory}" in {activeTimeframeOption.label}.
+            <View className="py-8 items-center justify-center">
+              <Text className="text-xs text-stone-500 font-medium text-center">
+                No items sold for "{selectedCategory}".
               </Text>
             </View>
           ) : (
             visibleBestSellers.map((item) => (
               <View key={item.id} className="pt-1">
-                <View className="flex-row items-start justify-between gap-3 flex-wrap">
-                  <View className="flex-row items-start flex-1 min-w-[160px]">
-                    <View className="h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 bg-stone-50 mr-2.5 mt-0.5">
-                      <Text className="text-base font-bold text-stone-700">{item.rank}</Text>
+                <View className="flex-row items-center justify-between gap-3 flex-wrap">
+                  <View className="flex-row items-center flex-1 min-w-[140px]">
+                    <View className="h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FAF8F5] border border-stone-200 mr-2">
+                      <Text className="text-xs font-bold text-stone-700">{item.rank}</Text>
                     </View>
                     <View className="flex-1 min-w-0">
-                      <Text className="text-base font-bold text-stone-900">{item.name}</Text>
-                      <View className="mt-1 self-start rounded-md bg-stone-100 border border-stone-200 px-2 py-0.5">
-                        <Text className="text-base font-medium text-stone-600">
-                          {item.category}
-                        </Text>
-                      </View>
+                      <Text className="text-sm font-bold text-stone-900" numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Text className="text-[11px] text-stone-500">{item.category}</Text>
                     </View>
                   </View>
 
-                  <View className="flex-row items-baseline gap-4 shrink-0">
+                  <View className="flex-row items-baseline gap-3 shrink-0">
                     <View className="items-end">
-                      <Text className="text-base font-bold text-stone-900">{item.soldCount}</Text>
-                      <Text className="text-base text-stone-400">sold</Text>
+                      <Text className="text-xs font-bold text-stone-900">{item.soldCount}</Text>
+                      <Text className="text-[10px] text-stone-400">sold</Text>
                     </View>
-                    <View className="items-end min-w-[70px]">
-                      <Text className="text-base font-black text-stone-900">
+                    <View className="items-end min-w-[60px]">
+                      <Text className="text-xs font-black text-stone-900">
                         ₱{Number(item.salesAmount || 0).toFixed(2)}
                       </Text>
-                      <Text className="text-base text-stone-400">sales</Text>
+                      <Text className="text-[10px] text-stone-400">sales</Text>
                     </View>
                   </View>
                 </View>
 
-                <View className="mt-2 h-2 w-full rounded-full bg-stone-100">
+                <View className="mt-1.5 h-1.5 w-full rounded-full bg-stone-100 overflow-hidden">
                   <View
                     style={{ width: `${Math.min(100, Math.max(5, item.progressPercent))}%` }}
-                    className="h-2 rounded-full bg-[#800020]"
+                    className="h-full rounded-full bg-[#800020]"
                   />
                 </View>
               </View>
             ))
           )}
         </View>
-
-        <View className="mt-6 flex-row items-center justify-between border-t border-stone-100 pt-4 flex-wrap gap-2">
-          <Text className="text-base text-stone-500">
-            Displaying {visibleBestSellers.length} ranked item
-            {visibleBestSellers.length === 1 ? '' : 's'}
-          </Text>
-          <Text className="text-base font-medium text-stone-600">
-            Direct database order item aggregations
-          </Text>
-        </View>
       </View>
 
       {/* Right Column: Live Stations + Sales By Category */}
       <View className="w-full lg:flex-1 min-w-0 space-y-6">
         <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
-          <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
-            <Text className="text-xl font-bold text-stone-900">Live Stations</Text>
+          <View className="flex-row items-center justify-between mb-3 flex-wrap gap-2">
+            <Text className="text-lg font-bold text-stone-900">Live Stations</Text>
             <Pressable
               onPress={() => onNavigateRoute('stations')}
-              className="min-h-[48px] px-3 flex-row items-center rounded-xl bg-stone-50 active:bg-stone-100"
+              className="px-2.5 py-1 flex-row items-center rounded-lg bg-stone-50 active:bg-stone-100"
             >
-              <Text className="text-base font-bold text-[#800020]">View Stations</Text>
-              <ArrowRight size={16} color="#800020" className="ml-1.5" />
+              <Text className="text-xs font-bold text-[#800020]">View Stations</Text>
+              <ArrowRight size={13} color="#800020" className="ml-1" />
             </Pressable>
           </View>
 
-          <View className="space-y-3.5">
+          <View className="space-y-3">
             {(telemetry.stations || []).map((station) => {
               const liveStats = getLiveStationTurnaround(
                 station.stationKey,
@@ -168,73 +149,56 @@ export const DashboardBestSellersAndStationsSection: React.FC<
               return (
                 <View
                   key={station.stationKey}
-                  className="rounded-xl border border-stone-200/70 bg-stone-50/60 p-4"
+                  className="rounded-xl border border-stone-200/80 bg-[#FAF8F5] p-3"
                 >
-                  <View className="flex-row items-center justify-between mb-3 flex-wrap gap-2">
-                    <View className="flex-row items-center gap-2 flex-wrap">
-                      <Text className="text-lg font-bold text-stone-900">{station.name}</Text>
-                      {station.isOnline ? (
-                        <View className="flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5">
-                          <View className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
-                          <Text className="text-base font-bold text-emerald-700">Online</Text>
-                        </View>
-                      ) : (
-                        <View className="flex-row items-center rounded-full bg-stone-100 border border-stone-300 px-2.5 py-0.5">
-                          <View className="h-2 w-2 rounded-full bg-stone-400 mr-1.5" />
-                          <Text className="text-base font-bold text-stone-600">Offline</Text>
-                        </View>
-                      )}
+                  <View className="flex-row items-center justify-between mb-2 flex-wrap gap-2">
+                    <View className="flex-row items-center gap-2">
+                      <Text className="text-sm font-bold text-stone-900">{station.name}</Text>
+                      <View className="flex-row items-center rounded-full bg-white border border-stone-200 px-2 py-0.5">
+                        <View
+                          className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
+                            station.isOnline ? 'bg-[#800020]' : 'bg-stone-400'
+                          }`}
+                        />
+                        <Text className="text-[10px] font-bold text-stone-700">
+                          {station.isOnline ? 'Online' : 'Offline'}
+                        </Text>
+                      </View>
                     </View>
-                    <Text className="text-base text-stone-500">
+                    <Text className="text-xs text-stone-500">
                       Target {station.targetTicketTime}
                     </Text>
                   </View>
 
                   <View className="flex-row flex-wrap gap-2 pt-1">
-                    <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
-                      <Text className="text-xl font-black text-stone-900">
+                    <View className="flex-1 min-w-[70px] bg-white rounded-lg p-2 border border-stone-200/80 items-center">
+                      <Text className="text-base font-black text-stone-900">
                         {station.activeTickets}
                       </Text>
-                      <Text className="text-base text-stone-500 mt-0.5">Active</Text>
-                      {station.activeTickets > 0 && (
-                        <Text
-                          className={`text-[10px] font-semibold mt-0.5 ${
-                            station.isOnline ? 'text-amber-600' : 'text-stone-400'
-                          }`}
-                        >
-                          {station.isOnline
-                            ? `Live: ${liveStats.liveActiveTime}`
-                            : 'Queued (Offline)'}
-                        </Text>
-                      )}
+                      <Text className="text-[10px] text-stone-500">Active</Text>
                     </View>
 
-                    <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
-                      <Text className="text-xl font-black text-stone-900">
+                    <View className="flex-1 min-w-[70px] bg-white rounded-lg p-2 border border-stone-200/80 items-center">
+                      <Text className="text-base font-black text-stone-900">
                         {station.avgTicketTime || 'Idle'}
                       </Text>
-                      <Text className="text-base text-stone-500 mt-0.5">Avg time</Text>
-                      <Text className="text-[10px] text-stone-400 mt-0.5">
-                        {station.completedTickets && station.completedTickets > 0
-                          ? `${station.completedTickets} fulfilled`
-                          : 'No orders yet'}
-                      </Text>
+                      <Text className="text-[10px] text-stone-500">Avg time</Text>
                     </View>
 
-                    <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
+                    <View className="flex-1 min-w-[70px] bg-white rounded-lg p-2 border border-stone-200/80 items-center">
                       <Text
-                        className={`text-xl font-black ${liveStats.lateTickets > 0 ? 'text-rose-600' : 'text-stone-900'}`}
+                        className={`text-base font-black ${liveStats.lateTickets > 0 ? 'text-[#800020]' : 'text-stone-900'}`}
                       >
                         {liveStats.lateTickets}
                       </Text>
-                      <Text className="text-base text-stone-500 mt-0.5">Late</Text>
+                      <Text className="text-[10px] text-stone-500">Late</Text>
                     </View>
 
-                    <View className="flex-1 min-w-[85px] bg-white rounded-lg p-2.5 border border-stone-200/70 items-center">
-                      <Text className="text-xl font-black text-amber-600">
+                    <View className="flex-1 min-w-[70px] bg-white rounded-lg p-2 border border-stone-200/80 items-center">
+                      <Text className="text-base font-black text-stone-900">
                         {station.stockoutCount}
                       </Text>
-                      <Text className="text-base text-stone-500 mt-0.5">Sold out</Text>
+                      <Text className="text-[10px] text-stone-500">Sold out</Text>
                     </View>
                   </View>
                 </View>
@@ -245,34 +209,31 @@ export const DashboardBestSellersAndStationsSection: React.FC<
 
         {/* Sales By Category Card */}
         <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
-          <Text className="text-xl font-bold text-stone-900">Sales By Category</Text>
-          <Text className="text-base text-stone-500 mb-4">
-            {activeTimeframeOption.label} · Scaled to top category
-          </Text>
+          <Text className="text-lg font-bold text-stone-900 mb-3">Sales By Category</Text>
 
-          <View className="space-y-4">
+          <View className="space-y-3">
             {(telemetry.categorySales || []).length === 0 ? (
-              <View className="py-6 items-center">
-                <Text className="text-base text-stone-500 font-medium">
-                  No category sales recorded for this period.
+              <View className="py-4 items-center">
+                <Text className="text-xs text-stone-500 font-medium">
+                  No category sales recorded.
                 </Text>
               </View>
             ) : (
               (telemetry.categorySales || []).map((cat) => (
                 <View key={cat.category} className="min-w-0">
-                  <View className="flex-row items-center justify-between gap-2 mb-1.5 flex-wrap">
-                    <Text className="flex-1 min-w-[120px] text-base font-semibold text-stone-800">
+                  <View className="flex-row items-center justify-between gap-2 mb-1 flex-wrap">
+                    <Text className="flex-1 min-w-[100px] text-xs font-semibold text-stone-800">
                       {cat.category}
                     </Text>
-                    <Text className="shrink-0 text-right text-base font-bold text-stone-900">
+                    <Text className="shrink-0 text-right text-xs font-bold text-stone-900">
                       ₱{Number(cat.amount || 0).toFixed(2)}
                     </Text>
                   </View>
 
-                  <View className="w-full h-2.5 rounded-full bg-stone-100 overflow-hidden">
+                  <View className="w-full h-1.5 rounded-full bg-stone-100 overflow-hidden">
                     <View
                       style={{ width: `${Math.min(100, Math.max(8, cat.percentage))}%` }}
-                      className="h-2.5 rounded-full bg-[#800020]"
+                      className="h-full rounded-full bg-[#800020]"
                     />
                   </View>
                 </View>

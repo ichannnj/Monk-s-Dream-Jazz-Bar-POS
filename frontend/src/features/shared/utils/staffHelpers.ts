@@ -48,7 +48,7 @@ export function getStaffRoleLabel(role?: string | null): string {
     case 'kitchen':
       return 'Kitchen Chef';
     case 'foh_runner':
-      return 'FOH Runner';
+      return 'Floor Waiter';
     default:
       return 'Floor Staff';
   }

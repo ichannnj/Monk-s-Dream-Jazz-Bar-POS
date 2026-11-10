@@ -15,11 +15,7 @@ interface HourlySalesVelocityChartProps {
   totalSales?: number;
 }
 
-export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> = ({
-  data,
-  peakHourLabel,
-  totalSales,
-}) => {
+export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> = ({ data }) => {
   const [selectedHour, setSelectedHour] = useState<HourlyPoint | null>(null);
 
   // Fallback default operational hours (08:00 to 23:00) if data is empty
@@ -39,27 +35,20 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
 
   return (
     <View className="w-full min-w-0 rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
-      {/* Header */}
+      {/* Header (Minimal, No Subtitle) */}
       <View className="flex-row items-center justify-between mb-4 flex-wrap gap-3">
-        <View className="flex-row items-center gap-3 flex-1 min-w-[200px]">
-          <View className="w-10 h-10 shrink-0 rounded-xl bg-[#800020]/10 items-center justify-center">
-            <TrendingUp size={20} color="#800020" />
+        <View className="flex-row items-center gap-2.5">
+          <View className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-stone-200 items-center justify-center">
+            <TrendingUp size={16} color="#800020" />
           </View>
-          <View className="flex-1 min-w-0">
-            <Text className="text-lg font-extrabold text-stone-900 leading-snug">
-              Hourly Sales Velocity & Peak Pacing
-            </Text>
-            <Text className="text-base text-stone-500 font-medium mt-0.5">
-              Real-time revenue pacing across service day-parts
-            </Text>
-          </View>
+          <Text className="text-lg font-bold text-stone-900">Hourly Sales Velocity</Text>
         </View>
 
         {/* Peak Badge */}
         {peakPoint.sales > 0 && (
-          <View className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 shrink-0">
-            <Sparkles size={16} color="#d97706" />
-            <Text className="text-base font-bold text-amber-800">
+          <View className="flex-row items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-stone-200 shrink-0">
+            <Sparkles size={13} color="#800020" />
+            <Text className="text-xs font-bold text-stone-800">
               Peak: {peakPoint.hour} ({formatCurrency(peakPoint.sales)})
             </Text>
           </View>
@@ -68,24 +57,24 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
 
       {/* Selected Hour Insight Banner */}
       {selectedHour && (
-        <View className="bg-stone-50 rounded-xl p-3 mb-4 flex-row flex-wrap justify-between items-center gap-2 border border-stone-200">
-          <View className="flex-row items-center gap-2 flex-wrap">
-            <Clock size={16} color="#57534e" />
-            <Text className="text-base font-bold text-stone-700">Hour {selectedHour.hour}:</Text>
-            <Text className="text-base font-black text-[#800020]">
+        <View className="bg-[#FAF8F5] rounded-xl p-2.5 mb-3 flex-row flex-wrap justify-between items-center gap-2 border border-stone-200">
+          <View className="flex-row items-center gap-2">
+            <Clock size={14} color="#78716c" />
+            <Text className="text-xs font-bold text-stone-700">Hour {selectedHour.hour}:</Text>
+            <Text className="text-xs font-black text-[#800020]">
               {formatCurrency(selectedHour.sales)}
             </Text>
           </View>
           {selectedHour.orderCount !== undefined && (
-            <Text className="text-base text-stone-500 font-semibold">
-              {selectedHour.orderCount} orders fulfilled
+            <Text className="text-xs text-stone-500 font-medium">
+              {selectedHour.orderCount} orders
             </Text>
           )}
         </View>
       )}
 
       {/* Chart Bars */}
-      <View className="h-44 w-full min-w-0 flex-row items-end justify-between pt-6 pb-2 border-b border-stone-100 gap-1 sm:gap-1.5">
+      <View className="h-40 w-full min-w-0 flex-row items-end justify-between pt-4 pb-2 border-b border-stone-100 gap-1 sm:gap-1.5">
         {hoursList.map((pt) => {
           const heightPercent = Math.max((pt.sales / maxSales) * 100, 4);
           const isPeak = pt.hour === peakPoint.hour && pt.sales > 0;
@@ -95,19 +84,18 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
             <Pressable
               key={pt.hour}
               onPress={() => setSelectedHour(isSelected ? null : pt)}
-              className="flex-1 min-w-0 items-center h-full justify-end group"
+              className="flex-1 min-w-0 items-center h-full justify-end"
             >
-              {/* Bar Fill */}
               <View
                 style={{ height: `${heightPercent}%` }}
-                className={`w-full rounded-t-md transition-all ${
+                className={`w-full rounded-t-sm transition-all ${
                   isSelected
-                    ? 'bg-stone-900 shadow-md'
+                    ? 'bg-stone-900'
                     : isPeak
                       ? 'bg-[#800020]'
                       : pt.sales > 0
-                        ? 'bg-[#800020]/75 hover:bg-[#800020]'
-                        : 'bg-stone-200/60'
+                        ? 'bg-[#800020]/70'
+                        : 'bg-stone-100'
                 }`}
               />
             </Pressable>
@@ -118,10 +106,9 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
       {/* X-Axis Hour Labels */}
       <View className="w-full min-w-0 flex-row justify-between pt-2">
         {hoursList.map((pt, index) => {
-          // Show every 3rd hour to avoid crowding on smaller viewports
           const shouldShowLabel = index % 3 === 0 || index === hoursList.length - 1;
           return shouldShowLabel ? (
-            <Text key={pt.hour} className="text-base font-semibold text-stone-500">
+            <Text key={pt.hour} className="text-xs font-medium text-stone-500">
               {pt.hour.slice(0, 2)}h
             </Text>
           ) : null;

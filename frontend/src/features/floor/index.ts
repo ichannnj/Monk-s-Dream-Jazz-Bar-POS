@@ -1,5 +1,7 @@
 export * from './presentation/WaiterCashierScreen';
 export * from './presentation/FloorWorkspaceView';
+export * from './presentation/foh/FohWorkspaceView';
+export * from './presentation/foh/FohCommandBar';
 export * from './presentation/WaiterModalsCluster';
 export * from './presentation/ShiftSettingsModal';
 export * from './presentation/FloorGridView';

@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import { RefreshCw, Calendar } from 'lucide-react-native';
+import { View, Text, ScrollView } from 'react-native';
+import { Calendar } from 'lucide-react-native';
 import type { DashboardTelemetry, AdminRoute, TimeframeFilter } from '../../domain/admin.types';
 import { PosDropdown } from '@/features/shared';
 import { TodaysEventBanner } from '@/features/events';
@@ -13,10 +13,11 @@ import { DashboardLaborAndPayrollSection } from './dashboard/DashboardLaborAndPa
 import { DashboardChartsAndTendersSection } from './dashboard/DashboardChartsAndTendersSection';
 import { DashboardBestSellersAndStationsSection } from './dashboard/DashboardBestSellersAndStationsSection';
 import { DashboardAlertsSection } from './dashboard/DashboardAlertsSection';
+import { DashboardSkeleton } from './dashboard/DashboardSkeleton';
 
 export interface AdminDashboardViewProps {
-  telemetry: DashboardTelemetry;
-  onRefresh: () => void;
+  telemetry: DashboardTelemetry | null;
+  onRefresh?: () => void;
   onNavigateRoute: (route: AdminRoute) => void;
   isLoading?: boolean;
   timeframe?: TimeframeFilter;
@@ -25,57 +26,54 @@ export interface AdminDashboardViewProps {
 
 export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
   telemetry,
-  onRefresh,
   onNavigateRoute,
   isLoading = false,
   timeframe = 'today',
   onChangeTimeframe,
 }) => {
   const ctrl = useAdminDashboardController({
-    telemetry,
+    telemetry: telemetry || ({} as DashboardTelemetry),
     timeframe,
     onChangeTimeframe,
   });
 
+  if (!telemetry && isLoading) {
+    return (
+      <ScrollView className="flex-1 min-w-0 bg-[#FAF8F5]" showsVerticalScrollIndicator={false}>
+        <DashboardSkeleton />
+      </ScrollView>
+    );
+  }
+
+  if (!telemetry) {
+    return (
+      <View className="flex-1 items-center justify-center bg-[#FAF8F5] p-6">
+        <Text className="text-base font-semibold text-stone-600">No telemetry data available.</Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView className="flex-1 min-w-0 bg-[#fcf9f9]" showsVerticalScrollIndicator={false}>
+    <ScrollView className="flex-1 min-w-0 bg-[#FAF8F5]" showsVerticalScrollIndicator={false}>
       <View className="w-full min-w-0 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 overflow-hidden">
-        {/* Header: Title, Timeframe Selector, and Refresh */}
-        <View className="flex-col sm:flex-row sm:items-center justify-between pb-1 gap-3">
-          <View className="flex-1 min-w-0">
-            <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-              Performance Overview
-            </Text>
-            <Text className="mt-0.5 text-base font-medium text-stone-500">
-              Updated {telemetry.lastUpdated}
-            </Text>
-          </View>
+        {/* Minimal Header: Title & Timeframe Selector (Refresh button removed as this is a live dashboard) */}
+        <View className="flex-row items-center justify-between pb-1 gap-3">
+          <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
+            Overview
+          </Text>
 
-          <View className="flex-row items-center gap-2.5 flex-wrap">
-            <PosDropdown
-              options={TIMEFRAME_OPTIONS.map((opt) => ({
-                value: opt.key,
-                label: opt.label,
-                description: opt.description,
-                icon: Calendar,
-              }))}
-              value={timeframe}
-              onChange={(key) => onChangeTimeframe?.(key)}
-              prefixLabel="Period:"
-              sheetTitle="Select Analytics Timeframe"
-            />
-
-            <Pressable
-              onPress={onRefresh}
-              disabled={isLoading}
-              className="min-h-[48px] flex-row items-center rounded-xl border border-stone-200 bg-white px-4 py-2.5 shadow-xs active:bg-stone-50"
-            >
-              <RefreshCw size={18} color="#44403c" className={isLoading ? 'animate-spin' : ''} />
-              <Text className="ml-2 text-base font-bold text-stone-800">
-                {isLoading ? 'Refreshing...' : 'Refresh'}
-              </Text>
-            </Pressable>
-          </View>
+          <PosDropdown
+            options={TIMEFRAME_OPTIONS.map((opt) => ({
+              value: opt.key,
+              label: opt.label,
+              description: opt.description,
+              icon: Calendar,
+            }))}
+            value={timeframe}
+            onChange={(key) => onChangeTimeframe?.(key)}
+            prefixLabel="Period:"
+            sheetTitle="Select Analytics Timeframe"
+          />
         </View>
 
         {/* Tonight's Event Live Highlight */}
@@ -127,4 +125,5 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
     </ScrollView>
   );
 };
+
 export default AdminDashboardView;

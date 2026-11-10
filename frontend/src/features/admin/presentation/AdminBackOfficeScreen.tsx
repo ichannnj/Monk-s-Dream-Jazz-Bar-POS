@@ -196,7 +196,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
 
     switch (currentRoute) {
       case 'dashboard':
-        return telemetry ? (
+        return (
           <AdminDashboardView
             telemetry={telemetry}
             onRefresh={() => loadData(timeframe)}
@@ -208,13 +208,6 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
               loadData(tf);
             }}
           />
-        ) : (
-          <View className="flex-1 items-center justify-center bg-[#fcf9f9]">
-            <ActivityIndicator size="large" color="#800020" />
-            <Text className="mt-4 text-base font-medium text-stone-600">
-              Initializing live analytics...
-            </Text>
-          </View>
         );
       case 'inventory':
         return <AdminInventoryView inventory={inventory} onRefresh={loadData} />;

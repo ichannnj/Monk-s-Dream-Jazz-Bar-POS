@@ -12,6 +12,7 @@ import {
   LogOut,
   Printer,
   LayoutDashboard,
+  ConciergeBell,
 } from 'lucide-react-native';
 import { useResponsive } from '../hooks/useResponsive';
 import { PosDropdown, PosDropdownOption } from '../ui/PosDropdown';
@@ -19,7 +20,7 @@ import { PosDropdown, PosDropdownOption } from '../ui/PosDropdown';
 const MONKS_DREAM_LOGO = require('../../../../assets/images/logo-white-bg.jpeg');
 
 export type NavTabId =
-  'tables' | 'board' | 'chat' | 'checks' | 'drawer' | 'printer' | 'alerts' | 'settings';
+  'tables' | 'foh' | 'board' | 'chat' | 'checks' | 'drawer' | 'printer' | 'alerts' | 'settings';
 
 export interface SidebarProps {
   activeTab: NavTabId;
@@ -28,6 +29,8 @@ export interface SidebarProps {
   onSwitchToAdmin?: () => void;
   unreadChatCount?: number;
   alertCount?: number;
+  fohBadgeCount?: number;
+  fohHasDot?: boolean;
   mode?: 'pos' | 'kds';
   hiddenTabs?: NavTabId[];
 }
@@ -39,6 +42,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSwitchToAdmin,
   unreadChatCount = 0,
   alertCount = 0,
+  fohBadgeCount = 0,
+  fohHasDot = false,
   mode = 'pos',
   hiddenTabs = [],
 }) => {
@@ -49,6 +54,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       id: 'tables' as NavTabId,
       label: 'Tables',
       Icon: LayoutGrid,
+    },
+    {
+      id: 'foh' as NavTabId,
+      label: 'FOH',
+      Icon: ConciergeBell,
+      badge: fohBadgeCount,
+      hasDot: fohHasDot,
     },
     {
       id: 'chat' as NavTabId,

@@ -40,7 +40,6 @@ const ROLE_LABELS: Record<string, string> = {
   station_bar: 'Bar Station',
   station_cafe: 'Cafe Station',
   station_food: 'Kitchen Station',
-  foh_runner: 'FOH Runner',
   printer_station: 'Printer Service',
 };
 

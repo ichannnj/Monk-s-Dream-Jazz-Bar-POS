@@ -7,8 +7,8 @@ import {
   getStaffInitials,
   getStaffRoleLabel,
 } from '@/features/shared/utils/staffHelpers';
+import { useNetworkLatency } from '@/features/shared/hooks/useNetworkLatency';
 import type { AdminRoute } from '../../domain/admin.types';
-import { getAdminNavConfig } from './adminNavigation.config';
 
 interface AdminHeaderProps {
   currentRoute: AdminRoute;
@@ -17,10 +17,10 @@ interface AdminHeaderProps {
   onSwitchToFloor?: () => void;
   onOpenDrawer?: () => void;
   onNavigateProfile?: () => void;
+  onRouteChange?: (route: AdminRoute) => void;
 }
 
 export const AdminHeader: React.FC<AdminHeaderProps> = ({
-  currentRoute,
   operatingMode,
   onToggleOperatingMode,
   onSwitchToFloor,
@@ -29,6 +29,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 }) => {
   const { logout, currentUser } = useAuthStore();
   const [currentTimeStr, setCurrentTimeStr] = useState('');
+  const { isSlow, isOffline } = useNetworkLatency(15000);
 
   useEffect(() => {
     const updateTime = () => {
@@ -41,7 +42,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         minute: '2-digit',
         hour12: true,
       };
-      // Format e.g. "Thu, Nov 5 - 4:18 PM"
+      // Format e.g. "Wed, Nov 11 - 4:06 AM"
       const formatted = now.toLocaleDateString('en-US', options).replace(/,([^,]*)$/, ' -$1');
       setCurrentTimeStr(formatted);
     };
@@ -59,47 +60,38 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
     [currentUser?.role]
   );
 
-  const routeConfig = useMemo(() => getAdminNavConfig(currentRoute), [currentRoute]);
-
   return (
-    <View className="w-full flex-row items-center justify-between border-b border-stone-200/90 bg-white px-3 sm:px-6 py-2.5 sm:py-3 shadow-xs">
-      {/* Left: Mobile Drawer Trigger + Page Context */}
-      <View className="flex-row items-center gap-2.5 sm:gap-3 flex-1 min-w-0 pr-2">
-        {onOpenDrawer && (
+    <View className="w-full relative flex-row items-center justify-center border-b border-stone-200/80 bg-white px-3 sm:px-6 py-2.5 sm:py-3 shadow-xs min-h-[64px]">
+      {/* Mobile Drawer Trigger (Positioned absolute so it doesn't offset the centered cluster) */}
+      {onOpenDrawer && (
+        <View className="absolute left-3 sm:left-6 lg:hidden z-10">
           <Pressable
             onPress={onOpenDrawer}
-            className="lg:hidden h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-stone-100"
+            className="h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-stone-100"
             accessibilityRole="button"
             accessibilityLabel="Open navigation menu"
           >
-            <Menu size={20} color="#292524" />
+            <Menu size={20} color="#1c1917" />
           </Pressable>
-        )}
+        </View>
+      )}
 
-        <View className="flex-1 min-w-0">
-          <View className="flex-row items-center gap-2">
-            <Text
-              className="text-lg sm:text-xl font-bold tracking-tight text-stone-900"
-              numberOfLines={1}
-            >
-              {routeConfig?.label || 'Admin Console'}
+      {/* Centered Controls Cluster */}
+      <View className="flex-row items-center justify-center gap-2 sm:gap-3 flex-wrap">
+        {/* Non-blocking Slow Connection / Offline Indicator */}
+        {isSlow && (
+          <View className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 border border-stone-300">
+            <View className="h-2 w-2 rounded-full bg-[#800020] animate-pulse" />
+            <Text className="text-xs font-semibold text-stone-700">
+              {isOffline ? 'Offline' : 'Slow connection'}
             </Text>
           </View>
-          <Text
-            className="hidden sm:flex text-xs text-stone-500 font-normal truncate"
-            numberOfLines={1}
-          >
-            {routeConfig?.description || "Monk's Dream Jazz Bar & Cafe"}
-          </Text>
-        </View>
-      </View>
+        )}
 
-      {/* Right: Actions, Mode, Profile, Logout */}
-      <View className="flex-row items-center gap-2 sm:gap-3 flex-shrink-0">
-        {/* Date Time Indicator (Desktop only) */}
+        {/* Date Time Indicator */}
         {currentTimeStr ? (
-          <View className="hidden xl:flex flex-row items-center gap-2 rounded-xl bg-stone-100 border border-stone-200/80 px-3.5 py-2 h-11">
-            <Clock size={15} color="#57534e" />
+          <View className="hidden xl:flex flex-row items-center gap-2 rounded-xl bg-stone-50 border border-stone-200 px-3.5 py-2 h-11">
+            <Clock size={15} color="#78716c" />
             <Text className="text-xs font-semibold text-stone-700">{currentTimeStr}</Text>
           </View>
         ) : null}
@@ -107,21 +99,21 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Operating Mode Toggle */}
         <Pressable
           onPress={onToggleOperatingMode}
-          className={`h-11 px-3 sm:px-3.5 flex-row items-center justify-center rounded-xl border transition-all active:scale-[0.98] ${
+          className={`h-11 px-3.5 flex-row items-center justify-center rounded-xl border transition-all active:scale-[0.98] ${
             operatingMode === 'EVENT'
-              ? 'bg-amber-600 border-amber-700/40'
-              : 'bg-stone-100 border-stone-300'
+              ? 'bg-[#800020] border-[#800020]'
+              : 'bg-stone-50 border-stone-200'
           }`}
           accessibilityLabel={`Switch operating mode. Current: ${operatingMode}`}
         >
           {operatingMode === 'EVENT' ? (
             <Flame size={17} color="#ffffff" />
           ) : (
-            <Sun size={17} color="#57534e" />
+            <Sun size={17} color="#1c1917" />
           )}
           <Text
-            className={`ml-2 text-base font-bold whitespace-nowrap ${
-              operatingMode === 'EVENT' ? 'text-white' : 'text-stone-800'
+            className={`ml-2 text-sm font-bold whitespace-nowrap ${
+              operatingMode === 'EVENT' ? 'text-white' : 'text-stone-900'
             }`}
           >
             {operatingMode === 'EVENT' ? 'Event' : 'Cafe'}
@@ -132,11 +124,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {onSwitchToFloor && (
           <Pressable
             onPress={onSwitchToFloor}
-            className="h-11 px-3 sm:px-3.5 flex-row items-center justify-center rounded-xl border border-stone-300 bg-white active:bg-stone-50 transition-all active:scale-[0.98]"
+            className="h-11 px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 transition-all active:scale-[0.98]"
             accessibilityLabel="Switch to Floor POS"
           >
-            <Layers size={17} color="#44403c" />
-            <Text className="hidden sm:inline ml-2 text-base font-bold text-stone-800 whitespace-nowrap">
+            <Layers size={17} color="#1c1917" />
+            <Text className="hidden sm:inline ml-2 text-sm font-bold text-stone-900 whitespace-nowrap">
               Floor POS
             </Text>
           </Pressable>
@@ -145,17 +137,17 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Staff Profile Pill */}
         <Pressable
           onPress={onNavigateProfile}
-          className="h-11 flex-row items-center rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 px-2 sm:px-2.5 active:bg-stone-100 transition-all active:scale-[0.98]"
+          className="h-11 flex-row items-center rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 px-2.5 active:bg-stone-100 transition-all active:scale-[0.98]"
           accessibilityLabel="Open Admin Profile"
         >
-          <View className="h-8 w-8 items-center justify-center rounded-full bg-[#6e1d2c] flex-shrink-0">
-            <Text className="text-xs font-bold text-white tracking-wider">{staffInitials}</Text>
+          <View className="h-7 w-7 items-center justify-center rounded-full bg-[#800020] flex-shrink-0">
+            <Text className="text-[11px] font-bold text-white tracking-wider">{staffInitials}</Text>
           </View>
           <View className="hidden md:flex ml-2 justify-center max-w-[120px]">
-            <Text className="text-base font-bold text-stone-900 leading-tight" numberOfLines={1}>
+            <Text className="text-xs font-bold text-stone-900 leading-tight" numberOfLines={1}>
               {staffFirstName}
             </Text>
-            <Text className="text-xs font-semibold text-[#6e1d2c] uppercase" numberOfLines={1}>
+            <Text className="text-[10px] font-semibold text-[#800020] uppercase" numberOfLines={1}>
               {staffRole}
             </Text>
           </View>
@@ -164,11 +156,11 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Logout Button */}
         <Pressable
           onPress={logout}
-          className="h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-rose-50 hover:border-rose-200 transition-all active:scale-[0.98]"
+          className="h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-rose-50 transition-all active:scale-[0.98]"
           accessibilityRole="button"
           accessibilityLabel="Log out of admin console"
         >
-          <LogOut size={17} color="#dc2626" />
+          <LogOut size={17} color="#800020" />
         </Pressable>
       </View>
     </View>

@@ -16,7 +16,6 @@ export interface User {
     | 'station_bar'
     | 'station_cafe'
     | 'station_food'
-    | 'foh_runner'
     | 'printer_station';
   isActive?: boolean;
   email?: string;

@@ -25,12 +25,15 @@ interface CreateUserAccountModalProps {
 }
 
 export const POS_SYSTEM_ROLES: { value: StaffRoleType; label: string; desc: string }[] = [
-  { value: 'waiter', label: 'Waiter', desc: 'Floor service, tables & firing chits' },
+  {
+    value: 'waiter',
+    label: 'Waiter & FOH Server',
+    desc: 'Floor service, expediting & firing chits',
+  },
   { value: 'cashier', label: 'Cashier', desc: 'Billing, tender settlement & drawer' },
   { value: 'station_bar', label: 'Bar Station', desc: 'Cocktail & beverage prep queue' },
   { value: 'station_cafe', label: 'Cafe Station', desc: 'Espresso, coffee & pastry queue' },
   { value: 'station_food', label: 'Kitchen Station', desc: 'Food & culinary prep queue' },
-  { value: 'foh_runner', label: 'FOH Runner', desc: 'Expediting & serving dishes' },
   { value: 'admin', label: 'Manager / Admin', desc: 'Full back-office & POS oversight' },
 ];
 
