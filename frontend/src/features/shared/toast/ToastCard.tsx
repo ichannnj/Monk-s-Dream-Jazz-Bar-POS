@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, Animated, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Animated, PanResponder, Platform } from 'react-native';
 import { CheckCircle2, AlertCircle, AlertTriangle, Sparkles, X } from 'lucide-react-native';
 import { ToastItemData, useToastStore } from './useToastStore';
 
@@ -13,28 +13,195 @@ export const ToastCard: React.FC<ToastCardProps> = ({ toast }) => {
   // Animations
   const animOpacity = useRef(new Animated.Value(0)).current;
   const animTranslateY = useRef(new Animated.Value(-16)).current;
+  const panTranslateX = useRef(new Animated.Value(0)).current;
+  const panTranslateY = useRef(new Animated.Value(0)).current;
   const animScale = useRef(new Animated.Value(0.96)).current;
   const progressAnim = useRef(new Animated.Value(1)).current;
 
+  // Track dismissal state to prevent double dismiss
+  const isDismissing = useRef(false);
+  const autoDismissTimer = useRef<any>(null);
+
+  const triggerDismiss = (direction: 'up' | 'left' | 'right' | 'fade' = 'fade') => {
+    if (isDismissing.current) return;
+    isDismissing.current = true;
+
+    if (autoDismissTimer.current) {
+      clearTimeout(autoDismissTimer.current);
+    }
+
+    const useDriver = Platform.OS !== 'web';
+
+    let toX = 0;
+    let toY = 0;
+    if (direction === 'left') {
+      toX = -400;
+    } else if (direction === 'right') {
+      toX = 400;
+    } else if (direction === 'up') {
+      toY = -120;
+    } else {
+      toY = -10;
+    }
+
+    Animated.parallel([
+      Animated.timing(animOpacity, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: useDriver,
+      }),
+      Animated.timing(panTranslateX, {
+        toValue: toX,
+        duration: 200,
+        useNativeDriver: useDriver,
+      }),
+      Animated.timing(panTranslateY, {
+        toValue: toY,
+        duration: 200,
+        useNativeDriver: useDriver,
+      }),
+      Animated.timing(animScale, {
+        toValue: 0.9,
+        duration: 180,
+        useNativeDriver: useDriver,
+      }),
+    ]).start(() => {
+      dismiss(toast.id);
+    });
+  };
+
+  // Swipe-to-dismiss PanResponder (supports swiping UP, LEFT, or RIGHT)
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Detect horizontal drag or upwards drag
+        const isHorizontal = Math.abs(gestureState.dx) > 10;
+        const isUpward = gestureState.dy < -10;
+        return isHorizontal || isUpward;
+      },
+      onPanResponderGrant: () => {
+        // Pause auto-dismiss timer during active gesture
+        if (autoDismissTimer.current) {
+          clearTimeout(autoDismissTimer.current);
+        }
+      },
+      onPanResponderMove: (_, gestureState) => {
+        if (isDismissing.current) return;
+
+        // Swiping UP: allow negative Y translation
+        if (gestureState.dy < 0) {
+          panTranslateY.setValue(gestureState.dy);
+        } else {
+          // Slight resistance if dragging downwards
+          panTranslateY.setValue(gestureState.dy * 0.2);
+        }
+
+        // Swiping Left/Right
+        panTranslateX.setValue(gestureState.dx);
+
+        // Dynamic fade as card is dragged away
+        const distance = Math.max(
+          Math.abs(gestureState.dx),
+          gestureState.dy < 0 ? Math.abs(gestureState.dy) : 0
+        );
+        const dragRatio = Math.min(distance / 200, 1);
+        animOpacity.setValue(1 - dragRatio * 0.6);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        if (isDismissing.current) return;
+
+        const SWIPE_THRESHOLD_X = 75;
+        const SWIPE_THRESHOLD_Y = -60;
+        const VELOCITY_THRESHOLD = 0.4;
+
+        // 1. Swiped UP
+        if (
+          gestureState.dy < SWIPE_THRESHOLD_Y ||
+          (gestureState.dy < -20 && gestureState.vy < -VELOCITY_THRESHOLD)
+        ) {
+          triggerDismiss('up');
+          return;
+        }
+
+        // 2. Swiped LEFT
+        if (
+          gestureState.dx < -SWIPE_THRESHOLD_X ||
+          (gestureState.dx < -20 && gestureState.vx < -VELOCITY_THRESHOLD)
+        ) {
+          triggerDismiss('left');
+          return;
+        }
+
+        // 3. Swiped RIGHT
+        if (
+          gestureState.dx > SWIPE_THRESHOLD_X ||
+          (gestureState.dx > 20 && gestureState.vx > VELOCITY_THRESHOLD)
+        ) {
+          triggerDismiss('right');
+          return;
+        }
+
+        // Snap back if threshold not met
+        const useDriver = Platform.OS !== 'web';
+        Animated.parallel([
+          Animated.spring(panTranslateX, {
+            toValue: 0,
+            friction: 7,
+            tension: 80,
+            useNativeDriver: useDriver,
+          }),
+          Animated.spring(panTranslateY, {
+            toValue: 0,
+            friction: 7,
+            tension: 80,
+            useNativeDriver: useDriver,
+          }),
+          Animated.timing(animOpacity, {
+            toValue: 1,
+            duration: 150,
+            useNativeDriver: useDriver,
+          }),
+        ]).start();
+
+        // Resume remaining auto-dismiss timer
+        autoDismissTimer.current = setTimeout(() => {
+          triggerDismiss('fade');
+        }, 2000);
+      },
+      onPanResponderTerminate: () => {
+        // Reset position on termination
+        const useDriver = Platform.OS !== 'web';
+        Animated.parallel([
+          Animated.spring(panTranslateX, { toValue: 0, useNativeDriver: useDriver }),
+          Animated.spring(panTranslateY, { toValue: 0, useNativeDriver: useDriver }),
+          Animated.timing(animOpacity, { toValue: 1, duration: 150, useNativeDriver: useDriver }),
+        ]).start();
+      },
+    })
+  ).current;
+
   useEffect(() => {
+    const useDriver = Platform.OS !== 'web';
+
     // 1. Entrance animation
     Animated.parallel([
       Animated.timing(animOpacity, {
         toValue: 1,
         duration: 220,
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: useDriver,
       }),
       Animated.spring(animTranslateY, {
         toValue: 0,
         friction: 8,
         tension: 80,
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: useDriver,
       }),
       Animated.spring(animScale, {
         toValue: 1,
         friction: 8,
         tension: 80,
-        useNativeDriver: Platform.OS !== 'web',
+        useNativeDriver: useDriver,
       }),
     ]).start();
 
@@ -44,38 +211,20 @@ export const ToastCard: React.FC<ToastCardProps> = ({ toast }) => {
     Animated.timing(progressAnim, {
       toValue: 0,
       duration: duration,
-      useNativeDriver: false, // width requires false
+      useNativeDriver: false,
     }).start();
 
     // 3. Auto dismiss timer
-    const timer = setTimeout(() => {
-      handleDismiss();
+    autoDismissTimer.current = setTimeout(() => {
+      triggerDismiss('fade');
     }, duration);
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (autoDismissTimer.current) {
+        clearTimeout(autoDismissTimer.current);
+      }
+    };
   }, []);
-
-  const handleDismiss = () => {
-    Animated.parallel([
-      Animated.timing(animOpacity, {
-        toValue: 0,
-        duration: 180,
-        useNativeDriver: Platform.OS !== 'web',
-      }),
-      Animated.timing(animScale, {
-        toValue: 0.92,
-        duration: 180,
-        useNativeDriver: Platform.OS !== 'web',
-      }),
-      Animated.timing(animTranslateY, {
-        toValue: -10,
-        duration: 180,
-        useNativeDriver: Platform.OS !== 'web',
-      }),
-    ]).start(() => {
-      dismiss(toast.id);
-    });
-  };
 
   const getThemeConfig = () => {
     switch (toast.type) {
@@ -125,19 +274,31 @@ export const ToastCard: React.FC<ToastCardProps> = ({ toast }) => {
 
   return (
     <Animated.View
+      {...panResponder.panHandlers}
       style={[
         styles.cardContainer,
         {
           opacity: animOpacity,
-          transform: [{ translateY: animTranslateY }, { scale: animScale }],
+          transform: [
+            { translateY: Animated.add(animTranslateY, panTranslateY) },
+            { translateX: panTranslateX },
+            { scale: animScale },
+          ],
           borderLeftColor: theme.accentColor,
+          ...(Platform.OS === 'web'
+            ? ({
+                cursor: 'grab',
+                userSelect: 'none',
+                touchAction: 'none',
+              } as any)
+            : {}),
         },
       ]}
     >
-      <Pressable onPress={handleDismiss} style={styles.innerTouchable} accessibilityRole="alert">
+      <View style={styles.innerTouchable} accessibilityRole="alert">
         {/* Left Icon Badge */}
         <View style={[styles.iconBadge, { backgroundColor: theme.bgColor }]}>
-          <IconComponent size={18} color={theme.iconColor} strokeWidth={2.4} />
+          <IconComponent size={18} color={theme.iconColor} strokeWidth={2.4} aria-hidden={true} />
         </View>
 
         {/* Content Column */}
@@ -157,7 +318,7 @@ export const ToastCard: React.FC<ToastCardProps> = ({ toast }) => {
               onPress={(e) => {
                 e.stopPropagation?.();
                 toast.action?.onPress();
-                handleDismiss();
+                triggerDismiss('fade');
               }}
               style={[styles.actionBtn, { borderColor: theme.accentColor }]}
             >
@@ -168,21 +329,21 @@ export const ToastCard: React.FC<ToastCardProps> = ({ toast }) => {
           ) : null}
         </View>
 
-        {/* Close Button */}
+        {/* Optional Clickable Dismiss button */}
         <Pressable
           onPress={(e) => {
             e.stopPropagation?.();
-            handleDismiss();
+            triggerDismiss('fade');
           }}
           hitSlop={8}
           style={styles.closeBtn}
           accessibilityLabel="Dismiss notification"
         >
-          <X size={15} color="#94a3b8" />
+          <X size={15} color="#94a3b8" aria-hidden={true} />
         </Pressable>
-      </Pressable>
+      </View>
 
-      {/* Subtle Progress Bar */}
+      {/* Progress Countdown Bar */}
       <View style={styles.progressBarTrack}>
         <Animated.View
           style={[
