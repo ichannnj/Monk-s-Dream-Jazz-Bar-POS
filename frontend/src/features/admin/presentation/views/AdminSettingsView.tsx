@@ -134,48 +134,35 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* Header */}
-      <View className="mb-6 flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <View className="flex-1 min-w-[260px]">
-          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-            Venue Settings, Taxes & Routing
-          </Text>
-          <Text className="mt-1 text-base text-stone-500">
-            VAT compliance, service charge distribution, comps/discounts, and hardware printer
-            routing
-          </Text>
-        </View>
+      <View className="mb-5 flex-row items-center justify-between gap-3 flex-wrap">
+        <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
+          Venue Settings
+        </Text>
 
         <Pressable
           onPress={handleSaveAll}
           disabled={isSaving}
-          className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-6 active:opacity-90 shadow-sm w-full sm:w-auto"
+          className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:bg-[#600018] shadow-xs"
         >
-          <Save size={20} color="#ffffff" />
-          <Text className="ml-2 text-base font-bold text-white">
-            {isSaving ? 'Saving Settings...' : 'Save All Settings'}
+          <Save size={16} color="#ffffff" />
+          <Text className="ml-1.5 text-xs font-bold text-white">
+            {isSaving ? 'Saving...' : 'Save Settings'}
           </Text>
         </Pressable>
       </View>
 
-      <View className="space-y-6">
+      <View className="space-y-5">
         {/* SECTION 0: GENERAL VENUE IDENTITY */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs space-y-4">
-          <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
-              <Building size={22} color="#800020" />
-            </View>
-            <View className="ml-2">
-              <Text className="text-xl font-bold text-stone-900">
-                Venue Identity & Operating Float
-              </Text>
-              <Text className="text-base text-stone-500">
-                Official business name and standard daily overheads
-              </Text>
-            </View>
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-3">
+          <View className="flex-row items-center gap-2 border-b border-stone-100 pb-2.5">
+            <Building size={18} color="#800020" />
+            <Text className="text-base font-bold text-stone-900">
+              Venue Identity &amp; Overhead
+            </Text>
           </View>
 
           <View className="flex-col md:flex-row gap-4">
@@ -201,19 +188,10 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
         </View>
 
         {/* SECTION 1: TAXES & SERVICE CHARGE */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs space-y-4">
-          <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
-              <Percent size={22} color="#800020" />
-            </View>
-            <View className="ml-2">
-              <Text className="text-xl font-bold text-stone-900">
-                Taxes & Hospitality Service Charge
-              </Text>
-              <Text className="text-base text-stone-500">
-                Philippine BIR VAT rate and front/back-of-house service gratuity pool
-              </Text>
-            </View>
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-3">
+          <View className="flex-row items-center gap-2 border-b border-stone-100 pb-2.5">
+            <Percent size={18} color="#800020" />
+            <Text className="text-base font-bold text-stone-900">Taxes &amp; Service Charge</Text>
           </View>
 
           <View className="flex-col md:flex-row items-start gap-4">
@@ -310,19 +288,10 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
         </View>
 
         {/* SECTION 2: DISCOUNTS & OPERATIONAL COMPS */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs space-y-4">
-          <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
-              <Receipt size={22} color="#800020" />
-            </View>
-            <View className="ml-2">
-              <Text className="text-xl font-bold text-stone-900">
-                Discounts & Operational Comps
-              </Text>
-              <Text className="text-base text-stone-500">
-                Statutory Senior/PWD exemptions, resident jazz artist comps, and staff meals
-              </Text>
-            </View>
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-3">
+          <View className="flex-row items-center gap-2 border-b border-stone-100 pb-2.5">
+            <Receipt size={18} color="#800020" />
+            <Text className="text-base font-bold text-stone-900">Discounts &amp; Comps</Text>
           </View>
 
           <View className="flex-col md:flex-row gap-4">
@@ -368,40 +337,29 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
         <AdminQrPaymentManager />
 
         {/* SECTION 4: PRINTER & HARDWARE ROUTING */}
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs space-y-4">
-          <View className="flex-row items-center space-x-3 border-b border-stone-100 pb-3">
-            <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
-              <Printer size={22} color="#800020" />
-            </View>
-            <View className="ml-2">
-              <Text className="text-xl font-bold text-stone-900">
-                Hardware Thermal Printer Routing
-              </Text>
-              <Text className="text-base text-stone-500">
-                IP and USB printer dispatch targets for Bar, Kitchen, and Runner Pass chits
-              </Text>
-            </View>
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-3">
+          <View className="flex-row items-center gap-2 border-b border-stone-100 pb-2.5">
+            <Printer size={18} color="#800020" />
+            <Text className="text-base font-bold text-stone-900">Printer Routing</Text>
           </View>
 
           {/* Dedicated Web Serial Station Tab Banner */}
-          <View className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <View className="p-3.5 rounded-xl bg-[#FAF8F5] border border-stone-200 flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <View className="flex-1">
-              <Text className="text-base font-bold text-amber-950">
-                Single Store Printer &amp; Cash Drawer Station (?mode=printer)
+              <Text className="text-xs font-bold text-stone-900">
+                Hardware Print &amp; Cash Drawer Station (?mode=printer)
               </Text>
-              <Text className="text-sm text-amber-800 mt-0.5">
-                Run this dedicated background tab on the counter PC connected to the USB thermal
-                printer and RJ11 cash drawer. It listens to all store orders in real-time and
-                automatically pops open the cash drawer on cash payments.
+              <Text className="text-xs text-stone-500 mt-0.5">
+                Background terminal for USB thermal printer and RJ11 cash drawer kicks.
               </Text>
             </View>
             <Pressable
               onPress={() => window.open('?mode=printer', '_blank')}
-              className="px-4 py-2.5 rounded-xl bg-amber-600 active:bg-amber-700 flex-row items-center"
+              className="h-9 px-3 rounded-xl bg-[#800020] active:bg-[#600018] flex-row items-center"
             >
-              <Printer size={16} color="#ffffff" />
-              <Text className="ml-2 text-sm font-bold text-white">Open Station Tab</Text>
-              <ExternalLink size={14} color="#ffffff" className="ml-1.5" />
+              <Printer size={14} color="#ffffff" />
+              <Text className="ml-1.5 text-xs font-bold text-white">Open Station</Text>
+              <ExternalLink size={12} color="#ffffff" className="ml-1" />
             </Pressable>
           </View>
 

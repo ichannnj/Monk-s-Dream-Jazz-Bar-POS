@@ -47,6 +47,7 @@ export function useBillSettlementController({
   const [tenderedCash, setTenderedCash] = useState<string>('');
   const [shouldPrintReceipt, setShouldPrintReceipt] = useState(true);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Discount & Privilege State
   const [discountType, setDiscountType] = useState<DiscountType>('NONE');
@@ -78,6 +79,7 @@ export function useBillSettlementController({
       setSettlementMode('single_tab');
       setSelectedMethod('cash');
       setShouldPrintReceipt(true);
+      setIsSubmitting(false);
 
       let isMounted = true;
       setIsLoadingQrChannels(true);
@@ -238,9 +240,11 @@ export function useBillSettlementController({
     setIsConfirmModalOpen(true);
   };
 
-  const handleFinalizePayment = () => {
+  const handleFinalizePayment = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      onConfirmPayment(
+      await onConfirmPayment(
         isTakeout ? 'takeout' : settlementMode,
         activeTab?.tabIndex || 1,
         selectedMethod,
@@ -270,6 +274,8 @@ export function useBillSettlementController({
           title: 'Payment Error',
         }
       );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -328,6 +334,7 @@ export function useBillSettlementController({
     changeDue,
     isRefNumberValid,
     isPaymentValid,
+    isSubmitting,
     handleOpenConfirm,
     handleFinalizePayment,
     quickCashOptions,

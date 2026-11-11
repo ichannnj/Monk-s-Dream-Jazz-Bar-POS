@@ -126,7 +126,7 @@ Item preparation destination is determined solely by product category, **never**
 
 Printing is handled via a dedicated Linux PC running ESC/POS USB drivers:
 
-1. **Order Dispatch Slip (Runner Chit):** Auto-prints upon tapping "Send Order" (checklist, customer name, destination table/tag) to clip to the serving tray.
+1. **Order Dispatch Slip (Runner Chit):** Auto-prints upon tapping "Send Order" (checklist, customer name, destination table/tag, clean normalized [BAR] / [KITCHEN] station badges) to clip to the serving tray.
 2. **Customer Payment Receipt:** Prints upon payment settlement (itemized breakdown, taxes, payment method).
 3. **Sales & Transactions Executive Reporting Suite:**
    - **Tab 1 (Financial Overview):** Real database analytics filtered by dynamic timeframe (Daily/Today, WTD, MTD, YTD, Specific Day) and fulfillment station (`ALL`, `CAFE_AREA`, `BAR_AREA`, `TAKEOUT_COUNTER`, `GRAB_FOOD`), powered by live `HourlySalesVelocityChart` (day-part revenue pacing & peak hour tracking), `PaymentTenderMixBar` (Cash, Card, Digital Wallet, Delivery mix), multi-channel revenue distribution, and 1-click executive Excel workbook generation (`exportFinancialOverviewToExcel`) & publication-grade A4 document printing.

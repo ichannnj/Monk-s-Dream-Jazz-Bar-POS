@@ -53,6 +53,7 @@ export function useOrderEntryController({
   const [editingImageItem, setEditingImageItem] = useState<MenuItem | null>(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
   const [isConfirmDispatchOpen, setIsConfirmDispatchOpen] = useState<boolean>(false);
+  const [isDispatching, setIsDispatching] = useState<boolean>(false);
 
   const [activeCustomizingItem, setActiveCustomizingItem] = useState<MenuItem | null>(null);
   const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
@@ -321,15 +322,19 @@ export function useOrderEntryController({
     setIsConfirmDispatchOpen(true);
   };
 
-  const handleExecuteDispatch = () => {
+  const handleExecuteDispatch = async () => {
+    if (isDispatching) return;
+    setIsDispatching(true);
     try {
-      onSendOrder(cartItems, hasCorkage, corkageAmount);
+      await onSendOrder(cartItems, hasCorkage, corkageAmount);
       setIsConfirmDispatchOpen(false);
       onClose();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to dispatch order. Check station connectivity.', {
         title: 'Dispatch Error',
       });
+    } finally {
+      setIsDispatching(false);
     }
   };
 
@@ -383,5 +388,6 @@ export function useOrderEntryController({
     handleToggleCorkage,
     handleOpenConfirm,
     handleExecuteDispatch,
+    isDispatching,
   };
 }

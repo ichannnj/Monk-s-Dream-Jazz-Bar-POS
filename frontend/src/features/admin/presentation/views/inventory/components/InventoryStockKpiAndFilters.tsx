@@ -43,49 +43,43 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
 
   return (
     <>
-      {/* Executive KPI Summary Cards */}
-      <View className="flex-row flex-wrap gap-4">
+      {/* Executive KPI Summary Cards (Strict 3-Color Hierarchy: Sand, Charcoal, Burgundy #800020) */}
+      <View className="flex-row flex-wrap gap-3 sm:gap-4">
         {/* Card 1: Total Valuation */}
-        <View className="flex-1 min-w-[200px] sm:min-w-[220px] rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 shadow-xs justify-between">
-          <View className="flex-row items-center justify-between mb-3">
+        <View className="flex-1 min-w-[180px] rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs justify-between">
+          <View className="flex-row items-center justify-between mb-2">
             <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider">
               Total Valuation
             </Text>
-            <View className="h-8 w-8 rounded-lg bg-[#800020]/10 items-center justify-center">
-              <Boxes size={17} color="#800020" />
-            </View>
+            <Boxes size={15} color="#800020" />
           </View>
-          <Text className="text-2xl sm:text-3xl font-black text-stone-900 tracking-tight">
+          <Text className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
             {formatCurrency(totalValuation)}
           </Text>
-          <Text className="text-xs font-medium text-stone-500 mt-2">
-            {inventory.length} SKUs across all stations
-          </Text>
+          <Text className="text-xs text-stone-500 mt-1">{inventory.length} SKUs total</Text>
         </View>
 
         {/* Card 2: Healthy In-Par */}
         <Pressable
           onPress={() => setStockStatusFilter(stockStatusFilter === 'IN_PAR' ? 'ALL' : 'IN_PAR')}
-          className={`flex-1 min-w-[200px] sm:min-w-[220px] rounded-2xl border p-5 sm:p-6 shadow-xs transition-all justify-between ${
+          className={`flex-1 min-w-[180px] rounded-2xl border p-4 sm:p-5 shadow-xs transition-all justify-between ${
             stockStatusFilter === 'IN_PAR'
-              ? 'border-emerald-600 bg-emerald-50/70 ring-2 ring-emerald-500/20'
-              : 'border-stone-200 bg-white active:bg-stone-50'
+              ? 'border-[#800020] bg-[#FAF8F5]'
+              : 'border-stone-200/80 bg-white active:bg-stone-50'
           }`}
         >
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
-              In-Par Healthy
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+              In-Par Stock
             </Text>
-            <View className="h-8 w-8 rounded-lg bg-emerald-100 items-center justify-center">
-              <CheckCircle2 size={17} color="#059669" />
-            </View>
+            <CheckCircle2 size={15} color="#78716c" />
           </View>
-          <Text className="text-2xl sm:text-3xl font-black text-emerald-900 tracking-tight">
+          <Text className="text-xl sm:text-2xl font-black text-stone-900 tracking-tight">
             {inParItemsCount}
           </Text>
-          <Text className="text-xs font-medium text-emerald-700 mt-2">
+          <Text className="text-xs text-stone-500 mt-1">
             {inventory.length > 0
-              ? `${Math.round((inParItemsCount / inventory.length) * 100)}% of stock healthy`
+              ? `${Math.round((inParItemsCount / inventory.length) * 100)}% healthy`
               : '0%'}
           </Text>
         </Pressable>
@@ -95,26 +89,22 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
           onPress={() =>
             setStockStatusFilter(stockStatusFilter === 'BELOW_PAR' ? 'ALL' : 'BELOW_PAR')
           }
-          className={`flex-1 min-w-[200px] sm:min-w-[220px] rounded-2xl border p-5 sm:p-6 shadow-xs transition-all justify-between ${
+          className={`flex-1 min-w-[180px] rounded-2xl border p-4 sm:p-5 shadow-xs transition-all justify-between ${
             stockStatusFilter === 'BELOW_PAR'
-              ? 'border-amber-500 bg-amber-50/70 ring-2 ring-amber-500/20'
-              : 'border-stone-200 bg-white active:bg-stone-50'
+              ? 'border-[#800020] bg-[#FAF8F5]'
+              : 'border-stone-200/80 bg-white active:bg-stone-50'
           }`}
         >
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-xs font-bold text-amber-800 uppercase tracking-wider">
-              Below Par (Reorder)
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-xs font-bold text-[#800020] uppercase tracking-wider">
+              Below Par
             </Text>
-            <View className="h-8 w-8 rounded-lg bg-amber-100 items-center justify-center">
-              <AlertCircle size={17} color="#d97706" />
-            </View>
+            <AlertCircle size={15} color="#800020" />
           </View>
-          <Text className="text-2xl sm:text-3xl font-black text-amber-900 tracking-tight">
+          <Text className="text-xl sm:text-2xl font-black text-[#800020] tracking-tight">
             {belowParItemsCount}
           </Text>
-          <Text className="text-xs font-medium text-amber-700 mt-2">
-            {belowParItemsCount > 0 ? 'Replenishment recommended' : 'Zero items below par'}
-          </Text>
+          <Text className="text-xs text-[#800020] mt-1">Reorder recommended</Text>
         </Pressable>
 
         {/* Card 4: Depleted / Out of Stock */}
@@ -122,52 +112,45 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
           onPress={() =>
             setStockStatusFilter(stockStatusFilter === 'DEPLETED' ? 'ALL' : 'DEPLETED')
           }
-          className={`flex-1 min-w-[200px] sm:min-w-[220px] rounded-2xl border p-5 sm:p-6 shadow-xs transition-all justify-between ${
+          className={`flex-1 min-w-[180px] rounded-2xl border p-4 sm:p-5 shadow-xs transition-all justify-between ${
             stockStatusFilter === 'DEPLETED'
-              ? 'border-rose-600 bg-rose-50/70 ring-2 ring-rose-500/20'
-              : 'border-stone-200 bg-white active:bg-stone-50'
+              ? 'border-[#800020] bg-[#FAF8F5]'
+              : 'border-stone-200/80 bg-white active:bg-stone-50'
           }`}
         >
-          <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-xs font-bold text-rose-800 uppercase tracking-wider">
-              Depleted / Overdrawn
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-xs font-bold text-[#800020] uppercase tracking-wider">
+              Depleted
             </Text>
-            <View className="h-8 w-8 rounded-lg bg-rose-100 items-center justify-center">
-              <AlertTriangle size={17} color="#e11d48" />
-            </View>
+            <AlertTriangle size={15} color="#800020" />
           </View>
-          <Text className="text-2xl sm:text-3xl font-black text-rose-900 tracking-tight">
+          <Text className="text-xl sm:text-2xl font-black text-[#800020] tracking-tight">
             {depletedItemsCount}
           </Text>
-          <Text className="text-xs font-medium text-rose-700 mt-2">
-            Orders active (soft warnings)
-          </Text>
+          <Text className="text-xs text-stone-500 mt-1">0 units remaining</Text>
         </Pressable>
       </View>
 
       {/* Search Bar, Filter Pills & Category Dropdown */}
-      <View className="flex-col gap-3">
-        <View className="flex-col md:flex-row md:items-center justify-between gap-3">
+      <View className="flex-col gap-2.5">
+        <View className="flex-col md:flex-row md:items-center justify-between gap-2.5">
           <View className="flex-1">
             <AdminInput
               value={searchQuery}
               onChangeText={setSearchQuery}
               placeholder="Search ingredients, SKUs, suppliers..."
-              leftElement={<Search size={18} color="#78716c" />}
+              leftElement={<Search size={16} color="#78716c" />}
             />
           </View>
 
-          <View className="flex-row items-center justify-between md:justify-end gap-3 flex-wrap sm:flex-nowrap">
+          <View className="flex-row items-center justify-between md:justify-end gap-2 flex-wrap sm:flex-nowrap">
             {/* Quick Filter Status Pills */}
             <View className="flex-row items-center gap-1.5 flex-wrap">
-              <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mr-1">
-                Status:
-              </Text>
               <Pressable
                 onPress={() => setStockStatusFilter('ALL')}
-                className={`rounded-xl px-3 py-2 border ${
+                className={`rounded-xl px-3 py-1.5 border ${
                   stockStatusFilter === 'ALL'
-                    ? 'bg-stone-900 border-stone-900 text-white'
+                    ? 'bg-stone-900 border-stone-900'
                     : 'bg-white border-stone-200 active:bg-stone-100'
                 }`}
               >
@@ -182,15 +165,15 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
 
               <Pressable
                 onPress={() => setStockStatusFilter('IN_PAR')}
-                className={`rounded-xl px-3 py-2 border ${
+                className={`rounded-xl px-3 py-1.5 border ${
                   stockStatusFilter === 'IN_PAR'
-                    ? 'bg-emerald-700 border-emerald-700 text-white'
+                    ? 'bg-stone-800 border-stone-800'
                     : 'bg-white border-stone-200 active:bg-stone-100'
                 }`}
               >
                 <Text
-                  className={`text-base font-bold ${
-                    stockStatusFilter === 'IN_PAR' ? 'text-white' : 'text-emerald-800'
+                  className={`text-xs font-bold ${
+                    stockStatusFilter === 'IN_PAR' ? 'text-white' : 'text-stone-700'
                   }`}
                 >
                   In par ({inParItemsCount})
@@ -199,15 +182,15 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
 
               <Pressable
                 onPress={() => setStockStatusFilter('BELOW_PAR')}
-                className={`rounded-xl px-3 py-2 border ${
+                className={`rounded-xl px-3 py-1.5 border ${
                   stockStatusFilter === 'BELOW_PAR'
-                    ? 'bg-amber-600 border-amber-600 text-white'
+                    ? 'bg-[#800020] border-[#800020]'
                     : 'bg-white border-stone-200 active:bg-stone-100'
                 }`}
               >
                 <Text
-                  className={`text-base font-bold ${
-                    stockStatusFilter === 'BELOW_PAR' ? 'text-white' : 'text-amber-800'
+                  className={`text-xs font-bold ${
+                    stockStatusFilter === 'BELOW_PAR' ? 'text-white' : 'text-[#800020]'
                   }`}
                 >
                   Below par ({belowParItemsCount})
@@ -216,15 +199,15 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
 
               <Pressable
                 onPress={() => setStockStatusFilter('DEPLETED')}
-                className={`rounded-xl px-3 py-2 border ${
+                className={`rounded-xl px-3 py-1.5 border ${
                   stockStatusFilter === 'DEPLETED'
-                    ? 'bg-rose-700 border-rose-700 text-white'
+                    ? 'bg-[#800020] border-[#800020]'
                     : 'bg-white border-stone-200 active:bg-stone-100'
                 }`}
               >
                 <Text
-                  className={`text-base font-bold ${
-                    stockStatusFilter === 'DEPLETED' ? 'text-white' : 'text-rose-800'
+                  className={`text-xs font-bold ${
+                    stockStatusFilter === 'DEPLETED' ? 'text-white' : 'text-[#800020]'
                   }`}
                 >
                   Depleted ({depletedItemsCount})
@@ -237,16 +220,16 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
               options={categoryDropdownOptions}
               value={categoryFilter}
               onChange={setCategoryFilter}
-              sheetTitle="Filter Inventory by Category"
-              className="w-full sm:w-60"
+              sheetTitle="Filter by Category"
+              className="w-full sm:w-56"
             />
           </View>
         </View>
 
         {/* Showing count indicator */}
         <View className="flex-row justify-end items-center px-1">
-          <Text className="text-xs font-semibold text-stone-500">
-            Showing {filteredCount} of {inventory.length} ingredients
+          <Text className="text-xs font-medium text-stone-500">
+            Showing {filteredCount} of {inventory.length} SKUs
           </Text>
         </View>
       </View>

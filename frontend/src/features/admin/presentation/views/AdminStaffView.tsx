@@ -160,17 +160,17 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
-      {/* Sleek Top Header Bar */}
+      {/* Header Bar */}
       <View className="mb-5 flex-col md:flex-row md:items-center justify-between gap-3">
-        <View className="flex-row items-center gap-3">
-          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+        <View className="flex-row items-center gap-2.5">
+          <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
             Staff Roster
           </Text>
-          <View className="rounded-full bg-stone-200/80 px-3 py-1">
-            <Text className="text-base font-bold text-stone-700">{counts.activeAll} Active</Text>
+          <View className="rounded-full bg-white border border-stone-200 px-2.5 py-0.5">
+            <Text className="text-xs font-bold text-stone-700">{counts.activeAll} Active</Text>
           </View>
         </View>
 
@@ -179,22 +179,22 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
           {Platform.OS === 'web' && (
             <Pressable
               onPress={() => window.open('?mode=timeclock', '_blank')}
-              className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
+              className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
               accessibilityLabel="Launch Timeclock Kiosk in new tab"
             >
-              <ExternalLink size={16} color="#800020" />
-              <Text className="ml-2 text-base font-bold text-[#800020]">Timeclock ↗</Text>
+              <ExternalLink size={15} color="#800020" />
+              <Text className="ml-1.5 text-xs font-bold text-[#800020]">Timeclock ↗</Text>
             </Pressable>
           )}
 
           {onNavigateToAttendance && (
             <Pressable
               onPress={onNavigateToAttendance}
-              className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-rose-200 bg-rose-50/70 active:bg-rose-100 shadow-xs"
+              className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
               accessibilityLabel="Go to Attendance & Payroll Ledger"
             >
-              <Clock size={16} color="#800020" />
-              <Text className="ml-2 text-base font-bold text-[#800020]">Attendance →</Text>
+              <Clock size={15} color="#1c1917" />
+              <Text className="ml-1.5 text-xs font-bold text-stone-800">Attendance →</Text>
             </Pressable>
           )}
 
@@ -209,7 +209,7 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
             triggerIcon={UserPlus}
             variant="wine"
             sheetTitle="Add Team Member"
-            className="min-w-[150px]"
+            className="min-w-[130px]"
           />
         </View>
       </View>
@@ -276,21 +276,17 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                   {/* Left: Identity & Metadata */}
                   <View className="flex-row items-center space-x-3 flex-1 min-w-0">
                     <View
-                      className={`min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border ${
+                      className={`h-11 w-11 items-center justify-center rounded-xl border ${
                         isAdmin
-                          ? 'bg-amber-50 border-amber-300 text-amber-900'
+                          ? 'bg-[#800020] border-[#800020]'
                           : isPosUser
-                            ? 'bg-rose-50 border-rose-200 text-[#800020]'
-                            : 'bg-purple-50 border-purple-200 text-purple-700'
+                            ? 'bg-stone-900 border-stone-900'
+                            : 'bg-stone-100 border-stone-200'
                       }`}
                     >
                       <Text
-                        className={`text-base font-black ${
-                          isAdmin
-                            ? 'text-amber-900'
-                            : isPosUser
-                              ? 'text-[#800020]'
-                              : 'text-purple-700'
+                        className={`text-xs font-bold ${
+                          isAdmin || isPosUser ? 'text-white' : 'text-stone-700'
                         }`}
                       >
                         {initials}
@@ -299,27 +295,21 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
 
                     <View className="ml-3 flex-1 min-w-0">
                       <View className="flex-row flex-wrap items-center gap-2">
-                        <Text className="text-lg font-extrabold text-stone-900 truncate">
+                        <Text className="text-base font-bold text-stone-900 truncate">
                           {member.display_name}
                         </Text>
 
                         {/* Clean Single Role Badge */}
                         <View
-                          className={`rounded-full px-2.5 py-0.5 border ${
+                          className={`rounded-full px-2 py-0.5 border ${
                             isAdmin
-                              ? 'bg-amber-50 border-amber-300'
-                              : isPosUser
-                                ? 'bg-rose-50 border-rose-200'
-                                : 'bg-purple-50 border-purple-200'
+                              ? 'bg-stone-100 border-[#800020]/30'
+                              : 'bg-stone-50 border-stone-200'
                           }`}
                         >
                           <Text
-                            className={`text-base font-bold ${
-                              isAdmin
-                                ? 'text-amber-900'
-                                : isPosUser
-                                  ? 'text-[#800020]'
-                                  : 'text-purple-700'
+                            className={`text-xs font-semibold ${
+                              isAdmin ? 'text-[#800020]' : 'text-stone-700'
                             }`}
                           >
                             {roleDisplay}
@@ -348,35 +338,35 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                   <View className="flex-row items-center justify-end gap-2 pt-2 md:pt-0 border-t border-stone-100 md:border-t-0">
                     <Pressable
                       onPress={() => setEditingStaff(member)}
-                      className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-stone-100"
+                      className="h-9 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-stone-100"
                     >
-                      <Edit3 size={16} color="#44403c" />
-                      <Text className="ml-1.5 text-base font-bold text-stone-700">Edit</Text>
+                      <Edit3 size={14} color="#1c1917" />
+                      <Text className="ml-1 text-xs font-semibold text-stone-800">Edit</Text>
                     </Pressable>
 
                     <Pressable
                       onPress={() => setResetPinStaff(member)}
-                      className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-[#800020]/20 bg-[#800020]/5 active:bg-[#800020]/10"
+                      className="h-9 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50"
                       accessibilityLabel={
                         isAdmin
                           ? `Reset Override PIN for ${member.display_name}`
                           : `Reset PIN for ${member.display_name}`
                       }
                     >
-                      <KeyRound size={16} color="#800020" />
-                      <Text className="ml-1.5 text-base font-bold text-[#800020]">PIN</Text>
+                      <KeyRound size={14} color="#800020" />
+                      <Text className="ml-1 text-xs font-semibold text-[#800020]">PIN</Text>
                     </Pressable>
 
                     <Pressable
                       onPress={() => handleToggleActiveStatus(member)}
-                      className={`min-h-[48px] w-12 items-center justify-center rounded-xl border ${
+                      className={`h-9 w-9 items-center justify-center rounded-xl border ${
                         member.is_active
-                          ? 'border-stone-200 bg-white active:bg-rose-50'
-                          : 'border-emerald-200 bg-emerald-50 active:bg-emerald-100'
+                          ? 'border-stone-200 bg-white active:bg-stone-100'
+                          : 'border-stone-300 bg-stone-100 active:bg-stone-200'
                       }`}
                       accessibilityLabel={member.is_active ? 'Deactivate staff' : 'Activate staff'}
                     >
-                      <Power size={18} color={member.is_active ? '#78716c' : '#047857'} />
+                      <Power size={14} color={member.is_active ? '#78716c' : '#800020'} />
                     </Pressable>
                   </View>
                 </View>

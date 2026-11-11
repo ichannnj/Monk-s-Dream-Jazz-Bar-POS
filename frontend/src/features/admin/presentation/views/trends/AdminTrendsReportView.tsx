@@ -144,52 +144,34 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
       {/* Printable Container */}
       <View {...({ id: 'monks-trends-report-printable' } as any)} className="flex-1">
         {/* Header Toolbar (print-hidden) */}
-        <View className="rounded-2xl border border-stone-200/90 bg-white p-4 sm:p-5 shadow-xs mb-6 print-hidden">
-          <View className="flex-col md:flex-row md:items-center justify-between gap-4">
-            {/* Left: Title & Subtitle */}
-            <View className="flex-1 min-w-0">
-              <View className="flex-row items-center gap-2.5">
-                <View className="w-9 h-9 rounded-xl bg-[#800020]/10 border border-[#800020]/20 items-center justify-center">
-                  <TrendingUp size={18} color="#800020" />
-                </View>
-                <Text className="text-xl font-black text-stone-900 tracking-tight">
-                  Sales &amp; Product Trends Analytics
-                </Text>
+        <View className="rounded-2xl border border-stone-200/90 bg-white p-3.5 sm:p-4 shadow-xs mb-5 print-hidden">
+          <View className="flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Left: Title */}
+            <View className="flex-row items-center gap-2">
+              <View className="w-8 h-8 rounded-lg bg-stone-100 items-center justify-center">
+                <TrendingUp size={16} color="#800020" />
               </View>
-              <Text className="text-sm text-stone-500 font-medium mt-1">
-                Day-of-week velocity, daily/weekly revenue peaks, and menu best sellers (
-                {timeframeLabel})
+              <Text className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
+                Sales &amp; Product Trends
               </Text>
             </View>
 
-            {/* Right: Refresh, Export, Print Action Buttons */}
-            <View className="flex-row items-center gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-stone-100 flex-wrap">
-              <Pressable
-                onPress={handleManualRefresh}
-                className="w-11 h-11 rounded-xl bg-white border border-stone-300 items-center justify-center active:bg-stone-100 shadow-xs cursor-pointer"
-                accessibilityLabel="Refresh trends data"
-              >
-                <RefreshCw
-                  size={18}
-                  color="#57534e"
-                  className={isRefreshing ? 'animate-spin' : ''}
-                />
-              </Pressable>
-
+            {/* Right: Export & Print Action Buttons */}
+            <View className="flex-row items-center gap-2 shrink-0 flex-wrap">
               <Pressable
                 onPress={handleExportExcel}
-                className="min-h-[44px] px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-300 active:bg-emerald-100 flex-row items-center gap-2 shadow-xs cursor-pointer"
+                className="h-9 px-3 rounded-xl bg-white border border-stone-200 active:bg-stone-50 flex-row items-center gap-1.5 shadow-xs cursor-pointer"
               >
-                <FileSpreadsheet size={17} color="#047857" />
-                <Text className="text-sm font-bold text-emerald-800">Export Excel</Text>
+                <FileSpreadsheet size={14} color="#800020" />
+                <Text className="text-xs font-bold text-stone-800">Export</Text>
               </Pressable>
 
               <Pressable
                 onPress={handlePrintReport}
-                className="min-h-[44px] px-5 py-2 rounded-xl bg-stone-900 active:bg-stone-800 flex-row items-center justify-center shadow-xs cursor-pointer"
+                className="h-9 px-3.5 rounded-xl bg-[#800020] active:bg-[#600018] flex-row items-center justify-center shadow-xs cursor-pointer"
               >
-                <Printer size={17} color="#ffffff" />
-                <Text className="ml-2 text-sm font-bold text-white">Print Report</Text>
+                <Printer size={14} color="#ffffff" />
+                <Text className="ml-1.5 text-xs font-bold text-white">Print</Text>
               </Pressable>
             </View>
           </View>

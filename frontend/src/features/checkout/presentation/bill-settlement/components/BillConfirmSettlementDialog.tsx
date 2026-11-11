@@ -18,6 +18,7 @@ interface BillConfirmSettlementDialogProps {
   grandTotal: number;
   isConfirmModalOpen: boolean;
   setIsConfirmModalOpen: (open: boolean) => void;
+  isSubmitting?: boolean;
   handleFinalizePayment: () => void;
   selectedMethod: string;
   selectedQrChannel: QrPaymentChannel | null;
@@ -40,6 +41,7 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
   grandTotal,
   isConfirmModalOpen,
   setIsConfirmModalOpen,
+  isSubmitting = false,
   handleFinalizePayment,
   selectedMethod,
   selectedQrChannel,
@@ -121,6 +123,7 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
         }
         cancelText="Back"
         variant="success"
+        isLoading={isSubmitting}
         onConfirm={handleFinalizePayment}
         onCancel={() => setIsConfirmModalOpen(false)}
       />

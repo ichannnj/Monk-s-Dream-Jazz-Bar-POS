@@ -87,31 +87,26 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
       value: 'analytics',
       label: 'Financial Overview',
       icon: BarChart3,
-      description: 'Revenue, COGS, net profit, and dual-mode Cafe/Event analytics',
     },
     {
       value: 'trends',
       label: 'Trends & Best Sellers',
       icon: TrendingUp,
-      description: 'Day-of-week velocity, daily/weekly revenue graphs, and product rankings',
     },
     {
       value: 'cashless',
-      label: 'Online & Cashless Payments',
+      label: 'Online & Cashless',
       icon: QrCode,
-      description: 'GCash, Maya, QRPH & Card audit trail with 4-digit reference numbers',
     },
     {
       value: 'checks',
       label: 'Checks & Reprints',
       icon: Receipt,
-      description: 'Settled checks register, receipt reprints, and Excel ledger export',
     },
     {
       value: 'readings',
-      label: 'X, Y & Z Shift Readings',
+      label: 'X, Y & Z Readings',
       icon: FileText,
-      description: 'Interim X-Readings, Y-Shift Handovers, and End-of-Day Z-Readings',
     },
   ];
 
@@ -122,9 +117,9 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
   ];
 
   return (
-    <View className="flex-1 bg-[#fcf9f9]">
-      <View className="border-b border-stone-200/80 bg-white px-4 sm:px-8 py-3 flex-row items-center justify-between gap-3">
-        <Text className="text-lg font-extrabold text-stone-900 hidden sm:flex">
+    <View className="flex-1 bg-[#FAF8F5]">
+      <View className="border-b border-stone-200/80 bg-white px-4 sm:px-8 py-2.5 flex-row items-center justify-between gap-3">
+        <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 hidden sm:flex">
           Reports &amp; Fiscal Hub
         </Text>
         <PosDropdown
@@ -132,8 +127,8 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
           value={subTab}
           onChange={setSubTab}
           prefixLabel="Report:"
-          sheetTitle="Select Sales & Fiscal Report"
-          className="w-full sm:w-80"
+          sheetTitle="Select Report"
+          className="w-full sm:w-72"
         />
       </View>
 

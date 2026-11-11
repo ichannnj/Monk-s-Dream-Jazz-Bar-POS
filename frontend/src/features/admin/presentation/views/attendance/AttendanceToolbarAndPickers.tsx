@@ -79,46 +79,46 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
     <>
       {/* Sleek Top Header Bar */}
       <View className="mb-5 flex-col md:flex-row md:items-center justify-between gap-3">
-        <View className="flex-row items-center gap-3">
-          <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
+        <View className="flex-row items-center gap-2.5">
+          <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
             Attendance &amp; Payroll
           </Text>
-          <View className="rounded-full bg-rose-50 border border-rose-200/80 px-3 py-1">
-            <Text className="text-base font-bold text-[#800020]">{dateRange.label}</Text>
+          <View className="rounded-full bg-white border border-stone-200 px-2.5 py-0.5">
+            <Text className="text-xs font-bold text-[#800020]">{dateRange.label}</Text>
           </View>
         </View>
 
-        {/* Action Shortcuts & Export Trio */}
+        {/* Action Shortcuts */}
         <View className="flex-row flex-wrap items-center gap-2">
           {Platform.OS === 'web' && (
             <>
               {/* Print A4 Report Button */}
               <Pressable
                 onPress={handleOpenPrintModal}
-                className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
+                className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
                 accessibilityLabel="Print Attendance & Payroll Report"
               >
-                <Printer size={16} color="#44403c" />
-                <Text className="ml-2 text-base font-bold text-stone-700">Print</Text>
+                <Printer size={15} color="#1c1917" />
+                <Text className="ml-1.5 text-xs font-bold text-stone-800">Print</Text>
               </Pressable>
 
               {/* Excel Spreadsheet Export Button */}
               <Pressable
                 onPress={handleExportExcel}
-                className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-emerald-300 bg-emerald-50/70 active:bg-emerald-100 shadow-xs"
+                className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
                 accessibilityLabel="Export Attendance to Excel Spreadsheet"
               >
-                <FileSpreadsheet size={16} color="#047857" />
-                <Text className="ml-2 text-base font-bold text-emerald-800">Excel</Text>
+                <FileSpreadsheet size={15} color="#800020" />
+                <Text className="ml-1.5 text-xs font-bold text-stone-800">Excel</Text>
               </Pressable>
 
               <Pressable
                 onPress={() => window.open('?mode=timeclock', '_blank')}
-                className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
+                className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
                 accessibilityLabel="Launch Timeclock Kiosk in new tab"
               >
-                <ExternalLink size={16} color="#800020" />
-                <Text className="ml-2 text-base font-bold text-[#800020]">Timeclock ↗</Text>
+                <ExternalLink size={15} color="#800020" />
+                <Text className="ml-1.5 text-xs font-bold text-[#800020]">Timeclock ↗</Text>
               </Pressable>
             </>
           )}
@@ -126,23 +126,12 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
           {onNavigateToRoster && (
             <Pressable
               onPress={onNavigateToRoster}
-              className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
+              className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
             >
-              <Users size={16} color="#44403c" />
-              <Text className="ml-2 text-base font-bold text-stone-700">Roster →</Text>
+              <Users size={15} color="#1c1917" />
+              <Text className="ml-1.5 text-xs font-bold text-stone-800">Roster →</Text>
             </Pressable>
           )}
-
-          <Pressable
-            onPress={loadData}
-            disabled={isLoading}
-            className="min-h-[48px] px-4 flex-row items-center justify-center rounded-xl bg-[#800020] active:bg-[#6b001a] shadow-xs"
-          >
-            <Clock size={16} color="#ffffff" className={isLoading ? 'animate-spin' : ''} />
-            <Text className="ml-2 text-base font-bold text-white">
-              {isLoading ? 'Syncing...' : 'Refresh'}
-            </Text>
-          </Pressable>
         </View>
       </View>
 

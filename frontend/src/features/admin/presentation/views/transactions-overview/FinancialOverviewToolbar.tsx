@@ -141,33 +141,22 @@ export const FinancialOverviewToolbar: React.FC<FinancialOverviewToolbarProps> =
           />
         </View>
 
-        {/* Right: Refresh, Export, Print Buttons */}
-        <View className="flex-row items-center gap-2.5 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-stone-100 flex-wrap">
-          <Pressable
-            onPress={fetchAnalyticsData}
-            className="w-12 h-12 rounded-xl bg-white border border-stone-300 items-center justify-center active:bg-stone-100 shadow-xs"
-          >
-            <RefreshCw
-              size={18}
-              color="#57534e"
-              className={isFetchingAnalytics ? 'animate-spin' : ''}
-            />
-          </Pressable>
-
+        {/* Right: Export & Print Buttons */}
+        <View className="flex-row items-center gap-2 shrink-0 pt-3 md:pt-0 border-t md:border-t-0 border-stone-100 flex-wrap">
           <Pressable
             onPress={handleExportFinancialExcel}
-            className="min-h-[48px] px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-300 active:bg-emerald-100 flex-row items-center gap-2 shadow-xs"
+            className="h-10 px-3 rounded-xl bg-white border border-stone-200 active:bg-stone-50 flex-row items-center gap-1.5 shadow-xs"
           >
-            <FileSpreadsheet size={18} color="#047857" />
-            <Text className="text-base font-bold text-emerald-800">Export Excel</Text>
+            <FileSpreadsheet size={15} color="#800020" />
+            <Text className="text-xs font-bold text-stone-800">Export</Text>
           </Pressable>
 
           <Pressable
             onPress={handlePrintReport}
-            className="min-h-[48px] px-5 py-2.5 rounded-xl bg-stone-900 active:bg-stone-800 flex-row items-center justify-center shadow-xs"
+            className="h-10 px-3.5 rounded-xl bg-[#800020] active:bg-[#600018] flex-row items-center justify-center shadow-xs"
           >
-            <Printer size={18} color="#ffffff" />
-            <Text className="ml-2 text-base font-bold text-white">Print Report</Text>
+            <Printer size={15} color="#ffffff" />
+            <Text className="ml-1.5 text-xs font-bold text-white">Print</Text>
           </Pressable>
         </View>
       </View>

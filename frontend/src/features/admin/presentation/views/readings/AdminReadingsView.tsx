@@ -58,9 +58,9 @@ export const AdminReadingsView: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#fcf9f9] p-8">
+      <View className="flex-1 items-center justify-center bg-[#FAF8F5] p-8">
         <ActivityIndicator size="large" color="#800020" />
-        <Text className="text-base font-bold text-stone-600 mt-3">Loading POS Shift Data...</Text>
+        <Text className="text-sm font-bold text-stone-600 mt-3">Loading POS Shift Data...</Text>
       </View>
     );
   }
@@ -70,26 +70,23 @@ export const AdminReadingsView: React.FC = () => {
       ? 'Bar Station Till'
       : drawerScope === 'main'
         ? 'Main Floor Till'
-        : 'Consolidated Venue (All Tills)';
+        : 'Consolidated Venue';
 
   const scopeOptions: PosDropdownOption<'consolidated' | 'main' | 'bar'>[] = [
     {
       value: 'consolidated',
-      label: 'Consolidated (All Tills)',
+      label: 'Consolidated',
       icon: Layers,
-      description: 'Combined venue sales and cash drawers',
     },
     {
       value: 'main',
       label: 'Main Floor Till',
       icon: Coins,
-      description: 'Waiter & Cashier counter register till',
     },
     {
       value: 'bar',
       label: 'Bar Station Till',
       icon: Receipt,
-      description: 'Barista & Bartender station till',
     },
   ];
 
@@ -99,58 +96,42 @@ export const AdminReadingsView: React.FC = () => {
     {
       value: 'x_reading',
       label: 'Preview Interim X-Reading',
-      description: 'Non-destructive live snapshot of current shift accumulators',
       icon: FileText,
     },
     {
       value: 'y_reading',
-      label: 'Close Shift & Handover (Y-Reading)',
-      description: 'Reconcile cashier drawer for shift handover without resetting daily totals',
+      label: 'Close Shift (Y-Reading)',
       icon: ArrowRightLeft,
-      variant: 'warning',
     },
     {
       value: 'z_reading',
-      label: 'End-of-Day Fiscal Close (Z-Reading)',
-      description: 'Lock business day, advance Z-counter, and reset daily accumulators',
+      label: 'End-of-Day Close (Z-Reading)',
       icon: Lock,
-      variant: 'danger',
     },
     {
       value: 'export_xls',
-      label: 'Export Current Reading to Excel (.xls)',
-      description: 'Download formatted spreadsheet of active shift reading',
+      label: 'Export Reading to Excel',
       icon: FileSpreadsheet,
-      variant: 'success',
     },
   ];
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* Top Controls: Till Scope Dropdown & Reading Actions Dropdown */}
-      <View className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-6">
+      <View className="flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 mb-5">
         <PosDropdown
           options={scopeOptions}
           value={drawerScope}
           onChange={setDrawerScope}
           prefixLabel="Scope:"
           sheetTitle="Select Till Scope"
-          className="w-full sm:w-72"
+          className="w-full sm:w-64"
         />
 
-        <View className="flex-row items-center gap-2.5 flex-wrap">
-          <Pressable
-            onPress={handleRefresh}
-            className="w-12 h-12 rounded-xl bg-white border border-stone-200 items-center justify-center active:bg-stone-100 shadow-xs"
-            accessibilityRole="button"
-            accessibilityLabel="Refresh readings"
-          >
-            <RefreshCw size={18} color="#57534e" className={isRefreshing ? 'animate-spin' : ''} />
-          </Pressable>
-
+        <View className="flex-row items-center gap-2 flex-wrap">
           <PosDropdown
             mode="action"
             options={readingActions}
@@ -160,11 +141,11 @@ export const AdminReadingsView: React.FC = () => {
               else if (act === 'z_reading') handleOpenZClose();
               else if (act === 'export_xls') handleExportExcel();
             }}
-            triggerLabel="X / Y / Z Reading Actions"
+            triggerLabel="Reading Actions"
             triggerIcon={FileText}
             variant="wine"
-            sheetTitle="Fiscal Shift Reading Actions"
-            className="flex-1 sm:flex-initial min-w-[220px]"
+            sheetTitle="Fiscal Reading Actions"
+            className="flex-1 sm:flex-initial min-w-[170px]"
           />
         </View>
       </View>

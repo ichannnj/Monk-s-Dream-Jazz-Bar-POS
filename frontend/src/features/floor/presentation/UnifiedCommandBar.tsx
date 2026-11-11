@@ -8,11 +8,13 @@ import {
   Bike,
   PlusCircle,
   Printer,
+  CloudOff,
 } from 'lucide-react-native';
 import { ChannelCategory, TableStatus } from '../../../types/floor';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
 import { TodaysEventBanner } from '@/features/events';
 import { HardwareStationToggleModal, useDeviceHardwareStation } from '@/features/printer';
+import { useOrderStore } from '@/features/orders';
 
 export type StatusFilter = 'all' | TableStatus;
 
@@ -62,6 +64,7 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
 }) => {
   const [stationModalVisible, setStationModalVisible] = useState(false);
   const isHardwareStation = useDeviceHardwareStation((s) => s.isHardwareStation);
+  const offlineQueueCount = useOrderStore((s) => s.offlineQueue?.length || 0);
   const channelOptions: PosDropdownOption<ChannelCategory>[] = [
     {
       value: 'all',
@@ -205,6 +208,17 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
             className="flex-1 sm:flex-initial min-w-[150px]"
           />
         ) : null}
+
+        {offlineQueueCount > 0 && (
+          <View
+            style={styles.offlinePill}
+            accessibilityRole="alert"
+            accessibilityLabel={`${offlineQueueCount} offline transactions queued. Syncing automatically.`}
+          >
+            <CloudOff size={15} color="#b45309" />
+            <Text style={styles.offlineText}>{offlineQueueCount} Queued</Text>
+          </View>
+        )}
 
         <Pressable
           onPress={onToggleOperatingMode}
@@ -506,5 +520,22 @@ const styles = StyleSheet.create({
   },
   printerTextActive: {
     color: '#b45309',
+  },
+  offlinePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: '#fef3c7',
+    borderWidth: 1.5,
+    borderColor: '#f59e0b',
+  },
+  offlineText: {
+    fontSize: 13.5,
+    fontWeight: '800',
+    color: '#92400e',
   },
 });

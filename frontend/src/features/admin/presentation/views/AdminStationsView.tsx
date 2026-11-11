@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import {
   Wine,
-  Coffee,
-  UtensilsCrossed,
   PackageCheck,
   RotateCcw,
   Clock,
@@ -12,6 +10,7 @@ import {
   AlertTriangle,
   Sparkles,
   Calendar,
+  UtensilsCrossed,
 } from 'lucide-react-native';
 import type { DashboardTelemetry, TimeframeFilter } from '../../domain/admin.types';
 import { useLiveNow, getLiveStationTurnaround } from '@/features/shared/utils/elapsedTime';
@@ -29,7 +28,7 @@ interface AdminStationsViewProps {
 }
 
 const TIMEFRAME_BUTTONS: { key: TimeframeFilter; label: string }[] = [
-  { key: 'today', label: 'Today (Daily)' },
+  { key: 'today', label: 'Today' },
   { key: 'yesterday', label: 'Yesterday' },
   { key: 'week', label: 'This Week' },
   { key: 'month', label: 'This Month' },
@@ -56,21 +55,21 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
     { role: string; icon: any; color: string; defaultTarget: string }
   > = {
     bar: {
-      role: 'Bartender & Barista (Spirits, Cocktails & Cafe)',
+      role: 'Bartender & Barista',
       icon: Wine,
-      color: 'bg-amber-600',
+      color: 'bg-[#800020]',
       defaultTarget: '08:00',
     },
     kitchen: {
-      role: 'Main Line Chef & Appetizers',
+      role: 'Hot Food Line',
       icon: UtensilsCrossed,
-      color: 'bg-rose-700',
+      color: 'bg-stone-900',
       defaultTarget: '15:00',
     },
     runner: {
-      role: 'Tablet Buzzout & Tray Dispatch',
+      role: 'FOH Expediter',
       icon: PackageCheck,
-      color: 'bg-emerald-700',
+      color: 'bg-stone-800',
       defaultTarget: '03:00',
     },
   };
@@ -81,7 +80,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
           const meta = stationMeta[st.stationKey] || {
             role: 'Station Workstation',
             icon: UtensilsCrossed,
-            color: 'bg-stone-600',
+            color: 'bg-stone-800',
             defaultTarget: '10:00',
           };
           const liveStats = getLiveStationTurnaround(
@@ -113,9 +112,9 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
           {
             id: 'bar',
             name: 'Bar & Cafe Station',
-            role: 'Bartender & Barista (Spirits, Cocktails & Cafe)',
+            role: 'Bartender & Barista',
             icon: Wine,
-            color: 'bg-amber-600',
+            color: 'bg-[#800020]',
             activeTickets: 0,
             avgTime: 'Idle',
             liveActiveTime: 'Idle',
@@ -129,9 +128,9 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
           {
             id: 'kitchen',
             name: 'Kitchen Hot Line',
-            role: 'Main Line Chef & Appetizers',
+            role: 'Kitchen Chef',
             icon: UtensilsCrossed,
-            color: 'bg-rose-700',
+            color: 'bg-stone-900',
             activeTickets: 0,
             avgTime: 'Idle',
             liveActiveTime: 'Idle',
@@ -144,10 +143,10 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
           },
           {
             id: 'runner',
-            name: 'FOH Expediter',
-            role: 'Tablet Buzzout & Tray Dispatch',
+            name: 'Expediter Pass',
+            role: 'FOH Expediter',
             icon: PackageCheck,
-            color: 'bg-emerald-700',
+            color: 'bg-stone-800',
             activeTickets: 0,
             avgTime: 'Idle',
             liveActiveTime: 'Idle',
@@ -190,39 +189,31 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl refreshing={false} onRefresh={onRefresh} tintColor="#f59e0b" />
-      }
     >
-      {/* 1. Header & Title */}
-      <View className="mb-6 flex-col md:flex-row md:items-center justify-between gap-4">
-        <View className="flex-1">
-          <Text className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
-            Live Stations
-          </Text>
-        </View>
+      {/* 1. Header & Title (Single-line, Minimal) */}
+      <View className="mb-5 flex-row items-center justify-between gap-3">
+        <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
+          Live Stations
+        </Text>
 
-        {/* Action: Reset Shift Baseline Button */}
-        <View className="flex-row items-center space-x-2">
-          <Pressable
-            onPress={() => setShowResetModal(true)}
-            className="flex-row items-center rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 shadow-xs active:bg-stone-100"
-          >
-            <RotateCcw size={16} color="#d97706" />
-            <Text className="ml-2 text-sm font-bold text-stone-800">Reset Shift Baseline</Text>
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={() => setShowResetModal(true)}
+          className="flex-row items-center rounded-xl border border-stone-200 bg-white px-3 py-2 shadow-xs active:bg-stone-50"
+        >
+          <RotateCcw size={14} color="#800020" />
+          <Text className="ml-1.5 text-xs font-bold text-stone-800">Reset Shift</Text>
+        </Pressable>
       </View>
 
       {/* 2. Filter Bar: Today, Yesterday, This Week, This Month */}
-      <View className="mb-6 flex-row flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200/80 bg-white p-3 shadow-xs">
-        <View className="flex-row items-center space-x-1.5 flex-wrap gap-1.5">
-          <View className="flex-row items-center mr-2 pl-1">
-            <Calendar size={16} color="#78716c" />
-            <Text className="ml-1.5 text-xs font-bold uppercase tracking-wider text-stone-500">
-              Timeframe:
+      <View className="mb-5 flex-row flex-wrap items-center justify-between gap-3 rounded-2xl border border-stone-200/80 bg-white p-2.5 shadow-xs">
+        <View className="flex-row items-center space-x-1 flex-wrap gap-1">
+          <View className="flex-row items-center mr-1.5 pl-1">
+            <Calendar size={14} color="#78716c" />
+            <Text className="ml-1 text-[11px] font-bold uppercase tracking-wider text-stone-500">
+              Period:
             </Text>
           </View>
           {TIMEFRAME_BUTTONS.map((tf) => {
@@ -231,8 +222,8 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
               <Pressable
                 key={tf.key}
                 onPress={() => onChangeTimeframe?.(tf.key)}
-                className={`rounded-xl px-3.5 py-2 ${
-                  isActive ? 'bg-amber-500 shadow-xs' : 'bg-stone-100 active:bg-stone-200'
+                className={`rounded-xl px-3 py-1.5 ${
+                  isActive ? 'bg-[#800020]' : 'bg-[#FAF8F5] active:bg-stone-100'
                 }`}
               >
                 <Text className={`text-xs font-bold ${isActive ? 'text-white' : 'text-stone-700'}`}>
@@ -243,71 +234,60 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
           })}
         </View>
 
-        {/* Live sync pill */}
         <View className="flex-row items-center space-x-2 pr-1">
-          <View className="h-2 w-2 rounded-full bg-emerald-500" />
+          <View className="h-1.5 w-1.5 rounded-full bg-[#800020]" />
           <Text className="text-xs font-semibold text-stone-500">
-            {timeframe === 'today'
-              ? 'Live Auto-Sync Active'
-              : `Showing: ${telemetry?.timeframeLabel || 'Selected Period'}`}
+            {timeframe === 'today' ? 'Live Sync' : telemetry?.timeframeLabel || 'Selected Period'}
           </Text>
         </View>
       </View>
 
       {/* 2b. Shift Baseline Active Notice (if reset was triggered) */}
       {timeframe === 'today' && telemetry?.stationMetricsResetAt && (
-        <View className="mb-6 flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-amber-300 bg-amber-50/80 p-3.5 gap-2">
-          <View className="flex-row items-center space-x-2.5">
-            <Sparkles size={18} color="#d97706" />
+        <View className="mb-5 flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-stone-200/80 bg-white p-3.5 gap-2">
+          <View className="flex-row items-center space-x-2">
+            <Sparkles size={16} color="#800020" />
             <View className="ml-2">
-              <Text className="text-xs font-bold text-amber-900">
-                Shift Baseline Active (Reset at {formattedResetTime})
-              </Text>
-              <Text className="text-xs text-amber-800">
-                {isShowingFullDay
-                  ? 'Currently previewing full 24-hour day totals.'
-                  : 'Calculating turnaround times and completed orders fresh from shift reset.'}
+              <Text className="text-xs font-bold text-stone-900">
+                Shift Baseline Active ({formattedResetTime})
               </Text>
             </View>
           </View>
           <View className="flex-row items-center space-x-2">
             <Pressable
               onPress={onToggleIgnoreReset}
-              className="rounded-lg bg-white border border-amber-300 px-3 py-1.5 active:bg-amber-100"
+              className="rounded-lg bg-[#FAF8F5] border border-stone-200 px-3 py-1 active:bg-stone-100"
             >
-              <Text className="text-xs font-bold text-amber-900">
-                {isShowingFullDay ? 'Filter to Active Shift' : 'Show Full Day'}
+              <Text className="text-xs font-bold text-stone-800">
+                {isShowingFullDay ? 'Active Shift' : 'Full Day'}
               </Text>
             </Pressable>
             <Pressable
               onPress={handleClearBaseline}
               disabled={isClearingReset}
-              className="rounded-lg bg-amber-200/60 border border-amber-300 px-2.5 py-1.5 active:bg-amber-300"
+              className="rounded-lg bg-stone-100 border border-stone-200 px-2.5 py-1 active:bg-stone-200"
             >
-              <Text className="text-xs font-semibold text-amber-950">Clear Baseline</Text>
+              <Text className="text-xs font-semibold text-stone-700">Clear</Text>
             </Pressable>
           </View>
         </View>
       )}
 
-      {/* 3. Executive Overview Banner (Table Turnover & Aggregated SLA) */}
-      <View className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* 3. Executive Overview Banner (Table Turnover & Aggregated SLA in 3-Color Scheme) */}
+      <View className="mb-5 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {/* Card 1: Avg Table Turnover Time */}
         <View className="rounded-2xl border border-stone-200/80 bg-white p-4 shadow-xs">
           <View className="flex-row items-center justify-between">
             <Text className="text-xs font-bold uppercase tracking-wider text-stone-500">
-              Avg Table Turnover
+              Avg Turnover
             </Text>
-            <View className="h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
-              <Clock size={16} color="#2563eb" />
-            </View>
+            <Clock size={15} color="#78716c" />
           </View>
-          <Text className="mt-2 text-2xl font-black text-stone-900">
+          <Text className="mt-2 text-xl font-black text-stone-900">
             {telemetry?.tableTurnover?.avgFormatted || '0 min'}
           </Text>
           <Text className="mt-1 text-xs text-stone-500">
-            {telemetry?.tableTurnover?.totalTablesTurned || 0} tables turned ·{' '}
-            {telemetry?.tableTurnover?.activeOccupiedTables || 0} active now
+            {telemetry?.tableTurnover?.totalTablesTurned || 0} turned
           </Text>
         </View>
 
@@ -317,16 +297,12 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
             <Text className="text-xs font-bold uppercase tracking-wider text-stone-500">
               On-Time SLA
             </Text>
-            <View className="h-8 w-8 items-center justify-center rounded-lg bg-emerald-50">
-              <CheckCircle2 size={16} color="#16a34a" />
-            </View>
+            <CheckCircle2 size={15} color="#800020" />
           </View>
-          <Text className="mt-2 text-2xl font-black text-emerald-700">
+          <Text className="mt-2 text-xl font-black text-stone-900">
             {telemetry?.stationsOverview?.overallSlaPercent ?? 100}%
           </Text>
-          <Text className="mt-1 text-xs text-stone-500">
-            Target SLA compliance across all stations
-          </Text>
+          <Text className="mt-1 text-xs text-stone-500">Target SLA compliance</Text>
         </View>
 
         {/* Card 3: Total Completed Orders */}
@@ -335,11 +311,9 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
             <Text className="text-xs font-bold uppercase tracking-wider text-stone-500">
               Total Fulfilled
             </Text>
-            <View className="h-8 w-8 items-center justify-center rounded-lg bg-purple-50">
-              <PackageCheck size={16} color="#9333ea" />
-            </View>
+            <PackageCheck size={15} color="#78716c" />
           </View>
-          <Text className="mt-2 text-2xl font-black text-stone-900">
+          <Text className="mt-2 text-xl font-black text-stone-900">
             {telemetry?.stationsOverview?.totalCompletedTickets || 0}
           </Text>
           <Text className="mt-1 text-xs text-stone-500">
@@ -353,109 +327,102 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
             <Text className="text-xs font-bold uppercase tracking-wider text-stone-500">
               Active Queue
             </Text>
-            <View className="h-8 w-8 items-center justify-center rounded-lg bg-amber-50">
-              <Activity size={16} color="#d97706" />
-            </View>
+            <Activity size={15} color="#800020" />
           </View>
-          <Text className="mt-2 text-2xl font-black text-amber-600">{totalActiveTickets}</Text>
-          <Text className="mt-1 text-xs text-stone-500">
-            Fastest: {telemetry?.stationsOverview?.fastestStation || 'Barista Espresso'}
-          </Text>
+          <Text className="mt-2 text-xl font-black text-[#800020]">{totalActiveTickets}</Text>
+          <Text className="mt-1 text-xs text-stone-500">In-flight tickets</Text>
         </View>
       </View>
 
-      {/* 4. The 4 Station Cards */}
-      <View className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      {/* 4. Station Cards */}
+      <View className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {stationData.map((st) => {
           const IconComp = st.icon;
           return (
             <View
               key={st.id}
-              className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs"
+              className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs"
             >
               {/* Station Header */}
-              <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
-                <View className="flex-row items-center space-x-3">
-                  <View className={`h-11 w-11 items-center justify-center rounded-xl ${st.color}`}>
-                    <IconComp size={22} color="#ffffff" />
+              <View className="flex-row items-center justify-between mb-3 flex-wrap gap-2">
+                <View className="flex-row items-center space-x-2.5">
+                  <View className={`h-9 w-9 items-center justify-center rounded-xl ${st.color}`}>
+                    <IconComp size={18} color="#ffffff" />
                   </View>
-                  <View className="ml-3">
-                    <Text className="text-lg font-bold text-stone-900">{st.name}</Text>
-                    <Text className="text-sm text-stone-500">{st.role}</Text>
+                  <View className="ml-2.5">
+                    <Text className="text-base font-bold text-stone-900">{st.name}</Text>
+                    <Text className="text-xs text-stone-500">{st.role}</Text>
                   </View>
                 </View>
 
                 {/* Online Heartbeat Indicator */}
-                {st.isOnline ? (
-                  <View className="flex-row items-center rounded-full bg-emerald-50 border border-emerald-200 px-3 py-1.5">
-                    <View className="h-2.5 w-2.5 rounded-full bg-emerald-500 mr-2" />
-                    <Text className="text-xs font-semibold text-emerald-700">Online</Text>
-                  </View>
-                ) : (
-                  <View className="flex-row items-center rounded-full bg-stone-100 border border-stone-300 px-3 py-1.5">
-                    <View className="h-2.5 w-2.5 rounded-full bg-stone-400 mr-2" />
-                    <Text className="text-xs font-semibold text-stone-600">Offline</Text>
-                  </View>
-                )}
+                <View className="flex-row items-center rounded-full bg-[#FAF8F5] border border-stone-200 px-2.5 py-1">
+                  <View
+                    className={`h-2 w-2 rounded-full mr-1.5 ${
+                      st.isOnline ? 'bg-[#800020]' : 'bg-stone-400'
+                    }`}
+                  />
+                  <Text className="text-xs font-semibold text-stone-700">
+                    {st.isOnline ? 'Online' : 'Offline'}
+                  </Text>
+                </View>
               </View>
 
               {/* Station Metrics Grid */}
-              <View className="grid grid-cols-2 sm:grid-cols-4 rounded-xl bg-stone-50 p-4 mb-4 gap-3">
+              <View className="grid grid-cols-2 sm:grid-cols-4 rounded-xl bg-[#FAF8F5] p-3 mb-3 gap-2.5">
                 <View>
-                  <Text className="text-xs font-medium text-stone-500">Active Queue</Text>
-                  <Text className="text-2xl font-black text-stone-900">{st.activeTickets}</Text>
+                  <Text className="text-[11px] font-medium text-stone-500">Active Queue</Text>
+                  <Text className="text-xl font-black text-stone-900">{st.activeTickets}</Text>
                   {st.activeTickets > 0 && (
                     <Text
-                      className={`text-[11px] font-semibold ${
-                        st.isOnline ? 'text-amber-600' : 'text-stone-400'
+                      className={`text-[10px] font-semibold ${
+                        st.isOnline ? 'text-[#800020]' : 'text-stone-400'
                       }`}
                     >
-                      {st.isOnline ? `Live: ${st.liveActiveTime}` : 'Queued (Offline)'}
+                      {st.isOnline ? `Live: ${st.liveActiveTime}` : 'Queued'}
                     </Text>
                   )}
                 </View>
 
                 <View>
-                  <Text className="text-xs font-medium text-stone-500">Avg Turnaround</Text>
-                  <Text className="text-2xl font-black text-stone-900">{st.avgTime}</Text>
-                  <Text className="text-[11px] text-stone-500">
-                    {st.completedCount > 0 ? `${st.completedCount} fulfilled` : 'No orders yet'}
+                  <Text className="text-[11px] font-medium text-stone-500">Avg Time</Text>
+                  <Text className="text-xl font-black text-stone-900">{st.avgTime}</Text>
+                  <Text className="text-[10px] text-stone-500">
+                    {st.completedCount > 0 ? `${st.completedCount} done` : 'No orders'}
                   </Text>
                 </View>
 
                 <View>
-                  <Text className="text-xs font-medium text-stone-500">Target SLA</Text>
-                  <Text className="text-2xl font-black text-stone-600">{st.targetTime}</Text>
-                  <Text className="text-[11px] text-stone-500">Max threshold</Text>
+                  <Text className="text-[11px] font-medium text-stone-500">Target SLA</Text>
+                  <Text className="text-xl font-black text-stone-600">{st.targetTime}</Text>
+                  <Text className="text-[10px] text-stone-500">Target</Text>
                 </View>
 
                 <View>
-                  <Text className="text-xs font-medium text-stone-500">Overdue / Late</Text>
+                  <Text className="text-[11px] font-medium text-stone-500">Overdue</Text>
                   <Text
-                    className={`text-2xl font-black ${
-                      st.lateCount > 0 ? 'text-rose-600' : 'text-stone-900'
+                    className={`text-xl font-black ${
+                      st.lateCount > 0 ? 'text-[#800020]' : 'text-stone-900'
                     }`}
                   >
                     {st.lateCount}
                   </Text>
-                  <Text className="text-[11px] text-stone-500">{st.onTimeRate}% on-time</Text>
+                  <Text className="text-[10px] text-stone-500">{st.onTimeRate}% on-time</Text>
                 </View>
               </View>
 
-              {/* Low stock notice */}
+              {/* Stock Notice */}
               {st.stockoutCount > 0 ? (
-                <View className="flex-row items-center rounded-xl bg-amber-50 border border-amber-200 px-3.5 py-2.5">
-                  <AlertTriangle size={16} color="#d97706" />
-                  <Text className="ml-2 text-xs font-semibold text-amber-900">
-                    Low stock or out-of-stock items: {st.stockoutCount}
+                <View className="flex-row items-center rounded-xl bg-[#FAF8F5] border border-stone-200 px-3 py-2">
+                  <AlertTriangle size={14} color="#800020" />
+                  <Text className="ml-2 text-xs font-semibold text-[#800020]">
+                    Out of stock: {st.stockoutCount} items
                   </Text>
                 </View>
               ) : (
-                <View className="flex-row items-center rounded-xl bg-emerald-50 border border-emerald-100 px-3.5 py-2.5">
-                  <CheckCircle2 size={16} color="#16a34a" />
-                  <Text className="ml-2 text-xs font-medium text-emerald-800">
-                    All station ingredients at healthy levels
-                  </Text>
+                <View className="flex-row items-center rounded-xl bg-[#FAF8F5] border border-stone-200 px-3 py-2">
+                  <CheckCircle2 size={14} color="#78716c" />
+                  <Text className="ml-2 text-xs font-medium text-stone-600">All items healthy</Text>
                 </View>
               )}
             </View>

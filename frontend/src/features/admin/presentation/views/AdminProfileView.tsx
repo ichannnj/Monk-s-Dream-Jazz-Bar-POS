@@ -179,24 +179,17 @@ export const AdminProfileView: React.FC = () => {
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* View Header */}
-      <View className="mb-6">
-        <View className="flex-row items-center gap-3">
-          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-[#800020] shadow-sm">
-            <Shield size={24} color="#ffffff" />
-          </View>
-          <View>
-            <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-              Admin Profile & Security
-            </Text>
-            <Text className="mt-0.5 text-base text-stone-500">
-              Manage your back-office credentials, bcrypt password, and Floor POS override PIN.
-            </Text>
-          </View>
+      <View className="mb-5 flex-row items-center gap-2.5">
+        <View className="h-9 w-9 items-center justify-center rounded-xl bg-stone-100">
+          <Shield size={18} color="#800020" />
         </View>
+        <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
+          Admin Profile &amp; Security
+        </Text>
       </View>
 
       {/* Responsive Grid: 2 Columns on Tablet/Desktop */}

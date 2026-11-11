@@ -1,6 +1,19 @@
 import * as fs from 'node:fs/promises';
 import { getMonksDreamLogoRasterBytes } from './assets/logoRasterBytes.js';
 
+export function sanitizeForEscPos(text: string): string {
+  if (!text) return '';
+  return text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // remove diacritics / accents
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/[–—]/g, '-')
+    .replace(/…/g, '...')
+    .replace(/₱/g, 'PHP ')
+    .replace(/[^\x20-\x7E\n•·]/g, ''); // strip any non-printable/corrupt bytes while keeping bullets
+}
+
 function cleanStaffName(name?: string): string {
   if (!name || !name.trim()) return 'Staff';
   const clean = name.trim();
@@ -224,7 +237,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
   public renderReceiptBytes(payload: CustomerReceiptPayload): Buffer {
     const parts: Buffer[] = [];
-    const push = (str: string) => parts.push(Buffer.from(str, 'utf-8'));
+    const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
     // Initialize printer: ESC @
@@ -419,7 +432,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
   public renderRunnerChit(payload: RunnerChitPayload): Buffer {
     const parts: Buffer[] = [];
-    const push = (str: string) => parts.push(Buffer.from(str, 'utf-8'));
+    const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
     cmd([0x1b, 0x40]); // Reset
@@ -467,7 +480,8 @@ export class UsbEscPosPrinter implements IPrinterService {
         name = `${name} (${item.size})`;
       }
 
-      const station = (item.station || item.stationTarget || 'BAR').toUpperCase();
+      const rawStation = (item.station || item.stationTarget || 'BAR').toUpperCase();
+      const station = rawStation.replace(/^STATION:/i, '');
       const stationTag = `[${station}]`;
       const itemLeft = `[ ]  ${qty}x  ${name}`;
 
@@ -496,7 +510,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
   public renderTakeoutSlip(payload: TakeoutSlipPayload): Buffer {
     const parts: Buffer[] = [];
-    const push = (str: string) => parts.push(Buffer.from(str, 'utf-8'));
+    const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
     cmd([0x1b, 0x40]);
@@ -534,7 +548,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
   public renderDeliveryTag(payload: DeliveryTagPayload): Buffer {
     const parts: Buffer[] = [];
-    const push = (str: string) => parts.push(Buffer.from(str, 'utf-8'));
+    const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
     cmd([0x1b, 0x40]);
@@ -577,7 +591,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
   public renderReadingSlipBytes(reading: any): Buffer {
     const parts: Buffer[] = [];
-    const push = (str: string) => parts.push(Buffer.from(str, 'utf-8'));
+    const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
     const fmt = (num: number = 0) =>

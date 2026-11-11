@@ -146,6 +146,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             grandTotal={ctrl.grandTotal}
             isConfirmModalOpen={ctrl.isConfirmModalOpen}
             setIsConfirmModalOpen={ctrl.setIsConfirmModalOpen}
+            isSubmitting={ctrl.isSubmitting}
             handleFinalizePayment={ctrl.handleFinalizePayment}
             selectedMethod={ctrl.selectedMethod}
             selectedQrChannel={ctrl.selectedQrChannel}

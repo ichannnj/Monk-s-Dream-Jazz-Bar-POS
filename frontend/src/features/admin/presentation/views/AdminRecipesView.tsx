@@ -105,16 +105,16 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* Page Header & View Dropdown */}
-      <View className="mb-5 flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-          Menu Catalog &amp; Recipe BOM
+      <View className="mb-5 flex-col md:flex-row md:items-center justify-between gap-3">
+        <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
+          Menu Catalog
         </Text>
 
-        <View className="flex-row items-center gap-2.5 flex-wrap">
+        <View className="flex-row items-center gap-2 flex-wrap">
           <PosDropdown
             options={menuTabOptions}
             value={activeTab}
@@ -136,11 +136,11 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 toast.error('Failed to export recipe spreadsheet', { title: 'Export Error' });
               }
             }}
-            className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-stone-200 bg-white px-3.5 sm:px-4 active:bg-stone-50 shadow-xs"
+            className="h-10 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white px-3 active:bg-stone-50 shadow-xs"
             accessibilityLabel="Export Recipe Catalog & BOM to Excel"
           >
-            <FileSpreadsheet size={18} color="#047857" />
-            <Text className="ml-2 text-base font-bold text-stone-800">Export Excel</Text>
+            <FileSpreadsheet size={15} color="#800020" />
+            <Text className="ml-1.5 text-xs font-bold text-stone-800">Export</Text>
           </Pressable>
 
           {activeTab === 'items' && (
@@ -149,10 +149,10 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingProduct(null);
                 setIsProductModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
             >
-              <Plus size={20} color="#ffffff" />
-              <Text className="ml-2 text-base font-bold text-white">+ Add Item</Text>
+              <Plus size={16} color="#ffffff" />
+              <Text className="ml-1.5 text-xs font-bold text-white">+ Add Item</Text>
             </Pressable>
           )}
 
@@ -162,10 +162,10 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingCategory(null);
                 setIsCategoryModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
             >
-              <FolderPlus size={20} color="#ffffff" />
-              <Text className="ml-2 text-base font-bold text-white">+ Add Category</Text>
+              <FolderPlus size={16} color="#ffffff" />
+              <Text className="ml-1.5 text-xs font-bold text-white">+ Add Category</Text>
             </Pressable>
           )}
 
@@ -175,10 +175,10 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingModifierGroup(null);
                 setIsModifierModalOpen(true);
               }}
-              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm w-full sm:w-auto"
+              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
             >
-              <Sliders size={20} color="#ffffff" />
-              <Text className="ml-2 text-base font-bold text-white">+ New Modifier Group</Text>
+              <Sliders size={16} color="#ffffff" />
+              <Text className="ml-1.5 text-xs font-bold text-white">+ Add Group</Text>
             </Pressable>
           )}
         </View>

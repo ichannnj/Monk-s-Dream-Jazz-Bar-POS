@@ -25,13 +25,13 @@ interface AdminCashlessTransactionsViewProps {
 type ChannelFilter = 'ALL' | 'GCash' | 'Maya' | 'Bank Transfer' | 'QRPH' | 'CARD' | 'COMP';
 
 const channelOptions: PosDropdownOption<ChannelFilter>[] = [
-  { value: 'ALL', label: 'All Cashless Channels', description: 'Show all non-cash tenders' },
-  { value: 'GCash', label: 'GCash QR', description: 'GCash digital wallet payments' },
-  { value: 'Maya', label: 'Maya QR', description: 'Maya digital wallet payments' },
-  { value: 'QRPH', label: 'BPI / QRPH', description: 'InstaPay & universal QRPH' },
-  { value: 'Bank Transfer', label: 'Bank Transfer', description: 'Direct account bank wire' },
-  { value: 'CARD', label: 'Credit / Debit Card', description: 'POS terminal card swipes' },
-  { value: 'COMP', label: 'House / VIP Comp', description: 'Musician & staff comps' },
+  { value: 'ALL', label: 'All Channels' },
+  { value: 'GCash', label: 'GCash QR' },
+  { value: 'Maya', label: 'Maya QR' },
+  { value: 'QRPH', label: 'BPI / QRPH' },
+  { value: 'Bank Transfer', label: 'Bank Transfer' },
+  { value: 'CARD', label: 'Credit / Debit Card' },
+  { value: 'COMP', label: 'House / VIP Comp' },
 ];
 
 export const AdminCashlessTransactionsView: React.FC<AdminCashlessTransactionsViewProps> = ({
@@ -126,49 +126,20 @@ export const AdminCashlessTransactionsView: React.FC<AdminCashlessTransactionsVi
   const metrics = useMemo(() => computeCashlessMetrics(transactions), [transactions]);
 
   return (
-    <View className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8">
+    <View className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8">
       {/* 1. Header & Actions */}
-      <View className="mb-6 flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <View className="flex-row items-center space-x-2">
-          <View className="h-10 w-10 items-center justify-center rounded-2xl bg-wine-800 shadow-sm">
-            <QrCode size={20} color="#ffffff" />
-          </View>
-          <View className="ml-2">
-            <Text className="text-2xl font-black text-stone-900">
-              Online &amp; Cashless Transactions
-            </Text>
-            <Text className="text-xs font-semibold text-stone-500">
-              Live audit trail of GCash, Maya, QRPH &amp; Card settlements with 4-digit reference
-              tracking
-            </Text>
-          </View>
-        </View>
+      <View className="mb-5 flex-row items-center justify-between gap-3 flex-wrap">
+        <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
+          Cashless Payments
+        </Text>
 
-        <View className="flex-row items-center gap-2.5">
-          <Pressable
-            onPress={() => exportCashlessRegisterToExcel(filteredTransactions, timeframeLabel)}
-            className="flex-row items-center rounded-xl border border-emerald-600/40 bg-emerald-50 px-4 py-2.5 active:bg-emerald-100 shadow-xs"
-          >
-            <FileSpreadsheet size={16} color="#059669" />
-            <Text className="ml-2 text-xs font-bold text-emerald-800">Export Excel Ledger</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => {
-              setIsRefreshing(true);
-              fetchTransactions();
-            }}
-            disabled={isRefreshing}
-            className="flex-row items-center rounded-xl bg-stone-800 px-4 py-2.5 active:bg-stone-900 shadow-xs"
-          >
-            {isRefreshing ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <RotateCw size={15} color="#ffffff" />
-            )}
-            <Text className="ml-2 text-xs font-semibold text-white">Refresh</Text>
-          </Pressable>
-        </View>
+        <Pressable
+          onPress={() => exportCashlessRegisterToExcel(filteredTransactions, timeframeLabel)}
+          className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
+        >
+          <FileSpreadsheet size={15} color="#800020" />
+          <Text className="ml-1.5 text-xs font-bold text-stone-800">Export</Text>
+        </Pressable>
       </View>
 
       {/* 2. KPI Cards Row */}

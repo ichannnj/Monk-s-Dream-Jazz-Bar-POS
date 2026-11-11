@@ -57,7 +57,7 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       <AttendanceToolbarAndPickers

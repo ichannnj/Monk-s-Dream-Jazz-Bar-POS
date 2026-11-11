@@ -83,6 +83,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     handleToggleCorkage,
     handleOpenConfirm,
     handleExecuteDispatch,
+    isDispatching,
   } = useOrderEntryController({
     visible,
     title,
@@ -201,6 +202,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
             confirmText="Send Order"
             cancelText="Back to Cart"
             variant="primary"
+            isLoading={isDispatching}
             onConfirm={handleExecuteDispatch}
             onCancel={() => setIsConfirmDispatchOpen(false)}
           />

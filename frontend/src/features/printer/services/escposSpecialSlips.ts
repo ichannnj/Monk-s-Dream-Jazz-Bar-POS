@@ -46,7 +46,8 @@ export function buildRunnerChitBytes(data: any): Uint8Array {
       name = `${name} (${item.size})`;
     }
 
-    const station = (item.station || item.stationTarget || 'BAR').toUpperCase();
+    const rawStation = (item.station || item.stationTarget || 'BAR').toUpperCase();
+    const station = rawStation.replace(/^STATION:/i, '');
     const stationTag = `[${station}]`;
     const itemLeft = `[ ]  ${qty}x  ${name}`;
 

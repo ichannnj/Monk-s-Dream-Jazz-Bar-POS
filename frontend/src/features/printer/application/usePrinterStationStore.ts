@@ -471,8 +471,9 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       });
 
     // 3. Supabase Realtime CDC subscription on print_jobs
+    const channelName = `monks_hardware_print_station_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
     const channel = supabase
-      .channel('monks_hardware_print_station')
+      .channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'print_jobs' }, (payload) => {
         if (payload.eventType === 'INSERT') {
           const newJob = payload.new as PrintJobItem;

@@ -194,74 +194,67 @@ export const AdminTableLayoutView: React.FC = () => {
       value: 'AVAILABLE',
       label: 'Available',
       badge: tables.filter((t) => !t.is_occupied).length,
-      dotColor: '#10b981',
+      dotColor: '#78716c',
     },
     {
       value: 'OCCUPIED',
-      label: 'Occupied Tab',
+      label: 'Occupied',
       badge: tables.filter((t) => t.is_occupied).length,
-      dotColor: '#f59e0b',
+      dotColor: '#800020',
     },
   ];
 
   const renderTableCard = (t: TableAdmin) => (
     <View
       key={t.id}
-      className="w-full sm:w-[48%] lg:w-[23.5%] rounded-2xl border border-stone-200 bg-stone-50/70 p-4 justify-between"
+      className="w-full sm:w-[48%] lg:w-[23.5%] rounded-2xl border border-stone-200 bg-white p-3.5 justify-between shadow-xs"
     >
       <View>
         <View className="flex-row items-center justify-between mb-1.5">
-          <Text className="text-xl font-extrabold text-stone-900">{t.table_number}</Text>
+          <Text className="text-lg font-bold text-stone-900">{t.table_number}</Text>
           <View
-            className={`px-2.5 py-0.5 rounded-full flex-row items-center gap-1.5 ${
-              t.is_occupied
-                ? 'bg-amber-100 border border-amber-200'
-                : 'bg-emerald-100 border border-emerald-200'
+            className={`px-2 py-0.5 rounded-full border ${
+              t.is_occupied ? 'bg-stone-100 border-[#800020]/40' : 'bg-stone-50 border-stone-200'
             }`}
           >
-            <View
-              className={`h-2 w-2 rounded-full ${
-                t.is_occupied ? 'bg-amber-600' : 'bg-emerald-600'
-              }`}
-            />
             <Text
-              className={`text-base font-bold ${
-                t.is_occupied ? 'text-amber-900' : 'text-emerald-900'
+              className={`text-xs font-semibold ${
+                t.is_occupied ? 'text-[#800020]' : 'text-stone-600'
               }`}
             >
               {t.is_occupied ? 'Occupied' : 'Free'}
             </Text>
           </View>
         </View>
-        <View className="flex-row items-center gap-1.5 text-stone-600">
-          <Users size={16} color="#78716c" />
-          <Text className="text-base font-medium text-stone-600">{t.capacity} Seats</Text>
+        <View className="flex-row items-center gap-1.5">
+          <Users size={14} color="#78716c" />
+          <Text className="text-xs font-medium text-stone-500">{t.capacity} Seats</Text>
         </View>
       </View>
 
-      <View className="flex-row items-center justify-end gap-2 mt-3 pt-3 border-t border-stone-200">
+      <View className="flex-row items-center justify-end gap-1.5 mt-3 pt-2.5 border-t border-stone-100">
         {t.is_occupied && (
           <Pressable
             onPress={() => setTableToRelease(t)}
-            className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-amber-50 border border-amber-200 active:bg-amber-100"
+            className="h-9 w-9 items-center justify-center rounded-xl bg-stone-100 border border-stone-200 active:bg-stone-200"
             accessibilityLabel={`Release table ${t.table_number}`}
           >
-            <Unlock size={18} color="#d97706" />
+            <Unlock size={14} color="#800020" />
           </Pressable>
         )}
         <Pressable
           onPress={() => handleOpenEdit(t)}
-          className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-white border border-stone-300 active:bg-stone-100"
+          className="h-9 w-9 items-center justify-center rounded-xl bg-white border border-stone-200 active:bg-stone-50"
           accessibilityLabel={`Edit table ${t.table_number}`}
         >
-          <Edit size={18} color="#44403c" />
+          <Edit size={14} color="#1c1917" />
         </Pressable>
         <Pressable
           onPress={() => handleDelete(t)}
-          className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-rose-50 border border-rose-200 active:bg-rose-100"
+          className="h-9 w-9 items-center justify-center rounded-xl bg-stone-50 border border-stone-200 active:bg-stone-100"
           accessibilityLabel={`Delete table ${t.table_number}`}
         >
-          <Trash2 size={18} color="#e11d48" />
+          <Trash2 size={14} color="#78716c" />
         </Pressable>
       </View>
     </View>
@@ -269,22 +262,22 @@ export const AdminTableLayoutView: React.FC = () => {
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* Header & Dropdown Controls */}
-      <View className="mb-5 flex-col lg:flex-row lg:items-center justify-between gap-3">
-        <Text className="text-2xl sm:text-3xl font-extrabold tracking-tight text-stone-900">
-          Table Layout & Floor Plan
+      <View className="mb-5 flex-col md:flex-row md:items-center justify-between gap-3">
+        <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
+          Table Layout
         </Text>
 
-        <View className="flex-row flex-wrap items-center gap-2.5">
+        <View className="flex-row flex-wrap items-center gap-2">
           <PosDropdown
             options={zoneOptions}
             value={zoneFilter}
             onChange={setZoneFilter}
-            sheetTitle="Filter by Seating Zone"
-            className="flex-1 sm:flex-initial min-w-[165px]"
+            sheetTitle="Filter by Zone"
+            className="flex-1 sm:flex-initial min-w-[150px]"
           />
 
           <PosDropdown
@@ -292,15 +285,15 @@ export const AdminTableLayoutView: React.FC = () => {
             value={statusFilter}
             onChange={setStatusFilter}
             sheetTitle="Filter by Occupancy"
-            className="flex-1 sm:flex-initial min-w-[150px]"
+            className="flex-1 sm:flex-initial min-w-[130px]"
           />
 
           <Pressable
             onPress={handleOpenAdd}
-            className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-5 active:opacity-90 shadow-sm w-full sm:w-auto"
+            className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
           >
-            <Plus size={20} color="#ffffff" />
-            <Text className="ml-2 text-base font-bold text-white">+ Add Table</Text>
+            <Plus size={16} color="#ffffff" />
+            <Text className="ml-1.5 text-xs font-bold text-white">+ Add Table</Text>
           </Pressable>
         </View>
       </View>

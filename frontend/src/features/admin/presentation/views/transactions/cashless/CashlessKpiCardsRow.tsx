@@ -19,52 +19,38 @@ export interface CashlessKpiCardsRowProps {
 
 export const CashlessKpiCardsRow: React.FC<CashlessKpiCardsRowProps> = ({ metrics }) => {
   return (
-    <View className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-      <View className="rounded-2xl border border-stone-200/90 bg-white p-4 shadow-xs">
-        <Text className="text-xs font-extrabold uppercase tracking-wider text-stone-500">
-          Total Cashless Revenue
-        </Text>
-        <Text className="mt-1 text-2xl font-black text-wine-800">
+    <View className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+      <View className="rounded-2xl border border-stone-200/90 bg-white p-3.5 shadow-xs">
+        <Text className="text-xs font-bold text-stone-500">Total Cashless</Text>
+        <Text className="mt-1 text-xl sm:text-2xl font-black text-[#800020]">
           {formatCurrency(metrics.totalCashless)}
         </Text>
-        <Text className="mt-1 text-xs font-semibold text-stone-400">
-          {metrics.count} total non-cash payments
-        </Text>
+        <Text className="mt-0.5 text-xs text-stone-400">{metrics.count} payments</Text>
       </View>
 
-      <View className="rounded-2xl border border-blue-200/80 bg-blue-50/40 p-4 shadow-xs">
-        <Text className="text-xs font-extrabold uppercase tracking-wider text-blue-700">
-          GCash QR Volume
-        </Text>
-        <Text className="mt-1 text-2xl font-black text-blue-900">
+      <View className="rounded-2xl border border-stone-200/90 bg-[#FAF8F5] p-3.5 shadow-xs">
+        <Text className="text-xs font-bold text-stone-600">GCash QR</Text>
+        <Text className="mt-1 text-xl sm:text-2xl font-black text-stone-900">
           {formatCurrency(metrics.gcashTotal)}
         </Text>
-        <Text className="mt-1 text-xs font-semibold text-blue-600">
-          {metrics.gcashCount} settled transactions
-        </Text>
+        <Text className="mt-0.5 text-xs text-stone-400">{metrics.gcashCount} checks</Text>
       </View>
 
-      <View className="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-4 shadow-xs">
-        <Text className="text-xs font-extrabold uppercase tracking-wider text-emerald-700">
-          Maya QR Volume
-        </Text>
-        <Text className="mt-1 text-2xl font-black text-emerald-900">
+      <View className="rounded-2xl border border-stone-200/90 bg-[#FAF8F5] p-3.5 shadow-xs">
+        <Text className="text-xs font-bold text-stone-600">Maya QR</Text>
+        <Text className="mt-1 text-xl sm:text-2xl font-black text-stone-900">
           {formatCurrency(metrics.mayaTotal)}
         </Text>
-        <Text className="mt-1 text-xs font-semibold text-emerald-600">
-          {metrics.mayaCount} settled transactions
-        </Text>
+        <Text className="mt-0.5 text-xs text-stone-400">{metrics.mayaCount} checks</Text>
       </View>
 
-      <View className="rounded-2xl border border-purple-200/80 bg-purple-50/40 p-4 shadow-xs">
-        <Text className="text-xs font-extrabold uppercase tracking-wider text-purple-700">
-          QRPH &amp; Card Volume
-        </Text>
-        <Text className="mt-1 text-2xl font-black text-purple-900">
+      <View className="rounded-2xl border border-stone-200/90 bg-[#FAF8F5] p-3.5 shadow-xs">
+        <Text className="text-xs font-bold text-stone-600">QRPH &amp; Card</Text>
+        <Text className="mt-1 text-xl sm:text-2xl font-black text-stone-900">
           {formatCurrency(metrics.qrphTotal + metrics.cardTotal)}
         </Text>
-        <Text className="mt-1 text-xs font-semibold text-purple-600">
-          {metrics.qrphCount + metrics.cardCount} settled transactions
+        <Text className="mt-0.5 text-xs text-stone-400">
+          {metrics.qrphCount + metrics.cardCount} checks
         </Text>
       </View>
     </View>

@@ -23,17 +23,14 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
 }) => {
   if (dateRange.isSingleDay) {
     return (
-      <View className="rounded-2xl border border-stone-200/80 bg-white p-3 sm:p-5 shadow-xs">
+      <View className="rounded-2xl border border-stone-200/80 bg-white p-3 sm:p-4 shadow-xs">
         {filteredSingleDayList.length === 0 ? (
-          <View className="py-12 items-center justify-center">
-            <Users size={36} color="#a8a29e" />
-            <Text className="mt-3 text-lg font-bold text-stone-700">No records found</Text>
-            <Text className="mt-1 text-base text-stone-500 text-center">
-              Try adjusting your search or period filter.
-            </Text>
+          <View className="py-10 items-center justify-center">
+            <Users size={32} color="#a8a29e" />
+            <Text className="mt-2 text-xs font-bold text-stone-700">No records found</Text>
           </View>
         ) : (
-          <View className="space-y-2.5">
+          <View className="space-y-2">
             {filteredSingleDayList.map((item) => {
               const isClockedIn = item.shiftStatus === 'CLOCKED_IN';
               const isCompleted = item.shiftStatus === 'COMPLETED';
@@ -67,46 +64,48 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
               return (
                 <View
                   key={item.staff.id}
-                  className={`flex-col md:flex-row md:items-center justify-between rounded-xl border p-3.5 sm:p-4 gap-3 ${
+                  className={`flex-col md:flex-row md:items-center justify-between rounded-xl border p-3 gap-2.5 ${
                     isClockedIn
-                      ? 'border-emerald-200 bg-emerald-50/20'
+                      ? 'border-[#800020]/30 bg-[#FAF8F5]'
                       : isCompleted
-                        ? 'border-sky-200 bg-sky-50/20'
-                        : 'border-stone-200 bg-white'
+                        ? 'border-stone-200 bg-white'
+                        : 'border-stone-200 bg-stone-50/50'
                   }`}
                 >
                   {/* Left: Staff Identity & Role */}
-                  <View className="flex-row items-center space-x-3 flex-1 min-w-[200px]">
+                  <View className="flex-row items-center space-x-2.5 flex-1 min-w-[180px]">
                     <View
-                      className={`min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border ${
+                      className={`h-9 w-9 items-center justify-center rounded-xl border ${
                         isClockedIn
-                          ? 'bg-emerald-100 border-emerald-300 text-emerald-800'
-                          : isCompleted
-                            ? 'bg-sky-100 border-sky-300 text-sky-800'
-                            : 'bg-stone-100 border-stone-200 text-stone-600'
+                          ? 'bg-[#800020] border-[#800020] text-white'
+                          : 'bg-stone-100 border-stone-200 text-stone-700'
                       }`}
                     >
-                      <Text className="text-base font-black">{initials}</Text>
+                      <Text
+                        className={`text-xs font-black ${isClockedIn ? 'text-white' : 'text-stone-700'}`}
+                      >
+                        {initials}
+                      </Text>
                     </View>
 
-                    <View className="ml-3 flex-1 min-w-0">
-                      <View className="flex-row flex-wrap items-center gap-2">
-                        <Text className="text-lg font-extrabold text-stone-900 truncate">
+                    <View className="ml-2.5 flex-1 min-w-0">
+                      <View className="flex-row flex-wrap items-center gap-1.5">
+                        <Text className="text-sm font-bold text-stone-900 truncate">
                           {item.staff.display_name}
                         </Text>
-                        <View className="rounded-full bg-stone-100 px-2.5 py-0.5 border border-stone-200">
-                          <Text className="text-base font-bold text-stone-700 capitalize">
+                        <View className="rounded-full bg-white px-2 py-0.2 border border-stone-200">
+                          <Text className="text-[10px] font-bold text-stone-700 capitalize">
                             {roleDisplay}
                           </Text>
                         </View>
                       </View>
 
                       {/* Punch & Shift Status Line */}
-                      <View className="mt-1 flex-row items-center flex-wrap gap-2">
+                      <View className="mt-0.5 flex-row items-center flex-wrap gap-2">
                         {isClockedIn && (
                           <View className="flex-row items-center">
-                            <View className="h-2 w-2 rounded-full bg-emerald-500 mr-1.5" />
-                            <Text className="text-base font-bold text-emerald-800">
+                            <View className="h-1.5 w-1.5 rounded-full bg-[#800020] mr-1.5" />
+                            <Text className="text-xs font-bold text-[#800020]">
                               In since {inTimeFormatted} ({item.hoursWorked}h)
                             </Text>
                           </View>
@@ -114,37 +113,36 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
 
                         {isCompleted && (
                           <View className="flex-row items-center">
-                            <View className="h-2 w-2 rounded-full bg-sky-500 mr-1.5" />
-                            <Text className="text-base font-bold text-sky-800">
-                              Completed: {inTimeFormatted} – {outTimeFormatted} ({item.hoursWorked}
-                              h)
+                            <View className="h-1.5 w-1.5 rounded-full bg-stone-400 mr-1.5" />
+                            <Text className="text-xs font-medium text-stone-700">
+                              {inTimeFormatted} – {outTimeFormatted} ({item.hoursWorked}h)
                             </Text>
                           </View>
                         )}
 
                         {!item.isPresent && (
-                          <Text className="text-base text-stone-400 font-medium">
-                            Not clocked in
-                          </Text>
+                          <Text className="text-xs text-stone-400 font-medium">Not clocked in</Text>
                         )}
                       </View>
                     </View>
                   </View>
 
                   {/* Right: Shift Pay & Actions */}
-                  <View className="flex-row items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t border-stone-100 md:border-t-0">
+                  <View className="flex-row items-center justify-between md:justify-end gap-2.5 pt-2 md:pt-0 border-t border-stone-100 md:border-t-0">
                     <View className="items-start md:items-end mr-1">
                       {item.staff.role === 'admin' ? (
-                        <View className="rounded-full bg-stone-100 border border-stone-200 px-2.5 py-0.5">
-                          <Text className="text-xs font-bold text-stone-600">Payroll Exempt</Text>
+                        <View className="rounded-full bg-stone-100 border border-stone-200 px-2 py-0.5">
+                          <Text className="text-[10px] font-bold text-stone-600">
+                            Payroll Exempt
+                          </Text>
                         </View>
                       ) : (
                         <>
-                          <Text className="text-lg font-black text-stone-900">
+                          <Text className="text-sm font-black text-stone-900">
                             ₱{item.totalDayPay.toFixed(2)}
                           </Text>
                           {item.addonPay > 0 && (
-                            <Text className="text-base font-bold text-emerald-700">
+                            <Text className="text-xs font-bold text-[#800020]">
                               +₱{item.addonPay.toFixed(2)} OT
                             </Text>
                           )}
@@ -152,8 +150,8 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                       )}
                     </View>
 
-                    {/* Interactive Buttons - Print will hide these via .no-print */}
-                    <View className="flex-row items-center gap-2 no-print">
+                    {/* Interactive Buttons */}
+                    <View className="flex-row items-center gap-1.5 no-print">
                       {!item.isPresent ? (
                         <Pressable
                           onPress={async () => {
@@ -172,12 +170,10 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                               toast.error(err?.message || 'Clock-in failed');
                             }
                           }}
-                          className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 active:bg-emerald-100"
+                          className="h-8 px-2.5 flex-row items-center justify-center rounded-lg bg-stone-900 active:bg-stone-800"
                         >
-                          <CheckCircle2 size={16} color="#047857" />
-                          <Text className="ml-1.5 text-base font-bold text-emerald-800">
-                            Clock In
-                          </Text>
+                          <CheckCircle2 size={13} color="#ffffff" />
+                          <Text className="ml-1 text-xs font-bold text-white">Clock In</Text>
                         </Pressable>
                       ) : isClockedIn ? (
                         <Pressable
@@ -197,10 +193,10 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                               toast.error(err?.message || 'Clock-out failed');
                             }
                           }}
-                          className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl bg-sky-50 border border-sky-200 active:bg-sky-100"
+                          className="h-8 px-2.5 flex-row items-center justify-center rounded-lg bg-[#800020] active:bg-[#600018]"
                         >
-                          <Clock size={16} color="#0369a1" />
-                          <Text className="ml-1.5 text-base font-bold text-sky-800">Clock Out</Text>
+                          <Clock size={13} color="#ffffff" />
+                          <Text className="ml-1 text-xs font-bold text-white">Clock Out</Text>
                         </Pressable>
                       ) : isCompleted ? (
                         <Pressable
@@ -220,12 +216,10 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                               toast.error(err?.message || 'Resume failed');
                             }
                           }}
-                          className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 active:bg-emerald-100"
+                          className="h-8 px-2.5 flex-row items-center justify-center rounded-lg border border-stone-200 bg-white active:bg-stone-50"
                         >
-                          <CheckCircle2 size={16} color="#047857" />
-                          <Text className="ml-1.5 text-base font-bold text-emerald-800">
-                            Resume Shift
-                          </Text>
+                          <CheckCircle2 size={13} color="#800020" />
+                          <Text className="ml-1 text-xs font-bold text-[#800020]">Resume</Text>
                         </Pressable>
                       ) : null}
 
@@ -245,10 +239,10 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                             notes: item.notes,
                           });
                         }}
-                        className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-stone-100"
+                        className="h-8 px-2.5 flex-row items-center justify-center rounded-lg border border-stone-200 bg-stone-50 active:bg-stone-100"
                       >
-                        <Edit3 size={16} color="#44403c" />
-                        <Text className="ml-1.5 text-base font-bold text-stone-700">Adjust</Text>
+                        <Edit3 size={13} color="#1c1917" />
+                        <Text className="ml-1 text-xs font-bold text-stone-800">Adjust</Text>
                       </Pressable>
                     </View>
                   </View>
@@ -263,17 +257,14 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
 
   // Multi-day Summary Table
   return (
-    <View className="rounded-2xl border border-stone-200/80 bg-white p-3 sm:p-5 shadow-xs">
+    <View className="rounded-2xl border border-stone-200/80 bg-white p-3 sm:p-4 shadow-xs">
       {multiDayAggregates.length === 0 ? (
-        <View className="py-12 items-center justify-center">
-          <FileText size={36} color="#a8a29e" />
-          <Text className="mt-3 text-lg font-bold text-stone-700">No shift records found</Text>
-          <Text className="mt-1 text-base text-stone-500 text-center">
-            No attendance punches logged within this period range.
-          </Text>
+        <View className="py-10 items-center justify-center">
+          <FileText size={32} color="#a8a29e" />
+          <Text className="mt-2 text-xs font-bold text-stone-700">No shift records found</Text>
         </View>
       ) : (
-        <View className="space-y-2.5">
+        <View className="space-y-2">
           {multiDayAggregates.map((item) => {
             const initials =
               (item.staff.display_name || '')
@@ -287,46 +278,46 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
             return (
               <View
                 key={item.staff.id}
-                className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 py-3 gap-3"
+                className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 py-2.5 gap-2"
               >
-                <View className="flex-row items-center space-x-3">
-                  <View className="min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-stone-100 border border-stone-200">
-                    <Text className="text-base font-black text-stone-700">{initials}</Text>
+                <View className="flex-row items-center space-x-2.5">
+                  <View className="h-8 w-8 items-center justify-center rounded-lg bg-stone-100 border border-stone-200">
+                    <Text className="text-xs font-black text-stone-700">{initials}</Text>
                   </View>
-                  <View className="ml-3">
-                    <Text className="text-lg font-extrabold text-stone-900">
+                  <View className="ml-2">
+                    <Text className="text-sm font-bold text-stone-900">
                       {item.staff.display_name}
                     </Text>
-                    <Text className="text-base text-stone-500">
+                    <Text className="text-xs text-stone-500">
                       {item.staff.job_title || item.staff.role}
                     </Text>
                   </View>
                 </View>
 
-                <View className="flex-row items-center justify-between sm:justify-end gap-5 flex-wrap">
+                <View className="flex-row items-center justify-between sm:justify-end gap-4 flex-wrap">
                   <View className="items-start sm:items-end">
-                    <Text className="text-base font-bold text-stone-800">
+                    <Text className="text-xs font-bold text-stone-700">
                       {item.shiftsWorked} shifts ({item.hoursLogged.toFixed(1)}h)
                     </Text>
                   </View>
 
                   {item.staff.role === 'admin' ? (
-                    <View className="items-start sm:items-end min-w-[90px]">
-                      <View className="rounded-full bg-stone-100 border border-stone-200 px-2.5 py-0.5">
-                        <Text className="text-xs font-bold text-stone-600">Payroll Exempt</Text>
+                    <View className="items-start sm:items-end min-w-[80px]">
+                      <View className="rounded-full bg-stone-100 border border-stone-200 px-2 py-0.5">
+                        <Text className="text-[10px] font-bold text-stone-600">Payroll Exempt</Text>
                       </View>
                     </View>
                   ) : (
                     <>
                       <View className="items-start sm:items-end">
-                        <Text className="text-base font-semibold text-stone-700">
+                        <Text className="text-xs text-stone-500">
                           Base: ₱{item.basePaySum.toFixed(2)}
                           {item.bonusSum > 0 ? ` · +₱${item.bonusSum.toFixed(2)} OT` : ''}
                         </Text>
                       </View>
 
-                      <View className="items-start sm:items-end min-w-[90px]">
-                        <Text className="text-xl font-black text-[#800020]">
+                      <View className="items-start sm:items-end min-w-[80px]">
+                        <Text className="text-base font-black text-[#800020]">
                           ₱{item.totalPaySum.toFixed(2)}
                         </Text>
                       </View>

@@ -105,26 +105,18 @@ export const AdminEventsView: React.FC = () => {
       isLoading={isLoading && events.length === 0}
       bannerSlot={<TodaysEventBanner />}
       headerSlot={
-        <View className="border-b border-stone-200/80 bg-white px-4 py-3 sm:px-6 sm:py-4 shadow-xs">
+        <View className="border-b border-stone-200/80 bg-white px-4 py-2.5 sm:px-6 sm:py-3 shadow-xs">
           <View className="max-w-7xl mx-auto flex-row items-center justify-between gap-3">
-            <View className="flex-row items-center gap-3 min-w-0">
-              <View className="h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-2xl bg-[#800020] shadow-xs flex-shrink-0">
-                <CalendarDays size={20} color="#ffffff" aria-hidden={true} />
+            <View className="flex-row items-center gap-2.5 min-w-0">
+              <View className="h-9 w-9 items-center justify-center rounded-xl bg-stone-100 flex-shrink-0">
+                <CalendarDays size={18} color="#800020" aria-hidden={true} />
               </View>
-              <View className="min-w-0">
-                <Text
-                  className="text-lg sm:text-2xl font-extrabold tracking-tight text-stone-900 leading-tight"
-                  numberOfLines={1}
-                >
-                  Event logistics & calendar
-                </Text>
-                <Text
-                  className="text-xs sm:text-sm text-stone-500 hidden sm:flex"
-                  numberOfLines={1}
-                >
-                  Schedule gigs, artist line-ups, posters, and run-of-show.
-                </Text>
-              </View>
+              <Text
+                className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 leading-tight"
+                numberOfLines={1}
+              >
+                Event Logistics
+              </Text>
             </View>
 
             {/* Primary Action: Schedule Event */}
@@ -133,10 +125,10 @@ export const AdminEventsView: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Schedule new event"
               style={Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined}
-              className="flex-row items-center justify-center gap-1.5 rounded-xl bg-[#800020] px-3.5 py-2 sm:px-4 sm:py-2.5 text-white active:bg-[#66001a] shadow-xs"
+              className="h-10 flex-row items-center justify-center gap-1.5 rounded-xl bg-[#800020] px-3.5 text-white active:bg-[#600018] shadow-xs"
             >
               <Plus size={16} color="#ffffff" aria-hidden={true} />
-              <Text className="text-xs sm:text-sm font-bold text-white">Schedule event</Text>
+              <Text className="text-xs font-bold text-white">+ Add Event</Text>
             </Pressable>
           </View>
         </View>

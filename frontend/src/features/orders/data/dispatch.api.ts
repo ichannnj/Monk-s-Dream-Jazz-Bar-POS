@@ -83,6 +83,9 @@ export async function createOrderWithItems(params: {
 
     if (orderError) throw orderError;
 
+    const isUuid = (str?: string) =>
+      Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));
+
     // 2. Prepare and Insert Order Items via authoritative RPC or atomic insert
     const preparedItems = await Promise.all(
       params.items.map(async (item) => {
@@ -94,16 +97,21 @@ export async function createOrderWithItems(params: {
           ['PENDING', 'PREPARING', 'READY', 'SERVED'].includes(item.status.toUpperCase())
             ? (item.status.toUpperCase() as any)
             : ('PENDING' as const);
+        const resolvedItemId = isUuid(item.id)
+          ? item.id!
+          : typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID()
+            : '00000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0').slice(-12);
         return {
-          id: item.id || undefined,
+          id: resolvedItemId,
           product_id: resolvedProdId || 'e1111111-0000-0000-0000-000000000001',
-          variant_id: item.variantId || null,
+          variant_id: isUuid(item.variantId) ? item.variantId : null,
           temperature: item.temperature || null,
           size_label: item.sizeLabel || null,
           quantity: item.quantity,
           unit_price: item.unitPrice,
           status: itemDbStatus,
-          station_target: item.stationTarget,
+          station_target: (item.stationTarget?.toLowerCase() as any) || 'bar',
           modifiers: (Array.isArray(item.modifiers) ? item.modifiers : []) as any,
           notes: item.notes || null,
           variant_selections: (item.variantSelections || []).map((s) => ({
