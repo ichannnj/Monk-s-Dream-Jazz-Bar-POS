@@ -11,6 +11,8 @@ export interface ChatThreadHeaderProps {
   onlineUserIds: string[];
   currentUserId?: string;
   onBackToList: () => void;
+  onBack?: () => void;
+  backLabel?: string;
 }
 
 export const ChatThreadHeader: React.FC<ChatThreadHeaderProps> = ({
@@ -20,73 +22,66 @@ export const ChatThreadHeader: React.FC<ChatThreadHeaderProps> = ({
   onlineUserIds,
   currentUserId,
   onBackToList,
+  onBack,
+  backLabel = 'Back',
 }) => {
+  const isDm = activeConversation.type === 'dm';
+  const counterpartId =
+    activeConversation.counterpartId ||
+    activeStaffRoster.find(
+      (u) =>
+        u.id !== currentUserId &&
+        (u.displayName.toLowerCase() === activeConversation.title.toLowerCase() ||
+          activeConversation.title.toLowerCase().includes(u.displayName.toLowerCase()))
+    )?.id;
+  const isOnlineNow = counterpartId ? onlineUserIds.includes(counterpartId) : false;
+
   return (
-    <View className="px-4 sm:px-6 py-3 sm:py-4 border-b border-neutral-100 flex-row items-center justify-between">
+    <View className="px-4 sm:px-5 py-3 border-b border-stone-200/80 flex-row items-center justify-between bg-white min-h-[52px]">
       <View className="flex-row items-center flex-1 min-w-0 mr-2">
         {isCompact && (
           <Pressable
             onPress={onBackToList}
-            className="flex-row items-center mr-2.5 px-2.5 py-1.5 -ml-1 rounded-xl bg-neutral-100 active:bg-neutral-200 min-h-[40px] justify-center shrink-0"
+            className="flex-row items-center mr-2 px-2.5 py-1.5 -ml-1 rounded-lg bg-stone-100 active:bg-stone-200 min-h-[36px] justify-center shrink-0"
             accessibilityRole="button"
             accessibilityLabel="Back to conversations list"
           >
-            <ArrowLeft size={18} color="#431621" />
-            <Text className="ml-1 text-sm sm:text-base font-bold text-[#431621]">Chats</Text>
+            <ArrowLeft size={16} color="#1c1917" />
+            <Text className="ml-1 text-xs font-bold text-stone-900">Chats</Text>
           </Pressable>
         )}
-        <View className="flex-1 min-w-0">
+
+        <View className="flex-row items-center flex-1 min-w-0">
           <Text
-            className="text-lg sm:text-2xl font-bold text-neutral-900 tracking-tight shrink min-w-0"
+            className="text-base sm:text-lg font-bold text-stone-900 tracking-tight truncate"
             numberOfLines={1}
           >
             {activeConversation.title}
           </Text>
-          <View className="flex-row items-center mt-0.5">
-            {activeConversation.type === 'dm' &&
-              (() => {
-                const counterpartId =
-                  activeConversation.counterpartId ||
-                  activeStaffRoster.find(
-                    (u) =>
-                      u.id !== currentUserId &&
-                      (u.displayName.toLowerCase() === activeConversation.title.toLowerCase() ||
-                        activeConversation.title
-                          .toLowerCase()
-                          .includes(u.displayName.toLowerCase()))
-                  )?.id;
-                const isOnlineNow = counterpartId ? onlineUserIds.includes(counterpartId) : false;
 
-                return (
-                  <View className="flex-row items-center mr-2">
-                    <View
-                      className={`w-2.5 h-2.5 rounded-full mr-1.5 ${
-                        isOnlineNow ? 'bg-emerald-500' : 'bg-neutral-300'
-                      }`}
-                    />
-                    <Text
-                      className={`text-sm font-semibold ${
-                        isOnlineNow ? 'text-emerald-700' : 'text-neutral-500'
-                      }`}
-                    >
-                      {isOnlineNow ? 'Active now' : 'Offline'}
-                    </Text>
-                    <Text className="text-neutral-300 mx-1.5">·</Text>
-                  </View>
-                );
-              })()}
-            <Text
-              className="text-xs sm:text-base font-medium text-neutral-500 shrink min-w-0"
-              numberOfLines={1}
-            >
-              {activeConversation.subtitle ||
-                (activeConversation.type === 'channel'
-                  ? `${activeConversation.title} · Staff Channel`
-                  : 'Direct conversation')}
-            </Text>
-          </View>
+          {isDm && (
+            <View
+              className={`w-2 h-2 rounded-full ml-2 shrink-0 ${
+                isOnlineNow ? 'bg-[#10b981]' : 'bg-stone-300'
+              }`}
+              accessibilityLabel={isOnlineNow ? 'Online' : 'Offline'}
+            />
+          )}
         </View>
       </View>
+
+      {/* Optional top-level back/dismiss when opened inside a drawer or modal on desktop */}
+      {!isCompact && onBack && (
+        <Pressable
+          onPress={onBack}
+          className="flex-row items-center px-2.5 py-1.5 rounded-lg bg-stone-100 active:bg-stone-200 min-h-[36px] shrink-0"
+          accessibilityRole="button"
+          accessibilityLabel={backLabel}
+        >
+          <ArrowLeft size={16} color="#1c1917" />
+          <Text className="ml-1 text-xs font-bold text-stone-900">{backLabel}</Text>
+        </Pressable>
+      )}
     </View>
   );
 };

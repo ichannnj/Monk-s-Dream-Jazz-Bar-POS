@@ -53,7 +53,6 @@ export function useSharedChatController({
   });
 
   const [inputText, setInputText] = useState('');
-  const [currentDateTime, setCurrentDateTime] = useState('');
   const [showScrollBottomPill, setShowScrollBottomPill] = useState(false);
   const [unseenMessagesCount, setUnseenMessagesCount] = useState(0);
   const [, setElapsedTicker] = useState<number>(Date.now());
@@ -106,26 +105,6 @@ export function useSharedChatController({
     setActiveConversation,
     currentUser?.id,
   ]);
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      const datePart = now.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      });
-      const timePart = now.toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-      });
-      setCurrentDateTime(`${datePart} · ${timePart}`);
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     const ticker = setInterval(() => setElapsedTicker(Date.now()), 5000);
@@ -313,7 +292,6 @@ export function useSharedChatController({
     setMobileView,
     inputText,
     setInputText,
-    currentDateTime,
     showScrollBottomPill,
     unseenMessagesCount,
     currentSenderName,

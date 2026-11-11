@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { ChevronDown } from 'lucide-react-native';
 import { useSharedChatController } from './hooks/useSharedChatController';
-import { ChatTopHeaderBar } from './components/ChatTopHeaderBar';
 import { ChatConversationSidebar } from './components/ChatConversationSidebar';
 import { ChatThreadHeader } from './components/ChatThreadHeader';
 import { ChatMessageFeed } from './components/ChatMessageFeed';
@@ -23,10 +22,8 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
   senderName: propSenderName,
   senderRole: propSenderRole,
   defaultChannel,
-  title = 'Team Chats',
   onBack,
   backLabel = 'Back',
-  hideHeader = false,
   compact = false,
 }) => {
   const {
@@ -37,12 +34,9 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
     setMobileView,
     inputText,
     setInputText,
-    currentDateTime,
     showScrollBottomPill,
     unseenMessagesCount,
     currentSenderName,
-    currentSenderRole,
-    userInitials,
     channels,
     directMessages,
     availableColleagues,
@@ -70,23 +64,9 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
   const showThread = !isCompact || mobileView === 'thread';
 
   return (
-    <View className={`flex-1 bg-[#FAF5F5] ${isCompact ? 'p-2 sm:p-3' : 'p-2 sm:p-4 lg:p-6'}`}>
-      {/* 1. Top Header Bar Card */}
-      {!hideHeader && (!isCompact || mobileView === 'list') && (
-        <ChatTopHeaderBar
-          title={title}
-          isMobile={isMobile}
-          onBack={onBack}
-          backLabel={backLabel}
-          currentDateTime={currentDateTime}
-          userInitials={userInitials}
-          currentSenderName={currentSenderName}
-          currentSenderRole={currentSenderRole}
-        />
-      )}
-
-      {/* 2. Main Two-Column or Single-Column Mobile Layout */}
-      <View className="flex-1 flex-row gap-4">
+    <View className={`flex-1 bg-[#FAF8F5] ${isCompact ? 'p-2 sm:p-3' : 'p-3 sm:p-4 lg:p-6'}`}>
+      {/* Main Two-Column or Single-Column Mobile Layout */}
+      <View className="flex-1 flex-row gap-3 sm:gap-4">
         {/* Left Column: Messages List (Channels & Direct Messages) */}
         {showList && (
           <ChatConversationSidebar
@@ -100,12 +80,14 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
             currentUserId={currentUser?.id}
             onSelectConversation={handleSelectConversation}
             onStartDmWithColleague={handleStartDmWithColleague}
+            onBack={onBack}
+            backLabel={backLabel}
           />
         )}
 
         {/* Right Column: Active Conversation Thread */}
         {showThread && (
-          <View className="flex-1 bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-neutral-100 flex-col overflow-hidden relative">
+          <View className="flex-1 bg-white rounded-2xl shadow-xs border border-stone-200/80 flex-col overflow-hidden relative">
             <ChatThreadHeader
               isCompact={isCompact}
               activeConversation={activeConversation}
@@ -113,6 +95,8 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
               onlineUserIds={onlineUserIds}
               currentUserId={currentUser?.id}
               onBackToList={() => setMobileView('list')}
+              onBack={!isCompact ? onBack : undefined}
+              backLabel={backLabel}
             />
 
             <ChatMessageFeed
@@ -128,14 +112,16 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
               onUnpinAnnouncement={unpinAnnouncement}
             />
 
-            {/* Floating Messenger Jump Pill */}
+            {/* Floating Jump Pill */}
             {showScrollBottomPill && (
               <Pressable
                 onPress={() => scrollToBottom(true)}
-                className="absolute bottom-28 self-center flex-row items-center bg-[#581827] px-4 py-2 rounded-full shadow-lg active:opacity-90 z-20"
+                className="absolute bottom-24 self-center flex-row items-center bg-[#810021] px-3.5 py-1.5 rounded-full shadow-md active:opacity-90 z-20"
+                accessibilityRole="button"
+                accessibilityLabel="Jump to new messages"
               >
-                <ChevronDown size={18} color="#FFFFFF" />
-                <Text className="ml-1.5 text-base font-bold text-white">
+                <ChevronDown size={15} color="#FFFFFF" />
+                <Text className="ml-1 text-xs font-bold text-white tabular-nums">
                   {unseenMessagesCount > 1
                     ? `${unseenMessagesCount} new messages ↓`
                     : 'New message ↓'}
@@ -148,6 +134,7 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
               inputText={inputText}
               quickPresets={quickPresets}
               conversationTitle={activeConversation.title}
+              isMobile={isMobile}
               onChangeText={setInputText}
               onSend={handleSend}
             />

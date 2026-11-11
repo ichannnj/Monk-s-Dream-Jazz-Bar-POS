@@ -7,6 +7,7 @@ export interface ChatComposerBarProps {
   inputText: string;
   quickPresets: string[];
   conversationTitle: string;
+  isMobile?: boolean;
   onChangeText: (text: string) => void;
   onSend: (text?: string) => void;
 }
@@ -16,38 +17,43 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
   inputText,
   quickPresets,
   conversationTitle,
+  isMobile = false,
   onChangeText,
   onSend,
 }) => {
   return (
-    <View className="flex-col">
-      {/* Quick-tap Presets for Fast Mobile & Tablet Operation */}
-      <View className="border-t border-neutral-100 px-3 sm:px-5 py-2 sm:py-2.5 bg-neutral-50/70">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View className="flex-row items-center gap-2">
-            {quickPresets.map((preset, idx) => (
-              <Pressable
-                key={idx}
-                onPress={() => onSend(preset)}
-                className="bg-white border border-neutral-200/80 px-4 py-2.5 rounded-full active:bg-neutral-100 min-h-[48px] justify-center shadow-xs"
-              >
-                <Text className="text-base font-medium text-neutral-700">{preset}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
-      </View>
+    <View className="flex-col bg-white">
+      {/* Quick-tap Presets */}
+      {quickPresets.length > 0 && (
+        <View className="border-t border-stone-100 px-3 sm:px-4 py-2 bg-[#FAF8F5]">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className="flex-row items-center gap-1.5">
+              {quickPresets.map((preset, idx) => (
+                <Pressable
+                  key={idx}
+                  onPress={() => onSend(preset)}
+                  className="bg-white border border-stone-200/80 px-3 py-1.5 rounded-full active:bg-stone-100 min-h-[36px] justify-center shadow-2xs"
+                  accessibilityRole="button"
+                  accessibilityLabel={preset}
+                >
+                  <Text className="text-xs font-medium text-stone-700">{preset}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      )}
 
       {/* Message Input Bar */}
-      <View className="flex-row items-center px-5 py-3 border-t border-neutral-100 gap-2.5 bg-white">
-        <View className="flex-1 min-h-[48px] bg-neutral-100/90 rounded-full px-4 py-2.5 justify-center border border-neutral-200/50">
+      <View className="flex-row items-center px-3 sm:px-4 py-2.5 border-t border-stone-100 gap-2 bg-white">
+        <View className="flex-1 min-h-[42px] bg-[#FAF8F5] rounded-full px-3.5 py-1.5 justify-center border border-stone-200/80 focus-within:border-stone-400">
           <TextInput
             ref={inputRef}
-            autoFocus
+            autoFocus={!isMobile}
             blurOnSubmit={false}
-            className="text-base text-neutral-900 w-full"
-            placeholder={`Message ${conversationTitle}...`}
-            placeholderTextColor="#9CA3AF"
+            className="text-sm text-stone-900 w-full"
+            placeholder={`Message ${conversationTitle}…`}
+            placeholderTextColor="#a8a29e"
             value={inputText}
             onChangeText={onChangeText}
             onSubmitEditing={() => onSend()}
@@ -64,10 +70,11 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
 
         <Pressable
           onPress={() => onSend()}
-          className="w-12 h-12 rounded-full bg-[#581827] items-center justify-center active:opacity-90 shadow-sm"
+          className="w-10 h-10 rounded-full bg-[#810021] items-center justify-center active:opacity-90 shadow-2xs shrink-0"
+          accessibilityRole="button"
           accessibilityLabel="Send message"
         >
-          <SendHorizontal size={20} color="#FFFFFF" strokeWidth={2.4} />
+          <SendHorizontal size={17} color="#FFFFFF" strokeWidth={2.4} />
         </Pressable>
       </View>
     </View>
