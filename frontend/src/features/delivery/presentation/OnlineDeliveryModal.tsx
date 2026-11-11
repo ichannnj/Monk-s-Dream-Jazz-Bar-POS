@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, Pressable, TextInput, StyleSheet } from 'react-native';
 import { X, Bike, ArrowRight, CheckCircle2 } from 'lucide-react-native';
+import { useVirtualKeyboard } from '../../shared';
 
 interface OnlineDeliveryModalProps {
   visible: boolean;
@@ -22,6 +23,14 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
   const [platformRef, setPlatformRef] = useState('');
   const [riderName, setRiderName] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
+
+  const handleBackdropPress = () => {
+    if (isKeyboardOpen) {
+      dismissKeyboard();
+    }
+    onClose();
+  };
 
   const handleProceed = () => {
     const finalRef =
@@ -39,13 +48,29 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View
+        style={[
+          styles.backdrop,
+          isKeyboardOpen && {
+            justifyContent: 'flex-start',
+            paddingTop: 16,
+            paddingBottom: Math.min(keyboardHeight, 320) + 16,
+          },
+        ]}
+      >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={onClose}
+          onPress={handleBackdropPress}
           accessibilityLabel="Close modal"
         />
-        <View style={styles.modalCard}>
+        <View
+          style={[
+            styles.modalCard,
+            isKeyboardOpen && {
+              maxHeight: Math.max(260, viewportHeight - 24),
+            },
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleGroup}>

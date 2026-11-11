@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Modal, Pressable, TextInput, StyleSheet, Switch } from 'react-native';
 import { X, ShoppingBag, ArrowRight } from 'lucide-react-native';
+import { useVirtualKeyboard } from '../../shared';
 
 interface NewTakeoutModalProps {
   visible: boolean;
@@ -18,6 +19,14 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
   const [customerName, setCustomerName] = useState('');
   const [isPrepaid, setIsPrepaid] = useState(true);
   const [notes, setNotes] = useState('');
+  const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
+
+  const handleBackdropPress = () => {
+    if (isKeyboardOpen) {
+      dismissKeyboard();
+    }
+    onClose();
+  };
 
   const handleProceed = () => {
     const finalName = customerName.trim() || 'Walk-In Guest';
@@ -29,13 +38,29 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View
+        style={[
+          styles.backdrop,
+          isKeyboardOpen && {
+            justifyContent: 'flex-start',
+            paddingTop: 16,
+            paddingBottom: Math.min(keyboardHeight, 320) + 16,
+          },
+        ]}
+      >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={onClose}
+          onPress={handleBackdropPress}
           accessibilityLabel="Close modal"
         />
-        <View style={styles.modalCard}>
+        <View
+          style={[
+            styles.modalCard,
+            isKeyboardOpen && {
+              maxHeight: Math.max(260, viewportHeight - 24),
+            },
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleGroup}>
@@ -63,18 +88,72 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
           {/* Form */}
           <View style={styles.formGroup}>
             <Text style={styles.label}>Customer Name:</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Sarah, David, Alex..."
-              placeholderTextColor="#9ca3af"
-              value={customerName}
-              onChangeText={setCustomerName}
-              autoFocus
-            />
+            <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <TextInput
+                style={[styles.input, customerName.length > 0 && { paddingRight: 40 }]}
+                placeholder="e.g. Sarah, David, Alex..."
+                placeholderTextColor="#9ca3af"
+                value={customerName}
+                onChangeText={setCustomerName}
+                autoFocus
+              />
+              {customerName.length > 0 && (
+                <Pressable
+                  onPress={() => setCustomerName('')}
+                  hitSlop={8}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#e5e7eb',
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear name"
+                >
+                  <X size={14} color="#4b5563" />
+                </Pressable>
+              )}
+            </View>
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Packaging & Takeout Notes:</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 6,
+              }}
+            >
+              <Text style={styles.label}>Packaging & Takeout Notes:</Text>
+              {notes.length > 0 && (
+                <Pressable
+                  onPress={() => setNotes('')}
+                  hitSlop={8}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#f3f4f6',
+                    paddingHorizontal: 8,
+                    paddingVertical: 3,
+                    borderRadius: 6,
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear packaging notes"
+                >
+                  <X size={12} color="#6b7280" />
+                  <Text
+                    style={{ marginLeft: 4, fontSize: 11, fontWeight: '700', color: '#4b5563' }}
+                  >
+                    Clear
+                  </Text>
+                </Pressable>
+              )}
+            </View>
             <TextInput
               style={[styles.input, styles.textArea]}
               placeholder="e.g. Disposable to-go cups, separate paper bag, utensils..."
@@ -203,7 +282,7 @@ const styles = StyleSheet.create({
   },
   textArea: {
     minHeight: 70,
-    fontSize: 15,
+    fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
     textAlignVertical: 'top',
   },
   toggleRow: {

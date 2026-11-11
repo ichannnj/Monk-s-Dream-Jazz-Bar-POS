@@ -35,12 +35,16 @@ body {
 }
 
 /* Web Input Focus & Outline Reset (Removes black box focus ring on typing) */
+/* Mobile & Touch Screen Anti-Zoom Invariant: iOS Safari & Chrome auto-zoom if font-size < 16px */
 input,
 textarea,
 select,
 [contenteditable] {
   outline: none !important;
   box-shadow: none !important;
+  font-size: 16px !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 input:focus,
@@ -49,6 +53,16 @@ select:focus,
 [contenteditable]:focus {
   outline: none !important;
   box-shadow: none !important;
+}
+
+/* Touch screen input height & ergonomics */
+@media screen and (max-width: 1024px) {
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+    min-height: 48px;
+  }
 }
 
 /* Chrome/Safari autofill background smoothing */

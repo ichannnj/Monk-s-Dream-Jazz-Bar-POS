@@ -116,11 +116,11 @@ const baseStyles = StyleSheet.create({
     borderRadius: 13,
     paddingHorizontal: 14,
     paddingVertical: 10,
-    minHeight: 44,
+    minHeight: 48,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
     color: '#111827',
     fontWeight: '500',
   },

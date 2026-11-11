@@ -254,13 +254,13 @@ export const styles = StyleSheet.create({
   },
   passwordInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
     fontWeight: '500',
     color: '#111827',
     paddingVertical: 0,
   },
   passwordInputMobile: {
-    fontSize: 14,
+    fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
   },
   passwordEyeButton: {
     padding: 6,

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { X, CheckCircle2, Flame, Snowflake, ChevronDown, Check } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
+import { useVirtualKeyboard } from '../../../shared';
 import {
   MenuItem,
   ProductVariant,
@@ -115,6 +116,14 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
 
   const [canScrollDown, setCanScrollDown] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
+  const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
+
+  const handleBackdropPress = () => {
+    if (isKeyboardOpen) {
+      dismissKeyboard();
+    }
+    onClose();
+  };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
@@ -147,13 +156,29 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
   }, [variantGroups, selectedVariantOptions]);
 
   return (
-    <View style={styles.customizerBackdrop}>
+    <View
+      style={[
+        styles.customizerBackdrop,
+        isKeyboardOpen && {
+          justifyContent: 'flex-start',
+          paddingTop: 12,
+          paddingBottom: Math.min(keyboardHeight, 320) + 16,
+        },
+      ]}
+    >
       <Pressable
         style={StyleSheet.absoluteFill}
-        onPress={onClose}
+        onPress={handleBackdropPress}
         accessibilityLabel="Close customizer"
       />
-      <View style={styles.customizerCard}>
+      <View
+        style={[
+          styles.customizerCard,
+          isKeyboardOpen && {
+            maxHeight: Math.max(260, viewportHeight - 24),
+          },
+        ]}
+      >
         {/* Fixed Header */}
         <View style={styles.customizerHeaderWrapper}>
           <View style={styles.customizerHeader}>
@@ -212,7 +237,10 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           onScroll={handleScroll}
           onContentSizeChange={handleContentSizeChange}
           scrollEventThrottle={16}
-          contentContainerStyle={styles.customizerScrollContent}
+          contentContainerStyle={[
+            styles.customizerScrollContent,
+            isKeyboardOpen && { paddingBottom: 64 },
+          ]}
         >
           {/* Variant Groups (e.g., Flavor - Single Select Radio) */}
           {variantGroups.map((grp) => {
@@ -463,7 +491,37 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           ) : null}
 
           {/* Special Prep Notes */}
-          <Text style={styles.customizerSectionTitle}>Special Instructions:</Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 6,
+            }}
+          >
+            <Text style={styles.customizerSectionTitle}>Special Instructions:</Text>
+            {notes.length > 0 && (
+              <Pressable
+                onPress={() => onChangeNotes('')}
+                hitSlop={8}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: '#f3f4f6',
+                  paddingHorizontal: 8,
+                  paddingVertical: 3,
+                  borderRadius: 6,
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear special instructions"
+              >
+                <X size={12} color="#6b7280" />
+                <Text style={{ marginLeft: 4, fontSize: 11, fontWeight: '700', color: '#4b5563' }}>
+                  Clear
+                </Text>
+              </Pressable>
+            )}
+          </View>
           <TextInput
             style={styles.customizerInput}
             placeholder="e.g. Extra hot oat milk, light ice, less sweet..."

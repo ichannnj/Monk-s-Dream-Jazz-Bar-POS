@@ -3,6 +3,7 @@ import { View, Text, Modal, Pressable, TextInput, StyleSheet } from 'react-nativ
 import { X, Plus, Utensils } from 'lucide-react-native';
 import { TableItem } from '../../../types/floor';
 import { toast } from '../../shared/toast/useToastStore';
+import { useVirtualKeyboard } from '../../shared';
 
 interface OpenTableDirectModalProps {
   visible: boolean;
@@ -21,6 +22,7 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
 }) => {
   const [guestName, setGuestName] = useState('');
   const [guestCount, setGuestCount] = useState(2);
+  const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
 
   React.useEffect(() => {
     if (visible) {
@@ -30,6 +32,13 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
   }, [visible]);
 
   if (!table) return null;
+
+  const handleBackdropPress = () => {
+    if (isKeyboardOpen) {
+      dismissKeyboard();
+    }
+    onClose();
+  };
 
   const isTableEmpty = table.status === 'empty';
   const activeTabsCount = isTableEmpty
@@ -56,13 +65,29 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View
+        style={[
+          styles.backdrop,
+          isKeyboardOpen && {
+            justifyContent: 'flex-start',
+            paddingTop: 16,
+            paddingBottom: Math.min(keyboardHeight, 320) + 16,
+          },
+        ]}
+      >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={onClose}
+          onPress={handleBackdropPress}
           accessibilityLabel="Close modal"
         />
-        <View style={styles.modalCard}>
+        <View
+          style={[
+            styles.modalCard,
+            isKeyboardOpen && {
+              maxHeight: Math.max(260, viewportHeight - 24),
+            },
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View>
@@ -90,14 +115,36 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
           {/* Guest Name Input */}
           <View style={styles.inputGroup}>
             <Text style={styles.sectionLabel}>Customer / Guest Tab Name:</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="e.g. Miles, Coltrane, Sarah..."
-              placeholderTextColor="#9ca3af"
-              value={guestName}
-              onChangeText={setGuestName}
-              autoFocus
-            />
+            <View style={{ position: 'relative', justifyContent: 'center' }}>
+              <TextInput
+                style={[styles.textInput, guestName.length > 0 && { paddingRight: 40 }]}
+                placeholder="e.g. Miles, Coltrane, Sarah..."
+                placeholderTextColor="#9ca3af"
+                value={guestName}
+                onChangeText={setGuestName}
+                autoFocus
+              />
+              {guestName.length > 0 && (
+                <Pressable
+                  onPress={() => setGuestName('')}
+                  hitSlop={8}
+                  style={{
+                    position: 'absolute',
+                    right: 12,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#e5e7eb',
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Clear name"
+                >
+                  <X size={14} color="#4b5563" />
+                </Pressable>
+              )}
+            </View>
           </View>
 
           {/* Guest Count Stepper */}

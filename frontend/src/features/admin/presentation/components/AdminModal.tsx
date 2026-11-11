@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, Modal, ScrollView, Platform } from 'react-native';
 import { X } from 'lucide-react-native';
+import { useVirtualKeyboard } from '../../../shared';
 
 export type AdminModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
@@ -40,15 +41,32 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   closeOnBackdropPress = true,
 }) => {
   const maxWClass = SIZE_CLASSES[size] || 'max-w-2xl';
+  const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
+
+  const handleBackdropPress = () => {
+    if (isKeyboardOpen) {
+      dismissKeyboard();
+    }
+    if (closeOnBackdropPress) {
+      onClose();
+    }
+  };
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
-      <View className="flex-1 items-center justify-center bg-black/60 p-4 sm:p-6">
+      <View
+        className="flex-1 items-center bg-black/60 p-4 sm:p-6"
+        style={{
+          justifyContent: isKeyboardOpen ? 'flex-start' : 'center',
+          paddingTop: isKeyboardOpen ? 12 : undefined,
+          paddingBottom: isKeyboardOpen ? Math.min(keyboardHeight, 320) + 16 : undefined,
+        }}
+      >
         {/* Backdrop Press Area (Click outside to dismiss) */}
         {closeOnBackdropPress && (
           <Pressable
             className="absolute inset-0"
-            onPress={onClose}
+            onPress={handleBackdropPress}
             accessibilityRole="button"
             accessibilityLabel="Close modal backdrop"
           />
@@ -58,12 +76,13 @@ export const AdminModal: React.FC<AdminModalProps> = ({
         <View
           onStartShouldSetResponder={() => true}
           onTouchEnd={(e) => e.stopPropagation()}
-          className={`w-full ${maxWClass} max-h-[92vh] rounded-2xl bg-white shadow-2xl overflow-hidden flex-col border border-stone-200 z-10`}
-          style={
-            Platform.OS === 'web'
+          className={`w-full ${maxWClass} rounded-2xl bg-white shadow-2xl overflow-hidden flex-col border border-stone-200 z-10`}
+          style={{
+            maxHeight: isKeyboardOpen ? Math.max(260, viewportHeight - 24) : '92vh',
+            ...(Platform.OS === 'web'
               ? ({ pointerEvents: 'auto', onClick: (e: any) => e.stopPropagation() } as any)
-              : undefined
-          }
+              : {}),
+          }}
         >
           {/* Header */}
           <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-4 sm:px-6 py-3.5 sm:py-4">
@@ -97,6 +116,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           {scrollable ? (
             <ScrollView
               className={`p-4 sm:p-6 flex-1 ${contentClassName}`}
+              contentContainerStyle={isKeyboardOpen ? { paddingBottom: 48 } : undefined}
               showsVerticalScrollIndicator={true}
               keyboardShouldPersistTaps="handled"
             >

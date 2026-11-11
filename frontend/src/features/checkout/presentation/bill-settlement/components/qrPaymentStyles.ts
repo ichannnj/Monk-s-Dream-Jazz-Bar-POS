@@ -145,7 +145,7 @@ export const qrPaymentStyles = StyleSheet.create({
   },
   refInput: {
     flex: 1,
-    minHeight: 44,
+    minHeight: 48,
     fontSize: 16,
     fontWeight: '700',
     fontFamily: 'monospace',

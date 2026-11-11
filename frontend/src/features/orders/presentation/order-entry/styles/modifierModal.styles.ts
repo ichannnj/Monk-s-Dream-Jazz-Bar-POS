@@ -136,10 +136,10 @@ export const modifierModalStyles = StyleSheet.create({
     borderColor: '#e5e7eb',
     borderRadius: 12,
     padding: 12,
-    fontSize: 14,
+    fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
     color: '#1f2937',
     marginBottom: 20,
-    minHeight: 60,
+    minHeight: 64,
     textAlignVertical: 'top',
   },
   confirmCustomizeBtn: {

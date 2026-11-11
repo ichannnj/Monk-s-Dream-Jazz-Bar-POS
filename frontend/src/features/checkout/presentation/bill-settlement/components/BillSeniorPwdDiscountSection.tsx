@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
-import { ShieldCheck, CheckCircle2 } from 'lucide-react-native';
+import { ShieldCheck, CheckCircle2, X } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { DiscountType } from '../../../utils/taxAndDiscountCalculator';
 import { styles } from '../BillSettlementModal.styles';
@@ -135,26 +135,52 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
               <Text className="text-[11px] font-bold text-gray-600 mb-1">
                 {discountType === 'SENIOR_CITIZEN' ? 'OSCA ID Number *' : 'PWD ID Number *'}
               </Text>
-              <TextInput
-                value={seniorPwdId}
-                onChangeText={setSeniorPwdId}
-                placeholder="e.g. 12-3456-7890"
-                placeholderTextColor="#9ca3af"
-                style={styles.seniorInput}
-              />
+              <View className="relative justify-center">
+                <TextInput
+                  value={seniorPwdId}
+                  onChangeText={setSeniorPwdId}
+                  placeholder="e.g. 12-3456-7890"
+                  placeholderTextColor="#9ca3af"
+                  style={[styles.seniorInput, seniorPwdId.length > 0 && { paddingRight: 36 }]}
+                />
+                {seniorPwdId.length > 0 && (
+                  <Pressable
+                    onPress={() => setSeniorPwdId('')}
+                    hitSlop={8}
+                    className="absolute right-2.5 h-7 w-7 items-center justify-center rounded-full active:bg-orange-200"
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear ID"
+                  >
+                    <X size={14} color="#9a3412" />
+                  </Pressable>
+                )}
+              </View>
             </View>
 
             <View className="flex-1">
               <Text className="text-[11px] font-bold text-gray-600 mb-1">
                 Cardholder Full Name *
               </Text>
-              <TextInput
-                value={seniorPwdName}
-                onChangeText={setSeniorPwdName}
-                placeholder="e.g. Maria Santos"
-                placeholderTextColor="#9ca3af"
-                style={styles.seniorInput}
-              />
+              <View className="relative justify-center">
+                <TextInput
+                  value={seniorPwdName}
+                  onChangeText={setSeniorPwdName}
+                  placeholder="e.g. Maria Santos"
+                  placeholderTextColor="#9ca3af"
+                  style={[styles.seniorInput, seniorPwdName.length > 0 && { paddingRight: 36 }]}
+                />
+                {seniorPwdName.length > 0 && (
+                  <Pressable
+                    onPress={() => setSeniorPwdName('')}
+                    hitSlop={8}
+                    className="absolute right-2.5 h-7 w-7 items-center justify-center rounded-full active:bg-orange-200"
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear Cardholder Name"
+                  >
+                    <X size={14} color="#9a3412" />
+                  </Pressable>
+                )}
+              </View>
             </View>
           </View>
 

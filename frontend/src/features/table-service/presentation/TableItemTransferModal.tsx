@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, Modal, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { useVirtualKeyboard, TouchTextInput } from '@/features/shared';
 import {
   X,
   ArrowRightLeft,
@@ -52,6 +53,14 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
 
   const [newTabCustomName, setNewTabCustomName] = useState<string>('Senior Citizen Tab');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
+
+  const handleBackdropPress = () => {
+    if (isKeyboardOpen) {
+      dismissKeyboard();
+    }
+    onClose();
+  };
 
   // Reset state when modal opens
   React.useEffect(() => {
@@ -130,14 +139,26 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View className="flex-1 bg-black/75 justify-center items-center p-3 sm:p-5">
+      <View
+        className="flex-1 bg-black/75 items-center p-3 sm:p-5"
+        style={{
+          justifyContent: isKeyboardOpen ? 'flex-start' : 'center',
+          paddingTop: isKeyboardOpen ? 12 : undefined,
+          paddingBottom: isKeyboardOpen ? Math.min(keyboardHeight, 320) + 16 : undefined,
+        }}
+      >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={onClose}
+          onPress={handleBackdropPress}
           accessibilityLabel="Close modal"
         />
 
-        <View className="w-full max-w-xl bg-white rounded-3xl p-5 sm:p-6 shadow-2xl max-h-[92%] flex-col">
+        <View
+          className="w-full max-w-xl bg-white rounded-3xl p-5 sm:p-6 shadow-2xl flex-col"
+          style={{
+            maxHeight: isKeyboardOpen ? Math.max(260, viewportHeight - 24) : '92%',
+          }}
+        >
           {/* Header */}
           <View className="flex-row justify-between items-center mb-4 pb-3 border-b border-gray-100">
             <View className="flex-row items-center gap-3">
@@ -161,7 +182,11 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
             </Pressable>
           </View>
 
-          <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          <ScrollView
+            className="flex-1"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={isKeyboardOpen ? { paddingBottom: 48 } : undefined}
+          >
             {/* 1. Destination Tab Section */}
             <View className="mb-5 bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4">
               <Text className="text-xs font-black uppercase tracking-wider text-amber-900 mb-2">
@@ -225,12 +250,13 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                   <Text className="text-xs font-bold text-gray-700 mb-1.5">
                     New Sub-Tab Name / Purpose:
                   </Text>
-                  <TextInput
+                  <TouchTextInput
                     value={newTabCustomName}
                     onChangeText={setNewTabCustomName}
                     placeholder="e.g. Senior Citizen Tab"
                     placeholderTextColor="#9ca3af"
-                    className="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 font-semibold mb-2 bg-gray-50"
+                    containerClassName="mb-2"
+                    className="font-semibold bg-gray-50 text-base"
                   />
                   {/* Quick Preset Chips */}
                   <View className="flex-row flex-wrap gap-1.5">

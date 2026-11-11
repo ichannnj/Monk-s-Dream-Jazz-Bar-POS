@@ -59,6 +59,42 @@ export default function App() {
     };
   }, [initDeviceStation, isHardwareStation]);
 
+  // Touch Screen & Mobile Anti-Zoom Enforcer + Viewport Scroll Normalizer
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // 1. Enforce strict touch viewport meta tag
+    let meta = document.querySelector('meta[name="viewport"]');
+    const targetContent =
+      'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content';
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'viewport');
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute('content', targetContent);
+
+    // 2. Global blur listener to normalize any mobile browser scroll-shift
+    const handleGlobalBlur = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.tagName === 'SELECT' ||
+          target.isContentEditable)
+      ) {
+        // Immediate scroll normalization
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      }
+    };
+
+    window.addEventListener('focusout', handleGlobalBlur);
+    return () => {
+      window.removeEventListener('focusout', handleGlobalBlur);
+    };
+  }, []);
+
   const renderScreen = () => {
     // Check if running in dedicated Hardware Print & Cash Drawer Station tab (?mode=printer)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=printer')) {

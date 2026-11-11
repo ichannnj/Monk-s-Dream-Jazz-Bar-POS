@@ -64,13 +64,13 @@ export const discountStyles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   seniorInput: {
-    minHeight: 40,
+    minHeight: 48,
     backgroundColor: '#fff7ed',
     borderWidth: 1,
     borderColor: '#fdba74',
     borderRadius: 8,
-    paddingHorizontal: 10,
-    fontSize: 13,
+    paddingHorizontal: 12,
+    fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
     fontWeight: '600',
     color: '#1e293b',
   },

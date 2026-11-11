@@ -234,6 +234,14 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 
 ---
 
+### 11. Mobile & Touch Screen Virtual Keyboard Ergonomics Invariant (`useVirtualKeyboard.ts` & `TouchTextInput.tsx`)
+
+- **Anti-Zoom Safeguards:** Handheld devices (iPads, Android tablets, iPhones) auto-zoom when tapping inputs with font-size < 16px. The application strictly enforces `font-size: 16px` across all inputs, paired with hardened viewport metadata (`width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content`) and an automated `focusout` scroll-reset listener in `App.tsx` ensuring zero page displacement or persistent zoom.
+- **Dynamic Virtual Keyboard Clearance & Auto-Scroll (`useVirtualKeyboard`):** Reactively monitors `window.visualViewport` dimensions to calculate real-time on-screen keyboard height (`keyboardHeight = window.innerHeight - visualViewport.height`). When active on touch devices, modals (`AdminModal`, `BillSettlementModal`, `OpenTableTabModal`, `TableItemTransferModal`, `OrderModifierModal`, `NewTakeoutModal`, `CashDrawerActionModal`, `OnlineDeliveryModal`) dynamically apply bottom breathing clearance (~32px buffer) and smoothly auto-scroll focused inputs into center view without obscuring form fields or primary submit buttons.
+- **Touch Ergonomics & 1-Tap Clear Affordance:** All touch inputs maintain ≥48px minimum touch targets. Single-line fields (Menu Search, Customer Names, Reference Numbers, Senior IDs) provide an inline 1-tap Clear ("✕") button when populated; multi-line textareas (Special Preparation Notes, Waste & Packaging Notes) provide a discreet top-right "✕ Clear" badge. Tapping modal backdrops automatically dismisses the software keyboard.
+
+---
+
 ## 📚 Related Documentation
 
 - Architecture & File Tree Map: [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)

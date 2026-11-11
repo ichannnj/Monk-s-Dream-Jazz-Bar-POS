@@ -174,6 +174,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+    fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
     opacity: 0.01,
     zIndex: 1,
     ...Platform.select({

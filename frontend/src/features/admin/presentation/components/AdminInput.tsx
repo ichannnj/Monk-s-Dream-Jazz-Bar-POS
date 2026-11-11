@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, type TextInputProps, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TextInput, type TextInputProps, Platform, Pressable } from 'react-native';
+import { X } from 'lucide-react-native';
 
 export interface AdminInputProps extends TextInputProps {
   label?: string;
@@ -9,6 +10,8 @@ export interface AdminInputProps extends TextInputProps {
   containerClassName?: string;
   rightElement?: React.ReactNode;
   leftElement?: React.ReactNode;
+  clearable?: boolean;
+  onClear?: () => void;
 }
 
 export const AdminInput: React.FC<AdminInputProps> = ({
@@ -19,6 +22,10 @@ export const AdminInput: React.FC<AdminInputProps> = ({
   containerClassName = '',
   rightElement,
   leftElement,
+  clearable = false,
+  onClear,
+  value,
+  onChangeText,
   style,
   onFocus,
   onBlur,
@@ -26,6 +33,7 @@ export const AdminInput: React.FC<AdminInputProps> = ({
   ...props
 }) => {
   const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
 
   const handleFocus = (e: any) => {
     setIsFocused(true);
@@ -36,6 +44,17 @@ export const AdminInput: React.FC<AdminInputProps> = ({
     setIsFocused(false);
     onBlur?.(e);
   };
+
+  const handleClear = () => {
+    if (onChangeText) {
+      onChangeText('');
+    }
+    onClear?.();
+    inputRef.current?.focus();
+  };
+
+  const hasValue = typeof value === 'string' && value.length > 0;
+  const showClear = clearable && hasValue;
 
   const getBorderAndRingClass = () => {
     if (error) {
@@ -64,16 +83,32 @@ export const AdminInput: React.FC<AdminInputProps> = ({
         {leftElement && <View className="mr-2.5 items-center justify-center">{leftElement}</View>}
 
         <TextInput
+          ref={inputRef}
+          value={value}
+          onChangeText={onChangeText}
           placeholderTextColor="#a8a29e"
           onFocus={handleFocus}
           onBlur={handleBlur}
           style={[
+            { fontSize: 16 }, // Enforce >= 16px to prevent iOS Safari auto-zoom
             Platform.OS === 'web' ? ({ outline: 'none', boxShadow: 'none' } as any) : undefined,
             style,
           ]}
           className={`min-h-[46px] flex-1 text-base text-stone-900 ${className}`}
           {...props}
         />
+
+        {showClear && (
+          <Pressable
+            onPress={handleClear}
+            hitSlop={8}
+            className="h-8 w-8 items-center justify-center rounded-full active:bg-stone-100"
+            accessibilityRole="button"
+            accessibilityLabel="Clear text"
+          >
+            <X size={16} color="#78716c" />
+          </Pressable>
+        )}
 
         {rightElement && <View className="ml-2.5 items-center justify-center">{rightElement}</View>}
       </View>

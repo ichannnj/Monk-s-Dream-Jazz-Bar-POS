@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useResponsive } from '@/features/shared';
+import { useResponsive, useVirtualKeyboard } from '@/features/shared';
 import { styles } from './BillSettlementModal.styles';
 import { BillSettlementModalProps } from './components/billSettlement.types';
 import { useBillSettlementController } from './components/useBillSettlementController';
@@ -21,6 +21,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   onConfirmPayment,
 }) => {
   const { isMobile } = useResponsive();
+  const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
   const ctrl = useBillSettlementController({
     visible,
     table,
@@ -34,15 +35,40 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 
   const activeTabsCount = table?.tabs ? table.tabs.filter((t) => t.status === 'open').length : 1;
 
+  const handleBackdropPress = () => {
+    if (isKeyboardOpen) {
+      dismissKeyboard();
+    }
+    onClose();
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={[styles.backdrop, isMobile && { padding: 8 }]}>
+      <View
+        style={[
+          styles.backdrop,
+          isMobile && { padding: 8 },
+          isKeyboardOpen && {
+            justifyContent: 'flex-start',
+            paddingTop: 8,
+            paddingBottom: Math.min(keyboardHeight, 320) + 16,
+          },
+        ]}
+      >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={onClose}
+          onPress={handleBackdropPress}
           accessibilityLabel="Close modal"
         />
-        <View style={[styles.modalCard, isMobile && { padding: 16, maxHeight: '95%' }]}>
+        <View
+          style={[
+            styles.modalCard,
+            isMobile && { padding: 16 },
+            isKeyboardOpen
+              ? { maxHeight: Math.max(260, viewportHeight - 20) }
+              : isMobile && { maxHeight: '95%' },
+          ]}
+        >
           <BillModalHeaderAndScope
             isTakeout={ctrl.isTakeout}
             takeoutOrder={takeoutOrder}
@@ -57,7 +83,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
 
           <ScrollView
             style={{ flex: 1 }}
-            contentContainerStyle={{ paddingBottom: 8 }}
+            contentContainerStyle={isKeyboardOpen ? { paddingBottom: 48 } : { paddingBottom: 8 }}
             showsVerticalScrollIndicator={false}
           >
             <View style={[styles.splitRow, isMobile && { flexDirection: 'column', gap: 14 }]}>

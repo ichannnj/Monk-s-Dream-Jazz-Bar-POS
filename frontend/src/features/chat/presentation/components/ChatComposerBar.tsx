@@ -46,12 +46,12 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
 
       {/* Message Input Bar */}
       <View className="flex-row items-center px-3 sm:px-4 py-2.5 border-t border-stone-100 gap-2 bg-white">
-        <View className="flex-1 min-h-[42px] bg-[#FAF8F5] rounded-full px-3.5 py-1.5 justify-center border border-stone-200/80 focus-within:border-stone-400">
+        <View className="flex-1 min-h-[46px] bg-[#FAF8F5] rounded-full px-3.5 py-1.5 justify-center border border-stone-200/80 focus-within:border-stone-400">
           <TextInput
             ref={inputRef}
             autoFocus={!isMobile}
             blurOnSubmit={false}
-            className="text-sm text-stone-900 w-full"
+            className="text-base text-stone-900 w-full"
             placeholder={`Message ${conversationTitle}…`}
             placeholderTextColor="#a8a29e"
             value={inputText}
@@ -60,6 +60,7 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
             returnKeyType="send"
             style={
               {
+                fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
                 outlineStyle: 'none',
                 outlineWidth: 0,
                 outlineColor: 'transparent',
