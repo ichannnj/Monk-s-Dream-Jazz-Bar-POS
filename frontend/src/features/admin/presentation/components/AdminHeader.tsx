@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Sun, Flame, Layers, LogOut, Clock, Menu } from 'lucide-react-native';
+import { Sun, Flame, Layers, LogOut, Clock } from 'lucide-react-native';
 import { useAuthStore } from '@/features/auth';
 import {
   getStaffFirstName,
@@ -62,20 +62,6 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
 
   return (
     <View className="w-full relative flex-row items-center justify-center border-b border-stone-200/80 bg-white px-3 sm:px-6 py-2.5 sm:py-3 shadow-xs min-h-[64px]">
-      {/* Mobile Drawer Trigger (Positioned absolute so it doesn't offset the centered cluster) */}
-      {onOpenDrawer && (
-        <View className="absolute left-3 sm:left-6 lg:hidden z-10">
-          <Pressable
-            onPress={onOpenDrawer}
-            className="h-11 w-11 items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-stone-100"
-            accessibilityRole="button"
-            accessibilityLabel="Open navigation menu"
-          >
-            <Menu size={20} color="#1c1917" />
-          </Pressable>
-        </View>
-      )}
-
       {/* Centered Controls Cluster */}
       <View className="flex-row items-center justify-center gap-2 sm:gap-3 flex-wrap">
         {/* Non-blocking Slow Connection / Offline Indicator */}
