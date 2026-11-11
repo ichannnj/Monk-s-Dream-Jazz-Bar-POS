@@ -76,6 +76,14 @@ export const EventSummaryCard: React.FC<EventSummaryCardProps> = ({
             </View>
           ) : null}
 
+          {event.has_door_charge && (
+            <View className="rounded bg-rose-50 px-1.5 py-0.5 border border-rose-200">
+              <Text className="text-[10px] font-extrabold text-[#800020]" numberOfLines={1}>
+                ₱{Number(event.door_charge_amount || 0).toFixed(0)} Door
+              </Text>
+            </View>
+          )}
+
           {event.status !== 'scheduled' && (
             <View
               className={`rounded px-1.5 py-0.2 border ${

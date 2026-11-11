@@ -52,3 +52,29 @@ export const playTransferAlertSound = () => {
     // AudioContext blocked or unsupported
   }
 };
+
+export const playCancellationChime = () => {
+  try {
+    const AudioCtx =
+      typeof window !== 'undefined'
+        ? window.AudioContext || (window as any).webkitAudioContext
+        : null;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sawtooth';
+    // Urgent descending alert (E5 -> C5 -> A4)
+    osc.frequency.setValueAtTime(659.25, ctx.currentTime);
+    osc.frequency.setValueAtTime(523.25, ctx.currentTime + 0.12);
+    osc.frequency.setValueAtTime(440.0, ctx.currentTime + 0.24);
+    gain.gain.setValueAtTime(0.22, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.45);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.45);
+  } catch {
+    // AudioContext blocked
+  }
+};

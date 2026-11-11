@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { ShoppingBag } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 
@@ -17,32 +17,83 @@ export const OrderMobileBottomBar: React.FC<OrderMobileBottomBarProps> = ({
   onOpenConfirm,
 }) => {
   return (
-    <View className="bg-white border-t border-stone-200 px-4 py-3 flex-row items-center justify-between gap-3">
+    <View style={localStyles.container}>
       <Pressable
         onPress={onOpenCart}
-        className="flex-1 min-h-[48px] rounded-xl bg-stone-900 px-4 py-2.5 flex-row items-center justify-between active:opacity-90"
+        style={({ pressed }) => [localStyles.basketButton, pressed && { opacity: 0.9 }]}
         accessibilityRole="button"
         accessibilityLabel="Open order basket"
       >
-        <View className="flex-row items-center gap-2">
+        <View style={localStyles.basketLeft}>
           <ShoppingBag size={18} color="#ffffff" />
-          <Text className="text-base font-bold text-white">Basket ({totalCartQty})</Text>
+          <Text style={localStyles.basketText}>Basket ({totalCartQty})</Text>
         </View>
-        <Text className="text-base font-extrabold text-amber-300">
-          {formatCurrency(grandTotal)}
-        </Text>
+        <Text style={localStyles.basketPrice}>{formatCurrency(grandTotal)}</Text>
       </Pressable>
 
       {totalCartQty > 0 ? (
         <Pressable
           onPress={onOpenConfirm}
-          className="min-h-[48px] rounded-xl bg-[#800020] px-5 items-center justify-center active:opacity-90"
+          style={({ pressed }) => [localStyles.sendButton, pressed && { opacity: 0.9 }]}
           accessibilityRole="button"
           accessibilityLabel="Send Order"
         >
-          <Text className="text-base font-extrabold text-white">Send</Text>
+          <Text style={localStyles.sendButtonText}>Send</Text>
         </Pressable>
       ) : null}
     </View>
   );
 };
+
+const localStyles = StyleSheet.create({
+  container: {
+    backgroundColor: '#ffffff',
+    borderTopWidth: 1,
+    borderTopColor: '#e7e5e4',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  basketButton: {
+    flex: 1,
+    minHeight: 48,
+    borderRadius: 12,
+    backgroundColor: '#1c1917',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  basketLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  basketText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  basketPrice: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#fcd34d',
+  },
+  sendButton: {
+    minHeight: 48,
+    borderRadius: 12,
+    backgroundColor: '#810021',
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonText: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#ffffff',
+  },
+});

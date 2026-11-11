@@ -17,6 +17,8 @@ interface BaristaKanbanColumnProps {
   onViewFohStatus?: (ticket: BarTicket) => void;
   onReadyBlockedPress?: (ticket: BarTicket) => void;
   onToggleItem?: (ticketId: string, itemId: string) => void;
+  onVoidTicket?: (ticket: BarTicket) => void;
+  onVoidItem?: (ticket: BarTicket, item: import('../types').BarItemLine) => void;
 }
 
 export const BaristaKanbanColumn: React.FC<BaristaKanbanColumnProps> = ({
@@ -32,6 +34,8 @@ export const BaristaKanbanColumn: React.FC<BaristaKanbanColumnProps> = ({
   onViewFohStatus,
   onReadyBlockedPress,
   onToggleItem,
+  onVoidTicket,
+  onVoidItem,
 }) => {
   const scrollRef = useRef<ScrollView>(null);
 
@@ -44,6 +48,10 @@ export const BaristaKanbanColumn: React.FC<BaristaKanbanColumnProps> = ({
       case 'preparing':
         return {
           textColor: '#b45309',
+        };
+      case 'cancelled':
+        return {
+          textColor: '#dc2626',
         };
       case 'new':
       default:
@@ -91,6 +99,8 @@ export const BaristaKanbanColumn: React.FC<BaristaKanbanColumnProps> = ({
                 onViewFohStatus={onViewFohStatus}
                 onReadyBlockedPress={onReadyBlockedPress}
                 onToggleItem={onToggleItem}
+                onVoidTicket={onVoidTicket}
+                onVoidItem={onVoidItem}
               />
             ))
           )}

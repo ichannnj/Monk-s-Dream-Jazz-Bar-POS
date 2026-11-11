@@ -73,9 +73,9 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
       case 'occupied':
         return {
           label: 'OCCUPIED',
-          bg: '#fdf2f4',
-          color: '#832238',
-          dotColor: '#832238',
+          bg: '#FAF8F5',
+          color: '#810021',
+          dotColor: '#810021',
         };
       case 'empty':
       default:
@@ -196,7 +196,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
             accessibilityRole="button"
             accessibilityLabel={`Manage Table ${code}`}
           >
-            <Utensils size={18} color="#832238" strokeWidth={2.3} />
+            <Utensils size={18} color="#810021" strokeWidth={2.3} />
             <Text style={styles.actionBtnManageText}>
               {status === 'served' ? 'Settle / Order' : 'View / Order'}
             </Text>

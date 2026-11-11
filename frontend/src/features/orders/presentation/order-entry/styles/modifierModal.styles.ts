@@ -109,8 +109,8 @@ export const modifierModalStyles = StyleSheet.create({
     minHeight: 48,
   },
   modRowSelected: {
-    borderColor: '#832238',
-    backgroundColor: '#fceeed',
+    borderColor: '#810021',
+    backgroundColor: '#FAF8F5',
   },
   modName: {
     fontSize: 15,
@@ -118,7 +118,7 @@ export const modifierModalStyles = StyleSheet.create({
     color: '#374151',
   },
   modNameSelected: {
-    color: '#832238',
+    color: '#810021',
     fontWeight: '700',
   },
   modPrice: {
@@ -128,7 +128,7 @@ export const modifierModalStyles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   modPriceSelected: {
-    color: '#832238',
+    color: '#810021',
   },
   customizerInput: {
     backgroundColor: '#f9fafb',
@@ -143,11 +143,11 @@ export const modifierModalStyles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   confirmCustomizeBtn: {
-    backgroundColor: '#832238',
+    backgroundColor: '#810021',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
-    shadowColor: '#832238',
+    shadowColor: '#810021',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -180,12 +180,12 @@ export const modifierModalStyles = StyleSheet.create({
     gap: 8,
   },
   tempButtonHotSelected: {
-    borderColor: '#ea580c',
-    backgroundColor: '#fff7ed',
+    borderColor: '#810021',
+    backgroundColor: '#FAF8F5',
   },
   tempButtonColdSelected: {
-    borderColor: '#0284c7',
-    backgroundColor: '#f0f9ff',
+    borderColor: '#810021',
+    backgroundColor: '#FAF8F5',
   },
   tempButtonText: {
     fontSize: 14.5,
@@ -193,11 +193,11 @@ export const modifierModalStyles = StyleSheet.create({
     color: '#4b5563',
   },
   tempButtonTextHotSelected: {
-    color: '#ea580c',
+    color: '#810021',
     fontWeight: '800',
   },
   tempButtonTextColdSelected: {
-    color: '#0284c7',
+    color: '#810021',
     fontWeight: '800',
   },
   sizeSelectorRow: {
@@ -219,8 +219,8 @@ export const modifierModalStyles = StyleSheet.create({
     backgroundColor: '#f9fafb',
   },
   sizeButtonSelected: {
-    borderColor: '#15803d',
-    backgroundColor: '#f0fdf4',
+    borderColor: '#810021',
+    backgroundColor: '#FAF8F5',
   },
   sizeButtonText: {
     fontSize: 14,
@@ -228,7 +228,7 @@ export const modifierModalStyles = StyleSheet.create({
     color: '#374151',
   },
   sizeButtonTextSelected: {
-    color: '#15803d',
+    color: '#810021',
     fontWeight: '800',
   },
   sizeButtonPriceText: {
@@ -238,7 +238,7 @@ export const modifierModalStyles = StyleSheet.create({
     marginTop: 2,
   },
   sizeButtonPriceTextSelected: {
-    color: '#15803d',
+    color: '#810021',
   },
   variantBadgeHeader: {
     flexDirection: 'row',
@@ -247,17 +247,17 @@ export const modifierModalStyles = StyleSheet.create({
     marginTop: 4,
   },
   variantBadgeHot: {
-    backgroundColor: '#fff7ed',
+    backgroundColor: '#FAF8F5',
     borderWidth: 1,
-    borderColor: '#fdba74',
+    borderColor: '#e7e5e4',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   variantBadgeCold: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: '#FAF8F5',
     borderWidth: 1,
-    borderColor: '#7dd3fc',
+    borderColor: '#e7e5e4',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -265,11 +265,11 @@ export const modifierModalStyles = StyleSheet.create({
   variantBadgeTextHot: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#ea580c',
+    color: '#810021',
   },
   variantBadgeTextCold: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#0284c7',
+    color: '#1C1917',
   },
 });

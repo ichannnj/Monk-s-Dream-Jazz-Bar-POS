@@ -12,6 +12,7 @@ export interface BaristaTicketActionsProps {
   onDismiss?: (ticket: BarTicket) => void;
   onViewFohStatus?: (ticket: BarTicket) => void;
   onReadyBlockedPress?: (ticket: BarTicket) => void;
+  onVoidTicket?: (ticket: BarTicket) => void;
 }
 
 export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
@@ -22,8 +23,22 @@ export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
   onDismiss,
   onViewFohStatus,
   onReadyBlockedPress,
+  onVoidTicket,
 }) => {
   const { stage, isReadyBlocked, hasFohStatusAlert } = ticket;
+
+  if (stage === 'cancelled') {
+    return (
+      <View style={styles.footerContainer}>
+        <Pressable
+          onPress={() => onDismiss?.(ticket)}
+          style={({ pressed }) => [styles.dismissCancelledButton, pressed && styles.buttonPressed]}
+        >
+          <Text style={styles.dismissCancelledButtonText}>Dismiss Cancelled Alert</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.footerContainer}>
@@ -36,12 +51,29 @@ export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
             <Text style={styles.fohStatusButtonText}>View FOH Status</Text>
           </Pressable>
         ) : (
-          <Pressable
-            onPress={() => onStart?.(ticket)}
-            style={({ pressed }) => [styles.primaryWineButton, pressed && styles.buttonPressed]}
-          >
-            <Text style={styles.primaryWineButtonText}>Start</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {onVoidTicket ? (
+              <Pressable
+                onPress={() => onVoidTicket(ticket)}
+                style={({ pressed }) => [
+                  styles.cancelTicketButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.cancelTicketButtonText}>Void</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={() => onStart?.(ticket)}
+              style={({ pressed }) => [
+                styles.primaryWineButton,
+                { flex: 1 },
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <Text style={styles.primaryWineButtonText}>Start</Text>
+            </Pressable>
+          </View>
         )
       ) : null}
 
@@ -54,15 +86,32 @@ export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
             <Text style={styles.blockedButtonText}>Ready Blocked</Text>
           </Pressable>
         ) : (
-          <Pressable
-            onPress={() => onReady?.(ticket)}
-            style={({ pressed }) => [styles.primaryWineButton, pressed && styles.buttonPressed]}
-          >
-            <View style={styles.readyButtonContent}>
-              <Check size={16} color="#ffffff" strokeWidth={3} />
-              <Text style={styles.primaryWineButtonText}>Ready</Text>
-            </View>
-          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {onVoidTicket ? (
+              <Pressable
+                onPress={() => onVoidTicket(ticket)}
+                style={({ pressed }) => [
+                  styles.cancelTicketButton,
+                  pressed && styles.buttonPressed,
+                ]}
+              >
+                <Text style={styles.cancelTicketButtonText}>Void</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={() => onReady?.(ticket)}
+              style={({ pressed }) => [
+                styles.primaryWineButton,
+                { flex: 1 },
+                pressed && styles.buttonPressed,
+              ]}
+            >
+              <View style={styles.readyButtonContent}>
+                <Check size={16} color="#ffffff" strokeWidth={3} />
+                <Text style={styles.primaryWineButtonText}>Ready</Text>
+              </View>
+            </Pressable>
+          </View>
         )
       ) : null}
 

@@ -88,8 +88,8 @@ export const styles = StyleSheet.create({
     borderColor: '#e8e2dc',
   },
   modeBtnActive: {
-    backgroundColor: '#641b2a',
-    borderColor: '#641b2a',
+    backgroundColor: '#810021',
+    borderColor: '#810021',
   },
   modeBtnText: {
     fontSize: 16,
@@ -114,7 +114,7 @@ export const styles = StyleSheet.create({
     minHeight: 52,
   },
   tabPickerCardSelected: {
-    borderColor: '#641b2a',
+    borderColor: '#810021',
     backgroundColor: '#fffdfd',
   },
   tabPickerLeft: {
@@ -134,13 +134,13 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioCircleSelected: {
-    borderColor: '#641b2a',
+    borderColor: '#810021',
   },
   radioDot: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#641b2a',
+    backgroundColor: '#810021',
   },
   tabGuestName: {
     fontSize: 16,
@@ -155,7 +155,7 @@ export const styles = StyleSheet.create({
   tabAmount: {
     fontSize: 16,
     fontWeight: '900',
-    color: '#641b2a',
+    color: '#810021',
   },
   emptyTabsNote: {
     padding: 14,
@@ -182,8 +182,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   reasonChipSelected: {
-    backgroundColor: '#641b2a',
-    borderColor: '#641b2a',
+    backgroundColor: '#810021',
+    borderColor: '#810021',
   },
   reasonChipText: {
     fontSize: 16,
@@ -215,7 +215,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
   },
   areaPillActive: {
-    backgroundColor: '#641b2a',
+    backgroundColor: '#810021',
   },
   areaPillText: {
     fontSize: 16,
@@ -248,7 +248,7 @@ export const styles = StyleSheet.create({
     borderColor: '#fde68a',
   },
   targetCardSelected: {
-    borderColor: '#641b2a',
+    borderColor: '#810021',
     backgroundColor: '#fff1f2',
   },
   targetCode: {
@@ -257,7 +257,7 @@ export const styles = StyleSheet.create({
     color: '#1f2937',
   },
   targetCodeSelected: {
-    color: '#641b2a',
+    color: '#810021',
   },
   targetStatus: {
     fontSize: 16,
@@ -284,7 +284,7 @@ export const styles = StyleSheet.create({
   },
   targetSummaryBold: {
     fontWeight: '800',
-    color: '#641b2a',
+    color: '#810021',
   },
   targetSummaryTextMuted: {
     fontSize: 16,
@@ -314,7 +314,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 14,
-    backgroundColor: '#641b2a',
+    backgroundColor: '#810021',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

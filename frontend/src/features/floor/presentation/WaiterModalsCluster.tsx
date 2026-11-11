@@ -39,7 +39,12 @@ export interface WaiterModalsClusterProps {
   // Open Table Tab Modal (Global + Tab from top bar)
   isOpenTabModalOpen: boolean;
   onCloseOpenTabModal: () => void;
-  onConfirmOpenTab: (tableId: string, guestName: string, guestCount: number) => void;
+  onConfirmOpenTab: (
+    tableId: string,
+    guestName: string,
+    guestCount: number,
+    includeDoorCharge?: boolean
+  ) => void;
 
   // Open Table Direct Modal (Direct click on table or + Split Tab)
   isOpenDirectModalOpen?: boolean;

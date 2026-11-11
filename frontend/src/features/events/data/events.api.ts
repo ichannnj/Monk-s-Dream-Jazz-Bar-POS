@@ -1,5 +1,10 @@
 import { supabase } from '@/features/shared/infrastructure/supabase';
-import type { VenueEvent, CreateEventInput, UpdateEventInput } from '../domain/event.types';
+import type {
+  VenueEvent,
+  CreateEventInput,
+  UpdateEventInput,
+  EventDoorChargeSummary,
+} from '../domain/event.types';
 
 export interface PreparedPosterImage {
   blob: Blob;
@@ -170,6 +175,14 @@ export const eventsApi = {
         reserved_tables: input.reserved_tables ? input.reserved_tables.trim() : null,
         special_requests: input.special_requests ? input.special_requests.trim() : null,
         status: input.status || 'scheduled',
+        has_door_charge: Boolean(input.has_door_charge),
+        door_charge_amount: Number(input.door_charge_amount || 0),
+        split_type: input.split_type || 'percentage',
+        artist_split_value: Number(input.artist_split_value ?? 50),
+        venue_split_value: Number(input.venue_split_value ?? 50),
+        artist_payout_status: input.artist_payout_status || 'unsettled',
+        artist_payout_notes: input.artist_payout_notes || null,
+        artist_payout_at: input.artist_payout_at || null,
       })
       .select()
       .single();
@@ -214,6 +227,21 @@ export const eventsApi = {
         ? input.special_requests.trim()
         : null;
     if (input.status !== undefined) updatePayload.status = input.status;
+    if (input.has_door_charge !== undefined)
+      updatePayload.has_door_charge = Boolean(input.has_door_charge);
+    if (input.door_charge_amount !== undefined)
+      updatePayload.door_charge_amount = Number(input.door_charge_amount || 0);
+    if (input.split_type !== undefined) updatePayload.split_type = input.split_type;
+    if (input.artist_split_value !== undefined)
+      updatePayload.artist_split_value = Number(input.artist_split_value ?? 50);
+    if (input.venue_split_value !== undefined)
+      updatePayload.venue_split_value = Number(input.venue_split_value ?? 50);
+    if (input.artist_payout_status !== undefined)
+      updatePayload.artist_payout_status = input.artist_payout_status;
+    if (input.artist_payout_notes !== undefined)
+      updatePayload.artist_payout_notes = input.artist_payout_notes;
+    if (input.artist_payout_at !== undefined)
+      updatePayload.artist_payout_at = input.artist_payout_at;
 
     const { data, error } = await (supabase as any)
       .from('venue_events')
@@ -278,5 +306,51 @@ export const eventsApi = {
       publicUrl: publicUrlData.publicUrl,
       storagePath,
     };
+  },
+
+  /**
+   * Fetch real-time Door Charge revenue and artist payout breakdown for an event
+   */
+  async getEventDoorChargeSummary(eventId: string): Promise<EventDoorChargeSummary> {
+    const { data, error } = await (supabase.rpc as any)('get_event_door_charge_summary', {
+      p_event_id: eventId,
+    });
+    if (error) {
+      console.warn('[eventsApi.getEventDoorChargeSummary] RPC error, falling back:', error);
+      return {
+        event_id: eventId,
+        title: '',
+        has_door_charge: false,
+        door_charge_amount: 0,
+        split_type: 'percentage',
+        artist_split_value: 50,
+        venue_split_value: 50,
+        tickets_sold: 0,
+        gross_sales: 0,
+        artist_share: 0,
+        venue_share: 0,
+        artist_payout_status: 'unsettled',
+      };
+    }
+    return data as EventDoorChargeSummary;
+  },
+
+  /**
+   * Settle and mark artist door charge payout as paid
+   */
+  async settleArtistDoorChargePayout(
+    eventId: string,
+    staffId: string,
+    notes?: string
+  ): Promise<void> {
+    const { error } = await (supabase.rpc as any)('settle_artist_door_charge_payout', {
+      p_event_id: eventId,
+      p_staff_id: staffId,
+      p_notes: notes || null,
+    });
+    if (error) {
+      console.error('[eventsApi.settleArtistDoorChargePayout] Error:', error);
+      throw error;
+    }
   },
 };

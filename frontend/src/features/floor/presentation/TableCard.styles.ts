@@ -129,7 +129,7 @@ export const styles = StyleSheet.create({
   tagWine: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#832238',
+    color: '#810021',
     marginTop: 2,
     letterSpacing: 0.3,
   },
@@ -144,7 +144,7 @@ export const styles = StyleSheet.create({
     paddingTop: 10,
   },
   actionBtnOpenTab: {
-    backgroundColor: '#832238',
+    backgroundColor: '#810021',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -153,7 +153,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 14,
-    shadowColor: '#832238',
+    shadowColor: '#810021',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
@@ -166,9 +166,9 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   actionBtnManage: {
-    backgroundColor: '#fdf2f4',
-    borderWidth: 1,
-    borderColor: '#fad4db',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1.5,
+    borderColor: '#e7e5e4',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -179,7 +179,7 @@ export const styles = StyleSheet.create({
     borderRadius: 14,
   },
   actionBtnManageText: {
-    color: '#832238',
+    color: '#810021',
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.2,

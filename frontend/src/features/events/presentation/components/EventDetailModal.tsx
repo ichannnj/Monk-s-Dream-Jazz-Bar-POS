@@ -1,5 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, Pressable, Image, ScrollView, Modal, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  Image,
+  ScrollView,
+  Modal,
+  Platform,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
 import {
   X,
   Calendar,
@@ -11,11 +21,16 @@ import {
   Trash2,
   ChevronDown,
   ChevronUp,
+  Ticket,
+  CheckCircle2,
 } from 'lucide-react-native';
-import type { VenueEvent } from '../../domain/event.types';
+import type { VenueEvent, EventDoorChargeSummary } from '../../domain/event.types';
 import { generateEventIcs, triggerIcsDownload } from '../../utils/eventIcsExport';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { formatFullDate, formatShowtimeRange } from '../utils/eventFormatters';
+import { eventsApi } from '../../data/events.api';
+import { useEventStore } from '../../application/useEventStore';
+import { useAuthStore } from '@/features/auth/application/useAuthStore';
 
 interface EventDetailModalProps {
   isOpen: boolean;
@@ -36,6 +51,28 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 }) => {
   const [showLogistics, setShowLogistics] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+
+  // Door Charge & Settlement
+  const [summary, setSummary] = useState<EventDoorChargeSummary | null>(null);
+  const [isLoadingSummary, setIsLoadingSummary] = useState(false);
+  const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
+  const [payoutNotes, setPayoutNotes] = useState('');
+  const [isSubmittingPayout, setIsSubmittingPayout] = useState(false);
+  const settleArtistPayout = useEventStore((s) => s.settleArtistPayout);
+  const currentUser = useAuthStore((s) => s.currentUser);
+
+  useEffect(() => {
+    if (isOpen && event && event.has_door_charge) {
+      setIsLoadingSummary(true);
+      eventsApi
+        .getEventDoorChargeSummary(event.id)
+        .then((res) => setSummary(res))
+        .catch((err) => console.warn('Failed to load door charge summary:', err))
+        .finally(() => setIsLoadingSummary(false));
+    } else {
+      setSummary(null);
+    }
+  }, [isOpen, event?.id, event?.has_door_charge, event?.artist_payout_status]);
 
   if (!isOpen || !event) return null;
 
@@ -242,6 +279,114 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 ) : null}
               </View>
             ) : null}
+
+            {/* Door Charge & Artist Settlement Card */}
+            {event.has_door_charge ? (
+              <View className="pt-2 border-t border-stone-100 space-y-2.5">
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center gap-1.5">
+                    <Ticket size={15} color="#800020" />
+                    <Text className="text-xs font-extrabold text-stone-900 uppercase tracking-wider">
+                      Door Charge & Artist Settlement
+                    </Text>
+                  </View>
+                  <View
+                    className={`px-2.5 py-0.5 rounded-full ${
+                      event.artist_payout_status === 'paid' ? 'bg-emerald-100' : 'bg-amber-100'
+                    }`}
+                  >
+                    <Text
+                      className={`text-[11px] font-bold ${
+                        event.artist_payout_status === 'paid'
+                          ? 'text-emerald-800'
+                          : 'text-amber-800'
+                      }`}
+                    >
+                      {event.artist_payout_status === 'paid' ? 'PAID TO ARTIST' : 'UNSETTLED'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="rounded-2xl border border-stone-200 bg-stone-50/80 p-3.5 space-y-3">
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-xs text-stone-500 font-medium">Admission Price</Text>
+                    <Text className="text-sm font-bold text-stone-900">
+                      ₱{Number(event.door_charge_amount || 0).toFixed(2)} / head
+                    </Text>
+                  </View>
+
+                  <View className="flex-row items-center justify-between">
+                    <Text className="text-xs text-stone-500 font-medium">Agreement Split</Text>
+                    <Text className="text-xs font-bold text-stone-800">
+                      {event.split_type === 'percentage'
+                        ? `${event.artist_split_value}% Artist · ${event.venue_split_value}% Monk's Dream`
+                        : `₱${event.artist_split_value} Artist · ₱${event.venue_split_value} Monk's Dream`}
+                    </Text>
+                  </View>
+
+                  {/* Dynamic Metrics */}
+                  <View className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-200/60">
+                    <View className="bg-white p-2 rounded-xl border border-stone-200/60 items-center">
+                      <Text className="text-[10px] uppercase font-bold text-stone-400">
+                        Tickets
+                      </Text>
+                      <Text className="text-sm font-extrabold text-stone-900 mt-0.5">
+                        {isLoadingSummary ? '…' : (summary?.tickets_sold ?? 0)}
+                      </Text>
+                    </View>
+                    <View className="bg-white p-2 rounded-xl border border-stone-200/60 items-center">
+                      <Text className="text-[10px] uppercase font-bold text-stone-400">Gross</Text>
+                      <Text className="text-sm font-extrabold text-stone-900 mt-0.5">
+                        {isLoadingSummary
+                          ? '…'
+                          : `₱${Number(summary?.gross_sales || 0).toLocaleString()}`}
+                      </Text>
+                    </View>
+                    <View className="bg-rose-50/70 p-2 rounded-xl border border-rose-200/60 items-center">
+                      <Text className="text-[10px] uppercase font-bold text-[#800020]">
+                        Artist Share
+                      </Text>
+                      <Text className="text-sm font-extrabold text-[#800020] mt-0.5">
+                        {isLoadingSummary
+                          ? '…'
+                          : `₱${Number(summary?.artist_share || 0).toLocaleString()}`}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Settle button or Paid Confirmation */}
+                  {isAdmin && (
+                    <View className="pt-1">
+                      {event.artist_payout_status === 'paid' ? (
+                        <View className="flex-row items-center gap-1.5 p-2 rounded-xl bg-emerald-50 border border-emerald-200">
+                          <CheckCircle2 size={16} color="#059669" />
+                          <View className="flex-1">
+                            <Text className="text-xs font-bold text-emerald-900">
+                              Payout Settled
+                            </Text>
+                            {event.artist_payout_notes ? (
+                              <Text className="text-[11px] text-emerald-700 mt-0.5">
+                                {event.artist_payout_notes}
+                              </Text>
+                            ) : null}
+                          </View>
+                        </View>
+                      ) : (
+                        <Pressable
+                          onPress={() => setIsPayoutModalOpen(true)}
+                          className="w-full py-2 px-3 rounded-xl bg-[#800020] active:bg-[#66001a] items-center justify-center flex-row gap-1.5 shadow-xs"
+                        >
+                          <Ticket size={14} color="#ffffff" />
+                          <Text className="text-xs font-bold text-white">
+                            Mark Artist Paid & Settle Door Charge
+                          </Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  )}
+                </View>
+              </View>
+            ) : null}
           </ScrollView>
 
           {/* Destructive Confirmation Bar (if confirming delete) */}
@@ -334,6 +479,95 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
           )}
         </View>
       </View>
+
+      {/* Settle Artist Payout Modal */}
+      {isPayoutModalOpen && (
+        <Modal visible={isPayoutModalOpen} transparent animationType="fade">
+          <View className="flex-1 items-center justify-center bg-black/60 p-4">
+            <View className="w-full max-w-sm rounded-2xl bg-white p-5 border border-stone-200 shadow-2xl space-y-3.5">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-base font-extrabold text-stone-900">
+                  Settle Artist Door Charge
+                </Text>
+                <Pressable
+                  onPress={() => setIsPayoutModalOpen(false)}
+                  className="p-1 rounded-full hover:bg-stone-100"
+                >
+                  <X size={16} color="#78716c" />
+                </Pressable>
+              </View>
+
+              <View className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/80 space-y-1">
+                <Text className="text-xs text-stone-600">
+                  Artist:{' '}
+                  <Text className="font-bold text-stone-900">
+                    {event.performer_name || event.title}
+                  </Text>
+                </Text>
+                <Text className="text-xs text-stone-600">
+                  Total Tickets Sold:{' '}
+                  <Text className="font-bold text-stone-900">{summary?.tickets_sold ?? 0}</Text>
+                </Text>
+                <Text className="text-sm font-extrabold text-[#800020] pt-1 border-t border-rose-200/60">
+                  Payout Due: ₱{Number(summary?.artist_share || 0).toLocaleString()}
+                </Text>
+              </View>
+
+              <View className="space-y-1">
+                <Text className="text-xs font-bold text-stone-700">
+                  Settlement Notes / Reference
+                </Text>
+                <TextInput
+                  value={payoutNotes}
+                  onChangeText={setPayoutNotes}
+                  placeholder="e.g. Paid in cash backstage after set 2..."
+                  placeholderTextColor="#a8a29e"
+                  multiline
+                  numberOfLines={2}
+                  className="w-full rounded-xl border border-stone-300 bg-white p-2.5 text-xs text-stone-900 focus:border-[#800020]"
+                />
+              </View>
+
+              <View className="flex-row items-center justify-end gap-2 pt-2 border-t border-stone-100">
+                <Pressable
+                  onPress={() => setIsPayoutModalOpen(false)}
+                  className="px-3.5 py-2 rounded-xl border border-stone-300 bg-white active:bg-stone-100"
+                >
+                  <Text className="text-xs font-semibold text-stone-700">Cancel</Text>
+                </Pressable>
+                <Pressable
+                  onPress={async () => {
+                    setIsSubmittingPayout(true);
+                    try {
+                      const staffId = currentUser?.id || '11111111-1111-1111-1111-111111111111';
+                      await settleArtistPayout(event.id, staffId, payoutNotes);
+                      setIsPayoutModalOpen(false);
+                      // reload summary
+                      const updatedSummary = await eventsApi.getEventDoorChargeSummary(event.id);
+                      setSummary(updatedSummary);
+                    } catch (e: any) {
+                      toast.error('Failed to settle payout');
+                    } finally {
+                      setIsSubmittingPayout(false);
+                    }
+                  }}
+                  disabled={isSubmittingPayout}
+                  className="px-4 py-2 rounded-xl bg-[#800020] active:bg-[#66001a] flex-row items-center gap-1.5"
+                >
+                  {isSubmittingPayout ? (
+                    <ActivityIndicator size="small" color="#ffffff" />
+                  ) : (
+                    <CheckCircle2 size={14} color="#ffffff" />
+                  )}
+                  <Text className="text-xs font-bold text-white">
+                    {isSubmittingPayout ? 'Recording...' : 'Confirm Paid'}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      )}
     </Modal>
   );
 };

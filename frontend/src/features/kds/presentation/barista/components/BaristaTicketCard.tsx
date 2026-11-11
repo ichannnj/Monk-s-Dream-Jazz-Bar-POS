@@ -16,6 +16,8 @@ interface BaristaTicketCardProps {
   onViewFohStatus?: (ticket: BarTicket) => void;
   onReadyBlockedPress?: (ticket: BarTicket) => void;
   onToggleItem?: (ticketId: string, itemId: string) => void;
+  onVoidTicket?: (ticket: BarTicket) => void;
+  onVoidItem?: (ticket: BarTicket, item: import('../types').BarItemLine) => void;
 }
 
 export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
@@ -27,6 +29,8 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
   onViewFohStatus,
   onReadyBlockedPress,
   onToggleItem,
+  onVoidTicket,
+  onVoidItem,
 }) => {
   const { stage, elapsedTime, items, specialNote, voidNote } = ticket;
 
@@ -34,6 +38,9 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
   const liveTimer = useLiveElapsedTimer(ticket.createdAt, elapsedTime, stationCategory);
 
   const getTimePillStyle = () => {
+    if (stage === 'cancelled') {
+      return { bg: '#fee2e2', text: '#b91c1c' };
+    }
     if (stage === 'ready') {
       return { bg: '#dcfce7', text: '#15803d' };
     }
@@ -53,8 +60,21 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
       style={[
         styles.cardContainer,
         Boolean(ticket.transferredFrom) && styles.cardContainerRelocated,
+        stage === 'cancelled' && styles.cardContainerCancelled,
       ]}
     >
+      {/* High-visibility Cancellation Banner */}
+      {stage === 'cancelled' ? (
+        <View style={styles.cancelledAlertBanner}>
+          <View style={styles.cancelledAlertHeader}>
+            <Text style={styles.cancelledAlertTitle}>🚨 ORDER CANCELLED / VOID</Text>
+          </View>
+          <Text style={styles.cancelledAlertSubtitle}>
+            Order was voided. Do not prepare or serve.
+          </Text>
+        </View>
+      ) : null}
+
       <BaristaTicketHeader
         ticket={ticket}
         timePill={timePill}
@@ -69,6 +89,7 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
             item={item}
             ticketId={ticket.id}
             onToggleItem={onToggleItem}
+            onVoidItem={onVoidItem ? (it) => onVoidItem(ticket, it) : undefined}
           />
         ))}
       </View>
@@ -98,6 +119,7 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
         onDismiss={onDismiss}
         onViewFohStatus={onViewFohStatus}
         onReadyBlockedPress={onReadyBlockedPress}
+        onVoidTicket={onVoidTicket}
       />
     </View>
   );

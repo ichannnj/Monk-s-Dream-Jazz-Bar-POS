@@ -119,7 +119,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
           <View style={styles.modalHeader}>
             <View style={styles.headerLeft}>
               <View style={styles.iconCircle}>
-                <Repeat size={20} color="#641b2a" />
+                <Repeat size={20} color="#810021" />
               </View>
               <View>
                 <Text style={styles.headerTitle}>
@@ -387,7 +387,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                       Table {originTable.code}
                     </Text>
                     <Text
-                      style={{ fontSize: 16, color: '#641b2a', fontWeight: '700', marginTop: 2 }}
+                      style={{ fontSize: 16, color: '#810021', fontWeight: '700', marginTop: 2 }}
                     >
                       {originTable.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
                     </Text>
@@ -398,7 +398,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                       width: 44,
                       height: 44,
                       borderRadius: 22,
-                      backgroundColor: '#641b2a',
+                      backgroundColor: '#810021',
                       alignItems: 'center',
                       justifyContent: 'center',
                       marginHorizontal: 12,
@@ -468,7 +468,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                     ) : (
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <Text style={{ fontSize: 16, color: '#4b5563' }}>Total Balance:</Text>
-                        <Text style={{ fontSize: 16, fontWeight: '800', color: '#641b2a' }}>
+                        <Text style={{ fontSize: 16, fontWeight: '800', color: '#810021' }}>
                           {formatCurrency(originTable.totalAmount || 0)}
                         </Text>
                       </View>
@@ -552,8 +552,8 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                     onPress={() => setStep(1)}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
                   >
-                    <ArrowLeft size={18} color="#641b2a" />
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#641b2a' }}>
+                    <ArrowLeft size={18} color="#810021" />
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#810021' }}>
                       Back to Selection
                     </Text>
                   </Pressable>

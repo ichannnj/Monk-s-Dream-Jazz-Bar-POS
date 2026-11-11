@@ -10,12 +10,24 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
-import { X, Upload, Calendar, Clock, Mic, Check, Trash2 } from 'lucide-react-native';
+import {
+  X,
+  Upload,
+  Calendar,
+  Clock,
+  Mic,
+  Check,
+  Trash2,
+  Ticket,
+  Percent,
+  DollarSign,
+} from 'lucide-react-native';
 import type {
   VenueEvent,
   CreateEventInput,
   UpdateEventInput,
   EventStatus,
+  EventSplitType,
 } from '../../domain/event.types';
 import { eventsApi } from '../../data/events.api';
 import { toast } from '@/features/shared/toast/useToastStore';
@@ -69,7 +81,16 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
   const [specialRequests, setSpecialRequests] = useState('');
   const [status, setStatus] = useState<EventStatus>('scheduled');
 
-  const [activeTab, setActiveTab] = useState<'info' | 'poster' | 'logistics'>('info');
+  // Door Charge & Revenue Split
+  const [hasDoorCharge, setHasDoorCharge] = useState(false);
+  const [doorChargeAmount, setDoorChargeAmount] = useState('300');
+  const [splitType, setSplitType] = useState<EventSplitType>('percentage');
+  const [artistSplitValue, setArtistSplitValue] = useState('50');
+  const [venueSplitValue, setVenueSplitValue] = useState('50');
+
+  const [activeTab, setActiveTab] = useState<'info' | 'poster' | 'logistics' | 'door_charge'>(
+    'info'
+  );
   const [isUploading, setIsUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<{ title?: string; eventDate?: string; startTime?: string }>(
@@ -92,6 +113,11 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
       setReservedTables(event.reserved_tables || '');
       setSpecialRequests(event.special_requests || '');
       setStatus(event.status || 'scheduled');
+      setHasDoorCharge(Boolean(event.has_door_charge));
+      setDoorChargeAmount(String(event.door_charge_amount ?? 300));
+      setSplitType(event.split_type || 'percentage');
+      setArtistSplitValue(String(event.artist_split_value ?? 50));
+      setVenueSplitValue(String(event.venue_split_value ?? 50));
     } else {
       const defaultDate = initialDate || getManilaTodayDateString();
       setTitle('');
@@ -109,6 +135,11 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
       setReservedTables('');
       setSpecialRequests('');
       setStatus('scheduled');
+      setHasDoorCharge(false);
+      setDoorChargeAmount('300');
+      setSplitType('percentage');
+      setArtistSplitValue('50');
+      setVenueSplitValue('50');
     }
     setErrors({});
     setActiveTab('info');
@@ -197,6 +228,11 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
         reserved_tables: reservedTables.trim() || null,
         special_requests: specialRequests.trim() || null,
         status,
+        has_door_charge: hasDoorCharge,
+        door_charge_amount: hasDoorCharge ? Math.max(0, parseFloat(doorChargeAmount) || 0) : 0,
+        split_type: splitType,
+        artist_split_value: Math.max(0, parseFloat(artistSplitValue) || 0),
+        venue_split_value: Math.max(0, parseFloat(venueSplitValue) || 0),
       };
 
       await onSave(payload, event?.id);
@@ -288,7 +324,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
               onPress={() => setActiveTab('logistics')}
               accessibilityRole="tab"
               accessibilityLabel="Production and logistics tab"
-              className={`pb-2.5 px-3 border-b-2 ${
+              className={`pb-2.5 px-3 border-b-2 mr-2 ${
                 activeTab === 'logistics'
                   ? 'border-[#800020] text-[#800020]'
                   : 'border-transparent text-stone-500'
@@ -301,6 +337,28 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
               >
                 Production notes
               </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setActiveTab('door_charge')}
+              accessibilityRole="tab"
+              accessibilityLabel="Door charge and split tab"
+              className={`pb-2.5 px-3 border-b-2 ${
+                activeTab === 'door_charge'
+                  ? 'border-[#800020] text-[#800020]'
+                  : 'border-transparent text-stone-500'
+              }`}
+            >
+              <View className="flex-row items-center gap-1.5">
+                <Text
+                  className={`text-xs font-bold ${
+                    activeTab === 'door_charge' ? 'text-[#800020]' : 'text-stone-600'
+                  }`}
+                >
+                  Door charge & split
+                </Text>
+                {hasDoorCharge && <View className="h-2 w-2 rounded-full bg-emerald-500" />}
+              </View>
             </Pressable>
           </View>
 
@@ -598,6 +656,282 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                     accessibilityLabel="Hospitality rider or special requests"
                   />
                 </View>
+              </View>
+            )}
+
+            {/* Door Charge & Split Tab */}
+            {activeTab === 'door_charge' && (
+              <View className="space-y-4">
+                {/* Enable Door Charge Toggle */}
+                <Pressable
+                  onPress={() => setHasDoorCharge(!hasDoorCharge)}
+                  className={`p-4 rounded-2xl border flex-row items-center justify-between ${
+                    hasDoorCharge
+                      ? 'border-[#800020] bg-rose-50/60'
+                      : 'border-stone-200 bg-stone-50/60'
+                  }`}
+                >
+                  <View className="flex-row items-center gap-3 flex-1 pr-3">
+                    <View
+                      className={`h-10 w-10 rounded-xl items-center justify-center ${
+                        hasDoorCharge ? 'bg-[#800020]' : 'bg-stone-200'
+                      }`}
+                    >
+                      <Ticket size={20} color={hasDoorCharge ? '#ffffff' : '#57534e'} />
+                    </View>
+                    <View className="flex-1">
+                      <Text className="text-sm font-extrabold text-stone-900">
+                        Enable Door Charge (Admission Cover Fee)
+                      </Text>
+                      <Text className="text-xs text-stone-500 mt-0.5">
+                        Priced per person; automatically populates Floor POS when active
+                      </Text>
+                    </View>
+                  </View>
+                  <View
+                    className={`h-6 w-11 rounded-full p-0.5 transition-colors ${
+                      hasDoorCharge ? 'bg-[#800020]' : 'bg-stone-300'
+                    }`}
+                  >
+                    <View
+                      className={`h-5 w-5 rounded-full bg-white shadow-xs transition-transform ${
+                        hasDoorCharge ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </View>
+                </Pressable>
+
+                {hasDoorCharge && (
+                  <>
+                    {/* Ticket Price */}
+                    <View className="space-y-1.5">
+                      <Text className="text-xs font-bold text-stone-700">
+                        Door Charge Price per Guest (₱)
+                      </Text>
+                      <View className="relative flex-row items-center">
+                        <Text className="absolute left-3.5 text-stone-500 font-bold text-base z-10">
+                          ₱
+                        </Text>
+                        <TextInput
+                          value={doorChargeAmount}
+                          onChangeText={(val) => {
+                            setDoorChargeAmount(val.replace(/[^0-9.]/g, ''));
+                            if (splitType === 'flat_per_ticket') {
+                              const total = parseFloat(val) || 0;
+                              const artist = parseFloat(artistSplitValue) || 0;
+                              setVenueSplitValue(String(Math.max(0, total - artist)));
+                            }
+                          }}
+                          keyboardType="numeric"
+                          placeholder="300"
+                          className="w-full rounded-xl border border-stone-300 bg-white pl-8 pr-3.5 py-2.5 text-base font-bold text-stone-900 focus:border-[#800020]"
+                          accessibilityLabel="Door charge price per guest"
+                        />
+                      </View>
+
+                      {/* Quick price presets */}
+                      <View className="flex-row items-center gap-2 pt-1">
+                        {['200', '300', '500', '800'].map((preset) => (
+                          <Pressable
+                            key={preset}
+                            onPress={() => {
+                              setDoorChargeAmount(preset);
+                              if (splitType === 'flat_per_ticket') {
+                                const total = parseFloat(preset);
+                                const artist = parseFloat(artistSplitValue) || 0;
+                                setVenueSplitValue(String(Math.max(0, total - artist)));
+                              }
+                            }}
+                            className={`px-2.5 py-1 rounded-lg border text-xs font-semibold ${
+                              doorChargeAmount === preset
+                                ? 'border-[#800020] bg-rose-50 text-[#800020]'
+                                : 'border-stone-200 bg-white text-stone-600'
+                            }`}
+                          >
+                            <Text
+                              className={`text-xs font-bold ${
+                                doorChargeAmount === preset ? 'text-[#800020]' : 'text-stone-600'
+                              }`}
+                            >
+                              ₱{preset}
+                            </Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Revenue Split Model Selector */}
+                    <View className="space-y-1.5 pt-1">
+                      <Text className="text-xs font-bold text-stone-700">
+                        Revenue Split Agreement
+                      </Text>
+                      <View className="flex-row rounded-xl border border-stone-200 bg-stone-100 p-1">
+                        <Pressable
+                          onPress={() => {
+                            setSplitType('percentage');
+                            setArtistSplitValue('50');
+                            setVenueSplitValue('50');
+                          }}
+                          className={`flex-1 py-2 rounded-lg items-center justify-center ${
+                            splitType === 'percentage' ? 'bg-white shadow-xs' : 'bg-transparent'
+                          }`}
+                        >
+                          <Text
+                            className={`text-xs font-bold ${
+                              splitType === 'percentage' ? 'text-[#800020]' : 'text-stone-600'
+                            }`}
+                          >
+                            Percentage Split (%)
+                          </Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => {
+                            setSplitType('flat_per_ticket');
+                            const total = parseFloat(doorChargeAmount) || 300;
+                            const half = Math.round(total / 2);
+                            setArtistSplitValue(String(half));
+                            setVenueSplitValue(String(total - half));
+                          }}
+                          className={`flex-1 py-2 rounded-lg items-center justify-center ${
+                            splitType === 'flat_per_ticket'
+                              ? 'bg-white shadow-xs'
+                              : 'bg-transparent'
+                          }`}
+                        >
+                          <Text
+                            className={`text-xs font-bold ${
+                              splitType === 'flat_per_ticket' ? 'text-[#800020]' : 'text-stone-600'
+                            }`}
+                          >
+                            Flat ₱ per Ticket
+                          </Text>
+                        </Pressable>
+                      </View>
+                    </View>
+
+                    {/* Split Details Inputs */}
+                    {splitType === 'percentage' ? (
+                      <View className="grid grid-cols-2 gap-3 p-3.5 rounded-xl border border-stone-200 bg-stone-50/60">
+                        <View className="space-y-1">
+                          <Text className="text-xs font-bold text-stone-700">
+                            Artist / Performer %
+                          </Text>
+                          <View className="flex-row items-center">
+                            <TextInput
+                              value={artistSplitValue}
+                              onChangeText={(val) => {
+                                const clean = val.replace(/[^0-9]/g, '');
+                                const num = Math.min(100, Math.max(0, parseInt(clean) || 0));
+                                setArtistSplitValue(String(num));
+                                setVenueSplitValue(String(100 - num));
+                              }}
+                              keyboardType="numeric"
+                              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-bold text-stone-900 focus:border-[#800020]"
+                            />
+                            <Text className="ml-2 font-bold text-stone-600">%</Text>
+                          </View>
+                        </View>
+                        <View className="space-y-1">
+                          <Text className="text-xs font-bold text-stone-700">
+                            Monk's Dream Jazz Bar %
+                          </Text>
+                          <View className="flex-row items-center">
+                            <TextInput
+                              value={venueSplitValue}
+                              editable={false}
+                              className="w-full rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-sm font-bold text-stone-500"
+                            />
+                            <Text className="ml-2 font-bold text-stone-600">%</Text>
+                          </View>
+                        </View>
+                      </View>
+                    ) : (
+                      <View className="grid grid-cols-2 gap-3 p-3.5 rounded-xl border border-stone-200 bg-stone-50/60">
+                        <View className="space-y-1">
+                          <Text className="text-xs font-bold text-stone-700">
+                            Artist Share (₱ / head)
+                          </Text>
+                          <View className="flex-row items-center">
+                            <Text className="mr-1.5 font-bold text-stone-600">₱</Text>
+                            <TextInput
+                              value={artistSplitValue}
+                              onChangeText={(val) => {
+                                const clean = val.replace(/[^0-9.]/g, '');
+                                const artistAmt = parseFloat(clean) || 0;
+                                const total = parseFloat(doorChargeAmount) || 0;
+                                setArtistSplitValue(clean);
+                                setVenueSplitValue(String(Math.max(0, total - artistAmt)));
+                              }}
+                              keyboardType="numeric"
+                              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-bold text-stone-900 focus:border-[#800020]"
+                            />
+                          </View>
+                        </View>
+                        <View className="space-y-1">
+                          <Text className="text-xs font-bold text-stone-700">
+                            Venue Share (₱ / head)
+                          </Text>
+                          <View className="flex-row items-center">
+                            <Text className="mr-1.5 font-bold text-stone-600">₱</Text>
+                            <TextInput
+                              value={venueSplitValue}
+                              editable={false}
+                              className="w-full rounded-lg border border-stone-200 bg-stone-100 px-3 py-2 text-sm font-bold text-stone-500"
+                            />
+                          </View>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Pro-forma Payout Simulation */}
+                    {(() => {
+                      const price = parseFloat(doorChargeAmount) || 0;
+                      const simAttendees = 50;
+                      const simGross = price * simAttendees;
+                      const simArtist =
+                        splitType === 'percentage'
+                          ? Math.round(simGross * ((parseFloat(artistSplitValue) || 0) / 100))
+                          : Math.round((parseFloat(artistSplitValue) || 0) * simAttendees);
+                      const simVenue = Math.max(0, simGross - simArtist);
+
+                      return (
+                        <View className="p-3.5 rounded-xl border border-rose-200 bg-rose-50/50 space-y-2">
+                          <View className="flex-row items-center justify-between">
+                            <Text className="text-xs font-bold text-stone-800">
+                              Pro-Forma Settlement (Example: 50 Guests)
+                            </Text>
+                            <Text className="text-xs font-extrabold text-[#800020]">
+                              Gross: ₱{simGross.toLocaleString()}
+                            </Text>
+                          </View>
+                          <View className="flex-row items-center justify-between pt-1 border-t border-rose-200/60">
+                            <Text className="text-xs text-stone-600">
+                              Artist Payout:{' '}
+                              <Text className="font-bold text-stone-900">
+                                ₱{simArtist.toLocaleString()}
+                              </Text>
+                            </Text>
+                            <Text className="text-xs text-stone-600">
+                              Monk's Dream Net:{' '}
+                              <Text className="font-bold text-stone-900">
+                                ₱{simVenue.toLocaleString()}
+                              </Text>
+                            </Text>
+                          </View>
+                        </View>
+                      );
+                    })()}
+
+                    {/* Statutory Policy Box */}
+                    <View className="p-3 rounded-xl bg-stone-100 border border-stone-200">
+                      <Text className="text-[11px] leading-relaxed text-stone-600">
+                        ⚖️ <Text className="font-bold text-stone-800">Venue Accounting Rule:</Text>{' '}
+                        Door Charge is legal admission. Includes 12% VAT ($Gross / 1.12$). Strictly
+                        0% Service Charge and strictly excluded from Senior Citizen/PWD discounts.
+                      </Text>
+                    </View>
+                  </>
+                )}
               </View>
             )}
           </ScrollView>

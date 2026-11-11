@@ -15,6 +15,8 @@ export interface PricingLineItem {
   notes?: string;
   /** Whether this specific item is tagged for Senior Citizen / PWD statutory discount */
   isSeniorDiscounted?: boolean;
+  /** Category slug (e.g. 'door_charge' for admission cover charges) */
+  categorySlug?: string;
 }
 
 export type DiscountType = 'NONE' | 'SENIOR_CITIZEN' | 'PWD' | 'CUSTOM' | 'PROMO';
@@ -92,15 +94,19 @@ export function calculateTabBilling(
     const lineTotal = item.unitPrice * item.quantity;
     grossSubtotal += lineTotal;
 
-    const isItemSenior = isSeniorOrPwd && Boolean(item.isSeniorDiscounted);
+    const isDoorCharge =
+      item.categorySlug === 'door_charge' || item.productName.toLowerCase().includes('door charge');
+
+    // Senior/PWD statutory discount: strictly excluded for Door Charge items per venue policy
+    const isItemSenior = isSeniorOrPwd && Boolean(item.isSeniorDiscounted) && !isDoorCharge;
     if (isItemSenior) {
       seniorItemsGross += lineTotal;
     } else {
       regularItemsGross += lineTotal;
     }
 
-    // Service Charge (Dine-in only)
-    if (isDineIn && serviceChargeEnabled) {
+    // Service Charge (Dine-in only, strictly 0% for Door Charge cover admissions)
+    if (isDineIn && serviceChargeEnabled && !isDoorCharge) {
       let applicableScRate: number;
 
       if (operatingMode === 'EVENT') {

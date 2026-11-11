@@ -324,6 +324,7 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
 
     try {
       await ordersApi.cancelOrderItem(itemId, staffId, reason);
+      realtimeGateway.broadcastPosSync('item_voided');
       return true;
     } catch (err) {
       console.warn('cancelOrderItem network/db error (mutation preserved in UI):', err);

@@ -27,8 +27,8 @@ export const qrPaymentStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   channelPillActive: {
-    backgroundColor: '#800020',
-    borderColor: '#800020',
+    backgroundColor: '#810021',
+    borderColor: '#810021',
   },
   channelPillText: {
     fontSize: 13,
@@ -81,7 +81,7 @@ export const qrPaymentStyles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     fontFamily: 'monospace',
-    color: '#800020',
+    color: '#810021',
   },
   expandQrBtn: {
     marginTop: 4,
@@ -92,14 +92,14 @@ export const qrPaymentStyles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#f43f5e15',
+    backgroundColor: '#81002115',
     borderWidth: 1,
-    borderColor: '#80002030',
+    borderColor: '#81002130',
   },
   expandQrBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#800020',
+    color: '#810021',
   },
   refInputCard: {
     backgroundColor: '#ffffff',

@@ -33,6 +33,8 @@ export async function createOrderWithItems(params: {
     quantity: number;
     unitPrice: number;
     stationTarget: 'bar' | 'kitchen';
+    categorySlug?: string;
+    eventId?: string;
     variantId?: string;
     temperature?: string;
     sizeLabel?: string;
@@ -105,6 +107,7 @@ export async function createOrderWithItems(params: {
         return {
           id: resolvedItemId,
           product_id: resolvedProdId || 'e1111111-0000-0000-0000-000000000001',
+          event_id: isUuid(item.eventId) ? item.eventId : null,
           variant_id: isUuid(item.variantId) ? item.variantId : null,
           temperature: item.temperature || null,
           size_label: item.sizeLabel || null,
@@ -137,10 +140,29 @@ export async function createOrderWithItems(params: {
         ...rest,
         order_id: orderData.id,
       }));
-      const { data: initialData, error: itemsError } = await supabase
+      let { data: initialData, error: itemsError } = await supabase
         .from('order_items')
         .insert(orderItemsToInsert as any)
         .select('*');
+
+      // Schema-cache fallback: If 'event_id' column is not yet in PostgREST schema cache
+      if (
+        itemsError &&
+        (itemsError.code === 'PGRST204' || itemsError.message?.includes('event_id'))
+      ) {
+        console.warn(
+          'order_items.event_id not yet in PostgREST schema cache; retrying insert without event_id.'
+        );
+        const fallbackItems = orderItemsToInsert.map(
+          ({ event_id, ...withoutEvent }) => withoutEvent
+        );
+        const retryRes = await supabase
+          .from('order_items')
+          .insert(fallbackItems as any)
+          .select('*');
+        initialData = retryRes.data;
+        itemsError = retryRes.error;
+      }
 
       if (itemsError) {
         throw itemsError;

@@ -151,6 +151,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         unitPrice: it.unitPrice,
         quantity: it.quantity,
         stationTarget: it.stationTarget || 'kitchen',
+        categorySlug: it.categorySlug,
       }));
 
       const billing = calculateTabBilling(pricingItems, {

@@ -9,6 +9,7 @@ import {
 import { toast } from '@/features/shared/toast/useToastStore';
 import { useAuthStore } from '@/features/auth';
 import { useVenueStore } from '@/features/shared/stores/useVenueStore';
+import { useEventStore } from '@/features/events/application/useEventStore';
 import {
   calculateTabBilling,
   PricingLineItem,
@@ -66,8 +67,24 @@ export function useOrderEntryController({
     let isMounted = true;
     async function loadDbMenuItems() {
       try {
-        const items = await menuApi.getMenuItems();
+        let items = await menuApi.getMenuItems();
         if (isMounted && items.length > 0) {
+          const todayEvent = useEventStore.getState().getTodayActiveEvent();
+          if (todayEvent?.has_door_charge && Number(todayEvent.door_charge_amount) > 0) {
+            items = items.map((item) => {
+              if (
+                item.category === 'door_charge' ||
+                item.name.toLowerCase().includes('door charge')
+              ) {
+                return {
+                  ...item,
+                  price: Number(todayEvent.door_charge_amount),
+                  description: `Admission for "${todayEvent.title}" (₱${Number(todayEvent.door_charge_amount).toFixed(2)} / head)`,
+                };
+              }
+              return item;
+            });
+          }
           setMenuItemsList(items);
         }
       } catch (err) {
@@ -146,6 +163,7 @@ export function useOrderEntryController({
       unitPrice: ci.unitPrice,
       quantity: ci.quantity,
       stationTarget: ci.stationTarget || 'kitchen',
+      categorySlug: ci.categorySlug,
     }));
 
     return calculateTabBilling(pricingItems, {

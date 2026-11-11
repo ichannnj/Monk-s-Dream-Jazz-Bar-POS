@@ -79,7 +79,6 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
           disabled={!isPaymentValid}
           style={[
             styles.confirmPayBtn,
-            isTakeout && { backgroundColor: '#15803d' },
             !isPaymentValid && { opacity: 0.5, backgroundColor: '#9ca3af' },
           ]}
           accessibilityRole="button"
@@ -88,8 +87,8 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
           <CheckCircle2 size={18} color="#ffffff" strokeWidth={2.4} />
           <Text style={styles.confirmPayBtnText}>
             {isTakeout && takeoutCollectAfterPay
-              ? `Confirm Payment & Hand Off (${formatCurrency(grandTotal)})`
-              : `Confirm Payment & Print Receipt (${formatCurrency(grandTotal)})`}
+              ? `Confirm & Hand Off · ${formatCurrency(grandTotal)}`
+              : `Confirm & Settle · ${formatCurrency(grandTotal)}`}
           </Text>
         </Pressable>
       </View>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Pressable, TextInput } from 'react-native';
-import { Search, X, Coffee, Wine, Pizza, UtensilsCrossed, Cake } from 'lucide-react-native';
+import { Search, X, Coffee, Wine, Pizza, UtensilsCrossed, Cake, Ticket } from 'lucide-react-native';
 import { MenuCategory } from '../../../../types/floor';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
 import { styles } from './OrderEntryModal.styles';
@@ -18,6 +18,7 @@ export const CATEGORIES: { id: MenuCategory; label: string; Icon: any }[] = [
   { id: 'mains_pasta', label: 'Pasta & Mains', Icon: Pizza },
   { id: 'small_plates', label: 'Small Bites', Icon: UtensilsCrossed },
   { id: 'desserts', label: 'Desserts', Icon: Cake },
+  { id: 'door_charge', label: 'Door Charge', Icon: Ticket },
 ];
 
 export const OrderCategoryBar: React.FC<OrderCategoryBarProps> = ({

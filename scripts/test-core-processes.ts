@@ -295,6 +295,63 @@ runTest('Corkage Fee: Adds designated corkage amount to final amount due', () =>
   assert.equal(res.totalAmountDue, 660.0);
 });
 
+runTest(
+  'Door Charge Invariant: 12% VAT inclusive, 0% SC even in Event Mode, strictly no Senior discount',
+  () => {
+    const items: PricingLineItem[] = [
+      {
+        id: 'dc-1',
+        productName: 'Event Door Charge',
+        unitPrice: 500,
+        quantity: 1,
+        stationTarget: 'bar',
+        categorySlug: 'door_charge',
+        isSeniorDiscounted: true, // Attempted senior discount
+      },
+      {
+        id: 'food-1',
+        productName: 'Pasta',
+        unitPrice: 400,
+        quantity: 1,
+        stationTarget: 'kitchen',
+        categorySlug: 'mains',
+        isSeniorDiscounted: true, // Legitimate senior food item
+      },
+    ];
+
+    const res = calculateTabBilling(items, {
+      operatingMode: 'EVENT',
+      orderType: 'DINE_IN',
+      eventServiceChargeRate: 10,
+      discountType: 'SENIOR_CITIZEN',
+      seniorPwdId: 'OSCA-999',
+      seniorPwdName: 'Thelonious Monk',
+    });
+
+    // Gross = 500 (Door) + 400 (Food) = 900
+    assert.equal(res.grossSubtotal, 900.0);
+
+    // Door Charge strictly incurs 0% SC. Food incurs 10% SC = 40.00
+    assert.equal(res.serviceCharge, 40.0);
+
+    // Door Charge is strictly exempt from Senior/PWD discount:
+    // Only Pasta gets senior discount: 400 / 1.12 = 357.14 base, 20% disc = 71.43
+    assert.equal(res.vatExemptSales, 357.14);
+    assert.equal(res.seniorDiscountAmount, 71.43);
+
+    // Door Charge remains in VATable sales: 500 / 1.12 = 446.43, VAT = 53.57
+    assert.equal(res.vatableSales, 446.43);
+    assert.equal(res.vatAmount, 53.57);
+
+    // Total Due:
+    // Door Charge: 500
+    // Pasta (Senior Net): 357.14 - 71.43 = 285.71
+    // SC: 40.00
+    // Sum = 500 + 285.71 + 40 = 825.71
+    assert.equal(res.totalAmountDue, 825.71);
+  }
+);
+
 // -------------------------------------------------------------
 // CORE PROCESS 3: RECEIPT GENERATION & ESC/POS PRINTING ENGINE
 // -------------------------------------------------------------

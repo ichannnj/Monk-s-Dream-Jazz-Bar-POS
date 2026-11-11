@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
+import { X } from 'lucide-react-native';
 import { BarItemLine } from '../types';
 import { styles } from './BaristaTicketCard.styles';
 
@@ -7,12 +8,14 @@ export interface BaristaTicketItemRowProps {
   item: BarItemLine;
   ticketId: string;
   onToggleItem?: (ticketId: string, itemId: string) => void;
+  onVoidItem?: (item: BarItemLine) => void;
 }
 
 export const BaristaTicketItemRow: React.FC<BaristaTicketItemRowProps> = ({
   item,
   ticketId,
   onToggleItem,
+  onVoidItem,
 }) => {
   const isVoid = item.isVoided;
   const is86 = item.is86;
@@ -45,6 +48,19 @@ export const BaristaTicketItemRow: React.FC<BaristaTicketItemRowProps> = ({
           <View style={styles.itemVariantBadgeCold}>
             <Text style={styles.itemVariantTextCold}>❄️ ICED</Text>
           </View>
+        ) : null}
+
+        {!isVoid && onVoidItem ? (
+          <Pressable
+            onPress={(e) => {
+              (e as any)?.stopPropagation?.();
+              onVoidItem(item);
+            }}
+            accessibilityLabel={`Void ${item.productName}`}
+            style={styles.itemVoidActionBtn}
+          >
+            <X size={13} color="#dc2626" strokeWidth={2.5} />
+          </Pressable>
         ) : null}
       </Pressable>
 

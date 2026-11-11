@@ -21,7 +21,9 @@ export const cartSidebarStyles = StyleSheet.create({
     color: '#1a1a1e',
   },
   itemCountBadge: {
-    backgroundColor: '#fceeed',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 8,
@@ -29,7 +31,7 @@ export const cartSidebarStyles = StyleSheet.create({
   itemCountText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#832238',
+    color: '#810021',
     fontVariant: ['tabular-nums'],
   },
   cartScroll: {
@@ -84,8 +86,8 @@ export const cartSidebarStyles = StyleSheet.create({
     color: '#1a1a1e',
   },
   cartItemModText: {
-    fontSize: 16,
-    color: '#059669',
+    fontSize: 15,
+    color: '#78716C',
     fontWeight: '600',
     marginTop: 2,
   },
@@ -135,7 +137,9 @@ export const cartSidebarStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff1f2',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     padding: 14,
     borderRadius: 14,
     marginVertical: 8,
@@ -148,11 +152,11 @@ export const cartSidebarStyles = StyleSheet.create({
   corkageTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#832238',
+    color: '#810021',
   },
   corkageSub: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: '#78716C',
   },
   pricingSummary: {
     borderTopWidth: 1,
@@ -191,16 +195,16 @@ export const cartSidebarStyles = StyleSheet.create({
   grandTotalValue: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#832238',
+    color: '#810021',
     fontVariant: ['tabular-nums'],
   },
   sendOrderBtn: {
-    backgroundColor: '#832238',
+    backgroundColor: '#810021',
     paddingVertical: 14,
     borderRadius: 14,
     alignItems: 'center',
     marginTop: 14,
-    shadowColor: '#832238',
+    shadowColor: '#810021',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.25,
     shadowRadius: 8,

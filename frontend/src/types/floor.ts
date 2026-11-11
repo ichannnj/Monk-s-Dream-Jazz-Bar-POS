@@ -84,6 +84,8 @@ export interface OrderLineItem {
   voidReason?: string;
   createdAt?: string;
   variantSelections?: OrderItemVariantSelection[];
+  categorySlug?: string;
+  eventId?: string;
 }
 
 export interface CustomerTab {
@@ -128,7 +130,7 @@ export interface TableItem {
 }
 
 export type MenuCategory =
-  'coffee' | 'cocktails_wine' | 'mains_pasta' | 'small_plates' | 'desserts';
+  'coffee' | 'cocktails_wine' | 'mains_pasta' | 'small_plates' | 'desserts' | 'door_charge';
 
 export interface MenuItem {
   id: string;

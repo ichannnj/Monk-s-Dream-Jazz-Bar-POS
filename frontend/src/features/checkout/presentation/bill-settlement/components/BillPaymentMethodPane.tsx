@@ -63,25 +63,21 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
     {
       value: 'cash',
       label: 'Cash Tender',
-      description: 'Physical bills & coins with change calculation',
       icon: Banknote,
     },
     {
       value: 'card',
-      label: 'Credit / Debit Card (Terminal)',
-      description: 'External bank POS card terminal settlement',
+      label: 'Card Terminal',
       icon: CreditCard,
     },
     {
       value: 'digital_wallet',
-      label: 'GCash / Maya QR Wallet',
-      description: 'Digital QR wallet payment confirmation',
+      label: 'QR Wallet (GCash/Maya)',
       icon: QrCode,
     },
     {
       value: 'comp',
-      label: 'House Comp (100% Complimentary)',
-      description: 'Musician or managerial complimentary check',
+      label: 'House Comp',
       icon: Gift,
     },
   ];
@@ -172,7 +168,7 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
         <View style={styles.qrSection}>
           {isLoadingQrChannels ? (
             <View style={{ paddingVertical: 12, alignItems: 'center' }}>
-              <ActivityIndicator size="small" color="#800020" />
+              <ActivityIndicator size="small" color="#810021" />
             </View>
           ) : qrChannels.length > 0 ? (
             <>
@@ -218,8 +214,8 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
                       accessibilityRole="button"
                       accessibilityLabel="Show QR full screen for customer to scan"
                     >
-                      <Maximize2 size={12} color="#800020" />
-                      <Text style={styles.expandQrBtnText}>Show to Guest (Full Screen)</Text>
+                      <Maximize2 size={12} color="#810021" />
+                      <Text style={styles.expandQrBtnText}>Show QR (Full Screen)</Text>
                     </Pressable>
                   </View>
                 </View>
@@ -294,9 +290,7 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
           {shouldPrintReceipt ? <CheckCircle2 size={14} color="#ffffff" /> : null}
         </View>
         <Printer size={16} color="#4b5563" />
-        <Text style={styles.printCheckboxText}>
-          Send Print Trigger to USB Printer PC (ESC/POS Receipt)
-        </Text>
+        <Text style={styles.printCheckboxText}>Print Receipt (ESC/POS)</Text>
       </Pressable>
     </>
   );

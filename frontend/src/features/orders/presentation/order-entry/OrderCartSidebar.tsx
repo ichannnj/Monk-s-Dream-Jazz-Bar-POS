@@ -268,8 +268,8 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
 
         {hasCorkage ? (
           <View style={styles.summaryLine}>
-            <Text style={[styles.summaryLabel, { color: '#832238' }]}>Outside Corkage (20%):</Text>
-            <Text style={[styles.summaryValue, { color: '#832238' }]}>
+            <Text style={[styles.summaryLabel, { color: '#810021' }]}>Outside Corkage (20%):</Text>
+            <Text style={[styles.summaryValue, { color: '#810021' }]}>
               +{formatCurrency(corkageAmount)}
             </Text>
           </View>

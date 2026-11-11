@@ -47,8 +47,8 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
       <View style={styles.discountTitleRow}>
         <Text style={styles.discountTitle}>Discounts & Privileges</Text>
         {totalDiscountAmount > 0 ? (
-          <View className="bg-rose-100 px-2 py-0.5 rounded-full">
-            <Text className="text-xs font-black text-rose-700">
+          <View className="bg-[#810021] px-2.5 py-0.5 rounded-full">
+            <Text className="text-xs font-black text-white">
               -{formatCurrency(totalDiscountAmount)} OFF
             </Text>
           </View>
@@ -121,7 +121,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
       {(discountType === 'SENIOR_CITIZEN' || discountType === 'PWD') && (
         <View style={styles.seniorFieldsBox}>
           <View className="flex-row items-center gap-1.5 mb-1">
-            <ShieldCheck size={16} color="#c2410c" />
+            <ShieldCheck size={16} color="#810021" />
             <Text style={styles.seniorInputLabel}>
               {discountType === 'SENIOR_CITIZEN'
                 ? 'Senior Citizen OSCA Details'
@@ -147,11 +147,11 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                   <Pressable
                     onPress={() => setSeniorPwdId('')}
                     hitSlop={8}
-                    className="absolute right-2.5 h-7 w-7 items-center justify-center rounded-full active:bg-orange-200"
+                    className="absolute right-2.5 h-7 w-7 items-center justify-center rounded-full active:bg-stone-200"
                     accessibilityRole="button"
                     accessibilityLabel="Clear ID"
                   >
-                    <X size={14} color="#9a3412" />
+                    <X size={14} color="#1C1917" />
                   </Pressable>
                 )}
               </View>
@@ -173,11 +173,11 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                   <Pressable
                     onPress={() => setSeniorPwdName('')}
                     hitSlop={8}
-                    className="absolute right-2.5 h-7 w-7 items-center justify-center rounded-full active:bg-orange-200"
+                    className="absolute right-2.5 h-7 w-7 items-center justify-center rounded-full active:bg-stone-200"
                     accessibilityRole="button"
                     accessibilityLabel="Clear Cardholder Name"
                   >
-                    <X size={14} color="#9a3412" />
+                    <X size={14} color="#1C1917" />
                   </Pressable>
                 )}
               </View>
@@ -186,7 +186,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
 
           {/* Scope Selector: All Items on this Tab vs Select Senior Items */}
           {rawItems.length > 1 && (
-            <View className="mt-2 pt-2 border-t border-orange-200">
+            <View className="mt-2 pt-2 border-t border-stone-200">
               <Text className="text-[11px] font-extrabold text-gray-700 uppercase mb-1.5">
                 Items Entitled to 20% Discount &amp; VAT Exemption:
               </Text>
@@ -195,8 +195,8 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                   onPress={() => setSeniorItemSelectionMode('all')}
                   className={`flex-1 py-1.5 px-2.5 rounded-lg border items-center ${
                     seniorItemSelectionMode === 'all'
-                      ? 'bg-amber-900 border-amber-900'
-                      : 'bg-white border-gray-300'
+                      ? 'bg-[#810021] border-[#810021]'
+                      : 'bg-white border-stone-200'
                   }`}
                 >
                   <Text
@@ -212,8 +212,8 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                   onPress={() => setSeniorItemSelectionMode('select')}
                   className={`flex-1 py-1.5 px-2.5 rounded-lg border items-center ${
                     seniorItemSelectionMode === 'select'
-                      ? 'bg-amber-900 border-amber-900'
-                      : 'bg-white border-gray-300'
+                      ? 'bg-[#810021] border-[#810021]'
+                      : 'bg-white border-stone-200'
                   }`}
                 >
                   <Text
@@ -246,8 +246,8 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                           <View
                             className={`w-4 h-4 rounded border items-center justify-center ${
                               isSelected
-                                ? 'bg-orange-600 border-orange-600'
-                                : 'border-gray-400 bg-white'
+                                ? 'bg-[#810021] border-[#810021]'
+                                : 'border-stone-400 bg-white'
                             }`}
                           >
                             {isSelected && <CheckCircle2 size={12} color="#ffffff" />}
@@ -257,7 +257,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                               {item.quantity}x {item.productName}
                             </Text>
                             {item.modifiers && item.modifiers.length > 0 ? (
-                              <Text className="text-[10px] text-wine-900 font-semibold mt-0.5">
+                              <Text className="text-[10px] text-[#810021] font-semibold mt-0.5">
                                 + {item.modifiers.join(', ')}
                               </Text>
                             ) : null}
@@ -278,7 +278,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
 
       {/* Custom Promo Discount Input */}
       {discountType === 'PROMO' && (
-        <View className="bg-white rounded-xl p-3 border border-purple-200 gap-2.5">
+        <View className="bg-white rounded-xl p-3 border border-stone-200 gap-2.5">
           <Text className="text-xs font-bold text-gray-700 uppercase tracking-wider">
             Custom / Promo Discount Value
           </Text>
@@ -288,7 +288,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
             <Pressable
               onPress={() => setCustomDiscountMode('percent')}
               className={`flex-1 py-2 rounded-md items-center justify-center ${
-                customDiscountMode === 'percent' ? 'bg-[#641b2a] shadow-sm' : 'bg-transparent'
+                customDiscountMode === 'percent' ? 'bg-[#810021] shadow-sm' : 'bg-transparent'
               }`}
             >
               <Text
@@ -303,7 +303,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
             <Pressable
               onPress={() => setCustomDiscountMode('fixed')}
               className={`flex-1 py-2 rounded-md items-center justify-center ${
-                customDiscountMode === 'fixed' ? 'bg-[#641b2a] shadow-sm' : 'bg-transparent'
+                customDiscountMode === 'fixed' ? 'bg-[#810021] shadow-sm' : 'bg-transparent'
               }`}
             >
               <Text

@@ -1,5 +1,6 @@
 import { TableItem, OrderLineItem, TakeoutOrder, OnlineDeliveryOrder } from '@/types/floor';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { useEventStore } from '@/features/events';
 import { OrderEntryContext } from '../domain/workflow.types';
 
 interface UseOrderEntryFlowProps {
@@ -51,7 +52,12 @@ export function useOrderEntryFlow({
   setIsOrderEntryOpen,
 }: UseOrderEntryFlowProps) {
   // Quick Action Flow: Open Tab
-  const handleConfirmOpenTab = (tableId: string, guestName: string, guestCount: number) => {
+  const handleConfirmOpenTab = (
+    tableId: string,
+    guestName: string,
+    guestCount: number,
+    includeDoorCharge = false
+  ) => {
     try {
       const { tabIndex } = openTableTab(tableId, guestName, guestCount);
       const targetTable = tables.find((t) => t.id === tableId);
@@ -65,13 +71,31 @@ export function useOrderEntryFlow({
         setSelectedTable(targetTable);
       }
 
+      const initialItems: OrderLineItem[] = [];
+      if (includeDoorCharge) {
+        const todayEvent = useEventStore.getState().getTodayActiveEvent();
+        if (todayEvent?.has_door_charge && (todayEvent.door_charge_amount || 0) > 0) {
+          initialItems.push({
+            id: `dc-${Date.now()}`,
+            productId: 'prod-door-charge',
+            productName: 'Event Door Charge',
+            unitPrice: todayEvent.door_charge_amount || 0,
+            quantity: guestCount > 0 ? guestCount : 1,
+            categorySlug: 'door_charge',
+            eventId: todayEvent.id,
+            stationTarget: 'bar',
+            status: 'pending',
+          });
+        }
+      }
+
       setOrderEntryContext({
         type: 'dine_in',
         title: `Table ${targetTable?.code || ''} • Tab: "${guestName}" • Round 1`,
         tableId: tableId,
         tabIndex: tabIndex,
         roundNumber: 1,
-        initialItems: [],
+        initialItems,
         previousTabItems: [],
         hasExistingCorkage: false,
       });

@@ -4,13 +4,19 @@ import { X, Users, Utensils, Check, Plus } from 'lucide-react-native';
 import { TableItem } from '../../../types/floor';
 import { toast } from '../../shared/toast/useToastStore';
 import { useVirtualKeyboard } from '../../shared';
+import { useEventStore } from '@/features/events';
 
 interface OpenTableTabModalProps {
   visible: boolean;
   tables: TableItem[];
   preselectedTable?: TableItem | null;
   onClose: () => void;
-  onConfirmOpenTab: (tableId: string, guestName: string, guestCount: number) => void;
+  onConfirmOpenTab: (
+    tableId: string,
+    guestName: string,
+    guestCount: number,
+    includeDoorCharge?: boolean
+  ) => void;
 }
 
 export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
@@ -24,6 +30,8 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
   const [guestName, setGuestName] = useState('');
   const [guestCount, setGuestCount] = useState(2);
   const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
+  const todayEvent = useEventStore((s) => s.getTodayActiveEvent());
+  const [includeDoorCharge, setIncludeDoorCharge] = useState(false);
 
   const handleBackdropPress = () => {
     if (isKeyboardOpen) {
@@ -38,8 +46,11 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
       setSelectedTableId('');
       setGuestName('');
       setGuestCount(2);
+      setIncludeDoorCharge(
+        Boolean(todayEvent?.has_door_charge && (todayEvent?.door_charge_amount || 0) > 0)
+      );
     }
-  }, [visible]);
+  }, [visible, todayEvent]);
 
   const currentTable = tables.find((t) => t.id === selectedTableId);
   const isCurrentEmpty = !currentTable || currentTable.status === 'empty';
@@ -60,7 +71,7 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
 
     try {
       const finalName = guestName.trim() || `Guest ${activeTabsCount + 1}`;
-      onConfirmOpenTab(selectedTableId, finalName, guestCount);
+      onConfirmOpenTab(selectedTableId, finalName, guestCount, includeDoorCharge);
       setGuestName('');
       setGuestCount(2);
       onClose();
@@ -215,6 +226,36 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
             </View>
           </View>
 
+          {/* Door Charge Quick Toggle */}
+          {todayEvent?.has_door_charge && (todayEvent?.door_charge_amount || 0) > 0 && (
+            <Pressable
+              onPress={() => setIncludeDoorCharge(!includeDoorCharge)}
+              style={({ pressed }) => [
+                styles.doorChargeRow,
+                includeDoorCharge && styles.doorChargeRowActive,
+                pressed && { opacity: 0.8 },
+              ]}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: includeDoorCharge }}
+            >
+              <View
+                style={[styles.doorChargeCheck, includeDoorCharge && styles.doorChargeCheckActive]}
+              >
+                {includeDoorCharge && <Check size={14} color="#ffffff" strokeWidth={3} />}
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.doorChargeTitle}>
+                  Add Door Charge: ₱{(todayEvent.door_charge_amount || 0).toLocaleString()} ×{' '}
+                  {guestCount} = ₱
+                  {((todayEvent.door_charge_amount || 0) * guestCount).toLocaleString()}
+                </Text>
+                <Text style={styles.doorChargeSubtitle}>
+                  Tonight: {todayEvent.title || 'Live Jazz Event'}
+                </Text>
+              </View>
+            </Pressable>
+          )}
+
           {/* Action Buttons */}
           <View style={styles.actionRow}>
             <Pressable onPress={onClose} style={styles.cancelBtn}>
@@ -315,8 +356,8 @@ const styles = StyleSheet.create({
     borderColor: '#fecdd3',
   },
   tableChipSelected: {
-    borderColor: '#641b2a',
-    backgroundColor: '#641b2a',
+    borderColor: '#810021',
+    backgroundColor: '#810021',
   },
   tableChipText: {
     fontSize: 16,
@@ -359,12 +400,15 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1.5,
+    borderColor: '#e7e5e4',
     alignItems: 'center',
     justifyContent: 'center',
   },
   guestCountBtnActive: {
-    backgroundColor: '#641b2a',
+    backgroundColor: '#810021',
+    borderColor: '#810021',
   },
   guestCountText: {
     fontSize: 16,
@@ -384,7 +428,9 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1.5,
+    borderColor: '#e7e5e4',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -398,7 +444,7 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#641b2a',
+    backgroundColor: '#810021',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -411,5 +457,44 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
     color: '#ffffff',
+  },
+  doorChargeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1.5,
+    borderColor: '#e7e5e4',
+    marginBottom: 16,
+    gap: 12,
+  },
+  doorChargeRowActive: {
+    backgroundColor: '#fdf2f4',
+    borderColor: '#810021',
+  },
+  doorChargeCheck: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#9ca3af',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ffffff',
+  },
+  doorChargeCheckActive: {
+    backgroundColor: '#810021',
+    borderColor: '#810021',
+  },
+  doorChargeTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  doorChargeSubtitle: {
+    fontSize: 11,
+    color: '#6b7280',
+    marginTop: 2,
   },
 });

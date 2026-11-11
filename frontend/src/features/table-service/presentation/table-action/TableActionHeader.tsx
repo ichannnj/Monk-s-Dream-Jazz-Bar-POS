@@ -12,14 +12,14 @@ export const TableActionHeader: React.FC<TableActionHeaderProps> = ({ table, onC
   return (
     <View className="flex-row justify-between items-center mb-4">
       <View className="flex-row items-center gap-3">
-        <View className="w-12 h-12 rounded-2xl bg-wine-800 items-center justify-center shadow-sm">
+        <View className="w-12 h-12 rounded-2xl bg-[#810021] items-center justify-center shadow-xs">
           <Text className="text-white text-xl font-black">{table.code}</Text>
         </View>
         <View>
-          <Text className="text-xl font-extrabold text-gray-900 tracking-tight">
-            Table {table.code} · Active Session
+          <Text className="text-xl font-extrabold text-stone-900 tracking-tight">
+            Table {table.code}
           </Text>
-          <Text className="text-base text-gray-500 font-medium">
+          <Text className="text-sm text-stone-500 font-medium">
             {table.guests > 0 ? `${table.guests} Guests · ` : ''}Status:{' '}
             {table.status.toUpperCase()}
           </Text>
@@ -28,11 +28,11 @@ export const TableActionHeader: React.FC<TableActionHeaderProps> = ({ table, onC
 
       <Pressable
         onPress={onClose}
-        className="min-w-[48px] min-h-[48px] rounded-xl bg-gray-100 items-center justify-center active:bg-gray-200"
+        className="min-w-[44px] min-h-[44px] rounded-xl bg-[#FAF8F5] border border-stone-200 items-center justify-center active:bg-stone-100"
         accessibilityRole="button"
         accessibilityLabel="Close modal"
       >
-        <X size={20} color="#6b7280" />
+        <X size={20} color="#1c1917" />
       </Pressable>
     </View>
   );

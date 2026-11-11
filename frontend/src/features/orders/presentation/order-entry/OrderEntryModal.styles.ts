@@ -12,7 +12,7 @@ const baseStyles = StyleSheet.create({
     padding: 16,
   },
   fullscreenModal: {
-    backgroundColor: '#f6f0ed',
+    backgroundColor: '#FAF8F5',
     borderRadius: 28,
     width: '100%',
     height: '95%',
@@ -40,7 +40,7 @@ const baseStyles = StyleSheet.create({
     gap: 14,
   },
   activeDestinationBadge: {
-    backgroundColor: '#641b2a',
+    backgroundColor: '#810021',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 14,
@@ -71,7 +71,7 @@ const baseStyles = StyleSheet.create({
     flex: 1.6,
     borderRightWidth: 1,
     borderRightColor: '#e5e7eb',
-    backgroundColor: '#fcfaf9',
+    backgroundColor: '#FAF8F5',
   },
   catalogHeader: {
     paddingHorizontal: 20,
@@ -96,7 +96,7 @@ const baseStyles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
   },
   catPillActive: {
-    backgroundColor: '#641b2a',
+    backgroundColor: '#810021',
   },
   catPillText: {
     fontSize: 14,

@@ -65,6 +65,7 @@ export function computePricingLineItems(
       quantity: item.quantity,
       stationTarget: item.stationTarget || 'bar',
       isSeniorDiscounted: isItemSenior,
+      categorySlug: item.categorySlug,
     };
   });
 }

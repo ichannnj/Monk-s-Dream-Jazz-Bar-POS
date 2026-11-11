@@ -1,15 +1,6 @@
 import React, { useMemo, useState, useRef } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  TextInput,
-  StyleSheet,
-  ScrollView,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-} from 'react-native';
-import { X, CheckCircle2, Flame, Snowflake, ChevronDown, Check } from 'lucide-react-native';
+import { View, Text, Pressable, TextInput, StyleSheet, ScrollView } from 'react-native';
+import { X, CheckCircle2, Flame, Snowflake, Check } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { useVirtualKeyboard } from '../../../shared';
 import {
@@ -114,7 +105,6 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
 
   const totalEffectivePrice = basePrice + optionsDelta + modifiersDelta;
 
-  const [canScrollDown, setCanScrollDown] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
 
@@ -123,26 +113,6 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
       dismissKeyboard();
     }
     onClose();
-  };
-
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const { layoutMeasurement, contentOffset, contentSize } = event.nativeEvent;
-    const paddingToBottom = 15;
-    const isCloseToBottom =
-      layoutMeasurement.height + contentOffset.y >= contentSize.height - paddingToBottom;
-    setCanScrollDown(!isCloseToBottom);
-  };
-
-  const handleContentSizeChange = (_contentWidth: number, contentHeight: number) => {
-    if (contentHeight > 340) {
-      setCanScrollDown(true);
-    } else {
-      setCanScrollDown(false);
-    }
-  };
-
-  const handleScrollDownPress = () => {
-    scrollViewRef.current?.scrollTo({ y: 180, animated: true });
   };
 
   // Required group validation
@@ -187,12 +157,12 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
               <View style={styles.variantBadgeHeader}>
                 <Text style={styles.customizerSub}>Base: {formatCurrency(basePrice)}</Text>
                 {optionsDelta > 0 ? (
-                  <Text style={[styles.customizerSub, { color: '#b45309', fontWeight: '700' }]}>
+                  <Text style={[styles.customizerSub, { color: '#78716C', fontWeight: '700' }]}>
                     • Flavor: +{formatCurrency(optionsDelta)}
                   </Text>
                 ) : null}
                 {modifiersDelta > 0 ? (
-                  <Text style={[styles.customizerSub, { color: '#800020', fontWeight: '700' }]}>
+                  <Text style={[styles.customizerSub, { color: '#810021', fontWeight: '700' }]}>
                     • Add-ons ({selectedModifiers.length}): +{formatCurrency(modifiersDelta)}
                   </Text>
                 ) : null}
@@ -229,14 +199,11 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           </View>
         </View>
 
-        {/* Scrollable Body with Scroll Indicator */}
+        {/* Scrollable Body */}
         <ScrollView
           ref={scrollViewRef}
           showsVerticalScrollIndicator={true}
           bounces={true}
-          onScroll={handleScroll}
-          onContentSizeChange={handleContentSizeChange}
-          scrollEventThrottle={16}
           contentContainerStyle={[
             styles.customizerScrollContent,
             isKeyboardOpen && { paddingBottom: 64 },
@@ -352,7 +319,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                   >
                     <Flame
                       size={18}
-                      color={selectedTemperature === 'HOT' ? '#ea580c' : '#6b7280'}
+                      color={selectedTemperature === 'HOT' ? '#810021' : '#6b7280'}
                     />
                     <Text
                       style={[
@@ -375,7 +342,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                   >
                     <Snowflake
                       size={18}
-                      color={selectedTemperature === 'COLD' ? '#0284c7' : '#6b7280'}
+                      color={selectedTemperature === 'COLD' ? '#810021' : '#6b7280'}
                     />
                     <Text
                       style={[
@@ -531,22 +498,8 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           />
         </ScrollView>
 
-        {/* Fixed Footer with Scroll Down Affordance & Confirm Button */}
+        {/* Fixed Footer with Confirm Button */}
         <View style={styles.customizerFooterWrapper}>
-          {canScrollDown && (
-            <Pressable
-              onPress={handleScrollDownPress}
-              style={styles.scrollAffordanceHint}
-              accessibilityRole="button"
-              accessibilityLabel="Scroll down for more options"
-            >
-              <Text style={styles.scrollAffordanceText}>
-                Scroll down for instructions & add-ons
-              </Text>
-              <ChevronDown size={14} color="#800020" strokeWidth={2.5} />
-            </Pressable>
-          )}
-
           {missingRequiredGroup ? (
             <View
               style={{ backgroundColor: '#fee2e2', padding: 8, borderRadius: 8, marginBottom: 8 }}

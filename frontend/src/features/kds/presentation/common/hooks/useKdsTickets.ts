@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useOrderStore } from '../../../../orders/application/useOrderStore';
+import { useAuthStore } from '@/features/auth/application/useAuthStore';
 import { toast } from '../../../../shared/toast/useToastStore';
 import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 import { BarTicket, StockInventoryItem } from '../../barista/types';
@@ -25,18 +26,52 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
     markRoundServed,
     markTakeoutServed,
     markOnlineServed,
+    voidOrderItem,
   } = useOrderStore();
+  const currentUser = useAuthStore((s) => s.currentUser);
+
+  const [dismissedTicketIds, setDismissedTicketIds] = useState<Set<string>>(new Set());
 
   const allTickets: BarTicket[] = useMemo(() => {
-    const dineInTickets = mapDineInTableTickets(tables, stationTarget, inventory);
-    const takeoutTicketList = mapTakeoutTickets(takeoutOrders, stationTarget);
-    const onlineTicketList = mapOnlineDeliveryTickets(onlineOrders, stationTarget);
+    const dineInTickets = mapDineInTableTickets(
+      tables,
+      stationTarget,
+      inventory,
+      dismissedTicketIds
+    );
+    const takeoutTicketList = mapTakeoutTickets(takeoutOrders, stationTarget, dismissedTicketIds);
+    const onlineTicketList = mapOnlineDeliveryTickets(
+      onlineOrders,
+      stationTarget,
+      dismissedTicketIds
+    );
 
     const combined = [...dineInTickets, ...takeoutTicketList, ...onlineTicketList];
     return combined.sort((a, b) => (b.minutesElapsed || 0) - (a.minutesElapsed || 0));
-  }, [tables, takeoutOrders, onlineOrders, inventory, stationTarget]);
+  }, [tables, takeoutOrders, onlineOrders, inventory, stationTarget, dismissedTicketIds]);
 
-  const newTickets = useMemo(() => allTickets.filter((t) => t.stage === 'new'), [allTickets]);
+  const cancelledTickets = useMemo(
+    () => allTickets.filter((t) => t.stage === 'cancelled'),
+    [allTickets]
+  );
+
+  // Auto-dismiss cancelled tickets after 30 seconds
+  useEffect(() => {
+    if (cancelledTickets.length === 0) return;
+    const timers = cancelledTickets.map((t) => {
+      return setTimeout(() => {
+        setDismissedTicketIds((prev) => new Set([...prev, t.id]));
+      }, 30000);
+    });
+    return () => {
+      timers.forEach((timer) => clearTimeout(timer));
+    };
+  }, [cancelledTickets]);
+
+  const newTickets = useMemo(
+    () => [...cancelledTickets, ...allTickets.filter((t) => t.stage === 'new')],
+    [allTickets, cancelledTickets]
+  );
   const preparingTickets = useMemo(
     () => allTickets.filter((t) => t.stage === 'preparing'),
     [allTickets]
@@ -163,16 +198,45 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
     }
   };
 
+  const handleDismissTicket = (ticket: BarTicket) => {
+    setDismissedTicketIds((prev) => new Set([...prev, ticket.id]));
+  };
+
+  const handleVoidItem = async (
+    itemId: string,
+    reason: string,
+    tableId?: string,
+    tabIndex?: number
+  ) => {
+    const staffId = currentUser?.id || '11111111-1111-1111-1111-111111111111';
+    const success = await voidOrderItem(itemId, staffId, reason, tableId, tabIndex);
+    return success;
+  };
+
+  const handleVoidTicket = async (ticket: BarTicket, reason: string) => {
+    const staffId = currentUser?.id || '11111111-1111-1111-1111-111111111111';
+    const activeItems = ticket.items.filter((i) => i.status !== 'cancelled');
+    for (const item of activeItems) {
+      await voidOrderItem(item.id, staffId, reason, ticket.tableId, ticket.tabIndex);
+    }
+    toast.success(`Cancelled order ${ticket.orderNumber}`);
+    return true;
+  };
+
   return {
     allTickets,
     newTickets,
     preparingTickets,
     readyTickets,
+    cancelledTickets,
     activeTicketsCount,
     handleStartTicket,
     handleReadyTicket,
     handleDismissReadyTicket,
+    handleDismissTicket,
     handleRecallTicket,
     handleToggleItem,
+    handleVoidItem,
+    handleVoidTicket,
   };
 }

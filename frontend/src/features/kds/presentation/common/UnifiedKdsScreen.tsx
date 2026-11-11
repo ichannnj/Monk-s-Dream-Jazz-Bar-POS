@@ -5,7 +5,9 @@ import { toast } from '../../../shared/toast/useToastStore';
 import { Sidebar } from '../../../shared/navigation/Sidebar';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { BaristaKanbanColumn } from '../barista/components/BaristaKanbanColumn';
+import { BarTicket, BarItemLine } from '../barista/types';
 import { KdsModals } from './components/KdsModals';
+import { KdsVoidModal } from './components/KdsVoidModal';
 import { KdsToolbar } from './components/KdsToolbar';
 import { SharedChatView } from '../../../chat/presentation/SharedChatView';
 import { useChatStore } from '../../../chat';
@@ -83,15 +85,36 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
     newTickets,
     preparingTickets,
     readyTickets,
+    cancelledTickets,
     activeTicketsCount,
     handleStartTicket,
     handleReadyTicket,
     handleDismissReadyTicket,
+    handleDismissTicket,
     handleRecallTicket,
     handleToggleItem,
+    handleVoidItem,
+    handleVoidTicket,
   } = useKdsTickets({ stationTarget, inventory });
 
-  useKdsArrivals({ newTickets, audioChimes, stationName });
+  useKdsArrivals({ newTickets, cancelledTickets, audioChimes, stationName });
+
+  const [voidModalTicket, setVoidModalTicket] = React.useState<BarTicket | null>(null);
+  const [voidModalItem, setVoidModalItem] = React.useState<BarItemLine | null>(null);
+  const [isVoidModalOpen, setIsVoidModalOpen] = React.useState(false);
+
+  const handleConfirmVoid = async (reason: string) => {
+    if (voidModalItem) {
+      await handleVoidItem(
+        voidModalItem.id,
+        reason,
+        voidModalTicket?.tableId,
+        voidModalTicket?.tabIndex
+      );
+    } else if (voidModalTicket) {
+      await handleVoidTicket(voidModalTicket, reason);
+    }
+  };
 
   const unreadChatCount = useChatStore((state) =>
     state.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
@@ -180,8 +203,19 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
                   tickets={newTickets}
                   overflowCount={newTickets.length > 2 ? newTickets.length - 1 : 0}
                   onStartTicket={handleStartTicket}
+                  onDismissTicket={handleDismissTicket}
                   onViewFohStatus={(ticket) => setFohModalTicket(ticket)}
                   onToggleItem={handleToggleItem}
+                  onVoidTicket={(ticket) => {
+                    setVoidModalTicket(ticket);
+                    setVoidModalItem(null);
+                    setIsVoidModalOpen(true);
+                  }}
+                  onVoidItem={(ticket, item) => {
+                    setVoidModalTicket(ticket);
+                    setVoidModalItem(item);
+                    setIsVoidModalOpen(true);
+                  }}
                 />
               )}
 
@@ -193,8 +227,19 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
                   tickets={preparingTickets}
                   overflowCount={preparingTickets.length > 2 ? preparingTickets.length - 1 : 1}
                   onReadyTicket={handleReadyTicket}
+                  onDismissTicket={handleDismissTicket}
                   onReadyBlockedPress={(ticket) => setFohModalTicket(ticket)}
                   onToggleItem={handleToggleItem}
+                  onVoidTicket={(ticket) => {
+                    setVoidModalTicket(ticket);
+                    setVoidModalItem(null);
+                    setIsVoidModalOpen(true);
+                  }}
+                  onVoidItem={(ticket, item) => {
+                    setVoidModalTicket(ticket);
+                    setVoidModalItem(item);
+                    setIsVoidModalOpen(true);
+                  }}
                 />
               )}
 
@@ -208,6 +253,16 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
                   onRecallTicket={handleRecallTicket}
                   onDismissTicket={handleDismissReadyTicket}
                   onToggleItem={handleToggleItem}
+                  onVoidTicket={(ticket) => {
+                    setVoidModalTicket(ticket);
+                    setVoidModalItem(null);
+                    setIsVoidModalOpen(true);
+                  }}
+                  onVoidItem={(ticket, item) => {
+                    setVoidModalTicket(ticket);
+                    setVoidModalItem(item);
+                    setIsVoidModalOpen(true);
+                  }}
                 />
               )}
             </View>
@@ -266,6 +321,18 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           logout();
         }}
         stationTarget={stationTarget}
+      />
+
+      <KdsVoidModal
+        visible={isVoidModalOpen}
+        ticket={voidModalTicket}
+        item={voidModalItem}
+        onClose={() => {
+          setIsVoidModalOpen(false);
+          setVoidModalTicket(null);
+          setVoidModalItem(null);
+        }}
+        onConfirmVoid={handleConfirmVoid}
       />
     </View>
   );

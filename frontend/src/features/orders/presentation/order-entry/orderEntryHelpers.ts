@@ -69,6 +69,7 @@ export function createOrderLineItem(
     productId: item.id,
     productName: formattedName,
     stationTarget: item.stationTarget,
+    categorySlug: item.category,
     variantId: variant?.id,
     temperature: variant?.temperature,
     sizeLabel: variant?.sizeLabel,

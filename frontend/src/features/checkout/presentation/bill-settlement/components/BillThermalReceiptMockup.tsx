@@ -139,7 +139,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
               </Text>
             </View>
             {item.modifiers && item.modifiers.length > 0 ? (
-              <Text style={[styles.receiptItemNote, { color: '#800020', fontWeight: '600' }]}>
+              <Text style={[styles.receiptItemNote, { color: '#810021', fontWeight: '600' }]}>
                 {'   '}+ {item.modifiers.join(', ')}
               </Text>
             ) : null}
@@ -206,7 +206,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         <Text style={styles.receiptDivider}>================================</Text>
         <View style={styles.receiptRow}>
           <Text style={[styles.receiptBold, { fontSize: 16 }]}>TOTAL AMOUNT DUE:</Text>
-          <Text style={[styles.receiptBold, { fontSize: 16, color: '#800020' }]}>
+          <Text style={[styles.receiptBold, { fontSize: 16, color: '#810021' }]}>
             {formatCurrency(grandTotal)}
           </Text>
         </View>

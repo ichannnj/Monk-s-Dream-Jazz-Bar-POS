@@ -8,6 +8,7 @@ import type {
   UpdateEventInput,
 } from '../domain/event.types';
 import { eventsApi } from '../data/events.api';
+import { getManilaTodayDateString } from '../presentation/utils/eventFormatters';
 
 interface EventState {
   events: VenueEvent[];
@@ -37,6 +38,8 @@ interface EventState {
   closeShareModal: () => void;
   saveEvent: (input: CreateEventInput | UpdateEventInput, id?: string) => Promise<VenueEvent>;
   deleteEvent: (id: string, storagePath?: string | null) => Promise<void>;
+  settleArtistPayout: (eventId: string, staffId: string, notes?: string) => Promise<void>;
+  getTodayActiveEvent: () => VenueEvent | undefined;
   initRealtimeSubscription: () => () => void;
 }
 
@@ -175,6 +178,43 @@ export const useEventStore = create<EventState>((set, get) => ({
       toast.error('Failed to remove event');
       throw err;
     }
+  },
+
+  settleArtistPayout: async (eventId: string, staffId: string, notes?: string) => {
+    try {
+      await eventsApi.settleArtistDoorChargePayout(eventId, staffId, notes);
+      set((state) => ({
+        events: state.events.map((e) =>
+          e.id === eventId
+            ? {
+                ...e,
+                artist_payout_status: 'paid' as const,
+                artist_payout_notes: notes || null,
+                artist_payout_at: new Date().toISOString(),
+              }
+            : e
+        ),
+        selectedEvent:
+          state.selectedEvent?.id === eventId
+            ? {
+                ...state.selectedEvent,
+                artist_payout_status: 'paid' as const,
+                artist_payout_notes: notes || null,
+                artist_payout_at: new Date().toISOString(),
+              }
+            : state.selectedEvent,
+      }));
+      toast.success('Artist Door Charge payout settled & marked paid!');
+    } catch (err: any) {
+      console.error('[useEventStore.settleArtistPayout] Error:', err);
+      toast.error('Failed to settle artist payout');
+      throw err;
+    }
+  },
+
+  getTodayActiveEvent: () => {
+    const todayStr = getManilaTodayDateString();
+    return get().events.find((ev) => ev.event_date === todayStr && ev.status !== 'cancelled');
   },
 
   initRealtimeSubscription: () => {

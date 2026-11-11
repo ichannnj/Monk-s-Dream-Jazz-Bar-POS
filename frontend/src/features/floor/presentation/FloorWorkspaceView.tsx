@@ -56,11 +56,12 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
   const [gridWidth, setGridWidth] = useState<number>(0);
 
   // Phone-to-Desktop dynamic grid column distribution
+  // Tablets (768px-1139px) use 2 columns to give cards generous width (~360px-450px) preventing table name truncation
   const numColumns = useMemo(() => {
-    if (windowWidth >= 1440) return 5;
-    if (windowWidth >= 1140) return 4;
-    if (windowWidth >= 768) return 3;
-    if (windowWidth >= 460) return 2;
+    if (windowWidth >= 1440) return 4;
+    if (windowWidth >= 1140) return 3;
+    if (windowWidth >= 768) return 2;
+    if (windowWidth >= 480) return 2;
     return 1;
   }, [windowWidth]);
 

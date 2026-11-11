@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { X, ChevronLeft } from 'lucide-react-native';
 import { styles } from '../OrderEntryModal.styles';
 
@@ -24,12 +24,12 @@ export const OrderEntryTopBar: React.FC<OrderEntryTopBarProps> = ({
         {isMobile && isMobileCartOpen ? (
           <Pressable
             onPress={onBackToMenu}
-            className="min-h-[48px] px-3 rounded-xl bg-stone-100 border border-stone-200 flex-row items-center gap-1"
+            style={localStyles.backButton}
             accessibilityRole="button"
             accessibilityLabel="Back to menu catalog"
           >
             <ChevronLeft size={18} color="#1c1917" />
-            <Text className="text-base font-bold text-stone-800">Menu</Text>
+            <Text style={localStyles.backButtonText}>Menu</Text>
           </Pressable>
         ) : null}
         <View style={[styles.activeDestinationBadge, { flexShrink: 1 }]}>
@@ -37,9 +37,6 @@ export const OrderEntryTopBar: React.FC<OrderEntryTopBarProps> = ({
             {title}
           </Text>
         </View>
-        <Text style={styles.topBarSub} className="hidden md:flex">
-          Monk’s Dream POS • Station Auto-Routing Active
-        </Text>
       </View>
 
       <Pressable
@@ -53,3 +50,22 @@ export const OrderEntryTopBar: React.FC<OrderEntryTopBarProps> = ({
     </View>
   );
 };
+
+const localStyles = StyleSheet.create({
+  backButton: {
+    minHeight: 48,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    backgroundColor: '#f5f5f4',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1c1917',
+  },
+});

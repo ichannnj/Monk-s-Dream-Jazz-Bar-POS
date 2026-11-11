@@ -61,7 +61,8 @@ VALUES
   ('c2222222-2222-2222-2222-222222222222', 'Signature Cocktails & Wine', 'cocktails_wine', 2),
   ('c3333333-3333-3333-3333-333333333333', 'Kitchen Mains & Pasta', 'mains_pasta', 3),
   ('c4444444-4444-4444-4444-444444444444', 'Small Plates & Bar Bites', 'small_plates', 4),
-  ('c5555555-5555-5555-5555-555555555555', 'Pastries & Desserts', 'desserts', 5)
+  ('c5555555-5555-5555-5555-555555555555', 'Pastries & Desserts', 'desserts', 5),
+  ('c6666666-6666-6666-6666-666666666666', 'Door Charge', 'door_charge', 6)
 ON CONFLICT (slug) DO NOTHING;
 
 -- 4. RAW INVENTORY ITEMS (Initial Stock & Par Levels)
@@ -114,7 +115,10 @@ VALUES
 
   -- Resold Outside Food (Fixed +20% Markup Constraint)
   ('e5555555-0000-0000-0000-000000000001', 'c5555555-5555-5555-5555-555555555555', 'Artisan Butter Croissant', 'https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=600&q=80', 'Flaky French butter croissant from partnering patisserie (+20% margin)', 180.00, 'bar', true, 150.00, false, ARRAY['DAIRY', 'GLUTEN'], ARRAY['Vegetarian'], true),
-  ('e5555555-0000-0000-0000-000000000002', 'c5555555-5555-5555-5555-555555555555', 'Basque Burnt Cheesecake Slice', 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80', 'Caramelized crust, creamy custard center (+20% margin)', 280.00, 'bar', true, 233.33, false, ARRAY['DAIRY', 'EGGS'], ARRAY['Vegetarian'], true)
+  ('e5555555-0000-0000-0000-000000000002', 'c5555555-5555-5555-5555-555555555555', 'Basque Burnt Cheesecake Slice', 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?auto=format&fit=crop&w=600&q=80', 'Caramelized crust, creamy custard center (+20% margin)', 280.00, 'bar', true, 233.33, false, ARRAY['DAIRY', 'EGGS'], ARRAY['Vegetarian'], true),
+
+  -- Door Charge
+  ('d1000001-0000-0000-0000-000000000001', 'c6666666-6666-6666-6666-666666666666', 'Event Door Charge', NULL, 'Live Jazz Performance & Admission Cover Charge', 0.00, 'bar', false, NULL, false, ARRAY[]::text[], ARRAY[]::text[], true)
 ON CONFLICT (name) DO NOTHING;
 
 -- 6. RECIPE BILL OF MATERIALS (BOM)

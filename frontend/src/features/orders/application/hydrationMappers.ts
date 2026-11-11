@@ -63,6 +63,10 @@ export const mapHydratedTables = (
             quantity: oi.quantity || 1,
             stationTarget: (oi.station_target || oi.products?.station_target || 'bar') as
               'bar' | 'kitchen',
+            categorySlug:
+              oi.products?.categories?.slug ||
+              (formattedName.toLowerCase().includes('door charge') ? 'door_charge' : undefined),
+            eventId: oi.event_id || undefined,
             variantId: oi.variant_id || undefined,
             temperature: oi.temperature || undefined,
             sizeLabel: oi.size_label || undefined,
@@ -213,6 +217,10 @@ export const mapHydratedOffPremiseTabs = (
           quantity: oi.quantity || 1,
           stationTarget: (oi.station_target || oi.products?.station_target || 'bar') as
             'bar' | 'kitchen',
+          categorySlug:
+            oi.products?.categories?.slug ||
+            (formattedName.toLowerCase().includes('door charge') ? 'door_charge' : undefined),
+          eventId: oi.event_id || undefined,
           variantId: oi.variant_id || undefined,
           temperature: oi.temperature || undefined,
           sizeLabel: oi.size_label || undefined,

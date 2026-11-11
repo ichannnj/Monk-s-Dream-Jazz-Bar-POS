@@ -351,4 +351,21 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     auto86: false,
     modifiers: [],
   },
+
+  // Door Charge
+  {
+    id: 'd1000001-0000-0000-0000-000000000001',
+    name: 'Event Door Charge',
+    category: 'door_charge',
+    price: 0.0,
+    imageUrl:
+      'https://images.unsplash.com/photo-1511192336575-5a79af67a629?auto=format&fit=crop&w=600&q=80',
+    stationTarget: 'bar',
+    description: 'Live Jazz Performance & Admission Cover Charge',
+    allergens: [],
+    dietary: [],
+    isAvailable: true,
+    auto86: false,
+    modifiers: [],
+  },
 ];

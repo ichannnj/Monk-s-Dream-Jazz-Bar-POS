@@ -1,6 +1,6 @@
 import { OrderLineItem } from '../../../../types/floor';
 
-export type KdsStage = 'new' | 'preparing' | 'ready';
+export type KdsStage = 'new' | 'preparing' | 'ready' | 'cancelled';
 
 export interface BarItemLine extends OrderLineItem {
   is86?: boolean;
@@ -16,6 +16,7 @@ export interface BarTicket {
   elapsedTime: string; // e.g. "00:20" or "06:20"
   minutesElapsed: number;
   createdAt?: string;
+  cancelledAt?: string;
   badges: string[];
   roundNumber?: number;
   multiStationTag?: string; // e.g. "Multi-Station · Cafe · Preparing"

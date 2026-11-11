@@ -46,7 +46,7 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={[styles.badge, isTakeout && { backgroundColor: '#15803d' }]}>
+          <View style={styles.badge}>
             <Text style={{ fontSize: 13, fontWeight: '800', color: '#ffffff' }}>
               {isTakeout
                 ? `Takeout #${takeoutOrder?.ticketNumber || 'T-001'}`
@@ -60,9 +60,6 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
                 : settlementMode === 'entire_table'
                   ? `Table ${table?.code || ''} Entire Bill (${activeTabsCount} Tabs)`
                   : `Guest Tab: ${activeTab?.guestName || 'Table Guest'}`}
-            </Text>
-            <Text style={styles.subtitle}>
-              Review line items, apply privileges &amp; settle tender
             </Text>
           </View>
         </View>

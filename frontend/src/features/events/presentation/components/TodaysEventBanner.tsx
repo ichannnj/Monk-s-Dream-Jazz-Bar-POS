@@ -133,6 +133,14 @@ export const TodaysEventBanner: React.FC<TodaysEventBannerProps> = ({
                   {firstEvent.genre}
                 </Text>
               ) : null}
+
+              {firstEvent.has_door_charge ? (
+                <View className="rounded-md bg-rose-50 px-1.5 py-0.5 border border-rose-200">
+                  <Text className="text-[10px] font-extrabold text-[#800020]">
+                    ₱{Number(firstEvent.door_charge_amount || 0).toFixed(0)} Door
+                  </Text>
+                </View>
+              ) : null}
             </View>
 
             <Text
