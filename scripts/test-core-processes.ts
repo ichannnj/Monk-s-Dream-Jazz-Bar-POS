@@ -496,6 +496,91 @@ runTest(
   }
 );
 
+runTest('Pre-Payment Bill Slip: Builds binary bytes with UNPAID banner and no drawer kick', () => {
+  const printer = new UsbEscPosPrinter('/dev/null');
+  const billBuffer = printer.renderBillStatementBytes({
+    receiptNumber: 'MD-BILL-7001',
+    tableNumber: 3,
+    tableLabel: 'Table 3',
+    tabName: 'Duke Ellington',
+    waiterName: 'Sarah K.',
+    operatingMode: 'CAFE',
+    timestamp: '2026-11-12 02:40',
+    items: [
+      { name: 'Cortado', quantity: 1, price: 160.0, temperature: 'HOT', size: '12oz' },
+      { name: 'Cortado', quantity: 1, price: 160.0, temperature: 'HOT', size: '12oz' },
+      { name: 'Truffle Mushroom Pasta', quantity: 1, price: 380.0 },
+    ],
+    subtotal: 700.0,
+    total: 700.0,
+  });
+
+  assert(billBuffer instanceof Buffer);
+  const billStr = billBuffer.toString('utf-8');
+  assert(billStr.includes('*** BILL STATEMENT / GUEST CHECK ***'));
+  assert(billStr.includes('*** UNPAID - PLEASE PAY AT CASHIER ***'));
+  assert(billStr.includes('2x   Cortado'));
+  assert(billStr.includes('1x   Truffle Mushroom Pasta'));
+  assert(billStr.includes('PHP 700.00'));
+
+  // Ensure cash drawer solenoid kick is absent
+  let hasKick = false;
+  for (let i = 0; i < billBuffer.length - 4; i++) {
+    if (
+      billBuffer[i] === 0x1b &&
+      billBuffer[i + 1] === 0x70 &&
+      billBuffer[i + 2] === 0x00 &&
+      billBuffer[i + 3] === 0x19 &&
+      billBuffer[i + 4] === 0xfa
+    ) {
+      hasKick = true;
+      break;
+    }
+  }
+  assert.equal(hasKick, false, 'Pre-payment bill slip must never kick the cash drawer');
+});
+
+runTest(
+  'Receipt Aggregator: Merges duplicate items across rounds while keeping different notes distinct',
+  () => {
+    const printer = new UsbEscPosPrinter('/dev/null');
+    const receiptBuffer = printer.renderReceiptBytes({
+      receiptNumber: 'MD-REC-7002',
+      tableNumber: 5,
+      tableLabel: 'Table 5',
+      tabName: 'Billie Holiday',
+      cashierName: 'Ella Fitzgerald',
+      operatingMode: 'CAFE',
+      timestamp: '2026-11-12 02:45',
+      items: [
+        { name: 'Cortado', quantity: 1, price: 160.0, temperature: 'HOT', size: '12oz' },
+        { name: 'Cortado', quantity: 2, price: 160.0, temperature: 'HOT', size: '12oz' },
+        {
+          name: 'Cortado',
+          quantity: 1,
+          price: 160.0,
+          temperature: 'HOT',
+          size: '12oz',
+          notes: 'Extra hot',
+        },
+      ],
+      subtotal: 640.0,
+      total: 640.0,
+      paymentMethod: 'CASH',
+      tendered: 1000.0,
+      change: 360.0,
+    });
+
+    assert(receiptBuffer instanceof Buffer);
+    const receiptStr = receiptBuffer.toString('utf-8');
+    // First 2 Cortados merge into 3x
+    assert(receiptStr.includes('3x   Cortado'));
+    // The one with special note remains separate as 1x
+    assert(receiptStr.includes('1x   Cortado'));
+    assert(receiptStr.includes('Extra hot'));
+  }
+);
+
 // -------------------------------------------------------------
 // CORE PROCESS 4: CASHLESS QR REFERENCE & PAYMENT VALIDATION
 // -------------------------------------------------------------

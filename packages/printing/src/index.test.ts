@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   UsbEscPosPrinter,
-  MockPrinter,
   type RunnerChitPayload,
   type CustomerReceiptPayload,
+  type BillStatementPayload,
   type DeliveryTagPayload,
   type TakeoutSlipPayload,
 } from '../dist/index.js';
@@ -107,4 +107,52 @@ test('UsbEscPosPrinter renders takeout and delivery tags', () => {
   assert.ok(deliveryText.includes('GRABFOOD #GF-8842'));
   assert.ok(deliveryText.includes('Miles Davis'));
   assert.ok(deliveryText.includes('Rider: Mike'));
+});
+
+test('UsbEscPosPrinter renders bill statement slip and aggregates duplicate items across rounds', () => {
+  const printer = new UsbEscPosPrinter('/dev/null');
+  const bill: BillStatementPayload = {
+    receiptNumber: 'MD-BILL-4001',
+    tableNumber: 2,
+    tableLabel: 'Table 2',
+    tabName: 'Thelonious Monk',
+    waiterName: 'Sarah K.',
+    operatingMode: 'CAFE',
+    timestamp: '2026-11-12 02:30',
+    items: [
+      { name: 'Cortado', quantity: 1, price: 160.0, temperature: 'HOT', size: '12oz' },
+      { name: 'Cortado', quantity: 1, price: 160.0, temperature: 'HOT', size: '12oz' },
+      { name: 'Matcha Latte', quantity: 1, price: 180.0, notes: 'Soy milk' },
+    ],
+    subtotal: 500.0,
+    serviceCharge: 0,
+    total: 500.0,
+  };
+
+  const billBuf = printer.renderBillStatementBytes(bill);
+  const billText = billBuf.toString('utf-8');
+
+  assert.ok(billText.includes('*** BILL STATEMENT / GUEST CHECK ***'));
+  assert.ok(billText.includes('*** UNPAID - PLEASE PAY AT CASHIER ***'));
+  assert.ok(billText.includes('Table 2'));
+  assert.ok(billText.includes('Thelonious Monk'));
+  assert.ok(billText.includes('2x   Cortado'));
+  assert.ok(billText.includes('1x   Matcha Latte'));
+  assert.ok(billText.includes('PHP 500.00'));
+
+  // Ensure cash drawer solenoid pulse (0x1B 0x70) is NOT in the bill statement buffer
+  let hasDrawerKick = false;
+  for (let i = 0; i < billBuf.length - 4; i++) {
+    if (
+      billBuf[i] === 0x1b &&
+      billBuf[i + 1] === 0x70 &&
+      billBuf[i + 2] === 0x00 &&
+      billBuf[i + 3] === 0x19 &&
+      billBuf[i + 4] === 0xfa
+    ) {
+      hasDrawerKick = true;
+      break;
+    }
+  }
+  assert.equal(hasDrawerKick, false, 'Bill statement must never pulse the cash drawer kick');
 });

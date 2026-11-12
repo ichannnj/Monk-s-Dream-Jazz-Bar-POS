@@ -11,6 +11,7 @@ import {
 } from '../../../utils/taxAndDiscountCalculator';
 import { qrPaymentChannelsApi, type QrPaymentChannel } from '../../../data/qrPaymentChannels.api';
 import { extractRawOrderItems, computePricingLineItems } from './settlementItemExtractors';
+import { printerApi } from '@/features/printer';
 
 interface UseBillSettlementParams {
   visible: boolean;
@@ -48,6 +49,7 @@ export function useBillSettlementController({
   const [shouldPrintReceipt, setShouldPrintReceipt] = useState(true);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isPrintingBill, setIsPrintingBill] = useState(false);
 
   // Discount & Privilege State
   const [discountType, setDiscountType] = useState<DiscountType>('NONE');
@@ -279,6 +281,58 @@ export function useBillSettlementController({
     }
   };
 
+  const handlePrintBillStatement = async () => {
+    if (isPrintingBill) return;
+    try {
+      setIsPrintingBill(true);
+      const billData = {
+        isBillStatement: true,
+        receiptNumber: `BILL-${(activeTab?.id || takeoutOrder?.id || '001').slice(0, 8).toUpperCase()}`,
+        tabId: activeTab?.id || takeoutOrder?.id,
+        operatingMode: effectiveOperatingMode,
+        timestamp: new Date().toISOString(),
+        tableNumber: table?.code,
+        tableLabel: table?.code
+          ? table.code.toLowerCase().startsWith('table')
+            ? table.code
+            : `Table ${table.code}`
+          : undefined,
+        tabName: isTakeout
+          ? takeoutOrder?.customerName || 'Takeout / Counter'
+          : activeTab?.guestName || 'Table Guest',
+        customerName: isTakeout
+          ? takeoutOrder?.customerName || 'Takeout / Counter'
+          : activeTab?.guestName || 'Table Guest',
+        serverName: currentUser?.displayName || 'Cashier',
+        waiterName: currentUser?.displayName || 'Cashier',
+        items: rawItems,
+        subtotal,
+        corkageFee: tableGroupCorkage,
+        corkageAmount: tableGroupCorkage,
+        discountAmount: billing.totalDiscountAmount,
+        discountType: isComp ? 'COMP' : discountType,
+        serviceCharge,
+        total: grandTotal,
+        amount: grandTotal,
+        vatableSales: billing.vatableSales,
+        vatAmount: billing.vatAmount,
+        vatExemptSales: billing.vatExemptSales,
+        seniorPwdId: seniorPwdId.trim(),
+        seniorPwdName: seniorPwdName.trim(),
+      };
+
+      await printerApi.enqueueBillStatement(billData);
+      toast.success('Bill statement sent to printer', { title: 'Bill Printed' });
+    } catch (err: any) {
+      console.error('[useBillSettlementController] Failed to print bill statement:', err);
+      toast.error(err?.message || 'Failed to print bill statement. Please check printer.', {
+        title: 'Print Error',
+      });
+    } finally {
+      setIsPrintingBill(false);
+    }
+  };
+
   const quickCashOptions = [
     grandTotal,
     Math.ceil(grandTotal / 100) * 100,
@@ -335,8 +389,10 @@ export function useBillSettlementController({
     isRefNumberValid,
     isPaymentValid,
     isSubmitting,
+    isPrintingBill,
     handleOpenConfirm,
     handleFinalizePayment,
+    handlePrintBillStatement,
     quickCashOptions,
     currentUser,
     effectiveOperatingMode,

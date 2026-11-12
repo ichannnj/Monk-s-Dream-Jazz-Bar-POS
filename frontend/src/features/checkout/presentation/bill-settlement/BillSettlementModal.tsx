@@ -156,6 +156,8 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 vatExemptSales={ctrl.vatExemptSales}
                 seniorPwdId={ctrl.seniorPwdId}
                 seniorPwdName={ctrl.seniorPwdName}
+                onPrintBill={ctrl.handlePrintBillStatement}
+                isPrintingBill={ctrl.isPrintingBill}
               />
             </View>
           </ScrollView>
@@ -182,6 +184,8 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             activeTab={activeTab}
             isFullscreenQrOpen={ctrl.isFullscreenQrOpen}
             setIsFullscreenQrOpen={ctrl.setIsFullscreenQrOpen}
+            handlePrintBillStatement={ctrl.handlePrintBillStatement}
+            isPrintingBill={ctrl.isPrintingBill}
           />
         </View>
       </View>

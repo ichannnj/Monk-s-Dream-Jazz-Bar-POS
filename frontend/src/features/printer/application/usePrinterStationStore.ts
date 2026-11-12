@@ -5,6 +5,7 @@ import { printerApi, type PrintJobItem } from '../data/printer.api';
 import { webSerialPrinter, type SerialPortInfo } from '../services/webSerialPrinter';
 import {
   buildReceiptBytes,
+  buildBillStatementBytes,
   buildRunnerChitBytes,
   buildTakeoutSlipBytes,
   buildDeliveryTagBytes,
@@ -213,6 +214,14 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
             isCashSettlement = method === 'CASH' && !rawData.isReprint;
             bytes = buildReceiptBytes(rawData, isCashSettlement);
           }
+          break;
+        }
+
+        case 'BILL_STATEMENT':
+        case 'BILL': {
+          // Pre-payment bill statement: paper slip only, NEVER kicks cash drawer
+          isCashSettlement = false;
+          bytes = buildBillStatementBytes(rawData);
           break;
         }
 

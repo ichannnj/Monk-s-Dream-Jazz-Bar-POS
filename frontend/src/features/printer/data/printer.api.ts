@@ -130,6 +130,28 @@ export const printerApi = {
   },
 
   /**
+   * Enqueue a pre-payment bill statement ("Guest Check") without kicking the cash drawer
+   */
+  async enqueueBillStatement(receiptData: any): Promise<PrintJobItem> {
+    const { data, error } = await supabase
+      .from('print_jobs')
+      .insert({
+        job_type: 'BILL_STATEMENT',
+        receipt_data: receiptData,
+        status: 'PENDING',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[printerApi.enqueueBillStatement] Failed to enqueue bill statement:', error);
+      throw error;
+    }
+
+    return data as PrintJobItem;
+  },
+
+  /**
    * Enqueue a pure cash drawer kick pulse without printing receipts or cutting paper
    */
   async kickCashDrawer(drawerTarget: 'main' | 'bar' = 'main'): Promise<PrintJobItem> {

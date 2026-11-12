@@ -81,6 +81,7 @@ export interface CustomerReceiptPayload {
     productName?: string;
     temperature?: string;
     size?: string;
+    flavor?: string;
     quantity: number;
     price?: number;
     unit_price?: number;
@@ -108,6 +109,94 @@ export interface CustomerReceiptPayload {
 }
 
 export type PrinterReceiptPayload = CustomerReceiptPayload;
+
+export interface BillStatementPayload {
+  receiptNumber?: string;
+  tableNumber?: number;
+  tableLabel?: string;
+  tabName?: string;
+  waiterName?: string;
+  serverName?: string;
+  cashierName?: string;
+  operatingMode?: string;
+  items: Array<{
+    name?: string;
+    productName?: string;
+    temperature?: string;
+    size?: string;
+    flavor?: string;
+    quantity: number;
+    price?: number;
+    unit_price?: number;
+    total?: number;
+    modifiers?: string[];
+    isCorkage?: boolean;
+    notes?: string;
+  }>;
+  subtotal: number;
+  corkageFee?: number;
+  discount?: number;
+  serviceCharge?: number;
+  total: number;
+  vatableSales?: number;
+  vatAmount?: number;
+  vatExemptSales?: number;
+  timestamp: string;
+  isReprint?: boolean;
+}
+
+export function aggregateReceiptItems<
+  T extends {
+    name?: string;
+    productName?: string;
+    temperature?: string;
+    size?: string;
+    flavor?: string;
+    quantity?: number;
+    price?: number;
+    unit_price?: number;
+    total?: number;
+    modifiers?: string[];
+    isCorkage?: boolean;
+    notes?: string;
+  },
+>(items: T[]): T[] {
+  if (!Array.isArray(items) || items.length === 0) return [];
+  const map = new Map<string, T>();
+  for (const item of items) {
+    if (!item) continue;
+    const name = (item.productName || item.name || 'item').trim();
+    const price = Number(item.price ?? item.unit_price ?? 0);
+    const temp = (item.temperature || '').trim().toUpperCase();
+    const size = (item.size || '').trim();
+    const flavor = (item.flavor || '').trim();
+    const mods = Array.isArray(item.modifiers)
+      ? [...item.modifiers]
+          .map((m) => String(m).trim())
+          .sort()
+          .join('|')
+      : '';
+    const notes = (item.notes || '').trim().toLowerCase();
+    const isCorkage = Boolean(item.isCorkage);
+    const groupKey = `${name}::${price.toFixed(2)}::${temp}::${size}::${flavor}::${mods}::${notes}::${isCorkage}`;
+    const qty = Number(item.quantity) || 1;
+    if (map.has(groupKey)) {
+      const existing = map.get(groupKey)!;
+      const currentQty = Number(existing.quantity) || 1;
+      const newQty = currentQty + qty;
+      existing.quantity = newQty;
+      existing.total = Number((price * newQty).toFixed(2));
+    } else {
+      map.set(groupKey, {
+        ...item,
+        quantity: qty,
+        price,
+        total: Number((price * qty).toFixed(2)),
+      });
+    }
+  }
+  return Array.from(map.values());
+}
 
 export interface RunnerChitPayload {
   orderNumber: string;
@@ -169,6 +258,7 @@ export type ThermalPrintJobPayload =
 
 export interface IPrinterService {
   printReceipt(payload: CustomerReceiptPayload): Promise<boolean>;
+  printBillStatement(payload: BillStatementPayload): Promise<boolean>;
   printRunnerChit(payload: RunnerChitPayload): Promise<boolean>;
   printTakeoutSlip(payload: TakeoutSlipPayload): Promise<boolean>;
   printDeliveryTag(payload: DeliveryTagPayload): Promise<boolean>;
@@ -190,6 +280,11 @@ export class UsbEscPosPrinter implements IPrinterService {
 
   public async printReceipt(payload: CustomerReceiptPayload): Promise<boolean> {
     const escpos = this.renderReceiptBytes(payload);
+    return this.writeBytes(escpos);
+  }
+
+  public async printBillStatement(payload: BillStatementPayload): Promise<boolean> {
+    const escpos = this.renderBillStatementBytes(payload);
     return this.writeBytes(escpos);
   }
 
@@ -298,8 +393,8 @@ export class UsbEscPosPrinter implements IPrinterService {
     cmd([0x1b, 0x45, 0x00]);
     push(divider('=', 48));
 
-    // 5. Line Items
-    for (const item of payload.items) {
+    // 5. Line Items (Aggregated across rounds)
+    for (const item of aggregateReceiptItems(payload.items)) {
       const qtyStr = `${item.quantity || 1}x`.padEnd(3, ' ');
       let desc = item.name || item.productName || 'Item';
 
@@ -418,6 +513,180 @@ export class UsbEscPosPrinter implements IPrinterService {
     push('- Thelonious Monk\n\n');
     push('Thank you for supporting live music!\n');
     push('Please come back for the next set.\n');
+    push(divider('-', 48));
+    cmd([0x1b, 0x45, 0x01]);
+    push('THIS IS NOT AN OFFICIAL RECEIPT\n');
+    cmd([0x1b, 0x45, 0x00]);
+    push('\n\n\n');
+
+    // Cut paper: GS V 0 (full cut)
+    cmd([0x1d, 0x56, 0x00]);
+
+    return Buffer.concat(parts);
+  }
+
+  public renderBillStatementBytes(payload: BillStatementPayload): Buffer {
+    const parts: Buffer[] = [];
+    const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
+    const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
+
+    // Initialize printer: ESC @
+    cmd([0x1b, 0x40]);
+
+    // Center alignment: ESC a 1
+    cmd([0x1b, 0x61, 0x01]);
+
+    if (payload.isReprint) {
+      cmd([0x1b, 0x45, 0x01]);
+      push('*** REPRINT ***\n\n');
+      cmd([0x1b, 0x45, 0x00]);
+    }
+
+    // 1. Bitonal High-Contrast Graphic Logo
+    const logoBytes = getMonksDreamLogoRasterBytes();
+    if (logoBytes && logoBytes.length > 0) {
+      cmd([0x1b, 0x61, 0x01]);
+      parts.push(Buffer.from(logoBytes));
+      push('\n');
+    }
+
+    // 2. Business Header
+    cmd([0x1b, 0x45, 0x01]); // Bold on
+    cmd([0x1d, 0x21, 0x11]); // Double height & width
+    push("MONK'S DREAM\n");
+    push('JAZZ BAR AND CAFE\n');
+    cmd([0x1d, 0x21, 0x00]); // Normal size
+    cmd([0x1b, 0x45, 0x00]); // Bold off
+    push('Craft Cocktails & Fine Jazz\n');
+    push('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz\n');
+    push(divider('-', 48));
+
+    // 3. Bill Statement Banner
+    cmd([0x1b, 0x45, 0x01]);
+    push('*** BILL STATEMENT / GUEST CHECK ***\n');
+    push('*** UNPAID — PLEASE PAY AT CASHIER ***\n');
+    cmd([0x1b, 0x45, 0x00]);
+    push(divider('=', 48));
+
+    // 4. Metadata Section
+    cmd([0x1b, 0x61, 0x00]); // Left
+    const billNo = payload.receiptNumber || 'MD-BILL-001';
+    const operatingMode = (payload.operatingMode || 'CAFE').toUpperCase();
+    const modeLabel = operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE';
+
+    cmd([0x1b, 0x45, 0x01]);
+    push(padLine(`BILL #:  ${billNo}`, `MODE: ${modeLabel}`, 48));
+    cmd([0x1b, 0x45, 0x00]);
+    push(`DATE:    ${payload.timestamp}\n`);
+
+    if (payload.tableNumber || payload.tableLabel) {
+      const tableStr = payload.tableLabel || `Table ${payload.tableNumber}`;
+      const tabStr = payload.tabName || 'Main Tab';
+      push(`TABLE:   ${tableStr.padEnd(16)} TAB: ${tabStr}\n`);
+    } else {
+      push(`TAB:     ${payload.tabName || 'Takeout / Counter'}\n`);
+    }
+
+    const staff = cleanStaffName(payload.serverName || payload.waiterName || payload.cashierName);
+    push(`SERVER:  ${staff.padEnd(16)} TERMINAL: TILL-1\n`);
+    push(divider('=', 48));
+
+    // 5. Items Table Header
+    cmd([0x1b, 0x45, 0x01]);
+    push(padLine('QTY  DESCRIPTION', 'AMOUNT (PHP)', 48));
+    cmd([0x1b, 0x45, 0x00]);
+    push(divider('=', 48));
+
+    // 6. Line Items (Aggregated across rounds)
+    for (const item of aggregateReceiptItems(payload.items || [])) {
+      const qtyStr = `${item.quantity || 1}x`.padEnd(3, ' ');
+      let desc = item.name || item.productName || 'Item';
+
+      if (item.temperature && item.temperature !== 'NONE' && !desc.includes('(')) {
+        const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
+        const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
+        desc = `${desc} (${temp}${size})`;
+      } else if (item.size && item.size !== 'Standard' && !desc.includes('(')) {
+        desc = `${desc} (${item.size})`;
+      }
+
+      const itemTotal = toPesos(
+        item.total ?? toPesos(item.price || item.unit_price) * (item.quantity || 1)
+      );
+      push(formatItemLine(qtyStr, desc, formatPhp(itemTotal), 48));
+
+      if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
+        for (const mod of item.modifiers) {
+          push(`     + ${mod}\n`);
+        }
+      }
+
+      if (item.notes && item.notes.trim()) {
+        push(`     >> Note: ${item.notes.trim()}\n`);
+      }
+
+      if (item.isCorkage) {
+        push(`     [Corkage Applied]\n`);
+      }
+    }
+
+    push(divider('-', 48));
+
+    // 7. Financial Summary & Totals
+    const subtotal = toPesos(payload.subtotal || payload.total || 0);
+    push(padLine('SUBTOTAL (Gross Sales):', formatPhp(subtotal), 48));
+
+    const corkage = toPesos(payload.corkageFee || 0);
+    if (corkage > 0) {
+      push(padLine('CORKAGE FEE:', formatPhp(corkage), 48));
+    }
+
+    const discount = toPesos(payload.discount || 0);
+    if (discount > 0) {
+      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, 48));
+    }
+
+    const serviceCharge = toPesos(payload.serviceCharge || 0);
+    if (serviceCharge > 0) {
+      push(padLine('SERVICE CHARGE (10%):', formatPhp(serviceCharge), 48));
+    }
+
+    // Bold Total Amount Due
+    push(divider('=', 48));
+    cmd([0x1b, 0x45, 0x01]); // Bold
+    cmd([0x1d, 0x21, 0x01]); // Double height
+    const total = toPesos(payload.total || subtotal + corkage - discount + serviceCharge);
+    push(padLine('TOTAL AMOUNT DUE:', `PHP ${formatPhp(total)}`, 48));
+    cmd([0x1d, 0x21, 0x00]); // Normal size
+    cmd([0x1b, 0x45, 0x00]); // Normal weight
+    push(divider('=', 48));
+
+    // 8. Philippine VAT & Statutory Breakdown (Estimate)
+    push(divider('-', 48));
+    push('TAX & STATUTORY BREAKDOWN (ESTIMATE):\n');
+    const vatableSales = toPesos(
+      payload.vatableSales ?? (discount > 0 ? 0 : Number((total / 1.12).toFixed(2)))
+    );
+    const vatAmount = toPesos(
+      payload.vatAmount ?? (discount > 0 ? 0 : Number((total - vatableSales).toFixed(2)))
+    );
+    const vatExempt = toPesos(
+      payload.vatExemptSales ?? (discount > 0 ? Number(total.toFixed(2)) : 0)
+    );
+
+    push(padLine('  VATable Sales (12%):', formatPhp(vatableSales), 48));
+    push(padLine('  VAT Amount (12%):', formatPhp(vatAmount), 48));
+    push(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), 48));
+    push(padLine('  Zero-Rated Sales:', '0.00', 48));
+
+    // 9. Payment Instructions & Footer
+    push(divider('-', 48));
+    cmd([0x1b, 0x61, 0x01]); // Center
+    cmd([0x1b, 0x45, 0x01]);
+    push('*** UNPAID — PLEASE PAY AT CASHIER ***\n');
+    cmd([0x1b, 0x45, 0x00]);
+    push('This slip is for order review and billing verification.\n');
+    push('Please present this bill when paying at the till.\n');
     push(divider('-', 48));
     cmd([0x1b, 0x45, 0x01]);
     push('THIS IS NOT AN OFFICIAL RECEIPT\n');
@@ -744,6 +1013,12 @@ export class UsbEscPosPrinter implements IPrinterService {
 export class MockPrinter implements IPrinterService {
   public async printReceipt(payload: CustomerReceiptPayload): Promise<boolean> {
     console.log('[MockPrinter] PRINT RECEIPT SIMULATED:');
+    console.log(JSON.stringify(payload, null, 2));
+    return true;
+  }
+
+  public async printBillStatement(payload: BillStatementPayload): Promise<boolean> {
+    console.log('[MockPrinter] PRINT BILL STATEMENT SIMULATED:');
     console.log(JSON.stringify(payload, null, 2));
     return true;
   }

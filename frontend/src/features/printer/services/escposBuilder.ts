@@ -15,8 +15,10 @@ import {
   formatDateTime,
   formatItemLine,
 } from './escposFormatters';
+import { aggregateReceiptItems } from './receiptItemAggregator';
 
 export { EscPosBuilder, ESCPOS };
+export { aggregateReceiptItems };
 export * from './escposSpecialSlips';
 
 /**
@@ -83,8 +85,8 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
     .bold(false);
   builder.line(divider('=', 48));
 
-  // 5. Line Items
-  const items = data.items || [];
+  // 5. Line Items (Aggregated across rounds)
+  const items = aggregateReceiptItems(data.items || []);
   for (const item of items) {
     const qtyStr = `${item.quantity || 1}x`.padEnd(3, ' ');
     let desc = item.name || item.productName || 'Item';

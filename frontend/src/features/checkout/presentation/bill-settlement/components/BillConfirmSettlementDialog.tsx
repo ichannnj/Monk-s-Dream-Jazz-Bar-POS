@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { CheckCircle2 } from 'lucide-react-native';
+import { CheckCircle2, Printer } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { ConfirmationModal } from '@/features/shared';
 import { FullscreenQrModal } from '../../components/FullscreenQrModal';
@@ -28,6 +28,8 @@ interface BillConfirmSettlementDialogProps {
   activeTab?: any;
   isFullscreenQrOpen: boolean;
   setIsFullscreenQrOpen: (open: boolean) => void;
+  handlePrintBillStatement?: () => void;
+  isPrintingBill?: boolean;
 }
 
 export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogProps> = ({
@@ -51,6 +53,8 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
   activeTab,
   isFullscreenQrOpen,
   setIsFullscreenQrOpen,
+  handlePrintBillStatement,
+  isPrintingBill = false,
 }) => {
   return (
     <>
@@ -71,6 +75,21 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
         ) : (
           <Pressable onPress={onClose} style={styles.cancelBtn}>
             <Text style={styles.cancelBtnText}>Back</Text>
+          </Pressable>
+        )}
+
+        {handlePrintBillStatement && (
+          <Pressable
+            onPress={handlePrintBillStatement}
+            disabled={isPrintingBill}
+            style={[styles.printBillBtn, isPrintingBill && { opacity: 0.6 }]}
+            accessibilityRole="button"
+            accessibilityLabel="Print pre-payment bill statement"
+          >
+            <Printer size={18} color="#810021" strokeWidth={2.4} />
+            <Text style={styles.printBillBtnText}>
+              {isPrintingBill ? 'Printing...' : 'Print Bill'}
+            </Text>
           </Pressable>
         )}
 

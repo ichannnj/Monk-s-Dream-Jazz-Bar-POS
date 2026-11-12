@@ -4,6 +4,7 @@ import {
   MockPrinter,
   type IPrinterService,
   type CustomerReceiptPayload,
+  type BillStatementPayload,
   type RunnerChitPayload,
   type TakeoutSlipPayload,
   type DeliveryTagPayload,
@@ -172,6 +173,36 @@ export class PrinterStationDaemon {
           if (receiptPayload.paymentMethod.toUpperCase() === 'CASH' && !receiptPayload.isReprint) {
             await this.printer.kickCashDrawer();
           }
+          break;
+        }
+
+        case 'BILL_STATEMENT':
+        case 'BILL': {
+          const billPayload: BillStatementPayload = {
+            receiptNumber:
+              rawData.receiptNumber || `BILL-${(rawData.tabId || '001').slice(0, 8).toUpperCase()}`,
+            tableNumber: rawData.tableNumber,
+            tableLabel: rawData.tableLabel,
+            tabName: rawData.tabName || rawData.customerName || rawData.guestName,
+            waiterName: rawData.waiterName || rawData.serverName || rawData.cashierName,
+            serverName: rawData.serverName || rawData.waiterName || rawData.cashierName,
+            cashierName: rawData.cashierName || rawData.waiterName,
+            operatingMode: rawData.operatingMode || rawData.operating_mode || 'CAFE',
+            items: rawData.items || [],
+            subtotal: rawData.subtotal || rawData.amount || 0,
+            corkageFee: rawData.corkageAmount || rawData.corkageFee || 0,
+            discount: rawData.discountAmount || rawData.discount || 0,
+            serviceCharge: rawData.serviceCharge || rawData.service_charge || 0,
+            total: rawData.total || rawData.amount || 0,
+            vatableSales: rawData.vatableSales,
+            vatAmount: rawData.vatAmount,
+            vatExemptSales: rawData.vatExemptSales,
+            timestamp: rawData.timestamp || new Date().toISOString(),
+            isReprint: Boolean(rawData.isReprint),
+          };
+
+          // Bill Statement prints slip only, NEVER kicks the cash drawer
+          await this.printer.printBillStatement(billPayload);
           break;
         }
 

@@ -1,9 +1,11 @@
-import React from 'react';
-import { View, Text, Image } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, Image, Pressable } from 'react-native';
+import { Printer } from 'lucide-react-native';
 import { TableItem, CustomerTab, TakeoutOrder } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 import { DiscountType } from '../../../utils/taxAndDiscountCalculator';
 import { QrPaymentChannel } from '../../../data/qrPaymentChannels.api';
+import { aggregateReceiptItems } from '@/features/printer';
 import { styles } from '../BillSettlementModal.styles';
 
 const MONKS_DREAM_LOGO = require('../../../../../../assets/Monks Dream Logo files-02.png');
@@ -32,6 +34,8 @@ interface BillThermalReceiptMockupProps {
   vatExemptSales: number;
   seniorPwdId: string;
   seniorPwdName: string;
+  onPrintBill?: () => void;
+  isPrintingBill?: boolean;
 }
 
 export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> = ({
@@ -58,9 +62,28 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
   vatExemptSales,
   seniorPwdId,
   seniorPwdName,
+  onPrintBill,
+  isPrintingBill = false,
 }) => {
+  const displayItems = useMemo(() => aggregateReceiptItems(rawItems), [rawItems]);
+
   return (
     <View style={styles.rightCol}>
+      {onPrintBill && (
+        <Pressable
+          onPress={onPrintBill}
+          disabled={isPrintingBill}
+          style={[styles.receiptQuickPrintBtn, isPrintingBill && { opacity: 0.6 }]}
+          accessibilityRole="button"
+          accessibilityLabel="Quick print pre-payment bill"
+        >
+          <Printer size={15} color="#810021" strokeWidth={2.2} />
+          <Text style={styles.receiptQuickPrintBtnText}>
+            {isPrintingBill ? 'Printing Bill...' : 'Quick Print Bill (Guest Check)'}
+          </Text>
+        </Pressable>
+      )}
+
       <View style={styles.receiptPaper}>
         {/* Receipt Header with Logo */}
         <View style={{ alignItems: 'center', marginBottom: 6 }}>
@@ -127,8 +150,8 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         </View>
         <Text style={styles.receiptDivider}>================================</Text>
 
-        {/* Itemized Line Items */}
-        {rawItems.map((item, idx) => (
+        {/* Itemized Line Items (Aggregated across rounds) */}
+        {displayItems.map((item, idx) => (
           <View key={idx} style={{ marginBottom: 4 }}>
             <View style={styles.receiptRow}>
               <Text style={styles.receiptItemName}>
