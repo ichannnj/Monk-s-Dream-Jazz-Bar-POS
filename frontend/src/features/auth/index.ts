@@ -7,3 +7,6 @@ export * from './presentation/components/PinCodeInput';
 export * from './presentation/components/ForgotPinModal';
 export * from './presentation/components/TrainingModeSwitch';
 export * from './presentation/components/JazzLogo';
+export * from './presentation/components/InactivityWarningModal';
+export * from './application/useInactivityWatchdog';
+export * from './utils/inactivityPolicy';

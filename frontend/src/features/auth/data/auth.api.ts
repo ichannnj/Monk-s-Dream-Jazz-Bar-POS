@@ -327,6 +327,72 @@ export class AuthApi {
   }
 
   /**
+   * Update staff member's last active timestamp in database (throttled keep-alive).
+   */
+  async touchActivity(userId: string): Promise<boolean> {
+    if (!userId) return false;
+    try {
+      const { error } = await (supabase.rpc as any)('touch_user_activity', {
+        p_user_id: userId,
+      });
+      return !error;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Auto clock out inactive staff user session and mark attendance shift completed.
+   */
+  async autoClockOutInactiveUser(
+    userId: string,
+    lastActivityAt?: string
+  ): Promise<{
+    success: boolean;
+    attendanceClosed?: boolean;
+    recordId?: string;
+    clockOutAt?: string;
+    hoursWorked?: number;
+    notes?: string;
+    message?: string;
+  }> {
+    if (!userId) return { success: false, message: 'No user ID provided' };
+    try {
+      const { data, error } = await (supabase.rpc as any)('auto_clock_out_inactive_user', {
+        p_user_id: userId,
+        p_last_activity_at: lastActivityAt || new Date().toISOString(),
+      });
+      if (error) {
+        console.warn('Auto clock out inactive user error:', error);
+        return { success: false, message: error.message };
+      }
+      return data as any;
+    } catch (err: any) {
+      console.warn('Auto clock out inactive user failed:', err);
+      return { success: false, message: err?.message || 'Failed to auto clock out' };
+    }
+  }
+
+  /**
+   * Sweep and reconcile abandoned attendance shifts across the venue.
+   */
+  async reconcileInactiveShifts(): Promise<{
+    success: boolean;
+    closedCount?: number;
+    thresholdHours?: number;
+  }> {
+    try {
+      const { data, error } = await (supabase.rpc as any)('reconcile_inactive_attendance_shifts');
+      if (error) {
+        return { success: false };
+      }
+      return data as any;
+    } catch {
+      return { success: false };
+    }
+  }
+
+  /**
    * Fetch active staff directory for administrative shift overviews.
    */
   async getStaffList() {
