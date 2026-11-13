@@ -56,7 +56,9 @@ export function useOrderEntryFlow({
     tableId: string,
     guestName: string,
     guestCount: number,
-    includeDoorCharge = false
+    includeDoorCharge = false,
+    doorChargePax?: number,
+    doorChargePrice?: number
   ) => {
     try {
       const { tabIndex } = openTableTab(tableId, guestName, guestCount);
@@ -74,18 +76,29 @@ export function useOrderEntryFlow({
       const initialItems: OrderLineItem[] = [];
       if (includeDoorCharge) {
         const todayEvent = useEventStore.getState().getTodayActiveEvent();
-        if (todayEvent?.has_door_charge && (todayEvent.door_charge_amount || 0) > 0) {
-          initialItems.push({
+        const effectivePrice =
+          doorChargePrice !== undefined ? doorChargePrice : todayEvent?.door_charge_amount || 300;
+        const effectivePax =
+          doorChargePax !== undefined && doorChargePax > 0 ? doorChargePax : guestCount;
+
+        if (effectivePrice > 0 && effectivePax > 0) {
+          const nowIso = new Date().toISOString();
+          const doorChargeItem: OrderLineItem = {
             id: `dc-${Date.now()}`,
-            productId: 'prod-door-charge',
+            productId: 'd1000001-0000-0000-0000-000000000001',
             productName: 'Event Door Charge',
-            unitPrice: todayEvent.door_charge_amount || 0,
-            quantity: guestCount > 0 ? guestCount : 1,
+            unitPrice: effectivePrice,
+            quantity: effectivePax,
             categorySlug: 'door_charge',
-            eventId: todayEvent.id,
+            eventId: todayEvent?.id,
             stationTarget: 'bar',
-            status: 'pending',
-          });
+            status: 'served',
+            createdAt: nowIso,
+            servedAt: nowIso,
+            stateChangedAt: nowIso,
+            roundNumber: 1,
+          };
+          initialItems.push(doorChargeItem);
         }
       }
 

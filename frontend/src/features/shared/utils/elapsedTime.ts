@@ -222,3 +222,129 @@ export function useLiveElapsedTimer(
     nowMs,
   };
 }
+
+/**
+ * Returns the timestamp when the item entered its current status.
+ */
+export function getItemStateTimestamp(item: {
+  status: string;
+  createdAt?: string;
+  preparingAt?: string;
+  readyAt?: string;
+  servedAt?: string;
+  stateChangedAt?: string;
+}): string | undefined {
+  const st = item.status?.toLowerCase();
+  if (st === 'pending') return item.createdAt;
+  if (st === 'preparing') return item.preparingAt || item.stateChangedAt || item.createdAt;
+  if (st === 'ready') return item.readyAt || item.stateChangedAt || item.createdAt;
+  if (st === 'served') return item.servedAt || item.stateChangedAt || item.createdAt;
+  return item.stateChangedAt || item.createdAt;
+}
+
+/**
+ * Computes exact duration breakdown per stage and total wait time.
+ */
+export function formatStageBreakdown(
+  items: Array<{
+    status: string;
+    createdAt?: string;
+    preparingAt?: string;
+    readyAt?: string;
+    servedAt?: string;
+    stateChangedAt?: string;
+  }>,
+  nowMs: number = Date.now()
+): {
+  currentStageTimer: string;
+  totalWaitTimer: string;
+  queueDuration?: string;
+  prepDuration?: string;
+  passDuration?: string;
+  summaryText: string;
+} {
+  if (!items || items.length === 0) {
+    return {
+      currentStageTimer: '00:00',
+      totalWaitTimer: '00:00',
+      summaryText: '',
+    };
+  }
+
+  const firstCreatedAt = items
+    .map((i) => i.createdAt)
+    .filter(Boolean)
+    .sort()[0];
+  const earliestPrep = items
+    .map((i) => i.preparingAt)
+    .filter(Boolean)
+    .sort()[0];
+  const earliestReady = items
+    .map((i) => i.readyAt)
+    .filter(Boolean)
+    .sort()[0];
+  const latestServed = items
+    .map((i) => i.servedAt)
+    .filter(Boolean)
+    .sort()
+    .reverse()[0];
+
+  const createdMs = firstCreatedAt ? new Date(firstCreatedAt).getTime() : nowMs;
+  const prepMs = earliestPrep ? new Date(earliestPrep).getTime() : undefined;
+  const readyMs = earliestReady ? new Date(earliestReady).getTime() : undefined;
+  const servedMs = latestServed ? new Date(latestServed).getTime() : undefined;
+
+  // Queue duration (created -> prep or ready or now)
+  let queueDuration: string | undefined;
+  if (prepMs && prepMs > createdMs) {
+    queueDuration = formatElapsedTimer(Math.max(0, Math.floor((prepMs - createdMs) / 1000)));
+  }
+
+  // Prep duration (prep -> ready or served or now)
+  let prepDuration: string | undefined;
+  if (prepMs) {
+    const endPrep = readyMs || servedMs || nowMs;
+    prepDuration = formatElapsedTimer(Math.max(0, Math.floor((endPrep - prepMs) / 1000)));
+  }
+
+  // Pass duration (ready -> served or now)
+  let passDuration: string | undefined;
+  if (readyMs) {
+    const endPass = servedMs || nowMs;
+    passDuration = formatElapsedTimer(Math.max(0, Math.floor((endPass - readyMs) / 1000)));
+  }
+
+  // Total wait (created -> served or now)
+  const totalWaitSec = Math.max(0, Math.floor(((servedMs || nowMs) - createdMs) / 1000));
+  const totalWaitTimer = formatElapsedTimer(totalWaitSec);
+
+  // Current stage duration
+  const activeItems = items.filter((i) => i.status !== 'cancelled');
+  const allServed = activeItems.length > 0 && activeItems.every((i) => i.status === 'served');
+  const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
+  const hasPrep = activeItems.some((i) => i.status === 'preparing');
+
+  let stageBaseMs = createdMs;
+  if (allServed && servedMs) stageBaseMs = servedMs;
+  else if (allReady && readyMs) stageBaseMs = readyMs;
+  else if (hasPrep && prepMs) stageBaseMs = prepMs;
+
+  const currentStageTimer = formatElapsedTimer(
+    Math.max(0, Math.floor((nowMs - stageBaseMs) / 1000))
+  );
+
+  const parts: string[] = [];
+  if (queueDuration) parts.push(`Queue: ${queueDuration}`);
+  if (prepDuration) parts.push(`Prep: ${prepDuration}`);
+  if (passDuration) parts.push(`Pass: ${passDuration}`);
+  parts.push(`Total: ${totalWaitTimer}`);
+
+  return {
+    currentStageTimer,
+    totalWaitTimer,
+    queueDuration,
+    prepDuration,
+    passDuration,
+    summaryText: parts.join(' · '),
+  };
+}

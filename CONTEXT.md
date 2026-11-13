@@ -263,6 +263,6 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 
 ## 📚 Related Documentation
 
-- Architecture & File Tree Map: [AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)
-- Implementation Roadmap: [PHASES.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/PHASES.md)
-- Developer Onboarding & Commands: [CONTRIBUTING.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/CONTRIBUTING.md)
+- Architecture & File Tree Map: [AGENTS.md](file:///home/ichannnj/orca/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)
+- Implementation Roadmap: [PHASES.md](file:///home/ichannnj/orca/Monk-s-Dream-Jazz-Bar-POS/PHASES.md)
+- Developer Onboarding & Commands: [CONTRIBUTING.md](file:///home/ichannnj/orca/Monk-s-Dream-Jazz-Bar-POS/CONTRIBUTING.md)

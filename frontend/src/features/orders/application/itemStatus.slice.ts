@@ -1,9 +1,9 @@
-import { CustomerTab, FloorAlert } from '../../../types/floor';
+import { CustomerTab, FloorAlert, OrderLineItem } from '../../../types/floor';
 import { ordersApi } from '../data/orders.api';
 import { tablesApi } from '../../table-service/data/tables.api';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
-import { deriveTabTotal, deriveTableStatus } from './order.helpers';
+import { deriveTabTotal, deriveTableStatus, deriveTableStateTimestamp } from './order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
 
 export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
@@ -11,6 +11,8 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
     itemId: string,
     newStatus: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled'
   ) => {
+    const nowIso = new Date().toISOString();
+
     set((state) => {
       // 1. Update items in Tables
       const updatedTables = state.tables.map((table) => {
@@ -19,7 +21,14 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
           const updatedItems = tab.items.map((item) => {
             if (item.id === itemId) {
               hasItem = true;
-              return { ...item, status: newStatus };
+              const stageStamp: Partial<OrderLineItem> = {
+                status: newStatus,
+                stateChangedAt: nowIso,
+              };
+              if (newStatus === 'preparing') stageStamp.preparingAt = item.preparingAt || nowIso;
+              if (newStatus === 'ready') stageStamp.readyAt = item.readyAt || nowIso;
+              if (newStatus === 'served') stageStamp.servedAt = item.servedAt || nowIso;
+              return { ...item, ...stageStamp };
             }
             return item;
           });
@@ -28,18 +37,36 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
 
         if (!hasItem) return table;
 
+        const nextStatus = deriveTableStatus(table.activeTabs.length > 0, updatedTabs);
+        const stateChangedAt = deriveTableStateTimestamp(
+          nextStatus,
+          updatedTabs,
+          table.occupiedSinceIso
+        );
+
         return {
           ...table,
           tabs: updatedTabs,
-          status: deriveTableStatus(table.activeTabs.length > 0, updatedTabs),
+          status: nextStatus,
+          stateChangedAt,
         };
       });
 
       // 2. Update items in Takeout orders
       const updatedTakeout = state.takeoutOrders.map((order) => {
-        const updatedItems = order.items.map((item) =>
-          item.id === itemId ? { ...item, status: newStatus } : item
-        );
+        const updatedItems = order.items.map((item) => {
+          if (item.id === itemId) {
+            const stageStamp: Partial<OrderLineItem> = {
+              status: newStatus,
+              stateChangedAt: nowIso,
+            };
+            if (newStatus === 'preparing') stageStamp.preparingAt = item.preparingAt || nowIso;
+            if (newStatus === 'ready') stageStamp.readyAt = item.readyAt || nowIso;
+            if (newStatus === 'served') stageStamp.servedAt = item.servedAt || nowIso;
+            return { ...item, ...stageStamp };
+          }
+          return item;
+        });
         const activeItems = updatedItems.filter((i) => i.status !== 'cancelled');
         const allReady =
           activeItems.length > 0 &&
@@ -48,14 +75,25 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
           ...order,
           items: updatedItems,
           status: allReady ? ('ready' as const) : order.status,
+          stateChangedAt: nowIso,
         };
       });
 
       // 3. Update items in Online delivery orders
       const updatedOnline = state.onlineOrders.map((order) => {
-        const updatedItems = order.items.map((item) =>
-          item.id === itemId ? { ...item, status: newStatus } : item
-        );
+        const updatedItems = order.items.map((item) => {
+          if (item.id === itemId) {
+            const stageStamp: Partial<OrderLineItem> = {
+              status: newStatus,
+              stateChangedAt: nowIso,
+            };
+            if (newStatus === 'preparing') stageStamp.preparingAt = item.preparingAt || nowIso;
+            if (newStatus === 'ready') stageStamp.readyAt = item.readyAt || nowIso;
+            if (newStatus === 'served') stageStamp.servedAt = item.servedAt || nowIso;
+            return { ...item, ...stageStamp };
+          }
+          return item;
+        });
         const activeItems = updatedItems.filter((i) => i.status !== 'cancelled');
         const allReady =
           activeItems.length > 0 &&
@@ -64,6 +102,7 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
           ...order,
           items: updatedItems,
           status: allReady ? ('ready' as const) : order.status,
+          stateChangedAt: nowIso,
         };
       });
 
@@ -87,6 +126,7 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
     stationTarget?: 'bar' | 'kitchen'
   ) => {
     const itemIdsToUpdate: string[] = [];
+    const nowIso = new Date().toISOString();
 
     set((state) => {
       const updatedTables = state.tables.map((table) => {
@@ -105,7 +145,12 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
               item.status !== 'served'
             ) {
               itemIdsToUpdate.push(item.id);
-              return { ...item, status: 'served' as const };
+              return {
+                ...item,
+                status: 'served' as const,
+                servedAt: item.servedAt || nowIso,
+                stateChangedAt: nowIso,
+              };
             }
             return item;
           });
@@ -113,10 +158,18 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
           return { ...tab, items: updatedItems };
         });
 
+        const nextStatus = deriveTableStatus(table.activeTabs.length > 0, updatedTabs);
+        const stateChangedAt = deriveTableStateTimestamp(
+          nextStatus,
+          updatedTabs,
+          table.occupiedSinceIso
+        );
+
         return {
           ...table,
           tabs: updatedTabs,
-          status: deriveTableStatus(table.activeTabs.length > 0, updatedTabs),
+          status: nextStatus,
+          stateChangedAt,
         };
       });
 

@@ -17,7 +17,11 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
   onDeliverTarget,
   onHandoff,
 }) => {
-  const liveTimer = useLiveElapsedTimer(ticket.createdAt, ticket.elapsedTime, 'runner');
+  const liveTimer = useLiveElapsedTimer(
+    ticket.passReadyAt || ticket.createdAt,
+    ticket.elapsedTime,
+    'runner'
+  );
   const progressPct =
     ticket.totalItemsCount > 0 ? (ticket.readyItemsCount / ticket.totalItemsCount) * 100 : 0;
 

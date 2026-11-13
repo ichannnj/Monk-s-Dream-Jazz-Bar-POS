@@ -15,6 +15,7 @@ import {
   ensureTab,
   createOrderWithItems,
   updateOrderItemStatus,
+  upsertTabDoorCharge,
 } from './dispatch.api';
 
 export class OrdersApi {
@@ -25,6 +26,7 @@ export class OrdersApi {
   ensureTab = ensureTab;
   createOrderWithItems = createOrderWithItems;
   updateOrderItemStatus = updateOrderItemStatus;
+  upsertTabDoorCharge = upsertTabDoorCharge;
 }
 
 export const ordersApi = new OrdersApi();
@@ -37,5 +39,6 @@ export {
   ensureTab,
   createOrderWithItems,
   updateOrderItemStatus,
+  upsertTabDoorCharge,
 };
 export type { DispatchOrderResult, CancelOrderItemResult };

@@ -1,17 +1,32 @@
 import { supabase } from '../../shared/infrastructure/supabase';
 import { resolveTableUuid } from '../../floor/data/resolver';
 
+export const DOOR_CHARGE_PRODUCT_ID = 'd1000001-0000-0000-0000-000000000001';
+
 /**
  * Resolves a raw product ID or name to a valid Supabase UUID from the products table.
  */
 export async function resolveProductId(rawIdOrName: string): Promise<string | null> {
+  if (!rawIdOrName) return null;
+
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     rawIdOrName
   );
   if (isUuid) return rawIdOrName;
 
+  // Explicit mapping for Event Door Charge
+  const lower = rawIdOrName.toLowerCase();
+  if (
+    lower === 'prod-door-charge' ||
+    lower === 'door_charge' ||
+    lower === 'door-charge' ||
+    lower.includes('door charge')
+  ) {
+    return DOOR_CHARGE_PRODUCT_ID;
+  }
+
   try {
-    const cleaned = rawIdOrName.replace(/^m-/, '').replace(/-/g, ' ');
+    const cleaned = rawIdOrName.replace(/^m-/, '').replace(/-/g, ' ').trim();
     const { data } = await supabase
       .from('products')
       .select('id, name')
@@ -22,8 +37,7 @@ export async function resolveProductId(rawIdOrName: string): Promise<string | nu
       return data[0].id;
     }
 
-    const { data: first } = await supabase.from('products').select('id').limit(1);
-    return first?.[0]?.id || null;
+    return null;
   } catch {
     return null;
   }

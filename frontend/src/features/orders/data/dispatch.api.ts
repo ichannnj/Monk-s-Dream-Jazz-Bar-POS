@@ -1,8 +1,13 @@
 import { supabase } from '../../shared/infrastructure/supabase';
 import { dispatchOrderWithDepletion, DispatchOrderResult } from './depletion.api';
-import { resolveProductId, ensureTab, getActiveOrders } from './tabLifecycle.api';
+import {
+  resolveProductId,
+  ensureTab,
+  getActiveOrders,
+  DOOR_CHARGE_PRODUCT_ID,
+} from './tabLifecycle.api';
 
-export { resolveProductId, ensureTab, getActiveOrders };
+export { resolveProductId, ensureTab, getActiveOrders, DOOR_CHARGE_PRODUCT_ID };
 
 /**
  * Create an order with line items and trigger in-database depletion.
@@ -91,19 +96,30 @@ export async function createOrderWithItems(params: {
     // 2. Prepare and Insert Order Items via authoritative RPC or atomic insert
     const preparedItems = await Promise.all(
       params.items.map(async (item) => {
-        const resolvedProdId =
-          (await resolveProductId(item.productId)) ||
-          (await resolveProductId(item.productName || ''));
-        const itemDbStatus =
-          item.status &&
-          ['PENDING', 'PREPARING', 'READY', 'SERVED'].includes(item.status.toUpperCase())
+        const isDoorCharge =
+          item.categorySlug === 'door_charge' ||
+          item.productId === DOOR_CHARGE_PRODUCT_ID ||
+          item.productId === 'prod-door-charge' ||
+          item.productName?.toLowerCase().includes('door charge');
+
+        const resolvedProdId = isDoorCharge
+          ? DOOR_CHARGE_PRODUCT_ID
+          : (await resolveProductId(item.productId)) ||
+            (await resolveProductId(item.productName || ''));
+
+        const itemDbStatus = isDoorCharge
+          ? ('SERVED' as const)
+          : item.status &&
+              ['PENDING', 'PREPARING', 'READY', 'SERVED'].includes(item.status.toUpperCase())
             ? (item.status.toUpperCase() as any)
             : ('PENDING' as const);
+
         const resolvedItemId = isUuid(item.id)
           ? item.id!
           : typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
             ? crypto.randomUUID()
             : '00000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0').slice(-12);
+
         return {
           id: resolvedItemId,
           product_id: resolvedProdId || 'e1111111-0000-0000-0000-000000000001',
@@ -115,6 +131,7 @@ export async function createOrderWithItems(params: {
           unit_price: item.unitPrice,
           status: itemDbStatus,
           station_target: (item.stationTarget?.toLowerCase() as any) || 'bar',
+          category_slug: isDoorCharge ? 'door_charge' : item.categorySlug || null,
           modifiers: (Array.isArray(item.modifiers) ? item.modifiers : []) as any,
           notes: item.notes || null,
           variant_selections: (item.variantSelections || []).map((s) => ({
@@ -136,10 +153,12 @@ export async function createOrderWithItems(params: {
     } else {
       console.warn('dispatch_order_with_selections RPC fallback or error:', rpcRes.error?.message);
       // Direct insertion fallback if RPC is not present
-      const orderItemsToInsert = preparedItems.map(({ variant_selections, ...rest }) => ({
-        ...rest,
-        order_id: orderData.id,
-      }));
+      const orderItemsToInsert = preparedItems.map(
+        ({ variant_selections, category_slug, ...rest }) => ({
+          ...rest,
+          order_id: orderData.id,
+        })
+      );
       let { data: initialData, error: itemsError } = await supabase
         .from('order_items')
         .insert(orderItemsToInsert as any)
@@ -170,12 +189,18 @@ export async function createOrderWithItems(params: {
       insertedItems = initialData || [];
     }
 
-    // 3. Trigger In-Database Recipe Depletion & Auto-86
+    // 3. Trigger In-Database Recipe Depletion & Auto-86 (only for actual kitchen/bar items)
+    const hasKitchenOrBarItems = params.items.some(
+      (i) =>
+        i.categorySlug !== 'door_charge' && !i.productName?.toLowerCase().includes('door charge')
+    );
     let depletionResult: DispatchOrderResult = { success: true, orderId: orderData.id };
-    try {
-      depletionResult = await dispatchOrderWithDepletion(orderData.id);
-    } catch (depletionErr) {
-      console.warn('Depletion execution notice:', depletionErr);
+    if (hasKitchenOrBarItems) {
+      try {
+        depletionResult = await dispatchOrderWithDepletion(orderData.id);
+      } catch (depletionErr) {
+        console.warn('Depletion execution notice:', depletionErr);
+      }
     }
 
     return {
@@ -191,6 +216,7 @@ export async function createOrderWithItems(params: {
 
 /**
  * Update order item status in Supabase (PENDING -> PREPARING -> READY -> SERVED).
+ * Reactively stamps per-state transition timestamps.
  */
 export async function updateOrderItemStatus(
   orderItemId: string,
@@ -203,13 +229,20 @@ export async function updateOrderItemStatus(
 
   try {
     const dbStatus = status.toUpperCase() as any;
+    const nowIso = new Date().toISOString();
     const updatePayload: Record<string, any> = {
       status: dbStatus,
-      updated_at: new Date().toISOString(),
+      state_changed_at: nowIso,
+      updated_at: nowIso,
     };
-    if (status === 'served') {
-      updatePayload.delivered_at = new Date().toISOString();
+    if (status === 'preparing') {
+      updatePayload.preparing_at = nowIso;
+    } else if (status === 'ready') {
+      updatePayload.ready_at = nowIso;
+    } else if (status === 'served') {
+      updatePayload.delivered_at = nowIso;
     }
+
     const { error } = await (supabase.from as any)('order_items')
       .update(updatePayload)
       .eq('id', orderItemId);
@@ -219,5 +252,35 @@ export async function updateOrderItemStatus(
     }
   } catch (err) {
     console.warn('updateOrderItemStatus error:', err);
+  }
+}
+
+/**
+ * Atomically upsert or void a Door Charge item on an active tab.
+ */
+export async function upsertTabDoorCharge(params: {
+  tabId: string;
+  quantity: number;
+  unitPrice: number;
+  eventId?: string;
+  notes?: string;
+}): Promise<any> {
+  try {
+    const { data, error } = await (supabase.rpc as any)('upsert_tab_door_charge', {
+      p_tab_id: params.tabId,
+      p_quantity: params.quantity,
+      p_unit_price: params.unitPrice,
+      p_event_id: params.eventId || null,
+      p_notes: params.notes || null,
+    });
+
+    if (error) {
+      console.warn('upsert_tab_door_charge RPC error:', error.message);
+      throw error;
+    }
+    return data;
+  } catch (err: any) {
+    console.warn('upsertTabDoorCharge error:', err?.message);
+    throw err;
   }
 }

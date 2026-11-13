@@ -23,7 +23,13 @@ export function useRunnerTickets() {
     // 1. Tables (Per Sub-Order Round)
     tables.forEach((table) => {
       (table.tabs || []).forEach((tab) => {
-        const activeItems = (tab.items || []).filter((i) => i.status !== 'cancelled');
+        // Exclude Door Charge from FOH Pass Runner delivery tickets
+        const activeItems = (tab.items || []).filter(
+          (i) =>
+            i.status !== 'cancelled' &&
+            i.categorySlug !== 'door_charge' &&
+            !i.productName.toLowerCase().includes('door charge')
+        );
         if (activeItems.length === 0) return;
 
         // Group active items by round number
@@ -46,7 +52,16 @@ export function useRunnerTickets() {
             roundItems.find((i) => i.createdAt)?.createdAt ||
             tab.openedAtIso ||
             table.occupiedSinceIso;
-          const elapsedSecs = getElapsedSeconds(roundCreatedAt, table.elapsedTime);
+
+          const passReadyAt = allDone
+            ? roundItems
+                .map((i) => i.readyAt || i.stateChangedAt)
+                .filter(Boolean)
+                .sort()
+                .reverse()[0]
+            : undefined;
+
+          const elapsedSecs = getElapsedSeconds(passReadyAt || roundCreatedAt, table.elapsedTime);
           const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
 
           list.push({
@@ -59,6 +74,7 @@ export function useRunnerTickets() {
             tableId: table.id,
             tabIndex: tab.tabIndex,
             createdAt: roundCreatedAt,
+            passReadyAt,
             elapsedTime: formatElapsedTimer(elapsedSecs),
             minutesElapsed: minutes,
             items: roundItems,
@@ -74,7 +90,12 @@ export function useRunnerTickets() {
     // 2. Takeout
     takeoutOrders.forEach((order) => {
       if (order.status !== 'completed') {
-        const activeItems = (order.items || []).filter((i) => i.status !== 'cancelled');
+        const activeItems = (order.items || []).filter(
+          (i) =>
+            i.status !== 'cancelled' &&
+            i.categorySlug !== 'door_charge' &&
+            !i.productName.toLowerCase().includes('door charge')
+        );
         if (activeItems.length === 0) return;
         if (activeItems.every((i) => i.status === 'served')) return;
 
@@ -82,7 +103,15 @@ export function useRunnerTickets() {
         const totalCount = activeItems.length;
         const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
         const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
-        const elapsedSecs = getElapsedSeconds(orderCreatedAt, order.elapsedTime);
+        const passReadyAt = allDone
+          ? activeItems
+              .map((i) => i.readyAt || i.stateChangedAt)
+              .filter(Boolean)
+              .sort()
+              .reverse()[0]
+          : undefined;
+
+        const elapsedSecs = getElapsedSeconds(passReadyAt || orderCreatedAt, order.elapsedTime);
         const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
 
         list.push({
@@ -93,6 +122,7 @@ export function useRunnerTickets() {
           guestName: order.customerName,
           orderType: 'takeout',
           createdAt: orderCreatedAt,
+          passReadyAt,
           isPrepaid: order.isPrepaid,
           elapsedTime: formatElapsedTimer(elapsedSecs),
           minutesElapsed: minutes,
@@ -107,7 +137,12 @@ export function useRunnerTickets() {
     // 3. Online Delivery
     onlineOrders.forEach((order) => {
       if (order.status !== 'completed') {
-        const activeItems = (order.items || []).filter((i) => i.status !== 'cancelled');
+        const activeItems = (order.items || []).filter(
+          (i) =>
+            i.status !== 'cancelled' &&
+            i.categorySlug !== 'door_charge' &&
+            !i.productName.toLowerCase().includes('door charge')
+        );
         if (activeItems.length === 0) return;
         if (activeItems.every((i) => i.status === 'served')) return;
 
@@ -116,7 +151,15 @@ export function useRunnerTickets() {
         const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
         const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
         const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
-        const elapsedSecs = getElapsedSeconds(orderCreatedAt, order.elapsedTime);
+        const passReadyAt = allDone
+          ? activeItems
+              .map((i) => i.readyAt || i.stateChangedAt)
+              .filter(Boolean)
+              .sort()
+              .reverse()[0]
+          : undefined;
+
+        const elapsedSecs = getElapsedSeconds(passReadyAt || orderCreatedAt, order.elapsedTime);
         const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
 
         list.push({
@@ -127,6 +170,7 @@ export function useRunnerTickets() {
           guestName: `${order.customerName} · Rider: ${order.riderName}`,
           orderType: 'online_delivery',
           createdAt: orderCreatedAt,
+          passReadyAt,
           isPrepaid: true,
           elapsedTime: formatElapsedTimer(elapsedSecs),
           minutesElapsed: minutes,

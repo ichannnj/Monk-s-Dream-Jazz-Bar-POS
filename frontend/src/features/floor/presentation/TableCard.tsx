@@ -19,15 +19,16 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
   const isPrep = status === 'preparing';
   const isServed = status === 'served';
 
-  const earliestTabIso = useMemo(() => {
+  const stateTimerIso = useMemo(() => {
+    if (table.stateChangedAt) return table.stateChangedAt;
     if (table.occupiedSinceIso) return table.occupiedSinceIso;
     const isos = (table.tabs || [])
       .filter((t) => t.status !== 'closed' && t.openedAtIso)
       .map((t) => t.openedAtIso as string);
     return isos[0];
-  }, [table.occupiedSinceIso, table.tabs]);
+  }, [table.stateChangedAt, table.occupiedSinceIso, table.tabs]);
 
-  const liveTimer = useLiveElapsedTimer(earliestTabIso, elapsedTime, 'floor', !isEmpty);
+  const liveTimer = useLiveElapsedTimer(stateTimerIso, elapsedTime, 'floor', !isEmpty);
 
   // Derive accurate active tabs count
   const activeTabCount = useMemo(() => {
@@ -150,7 +151,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
             <Text style={[styles.statusText, { color: statusConfig.color }]}>
               {statusConfig.label}
             </Text>
-            {!isEmpty && (earliestTabIso || elapsedTime) ? (
+            {!isEmpty && (stateTimerIso || elapsedTime) ? (
               <Text style={[styles.timeText, { color: statusConfig.color }]}>
                 · {liveTimer.formattedTimer}
               </Text>

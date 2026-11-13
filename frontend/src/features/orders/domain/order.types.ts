@@ -41,6 +41,14 @@ export interface OrderState {
     hasCorkageFee?: boolean,
     corkageAmount?: number
   ) => void;
+  upsertTabDoorCharge: (
+    tableId: string,
+    tabIndex: number,
+    quantity: number,
+    unitPrice: number,
+    eventId?: string,
+    notes?: string
+  ) => Promise<void>;
   transferTableOrTab: (
     originId: string,
     targetId: string,

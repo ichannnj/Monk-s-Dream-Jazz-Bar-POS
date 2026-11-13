@@ -23,8 +23,15 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
   const [managerPin, setManagerPin] = useState<string>('');
   const [pinError, setPinError] = useState<string>('');
 
+  const isDoorCharge =
+    item.categorySlug === 'door_charge' ||
+    item.productId === 'd1000001-0000-0000-0000-000000000001' ||
+    item.productName?.toLowerCase().includes('door charge');
+
+  // Door charge is admission cover, not kitchen/bar prep: no waste logging & no manager PIN required
   const isPostPrep =
-    item.status === 'preparing' || item.status === 'ready' || item.status === 'served';
+    !isDoorCharge &&
+    (item.status === 'preparing' || item.status === 'ready' || item.status === 'served');
 
   const handleConfirm = async () => {
     if (isPostPrep) {
@@ -81,7 +88,16 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
           </View>
 
           {/* Warning or Pre-Prep notice */}
-          {isPostPrep ? (
+          {isDoorCharge ? (
+            <View className="bg-stone-50 border border-stone-200 rounded-2xl p-4 mb-4">
+              <Text className="text-base font-bold text-stone-900">
+                Door Charge Admission Cover
+              </Text>
+              <Text className="text-sm text-stone-600 mt-1">
+                Voiding will remove this admission cover from the guest tab without waste logging.
+              </Text>
+            </View>
+          ) : isPostPrep ? (
             <View className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-4">
               <View className="flex-row items-center gap-2 mb-1.5">
                 <AlertTriangle size={18} color="#b45309" />

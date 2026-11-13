@@ -1,0 +1,28 @@
+# Monk's Dream Jazz Bar POS — Graphify Ignore Rules
+# Keep the knowledge graph focused strictly on application code, schema, and core docs.
+
+# Dependencies & Caches
+node_modules/
+.turbo/
+.expo/
+.temp/
+.cache/
+*.log
+
+# Build Artifacts & Compiled Bundles (Prevent minified bundle AST parsing explosion)
+dist/
+build/
+frontend/dist/
+public/_expo/
+public/assets/
+public/*.js
+public/*.map
+
+# Lock files
+pnpm-lock.yaml
+
+# Knowledge Graph output directory
+graphify-out/
+
+# Agent vendor skill documentation and templates (not POS application code)
+.agents/skills/

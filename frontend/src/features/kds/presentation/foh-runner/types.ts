@@ -9,6 +9,7 @@ export interface RunnerTicket {
   elapsedTime: string;
   minutesElapsed: number;
   createdAt?: string;
+  passReadyAt?: string;
   isPrepaid?: boolean;
   takeoutId?: string;
   onlineId?: string;

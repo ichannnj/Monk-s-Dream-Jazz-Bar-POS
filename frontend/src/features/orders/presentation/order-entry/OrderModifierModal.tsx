@@ -42,14 +42,12 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
   onClose,
   onConfirm,
 }) => {
-  if (!item) return null;
-
-  const hasVariants = Boolean(item.variants && item.variants.length > 0);
-  const variantGroups = item.variantGroups || [];
+  const hasVariants = Boolean(item?.variants && item.variants.length > 0);
+  const variantGroups = item?.variantGroups || [];
 
   // Available temperatures & sizes
   const availableTemperatures = useMemo<BeverageTemperature[]>(() => {
-    if (!hasVariants || !item.variants) return [];
+    if (!hasVariants || !item?.variants) return [];
     const temps = new Set<BeverageTemperature>();
     item.variants.forEach((v) => {
       if (v.temperature && v.temperature !== 'NONE') {
@@ -57,19 +55,19 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
       }
     });
     return Array.from(temps);
-  }, [hasVariants, item.variants]);
+  }, [hasVariants, item?.variants]);
 
   const availableSizes = useMemo<
     { sizeLabel: string; price: number; variant: ProductVariant }[]
   >(() => {
-    if (!hasVariants || !item.variants) return [];
+    if (!hasVariants || !item?.variants) return [];
     return item.variants
       .filter((v) => availableTemperatures.length === 0 || v.temperature === selectedTemperature)
       .map((v) => ({ sizeLabel: v.sizeLabel, price: v.price, variant: v }));
-  }, [hasVariants, item.variants, availableTemperatures, selectedTemperature]);
+  }, [hasVariants, item?.variants, availableTemperatures, selectedTemperature]);
 
   const currentVariant = useMemo<ProductVariant | undefined>(() => {
-    if (!hasVariants || !item.variants) return undefined;
+    if (!hasVariants || !item?.variants) return undefined;
     return (
       item.variants.find((v) => {
         const tempMatch =
@@ -78,9 +76,9 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
         return tempMatch && sizeMatch;
       }) || item.variants[0]
     );
-  }, [hasVariants, item.variants, availableTemperatures, selectedTemperature, selectedSize]);
+  }, [hasVariants, item?.variants, availableTemperatures, selectedTemperature, selectedSize]);
 
-  const basePrice = currentVariant ? currentVariant.price : item.price;
+  const basePrice = currentVariant ? currentVariant.price : (item?.price ?? 0);
 
   // Options delta (Flavor, etc.)
   const optionsDelta = useMemo(() => {
@@ -96,12 +94,12 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
   }, [variantGroups, selectedVariantOptions]);
 
   const modifiersDelta = useMemo(() => {
-    if (!item.modifiers) return 0;
+    if (!item?.modifiers) return 0;
     return selectedModifiers.reduce((acc, modName) => {
       const found = item.modifiers.find((m) => m.name === modName);
       return acc + (found ? found.priceDelta : 0);
     }, 0);
-  }, [item.modifiers, selectedModifiers]);
+  }, [item?.modifiers, selectedModifiers]);
 
   const totalEffectivePrice = basePrice + optionsDelta + modifiersDelta;
 
@@ -124,6 +122,8 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
     }
     return null;
   }, [variantGroups, selectedVariantOptions]);
+
+  if (!item) return null;
 
   return (
     <View

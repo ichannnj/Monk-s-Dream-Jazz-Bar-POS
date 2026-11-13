@@ -192,6 +192,8 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
           unitPrice: i.unitPrice,
           stationTarget: i.stationTarget,
           status: i.status,
+          categorySlug: i.categorySlug,
+          eventId: i.eventId,
           variantId: i.variantId,
           temperature: i.temperature,
           sizeLabel: i.sizeLabel,
@@ -267,6 +269,117 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
 
   closeEmptyTab: (tableId: string, tabIndex: number) => {
     closeEmptyTabAction(set, tableId, tabIndex);
+  },
+
+  upsertTabDoorCharge: async (
+    tableId: string,
+    tabIndex: number,
+    quantity: number,
+    unitPrice: number,
+    eventId?: string,
+    notes?: string
+  ) => {
+    const table = get().tables.find((t) => t.id === tableId);
+    const tab = table?.tabs?.find((t) => t.tabIndex === tabIndex);
+    if (!tab) return;
+
+    const doorChargeProdId = 'd1000001-0000-0000-0000-000000000001';
+    const nowIso = new Date().toISOString();
+
+    set((state) => {
+      const updatedTables = state.tables.map((tbl) => {
+        if (tbl.id !== tableId) return tbl;
+
+        const updatedTabs = (tbl.tabs || []).map((tb) => {
+          if (tb.tabIndex !== tabIndex) return tb;
+
+          const existingIndex = tb.items.findIndex(
+            (i) =>
+              (i.categorySlug === 'door_charge' ||
+                i.productId === doorChargeProdId ||
+                i.productName.toLowerCase().includes('door charge')) &&
+              i.status !== 'cancelled'
+          );
+
+          const nextItems = [...tb.items];
+
+          if (quantity <= 0) {
+            if (existingIndex >= 0) {
+              nextItems[existingIndex] = {
+                ...nextItems[existingIndex],
+                status: 'cancelled',
+                stateChangedAt: nowIso,
+                notes: notes || 'Door charge voided / removed',
+              };
+            }
+          } else {
+            if (existingIndex >= 0) {
+              nextItems[existingIndex] = {
+                ...nextItems[existingIndex],
+                quantity,
+                unitPrice,
+                eventId: eventId || nextItems[existingIndex].eventId,
+                status: 'served',
+                stateChangedAt: nowIso,
+                notes: notes !== undefined ? notes : nextItems[existingIndex].notes,
+              };
+            } else {
+              const newItem: OrderLineItem = {
+                id: `dc-${Date.now()}`,
+                productId: doorChargeProdId,
+                productName: 'Event Door Charge',
+                unitPrice,
+                quantity,
+                stationTarget: 'bar',
+                categorySlug: 'door_charge',
+                eventId,
+                status: 'served',
+                createdAt: nowIso,
+                servedAt: nowIso,
+                stateChangedAt: nowIso,
+                notes,
+                roundNumber: 1,
+              };
+              nextItems.push(newItem);
+            }
+          }
+
+          const updatedTab: CustomerTab = {
+            ...tb,
+            items: nextItems,
+            totalAmount: 0,
+          };
+          updatedTab.totalAmount = deriveTabTotal(updatedTab);
+          return updatedTab;
+        });
+
+        const tableTotal = updatedTabs.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
+
+        return {
+          ...tbl,
+          status: deriveTableStatus(tbl.activeTabs.length > 0, updatedTabs),
+          totalAmount: tableTotal,
+          tabs: updatedTabs,
+        };
+      });
+
+      return { tables: updatedTables };
+    });
+
+    try {
+      if (tab.id && !tab.id.startsWith('tab-')) {
+        await ordersApi.upsertTabDoorCharge({
+          tabId: tab.id,
+          quantity,
+          unitPrice,
+          eventId,
+          notes,
+        });
+        realtimeGateway.broadcastPosSync('door_charge_updated');
+      }
+    } catch (err) {
+      console.warn('upsertTabDoorCharge backend error:', err);
+    }
   },
 
   transferOrderItemsToTab: async (

@@ -43,7 +43,9 @@ export interface WaiterModalsClusterProps {
     tableId: string,
     guestName: string,
     guestCount: number,
-    includeDoorCharge?: boolean
+    includeDoorCharge?: boolean,
+    doorChargePax?: number,
+    doorChargePrice?: number
   ) => void;
 
   // Open Table Direct Modal (Direct click on table or + Split Tab)

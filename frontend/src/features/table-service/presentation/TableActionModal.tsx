@@ -19,6 +19,8 @@ import { TableActionTabSelector } from './table-action/TableActionTabSelector';
 import { TableActionRoundList, RoundGroup } from './table-action/TableActionRoundList';
 import { TableActionVoidModal } from './table-action/TableActionVoidModal';
 import { TableItemTransferModal } from './TableItemTransferModal';
+import { DoorChargeEditorModal } from './table-action/DoorChargeEditorModal';
+import { useEventStore } from '@/features/events';
 
 interface TableActionModalProps {
   visible: boolean;
@@ -40,13 +42,15 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   onCheckout,
 }) => {
   const { currentUser } = useAuthStore();
-  const { voidOrderItem, closeEmptyTab } = useOrderStore();
+  const { voidOrderItem, closeEmptyTab, upsertTabDoorCharge } = useOrderStore();
+  const todayEvent = useEventStore((s) => s.getTodayActiveEvent());
 
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(table?.activeTabs?.[0] || 1);
   const [itemToVoid, setItemToVoid] = useState<OrderLineItem | null>(null);
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
   const [isConfirmCloseEmptyOpen, setIsConfirmCloseEmptyOpen] = useState(false);
   const [isItemTransferModalOpen, setIsItemTransferModalOpen] = useState(false);
+  const [isDoorChargeEditorOpen, setIsDoorChargeEditorOpen] = useState(false);
 
   useEffect(() => {
     if (table) {
@@ -173,6 +177,23 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
 
   const hasZeroItems = (currentTab?.items.length || 0) === 0;
 
+  // Door charge info for the current tab
+  const currentDoorChargeItem = currentTab?.items.find(
+    (i) =>
+      i.status !== 'cancelled' &&
+      (i.categorySlug === 'door_charge' ||
+        i.productId === 'd1000001-0000-0000-0000-000000000001' ||
+        i.productName?.toLowerCase().includes('door charge'))
+  );
+
+  const handleSaveDoorCharge = async (pax: number, price: number) => {
+    await upsertTabDoorCharge(table.id, selectedTabIndex, pax, price, todayEvent?.id || undefined);
+  };
+
+  const handleVoidDoorCharge = async () => {
+    await upsertTabDoorCharge(table.id, selectedTabIndex, 0, 0, todayEvent?.id || undefined);
+  };
+
   return (
     <>
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -203,6 +224,8 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                 selectedTabIndex={selectedTabIndex}
                 rounds={rounds}
                 onOpenVoidModal={handleOpenVoidModal}
+                onEditDoorCharge={() => setIsDoorChargeEditorOpen(true)}
+                onAddDoorCharge={() => setIsDoorChargeEditorOpen(true)}
               />
 
               {/* 4. Natural Service Progression Actions */}
@@ -320,6 +343,20 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
           table={table}
           sourceTabIndex={selectedTabIndex}
           onClose={() => setIsItemTransferModalOpen(false)}
+        />
+      )}
+
+      {/* Door Charge Editor Modal */}
+      {isDoorChargeEditorOpen && currentTab && (
+        <DoorChargeEditorModal
+          visible={isDoorChargeEditorOpen}
+          onClose={() => setIsDoorChargeEditorOpen(false)}
+          tabId={currentTab.id}
+          tableName={`Table ${table.code} · Tab #${selectedTabIndex}`}
+          currentPax={currentDoorChargeItem?.quantity || 1}
+          currentPrice={currentDoorChargeItem?.unitPrice || todayEvent?.door_charge_amount || 300}
+          onSave={handleSaveDoorCharge}
+          onVoid={handleVoidDoorCharge}
         />
       )}
 

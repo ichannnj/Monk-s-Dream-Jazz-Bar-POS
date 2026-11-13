@@ -14,7 +14,9 @@ interface OpenTableDirectModalProps {
     tableId: string,
     guestName: string,
     guestCount: number,
-    includeDoorCharge?: boolean
+    includeDoorCharge?: boolean,
+    doorChargePax?: number,
+    doorChargePrice?: number
   ) => void;
   isSplitTab?: boolean;
 }
@@ -31,16 +33,24 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
   const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
   const todayEvent = useEventStore((s) => s.getTodayActiveEvent());
   const [includeDoorCharge, setIncludeDoorCharge] = useState(false);
+  const [doorChargePax, setDoorChargePax] = useState<number>(2);
+  const [doorChargePrice, setDoorChargePrice] = useState<string>('300');
 
   React.useEffect(() => {
     if (visible) {
       setGuestName('');
       setGuestCount(2);
+      setDoorChargePax(2);
+      setDoorChargePrice(String(todayEvent?.door_charge_amount || 300));
       setIncludeDoorCharge(
         Boolean(todayEvent?.has_door_charge && (todayEvent?.door_charge_amount || 0) > 0)
       );
     }
   }, [visible, todayEvent]);
+
+  React.useEffect(() => {
+    setDoorChargePax(guestCount);
+  }, [guestCount]);
 
   if (!table) return null;
 
@@ -63,7 +73,15 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
   const handleConfirm = () => {
     try {
       const finalName = guestName.trim() || `Guest ${activeTabsCount + 1}`;
-      onConfirmOpenTab(table.id, finalName, guestCount, includeDoorCharge);
+      const numericPrice = parseFloat(doorChargePrice) || 0;
+      onConfirmOpenTab(
+        table.id,
+        finalName,
+        guestCount,
+        includeDoorCharge,
+        doorChargePax,
+        numericPrice
+      );
       setGuestName('');
       setGuestCount(2);
       onClose();
@@ -183,34 +201,126 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
             </View>
           </View>
 
-          {/* Door Charge Quick Toggle */}
+          {/* Door Charge Quick Toggle & Adjustment */}
           {todayEvent?.has_door_charge && (todayEvent?.door_charge_amount || 0) > 0 && (
-            <Pressable
-              onPress={() => setIncludeDoorCharge(!includeDoorCharge)}
-              style={({ pressed }) => [
-                styles.doorChargeRow,
-                includeDoorCharge && styles.doorChargeRowActive,
-                pressed && { opacity: 0.8 },
-              ]}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: includeDoorCharge }}
-            >
-              <View
-                style={[styles.doorChargeCheck, includeDoorCharge && styles.doorChargeCheckActive]}
+            <View style={{ marginBottom: 16 }}>
+              <Pressable
+                onPress={() => setIncludeDoorCharge(!includeDoorCharge)}
+                style={({ pressed }) => [
+                  styles.doorChargeRow,
+                  includeDoorCharge && styles.doorChargeRowActive,
+                  pressed && { opacity: 0.8 },
+                ]}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: includeDoorCharge }}
               >
-                {includeDoorCharge && <Check size={14} color="#ffffff" strokeWidth={3} />}
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.doorChargeTitle}>
-                  Add Door Charge: ₱{(todayEvent.door_charge_amount || 0).toLocaleString()} ×{' '}
-                  {guestCount} = ₱
-                  {((todayEvent.door_charge_amount || 0) * guestCount).toLocaleString()}
-                </Text>
-                <Text style={styles.doorChargeSubtitle}>
-                  Tonight: {todayEvent.title || 'Live Jazz Event'}
-                </Text>
-              </View>
-            </Pressable>
+                <View
+                  style={[
+                    styles.doorChargeCheck,
+                    includeDoorCharge && styles.doorChargeCheckActive,
+                  ]}
+                >
+                  {includeDoorCharge && <Check size={14} color="#ffffff" strokeWidth={3} />}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.doorChargeTitle}>
+                    Add Door Charge: ₱{(parseFloat(doorChargePrice) || 0).toLocaleString()} ×{' '}
+                    {doorChargePax} = ₱
+                    {((parseFloat(doorChargePrice) || 0) * doorChargePax).toLocaleString()}
+                  </Text>
+                  <Text style={styles.doorChargeSubtitle}>
+                    Tonight: {todayEvent.title || 'Live Jazz Event'}
+                  </Text>
+                </View>
+              </Pressable>
+
+              {/* Inline Adjustment when Checked */}
+              {includeDoorCharge && (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginTop: 8,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    backgroundColor: '#FAF8F5',
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: '#e7e5e4',
+                  }}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#1C1917' }}>Pax:</Text>
+                    <Pressable
+                      onPress={() => setDoorChargePax((p) => Math.max(1, p - 1))}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 6,
+                        backgroundColor: '#ffffff',
+                        borderWidth: 1,
+                        borderColor: '#d6d3d1',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1C1917' }}>-</Text>
+                    </Pressable>
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontWeight: '800',
+                        color: '#810021',
+                        minWidth: 20,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {doorChargePax}
+                    </Text>
+                    <Pressable
+                      onPress={() => setDoorChargePax((p) => p + 1)}
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 6,
+                        backgroundColor: '#ffffff',
+                        borderWidth: 1,
+                        borderColor: '#d6d3d1',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1C1917' }}>+</Text>
+                    </Pressable>
+                  </View>
+
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#1C1917' }}>
+                      ₱ / head:
+                    </Text>
+                    <TextInput
+                      style={{
+                        width: 72,
+                        height: 32,
+                        backgroundColor: '#ffffff',
+                        borderRadius: 6,
+                        borderWidth: 1,
+                        borderColor: '#d6d3d1',
+                        textAlign: 'center',
+                        fontSize: 14,
+                        fontWeight: '700',
+                        color: '#1C1917',
+                        padding: 0,
+                      }}
+                      value={doorChargePrice}
+                      onChangeText={setDoorChargePrice}
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+              )}
+            </View>
           )}
 
           {/* Action Buttons */}

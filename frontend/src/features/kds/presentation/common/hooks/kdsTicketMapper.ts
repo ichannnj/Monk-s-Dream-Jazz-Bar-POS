@@ -78,7 +78,22 @@ export function mapDineInTableTickets(
           activeRoundItems.find((i) => i.createdAt)?.createdAt ||
           tab.openedAtIso ||
           table.occupiedSinceIso;
-        const elapsedSecs = getElapsedSeconds(roundCreatedAt, table.elapsedTime);
+
+        const stageTimestamp =
+          stage === 'ready'
+            ? activeRoundItems
+                .map((i) => i.readyAt || i.stateChangedAt)
+                .filter(Boolean)
+                .sort()
+                .reverse()[0] || roundCreatedAt
+            : stage === 'preparing'
+              ? activeRoundItems
+                  .map((i) => i.preparingAt || i.stateChangedAt)
+                  .filter(Boolean)
+                  .sort()[0] || roundCreatedAt
+              : roundCreatedAt;
+
+        const elapsedSecs = getElapsedSeconds(stageTimestamp, table.elapsedTime);
         const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
         const cleanCode = table.code
           .replace('Table ', 'T')
@@ -95,6 +110,7 @@ export function mapDineInTableTickets(
           tableId: table.id,
           tabIndex: tab.tabIndex,
           createdAt: roundCreatedAt,
+          stageTimestamp,
           elapsedTime: formatElapsedTimer(elapsedSecs),
           minutesElapsed: minutes,
           badges,
@@ -151,7 +167,21 @@ export function mapTakeoutTickets(
     else if (hasPrep || order.status === 'preparing') stage = 'preparing';
 
     const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
-    const elapsedSecs = getElapsedSeconds(orderCreatedAt, order.elapsedTime);
+    const stageTimestamp =
+      stage === 'ready'
+        ? activeItems
+            .map((i) => i.readyAt || i.stateChangedAt)
+            .filter(Boolean)
+            .sort()
+            .reverse()[0] || orderCreatedAt
+        : stage === 'preparing'
+          ? activeItems
+              .map((i) => i.preparingAt || i.stateChangedAt)
+              .filter(Boolean)
+              .sort()[0] || orderCreatedAt
+          : orderCreatedAt;
+
+    const elapsedSecs = getElapsedSeconds(stageTimestamp, order.elapsedTime);
     const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
 
     const otherStationItems = (order.items || []).filter(
@@ -170,6 +200,7 @@ export function mapTakeoutTickets(
       tableOrSource: `Takeout · ${order.customerName}`,
       stage,
       createdAt: orderCreatedAt,
+      stageTimestamp,
       isPrepaid: order.isPrepaid,
       elapsedTime: formatElapsedTimer(elapsedSecs),
       minutesElapsed: minutes,
@@ -223,7 +254,21 @@ export function mapOnlineDeliveryTickets(
     else if (hasPrep || order.status === 'preparing') stage = 'preparing';
 
     const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
-    const elapsedSecs = getElapsedSeconds(orderCreatedAt, order.elapsedTime);
+    const stageTimestamp =
+      stage === 'ready'
+        ? activeItems
+            .map((i) => i.readyAt || i.stateChangedAt)
+            .filter(Boolean)
+            .sort()
+            .reverse()[0] || orderCreatedAt
+        : stage === 'preparing'
+          ? activeItems
+              .map((i) => i.preparingAt || i.stateChangedAt)
+              .filter(Boolean)
+              .sort()[0] || orderCreatedAt
+          : orderCreatedAt;
+
+    const elapsedSecs = getElapsedSeconds(stageTimestamp, order.elapsedTime);
     const minutes = Math.max(1, Math.floor(elapsedSecs / 60));
 
     const otherStationItems = (order.items || []).filter(
@@ -242,6 +287,7 @@ export function mapOnlineDeliveryTickets(
       tableOrSource: `${platformLabel} · ${order.riderName}`,
       stage,
       createdAt: orderCreatedAt,
+      stageTimestamp,
       isPrepaid: true,
       elapsedTime: formatElapsedTimer(elapsedSecs),
       minutesElapsed: minutes,

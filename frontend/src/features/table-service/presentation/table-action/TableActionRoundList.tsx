@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Wine, ChefHat, Trash2 } from 'lucide-react-native';
+import { Wine, ChefHat, Trash2, Ticket, Edit3, Plus } from 'lucide-react-native';
 import { OrderLineItem, CustomerTab } from '../../../../types/floor';
 import { formatCurrency } from '@monks/shared';
+import { formatStageBreakdown } from '../../../shared/utils/elapsedTime';
 
 export interface RoundGroup {
   roundNum: number;
@@ -19,6 +20,8 @@ interface TableActionRoundListProps {
   selectedTabIndex: number;
   rounds: RoundGroup[];
   onOpenVoidModal: (item: OrderLineItem) => void;
+  onEditDoorCharge?: () => void;
+  onAddDoorCharge?: () => void;
 }
 
 export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
@@ -27,7 +30,18 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
   selectedTabIndex,
   rounds,
   onOpenVoidModal,
+  onEditDoorCharge,
+  onAddDoorCharge,
 }) => {
+  // Check if currentTab has door charge
+  const doorChargeItem = currentTab?.items.find(
+    (i) =>
+      i.status !== 'cancelled' &&
+      (i.categorySlug === 'door_charge' ||
+        i.productId === 'd1000001-0000-0000-0000-000000000001' ||
+        i.productName?.toLowerCase().includes('door charge'))
+  );
+
   return (
     <View className="bg-[#FAF8F5] border border-stone-200 rounded-2xl p-4 mb-4">
       {/* Header Row */}
@@ -37,6 +51,66 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
           {currentTab?.items.length || 0} items)
         </Text>
         <Text className="text-lg font-black text-[#810021]">{formatCurrency(tabTotal)}</Text>
+      </View>
+
+      {/* Door Charge Admission Banner */}
+      <View className="bg-white rounded-xl border border-stone-200 p-3 mb-3">
+        {doorChargeItem ? (
+          <View className="flex-row justify-between items-center">
+            <View className="flex-row items-center gap-2.5">
+              <View className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-stone-200 items-center justify-center">
+                <Ticket size={16} color="#810021" />
+              </View>
+              <View>
+                <Text className="text-sm font-bold text-stone-900">
+                  Door Charge: {doorChargeItem.quantity} Pax @{' '}
+                  {formatCurrency(doorChargeItem.unitPrice)}
+                </Text>
+                <Text className="text-xs text-stone-500 font-medium">
+                  Total: {formatCurrency(doorChargeItem.unitPrice * doorChargeItem.quantity)} ·
+                  Direct Admission
+                </Text>
+              </View>
+            </View>
+
+            <View className="flex-row items-center gap-1.5">
+              {onEditDoorCharge && (
+                <Pressable
+                  onPress={onEditDoorCharge}
+                  className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-stone-200 active:bg-stone-100"
+                >
+                  <Edit3 size={13} color="#810021" />
+                  <Text className="text-xs font-bold text-[#810021]">Edit</Text>
+                </Pressable>
+              )}
+              <Pressable
+                onPress={() => onOpenVoidModal(doorChargeItem)}
+                className="p-1.5 rounded-lg bg-stone-50 border border-stone-200 active:bg-stone-100"
+                accessibilityLabel="Void Door Charge"
+              >
+                <Trash2 size={13} color="#78716C" />
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <View className="flex-row justify-between items-center">
+            <View className="flex-row items-center gap-2">
+              <Ticket size={16} color="#78716C" />
+              <Text className="text-xs text-stone-600 font-semibold">
+                No Door Charge on this tab
+              </Text>
+            </View>
+            {onAddDoorCharge && (
+              <Pressable
+                onPress={onAddDoorCharge}
+                className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-stone-200 active:bg-stone-100"
+              >
+                <Plus size={13} color="#810021" />
+                <Text className="text-xs font-bold text-[#810021]">+ Add Cover</Text>
+              </Pressable>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Rounds list or Empty */}
@@ -117,6 +191,11 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                           {item.notes ? (
                             <Text className="text-xs text-stone-500 italic mt-0.5">
                               "{item.notes}"
+                            </Text>
+                          ) : null}
+                          {formatStageBreakdown([item]).summaryText ? (
+                            <Text className="text-[11px] text-stone-400 font-medium mt-0.5">
+                              {formatStageBreakdown([item]).summaryText}
                             </Text>
                           ) : null}
                         </View>

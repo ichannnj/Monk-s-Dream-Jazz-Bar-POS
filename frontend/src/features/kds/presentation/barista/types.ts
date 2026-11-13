@@ -16,6 +16,7 @@ export interface BarTicket {
   elapsedTime: string; // e.g. "00:20" or "06:20"
   minutesElapsed: number;
   createdAt?: string;
+  stageTimestamp?: string;
   cancelledAt?: string;
   badges: string[];
   roundNumber?: number;

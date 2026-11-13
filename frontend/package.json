@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "main": "index.ts",
   "dependencies": {
-    "@expo/metro-runtime": "~57.0.17",
+    "@expo/metro-runtime": "~57.0.18",
     "@monks/shared": "workspace:*",
     "@supabase/supabase-js": "^2.118.0",
     "@tanstack/react-query": "^5.104.1",
-    "expo": "~57.0.30",
+    "expo": "~57.0.33",
     "expo-font": "~57.0.4",
     "expo-image": "~57.0.5",
     "expo-status-bar": "~57.0.1",

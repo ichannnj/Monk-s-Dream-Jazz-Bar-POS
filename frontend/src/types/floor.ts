@@ -83,6 +83,10 @@ export interface OrderLineItem {
   roundNumber?: number;
   voidReason?: string;
   createdAt?: string;
+  preparingAt?: string;
+  readyAt?: string;
+  servedAt?: string;
+  stateChangedAt?: string;
   variantSelections?: OrderItemVariantSelection[];
   categorySlug?: string;
   eventId?: string;
@@ -117,6 +121,7 @@ export interface TableItem {
   status: TableStatus;
   elapsedTime: string;
   occupiedSinceIso?: string;
+  stateChangedAt?: string;
   assignedStaff?: {
     initials: string;
     name: string;
@@ -174,6 +179,7 @@ export interface TakeoutOrder {
   status: 'preparing' | 'ready' | 'completed';
   elapsedTime: string;
   createdAt?: string;
+  stateChangedAt?: string;
   isPrepaid: boolean;
   paymentMethod?: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp';
   operatingMode?: 'CAFE' | 'EVENT';
@@ -192,6 +198,7 @@ export interface OnlineDeliveryOrder {
   status: 'preparing' | 'ready' | 'completed';
   elapsedTime: string;
   createdAt?: string;
+  stateChangedAt?: string;
   operatingMode?: 'CAFE' | 'EVENT';
   paymentStatus: 'PAID_ONLINE_GRAB' | 'PAID_ONLINE_FOODPANDA';
 }

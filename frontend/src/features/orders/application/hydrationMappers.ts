@@ -5,7 +5,7 @@ import {
   OnlineDeliveryOrder,
   OrderLineItem,
 } from '../../../types/floor';
-import { deriveTableStatus } from './order.helpers';
+import { deriveTableStatus, deriveTableStateTimestamp } from './order.helpers';
 import { getElapsedSeconds, formatElapsedTimer } from '../../shared/utils/elapsedTime';
 
 export const mapHydratedTables = (
@@ -75,6 +75,11 @@ export const mapHydratedTables = (
             status: (oi.status || 'PENDING').toLowerCase() as any,
             roundNumber: o.round_number || 1,
             createdAt: oi.created_at || o.created_at || tb.created_at,
+            preparingAt: oi.preparing_at || undefined,
+            readyAt: oi.ready_at || undefined,
+            servedAt: oi.delivered_at || undefined,
+            stateChangedAt:
+              oi.state_changed_at || oi.delivered_at || oi.updated_at || oi.created_at,
             variantSelections: sels.length > 0 ? sels : undefined,
           };
         })
@@ -145,9 +150,11 @@ export const mapHydratedTables = (
       .filter(Boolean)
       .sort()[0];
 
+    const stateChangedAtIso = deriveTableStateTimestamp(tableStatus, combinedTabs, earliestTabIso);
+
     const liveElapsed =
-      hasActiveTabs && earliestTabIso
-        ? formatElapsedTimer(getElapsedSeconds(earliestTabIso, undefined, nowMs))
+      hasActiveTabs && stateChangedAtIso
+        ? formatElapsedTimer(getElapsedSeconds(stateChangedAtIso, undefined, nowMs))
         : '00:00';
 
     return {
@@ -159,6 +166,7 @@ export const mapHydratedTables = (
       status: tableStatus,
       elapsedTime: liveElapsed,
       occupiedSinceIso: hasActiveTabs ? earliestTabIso : undefined,
+      stateChangedAt: hasActiveTabs ? stateChangedAtIso : undefined,
       hasOpenCheck: hasActiveTabs,
       activeTabs: activeTabsIndices,
       maxTabs: 99,
@@ -229,6 +237,10 @@ export const mapHydratedOffPremiseTabs = (
           status: (oi.status || 'PENDING').toLowerCase() as any,
           roundNumber: o.round_number || 1,
           createdAt: oi.created_at || o.created_at || t.created_at,
+          preparingAt: oi.preparing_at || undefined,
+          readyAt: oi.ready_at || undefined,
+          servedAt: oi.delivered_at || undefined,
+          stateChangedAt: oi.state_changed_at || oi.delivered_at || oi.updated_at || oi.created_at,
           variantSelections: sels.length > 0 ? sels : undefined,
         };
       })
@@ -254,7 +266,18 @@ export const mapHydratedOffPremiseTabs = (
     if (orderStatus === 'completed') return;
 
     const createdAtIso = t.created_at || rawOrders[0]?.created_at || new Date().toISOString();
-    const liveElapsed = formatElapsedTimer(getElapsedSeconds(createdAtIso, undefined, nowMs));
+    const stateChangedAtIso =
+      orderStatus === 'ready'
+        ? activeItems
+            .map((i) => i.readyAt || i.stateChangedAt)
+            .filter(Boolean)
+            .sort()
+            .reverse()[0] || createdAtIso
+        : activeItems
+            .map((i) => i.preparingAt || i.stateChangedAt)
+            .filter(Boolean)
+            .sort()[0] || createdAtIso;
+    const liveElapsed = formatElapsedTimer(getElapsedSeconds(stateChangedAtIso, undefined, nowMs));
 
     if (t.order_type === 'TAKEOUT') {
       const localMatch = currentTakeout.find((lo) => lo.id === t.id || lo.tabId === t.id);
@@ -274,6 +297,7 @@ export const mapHydratedOffPremiseTabs = (
         status: orderStatus as any,
         elapsedTime: liveElapsed,
         createdAt: createdAtIso,
+        stateChangedAt: stateChangedAtIso,
         isPrepaid:
           t.is_prepaid !== undefined && t.is_prepaid !== null
             ? Boolean(t.is_prepaid || hasPayments)
@@ -301,6 +325,7 @@ export const mapHydratedOffPremiseTabs = (
         status: orderStatus as any,
         elapsedTime: liveElapsed,
         createdAt: createdAtIso,
+        stateChangedAt: stateChangedAtIso,
         operatingMode: t.operating_mode || 'CAFE',
         paymentStatus: platform === 'foodpanda' ? 'PAID_ONLINE_FOODPANDA' : 'PAID_ONLINE_GRAB',
       });
