@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "turbo run dev",
-    "build": "pnpm -F @monks/shared build && pnpm -F @monks/frontend build && cp -r frontend/dist/* public/ 2>/dev/null || true",
+    "build": "pnpm -F @monks/shared build && pnpm -F @monks/frontend build",
     "build:render": "bash scripts/render-build.sh",
     "typecheck": "pnpm -r run typecheck",
     "lint": "eslint .",

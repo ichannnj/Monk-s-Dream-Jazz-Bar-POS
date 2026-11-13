@@ -13,10 +13,7 @@ node_modules/
 dist/
 build/
 frontend/dist/
-public/_expo/
-public/assets/
-public/*.js
-public/*.map
+public/
 
 # Lock files
 pnpm-lock.yaml
