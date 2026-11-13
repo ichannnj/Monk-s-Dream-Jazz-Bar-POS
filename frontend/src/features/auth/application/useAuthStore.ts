@@ -24,6 +24,7 @@ export interface User {
   baseDailyRate?: number;
   jobTitle?: string;
   lastLoginAt?: string;
+  lastActivityAt?: string;
   passwordUpdatedAt?: string;
   pinUpdatedAt?: string;
 }

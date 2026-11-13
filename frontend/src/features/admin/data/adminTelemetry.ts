@@ -10,6 +10,7 @@ import {
   fetchOrderItemsAndAlertsTelemetry,
 } from './telemetry/salesAndVelocityTelemetry';
 import { financialSummaryApi } from './api/financialSummary.api';
+import { authApi } from '../../auth/data/auth.api';
 
 export { getTimeframeBounds };
 
@@ -28,6 +29,9 @@ export const adminTelemetryService = {
     const bounds = getTimeframeBounds(timeframe);
 
     try {
+      // Reconcile any inactive or abandoned shifts across the venue before querying attendance
+      authApi.reconcileInactiveShifts().catch(() => {});
+
       let paymentsQuery = (supabase.from as any)('payments').select(
         'id, amount, payment_method, operating_mode, created_at, tab_id, tabs(order_channel, operating_mode)'
       );

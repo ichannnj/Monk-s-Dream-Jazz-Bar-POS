@@ -5,7 +5,13 @@ import { rem } from 'nativewind';
 import { WaiterCashierScreen } from './src/features/floor';
 import { BaristaKdsScreen, KitchenKdsScreen, FohRunnerScreen } from './src/features/kds';
 import { ToastContainer, ErrorBoundary } from './src/features/shared';
-import { LoginScreen, TimeclockKioskScreen, useAuthStore } from './src/features/auth';
+import {
+  LoginScreen,
+  TimeclockKioskScreen,
+  useAuthStore,
+  useInactivityWatchdog,
+  InactivityWarningModal,
+} from './src/features/auth';
 import { PublicEventCalendarScreen } from './src/features/events';
 import { HardwarePrintStationScreen, useDeviceHardwareStation } from './src/features/printer';
 import { useOrderStore } from './src/features/orders';
@@ -95,6 +101,17 @@ export default function App() {
     };
   }, []);
 
+  // Check if running in dedicated headless station modes (hardware printer, public calendar, timeclock kiosk)
+  const isHeadlessMode =
+    typeof window !== 'undefined' &&
+    (window.location?.search?.includes('mode=printer') ||
+      window.location?.search?.includes('mode=events') ||
+      window.location?.search?.includes('mode=timeclock'));
+
+  // Session inactivity watchdog: 6h daytime / 3h late-night (12am-6am Manila) + fair attendance auto-clock-out
+  const { isWarning, remainingSeconds, isLateNight, staySignedIn, signOutNow } =
+    useInactivityWatchdog(Boolean(currentUser && !isHeadlessMode));
+
   const renderScreen = () => {
     // Check if running in dedicated Hardware Print & Cash Drawer Station tab (?mode=printer)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=printer')) {
@@ -150,6 +167,13 @@ export default function App() {
         <View style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
           {renderScreen()}
           <ToastContainer />
+          <InactivityWarningModal
+            visible={isWarning}
+            remainingSeconds={remainingSeconds}
+            isLateNight={isLateNight}
+            onStaySignedIn={staySignedIn}
+            onSignOutNow={signOutNow}
+          />
         </View>
       </SafeAreaView>
     </ErrorBoundary>
