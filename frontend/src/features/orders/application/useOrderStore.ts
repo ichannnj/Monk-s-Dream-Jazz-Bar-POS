@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { SEED_TABLES } from '../../floor/data/tables.mock';
 import { SEED_TAKEOUT_ORDERS, SEED_ONLINE_ORDERS } from '../data/orders.mock';
 import { OrderState } from '../domain/order.types';
+import { loadDurableQueue } from '../data/durableQueue';
 import { createTableTabSlice } from '../../table-service/application/tableTab.slice';
 import { createTransferSlice } from '../../table-service/application/transfer.slice';
 import { createSettlementSlice } from '../../checkout/application/settlement.slice';
@@ -22,7 +23,7 @@ export const useOrderStore = create<OrderState>((set, get) => ({
   alerts: [],
   chatMessages: [],
   isHydrated: false,
-  offlineQueue: [],
+  offlineQueue: loadDurableQueue(),
 
   ...createTableTabSlice(set, get),
   ...createTransferSlice(set, get),

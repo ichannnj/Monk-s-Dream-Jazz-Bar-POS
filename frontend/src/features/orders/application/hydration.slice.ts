@@ -4,6 +4,7 @@ import { ordersApi } from '../data/orders.api';
 import { tablesApi } from '../../table-service/data/tables.api';
 import { OrderStoreSet, OrderStoreGet, QueuedMutation } from '../domain/order.types';
 import { mapHydratedTables, mapHydratedOffPremiseTabs } from './hydrationMappers';
+import { loadDurableQueue, saveDurableQueue } from '../data/durableQueue';
 
 export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   hydrateFromSupabase: async () => {
@@ -306,6 +307,7 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
         onlineOrders: [...pendingLocalOnline, ...dbOnline],
         drawerEntries: mappedDrawer.length > 0 ? mappedDrawer : get().drawerEntries,
         isHydrated: true,
+        offlineQueue: loadDurableQueue(),
       });
     } catch (err) {
       console.warn('hydrateFromSupabase error:', err);
@@ -334,6 +336,7 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
       }
     }
 
+    saveDurableQueue(remainingQueue);
     set({ offlineQueue: remainingQueue });
   },
 });

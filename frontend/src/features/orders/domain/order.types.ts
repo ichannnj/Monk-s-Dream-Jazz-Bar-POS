@@ -1,5 +1,5 @@
-import { StateCreator } from 'zustand';
-import {
+import type { StateCreator } from 'zustand';
+import type {
   TableItem,
   TakeoutOrder,
   OnlineDeliveryOrder,
@@ -16,6 +16,8 @@ export interface QueuedMutation {
   type: 'create_order' | 'transfer_table' | 'settle_tab' | 'update_status';
   payload: any;
   timestamp: number;
+  retryCount?: number;
+  lastError?: string;
 }
 
 export interface OrderState {

@@ -15,7 +15,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "db:lint": "bash scripts/lint-migrations.sh",
     "db:types:check": "bash scripts/check-supabase-types.sh",
-    "test": "node --experimental-strip-types scripts/test-core-processes.ts && node --experimental-strip-types scripts/test-session-inactivity.ts && node --experimental-strip-types packages/printing/src/index.test.ts",
+    "test": "node --experimental-strip-types scripts/test-core-processes.ts && node --experimental-strip-types scripts/test-session-inactivity.ts && node --experimental-strip-types --import ./scripts/register-loader.js scripts/test-durable-offline-storage.ts && node --experimental-strip-types packages/printing/src/index.test.ts",
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "supabase:push": "npx supabase db push",
