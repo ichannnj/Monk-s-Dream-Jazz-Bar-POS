@@ -1,5 +1,13 @@
 import { supabase } from '@/features/shared/infrastructure/supabase';
+import type { Tables, Json } from '@monks/shared';
 import { PH_MINIMUM_WAGE_DAILY, type AttendanceRecordAdmin } from '../admin.types';
+
+type AttendanceDbRow = Tables<'attendance_records'> & {
+  users?: Pick<
+    Tables<'users'>,
+    'username' | 'display_name' | 'role' | 'job_title' | 'is_workflow_staff' | 'base_daily_rate'
+  > | null;
+};
 
 export const attendancePayrollApi = {
   async getAttendanceRecords(
@@ -21,7 +29,7 @@ export const attendancePayrollApi = {
     const { data, error } = await query.order('date', { ascending: false });
 
     if (error) throw error;
-    return (data || []).map((row: any) => {
+    return ((data || []) as unknown as AttendanceDbRow[]).map((row) => {
       const isAdmin = row.users?.role === 'admin';
       const userRate = Number(row.users?.base_daily_rate || 0);
       const rawBase = Number(row.base_daily_pay || 0);
@@ -43,7 +51,7 @@ export const attendancePayrollApi = {
         total_day_pay: row.is_present && !isAdmin ? resolvedBase + addon : 0,
         user: row.users,
       };
-    }) as AttendanceRecordAdmin[];
+    }) as unknown as AttendanceRecordAdmin[];
   },
 
   async adminUpsertAttendance(params: {
@@ -54,15 +62,15 @@ export const attendancePayrollApi = {
     baseDailyPay: number;
     addonPay: number;
     notes?: string;
-  }): Promise<any> {
-    const { data, error } = await (supabase.rpc as any)('admin_upsert_attendance_record', {
+  }): Promise<Json> {
+    const { data, error } = await supabase.rpc('admin_upsert_attendance_record', {
       p_user_id: params.userId,
       p_date: params.date,
       p_is_present: params.isPresent,
       p_shift_status: params.shiftStatus,
       p_base_daily_pay: params.baseDailyPay,
       p_addon_pay: params.addonPay,
-      p_notes: params.notes || null,
+      p_notes: params.notes || undefined,
     });
 
     if (error) throw error;

@@ -95,7 +95,7 @@ export async function transferTableTab(params: TransferTabParams): Promise<Trans
     const { data, error } = await supabase.rpc('transfer_table_tab', {
       p_origin_table_id: originTableUuid,
       p_target_table_id: targetTableUuid,
-      p_tab_id: tabUuidToTransfer as any,
+      p_tab_id: tabUuidToTransfer || undefined,
       p_staff_id: staffUuid,
       p_reason: params.reason || 'Guest relocation request',
     });
@@ -151,7 +151,7 @@ export async function transferTableTab(params: TransferTabParams): Promise<Trans
     }
 
     return (
-      (data as any) || {
+      (data as unknown as TransferTabResult) || {
         success: true,
         originTableId: originTableUuid,
         targetTableId: targetTableUuid,
@@ -159,7 +159,7 @@ export async function transferTableTab(params: TransferTabParams): Promise<Trans
         originTableCode: originCode,
       }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('transferTableTab error:', err);
     throw err;
   }

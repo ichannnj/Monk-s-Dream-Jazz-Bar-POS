@@ -1,4 +1,4 @@
-import test from 'node:test';
+import { test, expect } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   UsbEscPosPrinter,
@@ -7,7 +7,7 @@ import {
   type BillStatementPayload,
   type DeliveryTagPayload,
   type TakeoutSlipPayload,
-} from '../dist/index.js';
+} from './index.js';
 
 test('UsbEscPosPrinter renders runner chit with checkboxes and notes', () => {
   const printer = new UsbEscPosPrinter('/dev/null');

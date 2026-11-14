@@ -1,4 +1,4 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient, type RealtimeChannel } from '@supabase/supabase-js';
 import {
   UsbEscPosPrinter,
   MockPrinter,
@@ -8,6 +8,8 @@ import {
   type RunnerChitPayload,
   type TakeoutSlipPayload,
   type DeliveryTagPayload,
+  type FiscalReadingSlipPayload,
+  type ReceiptTenderItem,
 } from './index.js';
 
 export interface PrinterDaemonConfig {
@@ -18,10 +20,84 @@ export interface PrinterDaemonConfig {
   useMock?: boolean;
 }
 
+export interface RawPrintJobPayload {
+  orderNumber?: string;
+  orderId?: string;
+  receiptNumber?: string;
+  paymentId?: string;
+  tableNumber?: number;
+  tableLabel?: string;
+  tabName?: string;
+  tabId?: string;
+  customerName?: string;
+  guestName?: string;
+  roundNumber?: number;
+  waiterName?: string;
+  serverName?: string;
+  cashierName?: string;
+  staffName?: string;
+  staff_name?: string;
+  operatingMode?: string;
+  operating_mode?: string;
+  timestamp?: string;
+  settledAt?: string;
+  isReprint?: boolean;
+  isPrepaid?: boolean;
+  isDiagnosticKick?: boolean;
+  notes?: string;
+  platform?: string;
+  platformReference?: string;
+  riderName?: string;
+  address?: string;
+  itemCount?: number;
+  subtotal?: number;
+  corkageAmount?: number;
+  corkageFee?: number;
+  discountAmount?: number;
+  discount?: number;
+  serviceCharge?: number;
+  service_charge?: number;
+  total?: number;
+  amount?: number;
+  tendered?: number;
+  change?: number;
+  vatableSales?: number;
+  vatAmount?: number;
+  vatExemptSales?: number;
+  payment_method?: string;
+  paymentMethod?: string;
+  payment_channel?: string;
+  paymentChannel?: string;
+  reference_number?: string;
+  referenceNumber?: string;
+  last_4_digits?: string;
+  last4Digits?: string;
+  items?: Array<{
+    name: string;
+    productName?: string;
+    temperature?: string;
+    size?: string;
+    flavor?: string;
+    quantity: number;
+    price?: number;
+    unit_price?: number;
+    total?: number;
+    modifiers?: string[];
+    isCorkage?: boolean;
+    notes?: string;
+    station?: string;
+    stationTarget?: string;
+  }>;
+  tenders?: ReceiptTenderItem[];
+  tenderBreakdown?: ReceiptTenderItem[];
+  tender_breakdown?: ReceiptTenderItem[];
+  [key: string]: unknown;
+}
+
 export interface PrintJobRecord {
   id: string;
   job_type: string;
-  receipt_data: any;
+  receipt_data: RawPrintJobPayload;
   status: 'PENDING' | 'PRINTING' | 'COMPLETED' | 'FAILED';
   created_at: string;
   printed_at: string | null;
@@ -31,7 +107,7 @@ export class PrinterStationDaemon {
   private readonly client: SupabaseClient;
   private readonly printer: IPrinterService;
   private isRunning: boolean = false;
-  private channel: any = null;
+  private channel: RealtimeChannel | null = null;
 
   constructor(config: PrinterDaemonConfig) {
     this.client = createClient(config.supabaseUrl, config.supabaseKey);
@@ -124,7 +200,7 @@ export class PrinterStationDaemon {
             roundNumber: rawData.roundNumber,
             waiterName: rawData.waiterName || rawData.staffName || rawData.staff_name,
             timestamp: rawData.timestamp || new Date().toISOString(),
-            items: rawData.items || [],
+            items: (rawData.items as CustomerReceiptPayload['items']) || [],
             isReprint: Boolean(rawData.isReprint),
           };
           await this.printer.printRunnerChit(chitPayload);
@@ -148,7 +224,7 @@ export class PrinterStationDaemon {
             cashierName:
               rawData.cashierName || rawData.waiterName || rawData.staffName || rawData.staff_name,
             operatingMode: rawData.operatingMode || rawData.operating_mode || 'CAFE',
-            items: rawData.items || [],
+            items: (rawData.items as CustomerReceiptPayload['items']) || [],
             subtotal: rawData.subtotal || rawData.amount || 0,
             corkageFee: rawData.corkageAmount || rawData.corkageFee || 0,
             discount: rawData.discountAmount || rawData.discount || 0,
@@ -175,7 +251,7 @@ export class PrinterStationDaemon {
           const tenders = receiptPayload.tenders;
           const hasCashTender =
             Array.isArray(tenders) &&
-            tenders.some((t: any) => {
+            tenders.some((t: ReceiptTenderItem) => {
               const m = String(t.method || t.payment_method || t.paymentMethod || '').toLowerCase();
               return m === 'cash' && Number(t.amount || 0) > 0;
             });
@@ -201,7 +277,7 @@ export class PrinterStationDaemon {
             serverName: rawData.serverName || rawData.waiterName || rawData.cashierName,
             cashierName: rawData.cashierName || rawData.waiterName,
             operatingMode: rawData.operatingMode || rawData.operating_mode || 'CAFE',
-            items: rawData.items || [],
+            items: (rawData.items as CustomerReceiptPayload['items']) || [],
             subtotal: rawData.subtotal || rawData.amount || 0,
             corkageFee: rawData.corkageAmount || rawData.corkageFee || 0,
             discount: rawData.discountAmount || rawData.discount || 0,
@@ -223,7 +299,7 @@ export class PrinterStationDaemon {
           const takeoutPayload: TakeoutSlipPayload = {
             orderNumber: rawData.orderNumber || 'T-001',
             customerName: rawData.customerName || 'Guest',
-            items: rawData.items || [],
+            items: (rawData.items as CustomerReceiptPayload['items']) || [],
             timestamp: rawData.timestamp || new Date().toISOString(),
             isPrepaid: rawData.isPrepaid,
             notes: rawData.notes,
@@ -251,12 +327,7 @@ export class PrinterStationDaemon {
         case 'Y_READING':
         case 'Z_READING': {
           console.log(`[PrinterStationDaemon] PRINT ${jobType} RECEIVED:`, rawData);
-          if (
-            'printReadingSlip' in this.printer &&
-            typeof (this.printer as any).printReadingSlip === 'function'
-          ) {
-            await (this.printer as any).printReadingSlip(rawData);
-          }
+          await this.printer.printReadingSlip(rawData as unknown as FiscalReadingSlipPayload);
           break;
         }
 
@@ -274,7 +345,7 @@ export class PrinterStationDaemon {
         .eq('id', job.id);
 
       return true;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(`[PrinterStationDaemon] Error printing job ${job.id}:`, err);
       await this.client
         .from('print_jobs')

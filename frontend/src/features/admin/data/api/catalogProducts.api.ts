@@ -1,7 +1,23 @@
 import { supabase } from '@/features/shared/infrastructure/supabase';
+import type { Tables, TablesInsert, TablesUpdate } from '@monks/shared';
 import type { CategoryAdmin, ProductAdmin, ProductVariantAdmin } from '../admin.types';
 
 let hasWarnedMissingVariants = false;
+
+type ProductDbRow = Tables<'products'> & {
+  categories?: Pick<Tables<'categories'>, 'id' | 'name' | 'slug'> | null;
+  product_ingredients?: Array<
+    Tables<'product_ingredients'> & {
+      inventory_items?: Pick<Tables<'inventory_items'>, 'name' | 'unit' | 'unit_cost'> | null;
+    }
+  > | null;
+  product_modifiers?: Array<
+    Tables<'product_modifiers'> & {
+      inventory_items?: Pick<Tables<'inventory_items'>, 'name' | 'unit'> | null;
+    }
+  > | null;
+  product_variants?: Tables<'product_variants'>[] | null;
+};
 
 export const catalogProductsApi = {
   async getCategories(): Promise<CategoryAdmin[]> {
@@ -12,7 +28,7 @@ export const catalogProductsApi = {
       .order('name', { ascending: true });
 
     if (error) throw error;
-    return (data || []) as CategoryAdmin[];
+    return (data || []) as unknown as CategoryAdmin[];
   },
 
   async createCategory(category: {
@@ -31,7 +47,7 @@ export const catalogProductsApi = {
       .single();
 
     if (error) throw error;
-    return data as CategoryAdmin;
+    return data as unknown as CategoryAdmin;
   },
 
   async updateCategory(
@@ -52,7 +68,7 @@ export const catalogProductsApi = {
   },
 
   async getProductsWithBOM(): Promise<ProductAdmin[]> {
-    let rawData: any[];
+    let rawData: ProductDbRow[];
     const queryWithVariants = await supabase
       .from('products')
       .select(
@@ -61,7 +77,7 @@ export const catalogProductsApi = {
       .order('name', { ascending: true });
 
     if (!queryWithVariants.error) {
-      rawData = queryWithVariants.data || [];
+      rawData = (queryWithVariants.data || []) as unknown as ProductDbRow[];
     } else {
       if (!hasWarnedMissingVariants) {
         hasWarnedMissingVariants = true;
@@ -77,20 +93,20 @@ export const catalogProductsApi = {
         .order('name', { ascending: true });
 
       if (queryBase.error) throw queryBase.error;
-      rawData = queryBase.data || [];
+      rawData = (queryBase.data || []) as unknown as ProductDbRow[];
     }
 
-    return rawData.map((p: any) => ({
+    return rawData.map((p) => ({
       ...p,
       ingredients: p.product_ingredients,
-      modifiers: (p.product_modifiers || []).map((m: any) => ({
+      modifiers: (p.product_modifiers || []).map((m) => ({
         ...m,
         inventory_item: m.inventory_items,
       })),
       variants: (p.product_variants || []).sort(
-        (a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0)
+        (a, b) => (a.sort_order || 0) - (b.sort_order || 0)
       ),
-    })) as ProductAdmin[];
+    })) as unknown as ProductAdmin[];
   },
 
   async upsertProductVariants(
@@ -99,7 +115,8 @@ export const catalogProductsApi = {
   ): Promise<boolean> {
     try {
       // Fetch existing variants to preserve IDs and avoid cascade-nulling historical references
-      const { data: existing, error: fetchErr } = await (supabase.from as any)('product_variants')
+      const { data: existing, error: fetchErr } = await supabase
+        .from('product_variants')
         .select('id, temperature, size_label')
         .eq('product_id', productId);
 
@@ -112,20 +129,21 @@ export const catalogProductsApi = {
       }
 
       const existingMap = new Map<string, string>();
-      (existing || []).forEach((row: any) => {
+      (existing || []).forEach((row) => {
         existingMap.set(`${row.temperature}:${row.size_label}`, row.id);
       });
 
       const touchedIds = new Set<string>();
 
       for (let idx = 0; idx < (variants || []).length; idx++) {
-        const v = variants[idx];
+        const v = variants[idx]!;
         const key = `${v.temperature || 'NONE'}:${v.size_label || 'Standard'}`;
         const existingId = existingMap.get(key);
 
         if (existingId) {
           touchedIds.add(existingId);
-          await (supabase.from as any)('product_variants')
+          await supabase
+            .from('product_variants')
             .update({
               price: v.price,
               is_available: v.is_available !== false,
@@ -135,7 +153,8 @@ export const catalogProductsApi = {
             })
             .eq('id', existingId);
         } else {
-          const { data: inserted } = await (supabase.from as any)('product_variants')
+          const { data: inserted } = await supabase
+            .from('product_variants')
             .insert({
               product_id: productId,
               temperature: v.temperature || 'NONE',
@@ -154,17 +173,21 @@ export const catalogProductsApi = {
       }
 
       // Mark removed variants as unavailable instead of deleting them to preserve historical order lines
-      const toDeactivate = (existing || []).filter((row: any) => !touchedIds.has(row.id));
+      const toDeactivate = (existing || []).filter((row) => !touchedIds.has(row.id));
       if (toDeactivate.length > 0) {
-        const deactivateIds = toDeactivate.map((r: any) => r.id);
-        await (supabase.from as any)('product_variants')
+        const deactivateIds = toDeactivate.map((r) => r.id);
+        await supabase
+          .from('product_variants')
           .update({ is_available: false, updated_at: new Date().toISOString() })
           .in('id', deactivateIds);
       }
 
       return true;
-    } catch (err: any) {
-      console.warn('[catalogProductsApi.upsertProductVariants] unexpected error:', err?.message);
+    } catch (err: unknown) {
+      console.warn(
+        '[catalogProductsApi.upsertProductVariants] unexpected error:',
+        err instanceof Error ? err.message : String(err)
+      );
       return false;
     }
   },
@@ -185,29 +208,31 @@ export const catalogProductsApi = {
     dietary?: string[];
     is_available?: boolean;
   }): Promise<ProductAdmin> {
+    const insertPayload: TablesInsert<'products'> = {
+      name: params.name,
+      category_id: params.category_id,
+      base_price: params.base_price,
+      station_target: params.station_target,
+      is_resold_outside_food: params.is_resold_outside_food ?? false,
+      original_cost: params.original_cost ?? null,
+      image_url: params.image_url ?? null,
+      image_storage_path: params.image_storage_path ?? null,
+      image_mime_type: params.image_mime_type ?? null,
+      image_size_bytes: params.image_size_bytes ?? null,
+      description: params.description ?? '',
+      allergens: params.allergens ?? [],
+      dietary: params.dietary ?? [],
+      is_available: params.is_available ?? true,
+    };
+
     const { data, error } = await supabase
       .from('products')
-      .insert({
-        name: params.name,
-        category_id: params.category_id,
-        base_price: params.base_price,
-        station_target: params.station_target,
-        is_resold_outside_food: params.is_resold_outside_food ?? false,
-        original_cost: params.original_cost ?? null,
-        image_url: params.image_url ?? null,
-        image_storage_path: params.image_storage_path ?? null,
-        image_mime_type: params.image_mime_type ?? null,
-        image_size_bytes: params.image_size_bytes ?? null,
-        description: params.description ?? '',
-        allergens: params.allergens ?? [],
-        dietary: params.dietary ?? [],
-        is_available: params.is_available ?? true,
-      } as any)
+      .insert(insertPayload)
       .select('*, categories(id, name, slug)')
       .single();
 
     if (error) throw error;
-    return data as ProductAdmin;
+    return data as unknown as ProductAdmin;
   },
 
   async updateProduct(
@@ -230,10 +255,12 @@ export const catalogProductsApi = {
       auto_86: boolean;
     }>
   ): Promise<void> {
-    const { error } = await supabase
-      .from('products')
-      .update({ ...updates, updated_at: new Date().toISOString() } as any)
-      .eq('id', id);
+    const updatePayload: TablesUpdate<'products'> = {
+      ...updates,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error } = await supabase.from('products').update(updatePayload).eq('id', id);
 
     if (error) throw error;
   },
@@ -268,41 +295,44 @@ export const catalogProductsApi = {
   ) {
     if (variantId) {
       try {
-        await (supabase.from as any)('product_ingredients').delete().eq('variant_id', variantId);
+        await supabase.from('product_ingredients').delete().eq('variant_id', variantId);
       } catch (err) {
         console.warn('Could not delete by variant_id:', err);
       }
     } else {
-      const delScoped = await (supabase.from as any)('product_ingredients')
+      const delScoped = await supabase
+        .from('product_ingredients')
         .delete()
         .eq('product_id', productId)
         .is('variant_id', null);
       if (delScoped.error) {
-        await (supabase.from as any)('product_ingredients').delete().eq('product_id', productId);
+        await supabase.from('product_ingredients').delete().eq('product_id', productId);
       }
     }
 
     if (ingredients.length > 0) {
-      const rowsWithVariant = ingredients.map((ing) => ({
-        product_id: productId,
-        variant_id: variantId || null,
-        inventory_item_id: ing.inventoryItemId,
-        amount: ing.amount,
-        unit: ing.unit,
-        conversion_factor: ing.conversionFactor || 1,
-      }));
-      const { error } = await (supabase.from as any)('product_ingredients').insert(rowsWithVariant);
-      if (error) {
-        const rowsWithoutVariant = ingredients.map((ing) => ({
+      const rowsWithVariant: Array<TablesInsert<'product_ingredients'>> = ingredients.map(
+        (ing) => ({
           product_id: productId,
+          variant_id: variantId || null,
           inventory_item_id: ing.inventoryItemId,
           amount: ing.amount,
           unit: ing.unit,
           conversion_factor: ing.conversionFactor || 1,
-        }));
-        const retryRes = await (supabase.from as any)('product_ingredients').insert(
-          rowsWithoutVariant
+        })
+      );
+      const { error } = await supabase.from('product_ingredients').insert(rowsWithVariant);
+      if (error) {
+        const rowsWithoutVariant: Array<TablesInsert<'product_ingredients'>> = ingredients.map(
+          (ing) => ({
+            product_id: productId,
+            inventory_item_id: ing.inventoryItemId,
+            amount: ing.amount,
+            unit: ing.unit,
+            conversion_factor: ing.conversionFactor || 1,
+          })
         );
+        const retryRes = await supabase.from('product_ingredients').insert(rowsWithoutVariant);
         if (retryRes.error) throw retryRes.error;
       }
     }

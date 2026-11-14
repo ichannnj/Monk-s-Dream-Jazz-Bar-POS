@@ -1,5 +1,4 @@
-import test from 'node:test';
-import assert from 'node:assert/strict';
+import { test, expect } from 'vitest';
 
 export interface OrderItemVariantSelection {
   groupId: string;
@@ -69,16 +68,16 @@ export function shouldMergeCartItem(
 
 test('formatLineItemLabel correctly formats flavor with temperature and size', () => {
   const formatted = formatLineItemLabel('Latte', 'Spanish', 'HOT', '12oz');
-  assert.equal(formatted, 'Latte (Spanish · Hot · 12oz)');
+  expect(formatted).toBe('Latte (Spanish · Hot · 12oz)');
 
   const icedCaramel = formatLineItemLabel('Latte', 'Caramel', 'COLD', '16oz');
-  assert.equal(icedCaramel, 'Latte (Caramel · Iced · 16oz)');
+  expect(icedCaramel).toBe('Latte (Caramel · Iced · 16oz)');
 });
 
 test('calculateOrderPrice correctly sums base + option + modifier deltas', () => {
   // Base 12oz Iced Latte (200) + Spanish flavor (+25) + Oat Milk (+50) + Extra Shot (+40) = 315
   const finalPrice = calculateOrderPrice(200, 0, 25, 90);
-  assert.equal(finalPrice, 315.0);
+  expect(finalPrice).toBe(315.0);
 });
 
 test('shouldMergeCartItem keeps different flavors separate and merges identical selections', () => {
@@ -103,6 +102,6 @@ test('shouldMergeCartItem keeps different flavors separate and merges identical 
     mods: ['Barista Oat Milk'],
   };
 
-  assert.equal(shouldMergeCartItem(spanishLatte, caramelLatte), false);
-  assert.equal(shouldMergeCartItem(spanishLatte, identicalSpanishLatte), true);
+  expect(shouldMergeCartItem(spanishLatte, caramelLatte)).toBe(false);
+  expect(shouldMergeCartItem(spanishLatte, identicalSpanishLatte)).toBe(true);
 });

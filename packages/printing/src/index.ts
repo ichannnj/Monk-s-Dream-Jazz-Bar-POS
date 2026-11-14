@@ -25,7 +25,7 @@ function cleanStaffName(name?: string): string {
   return clean.split(' ')[0] || clean;
 }
 
-function toPesos(amount: any): number {
+function toPesos(amount: unknown): number {
   if (amount === null || amount === undefined) return 0;
   const num = Number(amount);
   return isNaN(num) ? 0 : num;
@@ -70,6 +70,8 @@ function formatItemLine(qtyStr: string, name: string, priceStr: string, cols: nu
 
 export interface ReceiptTenderItem {
   method: 'cash' | 'card' | 'digital_wallet' | 'comp' | string;
+  payment_method?: string;
+  paymentMethod?: string;
   amount: number;
   tendered?: number;
   change?: number;
@@ -82,6 +84,42 @@ export interface ReceiptTenderItem {
   last4_digits?: string;
   reason?: string;
   notes?: string;
+}
+
+export interface FiscalReadingSlipPayload {
+  reading_type?: string;
+  z_number?: number;
+  y_number?: number;
+  drawer_target?: 'bar' | 'main' | 'consolidated' | string;
+  generated_at?: string;
+  opened_at?: string | number | Date;
+  closed_at?: string | number | Date;
+  outgoing_staff_name?: string;
+  incoming_staff_name?: string;
+  performed_by_name?: string;
+  first_receipt_no?: string;
+  last_receipt_no?: string;
+  transaction_count?: number;
+  gross_sales?: number;
+  discount_total?: number;
+  net_sales?: number;
+  vatable_sales?: number;
+  vat_amount?: number;
+  service_charge?: number;
+  service_charge_total?: number;
+  tender_cash?: number;
+  tender_card?: number;
+  tender_digital?: number;
+  tender_delivery?: number;
+  total_tender?: number;
+  opening_float?: number;
+  cash_in?: number;
+  cash_out?: number;
+  safe_drops?: number;
+  expected_cash?: number;
+  counted_cash?: number;
+  variance?: number;
+  [key: string]: unknown;
 }
 
 export interface CustomerReceiptPayload {
@@ -281,7 +319,7 @@ export interface IPrinterService {
   printRunnerChit(payload: RunnerChitPayload): Promise<boolean>;
   printTakeoutSlip(payload: TakeoutSlipPayload): Promise<boolean>;
   printDeliveryTag(payload: DeliveryTagPayload): Promise<boolean>;
-  printReadingSlip(reading: any): Promise<boolean>;
+  printReadingSlip(reading: FiscalReadingSlipPayload): Promise<boolean>;
   kickCashDrawer(): Promise<boolean>;
 }
 
@@ -322,7 +360,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     return this.writeBytes(escpos);
   }
 
-  public async printReadingSlip(reading: any): Promise<boolean> {
+  public async printReadingSlip(reading: FiscalReadingSlipPayload): Promise<boolean> {
     const escpos = this.renderReadingSlipBytes(reading);
     return this.writeBytes(escpos);
   }
@@ -485,7 +523,7 @@ export class UsbEscPosPrinter implements IPrinterService {
       push(padLine('PAYMENT BREAKDOWN (SPLIT):', `PHP ${formatPhp(total)}`, 48));
       for (const t of tenders) {
         const rawMethod = String(
-          t.method || (t as any).payment_method || (t as any).paymentMethod || ''
+          t.method || t.payment_method || t.paymentMethod || ''
         ).toLowerCase();
         const amt = toPesos(t.amount);
         if (rawMethod === 'cash') {
@@ -919,16 +957,17 @@ export class UsbEscPosPrinter implements IPrinterService {
     return Buffer.concat(parts);
   }
 
-  public renderReadingSlipBytes(reading: any): Buffer {
+  public renderReadingSlipBytes(reading: FiscalReadingSlipPayload): Buffer {
     const parts: Buffer[] = [];
     const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
-    const fmt = (num: number = 0) =>
-      Number(num || 0).toLocaleString('en-PH', {
+    const fmt = (num: unknown = 0) =>
+      toPesos(num).toLocaleString('en-PH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
+    const parseDate = (d: unknown) => (d ? new Date(d as string | number | Date) : new Date());
     const padLine = (label: string, value: string, cols: number = 48) => {
       const spaceCount = Math.max(1, cols - label.length - value.length);
       return label + ' '.repeat(spaceCount) + value + '\n';
@@ -962,24 +1001,22 @@ export class UsbEscPosPrinter implements IPrinterService {
     push(`*** ${title} ***\n`);
     cmd([0x1b, 0x45, 0x00]);
     push(`Scope: ${drawer.toUpperCase()}\n`);
-    push(
-      `Generated: ${new Date(reading.generated_at || reading.closed_at || Date.now()).toLocaleString()}\n`
-    );
+    push(`Generated: ${parseDate(reading.generated_at || reading.closed_at).toLocaleString()}\n`);
     push('================================================\n');
 
     // Left alignment: ESC a 0
     cmd([0x1b, 0x61, 0x00]);
-    push(padLine('Opened At:', new Date(reading.opened_at).toLocaleTimeString()));
+    push(padLine('Opened At:', parseDate(reading.opened_at).toLocaleTimeString()));
     push(
       padLine(
         'Closed/Gen At:',
-        new Date(reading.closed_at || reading.generated_at || Date.now()).toLocaleTimeString()
+        parseDate(reading.closed_at || reading.generated_at).toLocaleTimeString()
       )
     );
     push(
       padLine(
         'Staff / Manager:',
-        reading.outgoing_staff_name || reading.performed_by_name || 'Admin'
+        String(reading.outgoing_staff_name || reading.performed_by_name || 'Admin')
       )
     );
     if (reading.first_receipt_no || reading.last_receipt_no) {
@@ -1041,8 +1078,9 @@ export class UsbEscPosPrinter implements IPrinterService {
     push(padLine('EXPECTED SYSTEM CASH:', `P ${fmt(reading.expected_cash)}`));
     if (reading.counted_cash !== undefined && reading.counted_cash !== null) {
       push(padLine('ACTUAL COUNTED CASH:', `P ${fmt(reading.counted_cash)}`));
-      const varSign = (reading.variance || 0) > 0 ? '+' : '';
-      push(padLine('VARIANCE (OVER/SHORT):', `${varSign}P ${fmt(reading.variance || 0)}`));
+      const varNum = toPesos(reading.variance);
+      const varSign = varNum > 0 ? '+' : '';
+      push(padLine('VARIANCE (OVER/SHORT):', `${varSign}P ${fmt(varNum)}`));
     }
     cmd([0x1b, 0x45, 0x00]);
 
@@ -1102,7 +1140,7 @@ export class MockPrinter implements IPrinterService {
     return true;
   }
 
-  public async printReadingSlip(reading: any): Promise<boolean> {
+  public async printReadingSlip(reading: FiscalReadingSlipPayload): Promise<boolean> {
     console.log('[MockPrinter] PRINT READING SLIP SIMULATED:');
     console.log(JSON.stringify(reading, null, 2));
     return true;

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "turbo run dev",
-    "build": "pnpm -F @monks/shared build && pnpm -F @monks/frontend build",
+    "build": "pnpm -F @monks/shared build && pnpm -F @monks/printing build && pnpm -F @monks/frontend build",
     "build:render": "bash scripts/render-build.sh",
     "typecheck": "pnpm -F @monks/shared build && pnpm -r run typecheck",
     "lint": "eslint .",
@@ -15,7 +15,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "db:lint": "bash scripts/lint-migrations.sh",
     "db:types:check": "bash scripts/check-supabase-types.sh",
-    "test": "node --experimental-strip-types scripts/test-core-processes.ts && node --experimental-strip-types scripts/test-session-inactivity.ts && node --experimental-strip-types --import ./scripts/register-loader.js scripts/test-durable-offline-storage.ts && node --experimental-strip-types packages/printing/src/index.test.ts",
+    "test": "vitest run",
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "supabase:push": "npx supabase db push",
@@ -64,6 +64,7 @@
     "prettier": "^3.9.10",
     "turbo": "^2.11.7",
     "typescript": "~5.7.3",
-    "typescript-eslint": "^8.71.2"
+    "typescript-eslint": "^8.71.2",
+    "vitest": "^5.1.0"
   }
 }

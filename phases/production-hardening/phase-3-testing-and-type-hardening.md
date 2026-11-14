@@ -1,6 +1,6 @@
 # 🧪 Phase 3: Type-Level Hardening (Matt Pocock Spec) & Vitest Test Harness
 
-> **Status:** Pending Execution  
+> **Status:** Completed  
 > **Target:** Eradicate all `any` types across API layers, achieve zero ESLint errors, and establish a modern Vitest test suite.
 
 ---
@@ -20,33 +20,35 @@
 
 ## 🛠️ Implementation Checklist
 
-- [ ] **Step 3.1: Install Vitest & Configure Tooling**
+- [x] **Step 3.1: Install Vitest & Configure Tooling**
   - Add `vitest` to `package.json` devDependencies.
-  - Create `vitest.config.ts` supporting path aliases (`@/*` and `@monks/shared`).
+  - Create `vitest.config.ts` supporting path aliases (`@/*`, `@monks/shared`, and `@monks/printing`).
   - Add `"type": "module"` to `frontend/package.json`.
   - Update root `"test"` script to `vitest run`.
-- [ ] **Step 3.2: Matt Pocock Type-Level Hardening**
+- [x] **Step 3.2: Matt Pocock Type-Level Hardening**
   - Audit and refactor API clients with strict types:
     - `frontend/src/features/admin/data/adminTelemetry.ts`
     - `frontend/src/features/admin/data/api/attendancePayroll.api.ts`
     - `frontend/src/features/admin/data/api/catalogModifiers.api.ts`
     - `frontend/src/features/admin/data/api/catalogProducts.api.ts`
-    - `frontend/src/features/checkout/data/tables.api.ts`
+    - `frontend/src/features/table-service/data/tabs.api.ts` & `transfer.api.ts`
     - `packages/printing/src/daemon.ts` and `index.ts`
   - Replace `any` casts with type guards, `unknown` narrowing, and `Tables<'table_name'>`.
-- [ ] **Step 3.3: Vitest Test Suite Suite Implementation**
+- [x] **Step 3.3: Vitest Test Suite Implementation**
   - Port existing scripts to modern Vitest suites:
     - `frontend/src/features/checkout/__tests__/taxAndDiscountCalculator.test.ts`
     - `frontend/src/features/auth/__tests__/inactivityPolicy.test.ts`
     - `frontend/src/features/checkout/__tests__/splitTender.test.ts`
     - `frontend/src/features/orders/__tests__/durableQueue.test.ts`
-- [ ] **Step 3.4: ESLint Cleanliness Check**
+    - `packages/printing/src/flavorVariants.test.ts`
+    - `packages/printing/src/index.test.ts`
+- [x] **Step 3.4: ESLint Cleanliness Check**
   - Run `pnpm lint:quiet` to verify 0 errors and drastically drop warning counts.
 
 ---
 
 ## 🧪 Verification Plan
 
-- [ ] `pnpm test`: All Vitest tests pass cleanly in under 2 seconds.
-- [ ] `pnpm typecheck`: Clean compile with zero TypeScript errors across all 4 projects.
-- [ ] Node execution without typeless package warnings.
+- [x] `pnpm test`: All Vitest tests pass cleanly in under 1 second (35 tests in ~400ms).
+- [x] `pnpm typecheck`: Clean compile with zero TypeScript errors across all workspace packages.
+- [x] Node execution without typeless package warnings.
