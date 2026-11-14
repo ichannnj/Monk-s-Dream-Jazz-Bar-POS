@@ -7,7 +7,7 @@
     "dev": "turbo run dev",
     "build": "pnpm -F @monks/shared build && pnpm -F @monks/frontend build",
     "build:render": "bash scripts/render-build.sh",
-    "typecheck": "pnpm -r run typecheck",
+    "typecheck": "pnpm -F @monks/shared build && pnpm -r run typecheck",
     "lint": "eslint .",
     "lint:quiet": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
