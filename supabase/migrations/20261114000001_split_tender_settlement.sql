@@ -7,6 +7,13 @@
 -- cash drawer movements while remaining 100% backward compatible for single tenders.
 -- ==============================================================================
 
+-- Drop old 21-argument signature to prevent function overload resolution conflicts in PostgREST
+DROP FUNCTION IF EXISTS public.settle_tab_and_record_payment(
+  UUID, UUID, public.payment_method, NUMERIC, NUMERIC, NUMERIC, NUMERIC,
+  TEXT, BOOLEAN, TEXT, TEXT, NUMERIC, NUMERIC, NUMERIC, NUMERIC, TEXT,
+  TEXT, TEXT, NUMERIC, TEXT, BOOLEAN
+);
+
 CREATE OR REPLACE FUNCTION public.settle_tab_and_record_payment(
   p_tab_id UUID,
   p_staff_id UUID,
@@ -106,7 +113,7 @@ BEGIN
 
   IF p_drawer_target IS NOT NULL AND lower(p_drawer_target) IN ('main', 'bar') THEN
     v_effective_drawer := lower(p_drawer_target);
-  ELSIF (v_tab.order_channel IS NOT NULL AND v_tab.order_channel ILIKE '%bar%')
+  ELSIF (v_tab.order_channel IS NOT NULL AND (v_tab.order_channel::text) ILIKE '%bar%')
      OR v_staff_role IN ('station_bar', 'station_cafe', 'bartender', 'barista') THEN
     v_effective_drawer := 'bar';
   ELSE
