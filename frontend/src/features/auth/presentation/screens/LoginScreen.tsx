@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, Suspense } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-na
 import { useAuthStore } from '../../application/useAuthStore';
 import { toast } from '../../../shared/toast/useToastStore';
 import { posApi } from '../../../shared/infrastructure/api';
+import { ScreenLoadingFallback } from '../../../shared/components/ScreenLoadingFallback';
 import { TrainingModeSwitch } from '../components/TrainingModeSwitch';
 import { ForgotPinModal } from '../components/ForgotPinModal';
 import { StaffPinLoginForm } from '../components/StaffPinLoginForm';
@@ -20,8 +21,11 @@ import { AdminPasswordLoginForm } from '../components/AdminPasswordLoginForm';
 import { LoginHeroPane } from '../components/LoginHeroPane';
 import { LoginHeader } from '../components/LoginHeader';
 import { AlertCircle } from 'lucide-react-native';
-import { TimeclockKioskScreen } from './TimeclockKioskScreen';
 import { styles } from './LoginScreen.styles';
+
+const TimeclockKioskScreen = React.lazy(() =>
+  import('./TimeclockKioskScreen').then((m) => ({ default: m.TimeclockKioskScreen }))
+);
 
 export const LoginScreen: React.FC = () => {
   const { setUser, setIsTrainingMode } = useAuthStore();
@@ -205,7 +209,11 @@ export const LoginScreen: React.FC = () => {
   );
 
   if (authMode === 'timeclock') {
-    return <TimeclockKioskScreen onBackToLogin={() => setAuthMode('staff')} />;
+    return (
+      <Suspense fallback={<ScreenLoadingFallback message="Loading Timeclock Kiosk..." />}>
+        <TimeclockKioskScreen onBackToLogin={() => setAuthMode('staff')} />
+      </Suspense>
+    );
   }
 
   const isCtaDisabled =

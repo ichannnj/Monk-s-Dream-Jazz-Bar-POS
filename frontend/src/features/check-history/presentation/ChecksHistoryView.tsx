@@ -5,7 +5,6 @@ import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { checksApi } from '../data/checks.api';
 import type { SettledCheckItem, CheckOrderType } from '../domain/check.types';
-import { exportChecksRegisterToExcel } from '@/features/admin/utils/readingExcelExport';
 import { printHtmlElement } from '@/features/shared';
 import { ChecksFilterToolbar } from './components/ChecksFilterToolbar';
 import { CheckReceiptInspector } from './components/CheckReceiptInspector';
@@ -115,8 +114,10 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
     }
   };
 
-  const handleExportChecksExcel = () => {
+  const handleExportChecksExcel = async () => {
     try {
+      const { exportChecksRegisterToExcel } =
+        await import('@/features/admin/utils/excel/exportFinancialAndChecks');
       const label = timeframeLabel ? `${timeframeLabel} · ${station}` : station;
       exportChecksRegisterToExcel(checks, label);
       toast.success(`Exported ${checks.length} checks to Excel (.xls)`, {

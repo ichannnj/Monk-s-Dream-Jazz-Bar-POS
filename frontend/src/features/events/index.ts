@@ -3,7 +3,6 @@ export * from './data/events.api';
 export * from './application/useEventStore';
 export * from './utils/eventIcsExport';
 export * from './presentation/views/AdminEventsView';
-export * from './presentation/screens/PublicEventCalendarScreen';
 export * from './presentation/components/TodaysEventBanner';
 export * from './presentation/components/MonthCalendarGrid';
 export * from './presentation/components/WeekScheduleView';

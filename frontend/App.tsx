@@ -1,25 +1,51 @@
 import './src/global.css';
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { SafeAreaView, StatusBar, View } from 'react-native';
 import { rem } from 'nativewind';
 import { WaiterCashierScreen } from './src/features/floor';
-import { BaristaKdsScreen, KitchenKdsScreen, FohRunnerScreen } from './src/features/kds';
-import { ToastContainer, ErrorBoundary } from './src/features/shared';
+import { BaristaKdsScreen, KitchenKdsScreen } from './src/features/kds';
+import {
+  ToastContainer,
+  ErrorBoundary,
+  ScreenLoadingFallback,
+  getRealtimeSubscriptionPlan,
+  useVenueStore,
+} from './src/features/shared';
 import {
   LoginScreen,
-  TimeclockKioskScreen,
   useAuthStore,
   useInactivityWatchdog,
   InactivityWarningModal,
 } from './src/features/auth';
-import { PublicEventCalendarScreen, useEventStore } from './src/features/events';
-import { HardwarePrintStationScreen, useDeviceHardwareStation } from './src/features/printer';
+import { useEventStore } from './src/features/events/application/useEventStore';
+import { useDeviceHardwareStation } from './src/features/printer/application/useDeviceHardwareStation';
 import { useOrderStore } from './src/features/orders';
 import { useChatStore } from './src/features/chat';
 
-import { AdminBackOfficeScreen } from './src/features/admin';
+// Lazy-loaded heavy screens to slash initial bundle footprint on floor tablets & mobile devices
+const AdminBackOfficeScreen = React.lazy(() =>
+  import('./src/features/admin/presentation/AdminBackOfficeScreen').then((m) => ({
+    default: m.AdminBackOfficeScreen,
+  }))
+);
 
-import { useVenueStore } from './src/features/shared';
+const PublicEventCalendarScreen = React.lazy(() =>
+  import('./src/features/events/presentation/screens/PublicEventCalendarScreen').then((m) => ({
+    default: m.PublicEventCalendarScreen,
+  }))
+);
+
+const HardwarePrintStationScreen = React.lazy(() =>
+  import('./src/features/printer/presentation/HardwarePrintStationScreen').then((m) => ({
+    default: m.HardwarePrintStationScreen,
+  }))
+);
+
+const TimeclockKioskScreen = React.lazy(() =>
+  import('./src/features/auth/presentation/screens/TimeclockKioskScreen').then((m) => ({
+    default: m.TimeclockKioskScreen,
+  }))
+);
 
 // Ensure 1rem = 16px root scale for tablet typography
 try {
@@ -33,16 +59,43 @@ export default function App() {
   const initRealtimeSync = useOrderStore((s) => s.initRealtimeSync);
   const [adminView, setAdminView] = React.useState<'admin' | 'floor'>('admin');
 
-  // Keep all stations synchronized with POS orders, venue settings, events and Team Chat in real-time
+  // Scoped Realtime Subscriptions: Strictly isolate order CDC and private chat to authenticated staff.
+  // Public modes (?mode=events) subscribe exclusively to public venue events.
   useEffect(() => {
-    const unsubOrders = initRealtimeSync();
-    const unsubChat = useChatStore.getState().setupRealtimeSubscription();
-    const unsubVenue = useVenueStore.getState().initRealtimeSubscription();
-    const unsubEvents = useEventStore.getState().initRealtimeSubscription();
-    useChatStore.getState().loadInitialData(currentUser?.id);
-    useEventStore.getState().loadEvents();
-    if (currentUser?.id) {
+    const searchString = typeof window !== 'undefined' ? window.location?.search || '' : '';
+    const plan = getRealtimeSubscriptionPlan({ currentUser, searchString });
+
+    let unsubOrders = () => {};
+    let unsubChat = () => {};
+    let unsubVenue = () => {};
+    let unsubEvents = () => {};
+
+    if (plan.subscribeOrders) {
+      unsubOrders = initRealtimeSync();
+    }
+
+    if (plan.subscribeChat) {
+      unsubChat = useChatStore.getState().setupRealtimeSubscription();
+    }
+
+    if (plan.subscribeVenueSettings) {
+      unsubVenue = useVenueStore.getState().initRealtimeSubscription();
+    }
+
+    if (plan.subscribeEvents) {
+      unsubEvents = useEventStore.getState().initRealtimeSubscription();
+    }
+
+    if (plan.loadInitialChat && currentUser?.id) {
+      useChatStore.getState().loadInitialData(currentUser.id);
+    }
+
+    if (plan.trackPresence && currentUser?.id) {
       useChatStore.getState().trackCurrentPresence();
+    }
+
+    if (plan.loadEvents) {
+      useEventStore.getState().loadEvents();
     }
 
     return () => {
@@ -51,7 +104,7 @@ export default function App() {
       unsubVenue();
       unsubEvents();
     };
-  }, [initRealtimeSync, currentUser?.id]);
+  }, [initRealtimeSync, currentUser]);
 
   // ALWAYS reset admin view to 'admin' whenever currentUser logs in or changes
   useEffect(() => {
@@ -118,17 +171,29 @@ export default function App() {
   const renderScreen = () => {
     // Check if running in dedicated Hardware Print & Cash Drawer Station tab (?mode=printer)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=printer')) {
-      return <HardwarePrintStationScreen />;
+      return (
+        <Suspense fallback={<ScreenLoadingFallback message="Loading Hardware Print Station..." />}>
+          <HardwarePrintStationScreen />
+        </Suspense>
+      );
     }
 
     // Check if running in dedicated Public Event Calendar tab (?mode=events)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=events')) {
-      return <PublicEventCalendarScreen />;
+      return (
+        <Suspense fallback={<ScreenLoadingFallback message="Loading Public Event Calendar..." />}>
+          <PublicEventCalendarScreen />
+        </Suspense>
+      );
     }
 
     // Check if running in dedicated Timeclock Kiosk tab (?mode=timeclock)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=timeclock')) {
-      return <TimeclockKioskScreen isStandaloneTab />;
+      return (
+        <Suspense fallback={<ScreenLoadingFallback message="Loading Timeclock Kiosk..." />}>
+          <TimeclockKioskScreen isStandaloneTab />
+        </Suspense>
+      );
     }
 
     if (!currentUser) {
@@ -140,7 +205,11 @@ export default function App() {
     // Admin & Manager roles: always land on Admin Console Dashboard upon login
     if (role === 'admin' || role === 'manager' || role === 'administrator') {
       if (adminView === 'admin') {
-        return <AdminBackOfficeScreen onSwitchToFloor={() => setAdminView('floor')} />;
+        return (
+          <Suspense fallback={<ScreenLoadingFallback message="Opening Admin Console..." />}>
+            <AdminBackOfficeScreen onSwitchToFloor={() => setAdminView('floor')} />
+          </Suspense>
+        );
       }
       return <WaiterCashierScreen onSwitchToAdmin={() => setAdminView('admin')} />;
     }
@@ -168,7 +237,7 @@ export default function App() {
       <SafeAreaView style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
         <StatusBar barStyle="dark-content" backgroundColor="#f6f0ed" />
         <View style={{ flex: 1, backgroundColor: '#f6f0ed' }}>
-          {renderScreen()}
+          <Suspense fallback={<ScreenLoadingFallback />}>{renderScreen()}</Suspense>
           <ToastContainer />
           <InactivityWarningModal
             visible={isWarning}
