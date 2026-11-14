@@ -88,3 +88,58 @@ export function dequeueDurableMutation(id: string): QueuedMutation[] {
 export function clearDurableQueue(): void {
   safeStorage.removeItem(STORAGE_KEY_OFFLINE_QUEUE);
 }
+
+/**
+ * Calculates exponential backoff delay with 0-25% random jitter.
+ * delay = min(baseMs * 2^retryCount, maxMs) * (1 + jitter)
+ */
+export function computeBackoffDelay(retryCount: number, baseMs = 1000, maxMs = 30000): number {
+  const exponential = Math.min(baseMs * Math.pow(2, retryCount), maxMs);
+  const jitter = Math.random() * 0.25; // 0% to 25% jitter
+  return Math.floor(exponential * (1 + jitter));
+}
+
+/**
+ * Checks if a queued mutation is eligible to retry based on its last attempt and backoff window.
+ */
+export function isItemReadyForRetry(
+  mutation: QueuedMutation,
+  now: number = Date.now(),
+  baseMs = 1000,
+  maxMs = 30000
+): boolean {
+  const retryCount = mutation.retryCount || 0;
+  if (retryCount === 0 || !mutation.lastAttemptAt) {
+    return true;
+  }
+  if ((mutation as any).nextRetryAt) {
+    return now >= (mutation as any).nextRetryAt;
+  }
+  const minRequiredDelay = Math.min(baseMs * Math.pow(2, retryCount - 1), maxMs);
+  return now - mutation.lastAttemptAt >= minRequiredDelay;
+}
+
+/**
+ * Records a failed execution attempt on a mutation, incrementing retryCount, applying exponential delay with jitter, and saving to durable storage.
+ */
+export function recordMutationFailure(
+  id: string,
+  error: string,
+  attemptTime: number = Date.now(),
+  baseMs = 1000,
+  maxMs = 30000
+): QueuedMutation[] {
+  const queue = loadDurableQueue();
+  const item = queue.find((m) => m.id === id);
+  if (item) {
+    const currentRetries = item.retryCount || 0;
+    item.retryCount = currentRetries + 1;
+    item.lastError = error;
+    item.lastAttemptAt = attemptTime;
+    // Calculate backoff delay with jitter for next scheduled retry window
+    const delay = computeBackoffDelay(currentRetries, baseMs, maxMs);
+    (item as any).nextRetryAt = attemptTime + delay;
+    saveDurableQueue(queue);
+  }
+  return queue;
+}

@@ -17,6 +17,8 @@ export interface QueuedMutation {
   payload: any;
   timestamp: number;
   retryCount?: number;
+  lastAttemptAt?: number;
+  nextRetryAt?: number;
   lastError?: string;
 }
 

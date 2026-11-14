@@ -234,6 +234,150 @@ const createOrderStore = () =>
   console.log('  ✅ [PASS] Offline orders persist with idempotency keys and survive reloads');
 }
 
+// -------------------------------------------------------------
+// Seam D: Backoff Engine & Retry Tracking (Issue #2)
+// -------------------------------------------------------------
+
+import {
+  computeBackoffDelay,
+  isItemReadyForRetry,
+  recordMutationFailure,
+} from '../frontend/src/features/orders/data/durableQueue.ts';
+
+console.log('\n--- Seam D: Backoff Engine & Retry Tracking ---');
+
+// Test 7: Exponential backoff with jitter calculation
+{
+  // retry 0 -> ~1000ms
+  const d0 = computeBackoffDelay(0, 1000, 30000);
+  assert.ok(d0 >= 1000 && d0 <= 1250, `d0 should be in [1000, 1250], got ${d0}`);
+
+  // retry 1 -> ~2000ms
+  const d1 = computeBackoffDelay(1, 1000, 30000);
+  assert.ok(d1 >= 2000 && d1 <= 2500, `d1 should be in [2000, 2500], got ${d1}`);
+
+  // retry 2 -> ~4000ms
+  const d2 = computeBackoffDelay(2, 1000, 30000);
+  assert.ok(d2 >= 4000 && d2 <= 5000, `d2 should be in [4000, 5000], got ${d2}`);
+
+  // capped at maxDelay (e.g. 30000)
+  const d10 = computeBackoffDelay(10, 1000, 30000);
+  assert.ok(d10 <= 37500, `d10 should cap at maxDelay + jitter, got ${d10}`);
+
+  console.log('  ✅ [PASS] computeBackoffDelay scales exponentially with jitter');
+}
+
+// Test 8: Retry eligibility check and failure recording
+{
+  clearDurableQueue();
+  const mutation = enqueueDurableMutation({
+    hlc: 'hlc-backoff-1',
+    type: 'create_order',
+    payload: { tableId: 't1' },
+  });
+
+  const now = Date.now();
+  // Fresh mutation with 0 retries is immediately ready
+  assert.equal(isItemReadyForRetry(mutation, now), true);
+
+  // Record failure
+  const updated = recordMutationFailure(mutation.id, 'Network timeout', now);
+  assert.equal(updated.length, 1);
+  assert.equal(updated[0].retryCount, 1);
+  assert.equal(updated[0].lastError, 'Network timeout');
+  assert.equal(updated[0].lastAttemptAt, now);
+
+  // 100ms later, should NOT be ready because backoff is >= 1000ms
+  assert.equal(isItemReadyForRetry(updated[0], now + 100), false);
+
+  // 2000ms later, should be ready
+  assert.equal(isItemReadyForRetry(updated[0], now + 2000), true);
+
+  console.log('  ✅ [PASS] isItemReadyForRetry and recordMutationFailure track backoff window');
+}
+
+// -------------------------------------------------------------
+// Seam E: Sequential Replay & Atomic Draining (Issue #2)
+// -------------------------------------------------------------
+
+console.log('\n--- Seam E: Sequential Replay & Atomic Draining ---');
+
+// Test 9: Sequential drain skips cool-down items, processes ready items, and decrements queue
+{
+  clearDurableQueue();
+  const processedIds: string[] = [];
+  const failedIds: string[] = [];
+
+  // Mock executor
+  const mockExecutor = async (item: QueuedMutation) => {
+    if (item.payload.shouldFail) {
+      throw new Error('Simulated network failure');
+    }
+    processedIds.push(item.id);
+  };
+
+  // Enqueue 3 mutations
+  const m1 = enqueueDurableMutation({
+    hlc: 'hlc-drain-1',
+    type: 'create_order',
+    payload: { shouldFail: false },
+  });
+  const m2 = enqueueDurableMutation({
+    hlc: 'hlc-drain-2',
+    type: 'create_order',
+    payload: { shouldFail: true },
+  });
+  const m3 = enqueueDurableMutation({
+    hlc: 'hlc-drain-3',
+    type: 'create_order',
+    payload: { shouldFail: false },
+  });
+
+  assert.equal(loadDurableQueue().length, 3);
+
+  // Define drainer algorithm
+  const executeDrainingCycle = async () => {
+    const queue = loadDurableQueue();
+    const now = Date.now();
+    for (const item of queue) {
+      if (!isItemReadyForRetry(item, now)) {
+        continue;
+      }
+      try {
+        await mockExecutor(item);
+        dequeueDurableMutation(item.id);
+      } catch (err: any) {
+        failedIds.push(item.id);
+        recordMutationFailure(item.id, err.message, now);
+      }
+    }
+    return loadDurableQueue();
+  };
+
+  // First cycle: m1 succeeds, m2 fails & backs off, m3 succeeds
+  await executeDrainingCycle();
+
+  assert.deepEqual(processedIds, [m1.id, m3.id]);
+  assert.deepEqual(failedIds, [m2.id]);
+
+  let remaining = loadDurableQueue();
+  assert.equal(remaining.length, 1);
+  assert.equal(remaining[0].id, m2.id);
+  assert.equal(remaining[0].retryCount, 1);
+
+  // Immediate second cycle: m2 is in backoff cool-down, so it should be skipped
+  processedIds.length = 0;
+  failedIds.length = 0;
+  await executeDrainingCycle();
+
+  assert.equal(processedIds.length, 0, 'No items should be processed while in cool-down');
+  assert.equal(failedIds.length, 0, 'No retry attempts should occur while in cool-down');
+  assert.equal(loadDurableQueue().length, 1);
+
+  clearDurableQueue();
+  console.log('  ✅ [PASS] Sequential draining processes ready items and honors cool-down');
+}
+
 console.log('\n============================================================');
-console.log('🎉 ALL DURABLE OFFLINE STORAGE & QUEUE TESTS PASSED (6/6)');
+console.log('🎉 ALL DURABLE OFFLINE STORAGE & QUEUE TESTS PASSED');
 console.log('============================================================\n');

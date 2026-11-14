@@ -73,22 +73,57 @@ export async function createOrderWithItems(params: {
       openedById: params.openedById,
     });
 
-    // 1. Insert Order
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert({
-        tab_id: tabId,
-        order_number: params.orderNumber,
-        order_type: params.orderType || 'DINE_IN',
-        order_channel: params.orderChannel || 'CAFE_AREA',
-        external_order_ref: params.externalOrderRef || null,
-        round_number: params.roundNumber || 1,
-        status: 'OPEN',
-      })
-      .select('id, order_number, status, created_at')
-      .single();
+    // 1. Idempotency Check: if externalOrderRef exists, check if already created
+    let orderData: {
+      id: string;
+      order_number: string;
+      status: string;
+      tab_id?: string;
+      created_at?: string;
+    } | null = null;
 
-    if (orderError) throw orderError;
+    if (params.externalOrderRef) {
+      const { data: existingOrder } = await supabase
+        .from('orders')
+        .select('id, order_number, status, tab_id, created_at')
+        .eq('external_order_ref', params.externalOrderRef)
+        .maybeSingle();
+
+      if (existingOrder) {
+        orderData = existingOrder;
+        // Fetch existing items to avoid double inserting
+        const { data: existingItems } = await supabase
+          .from('order_items')
+          .select('*')
+          .eq('order_id', existingOrder.id);
+
+        return {
+          order: existingOrder,
+          items: existingItems || [],
+          depletion: { success: true, orderId: existingOrder.id, lowStockAlerts: [] },
+        };
+      }
+    }
+
+    // Insert Order if not found
+    if (!orderData) {
+      const { data: newOrder, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          tab_id: tabId,
+          order_number: params.orderNumber,
+          order_type: params.orderType || 'DINE_IN',
+          order_channel: params.orderChannel || 'CAFE_AREA',
+          external_order_ref: params.externalOrderRef || null,
+          round_number: params.roundNumber || 1,
+          status: 'OPEN',
+        })
+        .select('id, order_number, status, tab_id, created_at')
+        .single();
+
+      if (orderError) throw orderError;
+      orderData = newOrder;
+    }
 
     const isUuid = (str?: string) =>
       Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str));

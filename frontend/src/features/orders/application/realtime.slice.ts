@@ -15,6 +15,7 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
     hydrateTimer = setTimeout(() => {
       hydrateTimer = null;
       get().hydrateFromSupabase();
+      get().drainOfflineQueue();
     }, delayMs);
   };
 
@@ -25,6 +26,7 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
 
       const heartbeatInterval = setInterval(() => {
         get().hydrateFromSupabase();
+        get().drainOfflineQueue();
       }, 10000);
 
       let removeVisibilityListeners = () => {};
@@ -34,11 +36,17 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
             scheduleHydration(100);
           }
         };
+        const handleOnline = () => {
+          get().drainOfflineQueue();
+          scheduleHydration(50);
+        };
         document.addEventListener('visibilitychange', handleVisibilityOrFocus);
         window.addEventListener('focus', handleVisibilityOrFocus);
+        window.addEventListener('online', handleOnline);
         removeVisibilityListeners = () => {
           document.removeEventListener('visibilitychange', handleVisibilityOrFocus);
           window.removeEventListener('focus', handleVisibilityOrFocus);
+          window.removeEventListener('online', handleOnline);
         };
       }
 
