@@ -10,6 +10,7 @@ import {
   recordMutationFailure,
   isItemReadyForRetry,
 } from '../data/durableQueue';
+import { saveAuthoritativeSnapshot } from '../data/venueSnapshot';
 
 export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   hydrateFromSupabase: async () => {
@@ -306,11 +307,23 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
         console.warn('Hydration cash drawer notice:', drawerErr);
       }
 
+      const nextTakeout = [...pendingLocalTakeout, ...dbTakeout];
+      const nextOnline = [...pendingLocalOnline, ...dbOnline];
+      const nextDrawer = mappedDrawer.length > 0 ? mappedDrawer : get().drawerEntries;
+
+      // Persist authoritative venue snapshot to durable storage on successful hydration
+      saveAuthoritativeSnapshot({
+        tables: mappedTables,
+        takeoutOrders: nextTakeout,
+        onlineOrders: nextOnline,
+        drawerEntries: nextDrawer,
+      });
+
       set({
         tables: mappedTables,
-        takeoutOrders: [...pendingLocalTakeout, ...dbTakeout],
-        onlineOrders: [...pendingLocalOnline, ...dbOnline],
-        drawerEntries: mappedDrawer.length > 0 ? mappedDrawer : get().drawerEntries,
+        takeoutOrders: nextTakeout,
+        onlineOrders: nextOnline,
+        drawerEntries: nextDrawer,
         isHydrated: true,
         offlineQueue: loadDurableQueue(),
       });

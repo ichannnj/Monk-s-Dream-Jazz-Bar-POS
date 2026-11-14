@@ -452,6 +452,128 @@ console.log('\n--- Seam F: Offline Table Transfers & Bill Settlement Queuing ---
   console.log('  ✅ [PASS] Sequential replay drains transfers and settlements in strict order');
 }
 
+// -------------------------------------------------------------
+// Seam G: Authoritative Venue State Snapshot & Cold Boot (Issue #4)
+// -------------------------------------------------------------
+
+import {
+  saveAuthoritativeSnapshot,
+  loadAuthoritativeSnapshot,
+  clearAuthoritativeSnapshot,
+  getInitialVenueState,
+  isValidVenueSnapshot,
+  CURRENT_SNAPSHOT_VERSION,
+} from '../frontend/src/features/orders/data/venueSnapshot.ts';
+
+console.log('\n--- Seam G: Authoritative Venue State Snapshot & Cold-Boot Recovery ---');
+
+// Test 12: Snapshot validation rejects malformed or unversioned snapshots
+{
+  assert.equal(isValidVenueSnapshot(null), false);
+  assert.equal(isValidVenueSnapshot({}), false);
+  assert.equal(isValidVenueSnapshot({ version: 999, timestamp: Date.now() }), false);
+  assert.equal(
+    isValidVenueSnapshot({
+      version: CURRENT_SNAPSHOT_VERSION,
+      timestamp: Date.now(),
+      tables: [], // empty tables invalid
+      takeoutOrders: [],
+      onlineOrders: [],
+    }),
+    false
+  );
+
+  const validMockSnapshot = {
+    version: CURRENT_SNAPSHOT_VERSION,
+    timestamp: Date.now(),
+    tables: [{ id: 'tbl-1', code: 'T1', status: 'occupied' as const, tabs: [] }] as any,
+    takeoutOrders: [],
+    onlineOrders: [],
+  };
+  assert.equal(isValidVenueSnapshot(validMockSnapshot), true);
+
+  console.log('  ✅ [PASS] isValidVenueSnapshot strictly validates schema & version');
+}
+
+// Test 13: Cold boot initializes from authoritative snapshot over static seeds
+{
+  clearAuthoritativeSnapshot();
+
+  // Without snapshot, returns mock seed tables
+  const defaultState = getInitialVenueState();
+  assert.equal(defaultState.hasAuthoritativeSnapshot, false);
+  assert.ok(defaultState.tables.length > 0);
+
+  // Save an authoritative live snapshot with an occupied VIP table
+  const testSnapshot = {
+    version: CURRENT_SNAPSHOT_VERSION,
+    timestamp: Date.now(),
+    tables: [
+      {
+        id: 'tbl-vip-1',
+        code: 'VIP1',
+        status: 'occupied' as const,
+        area: 'bar' as const,
+        activeTabs: [1],
+        guests: 4,
+        tabs: [
+          {
+            id: 'tab-vip-001',
+            tabIndex: 1,
+            guestName: 'Miles Davis',
+            status: 'open' as const,
+            totalAmount: 1250,
+            items: [
+              {
+                id: 'item-1',
+                productId: 'p-whiskey',
+                productName: 'Yamazaki 12',
+                quantity: 2,
+                unitPrice: 625,
+                status: 'served' as const,
+              },
+            ],
+          },
+        ],
+      },
+    ] as any,
+    takeoutOrders: [
+      {
+        id: 'takeout-001',
+        ticketNumber: 42,
+        customerName: 'Thelonious Monk',
+        total: 350,
+        items: [],
+        status: 'preparing' as const,
+        paymentStatus: 'PAID_COUNTER' as const,
+      },
+    ] as any,
+    onlineOrders: [],
+    drawerEntries: [],
+  };
+
+  saveAuthoritativeSnapshot(testSnapshot);
+
+  // Verify loaded snapshot directly
+  const loaded = loadAuthoritativeSnapshot();
+  assert.notEqual(loaded, null);
+  assert.equal(loaded?.tables[0].code, 'VIP1');
+  assert.equal(loaded?.takeoutOrders[0].customerName, 'Thelonious Monk');
+
+  // Verify cold boot initialization uses the cached snapshot
+  const coldBootState = getInitialVenueState();
+  assert.equal(coldBootState.hasAuthoritativeSnapshot, true);
+  assert.equal(coldBootState.tables.length, 1);
+  assert.equal(coldBootState.tables[0].code, 'VIP1');
+  assert.equal(coldBootState.tables[0].tabs?.[0].guestName, 'Miles Davis');
+  assert.equal(coldBootState.takeoutOrders[0].customerName, 'Thelonious Monk');
+
+  clearAuthoritativeSnapshot();
+  console.log(
+    '  ✅ [PASS] Cold boot initializes from authoritative snapshot with accurate tables and tabs'
+  );
+}
+
 console.log('\n============================================================');
 console.log('🎉 ALL DURABLE OFFLINE STORAGE & QUEUE TESTS PASSED');
 console.log('============================================================\n');
