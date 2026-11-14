@@ -3,12 +3,8 @@
  * Monk's Dream Jazz Bar POS (Supabase BaaS)
  */
 
-import {
-  dispatchOrderWithDepletion,
-  cancelOrderItem,
-  DispatchOrderResult,
-  CancelOrderItemResult,
-} from './depletion.api';
+import { dispatchOrderWithDepletion, cancelOrderItem } from './depletion.api';
+import type { DispatchOrderResult, CancelOrderItemResult } from './depletion.api';
 import {
   resolveProductId,
   getActiveOrders,

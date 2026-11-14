@@ -1,5 +1,5 @@
-import { OrderLineItem, OnlineDeliveryOrder } from '../../../types/floor';
-import { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
+import type { OrderLineItem, OnlineDeliveryOrder } from '../../../types/floor';
+import type { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
 import { ordersApi } from '../data/orders.api';
 import { tablesApi } from '../../table-service/data/tables.api';
 import { useAuthStore } from '../../auth/application/useAuthStore';

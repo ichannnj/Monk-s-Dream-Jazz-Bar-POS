@@ -7,6 +7,7 @@ import { DiscountType } from '../../../utils/taxAndDiscountCalculator';
 import { QrPaymentChannel } from '../../../data/qrPaymentChannels.api';
 import { aggregateReceiptItems } from '@/features/printer';
 import { styles } from '../BillSettlementModal.styles';
+import type { PaymentTender } from '../../../domain/splitTender.types';
 
 const MONKS_DREAM_LOGO = require('../../../../../../assets/Monks Dream Logo files-02.png');
 
@@ -23,6 +24,8 @@ interface BillThermalReceiptMockupProps {
   discountType: DiscountType;
   serviceCharge: number;
   grandTotal: number;
+  tenderTabMode?: 'single' | 'split';
+  splitTenders?: PaymentTender[];
   selectedMethod: string;
   selectedQrChannel: QrPaymentChannel | null;
   isRefNumberValid: boolean;
@@ -51,6 +54,8 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
   discountType,
   serviceCharge,
   grandTotal,
+  tenderTabMode = 'single',
+  splitTenders = [],
   selectedMethod,
   selectedQrChannel,
   isRefNumberValid,
@@ -236,47 +241,82 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         <Text style={styles.receiptDivider}>================================</Text>
 
         {/* Payment Details */}
-        <View style={styles.receiptRow}>
-          <Text style={styles.receiptMeta}>PAYMENT METHOD:</Text>
-          <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
-            {selectedMethod === 'digital_wallet'
-              ? `${(selectedQrChannel?.name || 'DIGITAL WALLET').toUpperCase()} QR`
-              : selectedMethod.toUpperCase()}
-          </Text>
-        </View>
-
-        {selectedMethod === 'digital_wallet' ? (
-          <View style={styles.receiptRow}>
-            <Text style={styles.receiptMeta}>REFERENCE NO:</Text>
-            <Text
-              style={[
-                styles.receiptMeta,
-                !isRefNumberValid && { color: '#dc2626', fontWeight: '800' },
-              ]}
-            >
-              {isRefNumberValid ? `#${referenceNumber}` : 'REQUIRED (4-DIGIT)'}
-            </Text>
-          </View>
-        ) : null}
-
-        {selectedMethod === 'cash' ? (
+        {tenderTabMode === 'split' ? (
           <>
             <View style={styles.receiptRow}>
-              <Text style={styles.receiptMeta}>CASH TENDERED:</Text>
-              <Text style={styles.receiptMeta}>{formatCurrency(numericTendered)}</Text>
-            </View>
-            <View style={styles.receiptRow}>
-              <Text style={styles.receiptMeta}>CHANGE DUE:</Text>
-              <Text style={[styles.receiptMeta, { fontWeight: '800', color: '#16a34a' }]}>
-                {formatCurrency(changeDue)}
+              <Text style={styles.receiptMeta}>PAYMENT METHOD:</Text>
+              <Text style={[styles.receiptMeta, { fontWeight: '800', color: '#810021' }]}>
+                SPLIT-TENDER ({splitTenders.length})
               </Text>
             </View>
+            {splitTenders.map((t, idx) => (
+              <View key={t.id || idx} style={styles.receiptRow}>
+                <Text style={styles.receiptTaxSub}>
+                  • {t.method.toUpperCase()}
+                  {t.method === 'digital_wallet'
+                    ? ` (${t.channel || 'Wallet'}${t.referenceNumber ? ` #${t.referenceNumber}` : ''})`
+                    : t.method === 'card' && t.last4Digits
+                      ? ` (*${t.last4Digits})`
+                      : ''}
+                  :
+                </Text>
+                <Text style={styles.receiptTaxSub}>{formatCurrency(t.amount)}</Text>
+              </View>
+            ))}
+            {changeDue > 0 && (
+              <View style={styles.receiptRow}>
+                <Text style={styles.receiptMeta}>CASH CHANGE DUE:</Text>
+                <Text style={[styles.receiptMeta, { fontWeight: '800', color: '#16a34a' }]}>
+                  {formatCurrency(changeDue)}
+                </Text>
+              </View>
+            )}
           </>
         ) : (
-          <View style={styles.receiptRow}>
-            <Text style={styles.receiptMeta}>AMOUNT PAID:</Text>
-            <Text style={styles.receiptMeta}>{formatCurrency(grandTotal)}</Text>
-          </View>
+          <>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptMeta}>PAYMENT METHOD:</Text>
+              <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
+                {selectedMethod === 'digital_wallet'
+                  ? `${(selectedQrChannel?.name || 'DIGITAL WALLET').toUpperCase()} QR`
+                  : selectedMethod.toUpperCase()}
+              </Text>
+            </View>
+
+            {selectedMethod === 'digital_wallet' ? (
+              <View style={styles.receiptRow}>
+                <Text style={styles.receiptMeta}>REFERENCE NO:</Text>
+                <Text
+                  style={[
+                    styles.receiptMeta,
+                    !isRefNumberValid && { color: '#dc2626', fontWeight: '800' },
+                  ]}
+                >
+                  {isRefNumberValid ? `#${referenceNumber}` : 'REQUIRED (4-DIGIT)'}
+                </Text>
+              </View>
+            ) : null}
+
+            {selectedMethod === 'cash' ? (
+              <>
+                <View style={styles.receiptRow}>
+                  <Text style={styles.receiptMeta}>CASH TENDERED:</Text>
+                  <Text style={styles.receiptMeta}>{formatCurrency(numericTendered)}</Text>
+                </View>
+                <View style={styles.receiptRow}>
+                  <Text style={styles.receiptMeta}>CHANGE DUE:</Text>
+                  <Text style={[styles.receiptMeta, { fontWeight: '800', color: '#16a34a' }]}>
+                    {formatCurrency(changeDue)}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <View style={styles.receiptRow}>
+                <Text style={styles.receiptMeta}>AMOUNT PAID:</Text>
+                <Text style={styles.receiptMeta}>{formatCurrency(grandTotal)}</Text>
+              </View>
+            )}
+          </>
         )}
 
         {/* Philippine VAT Breakdown */}

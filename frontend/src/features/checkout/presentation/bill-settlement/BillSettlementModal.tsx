@@ -109,8 +109,17 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 />
 
                 <BillPaymentMethodPane
+                  tenderTabMode={ctrl.tenderTabMode}
+                  setTenderTabMode={ctrl.setTenderTabMode}
                   selectedMethod={ctrl.selectedMethod}
                   setSelectedMethod={ctrl.setSelectedMethod}
+                  splitTenders={ctrl.splitTenders}
+                  splitBalance={ctrl.splitBalance}
+                  splitValidation={ctrl.splitValidation}
+                  onAddTender={ctrl.handleAddTender}
+                  onUpdateTender={ctrl.handleUpdateTender}
+                  onRemoveTender={ctrl.handleRemoveTender}
+                  onFillRemaining={ctrl.handleFillRemaining}
                   quickCashOptions={ctrl.quickCashOptions}
                   numericTendered={ctrl.numericTendered}
                   tenderedCash={ctrl.tenderedCash}
@@ -145,6 +154,8 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 discountType={ctrl.discountType}
                 serviceCharge={ctrl.serviceCharge}
                 grandTotal={ctrl.grandTotal}
+                tenderTabMode={ctrl.tenderTabMode}
+                splitTenders={ctrl.splitTenders}
                 selectedMethod={ctrl.selectedMethod}
                 selectedQrChannel={ctrl.selectedQrChannel}
                 isRefNumberValid={ctrl.isRefNumberValid}
@@ -176,6 +187,8 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             setIsConfirmModalOpen={ctrl.setIsConfirmModalOpen}
             isSubmitting={ctrl.isSubmitting}
             handleFinalizePayment={ctrl.handleFinalizePayment}
+            tenderTabMode={ctrl.tenderTabMode}
+            splitTenders={ctrl.splitTenders}
             selectedMethod={ctrl.selectedMethod}
             selectedQrChannel={ctrl.selectedQrChannel}
             referenceNumber={ctrl.referenceNumber}

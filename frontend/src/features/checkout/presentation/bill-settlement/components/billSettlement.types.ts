@@ -13,7 +13,7 @@ export interface BillSettlementModalProps {
   onConfirmPayment: (
     mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
-    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     tenderedAmount?: number,
     paymentChannel?: string,
     referenceNumber?: string,
@@ -21,5 +21,6 @@ export interface BillSettlementModalProps {
   ) => void;
 }
 
-export type PaymentMethodType = 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp';
+export type PaymentMethodType =
+  'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split';
 export type SettlementModeType = 'single_tab' | 'entire_table' | 'takeout';

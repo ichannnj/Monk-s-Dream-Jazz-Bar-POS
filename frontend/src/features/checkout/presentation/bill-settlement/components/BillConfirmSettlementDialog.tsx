@@ -6,6 +6,7 @@ import { ConfirmationModal } from '@/features/shared';
 import { FullscreenQrModal } from '../../components/FullscreenQrModal';
 import { QrPaymentChannel } from '../../../data/qrPaymentChannels.api';
 import { styles } from '../BillSettlementModal.styles';
+import type { PaymentTender } from '../../../domain/splitTender.types';
 
 interface BillConfirmSettlementDialogProps {
   isTakeout: boolean;
@@ -20,6 +21,8 @@ interface BillConfirmSettlementDialogProps {
   setIsConfirmModalOpen: (open: boolean) => void;
   isSubmitting?: boolean;
   handleFinalizePayment: () => void;
+  tenderTabMode?: 'single' | 'split';
+  splitTenders?: PaymentTender[];
   selectedMethod: string;
   selectedQrChannel: QrPaymentChannel | null;
   referenceNumber: string;
@@ -45,6 +48,8 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
   setIsConfirmModalOpen,
   isSubmitting = false,
   handleFinalizePayment,
+  tenderTabMode = 'single',
+  splitTenders = [],
   selectedMethod,
   selectedQrChannel,
   referenceNumber,
@@ -56,6 +61,13 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
   handlePrintBillStatement,
   isPrintingBill = false,
 }) => {
+  const paymentSummaryText =
+    tenderTabMode === 'split'
+      ? `SPLIT-TENDER (${splitTenders.length} payment lines: ${splitTenders.map((t) => `${t.method.toUpperCase()} ₱${t.amount}`).join(', ')})`
+      : selectedMethod === 'digital_wallet' && selectedQrChannel
+        ? `${selectedQrChannel.name} (Ref: #${referenceNumber})`
+        : selectedMethod.toUpperCase().replace('_', ' ');
+
   return (
     <>
       {/* Actions */}
@@ -117,11 +129,7 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
         title={`Confirm Payment of ${formatCurrency(grandTotal)}?`}
         message={
           isTakeout
-            ? `Takeout #${takeoutOrder?.ticketNumber} (${takeoutOrder?.customerName}) via ${
-                selectedMethod === 'digital_wallet' && selectedQrChannel
-                  ? `${selectedQrChannel.name} (Ref: #${referenceNumber})`
-                  : selectedMethod.toUpperCase().replace('_', ' ')
-              }. ${
+            ? `Takeout #${takeoutOrder?.ticketNumber} (${takeoutOrder?.customerName}) via ${paymentSummaryText}. ${
                 takeoutCollectAfterPay
                   ? 'This will record payment, print the receipt, and mark the order as collected.'
                   : 'This will record payment, print the receipt, and keep the ticket active on KDS until collected.'
@@ -130,11 +138,7 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
                 settlementMode === 'single_tab'
                   ? activeTab?.guestName || `Tab #${activeTab?.tabIndex || 1}`
                   : 'Entire Table'
-              } via ${
-                selectedMethod === 'digital_wallet' && selectedQrChannel
-                  ? `${selectedQrChannel.name} (Ref: #${referenceNumber})`
-                  : selectedMethod.toUpperCase().replace('_', ' ')
-              }. This will finalize the tab and send the receipt to the printer.`
+              } via ${paymentSummaryText}. This will finalize the tab and send the receipt to the printer.`
         }
         confirmText={
           isTakeout && takeoutCollectAfterPay ? 'Pay & Complete Hand-off' : 'Complete Settlement'

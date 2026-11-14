@@ -1,5 +1,6 @@
 import { supabase } from '../../shared/infrastructure/supabase';
-import { dispatchOrderWithDepletion, DispatchOrderResult } from './depletion.api';
+import { dispatchOrderWithDepletion } from './depletion.api';
+import type { DispatchOrderResult } from './depletion.api';
 import {
   resolveProductId,
   ensureTab,

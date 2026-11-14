@@ -8,7 +8,9 @@ import {
   loadDurableQueue,
 } from '../../orders/data/durableQueue';
 import { posHlc } from '../../orders/application/order.helpers';
-import { useOrderStore } from '../../orders/application/useOrderStore';
+
+import type { PaymentTender } from '../domain/splitTender.types';
+import { mapTendersToDbPayload } from '../domain/splitTenderCalculator';
 
 export interface SettlementBillingDetails {
   serviceCharge?: number;
@@ -23,10 +25,11 @@ export interface SettlementBillingDetails {
   corkageAmount?: number;
   tenderedAmount?: number;
   shouldPrintReceipt?: boolean;
+  tenders?: PaymentTender[];
 }
 
 export function mapPaymentMethodToDb(
-  method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp'
+  method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split'
 ): 'CASH' | 'CARD' | 'DIGITAL_WALLET' | 'COMP' {
   if (method === 'card') return 'CARD';
   if (method === 'digital_wallet' || method === 'platform_prepaid') return 'DIGITAL_WALLET';
@@ -49,7 +52,7 @@ export async function backgroundSettleTabDb({
 }: {
   targetTabId?: string;
   tableId: string;
-  paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp';
+  paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split';
   grandTotalPaid: number;
   discountAmount: number;
   effectiveStaffId?: string;
@@ -104,6 +107,9 @@ export async function backgroundSettleTabDb({
         tenderedAmount: billingDetails?.tenderedAmount,
         drawerTarget: computedDrawerTarget,
         shouldPrintReceipt: billingDetails?.shouldPrintReceipt,
+        tenders: billingDetails?.tenders
+          ? mapTendersToDbPayload(billingDetails.tenders)
+          : undefined,
       };
 
       const mutationId = `mut-settle-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
@@ -113,12 +119,10 @@ export async function backgroundSettleTabDb({
         type: 'settle_tab',
         payload: settlementPayload,
       });
-      useOrderStore.setState({ offlineQueue: loadDurableQueue() });
 
       try {
         await tablesApi.settleTabAndRecordPayment(settlementPayload);
         dequeueDurableMutation(mutationId);
-        useOrderStore.setState({ offlineQueue: loadDurableQueue() });
         realtimeGateway.broadcastPosSync('tab_settled');
       } catch (networkErr) {
         console.warn(

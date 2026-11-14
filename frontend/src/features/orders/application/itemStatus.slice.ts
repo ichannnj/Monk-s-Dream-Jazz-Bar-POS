@@ -1,10 +1,10 @@
-import { CustomerTab, FloorAlert, OrderLineItem } from '../../../types/floor';
+import type { CustomerTab, FloorAlert, OrderLineItem } from '../../../types/floor';
 import { ordersApi } from '../data/orders.api';
 import { tablesApi } from '../../table-service/data/tables.api';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { deriveTabTotal, deriveTableStatus, deriveTableStateTimestamp } from './order.helpers';
-import { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
+import type { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
 
 export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   updateOrderItemStatus: (

@@ -1,12 +1,8 @@
 import { create } from 'zustand';
 import { supabase } from '../infrastructure/supabase';
 import { toast } from '../toast/useToastStore';
-import {
-  adminApi,
-  OperatingMode,
-  getLatest6AmCutoff,
-  getMsUntilNext6Am,
-} from '../../admin/data/admin.api';
+import { adminApi, getLatest6AmCutoff, getMsUntilNext6Am } from '../../admin/data/admin.api';
+import type { OperatingMode } from '../../admin/data/admin.api';
 
 interface VenueState {
   operatingMode: OperatingMode;

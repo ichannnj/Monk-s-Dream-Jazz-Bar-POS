@@ -1,8 +1,8 @@
-import { TableItem, DrawerEntry } from '../../../types/floor';
+import type { TableItem, DrawerEntry } from '../../../types/floor';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { ordersApi } from '../data/orders.api';
 import { tablesApi } from '../../table-service/data/tables.api';
-import { OrderStoreSet, OrderStoreGet, QueuedMutation } from '../domain/order.types';
+import type { OrderStoreSet, OrderStoreGet, QueuedMutation } from '../domain/order.types';
 import { mapHydratedTables, mapHydratedOffPremiseTabs } from './hydrationMappers';
 import {
   loadDurableQueue,

@@ -213,13 +213,14 @@ export interface CheckItem {
   subtotal: number;
   tax: number;
   total: number;
-  paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp';
+  paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split';
   paymentChannel?: string;
   referenceNumber?: string;
   status: 'open' | 'billed' | 'paid' | 'voided';
   timestamp: string;
   cashierName: string;
   itemsSummary: string;
+  tendersSummary?: string;
 }
 
 export interface DrawerEntry {

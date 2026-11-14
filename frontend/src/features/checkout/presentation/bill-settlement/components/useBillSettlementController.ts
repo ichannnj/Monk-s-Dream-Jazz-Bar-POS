@@ -12,6 +12,11 @@ import {
 import { qrPaymentChannelsApi, type QrPaymentChannel } from '../../../data/qrPaymentChannels.api';
 import { extractRawOrderItems, computePricingLineItems } from './settlementItemExtractors';
 import { printerApi } from '@/features/printer';
+import type { PaymentTender } from '../../../domain/splitTender.types';
+import {
+  calculateTenderBalance,
+  validateSplitTenders,
+} from '../../../domain/splitTenderCalculator';
 
 interface UseBillSettlementParams {
   visible: boolean;
@@ -22,7 +27,7 @@ interface UseBillSettlementParams {
   onConfirmPayment: (
     mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
-    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     tenderedAmount?: number,
     paymentChannel?: string,
     referenceNumber?: string,
@@ -42,9 +47,11 @@ export function useBillSettlementController({
   const { operatingMode, cafeFoodServiceChargeRate, eventServiceChargeRate, serviceChargeEnabled } =
     useVenueStore();
   const [settlementMode, setSettlementMode] = useState<'single_tab' | 'entire_table'>('single_tab');
+  const [tenderTabMode, setTenderTabMode] = useState<'single' | 'split'>('single');
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'digital_wallet' | 'comp'>(
     'cash'
   );
+  const [splitTenders, setSplitTenders] = useState<PaymentTender[]>([]);
   const [tenderedCash, setTenderedCash] = useState<string>('');
   const [shouldPrintReceipt, setShouldPrintReceipt] = useState(true);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
@@ -79,7 +86,9 @@ export function useBillSettlementController({
       setTenderedCash('');
       setReferenceNumber('');
       setSettlementMode('single_tab');
+      setTenderTabMode('single');
       setSelectedMethod('cash');
+      setSplitTenders([]);
       setShouldPrintReceipt(true);
       setIsSubmitting(false);
 
@@ -186,15 +195,55 @@ export function useBillSettlementController({
   const vatExemptSales = billing.vatExemptSales;
   const serviceCharge = billing.serviceCharge;
 
+  const splitBalance = useMemo(() => {
+    return calculateTenderBalance(splitTenders, grandTotal);
+  }, [splitTenders, grandTotal]);
+
+  const splitValidation = useMemo(() => {
+    return validateSplitTenders(splitTenders, grandTotal);
+  }, [splitTenders, grandTotal]);
+
   const numericTendered = parseFloat(tenderedCash) || 0;
-  const changeDue = Math.max(0, numericTendered - grandTotal);
+  const changeDue =
+    tenderTabMode === 'split'
+      ? splitBalance.totalCashChange
+      : Math.max(0, numericTendered - grandTotal);
+
   const isRefNumberValid = /^\d{4}$/.test(referenceNumber.trim());
   const isPaymentValid =
-    selectedMethod === 'cash'
-      ? grandTotal === 0 || numericTendered >= grandTotal
-      : selectedMethod === 'digital_wallet'
-        ? selectedQrChannel !== null && isRefNumberValid
-        : true;
+    tenderTabMode === 'split'
+      ? splitValidation.isValid
+      : selectedMethod === 'cash'
+        ? grandTotal === 0 || numericTendered >= grandTotal
+        : selectedMethod === 'digital_wallet'
+          ? selectedQrChannel !== null && isRefNumberValid
+          : true;
+
+  const handleAddTender = (tender: PaymentTender) => {
+    setSplitTenders((prev) => [...prev, tender]);
+  };
+
+  const handleUpdateTender = (id: string, updated: Partial<PaymentTender>) => {
+    setSplitTenders((prev) =>
+      prev.map((t) => (t.id === id ? ({ ...t, ...updated } as PaymentTender) : t))
+    );
+  };
+
+  const handleRemoveTender = (id: string) => {
+    setSplitTenders((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  const handleFillRemaining = (id: string) => {
+    setSplitTenders((prev) => {
+      const current = prev.find((t) => t.id === id);
+      if (!current) return prev;
+      const otherAllocated = prev
+        .filter((t) => t.id !== id)
+        .reduce((sum, t) => sum + (t.amount || 0), 0);
+      const remainingForThis = Math.max(0, grandTotal - otherAllocated);
+      return prev.map((t) => (t.id === id ? { ...t, amount: remainingForThis } : t));
+    });
+  };
 
   const handleOpenConfirm = () => {
     if (isSeniorOrPwd) {
@@ -220,7 +269,12 @@ export function useBillSettlementController({
     }
 
     if (!isPaymentValid) {
-      if (selectedMethod === 'cash') {
+      if (tenderTabMode === 'split') {
+        const errorMsg =
+          splitValidation.errors[0] ||
+          `Split tenders must allocate exactly ${formatCurrency(grandTotal)}`;
+        toast.warning(errorMsg, { title: 'Split Tender Incomplete' });
+      } else if (selectedMethod === 'cash') {
         toast.warning(
           numericTendered === 0
             ? `Please enter cash tendered (min. ${formatCurrency(grandTotal)})`
@@ -246,27 +300,40 @@ export function useBillSettlementController({
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
+      const isSplit = tenderTabMode === 'split';
+      const cashPortion = isSplit
+        ? splitTenders
+            .filter((t): t is PaymentTender & { method: 'cash' } => t.method === 'cash')
+            .reduce((sum, t) => sum + (t.amount || 0), 0)
+        : numericTendered;
+
       await onConfirmPayment(
         isTakeout ? 'takeout' : settlementMode,
         activeTab?.tabIndex || 1,
-        selectedMethod,
-        selectedMethod === 'cash' ? numericTendered : undefined,
-        selectedMethod === 'digital_wallet'
+        isSplit ? 'split' : selectedMethod,
+        isSplit ? cashPortion : selectedMethod === 'cash' ? numericTendered : undefined,
+        !isSplit && selectedMethod === 'digital_wallet'
           ? selectedQrChannel?.name || 'Digital Wallet'
           : undefined,
-        selectedMethod === 'digital_wallet' ? referenceNumber.trim() : undefined,
+        !isSplit && selectedMethod === 'digital_wallet' ? referenceNumber.trim() : undefined,
         {
           ...billing,
           discountType: isComp ? 'COMP' : discountType,
           seniorPwdId: seniorPwdId.trim(),
           seniorPwdName: seniorPwdName.trim(),
           shouldPrintReceipt,
-          tenderedAmount: selectedMethod === 'cash' ? numericTendered : grandTotal,
+          tenderedAmount: isSplit
+            ? cashPortion
+            : selectedMethod === 'cash'
+              ? numericTendered
+              : grandTotal,
           corkageAmount: tableGroupCorkage,
+          tenders: isSplit ? splitTenders : undefined,
         }
       );
       setTenderedCash('');
       setReferenceNumber('');
+      setSplitTenders([]);
       setIsConfirmModalOpen(false);
       onClose();
     } catch (err: any) {
@@ -343,8 +410,17 @@ export function useBillSettlementController({
   return {
     settlementMode,
     setSettlementMode,
+    tenderTabMode,
+    setTenderTabMode,
     selectedMethod,
     setSelectedMethod,
+    splitTenders,
+    splitBalance,
+    splitValidation,
+    handleAddTender,
+    handleUpdateTender,
+    handleRemoveTender,
+    handleFillRemaining,
     tenderedCash,
     setTenderedCash,
     shouldPrintReceipt,

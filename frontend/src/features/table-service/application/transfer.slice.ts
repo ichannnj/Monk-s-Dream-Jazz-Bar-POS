@@ -1,4 +1,4 @@
-import { CustomerTab, FloorAlert } from '../../../types/floor';
+import type { CustomerTab, FloorAlert } from '../../../types/floor';
 import { tablesApi } from '../data/tables.api';
 import { deriveTableStatus, posHlc } from '../../orders/application/order.helpers';
 import {
@@ -6,7 +6,7 @@ import {
   dequeueDurableMutation,
   loadDurableQueue,
 } from '../../orders/data/durableQueue';
-import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
+import type { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 

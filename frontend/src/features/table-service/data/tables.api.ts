@@ -11,7 +11,8 @@ import {
   completeOffPremiseTab,
   transferOrderItemsToTab,
 } from './tabs.api';
-import { getTables, transferTableTab, TransferTabParams, TransferTabResult } from './transfer.api';
+import { getTables, transferTableTab } from './transfer.api';
+import type { TransferTabParams, TransferTabResult } from './transfer.api';
 
 export class TablesApi {
   getTables = getTables;

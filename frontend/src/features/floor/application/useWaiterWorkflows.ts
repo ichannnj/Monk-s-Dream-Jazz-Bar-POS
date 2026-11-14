@@ -222,7 +222,7 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
   const handleConfirmPayment = (
     mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
-    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     _tenderedAmount?: number,
     paymentChannel?: string,
     referenceNumber?: string,
@@ -239,6 +239,7 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           : 'Digital Wallet (QR)',
         platform_prepaid: 'Platform Prepaid',
         comp: 'House Comp (100%)',
+        split: 'Split-Tender (Multi-Payment)',
       };
       const methodName = methodLabels[method] || method.toUpperCase();
 

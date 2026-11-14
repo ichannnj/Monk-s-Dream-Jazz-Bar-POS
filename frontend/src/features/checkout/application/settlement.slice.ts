@@ -1,9 +1,11 @@
-import { CustomerTab, OrderLineItem, TakeoutOrder } from '../../../types/floor';
-import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
+import type { CustomerTab, OrderLineItem, TakeoutOrder } from '../../../types/floor';
+import type { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
-import { calculateTabBilling, PricingLineItem } from '../utils/taxAndDiscountCalculator';
-import { backgroundSettleTabDb, SettlementBillingDetails } from './settlementHelpers';
+import { calculateTabBilling } from '../utils/taxAndDiscountCalculator';
+import type { PricingLineItem } from '../utils/taxAndDiscountCalculator';
+import { backgroundSettleTabDb } from './settlementHelpers';
+import type { SettlementBillingDetails } from './settlementHelpers';
 import { backgroundSettleTakeoutDb } from './offPremiseSettlement';
 import { backgroundSettleTableGroupDb } from './tableGroupSettlement';
 import {
@@ -14,12 +16,44 @@ import {
   updateTableGroupOnSettlement,
   updateTakeoutOnSettlement,
 } from './settlementStateUpdaters';
+import type { PaymentTender } from '../domain/splitTender.types';
+import { formatCurrency } from '@monks/shared';
+
+function formatTendersSummary(tenders: PaymentTender[]): string {
+  return tenders
+    .map((t) => {
+      if (t.method === 'cash') {
+        return `Cash: ${formatCurrency(t.amount)}`;
+      }
+      if (t.method === 'digital_wallet') {
+        return `${t.channel || 'Wallet'} [Ref: ${t.referenceNumber}]: ${formatCurrency(t.amount)}`;
+      }
+      if (t.method === 'card') {
+        return `Card (${t.last4Digits ? `ending ${t.last4Digits}` : 'Terminal'}): ${formatCurrency(t.amount)}`;
+      }
+      return `Comp (${t.reason || 'House'}): ${formatCurrency(t.amount)}`;
+    })
+    .join(' • ');
+}
+
+function calculateCashTenderAmount(
+  paymentMethod: string,
+  tenders: PaymentTender[] | undefined,
+  grandTotal: number
+): number {
+  if (tenders && tenders.length > 0) {
+    return tenders
+      .filter((t): t is PaymentTender & { method: 'cash' } => t.method === 'cash')
+      .reduce((sum, t) => sum + (t.amount || 0), 0);
+  }
+  return paymentMethod === 'cash' ? grandTotal : 0;
+}
 
 export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   settleTab: (
     tableId: string,
     tabIndex: number,
-    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     cashierName?: string,
     discountAmount = 0,
     staffId?: string,
@@ -62,6 +96,11 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         useAuthStore.getState().currentUser?.role
       );
 
+      const tendersSummary =
+        billingDetails?.tenders && billingDetails.tenders.length > 0
+          ? formatTendersSummary(billingDetails.tenders)
+          : undefined;
+
       const newCheck = createCheckItemRecord({
         checkNumber: `#${1042 + state.checks.length}`,
         orderType: 'dine_in',
@@ -77,13 +116,20 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         cashierName: effectiveCashierName,
         itemsSummary:
           targetTab?.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ') || 'Table Bill',
+        tendersSummary,
       });
 
+      const cashPortion = calculateCashTenderAmount(
+        paymentMethod,
+        billingDetails?.tenders,
+        grandTotal
+      );
+
       const nextDrawer =
-        paymentMethod === 'cash'
+        cashPortion > 0
           ? [
               createCashDrawerEntry(
-                grandTotal,
+                cashPortion,
                 `Table ${table.code} (${targetTab?.guestName}) Cash Settle`,
                 effectiveCashierName,
                 computedDrawerTarget
@@ -116,7 +162,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
 
   settleTableGroup: (
     tableId: string,
-    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     cashierName?: string,
     staffId?: string,
     paymentChannel?: string,
@@ -174,6 +220,11 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         useAuthStore.getState().currentUser?.role
       );
 
+      const tendersSummary =
+        billingDetails?.tenders && billingDetails.tenders.length > 0
+          ? formatTendersSummary(billingDetails.tenders)
+          : undefined;
+
       const newCheck = createCheckItemRecord({
         checkNumber: `#${1042 + state.checks.length}`,
         orderType: 'dine_in',
@@ -190,13 +241,20 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         itemsSummary:
           allItems.map((i) => `${i.quantity}x ${i.productName}`).join(', ') ||
           'Combined Table Bill',
+        tendersSummary,
       });
 
+      const cashPortion = calculateCashTenderAmount(
+        paymentMethod,
+        billingDetails?.tenders,
+        grandTotal
+      );
+
       const nextDrawer =
-        paymentMethod === 'cash'
+        cashPortion > 0
           ? [
               createCashDrawerEntry(
-                grandTotal,
+                cashPortion,
                 `Table ${table.code} Combined Group Cash Settle`,
                 effectiveCashierName,
                 computedDrawerTarget
@@ -228,7 +286,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
 
   settleTakeoutOrder: (
     takeoutId: string,
-    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     options?: {
       completeOrder?: boolean;
       cashierName?: string;
@@ -246,6 +304,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       totalAmountDue?: number;
       tenderedAmount?: number;
       shouldPrintReceipt?: boolean;
+      tenders?: PaymentTender[];
     }
   ) => {
     const completeOrder = Boolean(options?.completeOrder);
@@ -276,6 +335,11 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         options?.totalAmountDue !== undefined ? options.totalAmountDue : netSubtotal;
       grandTotalPaid = grandTotal;
 
+      const tendersSummary =
+        options?.tenders && options.tenders.length > 0
+          ? formatTendersSummary(options.tenders)
+          : undefined;
+
       const newCheck = createCheckItemRecord({
         checkNumber: `#${1042 + state.checks.length}`,
         orderType: 'takeout',
@@ -292,6 +356,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         itemsSummary:
           targetOrder.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ') ||
           'Takeout Order',
+        tendersSummary,
       });
 
       const drawerTarget = determineDrawerTarget(
@@ -300,11 +365,13 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         useAuthStore.getState().currentUser?.role
       );
 
+      const cashPortion = calculateCashTenderAmount(paymentMethod, options?.tenders, grandTotal);
+
       const nextDrawer =
-        paymentMethod === 'cash'
+        cashPortion > 0
           ? [
               createCashDrawerEntry(
-                grandTotal,
+                cashPortion,
                 `Takeout #${targetOrder.ticketNumber} (${targetOrder.customerName}) Cash Settle`,
                 effectiveCashierName,
                 drawerTarget
