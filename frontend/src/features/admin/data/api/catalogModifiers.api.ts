@@ -1,9 +1,23 @@
 import { supabase } from '@/features/shared/infrastructure/supabase';
+import type { Tables } from '@monks/shared';
 import type { ModifierGroupAdmin, ProductModifierOptionAdmin } from '../admin.types';
+
+type ModifierGroupWithItems = Tables<'modifier_groups'> & {
+  product_modifiers?: Array<
+    Tables<'product_modifiers'> & {
+      inventory_items?: Pick<Tables<'inventory_items'>, 'name' | 'unit'> | null;
+    }
+  > | null;
+};
+
+type ProductModifierWithItem = Tables<'product_modifiers'> & {
+  inventory_items?: Pick<Tables<'inventory_items'>, 'name' | 'unit'> | null;
+};
 
 export const catalogModifiersApi = {
   async getModifierGroups(productId?: string): Promise<ModifierGroupAdmin[]> {
-    let query = (supabase.from as any)('modifier_groups')
+    let query = supabase
+      .from('modifier_groups')
       .select('*, product_modifiers(*, inventory_items(name, unit))')
       .order('sort_order', { ascending: true });
 
@@ -14,13 +28,13 @@ export const catalogModifiersApi = {
     const { data, error } = await query;
     if (error) throw error;
 
-    return (data || []).map((g: any) => ({
+    return ((data || []) as unknown as ModifierGroupWithItems[]).map((g) => ({
       ...g,
-      options: (g.product_modifiers || []).map((m: any) => ({
+      options: (g.product_modifiers || []).map((m) => ({
         ...m,
         inventory_item: m.inventory_items,
       })),
-    })) as ModifierGroupAdmin[];
+    })) as unknown as ModifierGroupAdmin[];
   },
 
   async createModifierGroup(group: {
@@ -31,7 +45,8 @@ export const catalogModifiersApi = {
     is_required?: boolean;
     sort_order?: number;
   }): Promise<ModifierGroupAdmin> {
-    const { data, error } = await (supabase.from as any)('modifier_groups')
+    const { data, error } = await supabase
+      .from('modifier_groups')
       .insert({
         name: group.name,
         product_id: group.product_id ?? null,
@@ -44,7 +59,7 @@ export const catalogModifiersApi = {
       .single();
 
     if (error) throw error;
-    return data as ModifierGroupAdmin;
+    return data as unknown as ModifierGroupAdmin;
   },
 
   async updateModifierGroup(
@@ -57,7 +72,8 @@ export const catalogModifiersApi = {
       sort_order: number;
     }>
   ): Promise<void> {
-    const { error } = await (supabase.from as any)('modifier_groups')
+    const { error } = await supabase
+      .from('modifier_groups')
       .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', id);
 
@@ -65,7 +81,7 @@ export const catalogModifiersApi = {
   },
 
   async deleteModifierGroup(id: string): Promise<void> {
-    const { error } = await (supabase.from as any)('modifier_groups').delete().eq('id', id);
+    const { error } = await supabase.from('modifier_groups').delete().eq('id', id);
     if (error) throw error;
   },
 
@@ -80,7 +96,8 @@ export const catalogModifiersApi = {
     unit?: string | null;
   }): Promise<void> {
     if (params.id) {
-      const { error } = await (supabase.from as any)('product_modifiers')
+      const { error } = await supabase
+        .from('product_modifiers')
         .update({
           group_id: params.group_id ?? null,
           product_id: params.product_id ?? null,
@@ -93,7 +110,7 @@ export const catalogModifiersApi = {
         .eq('id', params.id);
       if (error) throw error;
     } else {
-      const { error } = await (supabase.from as any)('product_modifiers').insert({
+      const { error } = await supabase.from('product_modifiers').insert({
         group_id: params.group_id ?? null,
         product_id: params.product_id ?? null,
         name: params.name,
@@ -108,7 +125,8 @@ export const catalogModifiersApi = {
 
   async getCatalogModifiers(): Promise<ProductModifierOptionAdmin[]> {
     try {
-      const { data, error } = await (supabase.from as any)('product_modifiers')
+      const { data, error } = await supabase
+        .from('product_modifiers')
         .select('*, inventory_items(name, unit)')
         .is('product_id', null)
         .order('name', { ascending: true });
@@ -121,12 +139,15 @@ export const catalogModifiersApi = {
         return [];
       }
 
-      return (data || []).map((m: any) => ({
+      return ((data || []) as unknown as ProductModifierWithItem[]).map((m) => ({
         ...m,
         inventory_item: m.inventory_items,
-      })) as ProductModifierOptionAdmin[];
-    } catch (err: any) {
-      console.warn('[catalogModifiersApi.getCatalogModifiers] Failed:', err?.message);
+      })) as unknown as ProductModifierOptionAdmin[];
+    } catch (err: unknown) {
+      console.warn(
+        '[catalogModifiersApi.getCatalogModifiers] Failed:',
+        err instanceof Error ? err.message : String(err)
+      );
       return [];
     }
   },
@@ -145,7 +166,8 @@ export const catalogModifiersApi = {
     }>
   ): Promise<boolean> {
     try {
-      const { error: delErr } = await (supabase.from as any)('product_modifiers')
+      const { error: delErr } = await supabase
+        .from('product_modifiers')
         .delete()
         .eq('product_id', productId);
 
@@ -167,21 +189,24 @@ export const catalogModifiersApi = {
         unit: m.unit ?? null,
       }));
 
-      const { error: insErr } = await (supabase.from as any)('product_modifiers').insert(toInsert);
+      const { error: insErr } = await supabase.from('product_modifiers').insert(toInsert);
       if (insErr) {
         console.warn('[catalogModifiersApi.upsertProductModifiers] insert error:', insErr.message);
         return false;
       }
 
       return true;
-    } catch (err: any) {
-      console.warn('[catalogModifiersApi.upsertProductModifiers] failed:', err?.message);
+    } catch (err: unknown) {
+      console.warn(
+        '[catalogModifiersApi.upsertProductModifiers] failed:',
+        err instanceof Error ? err.message : String(err)
+      );
       return false;
     }
   },
 
   async deleteProductModifier(id: string): Promise<void> {
-    const { error } = await (supabase.from as any)('product_modifiers').delete().eq('id', id);
+    const { error } = await supabase.from('product_modifiers').delete().eq('id', id);
     if (error) throw error;
   },
 };

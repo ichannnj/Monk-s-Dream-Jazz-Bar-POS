@@ -1,4 +1,5 @@
 import { supabase } from '../../shared/infrastructure/supabase';
+import type { TablesInsert, Enums, Json } from '@monks/shared';
 import { resolveTableUuid } from '../../floor/data/resolver';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 
@@ -65,27 +66,20 @@ export async function createTab(params: {
     const validTableId = params.tableId ? await resolveTableUuid(params.tableId) : null;
     const effectiveMode = params.operatingMode || 'CAFE';
 
-    const insertPayload: Record<string, any> = {
+    const insertPayload: TablesInsert<'tabs'> = {
       table_id: validTableId,
       customer_name: params.customerName || 'Guest',
       order_type: params.orderType || 'DINE_IN',
-      order_channel: (params.orderChannel || 'CAFE_AREA') as any,
+      order_channel: params.orderChannel || 'CAFE_AREA',
       has_corkage_fee: params.hasCorkageFee || false,
       corkage_amount: params.corkageAmount || 0,
       opened_by_id: params.openedById || null,
       operating_mode: effectiveMode,
       status: 'OPEN',
+      ...(params.id ? { id: params.id } : {}),
     };
 
-    if (params.id) {
-      insertPayload.id = params.id;
-    }
-
-    const { data, error } = await supabase
-      .from('tabs')
-      .insert(insertPayload as any)
-      .select('id')
-      .single();
+    const { data, error } = await supabase.from('tabs').insert(insertPayload).select('id').single();
 
     if (error) {
       console.warn('createTab insert error:', error.message);
@@ -149,32 +143,60 @@ export async function settleTabAndRecordPayment(params: {
   }
 
   try {
-    const rpcPayload: Record<string, any> = {
+    interface SettleTabRpcArgs {
+      p_tab_id: string;
+      p_staff_id?: string | null;
+      p_payment_method: Enums<'payment_method'>;
+      p_amount: number;
+      p_corkage_amount?: number;
+      p_discount_amount?: number;
+      p_tip_amount?: number;
+      p_notes?: string | null;
+      p_keep_open_for_prep?: boolean;
+      p_payment_channel?: string | null;
+      p_reference_number?: string | null;
+      p_service_charge?: number;
+      p_vatable_sales?: number | null;
+      p_vat_amount?: number | null;
+      p_vat_exempt_sales?: number | null;
+      p_discount_type?: string | null;
+      p_senior_pwd_id?: string | null;
+      p_senior_pwd_name?: string | null;
+      p_tendered_amount?: number | null;
+      p_drawer_target?: string | null;
+      p_should_print_receipt?: boolean;
+      p_tenders?: Json | null;
+    }
+
+    const rpcPayload: SettleTabRpcArgs = {
       p_tab_id: params.tabId,
-      p_staff_id: (params.staffId || null) as any,
+      p_staff_id: params.staffId || null,
       p_payment_method: params.paymentMethod,
       p_amount: params.amount,
       p_corkage_amount: params.corkageAmount || 0,
       p_discount_amount: params.discountAmount || 0,
       p_tip_amount: params.tipAmount || 0,
-      p_notes: (params.notes || null) as any,
+      p_notes: params.notes || null,
       p_keep_open_for_prep: Boolean(params.keepOpenForPrep),
-      p_payment_channel: (params.paymentChannel || null) as any,
-      p_reference_number: (params.referenceNumber || null) as any,
+      p_payment_channel: params.paymentChannel || null,
+      p_reference_number: params.referenceNumber || null,
       p_service_charge: params.serviceCharge || 0,
       p_vatable_sales: params.vatableSales ?? null,
       p_vat_amount: params.vatAmount ?? null,
       p_vat_exempt_sales: params.vatExemptSales ?? null,
-      p_discount_type: (params.discountType || null) as any,
-      p_senior_pwd_id: (params.seniorPwdId || null) as any,
-      p_senior_pwd_name: (params.seniorPwdName || null) as any,
+      p_discount_type: params.discountType || null,
+      p_senior_pwd_id: params.seniorPwdId || null,
+      p_senior_pwd_name: params.seniorPwdName || null,
       p_tendered_amount: params.tenderedAmount ?? null,
-      p_drawer_target: (params.drawerTarget || null) as any,
+      p_drawer_target: params.drawerTarget || null,
       p_should_print_receipt: params.shouldPrintReceipt !== false,
-      p_tenders: params.tenders ? (params.tenders as any) : null,
+      p_tenders: params.tenders ? (params.tenders as unknown as Json) : null,
     };
 
-    let { data, error } = await (supabase.rpc as any)('settle_tab_and_record_payment', rpcPayload);
+    let { data, error } = await supabase.rpc(
+      'settle_tab_and_record_payment' as never,
+      rpcPayload as never
+    );
 
     if (
       error &&
@@ -192,7 +214,10 @@ export async function settleTabAndRecordPayment(params: {
         ...restPayload
       } = rpcPayload;
 
-      const retry = await (supabase.rpc as any)('settle_tab_and_record_payment', restPayload);
+      const retry = await supabase.rpc(
+        'settle_tab_and_record_payment' as never,
+        restPayload as never
+      );
       data = retry.data;
       error = retry.error;
     }
@@ -203,8 +228,8 @@ export async function settleTabAndRecordPayment(params: {
 
     realtimeGateway.broadcastPosSync('payment_settled');
 
-    return (data as any) || { success: true };
-  } catch (err: any) {
+    return (data as unknown as { success: boolean }) || { success: true };
+  } catch (err: unknown) {
     console.error('settleTabAndRecordPayment error:', err);
     throw err;
   }
@@ -219,10 +244,13 @@ export async function completeOffPremiseTab(params: { tabId: string; staffId?: s
   }
 
   try {
-    const { data, error } = await (supabase.rpc as any)('complete_off_premise_tab', {
-      p_tab_id: params.tabId,
-      p_staff_id: params.staffId || null,
-    });
+    const { data, error } = await supabase.rpc(
+      'complete_off_premise_tab' as never,
+      {
+        p_tab_id: params.tabId,
+        p_staff_id: params.staffId || null,
+      } as never
+    );
 
     if (error) {
       // Fallback direct update if RPC is not yet deployed
@@ -239,8 +267,8 @@ export async function completeOffPremiseTab(params: { tabId: string; staffId?: s
     }
 
     realtimeGateway.broadcastPosSync('tab_completed');
-    return data || { success: true };
-  } catch (err) {
+    return (data as unknown as { success: boolean }) || { success: true };
+  } catch (err: unknown) {
     console.warn('completeOffPremiseTab error:', err);
     return { success: false };
   }
@@ -265,29 +293,29 @@ export async function transferOrderItemsToTab(params: {
     }
 
     if (isSourceUuid) {
-      const { data, error } = await (supabase.rpc as any)('transfer_order_items_to_tab', {
+      const { data, error } = await supabase.rpc('transfer_order_items_to_tab', {
         p_source_tab_id: params.sourceTabId,
-        p_target_tab_id: params.targetTabId || null,
-        p_table_id: resolvedTableId || null,
-        p_new_tab_name: params.newTabName || null,
+        p_target_tab_id: params.targetTabId || undefined,
+        p_table_id: resolvedTableId || undefined,
+        p_new_tab_name: params.newTabName || undefined,
         p_item_transfers: params.itemTransfers.map((i) => ({
           order_item_id: i.orderItemId,
           quantity: i.quantity,
         })),
-        p_staff_id: params.staffId || null,
+        p_staff_id: params.staffId || undefined,
       });
 
       if (error) {
         console.warn('transfer_order_items_to_tab RPC warning:', error.message);
       } else {
         realtimeGateway.broadcastPosSync('tab_items_transferred');
-        return data || { success: true };
+        return (data as unknown as { success: boolean; targetTabId?: string }) || { success: true };
       }
     }
 
     realtimeGateway.broadcastPosSync('tab_items_transferred');
     return { success: true };
-  } catch (err) {
+  } catch (err: unknown) {
     console.error('transferOrderItemsToTab error:', err);
     return { success: false };
   }

@@ -1,4 +1,5 @@
 import { supabase } from '@/features/shared/infrastructure/supabase';
+import type { Tables } from '@monks/shared';
 import type { DashboardTelemetry, TimeframeFilter } from '../domain/admin.types';
 import { getTimeframeBounds, formatHour } from './telemetry/timeframeBounds';
 import {
@@ -32,17 +33,42 @@ export const adminTelemetryService = {
       // Reconcile any inactive or abandoned shifts across the venue before querying attendance
       authApi.reconcileInactiveShifts().catch(() => {});
 
-      let paymentsQuery = (supabase.from as any)('payments').select(
-        'id, amount, payment_method, operating_mode, created_at, tab_id, tabs(order_channel, operating_mode)'
-      );
+      type PaymentRow = Pick<
+        Tables<'payments'>,
+        'id' | 'amount' | 'payment_method' | 'operating_mode' | 'created_at' | 'tab_id'
+      > & {
+        tabs?: Pick<Tables<'tabs'>, 'order_channel' | 'operating_mode'> | null;
+      };
+
+      type AttendanceRow = Pick<
+        Tables<'attendance_records'>,
+        | 'id'
+        | 'user_id'
+        | 'date'
+        | 'is_present'
+        | 'shift_status'
+        | 'base_daily_pay'
+        | 'addon_pay'
+        | 'total_day_pay'
+      >;
+
+      type StaffRow = Pick<Tables<'users'>, 'id' | 'is_active' | 'is_workflow_staff'>;
+
+      let paymentsQuery = supabase
+        .from('payments')
+        .select(
+          'id, amount, payment_method, operating_mode, created_at, tab_id, tabs(order_channel, operating_mode)'
+        );
       if (bounds.startDate) paymentsQuery = paymentsQuery.gte('created_at', bounds.startDate);
       if (bounds.endDate) paymentsQuery = paymentsQuery.lt('created_at', bounds.endDate);
 
       // Attendance is stored on the business date (6:00 AM Manila cutoff), so
       // it must be queried with business-date strings and BOTH bounds applied.
-      let attendanceQuery = (supabase.from as any)('attendance_records').select(
-        'id, user_id, date, is_present, shift_status, base_daily_pay, addon_pay, total_day_pay'
-      );
+      let attendanceQuery = supabase
+        .from('attendance_records')
+        .select(
+          'id, user_id, date, is_present, shift_status, base_daily_pay, addon_pay, total_day_pay'
+        );
       if (bounds.businessStartDate) {
         attendanceQuery = attendanceQuery.gte('date', bounds.businessStartDate);
       }
@@ -67,7 +93,8 @@ export const adminTelemetryService = {
         cogsSummary,
       ] = await Promise.all([
         paymentsQuery,
-        (supabase.from as any)('venue_settings')
+        supabase
+          .from('venue_settings')
           .select('operating_mode, station_metrics_reset_at')
           .limit(1)
           .maybeSingle(),
@@ -80,12 +107,12 @@ export const adminTelemetryService = {
         financialSummaryApi.getActualCogs(bounds, 'ALL'),
       ]);
 
-      const payments = (paymentsRes.data || []) as any[];
+      const payments = (paymentsRes.data || []) as unknown as PaymentRow[];
       const activeOperatingMode = (settingsRes?.data?.operating_mode || 'CAFE') as 'CAFE' | 'EVENT';
       const stationMetricsResetAt = (settingsRes?.data?.station_metrics_reset_at || null) as
         string | null;
-      const attendanceRows = (attendanceRes.data || []) as any[];
-      const activeStaffRows = (staffRes.data || []) as any[];
+      const attendanceRows = (attendanceRes.data || []) as unknown as AttendanceRow[];
+      const activeStaffRows = (staffRes.data || []) as unknown as StaffRow[];
 
       const totalActiveStaffCount = activeStaffRows.length;
       const presentRows = attendanceRows.filter((r) => r.is_present);

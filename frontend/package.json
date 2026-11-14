@@ -1,6 +1,7 @@
 {
   "name": "@monks/frontend",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.ts",
   "dependencies": {
     "@expo/metro-runtime": "~57.0.18",
