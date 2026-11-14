@@ -13,7 +13,6 @@ import { EventCalendarShell } from '../components/EventCalendarShell';
 import { EventCalendarControls } from '../components/EventCalendarControls';
 import { EventActionMenu } from '../components/EventActionMenu';
 import { generateMonthScheduleIcs, triggerIcsDownload } from '../../utils/eventIcsExport';
-import { exportEventsScheduleToExcel } from '@/features/admin/utils/readingExcelExport';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { useWindowVisibilitySync, useResponsive } from '@/features/shared';
 import { formatMonthYearTitle, formatWeekPeriodTitle } from '../utils/eventFormatters';
@@ -82,9 +81,11 @@ export const AdminEventsView: React.FC = () => {
     toast.success(`Downloaded ${monthYear} schedule (.ics)`);
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     try {
-      exportEventsScheduleToExcel(events, currentPeriodTitle());
+      const { lazyExportEventsSchedule } =
+        await import('@/features/admin/utils/readingExcelExport');
+      await lazyExportEventsSchedule(events, currentPeriodTitle());
       toast.success('Event run-of-show exported to Excel (.xls)', {
         title: 'Excel export ready',
       });

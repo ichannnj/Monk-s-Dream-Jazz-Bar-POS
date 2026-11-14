@@ -20,7 +20,6 @@ import { toast } from '@/features/shared/toast/useToastStore';
 import { printHtmlElement } from '@/features/shared/utils/printHelpers';
 import { trendsApi } from '../../../data/trends.api';
 import type { SalesTrendsReport } from '../../../domain/trends.types';
-import { exportTrendsReportToExcel } from '../../../utils/readingExcelExport';
 import { DayOfWeekTrendChart } from './DayOfWeekTrendChart';
 import { MultiGranularitySalesChart } from './MultiGranularitySalesChart';
 import { BestSellersRankingTable } from './BestSellersRankingTable';
@@ -91,13 +90,14 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
     }
   };
 
-  const handleExportExcel = () => {
+  const handleExportExcel = async () => {
     if (!trends) return;
     try {
+      const { lazyExportTrendsReport } = await import('../../../utils/readingExcelExport');
       const scopeLabel = `${timeframeLabel} · ${
         station === 'ALL' ? 'All Stations' : station
       } · ${mode === 'ALL' ? 'Consolidated' : mode === 'CAFE' ? 'Cafe Mode' : 'Event Mode'}`;
-      exportTrendsReportToExcel(trends, scopeLabel);
+      await lazyExportTrendsReport(trends, scopeLabel);
       toast.success('Sales & Product Trends exported to Excel (.xls)', {
         title: 'Excel Ready',
       });

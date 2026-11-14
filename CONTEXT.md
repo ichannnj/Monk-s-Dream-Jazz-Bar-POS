@@ -262,6 +262,14 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 
 ---
 
+### 13. Code-Splitting, Lazy-Loading & Scoped Realtime Subscriptions (`App.tsx`, `realtimeSubscriptionScope.ts`, `ScreenLoadingFallback.tsx`)
+
+- **Route-Level Code-Splitting & Cold-Boot Bundle Optimization:** Heavy Back-Office consoles (`AdminBackOfficeScreen`), public flyers (`PublicEventCalendarScreen`), hardware print stations (`HardwarePrintStationScreen`), and standalone timeclock kiosks (`TimeclockKioskScreen`) are lazily evaluated via `React.lazy()` with `<Suspense fallback={<ScreenLoadingFallback />}>`. Eager barrel re-exports from `features/printer`, `features/events`, and `features/auth` are eliminated, decoupling ~651KB of administrative UI and specialized hardware drivers from floor tablets and handheld terminals.
+- **Dynamic SpreadsheetML Exporter Imports:** Spreadsheet generation engines (`readingExcelExport.ts`, `exportFinancialAndChecks`, `exportTrendsReport`, `exportEventsSchedule`) are dynamically loaded via `await import(...)` inside export trigger functions (`handleExportChecksExcel`, `handleExportExcel`), ensuring floor terminals and KDS check histories do not load XML generators into memory until the user taps export.
+- **Scoped Realtime Channel Subscriptions (`getRealtimeSubscriptionPlan`):** Unauthenticated login screens and dedicated headless kiosks (`?mode=printer`, `?mode=timeclock`) never open orders CDC, team chat, or presence subscriptions. Public flyer mode (`?mode=events`) subscribes exclusively to public `venue_events`, preventing orders and financial publications from leaking to public devices. Full order CDC, chat channels, venue settings, and presence tracking initialize strictly when `currentUser && !isHeadlessMode` is evaluated.
+
+---
+
 ## 📚 Related Documentation
 
 - Architecture & File Tree Map: [AGENTS.md](file:///home/ichannnj/orca/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)
