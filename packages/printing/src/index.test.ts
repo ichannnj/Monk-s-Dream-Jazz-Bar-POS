@@ -156,3 +156,40 @@ test('UsbEscPosPrinter renders bill statement slip and aggregates duplicate item
   }
   assert.equal(hasDrawerKick, false, 'Bill statement must never pulse the cash drawer kick');
 });
+
+test('UsbEscPosPrinter renders multi-tender split payment breakdown', () => {
+  const printer = new UsbEscPosPrinter('/dev/null');
+  const payload: CustomerReceiptPayload = {
+    receiptNumber: 'REC-9002',
+    tableNumber: 3,
+    tabName: 'Guest: Bill Evans',
+    waiterName: 'Sarah',
+    timestamp: '2026-11-14 18:00',
+    items: [
+      { name: 'Negroni', quantity: 2, price: 350.0, total: 700.0 },
+      { name: 'Truffle Mushroom Pasta', quantity: 1, price: 450.0, total: 450.0 },
+    ],
+    subtotal: 1150.0,
+    total: 1150.0,
+    paymentMethod: 'SPLIT',
+    tenders: [
+      { method: 'cash', amount: 500.0, tendered: 1000.0, change: 500.0 },
+      { method: 'digital_wallet', channel: 'GCash', referenceNumber: '8812', amount: 400.0 },
+      { method: 'card', last4Digits: '4242', amount: 250.0 },
+    ],
+  };
+
+  const buffer = printer.renderReceiptBytes(payload);
+  const text = buffer.toString('utf-8');
+
+  assert.ok(text.includes('PAYMENT BREAKDOWN (SPLIT):'), 'Should show split header');
+  assert.ok(text.includes('CASH:'), 'Should show cash line');
+  assert.ok(text.includes('PHP 500.00'), 'Should show cash amount');
+  assert.ok(text.includes('Cash Tendered:'), 'Should show cash tendered detail');
+  assert.ok(text.includes('PHP 1,000.00'), 'Should format 1000 tendered');
+  assert.ok(text.includes('Change:'), 'Should show change detail');
+  assert.ok(text.includes('GCASH [Ref: 8812]:'), 'Should show GCash channel and ref');
+  assert.ok(text.includes('PHP 400.00'), 'Should show GCash amount');
+  assert.ok(text.includes('CARD [**** 4242]:'), 'Should show card with masked digits');
+  assert.ok(text.includes('PHP 250.00'), 'Should show card amount');
+});

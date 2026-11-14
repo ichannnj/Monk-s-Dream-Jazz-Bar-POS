@@ -103,6 +103,7 @@ export function mapRawPaymentToCheck(
     orderChannel: tab.order_channel || 'CAFE_AREA',
     operatingMode: tab.operating_mode || p.operating_mode || 'CAFE',
     notes: p.notes || tab.notes || undefined,
+    tenders: p.tenders || undefined,
   };
 }
 

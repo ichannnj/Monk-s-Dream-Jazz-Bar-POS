@@ -125,6 +125,35 @@ export const CheckMobileDetailSheet: React.FC<CheckMobileDetailSheetProps> = ({
                   {formatCurrency(selectedCheck.total)}
                 </Text>
               </View>
+
+              {/* Multi-Tender Breakdown */}
+              {selectedCheck.tenders && selectedCheck.tenders.length > 0 ? (
+                <View className="mt-3 p-3 bg-stone-50 rounded-xl border border-stone-200">
+                  <Text className="text-xs font-bold uppercase tracking-wider text-stone-500 mb-1.5">
+                    Split Tender Breakdown
+                  </Text>
+                  {selectedCheck.tenders.map((t, idx) => {
+                    const m = (t.method || '').toLowerCase();
+                    let label = m.toUpperCase();
+                    if (m === 'cash') label = 'Cash';
+                    else if (m === 'digital_wallet' || m === 'wallet') {
+                      label = `${t.channel || 'Wallet'}${t.referenceNumber ? ` (#${t.referenceNumber})` : ''}`;
+                    } else if (m === 'card') {
+                      label = t.last4Digits ? `Card (**** ${t.last4Digits})` : 'Card';
+                    } else if (m === 'comp') {
+                      label = t.reason ? `Comp (${t.reason})` : 'Comp';
+                    }
+                    return (
+                      <View key={t.id || idx} className="flex-row justify-between py-0.5">
+                        <Text className="text-sm font-semibold text-stone-700">{label}</Text>
+                        <Text className="text-sm font-bold text-stone-900">
+                          {formatCurrency(t.amount)}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              ) : null}
             </View>
           </ScrollView>
 

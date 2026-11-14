@@ -238,16 +238,25 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                           <Text className="text-base font-black text-stone-900">
                             {formatCurrency(chk.total)}
                           </Text>
-                          <View className="mt-1 bg-stone-100 px-2 py-0.5 rounded-md flex-row items-center gap-1">
-                            <Text className="text-base font-bold text-stone-600 uppercase">
-                              {chk.paymentChannel || chk.paymentMethod.replace('_', ' ')}
-                            </Text>
-                            {chk.referenceNumber ? (
-                              <Text className="text-base font-bold text-[#800020] font-mono">
-                                #{chk.referenceNumber}
+                          {chk.paymentMethod === 'SPLIT' ||
+                          (chk.tenders && chk.tenders.length > 0) ? (
+                            <View className="mt-1 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md flex-row items-center gap-1">
+                              <Text className="text-xs font-bold text-[#800020] uppercase">
+                                SPLIT ({chk.tenders?.length || 'MULTI'})
                               </Text>
-                            ) : null}
-                          </View>
+                            </View>
+                          ) : (
+                            <View className="mt-1 bg-stone-100 px-2 py-0.5 rounded-md flex-row items-center gap-1">
+                              <Text className="text-base font-bold text-stone-600 uppercase">
+                                {chk.paymentChannel || chk.paymentMethod.replace('_', ' ')}
+                              </Text>
+                              {chk.referenceNumber ? (
+                                <Text className="text-base font-bold text-[#800020] font-mono">
+                                  #{chk.referenceNumber}
+                                </Text>
+                              ) : null}
+                            </View>
+                          )}
                         </View>
                       </Pressable>
                     );

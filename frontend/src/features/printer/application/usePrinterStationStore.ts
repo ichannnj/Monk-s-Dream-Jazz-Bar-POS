@@ -210,8 +210,17 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
               rawData.payment_method ||
               'CASH'
             ).toUpperCase();
-            // Cash drawer kicks ONLY on real Cash payment settlement (never on reprint or cashless)
-            isCashSettlement = method === 'CASH' && !rawData.isReprint;
+            const tenders = rawData.tenders || rawData.tenderBreakdown || rawData.tender_breakdown;
+            const hasCashTender =
+              Array.isArray(tenders) &&
+              tenders.some((t: any) => {
+                const m = String(
+                  t.method || t.payment_method || t.paymentMethod || ''
+                ).toLowerCase();
+                return m === 'cash' && Number(t.amount || 0) > 0;
+              });
+            // Cash drawer kicks ONLY on real Cash payment settlement (never on reprint or pure cashless)
+            isCashSettlement = (method === 'CASH' || hasCashTender) && !rawData.isReprint;
             bytes = buildReceiptBytes(rawData, isCashSettlement);
           }
           break;

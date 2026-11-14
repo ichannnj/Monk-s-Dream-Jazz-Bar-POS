@@ -69,6 +69,14 @@ export const checksApi = {
 
       const tabIds = Array.from(new Set(paymentsData.map((p: any) => p.tab_id).filter(Boolean)));
       const itemsByTab = new Map<string, CheckLineItem[]>();
+      const paymentsByTab = new Map<string, any[]>();
+      for (const p of paymentsData) {
+        if (p.tab_id) {
+          const list = paymentsByTab.get(p.tab_id) || [];
+          list.push(p);
+          paymentsByTab.set(p.tab_id, list);
+        }
+      }
 
       if (tabIds.length > 0) {
         try {
@@ -149,7 +157,48 @@ export const checksApi = {
         }
       }
 
-      const checks = paymentsData.map((p: any) => mapRawPaymentToCheck(p, itemsByTab));
+      const processedTabIds = new Set<string>();
+      const deduplicatedPayments: any[] = [];
+
+      for (const p of paymentsData) {
+        if (!p.tab_id) {
+          deduplicatedPayments.push(p);
+          continue;
+        }
+        if (processedTabIds.has(p.tab_id)) {
+          continue; // Already processed this tab group
+        }
+        processedTabIds.add(p.tab_id);
+
+        const tabPayments = paymentsByTab.get(p.tab_id) || [p];
+        if (tabPayments.length > 1) {
+          // Multi-tender checkout for this tab!
+          // Identify primary payment (one with discounts or earliest/latest created)
+          const primary =
+            tabPayments.find((pay) => Number(pay.discount_amount || 0) > 0) || tabPayments[0];
+          const grandTotal = tabPayments.reduce((sum, pay) => sum + (Number(pay.amount) || 0), 0);
+          const tenders = tabPayments.map((pay) => ({
+            id: pay.id,
+            method: (pay.payment_method || 'CASH').toLowerCase(),
+            amount: Number(pay.amount) || 0,
+            channel: pay.payment_channel || undefined,
+            referenceNumber: pay.reference_number || undefined,
+            notes: pay.notes || undefined,
+          }));
+
+          const combined = {
+            ...primary,
+            amount: grandTotal,
+            payment_method: 'SPLIT',
+            tenders,
+          };
+          deduplicatedPayments.push(combined);
+        } else {
+          deduplicatedPayments.push(p);
+        }
+      }
+
+      const checks = deduplicatedPayments.map((p: any) => mapRawPaymentToCheck(p, itemsByTab));
       return filterSettledChecks(checks, filter);
     } catch (err: any) {
       console.error('[checksApi] Error in fetchSettledChecks:', err);
@@ -195,6 +244,8 @@ export const checksApi = {
           paymentMethod: check.paymentMethod,
           paymentChannel: check.paymentChannel,
           referenceNumber: check.referenceNumber,
+          tenders: check.tenders,
+          tenderBreakdown: check.tenders,
           operatingMode: check.operatingMode || 'CAFE',
           rawItems: (check.items || []).map((it) => ({
             name: it.name,
