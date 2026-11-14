@@ -9,6 +9,10 @@ import type {
 } from '../domain/event.types';
 import { eventsApi } from '../data/events.api';
 import { getManilaTodayDateString } from '../presentation/utils/eventFormatters';
+import { toBusinessDate } from '@/features/shared/utils/businessDay';
+
+let eventSubscriptionCount = 0;
+let eventChannel: ReturnType<typeof supabase.channel> | null = null;
 
 interface EventState {
   events: VenueEvent[];
@@ -213,48 +217,90 @@ export const useEventStore = create<EventState>((set, get) => ({
   },
 
   getTodayActiveEvent: () => {
-    const todayStr = getManilaTodayDateString();
-    return get().events.find((ev) => ev.event_date === todayStr && ev.status !== 'cancelled');
+    const state = get();
+    // Auto-heal: if store is empty and not already loading, trigger load in background
+    if (state.events.length === 0 && !state.isLoading) {
+      state.loadEvents().catch(() => {});
+    }
+
+    const businessDateStr = toBusinessDate();
+    const calendarDateStr = getManilaTodayDateString();
+    const activeEvents = state.events.filter((ev) => ev.status !== 'cancelled');
+
+    // 1. Business Day Match (aligned to 6:00 AM Manila cutoff for jazz night shows)
+    const businessWithCover = activeEvents.find(
+      (ev) =>
+        ev.event_date === businessDateStr && ev.has_door_charge && (ev.door_charge_amount || 0) > 0
+    );
+    if (businessWithCover) return businessWithCover;
+
+    const businessAny = activeEvents.find((ev) => ev.event_date === businessDateStr);
+    if (businessAny) return businessAny;
+
+    // 2. Calendar Day Fallback (for daytime cafe events)
+    const calendarWithCover = activeEvents.find(
+      (ev) =>
+        ev.event_date === calendarDateStr && ev.has_door_charge && (ev.door_charge_amount || 0) > 0
+    );
+    if (calendarWithCover) return calendarWithCover;
+
+    return activeEvents.find((ev) => ev.event_date === calendarDateStr);
   },
 
   initRealtimeSubscription: () => {
-    const channel = supabase
-      .channel('pos_venue_events_sync')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'venue_events' },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const newEvent = payload.new as VenueEvent;
-            set((state) => {
-              if (state.events.some((e) => e.id === newEvent.id)) return state;
-              return {
-                events: [...state.events, newEvent].sort(
-                  (a, b) =>
-                    a.event_date.localeCompare(b.event_date) ||
-                    a.start_time.localeCompare(b.start_time)
-                ),
-              };
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            const updated = payload.new as VenueEvent;
-            set((state) => ({
-              events: state.events.map((e) => (e.id === updated.id ? updated : e)),
-              selectedEvent: state.selectedEvent?.id === updated.id ? updated : state.selectedEvent,
-            }));
-          } else if (payload.eventType === 'DELETE') {
-            const deleted = payload.old as { id: string };
-            set((state) => ({
-              events: state.events.filter((e) => e.id !== deleted.id),
-              selectedEvent: state.selectedEvent?.id === deleted.id ? null : state.selectedEvent,
-            }));
+    eventSubscriptionCount++;
+
+    if (!eventChannel) {
+      const existingChannel = supabase
+        .getChannels()
+        .find((ch) => ch.topic === 'realtime:pos_venue_events_sync');
+      if (existingChannel) {
+        supabase.removeChannel(existingChannel);
+      }
+
+      eventChannel = supabase
+        .channel('pos_venue_events_sync')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'venue_events' },
+          (payload) => {
+            if (payload.eventType === 'INSERT') {
+              const newEvent = payload.new as VenueEvent;
+              set((state) => {
+                if (state.events.some((e) => e.id === newEvent.id)) return state;
+                return {
+                  events: [...state.events, newEvent].sort(
+                    (a, b) =>
+                      a.event_date.localeCompare(b.event_date) ||
+                      a.start_time.localeCompare(b.start_time)
+                  ),
+                };
+              });
+            } else if (payload.eventType === 'UPDATE') {
+              const updated = payload.new as VenueEvent;
+              set((state) => ({
+                events: state.events.map((e) => (e.id === updated.id ? updated : e)),
+                selectedEvent:
+                  state.selectedEvent?.id === updated.id ? updated : state.selectedEvent,
+              }));
+            } else if (payload.eventType === 'DELETE') {
+              const deleted = payload.old as { id: string };
+              set((state) => ({
+                events: state.events.filter((e) => e.id !== deleted.id),
+                selectedEvent: state.selectedEvent?.id === deleted.id ? null : state.selectedEvent,
+              }));
+            }
           }
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    }
 
     return () => {
-      supabase.removeChannel(channel);
+      eventSubscriptionCount = Math.max(0, eventSubscriptionCount - 1);
+      if (eventSubscriptionCount === 0 && eventChannel) {
+        supabase.removeChannel(eventChannel);
+        eventChannel = null;
+      }
     };
   },
 }));

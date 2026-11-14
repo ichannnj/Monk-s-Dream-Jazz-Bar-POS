@@ -4,6 +4,7 @@ import { Clock, Music, Calendar, ChevronRight } from 'lucide-react-native';
 import { useEventStore } from '../../application/useEventStore';
 import type { VenueEvent } from '../../domain/event.types';
 import { getManilaTodayDateString, formatShowtimeRange } from '../utils/eventFormatters';
+import { toBusinessDate } from '@/features/shared/utils/businessDay';
 
 interface TodaysEventBannerProps {
   onPressEvent?: (event: VenueEvent) => void;
@@ -16,11 +17,15 @@ export const TodaysEventBanner: React.FC<TodaysEventBannerProps> = ({
 }) => {
   const { events, openEventDetail, setViewMode } = useEventStore();
 
-  const todayStr = getManilaTodayDateString();
+  const businessDateStr = toBusinessDate();
+  const calendarDateStr = getManilaTodayDateString();
 
   const todayEvents = React.useMemo(() => {
-    return events.filter((ev) => ev.event_date === todayStr && ev.status !== 'cancelled');
-  }, [events, todayStr]);
+    const active = events.filter((ev) => ev.status !== 'cancelled');
+    const matched = active.filter((ev) => ev.event_date === businessDateStr);
+    if (matched.length > 0) return matched;
+    return active.filter((ev) => ev.event_date === calendarDateStr);
+  }, [events, businessDateStr, calendarDateStr]);
 
   if (todayEvents.length === 0) return null;
 

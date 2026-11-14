@@ -62,6 +62,24 @@ export function useOrderEntryController({
   const [itemNotes, setItemNotes] = useState('');
   const [selectedTemperature, setSelectedTemperature] = useState<BeverageTemperature>('HOT');
   const [selectedSize, setSelectedSize] = useState<string>('');
+  const todayEvent = useEventStore((s) => s.getTodayActiveEvent());
+
+  useEffect(() => {
+    if (todayEvent?.has_door_charge && Number(todayEvent.door_charge_amount) > 0) {
+      setMenuItemsList((prevItems) =>
+        prevItems.map((item) => {
+          if (item.category === 'door_charge' || item.name.toLowerCase().includes('door charge')) {
+            return {
+              ...item,
+              price: Number(todayEvent.door_charge_amount),
+              description: `Admission for "${todayEvent.title}" (₱${Number(todayEvent.door_charge_amount).toFixed(2)} / head)`,
+            };
+          }
+          return item;
+        })
+      );
+    }
+  }, [todayEvent]);
 
   useEffect(() => {
     let isMounted = true;

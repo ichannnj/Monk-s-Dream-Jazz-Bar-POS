@@ -12,7 +12,7 @@ import {
   useInactivityWatchdog,
   InactivityWarningModal,
 } from './src/features/auth';
-import { PublicEventCalendarScreen } from './src/features/events';
+import { PublicEventCalendarScreen, useEventStore } from './src/features/events';
 import { HardwarePrintStationScreen, useDeviceHardwareStation } from './src/features/printer';
 import { useOrderStore } from './src/features/orders';
 import { useChatStore } from './src/features/chat';
@@ -33,12 +33,14 @@ export default function App() {
   const initRealtimeSync = useOrderStore((s) => s.initRealtimeSync);
   const [adminView, setAdminView] = React.useState<'admin' | 'floor'>('admin');
 
-  // Keep all stations synchronized with POS orders, venue settings and Team Chat in real-time
+  // Keep all stations synchronized with POS orders, venue settings, events and Team Chat in real-time
   useEffect(() => {
     const unsubOrders = initRealtimeSync();
     const unsubChat = useChatStore.getState().setupRealtimeSubscription();
     const unsubVenue = useVenueStore.getState().initRealtimeSubscription();
+    const unsubEvents = useEventStore.getState().initRealtimeSubscription();
     useChatStore.getState().loadInitialData(currentUser?.id);
+    useEventStore.getState().loadEvents();
     if (currentUser?.id) {
       useChatStore.getState().trackCurrentPresence();
     }
@@ -47,6 +49,7 @@ export default function App() {
       unsubOrders();
       unsubChat();
       unsubVenue();
+      unsubEvents();
     };
   }, [initRealtimeSync, currentUser?.id]);
 
