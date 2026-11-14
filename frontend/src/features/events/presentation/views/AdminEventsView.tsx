@@ -83,9 +83,9 @@ export const AdminEventsView: React.FC = () => {
 
   const handleExportExcel = async () => {
     try {
-      const { exportEventsScheduleToExcel } =
-        await import('@/features/admin/utils/excel/exportEventsSchedule');
-      exportEventsScheduleToExcel(events, currentPeriodTitle());
+      const { lazyExportEventsSchedule } =
+        await import('@/features/admin/utils/readingExcelExport');
+      await lazyExportEventsSchedule(events, currentPeriodTitle());
       toast.success('Event run-of-show exported to Excel (.xls)', {
         title: 'Excel export ready',
       });

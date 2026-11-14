@@ -116,10 +116,10 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
 
   const handleExportChecksExcel = async () => {
     try {
-      const { exportChecksRegisterToExcel } =
-        await import('@/features/admin/utils/excel/exportFinancialAndChecks');
+      const { lazyExportChecksRegister } =
+        await import('@/features/admin/utils/readingExcelExport');
       const label = timeframeLabel ? `${timeframeLabel} · ${station}` : station;
-      exportChecksRegisterToExcel(checks, label);
+      await lazyExportChecksRegister(checks, label);
       toast.success(`Exported ${checks.length} checks to Excel (.xls)`, {
         title: 'Export Ready',
       });

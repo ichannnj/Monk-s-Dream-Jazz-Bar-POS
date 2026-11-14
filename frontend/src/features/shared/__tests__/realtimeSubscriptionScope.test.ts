@@ -55,7 +55,7 @@ describe('getRealtimeSubscriptionPlan', () => {
     expect(plan.loadEvents).toBe(false);
   });
 
-  it('denies order and chat subscriptions on unauthenticated login screen', () => {
+  it('denies order and chat subscriptions on unauthenticated login screen while keeping venue settings', () => {
     const plan = getRealtimeSubscriptionPlan({
       currentUser: null,
       searchString: '',
@@ -63,7 +63,7 @@ describe('getRealtimeSubscriptionPlan', () => {
 
     expect(plan.subscribeOrders).toBe(false);
     expect(plan.subscribeChat).toBe(false);
-    expect(plan.subscribeVenueSettings).toBe(false);
+    expect(plan.subscribeVenueSettings).toBe(true); // Retains 6:00 AM auto-revert timer & mode awareness
     expect(plan.subscribeEvents).toBe(false);
     expect(plan.trackPresence).toBe(false);
     expect(plan.loadInitialChat).toBe(false);

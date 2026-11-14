@@ -4,8 +4,8 @@
  * Governs which Supabase Realtime CDC channels and telemetry loops are active
  * depending on authenticated staff state and station operating mode.
  *
- * Guarantees zero data leakage in public modes (?mode=events) and headless
- * terminals (?mode=printer, ?mode=timeclock).
+ * Guarantees zero order and chat data leakage in public modes (?mode=events)
+ * and headless terminals (?mode=printer, ?mode=timeclock).
  */
 
 export interface RealtimeSubscriptionPlan {
@@ -23,14 +23,26 @@ export interface ScopeEvaluationContext {
   searchString?: string;
 }
 
+function parseModeParam(search: string): string | null {
+  if (!search) return null;
+  try {
+    const cleanSearch = search.startsWith('?') ? search.slice(1) : search;
+    const params = new URLSearchParams(cleanSearch);
+    return params.get('mode');
+  } catch {
+    return null;
+  }
+}
+
 export function getRealtimeSubscriptionPlan(
   context: ScopeEvaluationContext
 ): RealtimeSubscriptionPlan {
   const search = context.searchString || '';
+  const mode = parseModeParam(search);
 
-  const isPublicEventsMode = search.includes('mode=events');
-  const isPrinterMode = search.includes('mode=printer');
-  const isTimeclockMode = search.includes('mode=timeclock');
+  const isPublicEventsMode = mode === 'events';
+  const isPrinterMode = mode === 'printer';
+  const isTimeclockMode = mode === 'timeclock';
   const isHeadless = isPublicEventsMode || isPrinterMode || isTimeclockMode;
 
   // 1. Dedicated Public Events Flyer Mode (?mode=events)
@@ -61,13 +73,14 @@ export function getRealtimeSubscriptionPlan(
     };
   }
 
-  // 3. Unauthenticated sessions (LoginScreen)
-  // Do not open order CDC or team chat channels until employee authenticates.
+  // 3. Unauthenticated sessions on standard workstation login screen (!currentUser)
+  // Subscribes ONLY to public venue operating mode (?CAFE vs EVENT) to keep 6:00 AM
+  // daily auto-revert timers active on idle terminals. Strictly blocks orders CDC & chat.
   if (!context.currentUser) {
     return {
       subscribeOrders: false,
       subscribeChat: false,
-      subscribeVenueSettings: false,
+      subscribeVenueSettings: true,
       subscribeEvents: false,
       trackPresence: false,
       loadInitialChat: false,

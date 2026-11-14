@@ -171,29 +171,17 @@ export default function App() {
   const renderScreen = () => {
     // Check if running in dedicated Hardware Print & Cash Drawer Station tab (?mode=printer)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=printer')) {
-      return (
-        <Suspense fallback={<ScreenLoadingFallback message="Loading Hardware Print Station..." />}>
-          <HardwarePrintStationScreen />
-        </Suspense>
-      );
+      return <HardwarePrintStationScreen />;
     }
 
     // Check if running in dedicated Public Event Calendar tab (?mode=events)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=events')) {
-      return (
-        <Suspense fallback={<ScreenLoadingFallback message="Loading Public Event Calendar..." />}>
-          <PublicEventCalendarScreen />
-        </Suspense>
-      );
+      return <PublicEventCalendarScreen />;
     }
 
     // Check if running in dedicated Timeclock Kiosk tab (?mode=timeclock)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=timeclock')) {
-      return (
-        <Suspense fallback={<ScreenLoadingFallback message="Loading Timeclock Kiosk..." />}>
-          <TimeclockKioskScreen isStandaloneTab />
-        </Suspense>
-      );
+      return <TimeclockKioskScreen isStandaloneTab />;
     }
 
     if (!currentUser) {
@@ -205,11 +193,7 @@ export default function App() {
     // Admin & Manager roles: always land on Admin Console Dashboard upon login
     if (role === 'admin' || role === 'manager' || role === 'administrator') {
       if (adminView === 'admin') {
-        return (
-          <Suspense fallback={<ScreenLoadingFallback message="Opening Admin Console..." />}>
-            <AdminBackOfficeScreen onSwitchToFloor={() => setAdminView('floor')} />
-          </Suspense>
-        );
+        return <AdminBackOfficeScreen onSwitchToFloor={() => setAdminView('floor')} />;
       }
       return <WaiterCashierScreen onSwitchToAdmin={() => setAdminView('admin')} />;
     }

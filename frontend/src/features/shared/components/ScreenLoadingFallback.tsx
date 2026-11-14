@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { JazzLogo } from '@/features/auth/presentation/components/JazzLogo';
+import { JazzLogo } from './JazzLogo';
 
 export interface ScreenLoadingFallbackProps {
   message?: string;
@@ -72,10 +72,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   subTitle: {
-    fontSize: 13,
+    fontSize: 16,
     color: '#78716C',
     textAlign: 'center',
     marginTop: 6,
-    lineHeight: 18,
+    lineHeight: 22,
   },
 });

@@ -93,11 +93,11 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
   const handleExportExcel = async () => {
     if (!trends) return;
     try {
-      const { exportTrendsReportToExcel } = await import('../../../utils/excel/exportTrendsReport');
+      const { lazyExportTrendsReport } = await import('../../../utils/readingExcelExport');
       const scopeLabel = `${timeframeLabel} · ${
         station === 'ALL' ? 'All Stations' : station
       } · ${mode === 'ALL' ? 'Consolidated' : mode === 'CAFE' ? 'Cafe Mode' : 'Event Mode'}`;
-      exportTrendsReportToExcel(trends, scopeLabel);
+      await lazyExportTrendsReport(trends, scopeLabel);
       toast.success('Sales & Product Trends exported to Excel (.xls)', {
         title: 'Excel Ready',
       });

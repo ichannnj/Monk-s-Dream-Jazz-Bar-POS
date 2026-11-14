@@ -16,6 +16,7 @@ export * from './hooks/useNetworkLatency';
 export * from './hooks/useVirtualKeyboard';
 export * from './components/TouchTextInput';
 export * from './stores/useVenueStore';
+export * from './components/JazzLogo';
 export * from './components/ScreenLoadingFallback';
 export * from './utils/realtimeSubscriptionScope';
 export * from './utils/printHelpers';
