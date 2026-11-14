@@ -1,4 +1,10 @@
-import { TableItem, CustomerTab, CheckItem, DrawerEntry, TakeoutOrder } from '../../../types/floor';
+import type {
+  TableItem,
+  CustomerTab,
+  CheckItem,
+  DrawerEntry,
+  TakeoutOrder,
+} from '../../../types/floor';
 import { deriveTableStatus } from '../../orders/application/order.helpers';
 
 export function determineDrawerTarget(
@@ -47,6 +53,7 @@ export function createCheckItemRecord(p: {
   referenceNumber?: string;
   cashierName: string;
   itemsSummary: string;
+  tendersSummary?: string;
 }): CheckItem {
   return {
     id: `chk-${Date.now()}`,
@@ -64,7 +71,7 @@ export function updateTableOnSettlement(
   return tables.map((t) => {
     if (t.id !== tableId) return t;
     const remainingTabs = (t.tabs || []).filter((tab: CustomerTab) => tab.tabIndex !== tabIndex);
-    const remainingActiveTabs = t.activeTabs.filter((num: number) => num !== tabIndex);
+    const remainingActiveTabs = (t.activeTabs || []).filter((num: number) => num !== tabIndex);
     const remainingAmount = remainingTabs.reduce(
       (acc: number, cur: CustomerTab) => acc + (cur.totalAmount || 0),
       0

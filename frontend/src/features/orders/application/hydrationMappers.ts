@@ -1,4 +1,4 @@
-import {
+import type {
   TableItem,
   CustomerTab,
   TakeoutOrder,

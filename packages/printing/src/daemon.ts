@@ -162,6 +162,7 @@ export class PrinterStationDaemon {
             paymentMethod: rawData.payment_method || rawData.paymentMethod || 'CASH',
             paymentChannel: rawData.payment_channel || rawData.paymentChannel,
             referenceNumber: rawData.reference_number || rawData.referenceNumber,
+            tenders: rawData.tenders || rawData.tenderBreakdown || rawData.tender_breakdown,
             timestamp: rawData.settledAt || rawData.timestamp || new Date().toISOString(),
             settledAt: rawData.settledAt,
             isReprint: Boolean(rawData.isReprint),
@@ -170,7 +171,19 @@ export class PrinterStationDaemon {
           await this.printer.printReceipt(receiptPayload);
 
           // Auto-kick cash drawer on real CASH payment settlement (never on reprint)
-          if (receiptPayload.paymentMethod.toUpperCase() === 'CASH' && !receiptPayload.isReprint) {
+          // For split payments, kick if any tender in the split is cash with amount > 0
+          const tenders = receiptPayload.tenders;
+          const hasCashTender =
+            Array.isArray(tenders) &&
+            tenders.some((t: any) => {
+              const m = String(t.method || t.payment_method || t.paymentMethod || '').toLowerCase();
+              return m === 'cash' && Number(t.amount || 0) > 0;
+            });
+          const shouldKick =
+            !receiptPayload.isReprint &&
+            (receiptPayload.paymentMethod.toUpperCase() === 'CASH' || hasCashTender);
+
+          if (shouldKick) {
             await this.printer.kickCashDrawer();
           }
           break;

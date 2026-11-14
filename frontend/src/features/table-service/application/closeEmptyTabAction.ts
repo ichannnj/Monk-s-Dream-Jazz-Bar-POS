@@ -1,9 +1,9 @@
-import { CustomerTab } from '../../../types/floor';
+import type { CustomerTab } from '../../../types/floor';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { resolveTableUuid } from '../../floor/data/resolver';
 import { deriveTableStatus } from '../../orders/application/order.helpers';
-import { OrderStoreSet } from '../../orders/domain/order.types';
+import type { OrderStoreSet } from '../../orders/domain/order.types';
 
 export const closeEmptyTabAction = (set: OrderStoreSet, tableId: string, tabIndex: number) => {
   let targetTabRef: CustomerTab | undefined;

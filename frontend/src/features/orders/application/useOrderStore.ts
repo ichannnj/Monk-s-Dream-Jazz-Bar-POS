@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { OrderState } from '../domain/order.types';
+import type { OrderState } from '../domain/order.types';
 import { loadDurableQueue } from '../data/durableQueue';
 import { getInitialVenueState } from '../data/venueSnapshot';
 import { createTableTabSlice } from '../../table-service/application/tableTab.slice';

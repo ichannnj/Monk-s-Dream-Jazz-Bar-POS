@@ -68,6 +68,22 @@ function formatItemLine(qtyStr: string, name: string, priceStr: string, cols: nu
   );
 }
 
+export interface ReceiptTenderItem {
+  method: 'cash' | 'card' | 'digital_wallet' | 'comp' | string;
+  amount: number;
+  tendered?: number;
+  change?: number;
+  channel?: string;
+  paymentChannel?: string;
+  payment_channel?: string;
+  referenceNumber?: string;
+  reference_number?: string;
+  last4Digits?: string;
+  last4_digits?: string;
+  reason?: string;
+  notes?: string;
+}
+
 export interface CustomerReceiptPayload {
   receiptNumber: string;
   tableNumber?: number;
@@ -103,6 +119,9 @@ export interface CustomerReceiptPayload {
   paymentMethod: string;
   paymentChannel?: string;
   referenceNumber?: string;
+  tenders?: ReceiptTenderItem[];
+  tenderBreakdown?: ReceiptTenderItem[];
+  tender_breakdown?: ReceiptTenderItem[];
   timestamp: string;
   settledAt?: string;
   isReprint?: boolean;
@@ -459,24 +478,66 @@ export class UsbEscPosPrinter implements IPrinterService {
 
     // 7. Payment Tendered & Change
     const paymentMethod = (payload.paymentMethod || 'CASH').toUpperCase();
-    const paymentChannel = payload.paymentChannel;
-    const paymentLabel = paymentChannel ? `${paymentChannel.toUpperCase()} QR` : paymentMethod;
-    push(padLine('PAYMENT METHOD:', paymentLabel, 48));
+    const tenders = payload.tenders || payload.tenderBreakdown || payload.tender_breakdown;
+    const isSplit = paymentMethod === 'SPLIT' || (Array.isArray(tenders) && tenders.length > 0);
 
-    if (payload.referenceNumber) {
-      push(padLine('REFERENCE NO:', `#${payload.referenceNumber}`, 48));
-    }
-
-    const tendered = toPesos(payload.tendered || total);
-    const change = toPesos(
-      payload.change || (paymentMethod === 'CASH' ? Math.max(0, tendered - total) : 0)
-    );
-
-    if (paymentMethod === 'CASH') {
-      push(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, 48));
-      push(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, 48));
+    if (isSplit && Array.isArray(tenders) && tenders.length > 0) {
+      push(padLine('PAYMENT BREAKDOWN (SPLIT):', `PHP ${formatPhp(total)}`, 48));
+      for (const t of tenders) {
+        const rawMethod = String(
+          t.method || (t as any).payment_method || (t as any).paymentMethod || ''
+        ).toLowerCase();
+        const amt = toPesos(t.amount);
+        if (rawMethod === 'cash') {
+          push(padLine('  CASH:', `PHP ${formatPhp(amt)}`, 48));
+          const tTendered = toPesos(t.tendered);
+          if (tTendered > amt) {
+            push(padLine('    Cash Tendered:', `PHP ${formatPhp(tTendered)}`, 48));
+            const tChange = toPesos(t.change ?? tTendered - amt);
+            push(padLine('    Change:', `PHP ${formatPhp(tChange)}`, 48));
+          }
+        } else if (rawMethod === 'digital_wallet' || rawMethod === 'wallet' || rawMethod === 'qr') {
+          const chan = (
+            t.channel ||
+            t.paymentChannel ||
+            t.payment_channel ||
+            'Wallet'
+          ).toUpperCase();
+          const ref = t.referenceNumber || t.reference_number;
+          const refLabel = ref ? ` [Ref: ${ref}]` : '';
+          push(padLine(`  ${chan}${refLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+        } else if (rawMethod === 'card') {
+          const last4 = t.last4Digits || t.last4_digits;
+          const cardLabel = last4 ? `CARD [**** ${last4}]` : 'CARD';
+          push(padLine(`  ${cardLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+        } else if (rawMethod === 'comp') {
+          const reason = t.reason || t.notes;
+          const compLabel = reason ? `COMP [${reason}]` : 'COMPLIMENTARY';
+          push(padLine(`  ${compLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+        } else {
+          push(padLine(`  ${rawMethod.toUpperCase()}:`, `PHP ${formatPhp(amt)}`, 48));
+        }
+      }
     } else {
-      push(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, 48));
+      const paymentChannel = payload.paymentChannel;
+      const paymentLabel = paymentChannel ? `${paymentChannel.toUpperCase()} QR` : paymentMethod;
+      push(padLine('PAYMENT METHOD:', paymentLabel, 48));
+
+      if (payload.referenceNumber) {
+        push(padLine('REFERENCE NO:', `#${payload.referenceNumber}`, 48));
+      }
+
+      const tendered = toPesos(payload.tendered || total);
+      const change = toPesos(
+        payload.change || (paymentMethod === 'CASH' ? Math.max(0, tendered - total) : 0)
+      );
+
+      if (paymentMethod === 'CASH') {
+        push(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, 48));
+        push(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, 48));
+      } else {
+        push(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, 48));
+      }
     }
 
     // 8. Philippine VAT & Statutory Tax Breakdown

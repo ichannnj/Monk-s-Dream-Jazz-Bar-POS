@@ -110,12 +110,35 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
           </View>
           <View>
             <Text className="text-base font-semibold text-stone-500">Tender Captured</Text>
-            <Text className="text-base font-bold text-[#800020] mt-0.5">
-              {(
-                selectedCheck.paymentChannel || selectedCheck.paymentMethod.replace('_', ' ')
-              ).toUpperCase()}
-              {selectedCheck.referenceNumber ? ` · REF #${selectedCheck.referenceNumber}` : ''}
-            </Text>
+            {selectedCheck.tenders && selectedCheck.tenders.length > 0 ? (
+              <View className="mt-1 flex-col gap-1">
+                <Text className="text-base font-black text-[#800020]">SPLIT PAYMENT</Text>
+                {selectedCheck.tenders.map((t, idx) => {
+                  const m = (t.method || '').toLowerCase();
+                  let label = m.toUpperCase();
+                  if (m === 'cash') label = 'Cash';
+                  else if (m === 'digital_wallet' || m === 'wallet') {
+                    label = `${t.channel || 'Wallet'}${t.referenceNumber ? ` (#${t.referenceNumber})` : ''}`;
+                  } else if (m === 'card') {
+                    label = t.last4Digits ? `Card (**** ${t.last4Digits})` : 'Card';
+                  } else if (m === 'comp') {
+                    label = t.reason ? `Comp (${t.reason})` : 'Comp';
+                  }
+                  return (
+                    <Text key={t.id || idx} className="text-sm font-semibold text-stone-700">
+                      • {label}: {formatCurrency(t.amount)}
+                    </Text>
+                  );
+                })}
+              </View>
+            ) : (
+              <Text className="text-base font-bold text-[#800020] mt-0.5">
+                {(
+                  selectedCheck.paymentChannel || selectedCheck.paymentMethod.replace('_', ' ')
+                ).toUpperCase()}
+                {selectedCheck.referenceNumber ? ` · REF #${selectedCheck.referenceNumber}` : ''}
+              </Text>
+            )}
           </View>
         </View>
 

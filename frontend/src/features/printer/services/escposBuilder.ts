@@ -162,25 +162,60 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
 
   // 7. Payment Tendered & Change
   const paymentMethod = (data.paymentMethod || data.payment_method || 'CASH').toUpperCase();
-  const paymentChannel = data.paymentChannel || data.payment_channel;
-  const paymentLabel = paymentChannel ? `${paymentChannel.toUpperCase()} QR` : paymentMethod;
-  builder.text(padLine('PAYMENT METHOD:', paymentLabel, 48));
+  const tenders = data.tenders || data.tenderBreakdown || data.tender_breakdown;
+  const isSplit = paymentMethod === 'SPLIT' || (Array.isArray(tenders) && tenders.length > 0);
 
-  const refNo = data.referenceNumber || data.reference_number;
-  if (refNo) {
-    builder.text(padLine('REFERENCE NO:', `#${refNo}`, 48));
-  }
-
-  const tendered = toPesos(data.tendered || total);
-  const change = toPesos(
-    data.change || (paymentMethod === 'CASH' ? Math.max(0, tendered - total) : 0)
-  );
-
-  if (paymentMethod === 'CASH') {
-    builder.text(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, 48));
-    builder.text(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, 48));
+  if (isSplit && Array.isArray(tenders) && tenders.length > 0) {
+    builder.text(padLine('PAYMENT BREAKDOWN (SPLIT):', `PHP ${formatPhp(total)}`, 48));
+    for (const t of tenders) {
+      const rawMethod = String(t.method || t.payment_method || t.paymentMethod || '').toLowerCase();
+      const amt = toPesos(t.amount);
+      if (rawMethod === 'cash') {
+        builder.text(padLine('  CASH:', `PHP ${formatPhp(amt)}`, 48));
+        const tTendered = toPesos(t.tendered);
+        if (tTendered > amt) {
+          builder.text(padLine('    Cash Tendered:', `PHP ${formatPhp(tTendered)}`, 48));
+          const tChange = toPesos(t.change ?? tTendered - amt);
+          builder.text(padLine('    Change:', `PHP ${formatPhp(tChange)}`, 48));
+        }
+      } else if (rawMethod === 'digital_wallet' || rawMethod === 'wallet' || rawMethod === 'qr') {
+        const chan = (t.channel || t.paymentChannel || t.payment_channel || 'Wallet').toUpperCase();
+        const ref = t.referenceNumber || t.reference_number;
+        const refLabel = ref ? ` [Ref: ${ref}]` : '';
+        builder.text(padLine(`  ${chan}${refLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+      } else if (rawMethod === 'card') {
+        const last4 = t.last4Digits || t.last4_digits;
+        const cardLabel = last4 ? `CARD [**** ${last4}]` : 'CARD';
+        builder.text(padLine(`  ${cardLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+      } else if (rawMethod === 'comp') {
+        const reason = t.reason || t.notes;
+        const compLabel = reason ? `COMP [${reason}]` : 'COMPLIMENTARY';
+        builder.text(padLine(`  ${compLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+      } else {
+        builder.text(padLine(`  ${rawMethod.toUpperCase()}:`, `PHP ${formatPhp(amt)}`, 48));
+      }
+    }
   } else {
-    builder.text(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, 48));
+    const paymentChannel = data.paymentChannel || data.payment_channel;
+    const paymentLabel = paymentChannel ? `${paymentChannel.toUpperCase()} QR` : paymentMethod;
+    builder.text(padLine('PAYMENT METHOD:', paymentLabel, 48));
+
+    const refNo = data.referenceNumber || data.reference_number;
+    if (refNo) {
+      builder.text(padLine('REFERENCE NO:', `#${refNo}`, 48));
+    }
+
+    const tendered = toPesos(data.tendered || total);
+    const change = toPesos(
+      data.change || (paymentMethod === 'CASH' ? Math.max(0, tendered - total) : 0)
+    );
+
+    if (paymentMethod === 'CASH') {
+      builder.text(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, 48));
+      builder.text(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, 48));
+    } else {
+      builder.text(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, 48));
+    }
   }
 
   // 8. Philippine VAT & Statutory Tax Breakdown
@@ -232,8 +267,18 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
   builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').bold(false);
   builder.cut(true);
 
-  if (shouldKickDrawer && paymentMethod === 'CASH') {
-    builder.kickDrawer();
+  if (shouldKickDrawer) {
+    const tenders = data.tenders || data.tenderBreakdown || data.tender_breakdown;
+    const hasCashTender =
+      Array.isArray(tenders) &&
+      tenders.some((t: any) => {
+        const m = String(t.method || t.payment_method || t.paymentMethod || '').toLowerCase();
+        return m === 'cash' && Number(t.amount || 0) > 0;
+      });
+
+    if (paymentMethod === 'CASH' || hasCashTender) {
+      builder.kickDrawer();
+    }
   }
 
   return builder.toBytes();

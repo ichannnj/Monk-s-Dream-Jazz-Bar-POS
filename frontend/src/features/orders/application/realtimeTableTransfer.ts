@@ -1,5 +1,5 @@
-import { TableItem } from '../../../types/floor';
-import { TableTransferPayload } from '../../shared/infrastructure/realtime';
+import type { TableItem } from '../../../types/floor';
+import type { TableTransferPayload } from '../../shared/infrastructure/realtime';
 
 export const applyTableTransferToLocalTables = (
   tables: TableItem[],

@@ -1,6 +1,6 @@
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import { ChatRealtimeCallbacks } from './realtime.types';
+import type { ChatRealtimeCallbacks } from './realtime.types';
 
 export const subscribeChatMessagesChannel = (
   channels: Map<string, RealtimeChannel>,

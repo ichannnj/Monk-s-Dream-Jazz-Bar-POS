@@ -1,4 +1,4 @@
-import {
+import type {
   TakeoutOrder,
   OnlineDeliveryOrder,
   DrawerEntry,
@@ -6,7 +6,7 @@ import {
   FloorAlert,
   OrderLineItem,
 } from '../../../types/floor';
-import { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
+import type { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { supabase } from '../../shared/infrastructure/supabase';

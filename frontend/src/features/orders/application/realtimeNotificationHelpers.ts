@@ -1,7 +1,7 @@
-import { TableTransferPayload } from '../../shared/infrastructure/realtime';
+import type { TableTransferPayload } from '../../shared/infrastructure/realtime';
 import { toast } from '../../shared/toast/useToastStore';
 import { playTransferAlertSound } from '../../shared/infrastructure/audio';
-import { FloorAlert } from '../../../types/floor';
+import type { FloorAlert } from '../../../types/floor';
 
 export const handleRealtimeTableTransferAlert = (
   payload: TableTransferPayload,

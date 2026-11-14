@@ -1,15 +1,16 @@
-import { TakeoutOrder } from '../../../types/floor';
+import type { TakeoutOrder } from '../../../types/floor';
 import { tablesApi } from '../../table-service/data/tables.api';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
-import { mapPaymentMethodToDb, SettlementBillingDetails } from './settlementHelpers';
+import { mapPaymentMethodToDb } from './settlementHelpers';
+import type { SettlementBillingDetails } from './settlementHelpers';
+import { mapTendersToDbPayload } from '../domain/splitTenderCalculator';
 import {
   enqueueDurableMutation,
   dequeueDurableMutation,
   loadDurableQueue,
 } from '../../orders/data/durableQueue';
 import { posHlc } from '../../orders/application/order.helpers';
-import { useOrderStore } from '../../orders/application/useOrderStore';
 
 export async function backgroundSettleTakeoutDb({
   takeoutId,
@@ -27,7 +28,7 @@ export async function backgroundSettleTakeoutDb({
 }: {
   takeoutId: string;
   targetOrderRef?: TakeoutOrder;
-  paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp';
+  paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split';
   grandTotalPaid: number;
   discountAmount: number;
   effectiveStaffId?: string;
@@ -94,6 +95,7 @@ export async function backgroundSettleTakeoutDb({
         tenderedAmount: options?.tenderedAmount,
         drawerTarget: 'main' as const,
         shouldPrintReceipt: options?.shouldPrintReceipt,
+        tenders: options?.tenders ? mapTendersToDbPayload(options.tenders) : undefined,
       };
 
       const mutationId = `mut-takeout-settle-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
@@ -103,12 +105,10 @@ export async function backgroundSettleTakeoutDb({
         type: 'settle_tab',
         payload: settlementPayload,
       });
-      useOrderStore.setState({ offlineQueue: loadDurableQueue() });
 
       try {
         await tablesApi.settleTabAndRecordPayment(settlementPayload);
         dequeueDurableMutation(mutationId);
-        useOrderStore.setState({ offlineQueue: loadDurableQueue() });
         realtimeGateway.broadcastPosSync('takeout_settled');
       } catch (networkErr) {
         console.warn(

@@ -94,7 +94,7 @@ export interface WaiterModalsClusterProps {
   onConfirmPayment: (
     mode: 'single_tab' | 'entire_table' | 'takeout',
     tabIndex: number,
-    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    method: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     tenderedAmount?: number,
     paymentChannel?: string,
     referenceNumber?: string,

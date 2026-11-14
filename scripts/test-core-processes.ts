@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import { calculateTabBilling } from '../frontend/src/features/checkout/utils/taxAndDiscountCalculator.ts';
 import type { PricingLineItem } from '../frontend/src/features/checkout/utils/taxAndDiscountCalculator.ts';
 import {
+  calculateTenderBalance,
+  validateSplitTenders,
+  mapTendersToDbPayload,
+} from '../frontend/src/features/checkout/domain/splitTenderCalculator.ts';
+import type { PaymentTender } from '../frontend/src/features/checkout/domain/splitTender.types.ts';
+import {
   UsbEscPosPrinter,
   sanitizeForEscPos,
   type CustomerReceiptPayload,
@@ -674,6 +680,135 @@ runTest('Senior / PWD settlement: Strictly requires ID number and Cardholder Nam
   assert.equal(isSeniorDataValid('', 'Thelonious Monk'), false);
   assert.equal(isSeniorDataValid('OSCA-98765', ''), false);
   assert.equal(isSeniorDataValid('   ', '   '), false);
+});
+
+runTest(
+  'Split-Tender Balance Calculator: Accurately computes remaining balance and cash change',
+  () => {
+    const tenders: PaymentTender[] = [
+      { id: '1', method: 'cash', amount: 500, tendered: 1000 },
+      { id: '2', method: 'digital_wallet', channel: 'GCash', referenceNumber: '1234', amount: 750 },
+    ];
+
+    const balance = calculateTenderBalance(tenders, 1250);
+    assert.equal(balance.allocatedAmount, 1250);
+    assert.equal(balance.remainingBalance, 0);
+    assert.equal(balance.totalCashTendered, 1000);
+    assert.equal(balance.totalCashChange, 500);
+    assert.equal(balance.isFullyAllocated, true);
+    assert.equal(balance.isUnderAllocated, false);
+    assert.equal(balance.isOverAllocated, false);
+  }
+);
+
+runTest('Split-Tender Balance Calculator: Identifies under-allocation and over-allocation', () => {
+  const underTenders: PaymentTender[] = [{ id: '1', method: 'cash', amount: 500 }];
+  const under = calculateTenderBalance(underTenders, 1200);
+  assert.equal(under.allocatedAmount, 500);
+  assert.equal(under.remainingBalance, 700);
+  assert.equal(under.isUnderAllocated, true);
+  assert.equal(under.isFullyAllocated, false);
+
+  const overTenders: PaymentTender[] = [
+    { id: '1', method: 'cash', amount: 1000 },
+    { id: '2', method: 'card', amount: 500 },
+  ];
+  const over = calculateTenderBalance(overTenders, 1200);
+  assert.equal(over.allocatedAmount, 1500);
+  assert.equal(over.remainingBalance, 0);
+  assert.equal(over.isOverAllocated, true);
+  assert.equal(over.isFullyAllocated, false);
+});
+
+runTest(
+  'Split-Tender Validator: Rejects invalid reference numbers, zero amounts, and unbalances',
+  () => {
+    // Missing tenders
+    const emptyRes = validateSplitTenders([], 1000);
+    assert.equal(emptyRes.isValid, false);
+
+    // Under-allocated
+    const underRes = validateSplitTenders([{ id: '1', method: 'cash', amount: 800 }], 1000);
+    assert.equal(underRes.isValid, false);
+    assert(underRes.errors.some((e) => e.includes('Under-allocated')));
+
+    // Invalid digital wallet reference (non-4 digits)
+    const invalidRefRes = validateSplitTenders(
+      [
+        {
+          id: '1',
+          method: 'digital_wallet',
+          channel: 'GCash',
+          referenceNumber: '123',
+          amount: 1000,
+        },
+      ],
+      1000
+    );
+    assert.equal(invalidRefRes.isValid, false);
+    assert(
+      invalidRefRes.errors.some((e) =>
+        e.includes('Reference number must be exactly 4 numeric digits')
+      )
+    );
+
+    // Zero / negative amount
+    const zeroRes = validateSplitTenders(
+      [
+        { id: '1', method: 'cash', amount: 0 },
+        { id: '2', method: 'card', amount: 1000 },
+      ],
+      1000
+    );
+    assert.equal(zeroRes.isValid, false);
+    assert(zeroRes.errors.some((e) => e.includes('Amount must be greater than ₱0.00')));
+
+    // Valid split tender plan
+    const validRes = validateSplitTenders(
+      [
+        { id: '1', method: 'cash', amount: 600, tendered: 1000 },
+        {
+          id: '2',
+          method: 'digital_wallet',
+          channel: 'Maya',
+          referenceNumber: '9876',
+          amount: 400,
+        },
+      ],
+      1000
+    );
+    assert.equal(validRes.isValid, true);
+    assert.equal(validRes.errors.length, 0);
+  }
+);
+
+runTest('Split-Tender Mapper: Generates valid PostgreSQL RPC payload', () => {
+  const tenders: PaymentTender[] = [
+    { id: '1', method: 'cash', amount: 500, tendered: 1000 },
+    { id: '2', method: 'digital_wallet', channel: 'GCash', referenceNumber: '4829', amount: 700 },
+    { id: '3', method: 'comp', reason: 'VIP Owner guest', amount: 300 },
+  ];
+
+  const dbPayload = mapTendersToDbPayload(tenders);
+  assert.equal(dbPayload.length, 3);
+  assert.deepEqual(dbPayload[0], {
+    payment_method: 'CASH',
+    amount: 500,
+    tendered_amount: 1000,
+    notes: undefined,
+  });
+  assert.deepEqual(dbPayload[1], {
+    payment_method: 'DIGITAL_WALLET',
+    amount: 700,
+    payment_channel: 'GCash',
+    reference_number: '4829',
+    notes: undefined,
+  });
+  assert.deepEqual(dbPayload[2], {
+    payment_method: 'COMP',
+    amount: 300,
+    notes: 'VIP Owner guest',
+  });
 });
 
 // -------------------------------------------------------------

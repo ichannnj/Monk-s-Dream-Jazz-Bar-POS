@@ -1,5 +1,5 @@
-import { CustomerTab, OrderLineItem } from '../../../types/floor';
-import { OrderStoreSet } from '../../orders/domain/order.types';
+import type { CustomerTab, OrderLineItem } from '../../../types/floor';
+import type { OrderStoreSet } from '../../orders/domain/order.types';
 import { tablesApi } from '../data/tables.api';
 import { deriveTabTotal } from '../../orders/application/order.helpers';
 import { useAuthStore } from '../../auth/application/useAuthStore';

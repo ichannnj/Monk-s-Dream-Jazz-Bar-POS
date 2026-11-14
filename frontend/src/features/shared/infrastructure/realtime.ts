@@ -4,7 +4,7 @@
  */
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import {
+import type {
   StationOrderPayload,
   TableOccupancyPayload,
   Auto86Payload,

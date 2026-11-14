@@ -1,16 +1,17 @@
-import { CustomerTab } from '../../../types/floor';
+import type { CustomerTab } from '../../../types/floor';
 import { tablesApi } from '../../table-service/data/tables.api';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { resolveTableUuid } from '../../floor/data/resolver';
-import { mapPaymentMethodToDb, SettlementBillingDetails } from './settlementHelpers';
+import { mapPaymentMethodToDb } from './settlementHelpers';
+import type { SettlementBillingDetails } from './settlementHelpers';
+import { mapTendersToDbPayload } from '../domain/splitTenderCalculator';
 import {
   enqueueDurableMutation,
   dequeueDurableMutation,
   loadDurableQueue,
 } from '../../orders/data/durableQueue';
 import { posHlc } from '../../orders/application/order.helpers';
-import { useOrderStore } from '../../orders/application/useOrderStore';
 
 export async function backgroundSettleTableGroupDb({
   tableId,
@@ -26,7 +27,7 @@ export async function backgroundSettleTableGroupDb({
 }: {
   tableId: string;
   tabsToSettle: CustomerTab[];
-  paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp';
+  paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split';
   groupGrandTotal: number;
   effectiveStaffId?: string;
   effectiveCashierName: string;
@@ -66,6 +67,10 @@ export async function backgroundSettleTableGroupDb({
           tenderedAmount: isPrimary ? billingDetails?.tenderedAmount : undefined,
           drawerTarget: computedDrawerTarget,
           shouldPrintReceipt: isPrimary ? (billingDetails?.shouldPrintReceipt ?? true) : false,
+          tenders:
+            isPrimary && billingDetails?.tenders
+              ? mapTendersToDbPayload(billingDetails.tenders)
+              : undefined,
         };
 
         const mutationId = `mut-grp-settle-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
@@ -75,13 +80,11 @@ export async function backgroundSettleTableGroupDb({
           type: 'settle_tab',
           payload: settlePayload,
         });
-        useOrderStore.setState({ offlineQueue: loadDurableQueue() });
 
         await tablesApi
           .settleTabAndRecordPayment(settlePayload)
           .then(() => {
             dequeueDurableMutation(mutationId);
-            useOrderStore.setState({ offlineQueue: loadDurableQueue() });
           })
           .catch((e) => {
             console.warn('[settleTableGroup] tab settle warn (retained in durable queue):', e);

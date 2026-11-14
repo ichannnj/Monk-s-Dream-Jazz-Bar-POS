@@ -10,6 +10,8 @@ import type {
   OrderLineItem,
 } from '../../../types/floor';
 
+import type { PaymentTender } from '../../checkout/domain/splitTender.types';
+
 export interface QueuedMutation {
   id: string;
   hlc: string;
@@ -71,7 +73,7 @@ export interface OrderState {
   settleTab: (
     tableId: string,
     tabIndex: number,
-    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     cashierName?: string,
     discountAmount?: number,
     staffId?: string,
@@ -90,11 +92,12 @@ export interface OrderState {
       corkageAmount?: number;
       tenderedAmount?: number;
       shouldPrintReceipt?: boolean;
+      tenders?: PaymentTender[];
     }
   ) => void;
   settleTableGroup: (
     tableId: string,
-    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     cashierName?: string,
     staffId?: string,
     paymentChannel?: string,
@@ -112,11 +115,12 @@ export interface OrderState {
       corkageAmount?: number;
       tenderedAmount?: number;
       shouldPrintReceipt?: boolean;
+      tenders?: PaymentTender[];
     }
   ) => void;
   settleTakeoutOrder: (
     takeoutId: string,
-    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp',
+    paymentMethod: 'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split',
     options?: {
       completeOrder?: boolean;
       cashierName?: string;
@@ -134,6 +138,7 @@ export interface OrderState {
       totalAmountDue?: number;
       tenderedAmount?: number;
       shouldPrintReceipt?: boolean;
+      tenders?: PaymentTender[];
     }
   ) => void;
   createTakeoutOrder: (

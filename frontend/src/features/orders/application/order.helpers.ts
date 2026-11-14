@@ -1,5 +1,5 @@
 import { HybridLogicalClock } from '@monks/shared';
-import { CustomerTab, TableItem } from '../../../types/floor';
+import type { CustomerTab, TableItem } from '../../../types/floor';
 
 export const posHlc = new HybridLogicalClock(
   `pos-node-${Math.random().toString(36).substring(2, 7)}`

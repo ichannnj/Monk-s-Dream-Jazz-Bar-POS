@@ -41,6 +41,19 @@ export interface SettledCheckItem {
   orderChannel: string;
   operatingMode: string;
   notes?: string;
+  tenders?: Array<{
+    id?: string;
+    method: 'cash' | 'card' | 'digital_wallet' | 'comp' | string;
+    amount: number;
+    tendered?: number;
+    change?: number;
+    channel?: string;
+    referenceNumber?: string;
+    last4Digits?: string;
+    reason?: string;
+    notes?: string;
+  }>;
+  tendersSummary?: string;
 }
 
 export interface CheckFilterParams {

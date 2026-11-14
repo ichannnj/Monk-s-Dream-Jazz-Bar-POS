@@ -124,6 +124,14 @@ export async function settleTabAndRecordPayment(params: {
   tenderedAmount?: number;
   drawerTarget?: 'main' | 'bar';
   shouldPrintReceipt?: boolean;
+  tenders?: Array<{
+    payment_method: string;
+    amount: number;
+    tendered_amount?: number;
+    payment_channel?: string;
+    reference_number?: string;
+    notes?: string;
+  }>;
 }) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     params.tabId
@@ -156,18 +164,21 @@ export async function settleTabAndRecordPayment(params: {
       p_tendered_amount: params.tenderedAmount ?? null,
       p_drawer_target: (params.drawerTarget || null) as any,
       p_should_print_receipt: params.shouldPrintReceipt !== false,
+      p_tenders: params.tenders ? (params.tenders as any) : null,
     };
 
     let { data, error } = await (supabase.rpc as any)('settle_tab_and_record_payment', rpcPayload);
 
     if (
       error &&
-      (error.message?.includes('p_tendered_amount') ||
+      (error.message?.includes('p_tenders') ||
+        error.message?.includes('p_tendered_amount') ||
         error.message?.includes('p_drawer_target') ||
         error.message?.includes('p_service_charge'))
     ) {
       // Fallback if latest migration parameters not yet updated
       const {
+        p_tenders: _pt,
         p_tendered_amount: _ta,
         p_drawer_target: _dtg,
         p_should_print_receipt: _spr,

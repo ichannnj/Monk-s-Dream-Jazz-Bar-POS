@@ -1,6 +1,6 @@
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from './supabase';
-import { GlobalRealtimeCallbacks } from './realtime.types';
+import type { GlobalRealtimeCallbacks } from './realtime.types';
 
 export const ensureGlobalPOSRealtimeChannel = (
   channels: Map<string, RealtimeChannel>,

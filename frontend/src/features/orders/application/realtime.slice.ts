@@ -1,6 +1,6 @@
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
-import { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
-import { DrawerEntry } from '../../../types/floor';
+import type { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
+import type { DrawerEntry } from '../../../types/floor';
 import {
   handleRealtimeTableTransferAlert,
   handleRealtimeInventoryAlert,
