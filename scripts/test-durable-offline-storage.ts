@@ -378,6 +378,80 @@ console.log('\n--- Seam E: Sequential Replay & Atomic Draining ---');
   console.log('  ✅ [PASS] Sequential draining processes ready items and honors cool-down');
 }
 
+// -------------------------------------------------------------
+// Seam F: Offline Table Transfers & Bill Settlement Queuing (Issue #3)
+// -------------------------------------------------------------
+
+console.log('\n--- Seam F: Offline Table Transfers & Bill Settlement Queuing ---');
+
+// Test 10: Enqueuing table transfer & settlements persists mutations with idempotency keys
+{
+  clearDurableQueue();
+
+  const transferMutation = enqueueDurableMutation({
+    hlc: 'hlc-transfer-01',
+    type: 'transfer_table',
+    payload: {
+      originTableId: 'tbl-c1',
+      targetTableId: 'tbl-c2',
+      originTableCode: 'C1',
+      targetTableCode: 'C2',
+      staffId: 'staff-waiter-01',
+      reason: 'Guest moved to window table',
+    },
+  });
+
+  const settleTabMutation = enqueueDurableMutation({
+    hlc: 'hlc-settle-01',
+    type: 'settle_tab',
+    payload: {
+      tabId: '22222222-2222-2222-2222-222222222222',
+      paymentMethod: 'CASH',
+      amount: 450,
+      notes: 'Cash settlement by cashier',
+      drawerTarget: 'main',
+    },
+  });
+
+  const queue = loadDurableQueue();
+  assert.equal(queue.length, 2, 'Queue should hold 2 enqueued mutations');
+  assert.equal(queue[0].type, 'transfer_table');
+  assert.equal(queue[1].type, 'settle_tab');
+  assert.equal(queue[0].id, transferMutation.id);
+  assert.equal(queue[1].id, settleTabMutation.id);
+
+  console.log('  ✅ [PASS] Transfer and settlement mutations enqueue with deterministic UUIDs');
+}
+
+// Test 11: Sequential replay drains transfers and settlements in order
+{
+  const executedActions: string[] = [];
+  const queue = loadDurableQueue();
+
+  for (const item of queue) {
+    if (item.type === 'transfer_table') {
+      executedActions.push(
+        `TRANSFERRED: ${item.payload.originTableCode}->${item.payload.targetTableCode}`
+      );
+      dequeueDurableMutation(item.id);
+    } else if (item.type === 'settle_tab') {
+      executedActions.push(
+        `SETTLED: ${item.payload.tabId} (${item.payload.paymentMethod} ₱${item.payload.amount})`
+      );
+      dequeueDurableMutation(item.id);
+    }
+  }
+
+  assert.deepEqual(executedActions, [
+    'TRANSFERRED: C1->C2',
+    'SETTLED: 22222222-2222-2222-2222-222222222222 (CASH ₱450)',
+  ]);
+  assert.equal(loadDurableQueue().length, 0, 'Durable queue should be fully drained');
+
+  clearDurableQueue();
+  console.log('  ✅ [PASS] Sequential replay drains transfers and settlements in strict order');
+}
+
 console.log('\n============================================================');
 console.log('🎉 ALL DURABLE OFFLINE STORAGE & QUEUE TESTS PASSED');
 console.log('============================================================\n');

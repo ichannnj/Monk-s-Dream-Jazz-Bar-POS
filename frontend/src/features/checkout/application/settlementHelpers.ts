@@ -2,6 +2,13 @@ import { tablesApi } from '../../table-service/data/tables.api';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { resolveTableUuid } from '../../floor/data/resolver';
+import {
+  enqueueDurableMutation,
+  dequeueDurableMutation,
+  loadDurableQueue,
+} from '../../orders/data/durableQueue';
+import { posHlc } from '../../orders/application/order.helpers';
+import { useOrderStore } from '../../orders/application/useOrderStore';
 
 export interface SettlementBillingDetails {
   serviceCharge?: number;
@@ -77,7 +84,7 @@ export async function backgroundSettleTabDb({
       tabUuid &&
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tabUuid)
     ) {
-      await tablesApi.settleTabAndRecordPayment({
+      const settlementPayload = {
         tabId: tabUuid,
         paymentMethod: mapPaymentMethodToDb(paymentMethod),
         amount: grandTotalPaid,
@@ -97,10 +104,30 @@ export async function backgroundSettleTabDb({
         tenderedAmount: billingDetails?.tenderedAmount,
         drawerTarget: computedDrawerTarget,
         shouldPrintReceipt: billingDetails?.shouldPrintReceipt,
+      };
+
+      const mutationId = `mut-settle-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+      enqueueDurableMutation({
+        id: mutationId,
+        hlc: posHlc.now(),
+        type: 'settle_tab',
+        payload: settlementPayload,
       });
-      realtimeGateway.broadcastPosSync('tab_settled');
+      useOrderStore.setState({ offlineQueue: loadDurableQueue() });
+
+      try {
+        await tablesApi.settleTabAndRecordPayment(settlementPayload);
+        dequeueDurableMutation(mutationId);
+        useOrderStore.setState({ offlineQueue: loadDurableQueue() });
+        realtimeGateway.broadcastPosSync('tab_settled');
+      } catch (networkErr) {
+        console.warn(
+          'Background settleTab offline notice (retained in durable queue):',
+          networkErr
+        );
+      }
     }
   } catch (err) {
-    console.warn('Background settleTab offline notice:', err);
+    console.warn('Background settleTab error:', err);
   }
 }

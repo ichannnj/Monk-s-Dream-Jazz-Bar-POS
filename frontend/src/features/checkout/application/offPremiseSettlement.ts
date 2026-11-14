@@ -3,6 +3,13 @@ import { tablesApi } from '../../table-service/data/tables.api';
 import { supabase } from '../../shared/infrastructure/supabase';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { mapPaymentMethodToDb, SettlementBillingDetails } from './settlementHelpers';
+import {
+  enqueueDurableMutation,
+  dequeueDurableMutation,
+  loadDurableQueue,
+} from '../../orders/data/durableQueue';
+import { posHlc } from '../../orders/application/order.helpers';
+import { useOrderStore } from '../../orders/application/useOrderStore';
 
 export async function backgroundSettleTakeoutDb({
   takeoutId,
@@ -67,7 +74,7 @@ export async function backgroundSettleTakeoutDb({
     }
 
     if (tabUuid && uuidRegex.test(tabUuid)) {
-      await tablesApi.settleTabAndRecordPayment({
+      const settlementPayload = {
         tabId: tabUuid,
         paymentMethod: mapPaymentMethodToDb(paymentMethod),
         amount: grandTotalPaid,
@@ -85,10 +92,30 @@ export async function backgroundSettleTakeoutDb({
         seniorPwdId: options?.seniorPwdId,
         seniorPwdName: options?.seniorPwdName,
         tenderedAmount: options?.tenderedAmount,
-        drawerTarget: 'main',
+        drawerTarget: 'main' as const,
         shouldPrintReceipt: options?.shouldPrintReceipt,
+      };
+
+      const mutationId = `mut-takeout-settle-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+      enqueueDurableMutation({
+        id: mutationId,
+        hlc: posHlc.now(),
+        type: 'settle_tab',
+        payload: settlementPayload,
       });
-      realtimeGateway.broadcastPosSync('takeout_settled');
+      useOrderStore.setState({ offlineQueue: loadDurableQueue() });
+
+      try {
+        await tablesApi.settleTabAndRecordPayment(settlementPayload);
+        dequeueDurableMutation(mutationId);
+        useOrderStore.setState({ offlineQueue: loadDurableQueue() });
+        realtimeGateway.broadcastPosSync('takeout_settled');
+      } catch (networkErr) {
+        console.warn(
+          'Background settleTakeoutOrder offline notice (retained in durable queue):',
+          networkErr
+        );
+      }
     }
   } catch (err) {
     console.warn('Background settleTakeoutOrder notice:', err);
