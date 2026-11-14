@@ -1,6 +1,11 @@
 import { CustomerTab, OrderLineItem, FloorAlert } from '../../../types/floor';
 import { tablesApi } from '../data/tables.api';
 import { ordersApi } from '../../orders/data/orders.api';
+import {
+  enqueueDurableMutation,
+  dequeueDurableMutation,
+  loadDurableQueue,
+} from '../../orders/data/durableQueue';
 import { posHlc, deriveTabTotal, deriveTableStatus } from '../../orders/application/order.helpers';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { useAuthStore } from '../../auth/application/useAuthStore';
@@ -174,6 +179,15 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     const mutationId = `mut-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
     const hlcTs = posHlc.now();
 
+    // Persist mutation to durable storage before network execution
+    enqueueDurableMutation({
+      id: mutationId,
+      hlc: hlcTs,
+      type: 'create_order',
+      payload: { tableId, tabIndex, items, hasCorkageFee, corkageAmount },
+    });
+    set({ offlineQueue: loadDurableQueue() });
+
     ordersApi
       .createOrderWithItems({
         tabId: currentTab?.id || `tab-${tableId}-${tabIndex}`,
@@ -203,6 +217,10 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         })),
       })
       .then((res) => {
+        // Mutation successfully reached the server: dequeue from durable offline storage
+        dequeueDurableMutation(mutationId);
+        set({ offlineQueue: loadDurableQueue() });
+
         if (res.items && res.items.length > 0) {
           const newlyAddedMap = new Map<string, { id: string; createdAt?: string }>();
           const dbOrderCreatedAt = (res.order as any)?.created_at;
@@ -252,18 +270,8 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       })
       .catch((err) => {
         console.warn('Background order dispatch deferred to offline queue:', err);
-        set((state) => ({
-          offlineQueue: [
-            ...state.offlineQueue,
-            {
-              id: mutationId,
-              hlc: hlcTs,
-              type: 'create_order',
-              payload: { tableId, tabIndex, items, hasCorkageFee, corkageAmount },
-              timestamp: Date.now(),
-            },
-          ],
-        }));
+        // Mutation was already persisted to durable storage before dispatch; maintain queued state
+        set({ offlineQueue: loadDurableQueue() });
       });
   },
 

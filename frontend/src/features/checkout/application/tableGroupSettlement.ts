@@ -4,6 +4,13 @@ import { supabase } from '../../shared/infrastructure/supabase';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { resolveTableUuid } from '../../floor/data/resolver';
 import { mapPaymentMethodToDb, SettlementBillingDetails } from './settlementHelpers';
+import {
+  enqueueDurableMutation,
+  dequeueDurableMutation,
+  loadDurableQueue,
+} from '../../orders/data/durableQueue';
+import { posHlc } from '../../orders/application/order.helpers';
+import { useOrderStore } from '../../orders/application/useOrderStore';
 
 export async function backgroundSettleTableGroupDb({
   tableId,
@@ -40,28 +47,45 @@ export async function backgroundSettleTableGroupDb({
       const isPrimary = i === 0;
 
       if (isUuid) {
+        const settlePayload = {
+          tabId: tab.id,
+          paymentMethod: dbMethod,
+          amount: isPrimary ? groupGrandTotal : 0,
+          staffId: effectiveStaffId,
+          notes: `Group Settle by ${effectiveCashierName}${isPrimary ? ' (Primary Group Bill)' : ' (Secondary Tab)'}`,
+          paymentChannel: isPrimary ? paymentChannel : undefined,
+          referenceNumber: isPrimary ? referenceNumber : undefined,
+          serviceCharge: isPrimary ? billingDetails?.serviceCharge : 0,
+          vatableSales: isPrimary ? billingDetails?.vatableSales : 0,
+          vatAmount: isPrimary ? billingDetails?.vatAmount : 0,
+          vatExemptSales: isPrimary ? billingDetails?.vatExemptSales : 0,
+          discountType: isPrimary ? billingDetails?.discountType : undefined,
+          seniorPwdId: isPrimary ? billingDetails?.seniorPwdId : undefined,
+          seniorPwdName: isPrimary ? billingDetails?.seniorPwdName : undefined,
+          corkageAmount: isPrimary ? billingDetails?.corkageAmount : 0,
+          tenderedAmount: isPrimary ? billingDetails?.tenderedAmount : undefined,
+          drawerTarget: computedDrawerTarget,
+          shouldPrintReceipt: isPrimary ? (billingDetails?.shouldPrintReceipt ?? true) : false,
+        };
+
+        const mutationId = `mut-grp-settle-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+        enqueueDurableMutation({
+          id: mutationId,
+          hlc: posHlc.now(),
+          type: 'settle_tab',
+          payload: settlePayload,
+        });
+        useOrderStore.setState({ offlineQueue: loadDurableQueue() });
+
         await tablesApi
-          .settleTabAndRecordPayment({
-            tabId: tab.id,
-            paymentMethod: dbMethod,
-            amount: isPrimary ? groupGrandTotal : 0,
-            staffId: effectiveStaffId,
-            notes: `Group Settle by ${effectiveCashierName}${isPrimary ? ' (Primary Group Bill)' : ' (Secondary Tab)'}`,
-            paymentChannel: isPrimary ? paymentChannel : undefined,
-            referenceNumber: isPrimary ? referenceNumber : undefined,
-            serviceCharge: isPrimary ? billingDetails?.serviceCharge : 0,
-            vatableSales: isPrimary ? billingDetails?.vatableSales : 0,
-            vatAmount: isPrimary ? billingDetails?.vatAmount : 0,
-            vatExemptSales: isPrimary ? billingDetails?.vatExemptSales : 0,
-            discountType: isPrimary ? billingDetails?.discountType : undefined,
-            seniorPwdId: isPrimary ? billingDetails?.seniorPwdId : undefined,
-            seniorPwdName: isPrimary ? billingDetails?.seniorPwdName : undefined,
-            corkageAmount: isPrimary ? billingDetails?.corkageAmount : 0,
-            tenderedAmount: isPrimary ? billingDetails?.tenderedAmount : undefined,
-            drawerTarget: computedDrawerTarget,
-            shouldPrintReceipt: isPrimary ? (billingDetails?.shouldPrintReceipt ?? true) : false,
+          .settleTabAndRecordPayment(settlePayload)
+          .then(() => {
+            dequeueDurableMutation(mutationId);
+            useOrderStore.setState({ offlineQueue: loadDurableQueue() });
           })
-          .catch((e) => console.warn('[settleTableGroup] tab settle warn:', e));
+          .catch((e) => {
+            console.warn('[settleTableGroup] tab settle warn (retained in durable queue):', e);
+          });
       }
     }
 

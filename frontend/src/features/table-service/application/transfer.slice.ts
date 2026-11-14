@@ -1,6 +1,11 @@
 import { CustomerTab, FloorAlert } from '../../../types/floor';
 import { tablesApi } from '../data/tables.api';
-import { deriveTableStatus } from '../../orders/application/order.helpers';
+import { deriveTableStatus, posHlc } from '../../orders/application/order.helpers';
+import {
+  enqueueDurableMutation,
+  dequeueDurableMutation,
+  loadDurableQueue,
+} from '../../orders/data/durableQueue';
 import { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { useAuthStore } from '../../auth/application/useAuthStore';
@@ -273,19 +278,38 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         console.warn('Background broadcastTableTransfer offline notice:', err);
       });
 
+    // Durable offline write-ahead logging
+    const transferMutationId = `mut-trans-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+    const transferPayload = {
+      originTableId: originId,
+      targetTableId: targetId,
+      tabId: mode === 'entire' ? undefined : tabUuidForRpc,
+      originTableCode: initialOriginTable?.code,
+      targetTableCode: initialTargetTable?.code,
+      staffId: useAuthStore.getState().currentUser?.id || '11111111-1111-1111-1111-111111111111',
+      reason: reason || 'Guest relocation request',
+    };
+
+    enqueueDurableMutation({
+      id: transferMutationId,
+      hlc: posHlc.now(),
+      type: 'transfer_table',
+      payload: transferPayload,
+    });
+    set({ offlineQueue: loadDurableQueue() });
+
     // Background asynchronous Supabase RPC execution
     tablesApi
-      .transferTableTab({
-        originTableId: originId,
-        targetTableId: targetId,
-        tabId: mode === 'entire' ? undefined : tabUuidForRpc,
-        originTableCode: initialOriginTable?.code,
-        targetTableCode: initialTargetTable?.code,
-        staffId: useAuthStore.getState().currentUser?.id || '11111111-1111-1111-1111-111111111111',
-        reason: reason || 'Guest relocation request',
+      .transferTableTab(transferPayload)
+      .then(() => {
+        dequeueDurableMutation(transferMutationId);
+        set({ offlineQueue: loadDurableQueue() });
       })
       .catch((err) => {
-        console.warn('Background transferTableTab offline notice:', err);
+        console.warn(
+          'Background transferTableTab offline notice (retained in durable queue):',
+          err
+        );
       });
   },
 });

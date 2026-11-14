@@ -4,6 +4,13 @@ import { ordersApi } from '../data/orders.api';
 import { tablesApi } from '../../table-service/data/tables.api';
 import { OrderStoreSet, OrderStoreGet, QueuedMutation } from '../domain/order.types';
 import { mapHydratedTables, mapHydratedOffPremiseTabs } from './hydrationMappers';
+import {
+  loadDurableQueue,
+  dequeueDurableMutation,
+  recordMutationFailure,
+  isItemReadyForRetry,
+} from '../data/durableQueue';
+import { saveAuthoritativeSnapshot } from '../data/venueSnapshot';
 
 export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   hydrateFromSupabase: async () => {
@@ -300,12 +307,25 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
         console.warn('Hydration cash drawer notice:', drawerErr);
       }
 
+      const nextTakeout = [...pendingLocalTakeout, ...dbTakeout];
+      const nextOnline = [...pendingLocalOnline, ...dbOnline];
+      const nextDrawer = mappedDrawer.length > 0 ? mappedDrawer : get().drawerEntries;
+
+      // Persist authoritative venue snapshot to durable storage on successful hydration
+      saveAuthoritativeSnapshot({
+        tables: mappedTables,
+        takeoutOrders: nextTakeout,
+        onlineOrders: nextOnline,
+        drawerEntries: nextDrawer,
+      });
+
       set({
         tables: mappedTables,
-        takeoutOrders: [...pendingLocalTakeout, ...dbTakeout],
-        onlineOrders: [...pendingLocalOnline, ...dbOnline],
-        drawerEntries: mappedDrawer.length > 0 ? mappedDrawer : get().drawerEntries,
+        takeoutOrders: nextTakeout,
+        onlineOrders: nextOnline,
+        drawerEntries: nextDrawer,
         isHydrated: true,
+        offlineQueue: loadDurableQueue(),
       });
     } catch (err) {
       console.warn('hydrateFromSupabase error:', err);
@@ -313,15 +333,30 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
   },
 
   drainOfflineQueue: async () => {
-    const queue = get().offlineQueue;
-    if (queue.length === 0) return;
+    const queue = loadDurableQueue();
+    if (queue.length === 0) {
+      if (get().offlineQueue.length > 0) {
+        set({ offlineQueue: [] });
+      }
+      return;
+    }
 
-    const remainingQueue: QueuedMutation[] = [];
+    const now = Date.now();
 
     for (const item of queue) {
+      // Respect exponential backoff cool-down
+      if (!isItemReadyForRetry(item, now)) {
+        continue;
+      }
+
       try {
         if (item.type === 'create_order') {
-          await ordersApi.createOrderWithItems(item.payload);
+          // If the payload contains externalOrderRef or tab info, pass idempotency key
+          const orderPayload = {
+            ...item.payload,
+            externalOrderRef: item.payload.externalOrderRef || item.id,
+          };
+          await ordersApi.createOrderWithItems(orderPayload);
         } else if (item.type === 'transfer_table') {
           await tablesApi.transferTableTab(item.payload);
         } else if (item.type === 'settle_tab') {
@@ -329,11 +364,19 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
         } else if (item.type === 'update_status') {
           await ordersApi.updateOrderItemStatus(item.payload.itemId, item.payload.status);
         }
-      } catch {
-        remainingQueue.push(item);
+
+        // Successfully drained: atomically remove from durable storage and update store state
+        const remaining = dequeueDurableMutation(item.id);
+        set({ offlineQueue: remaining });
+      } catch (err: any) {
+        console.warn(`drainOfflineQueue item [${item.id}] execution failed:`, err);
+        const remaining = recordMutationFailure(
+          item.id,
+          err?.message || 'Network / execution error',
+          Date.now()
+        );
+        set({ offlineQueue: remaining });
       }
     }
-
-    set({ offlineQueue: remainingQueue });
   },
 });
