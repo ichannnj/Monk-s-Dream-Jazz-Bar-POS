@@ -200,7 +200,7 @@ export class PrinterStationDaemon {
             roundNumber: rawData.roundNumber,
             waiterName: rawData.waiterName || rawData.staffName || rawData.staff_name,
             timestamp: rawData.timestamp || new Date().toISOString(),
-            items: (rawData.items as CustomerReceiptPayload['items']) || [],
+            items: (rawData.items as RunnerChitPayload['items']) || [],
             isReprint: Boolean(rawData.isReprint),
           };
           await this.printer.printRunnerChit(chitPayload);
@@ -277,7 +277,7 @@ export class PrinterStationDaemon {
             serverName: rawData.serverName || rawData.waiterName || rawData.cashierName,
             cashierName: rawData.cashierName || rawData.waiterName,
             operatingMode: rawData.operatingMode || rawData.operating_mode || 'CAFE',
-            items: (rawData.items as CustomerReceiptPayload['items']) || [],
+            items: (rawData.items as BillStatementPayload['items']) || [],
             subtotal: rawData.subtotal || rawData.amount || 0,
             corkageFee: rawData.corkageAmount || rawData.corkageFee || 0,
             discount: rawData.discountAmount || rawData.discount || 0,
@@ -299,7 +299,7 @@ export class PrinterStationDaemon {
           const takeoutPayload: TakeoutSlipPayload = {
             orderNumber: rawData.orderNumber || 'T-001',
             customerName: rawData.customerName || 'Guest',
-            items: (rawData.items as CustomerReceiptPayload['items']) || [],
+            items: (rawData.items as TakeoutSlipPayload['items']) || [],
             timestamp: rawData.timestamp || new Date().toISOString(),
             isPrepaid: rawData.isPrepaid,
             notes: rawData.notes,
@@ -315,7 +315,7 @@ export class PrinterStationDaemon {
             customerName: rawData.customerName || 'Customer',
             riderName: rawData.riderName,
             itemCount: rawData.itemCount || rawData.items?.length || 1,
-            items: rawData.items,
+            items: (rawData.items as DeliveryTagPayload['items']) || [],
             address: rawData.address,
             timestamp: rawData.timestamp || new Date().toISOString(),
           };
