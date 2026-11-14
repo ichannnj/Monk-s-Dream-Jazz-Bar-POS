@@ -108,11 +108,13 @@ export async function createOrderWithItems(params: {
 
     // Insert Order if not found
     if (!orderData) {
+      const generatedOrderNumber = params.orderNumber || `#ORD-${Date.now().toString().slice(-6)}`;
+
       const { data: newOrder, error: orderError } = await supabase
         .from('orders')
         .insert({
           tab_id: tabId,
-          order_number: params.orderNumber,
+          order_number: generatedOrderNumber,
           order_type: params.orderType || 'DINE_IN',
           order_channel: params.orderChannel || 'CAFE_AREA',
           external_order_ref: params.externalOrderRef || null,

@@ -50,6 +50,7 @@ export async function openTab(params: {
 }
 
 export async function createTab(params: {
+  id?: string;
   tableId?: string;
   customerName: string;
   orderType?: 'DINE_IN' | 'TAKEOUT' | 'ONLINE_DELIVERY';
@@ -64,19 +65,25 @@ export async function createTab(params: {
     const validTableId = params.tableId ? await resolveTableUuid(params.tableId) : null;
     const effectiveMode = params.operatingMode || 'CAFE';
 
+    const insertPayload: Record<string, any> = {
+      table_id: validTableId,
+      customer_name: params.customerName || 'Guest',
+      order_type: params.orderType || 'DINE_IN',
+      order_channel: (params.orderChannel || 'CAFE_AREA') as any,
+      has_corkage_fee: params.hasCorkageFee || false,
+      corkage_amount: params.corkageAmount || 0,
+      opened_by_id: params.openedById || null,
+      operating_mode: effectiveMode,
+      status: 'OPEN',
+    };
+
+    if (params.id) {
+      insertPayload.id = params.id;
+    }
+
     const { data, error } = await supabase
       .from('tabs')
-      .insert({
-        table_id: validTableId,
-        customer_name: params.customerName || 'Guest',
-        order_type: params.orderType || 'DINE_IN',
-        order_channel: (params.orderChannel || 'CAFE_AREA') as any,
-        has_corkage_fee: params.hasCorkageFee || false,
-        corkage_amount: params.corkageAmount || 0,
-        opened_by_id: params.openedById || null,
-        operating_mode: effectiveMode,
-        status: 'OPEN',
-      })
+      .insert(insertPayload as any)
       .select('id')
       .single();
 

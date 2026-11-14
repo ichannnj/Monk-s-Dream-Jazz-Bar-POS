@@ -141,18 +141,27 @@ export async function ensureTab(params: {
       return params.tabId;
     }
 
-    if (validTableId && params.customerName) {
+    if (validTableId) {
       const { data: matchingTabs } = await supabase
         .from('tabs')
         .select('id, customer_name')
         .eq('table_id', validTableId)
         .eq('status', 'OPEN');
 
-      const found = matchingTabs?.find(
-        (t) => t.customer_name.trim().toLowerCase() === params.customerName?.trim().toLowerCase()
-      );
-      if (found) {
-        return found.id;
+      if (matchingTabs && matchingTabs.length > 0) {
+        if (params.customerName) {
+          const found = matchingTabs.find(
+            (t) =>
+              t.customer_name.trim().toLowerCase() === params.customerName?.trim().toLowerCase()
+          );
+          if (found) {
+            return found.id;
+          }
+        }
+        // If only 1 open tab exists on this table, reuse it to avoid duplicate ghost tabs
+        if (matchingTabs.length === 1) {
+          return matchingTabs[0].id;
+        }
       }
     }
 

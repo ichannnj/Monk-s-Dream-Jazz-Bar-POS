@@ -134,7 +134,9 @@ export const mapHydratedTables = (
         lt.status === 'open' &&
         !customerTabs.some((ct) => ct.id === lt.id) &&
         !allOpenDbTabIds.has(lt.id) &&
-        lt.id.startsWith('tab-')
+        (lt.id.startsWith('tab-') || lt.id.startsWith('to-') || lt.id.startsWith('od-')) &&
+        ((lt.items && lt.items.length > 0) || customerTabs.length === 0) &&
+        !customerTabs.some((ct) => ct.tabIndex === lt.tabIndex)
     );
     const combinedTabs = [...customerTabs, ...pendingLocalTabs];
     const activeTabsIndices = combinedTabs.map((tb, idx) => tb.tabIndex || idx + 1);

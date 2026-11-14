@@ -351,11 +351,60 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
 
       try {
         if (item.type === 'create_order') {
-          // If the payload contains externalOrderRef or tab info, pass idempotency key
+          const payload = item.payload || {};
+
+          // Reconstruct/heal missing fields for legacy or sparse mutations
+          const currentTables = get().tables;
+          const currentTable = currentTables.find(
+            (t) => t.id === payload.tableId || t.code === payload.tableId
+          );
+          const currentTab = currentTable?.tabs?.find((tb) =>
+            payload.tabIndex ? tb.tabIndex === payload.tabIndex : true
+          );
+
+          const resolvedTabId =
+            payload.tabId ||
+            currentTab?.id ||
+            (payload.tableId ? `tab-${payload.tableId}-${payload.tabIndex || 1}` : undefined);
+          const resolvedCustomerName =
+            payload.customerName ||
+            currentTab?.guestName ||
+            (payload.tabIndex ? `Guest ${payload.tabIndex}` : 'Guest');
+          const resolvedRound = payload.roundNumber || 1;
+          const resolvedOrderNumber =
+            payload.orderNumber ||
+            `#${currentTable?.code || 'T'}-${payload.tabIndex || 1}-R${resolvedRound}-${item.id.slice(-4)}`;
+
+          const resolvedItems = (payload.items || []).map((i: any, idx: number) => ({
+            id: i.id || `item-${item.id}-${idx}`,
+            productId: i.productId || i.id,
+            productName: i.productName,
+            quantity: Number(i.quantity) || 1,
+            unitPrice: Number(i.unitPrice) || 0,
+            stationTarget: i.stationTarget || 'bar',
+            status: i.status || 'pending',
+            categorySlug: i.categorySlug,
+            eventId: i.eventId,
+            variantId: i.variantId,
+            temperature: i.temperature,
+            sizeLabel: i.sizeLabel,
+            modifiers: i.modifiers,
+            notes: i.notes,
+            variantSelections: i.variantSelections,
+          }));
+
           const orderPayload = {
-            ...item.payload,
-            externalOrderRef: item.payload.externalOrderRef || item.id,
+            ...payload,
+            tabId: resolvedTabId,
+            tableId: payload.tableId,
+            customerName: resolvedCustomerName,
+            orderNumber: resolvedOrderNumber,
+            orderType: payload.orderType || 'DINE_IN',
+            roundNumber: resolvedRound,
+            items: resolvedItems,
+            externalOrderRef: payload.externalOrderRef || item.id,
           };
+
           await ordersApi.createOrderWithItems(orderPayload);
         } else if (item.type === 'transfer_table') {
           await tablesApi.transferTableTab(item.payload);
@@ -370,12 +419,23 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
         set({ offlineQueue: remaining });
       } catch (err: any) {
         console.warn(`drainOfflineQueue item [${item.id}] execution failed:`, err);
-        const remaining = recordMutationFailure(
-          item.id,
-          err?.message || 'Network / execution error',
-          Date.now()
-        );
-        set({ offlineQueue: remaining });
+        const isConstraintViolation = err?.code === '23502' || err?.code === '23503';
+        const retryCount = item.retryCount || 0;
+        if (isConstraintViolation && retryCount >= 3) {
+          console.error(
+            `drainOfflineQueue dropping permanently unrecoverable mutation [${item.id}]:`,
+            err?.message
+          );
+          const remaining = dequeueDurableMutation(item.id);
+          set({ offlineQueue: remaining });
+        } else {
+          const remaining = recordMutationFailure(
+            item.id,
+            err?.message || 'Network / execution error',
+            Date.now()
+          );
+          set({ offlineQueue: remaining });
+        }
       }
     }
   },

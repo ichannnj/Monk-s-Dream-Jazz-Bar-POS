@@ -25,7 +25,10 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       : [...(targetTable?.activeTabs || []), ...(targetTable?.tabs || []).map((tb) => tb.tabIndex)];
     const nextTabIndex = existingIndices.length > 0 ? Math.max(...existingIndices) + 1 : 1;
     const finalGuestName = guestName.trim() || `Guest ${nextTabIndex}`;
-    const localTabId = `tab-${tableId}-${nextTabIndex}`;
+    const localTabId =
+      typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+        ? crypto.randomUUID()
+        : '00000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0').slice(-12);
     const currentOperatingMode = useVenueStore.getState().operatingMode;
     const nowIso = new Date().toISOString();
 
@@ -71,6 +74,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     const currentUserId = useAuthStore.getState().currentUser?.id;
     tablesApi
       .createTab({
+        id: localTabId,
         tableId: tableId,
         customerName: finalGuestName,
         orderType: 'DINE_IN',
@@ -79,14 +83,14 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         operatingMode: currentOperatingMode,
       })
       .then((res) => {
-        if (res?.id) {
+        if (res?.id && res.id !== localTabId) {
           set((state) => ({
             tables: state.tables.map((t) => {
               if (t.id !== tableId) return t;
               return {
                 ...t,
                 tabs: (t.tabs || []).map((tb) =>
-                  tb.tabIndex === nextTabIndex ? { ...tb, id: res.id } : tb
+                  tb.tabIndex === nextTabIndex || tb.id === localTabId ? { ...tb, id: res.id } : tb
                 ),
               };
             }),
@@ -178,43 +182,59 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     const currentTab = currentTable?.tabs?.find((t) => t.tabIndex === tabIndex);
     const mutationId = `mut-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
     const hlcTs = posHlc.now();
+    const orderNumber = `#${currentTable?.code || 'T'}-${tabIndex}-R${targetRound}-${Date.now().toString().slice(-4)}`;
+    const tabId = currentTab?.id || `tab-${tableId}-${tabIndex}`;
+    const customerName = currentTab?.guestName || `Guest ${tabIndex}`;
+    const mappedItems = roundTaggedItems.map((i) => ({
+      id: i.id,
+      productId: i.productId,
+      productName: i.productName,
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      stationTarget: i.stationTarget,
+      status: i.status,
+      categorySlug: i.categorySlug,
+      eventId: i.eventId,
+      variantId: i.variantId,
+      temperature: i.temperature,
+      sizeLabel: i.sizeLabel,
+      modifiers: i.modifiers,
+      notes: i.notes,
+      variantSelections: i.variantSelections,
+    }));
 
-    // Persist mutation to durable storage before network execution
+    // Persist mutation to durable storage before network execution with complete order metadata
     enqueueDurableMutation({
       id: mutationId,
       hlc: hlcTs,
       type: 'create_order',
-      payload: { tableId, tabIndex, items, hasCorkageFee, corkageAmount },
+      payload: {
+        tabId,
+        tableId,
+        tabIndex,
+        customerName,
+        orderNumber,
+        orderType: 'DINE_IN',
+        orderChannel: currentTable?.area === 'bar' ? 'BAR_AREA' : 'CAFE_AREA',
+        roundNumber: targetRound,
+        items: mappedItems,
+        hasCorkageFee,
+        corkageAmount,
+      },
     });
     set({ offlineQueue: loadDurableQueue() });
 
     ordersApi
       .createOrderWithItems({
-        tabId: currentTab?.id || `tab-${tableId}-${tabIndex}`,
-        tableId: tableId,
-        customerName: currentTab?.guestName || `Guest ${tabIndex}`,
-        orderNumber: `#${currentTable?.code || 'T'}-${tabIndex}-R${targetRound}-${Date.now().toString().slice(-4)}`,
+        tabId,
+        tableId,
+        customerName,
+        orderNumber,
         orderType: 'DINE_IN',
         hasCorkageFee,
         corkageAmount,
         roundNumber: targetRound,
-        items: roundTaggedItems.map((i) => ({
-          id: i.id,
-          productId: i.productId,
-          productName: i.productName,
-          quantity: i.quantity,
-          unitPrice: i.unitPrice,
-          stationTarget: i.stationTarget,
-          status: i.status,
-          categorySlug: i.categorySlug,
-          eventId: i.eventId,
-          variantId: i.variantId,
-          temperature: i.temperature,
-          sizeLabel: i.sizeLabel,
-          modifiers: i.modifiers,
-          notes: i.notes,
-          variantSelections: i.variantSelections,
-        })),
+        items: mappedItems,
       })
       .then((res) => {
         // Mutation successfully reached the server: dequeue from durable offline storage
