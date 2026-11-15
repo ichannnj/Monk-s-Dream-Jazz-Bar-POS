@@ -3,203 +3,149 @@ import { StyleSheet, Platform } from 'react-native';
 export const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
-    backgroundColor: '#f7f2f0',
+    backgroundColor: '#f3ece7',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  // Circular organic decorative gradients matching inspiration art
+  decorCircleTopLeft: {
+    position: 'absolute',
+    top: -120,
+    left: -120,
+    width: 320,
+    height: 320,
+    borderRadius: 160,
+    backgroundColor: 'rgba(129, 0, 33, 0.12)',
+    pointerEvents: 'none',
+  },
+  decorCircleBottomRight: {
+    position: 'absolute',
+    bottom: -140,
+    right: -140,
+    width: 380,
+    height: 380,
+    borderRadius: 190,
+    backgroundColor: 'rgba(129, 0, 33, 0.08)',
+    pointerEvents: 'none',
   },
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 16,
+    padding: 24,
   },
   scrollContentMobile: {
-    padding: 12,
-    justifyContent: 'flex-start',
+    padding: 16,
+    justifyContent: 'center',
   },
   outerCanvas: {
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Floating Card inspired by modern minimal card UI
   cardContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 32,
+    borderRadius: 24,
     overflow: 'hidden',
     shadowColor: '#2b0f16',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.16,
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.14,
     shadowRadius: 36,
     elevation: 10,
     width: '100%',
-    maxWidth: 980,
+    maxWidth: 880,
   },
   cardTablet: {
     flexDirection: 'row',
-    minHeight: 580,
+    minHeight: 520,
   },
   cardMobile: {
     flexDirection: 'column',
-    borderRadius: 24,
-    maxWidth: 480,
+    borderRadius: 20,
+    maxWidth: 420,
     shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 6,
   },
-  // ---------------- Left Pane ----------------
-  leftPane: {
-    position: 'relative',
-    overflow: 'hidden',
-    backgroundColor: '#1b0910',
-  },
-  leftPaneTablet: {
-    width: '50%',
-    minHeight: 580,
-  },
-  leftPaneMobile: {
-    width: '100%',
-    height: 180,
-  },
-  imageOverlayTop: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(28, 10, 16, 0.45)',
-  },
-  imageOverlayBottom: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: 'rgba(16, 5, 9, 0.65)',
-  },
-  leftContent: {
-    flex: 1,
-    padding: 38,
-    justifyContent: 'space-between',
-    zIndex: 2,
-  },
-  leftContentMobile: {
-    padding: 20,
-    justifyContent: 'flex-end',
-  },
-  brandTitleBlock: {
-    marginTop: 10,
-  },
-  brandTitleBlockMobile: {
-    marginTop: 0,
-  },
-  heroTitleLine: {
-    color: '#ffffff',
-    fontSize: 44,
-    fontWeight: '400',
-    fontFamily: Platform.select({
-      web: '"Raconteur NF", "Playfair Display", Georgia, serif',
-      ios: 'Raconteur NF',
-      default: 'Raconteur NF',
-    }),
-    lineHeight: 48,
-    letterSpacing: 0.8,
-  },
-  heroTitleMobile: {
-    color: '#ffffff',
-    fontSize: 26,
-    fontWeight: '400',
-    fontFamily: Platform.select({
-      web: '"Raconteur NF", "Playfair Display", Georgia, serif',
-      ios: 'Raconteur NF',
-      default: 'Raconteur NF',
-    }),
-    lineHeight: 30,
-    letterSpacing: 0.6,
-  },
-  heroAccentDash: {
-    width: 44,
-    height: 3.5,
-    backgroundColor: '#b93a52',
-    borderRadius: 2,
-    marginTop: 12,
-  },
-  heroAccentDashMobile: {
-    width: 32,
-    height: 3,
-    backgroundColor: '#b93a52',
-    borderRadius: 2,
-    marginTop: 6,
-  },
-  leftBottomBlock: {
-    marginBottom: 6,
-  },
-  welcomeHeading: {
-    color: '#ffffff',
-    fontSize: 17,
-    fontWeight: '700',
-    fontFamily: Platform.select({
-      web: 'Plus Jakarta Sans, Inter, sans-serif',
-      default: 'sans-serif',
-    }),
-    marginBottom: 8,
-  },
-  welcomeDescription: {
-    color: '#d4b2b9',
-    fontSize: 13,
-    lineHeight: 20,
-    fontFamily: Platform.select({
-      web: 'Plus Jakarta Sans, Inter, sans-serif',
-      default: 'sans-serif',
-    }),
-  },
-  heroDivider: {
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    marginVertical: 16,
-  },
-  portalBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  redStatusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#e11d48',
-  },
-  portalBadgeText: {
-    color: '#b38d95',
-    fontSize: 11.5,
-    fontWeight: '500',
-  },
-  portalBadgeTextMobile: {
-    color: '#f3c7d0',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  // ---------------- Right Pane ----------------
-  rightPane: {
+
+  // ---------------- LEFT PANE: Clean Form ----------------
+  formPane: {
     backgroundColor: '#ffffff',
     justifyContent: 'center',
   },
-  rightPaneTablet: {
-    width: '50%',
+  formPaneTablet: {
+    width: '52%',
     paddingVertical: 44,
-    paddingHorizontal: 52,
+    paddingHorizontal: 48,
   },
-  rightPaneMobile: {
+  formPaneMobile: {
     width: '100%',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    paddingVertical: 28,
+    paddingHorizontal: 22,
   },
-  rightHeader: {
+  formHeader: {
     alignItems: 'center',
+    marginBottom: 20,
+  },
+  formHeaderMobile: {
     marginBottom: 16,
   },
-  rightHeaderMobile: {
-    marginBottom: 14,
+  welcomeEyebrow: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 2.5,
+    color: '#810021',
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    fontFamily: Platform.select({
+      web: 'Plus Jakarta Sans, Inter, sans-serif',
+      default: 'sans-serif',
+    }),
   },
+  logoWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  logoWrapperMobile: {
+    marginBottom: 8,
+  },
+  officialBarLogo: {
+    width: 210,
+    height: 60,
+  },
+  officialBarLogoMobile: {
+    width: 175,
+    height: 50,
+  },
+  headerSubtitle: {
+    fontSize: 13,
+    color: '#78716c',
+    textAlign: 'center',
+    marginTop: 0,
+    marginBottom: 4,
+    lineHeight: 18,
+    fontFamily: Platform.select({
+      web: 'Plus Jakarta Sans, Inter, sans-serif',
+      default: 'sans-serif',
+    }),
+  },
+  headerSubtitleMobile: {
+    fontSize: 12,
+  },
+
+  // Mode Toggle Pill
   modeToggleContainer: {
     flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
-    borderRadius: 14,
-    padding: 4,
+    backgroundColor: '#f5f5f4',
+    borderRadius: 24,
+    padding: 3,
     marginBottom: 20,
     width: '100%',
   },
   modeToggleContainerMobile: {
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 3,
     marginBottom: 16,
   },
@@ -209,246 +155,257 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
   modeToggleTabMobile: {
-    paddingVertical: 8,
+    paddingVertical: 7,
     gap: 4,
-    borderRadius: 8,
+    borderRadius: 18,
   },
   modeToggleTabActive: {
     backgroundColor: '#ffffff',
     shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
-    shadowRadius: 4,
+    shadowRadius: 3,
     elevation: 2,
   },
   modeToggleText: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#6b7280',
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#78716c',
   },
   modeToggleTextMobile: {
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 11.5,
   },
   modeToggleTextActive: {
-    color: '#641b2a',
+    color: '#810021',
+    fontWeight: '700',
   },
-  passwordInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#e2e4e8',
-    borderRadius: 14,
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 14,
-    height: 52,
+
+  // Form Body & Input Fields with Rounded Pill Style
+  formBody: {
+    width: '100%',
   },
-  passwordInputWrapperMobile: {
-    height: 48,
-    borderRadius: 12,
-    paddingHorizontal: 12,
+  inputGroup: {
+    marginBottom: 16,
   },
-  passwordInput: {
-    flex: 1,
-    fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
-    fontWeight: '500',
-    color: '#111827',
-    paddingVertical: 0,
+  inputGroupMobile: {
+    marginBottom: 14,
   },
-  passwordInputMobile: {
-    fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
-  },
-  passwordEyeButton: {
-    padding: 6,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  rightBrandName: {
-    color: '#641b2a',
-    fontSize: 22,
-    fontWeight: '400',
-    fontFamily: Platform.select({
-      web: '"Raconteur NF", "Playfair Display", Georgia, serif',
-      ios: 'Raconteur NF',
-      default: 'Raconteur NF',
-    }),
-    letterSpacing: 0.5,
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#57534e',
     marginBottom: 8,
-    textAlign: 'center',
-  },
-  rightBrandNameMobile: {
-    fontSize: 19,
-    marginBottom: 6,
-  },
-  logoWrapper: {
-    marginBottom: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logoWrapperMobile: {
-    marginBottom: 6,
-  },
-  officialBarLogo: {
-    width: 90,
-    height: 90,
-  },
-  officialBarLogoMobile: {
-    width: 68,
-    height: 68,
-  },
-  formTitle: {
-    color: '#1a1a1e',
-    fontSize: 14.5,
-    fontWeight: '800',
     letterSpacing: 0.2,
     fontFamily: Platform.select({
       web: 'Plus Jakarta Sans, Inter, sans-serif',
       default: 'sans-serif',
     }),
   },
-  formTitleMobile: {
-    fontSize: 13,
+  inputLabelMobile: {
+    fontSize: 11.5,
+    marginBottom: 6,
   },
+  roundedInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e7e5e4',
+    borderRadius: 24,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    height: 50,
+  },
+  roundedInputWrapperMobile: {
+    height: 48,
+    borderRadius: 24,
+    paddingHorizontal: 14,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  roundedTextInput: {
+    flex: 1,
+    fontSize: 16, // Invariant: >= 16px to prevent iOS Safari auto-zoom
+    fontWeight: '500',
+    color: '#1c1917',
+    paddingVertical: 0,
+  },
+  roundedTextInputMobile: {
+    fontSize: 16, // Invariant: >= 16px to prevent iOS Safari auto-zoom
+  },
+  passwordEyeButton: {
+    padding: 6,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Primary Action Button (Rounded Pill with Soft Glow Shadow)
+  submitButtonWrapper: {
+    width: '100%',
+    marginTop: 6,
+    marginBottom: 16,
+  },
+  submitButtonWrapperMobile: {
+    marginTop: 4,
+    marginBottom: 14,
+  },
+  submitButton: {
+    width: '100%',
+    height: 48,
+    backgroundColor: '#810021',
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#810021',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.28,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  submitButtonMobile: {
+    height: 46,
+    borderRadius: 22,
+  },
+  submitButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: '#a85068',
+    shadowOpacity: 0.08,
+  },
+  submitButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+  },
+  submitButtonTextMobile: {
+    fontSize: 13,
+    letterSpacing: 1,
+  },
+
+  // Bottom Links & Controls
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  controlsRowMobile: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  trainingModeGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  trainingModeLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#78716c',
+  },
+  forgotPinPressable: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    minHeight: 40,
+    justifyContent: 'center',
+  },
+  forgotPinText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#810021',
+  },
+
+  // Error Banner
   errorBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fef2f2',
     borderWidth: 1,
     borderColor: '#fecdd3',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
     borderRadius: 12,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   errorText: {
     color: '#be123c',
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '600',
     flex: 1,
-    lineHeight: 18,
+    lineHeight: 16,
   },
-  formBody: {
+
+  // ---------------- LEFT PANE: Natural Stage Photography ----------------
+  heroPane: {
+    position: 'relative',
+    overflow: 'hidden',
+    backgroundColor: '#171314',
+  },
+  heroPaneTablet: {
+    width: '48%',
+    minHeight: 520,
+  },
+  heroPaneMobile: {
     width: '100%',
+    height: 140,
   },
-  inputGroup: {
-    marginBottom: 18,
+  heroImageOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    // Subtle central atmospheric darkening behind the white logo and badge
+    backgroundColor: 'rgba(0, 0, 0, 0.32)',
   },
-  inputGroupMobile: {
-    marginBottom: 14,
+  heroContent: {
+    flex: 1,
+    padding: 32,
+    alignItems: 'center',
+    justifyContent: 'center', // Centered vertically and horizontally
+    zIndex: 2,
   },
-  inputLabel: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#1f242e',
+  heroContentMobile: {
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroLogoBadge: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    // Zero border, pure clean floating logo with ambient depth
+  },
+  heroLogoBadgeMobile: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  heroBrandLockup: {
+    width: 240,
+    height: 72,
     marginBottom: 8,
+  },
+  heroBrandLockupMobile: {
+    width: 170,
+    height: 52,
+    marginBottom: 0,
+  },
+  heroTagline: {
+    color: '#ffffff',
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    fontWeight: '600',
+    letterSpacing: 0.4,
+    marginTop: 2,
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 6,
     fontFamily: Platform.select({
       web: 'Plus Jakarta Sans, Inter, sans-serif',
       default: 'sans-serif',
     }),
-  },
-  inputLabelMobile: {
-    fontSize: 12.5,
-    marginBottom: 6,
-  },
-  textInput: {
-    height: 52,
-    borderWidth: 1.5,
-    borderColor: '#e2e4e8',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    fontSize: 15,
-    fontWeight: '500',
-    color: '#111827',
-    backgroundColor: '#ffffff',
-  },
-  textInputMobile: {
-    height: 48,
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    fontSize: 14,
-  },
-  clockInButtonWrapper: {
-    width: '100%',
-    marginTop: 8,
-    marginBottom: 20,
-  },
-  clockInButtonWrapperMobile: {
-    marginTop: 6,
-    marginBottom: 16,
-  },
-  clockInButton: {
-    width: '100%',
-    height: 52,
-    backgroundColor: '#641b2a',
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#641b2a',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  clockInButtonMobile: {
-    height: 48,
-    borderRadius: 12,
-  },
-  clockInButtonDisabled: {
-    opacity: 0.45,
-    backgroundColor: '#7a3b47',
-  },
-  clockInButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-  clockInButtonTextMobile: {
-    fontSize: 14.5,
-  },
-  controlsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 4,
-  },
-  controlsRowMobile: {
-    paddingTop: 0,
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  trainingModeGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  trainingModeGroupMobile: {
-    gap: 8,
-  },
-  trainingModeLabel: {
-    fontSize: 13.5,
-    fontWeight: '600',
-    color: '#1a1a1e',
-  },
-  trainingModeLabelMobile: {
-    fontSize: 12.5,
-  },
-  forgotPinPressable: {
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    minHeight: 44,
-    justifyContent: 'center',
-  },
-  forgotPinText: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: '#641b2a',
-  },
-  forgotPinTextMobile: {
-    fontSize: 12.5,
   },
 });

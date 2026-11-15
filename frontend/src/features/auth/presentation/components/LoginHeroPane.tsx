@@ -3,7 +3,8 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { styles } from '../screens/LoginScreen.styles';
 
-const JAZZ_HERO_IMAGE = require('../../../../../assets/images/jazz-club-stage.jpg');
+const JAZZ_HERO_IMAGE = require('../../../../../assets/images/jazz-club-stage-blurred.jpg');
+const MONKS_DREAM_LOGO_WHITE = require('../../../../../assets/monks-dream-logo-lockup-white.png');
 
 interface LoginHeroPaneProps {
   isTablet: boolean;
@@ -11,53 +12,30 @@ interface LoginHeroPaneProps {
 
 export const LoginHeroPane: React.FC<LoginHeroPaneProps> = ({ isTablet }) => {
   return (
-    <View style={[styles.leftPane, isTablet ? styles.leftPaneTablet : styles.leftPaneMobile]}>
+    <View style={[styles.heroPane, isTablet ? styles.heroPaneTablet : styles.heroPaneMobile]}>
+      {/* Blurred atmospheric stage photography adding visual depth */}
       <ExpoImage
         source={JAZZ_HERO_IMAGE}
-        style={StyleSheet.absoluteFill}
+        style={StyleSheet.absoluteFillObject}
         contentFit="cover"
-        transition={400}
+        transition={300}
         priority="high"
+        accessibilityLabel="Monk's Dream Jazz Club Stage"
       />
-      <View style={styles.imageOverlayTop} />
-      <View style={styles.imageOverlayBottom} />
+      <View style={styles.heroImageOverlay} />
 
-      <View style={[styles.leftContent, !isTablet && styles.leftContentMobile]}>
-        <View style={[styles.brandTitleBlock, !isTablet && styles.brandTitleBlockMobile]}>
-          {isTablet ? (
-            <>
-              <Text style={styles.heroTitleLine}>Monk's</Text>
-              <Text style={styles.heroTitleLine}>Dream</Text>
-              <Text style={styles.heroTitleLine}>Jazz Bar</Text>
-              <View style={styles.heroAccentDash} />
-            </>
-          ) : (
-            <>
-              <Text style={styles.heroTitleMobile}>Monk's Dream Jazz Bar</Text>
-              <View style={styles.heroAccentDashMobile} />
-            </>
-          )}
+      {/* Clean centered logo lockup without bounding border */}
+      <View style={[styles.heroContent, !isTablet && styles.heroContentMobile]}>
+        <View style={[styles.heroLogoBadge, !isTablet && styles.heroLogoBadgeMobile]}>
+          <ExpoImage
+            source={MONKS_DREAM_LOGO_WHITE}
+            style={isTablet ? styles.heroBrandLockup : styles.heroBrandLockupMobile}
+            contentFit="contain"
+            priority="high"
+            accessibilityLabel="Monk's Dream logo"
+          />
+          {isTablet && <Text style={styles.heroTagline}>Live sound · Artisan pours</Text>}
         </View>
-
-        {isTablet ? (
-          <View style={styles.leftBottomBlock}>
-            <Text style={styles.welcomeHeading}>Welcome back to the club.</Text>
-            <Text style={styles.welcomeDescription}>
-              Clock in, track your shift, and get back to what you do best. Built for every member
-              of the team.
-            </Text>
-            <View style={styles.heroDivider} />
-            <View style={styles.portalBadgeRow}>
-              <View style={styles.redStatusDot} />
-              <Text style={styles.portalBadgeText}>Secure staff portal · Shift attendance</Text>
-            </View>
-          </View>
-        ) : (
-          <View style={styles.portalBadgeRow}>
-            <View style={styles.redStatusDot} />
-            <Text style={styles.portalBadgeTextMobile}>Secure Staff Portal</Text>
-          </View>
-        )}
       </View>
     </View>
   );

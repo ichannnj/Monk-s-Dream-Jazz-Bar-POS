@@ -20,12 +20,9 @@ import { StaffPinLoginForm } from '../components/StaffPinLoginForm';
 import { AdminPasswordLoginForm } from '../components/AdminPasswordLoginForm';
 import { LoginHeroPane } from '../components/LoginHeroPane';
 import { LoginHeader } from '../components/LoginHeader';
-import { AlertCircle } from 'lucide-react-native';
+import { TimeclockKioskScreen } from './TimeclockKioskScreen';
+import { AlertCircle, User } from 'lucide-react-native';
 import { styles } from './LoginScreen.styles';
-
-const TimeclockKioskScreen = React.lazy(() =>
-  import('./TimeclockKioskScreen').then((m) => ({ default: m.TimeclockKioskScreen }))
-);
 
 export const LoginScreen: React.FC = () => {
   const { setUser, setIsTrainingMode } = useAuthStore();
@@ -209,11 +206,7 @@ export const LoginScreen: React.FC = () => {
   );
 
   if (authMode === 'timeclock') {
-    return (
-      <Suspense fallback={<ScreenLoadingFallback message="Loading Timeclock Kiosk..." />}>
-        <TimeclockKioskScreen onBackToLogin={() => setAuthMode('staff')} />
-      </Suspense>
-    );
+    return <TimeclockKioskScreen onBackToLogin={() => setAuthMode('staff')} />;
   }
 
   const isCtaDisabled =
@@ -224,6 +217,10 @@ export const LoginScreen: React.FC = () => {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.keyboardContainer}
     >
+      {/* Decorative background shapes inspired by modern landing designs */}
+      <View style={styles.decorCircleTopLeft} />
+      <View style={styles.decorCircleBottomRight} />
+
       <ScrollView
         contentContainerStyle={[styles.scrollContent, !isTablet && styles.scrollContentMobile]}
         keyboardShouldPersistTaps="handled"
@@ -231,12 +228,12 @@ export const LoginScreen: React.FC = () => {
       >
         <View style={styles.outerCanvas}>
           <View style={[styles.cardContainer, isTablet ? styles.cardTablet : styles.cardMobile]}>
-            {/* LEFT PANE: Jazz Club Hero & Ambiance */}
+            {/* LEFT PANE: Natural Stage Artwork (Desktop/Tablet & Mobile Top Banner) */}
             <LoginHeroPane isTablet={isTablet} />
 
-            {/* RIGHT PANE: Staff Login & Attendance Form */}
+            {/* RIGHT PANE: Minimal Form */}
             <View
-              style={[styles.rightPane, isTablet ? styles.rightPaneTablet : styles.rightPaneMobile]}
+              style={[styles.formPane, isTablet ? styles.formPaneTablet : styles.formPaneMobile]}
             >
               <LoginHeader
                 authMode={authMode}
@@ -247,32 +244,38 @@ export const LoginScreen: React.FC = () => {
 
               {/* Error Banner */}
               {errorMessage ? (
-                <View style={styles.errorBanner}>
-                  <AlertCircle size={18} color="#be123c" style={{ marginRight: 8 }} />
+                <View style={styles.errorBanner} accessibilityLiveRegion="polite">
+                  <AlertCircle size={16} color="#be123c" style={{ marginRight: 6 }} />
                   <Text style={styles.errorText}>{errorMessage}</Text>
                 </View>
               ) : null}
 
               <View style={styles.formBody}>
-                {/* Username / Staff ID */}
+                {/* Username / Staff ID Pill */}
                 <View style={[styles.inputGroup, !isTablet && styles.inputGroupMobile]}>
-                  <Text style={[styles.inputLabel, !isTablet && styles.inputLabelMobile]}>
-                    {authMode === 'admin' ? 'Admin Username or Email' : 'Username'}
-                  </Text>
-                  <TextInput
-                    value={username}
-                    onChangeText={(val) => {
-                      setUsername(val);
-                      if (errorMessage) setErrorMessage(null);
-                    }}
-                    placeholder={
-                      authMode === 'admin' ? 'Enter admin username or email' : 'Enter staff ID'
-                    }
-                    placeholderTextColor="#9ca3af"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    style={[styles.textInput, !isTablet && styles.textInputMobile]}
-                  />
+                  <View
+                    style={[
+                      styles.roundedInputWrapper,
+                      !isTablet && styles.roundedInputWrapperMobile,
+                    ]}
+                  >
+                    <User size={18} color="#a8a29e" style={styles.inputIcon} />
+                    <TextInput
+                      value={username}
+                      onChangeText={(val) => {
+                        setUsername(val);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                      placeholder={authMode === 'admin' ? 'Username or Email' : 'Staff ID'}
+                      placeholderTextColor="#a8a29e"
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      spellCheck={false}
+                      autoComplete={authMode === 'admin' ? 'username' : 'off'}
+                      accessibilityLabel={authMode === 'admin' ? 'Username or Email' : 'Staff ID'}
+                      style={[styles.roundedTextInput, !isTablet && styles.roundedTextInputMobile]}
+                    />
+                  </View>
                 </View>
 
                 {authMode === 'admin' ? (
@@ -296,11 +299,11 @@ export const LoginScreen: React.FC = () => {
                   />
                 )}
 
-                {/* Primary CTA */}
+                {/* Primary CTA Button */}
                 <Animated.View
                   style={[
-                    styles.clockInButtonWrapper,
-                    !isTablet && styles.clockInButtonWrapperMobile,
+                    styles.submitButtonWrapper,
+                    !isTablet && styles.submitButtonWrapperMobile,
                     buttonAnimatedStyle,
                   ]}
                 >
@@ -310,56 +313,35 @@ export const LoginScreen: React.FC = () => {
                     onPressOut={handlePressOut}
                     disabled={isCtaDisabled}
                     style={[
-                      styles.clockInButton,
-                      !isTablet && styles.clockInButtonMobile,
-                      isCtaDisabled && styles.clockInButtonDisabled,
+                      styles.submitButton,
+                      !isTablet && styles.submitButtonMobile,
+                      isCtaDisabled && styles.submitButtonDisabled,
                     ]}
                     accessibilityRole="button"
-                    accessibilityLabel={
-                      authMode === 'admin' ? 'Sign In as Administrator' : 'Sign In to POS'
-                    }
+                    accessibilityLabel={authMode === 'admin' ? 'Sign In Admin' : 'Sign In POS'}
                   >
                     <Text
-                      style={[
-                        styles.clockInButtonText,
-                        !isTablet && styles.clockInButtonTextMobile,
-                      ]}
+                      style={[styles.submitButtonText, !isTablet && styles.submitButtonTextMobile]}
                     >
-                      {isSubmitting
-                        ? 'Verifying...'
-                        : authMode === 'admin'
-                          ? 'Sign In to Admin Console'
-                          : 'Sign In to POS'}
+                      {isSubmitting ? 'Signing in…' : 'Sign In'}
                     </Text>
                   </Pressable>
                 </Animated.View>
 
                 {/* Bottom Row Controls */}
                 <View style={[styles.controlsRow, !isTablet && styles.controlsRowMobile]}>
-                  <View
-                    style={[styles.trainingModeGroup, !isTablet && styles.trainingModeGroupMobile]}
-                  >
-                    <Text
-                      style={[
-                        styles.trainingModeLabel,
-                        !isTablet && styles.trainingModeLabelMobile,
-                      ]}
-                    >
-                      Training Mode
-                    </Text>
+                  <View style={styles.trainingModeGroup}>
+                    <Text style={styles.trainingModeLabel}>Training</Text>
                     <TrainingModeSwitch
                       value={isTraining}
                       onValueChange={(val) => {
                         setIsTraining(val);
                         if (val) {
-                          toast.info(
-                            "Training Sandbox Mode active — tickets won't route to live stations.",
-                            {
-                              title: 'Sandbox Mode ON',
-                            }
-                          );
+                          toast.info("Sandbox Mode — tickets won't route to live stations.", {
+                            title: 'Sandbox ON',
+                          });
                         } else {
-                          toast.info('Live Production Mode active.', { title: 'Live Mode' });
+                          toast.info('Live Mode active.', { title: 'Live Mode' });
                         }
                       }}
                     />
@@ -370,9 +352,7 @@ export const LoginScreen: React.FC = () => {
                     style={styles.forgotPinPressable}
                     accessibilityRole="link"
                   >
-                    <Text style={[styles.forgotPinText, !isTablet && styles.forgotPinTextMobile]}>
-                      Forgot PIN?
-                    </Text>
+                    <Text style={styles.forgotPinText}>Need help?</Text>
                   </Pressable>
                 </View>
               </View>
