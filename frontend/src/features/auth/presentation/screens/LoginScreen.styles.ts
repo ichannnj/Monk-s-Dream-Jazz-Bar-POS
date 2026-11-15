@@ -3,7 +3,7 @@ import { StyleSheet, Platform } from 'react-native';
 export const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
-    backgroundColor: '#f3ece7',
+    backgroundColor: '#FAF7F2', // Elegant Warm Cream canvas behind login card, complementing #810021
     position: 'relative',
     overflow: 'hidden',
   },
@@ -15,7 +15,7 @@ export const styles = StyleSheet.create({
     width: 320,
     height: 320,
     borderRadius: 160,
-    backgroundColor: 'rgba(129, 0, 33, 0.12)',
+    backgroundColor: 'rgba(129, 0, 33, 0.08)',
     pointerEvents: 'none',
   },
   decorCircleBottomRight: {
@@ -25,7 +25,7 @@ export const styles = StyleSheet.create({
     width: 380,
     height: 380,
     borderRadius: 190,
-    backgroundColor: 'rgba(129, 0, 33, 0.08)',
+    backgroundColor: 'rgba(129, 0, 33, 0.06)',
     pointerEvents: 'none',
   },
   scrollContent: {
