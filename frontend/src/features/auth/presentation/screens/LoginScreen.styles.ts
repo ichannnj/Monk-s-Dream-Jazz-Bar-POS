@@ -355,7 +355,7 @@ export const styles = StyleSheet.create({
     height: 140,
   },
   heroImageOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     // Subtle central atmospheric darkening behind the white logo and badge
     backgroundColor: 'rgba(0, 0, 0, 0.32)',
   },

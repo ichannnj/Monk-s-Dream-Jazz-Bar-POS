@@ -16,7 +16,7 @@ export const LoginHeroPane: React.FC<LoginHeroPaneProps> = ({ isTablet }) => {
       {/* Blurred atmospheric stage photography adding visual depth */}
       <ExpoImage
         source={JAZZ_HERO_IMAGE}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={300}
         priority="high"
