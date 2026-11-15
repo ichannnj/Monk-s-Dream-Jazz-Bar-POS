@@ -15,58 +15,66 @@ export const ModifierGroupListTab: React.FC<ModifierGroupListTabProps> = ({
   onDeleteGroup,
 }) => {
   return (
-    <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
-      <View className="space-y-4">
+    <View className="rounded-2xl border border-stone-200/80 bg-white p-3.5 sm:p-5 lg:p-6 shadow-xs">
+      <View className="space-y-3.5">
         {modifierGroups.length === 0 ? (
           <View className="py-12 items-center justify-center">
-            <Sliders size={40} color="#a8a29e" />
+            <Sliders size={36} color="#a8a29e" />
             <Text className="mt-2 text-base text-stone-500">
-              No modifier groups configured. Tap "New Modifier Group" to add.
+              No modifier groups configured. Tap "+ Add Group" to add.
             </Text>
           </View>
         ) : (
           modifierGroups.map((group) => (
-            <View key={group.id} className="rounded-xl border border-stone-200 bg-stone-50/70 p-4">
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <View className="flex-row items-center space-x-2">
-                    <Text className="text-lg font-bold text-stone-900">{group.name}</Text>
+            <View
+              key={group.id}
+              className="rounded-xl border border-stone-200/90 bg-stone-50/50 p-3.5 sm:p-4"
+            >
+              <View className="flex-row items-start sm:items-center justify-between gap-3">
+                <View className="flex-1 min-w-0">
+                  <View className="flex-row items-center gap-2 flex-wrap">
+                    <Text className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
+                      {group.name}
+                    </Text>
                     {group.is_required && (
-                      <View className="rounded-md bg-amber-100 border border-amber-300 px-2 py-0.5">
-                        <Text className="text-base font-bold text-amber-900">Required</Text>
+                      <View className="rounded-md bg-stone-100 border border-stone-300 px-2 py-0.5">
+                        <Text className="text-xs font-bold text-stone-700">Required</Text>
                       </View>
                     )}
                   </View>
-                  <Text className="text-base text-stone-500 mt-0.5">
-                    Rules: Min {group.min_selections} • Max {group.max_selections} choices
+                  <Text className="text-xs text-stone-500 font-medium mt-0.5">
+                    Select {group.min_selections}–{group.max_selections} choices
                   </Text>
                 </View>
-                <View className="flex-row items-center space-x-2">
+
+                <View className="flex-row items-center gap-2 flex-shrink-0">
                   <Pressable
                     onPress={() => onEditGroup(group)}
-                    className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-white border border-stone-300 active:bg-stone-100"
+                    className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl bg-white border border-stone-200 active:bg-stone-50"
+                    accessibilityLabel={`Edit ${group.name}`}
                   >
-                    <Edit size={18} color="#44403c" />
+                    <Edit size={17} color="#1c1917" />
                   </Pressable>
                   <Pressable
                     onPress={() => onDeleteGroup(group)}
-                    className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-rose-50 border border-rose-200 active:bg-rose-100"
+                    className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl bg-white border border-stone-200 active:bg-stone-50"
+                    accessibilityLabel={`Delete ${group.name}`}
                   >
-                    <Trash2 size={18} color="#e11d48" />
+                    <Trash2 size={17} color="#800020" />
                   </Pressable>
                 </View>
               </View>
 
-              <View className="mt-3 border-t border-stone-200 pt-3">
-                <Text className="text-base font-semibold text-stone-600 mb-2">Options:</Text>
-                <View className="flex-row flex-wrap gap-2">
+              {/* Options pill chips */}
+              <View className="mt-3 border-t border-stone-200/70 pt-2.5">
+                <View className="flex-row flex-wrap gap-1.5">
                   {group.options && group.options.length > 0 ? (
                     group.options.map((opt) => (
                       <View
                         key={opt.id}
-                        className="rounded-lg bg-white border border-stone-300 px-3 py-1.5"
+                        className="rounded-lg bg-white border border-stone-200 px-2.5 py-1"
                       >
-                        <Text className="text-base text-stone-800">
+                        <Text className="text-xs text-stone-800 font-medium">
                           {opt.name}{' '}
                           <Text className="font-bold text-[#800020]">
                             {Number(opt.price_delta || 0) > 0
@@ -74,16 +82,16 @@ export const ModifierGroupListTab: React.FC<ModifierGroupListTabProps> = ({
                               : '(+₱0.00)'}
                           </Text>
                           {opt.inventory_item && (
-                            <Text className="text-base text-stone-500">
+                            <Text className="text-stone-400">
                               {' '}
-                              • -{opt.amount_delta} {opt.unit}
+                              · {opt.amount_delta} {opt.unit}
                             </Text>
                           )}
                         </Text>
                       </View>
                     ))
                   ) : (
-                    <Text className="text-base text-stone-400">No options defined</Text>
+                    <Text className="text-xs text-stone-400 font-medium">No options defined</Text>
                   )}
                 </View>
               </View>

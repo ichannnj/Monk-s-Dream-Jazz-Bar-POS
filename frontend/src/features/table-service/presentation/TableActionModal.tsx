@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, Pressable, Modal, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  Modal,
+  StyleSheet,
+  ScrollView,
+  useWindowDimensions,
+} from 'react-native';
 import {
   PlusCircle,
   Repeat,
@@ -7,13 +15,20 @@ import {
   UtensilsCrossed,
   Trash2,
   ArrowRightLeft,
+  Receipt,
 } from 'lucide-react-native';
 import { TableItem, OrderLineItem } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 import { useAuthStore } from '@/features/auth';
 import { useOrderStore } from '@/features/orders';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { ConfirmationModal } from '@/features/shared';
+import { ConfirmationModal, useVenueStore } from '@/features/shared';
+import { CustomerBillModal } from '@/features/checkout';
+import { printerApi } from '@/features/printer';
+import {
+  calculateTabBilling,
+  PricingLineItem,
+} from '@/features/checkout/utils/taxAndDiscountCalculator';
 import { TableActionHeader } from './table-action/TableActionHeader';
 import { TableActionTabSelector } from './table-action/TableActionTabSelector';
 import { TableActionRoundList, RoundGroup } from './table-action/TableActionRoundList';
@@ -45,12 +60,19 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   const { voidOrderItem, closeEmptyTab, upsertTabDoorCharge } = useOrderStore();
   const todayEvent = useEventStore((s) => s.getTodayActiveEvent());
 
+  const { height } = useWindowDimensions();
+  const isCompactHeight = height < 520;
+  const { operatingMode, cafeFoodServiceChargeRate, eventServiceChargeRate, serviceChargeEnabled } =
+    useVenueStore();
+
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(table?.activeTabs?.[0] || 1);
   const [itemToVoid, setItemToVoid] = useState<OrderLineItem | null>(null);
   const [isVoidModalOpen, setIsVoidModalOpen] = useState(false);
   const [isConfirmCloseEmptyOpen, setIsConfirmCloseEmptyOpen] = useState(false);
   const [isItemTransferModalOpen, setIsItemTransferModalOpen] = useState(false);
   const [isDoorChargeEditorOpen, setIsDoorChargeEditorOpen] = useState(false);
+  const [isCustomerBillOpen, setIsCustomerBillOpen] = useState(false);
+  const [isPrintingBill, setIsPrintingBill] = useState(false);
 
   useEffect(() => {
     if (table) {
@@ -194,16 +216,91 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     await upsertTabDoorCharge(table.id, selectedTabIndex, 0, 0, todayEvent?.id || undefined);
   };
 
+  const activeTabItems = useMemo(() => {
+    return (currentTab?.items || []).filter((i) => i.status !== 'cancelled');
+  }, [currentTab?.items]);
+
+  const pricingItems = useMemo<PricingLineItem[]>(() => {
+    return activeTabItems.map((item) => ({
+      id: item.id,
+      productName: item.productName || 'Item',
+      unitPrice: item.unitPrice ?? 0,
+      quantity: item.quantity || 1,
+      stationTarget: (item.stationTarget as 'bar' | 'kitchen') || 'bar',
+      notes: item.notes,
+      categorySlug: item.categorySlug,
+    }));
+  }, [activeTabItems]);
+
+  const billing = useMemo(() => {
+    return calculateTabBilling(pricingItems, {
+      operatingMode: currentTab?.operatingMode || operatingMode || 'CAFE',
+      orderType: 'DINE_IN',
+      serviceChargeEnabled,
+      cafeFoodServiceChargeRate,
+      eventServiceChargeRate,
+    });
+  }, [
+    pricingItems,
+    currentTab?.operatingMode,
+    operatingMode,
+    serviceChargeEnabled,
+    cafeFoodServiceChargeRate,
+    eventServiceChargeRate,
+  ]);
+
+  const handlePrintCustomerBill = async () => {
+    if (isPrintingBill || !currentTab) return;
+    try {
+      setIsPrintingBill(true);
+      const billData = {
+        isBillStatement: true,
+        receiptNumber: `BILL-${currentTab.id.slice(0, 8).toUpperCase()}`,
+        tabId: currentTab.id,
+        operatingMode: currentTab.operatingMode || operatingMode || 'CAFE',
+        timestamp: new Date().toISOString(),
+        tableNumber: table.code,
+        tableLabel: table.code.toLowerCase().startsWith('table')
+          ? table.code
+          : `Table ${table.code}`,
+        tabName: currentTab.guestName || `Tab #${selectedTabIndex}`,
+        customerName: currentTab.guestName || `Tab #${selectedTabIndex}`,
+        serverName: currentUser?.displayName || 'Floor Staff',
+        waiterName: currentUser?.displayName || 'Floor Staff',
+        items: activeTabItems,
+        subtotal: billing.grossSubtotal,
+        discountAmount: billing.totalDiscountAmount,
+        serviceCharge: billing.serviceCharge,
+        total: billing.totalAmountDue,
+        amount: billing.totalAmountDue,
+        vatableSales: billing.vatableSales,
+        vatAmount: billing.vatAmount,
+        vatExemptSales: billing.vatExemptSales,
+      };
+      await printerApi.enqueueBillStatement(billData);
+      toast.success('Bill statement sent to printer', { title: 'Bill Printed' });
+    } catch (err: any) {
+      console.error('[TableActionModal] Failed to print bill:', err);
+      toast.error('Failed to print bill statement', { title: 'Print Error' });
+    } finally {
+      setIsPrintingBill(false);
+    }
+  };
+
   return (
     <>
       <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-        <View className="flex-1 bg-black/75 justify-center items-center p-2.5 sm:p-5">
+        <View
+          className={`flex-1 bg-black/75 justify-center items-center ${isCompactHeight ? 'p-1.5' : 'p-2.5 sm:p-5'}`}
+        >
           <Pressable
             style={StyleSheet.absoluteFill}
             onPress={onClose}
             accessibilityLabel="Close modal"
           />
-          <View className="w-full max-w-2xl bg-white rounded-3xl p-4 sm:p-6 shadow-2xl max-h-[94%] flex-col">
+          <View
+            className={`w-full max-w-2xl bg-white rounded-3xl ${isCompactHeight ? 'p-3 max-h-[98%]' : 'p-4 sm:p-6 max-h-[94%]'} shadow-2xl flex-col`}
+          >
             {/* 1. Header */}
             <TableActionHeader table={table} onClose={onClose} />
 
@@ -238,37 +335,37 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                   }}
                   className="flex-row items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-[#810021] active:opacity-90 min-h-[48px] shadow-xs"
                   accessibilityRole="button"
-                  accessibilityLabel={`Start Round ${nextRound} Order`}
+                  accessibilityLabel={`Order Round ${nextRound}`}
                 >
                   <UtensilsCrossed size={18} color="#ffffff" strokeWidth={2.3} />
                   <Text className="text-base font-extrabold text-white">
-                    + Start Round {nextRound} Order
+                    + Order Round {nextRound}
                   </Text>
                 </Pressable>
 
                 {/* 2 & 3. TAB MANAGEMENT: Split Tab, Move Items & Transfer */}
-                <View className="flex-col sm:flex-row gap-2.5">
+                <View className="flex-row gap-2">
                   <Pressable
                     onPress={() => {
                       onClose();
                       onOpenNewTab(table);
                     }}
-                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-3 rounded-2xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
+                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-2xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
                     accessibilityRole="button"
-                    accessibilityLabel="Open Split Tab"
+                    accessibilityLabel="Split Tab"
                   >
-                    <PlusCircle size={18} color="#1C1917" strokeWidth={2.2} />
-                    <Text className="text-sm font-bold text-stone-900">+ Split Tab</Text>
+                    <PlusCircle size={16} color="#1C1917" strokeWidth={2.2} />
+                    <Text className="text-sm font-bold text-stone-900">Split Tab</Text>
                   </Pressable>
 
                   {(currentTab?.items.length || 0) > 0 && (
                     <Pressable
                       onPress={() => setIsItemTransferModalOpen(true)}
-                      className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-3 rounded-2xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
+                      className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-2xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
                       accessibilityRole="button"
-                      accessibilityLabel="Move items to another tab"
+                      accessibilityLabel="Move items"
                     >
-                      <ArrowRightLeft size={18} color="#1C1917" strokeWidth={2.2} />
+                      <ArrowRightLeft size={16} color="#1C1917" strokeWidth={2.2} />
                       <Text className="text-sm font-bold text-stone-900">Move Items</Text>
                     </Pressable>
                   )}
@@ -278,42 +375,54 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                       onClose();
                       onTransferTable(table);
                     }}
-                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-3 rounded-2xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
+                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-2xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
                     accessibilityRole="button"
-                    accessibilityLabel="Transfer Tab or Table"
+                    accessibilityLabel="Transfer Table"
                   >
-                    <Repeat size={18} color="#1C1917" strokeWidth={2.2} />
-                    <Text className="text-sm font-bold text-stone-900">Transfer Table</Text>
+                    <Repeat size={16} color="#1C1917" strokeWidth={2.2} />
+                    <Text className="text-sm font-bold text-stone-900">Transfer</Text>
                   </Pressable>
                 </View>
 
-                {/* 4. BILLING: Settle Tab */}
-                <Pressable
-                  onPress={() => {
-                    onClose();
-                    onCheckout(table, selectedTabIndex);
-                  }}
-                  className="flex-row items-center justify-center gap-2 py-3.5 px-5 rounded-2xl bg-[#810021] active:opacity-90 min-h-[48px] shadow-xs"
-                  accessibilityRole="button"
-                  accessibilityLabel={`Settle Tab for ${formatCurrency(tabTotal)}`}
-                >
-                  <CreditCard size={18} color="#ffffff" strokeWidth={2.3} />
-                  <Text className="text-base font-extrabold text-white">
-                    Settle Tab · {formatCurrency(tabTotal)}
-                  </Text>
-                </Pressable>
+                {/* 4. BILLING: View Bill & Settle Tab */}
+                <View className="flex-row items-center gap-2">
+                  <Pressable
+                    onPress={() => setIsCustomerBillOpen(true)}
+                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3.5 px-3 rounded-2xl border border-[#810021] bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
+                    accessibilityRole="button"
+                    accessibilityLabel="View full customer bill statement"
+                  >
+                    <Receipt size={18} color="#810021" strokeWidth={2.4} />
+                    <Text className="text-sm font-extrabold text-[#810021]">View Bill</Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => {
+                      onClose();
+                      onCheckout(table, selectedTabIndex);
+                    }}
+                    className="flex-2 flex-row items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-[#810021] active:opacity-90 min-h-[48px] shadow-xs"
+                    accessibilityRole="button"
+                    accessibilityLabel={`Settle Tab for ${formatCurrency(tabTotal)}`}
+                  >
+                    <CreditCard size={18} color="#ffffff" strokeWidth={2.3} />
+                    <Text className="text-base font-extrabold text-white">
+                      Settle Tab · {formatCurrency(tabTotal)}
+                    </Text>
+                  </Pressable>
+                </View>
 
                 {/* 5. CLEANUP: Close Empty Tab */}
                 {hasZeroItems ? (
                   <Pressable
                     onPress={() => setIsConfirmCloseEmptyOpen(true)}
-                    className="flex-row items-center justify-center gap-2 py-3 px-4 rounded-2xl border border-amber-300 bg-amber-50 active:bg-amber-100 min-h-[48px]"
+                    className="flex-row items-center justify-center gap-2 py-3 px-4 rounded-2xl border border-stone-300 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
                     accessibilityRole="button"
                     accessibilityLabel="Close empty tab"
                   >
-                    <Trash2 size={16} color="#b45309" strokeWidth={2.2} />
-                    <Text className="text-base font-bold text-amber-900">
-                      Close / Clean Empty Tab #{selectedTabIndex}
+                    <Trash2 size={16} color="#78716C" strokeWidth={2.2} />
+                    <Text className="text-base font-bold text-stone-800">
+                      Close Empty Tab #{selectedTabIndex}
                     </Text>
                   </Pressable>
                 ) : null}
@@ -322,6 +431,32 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* Fullscreen Customer Bill Modal */}
+      {isCustomerBillOpen && currentTab && (
+        <CustomerBillModal
+          visible={isCustomerBillOpen}
+          onClose={() => setIsCustomerBillOpen(false)}
+          tableName={`Table ${table.code}`}
+          tabLabel={currentTab.guestName || `Tab #${selectedTabIndex}`}
+          serverName={currentUser?.displayName}
+          rawItems={activeTabItems}
+          subtotal={billing.grossSubtotal}
+          vatableSales={billing.vatableSales}
+          vatAmount={billing.vatAmount}
+          vatExemptSales={billing.vatExemptSales}
+          serviceCharge={billing.serviceCharge}
+          discountAmount={billing.totalDiscountAmount}
+          grandTotal={billing.totalAmountDue || tabTotal}
+          onPrintBill={handlePrintCustomerBill}
+          isPrintingBill={isPrintingBill}
+          onProceedToPay={() => {
+            setIsCustomerBillOpen(false);
+            onClose();
+            onCheckout(table, selectedTabIndex);
+          }}
+        />
+      )}
 
       {/* Void Modal */}
       {isVoidModalOpen && itemToVoid ? (

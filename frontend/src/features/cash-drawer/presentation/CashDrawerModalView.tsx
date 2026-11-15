@@ -128,13 +128,11 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
     {
       value: 'main',
       label: 'Main Floor Till',
-      description: 'Waiter & Cashier counter till',
       icon: Vault,
     },
     {
       value: 'bar',
       label: 'Bar Station Till',
-      description: 'Barista & Bartender station till',
       icon: Coins,
     },
   ];
@@ -143,60 +141,52 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
     {
       value: 'kick',
       label: 'Open Cash Drawer',
-      description: 'Send 24V solenoid pulse to pop cash drawer open',
       icon: Zap,
-      variant: 'warning',
     },
     {
       value: 'cash_in',
-      label: 'Cash In (Add Change Float)',
-      description: 'Record additional bills or coin change added to drawer',
+      label: 'Cash In (Change Float)',
       icon: ArrowDownCircle,
-      variant: 'success',
     },
     {
       value: 'cash_out',
       label: 'Petty Cash Paid-Out',
-      description: 'Record petty cash expense or supplier payout',
       icon: ArrowUpCircle,
-      variant: 'warning',
     },
     {
       value: 'drop',
       label: 'Safe Drop Transfer',
-      description: 'Transfer excess cash from register to floor safe',
       icon: Vault,
     },
     {
       value: 'audit',
       label: 'End Shift Cash Audit',
-      description: 'Reconcile physical cash count against expected balance',
       icon: Calculator,
     },
   ];
 
   return (
-    <View className="flex-1 bg-gray-50 p-3 sm:p-6">
+    <View className="flex-1 bg-[#FAF8F5] p-3 sm:p-5">
       {/* Unified Responsive Top Header Card */}
-      <View className="flex-col lg:flex-row lg:items-center justify-between bg-white p-4 sm:p-5 rounded-3xl border border-gray-100 mb-4 shadow-sm gap-3">
+      <View className="flex-col sm:flex-row sm:items-center justify-between bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 mb-4 shadow-xs gap-3">
         <View className="flex-row items-center gap-3">
-          <View className="w-11 h-11 rounded-2xl bg-wine-800 items-center justify-center shadow-sm">
-            <Coins size={20} color="#ffffff" strokeWidth={2.4} />
+          <View className="w-10 h-10 rounded-xl bg-[#810021] items-center justify-center shadow-xs">
+            <Coins size={18} color="#ffffff" strokeWidth={2.4} />
           </View>
-          <Text className="text-xl font-extrabold text-jazz-text">
-            Cash Drawer &amp; Till Audit
+          <Text className="text-xl font-black text-stone-900 tracking-tight">
+            Cash Drawer &amp; Till
           </Text>
         </View>
 
         {/* Till Scope Selector + Cash Action Dropdown */}
-        <View className="flex-row flex-wrap items-center gap-2.5">
+        <View className="flex-row flex-wrap items-center gap-2">
           <PosDropdown
             options={drawerOptions}
             value={activeDrawer}
             onChange={setActiveDrawer}
             prefixLabel="Till:"
             sheetTitle="Select Cash Drawer Till"
-            className="flex-1 sm:flex-initial min-w-[180px]"
+            className="flex-1 sm:flex-initial min-w-[170px]"
           />
 
           <PosDropdown
@@ -214,7 +204,7 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
             triggerIcon={Calculator}
             variant="wine"
             sheetTitle="Cash Drawer Operations"
-            className="flex-1 sm:flex-initial min-w-[170px]"
+            className="flex-1 sm:flex-initial min-w-[160px]"
           />
         </View>
       </View>

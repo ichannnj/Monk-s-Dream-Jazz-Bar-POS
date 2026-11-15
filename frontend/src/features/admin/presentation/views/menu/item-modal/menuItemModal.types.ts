@@ -6,6 +6,7 @@ export interface MenuItemModalProps {
   onSuccess: () => void;
   product?: ProductAdmin | null;
   categories: CategoryAdmin[];
+  onDelete?: (prod: ProductAdmin) => void;
 }
 
 export interface ProductModifierStateItem {

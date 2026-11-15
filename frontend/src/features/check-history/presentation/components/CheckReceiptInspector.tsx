@@ -25,40 +25,33 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
         {...({ id: 'monks-check-receipt-printable' } as any)}
         className="rounded-3xl border border-stone-200/90 bg-white p-6 sm:p-8 shadow-xs max-w-2xl mx-auto w-full"
       >
-        {/* Top Bar with Reprint & PDF Actions */}
-        <View className="flex-col sm:flex-row items-start sm:items-center justify-between pb-6 border-b border-stone-200 gap-4 print:hidden">
+        {/* Top Bar with Single Primary Reprint Action */}
+        <View className="flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-stone-200 gap-3 print:hidden">
           <View>
             <View className="flex-row items-center gap-2">
               <Text className="text-2xl font-black text-stone-900 tracking-tight">
                 Check {selectedCheck.checkNumber}
               </Text>
-              <View className="bg-emerald-100 px-2.5 py-0.5 rounded-full">
-                <Text className="text-base font-bold text-emerald-800">SETTLED</Text>
+              <View className="bg-[#FAF8F5] border border-stone-300 px-2.5 py-0.5 rounded-full">
+                <Text className="text-xs font-bold text-stone-800 uppercase">SETTLED</Text>
               </View>
             </View>
-            <Text className="text-base text-stone-500 mt-1">
-              Settled on {new Date(selectedCheck.settledAt).toLocaleDateString()} at{' '}
-              {selectedCheck.timestamp}
+            <Text className="text-base text-stone-500 mt-0.5">
+              {new Date(selectedCheck.settledAt).toLocaleDateString()} · {selectedCheck.timestamp}
             </Text>
           </View>
 
-          <View className="flex-row items-center gap-2.5">
-            <Pressable
-              onPress={onBrowserPrint}
-              className="min-h-[48px] px-4 py-2.5 rounded-xl border border-stone-300 bg-white active:bg-stone-50 flex-row items-center gap-2 shadow-xs"
-            >
-              <Printer size={18} color="#44403c" />
-              <Text className="text-base font-bold text-stone-800">Print / PDF</Text>
-            </Pressable>
-
+          <View className="flex-row items-center gap-2">
             <Pressable
               onPress={onReprintThermal}
               disabled={isReprinting}
-              className="min-h-[48px] px-4 py-2.5 rounded-xl bg-[#800020] active:bg-[#600018] flex-row items-center gap-2 shadow-xs"
+              className="min-h-[48px] px-5 py-2.5 rounded-xl bg-[#810021] active:opacity-90 flex-row items-center gap-2 shadow-xs"
+              accessibilityRole="button"
+              accessibilityLabel="Reprint receipt"
             >
               <Printer size={18} color="#ffffff" />
               <Text className="text-base font-bold text-white">
-                {isReprinting ? 'Sending...' : 'Thermal Reprint'}
+                {isReprinting ? 'Printing...' : 'Reprint Receipt'}
               </Text>
             </Pressable>
           </View>

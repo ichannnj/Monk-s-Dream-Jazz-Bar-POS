@@ -88,4 +88,29 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
     }
     expect(hasDrawerKick).toBe(false);
   });
+
+  it('buildReceiptBytes formats correctly for 57mm compact paper (32 cols)', () => {
+    const receiptData = {
+      receiptNumber: 'MD-57MM-001',
+      operatingMode: 'EVENT',
+      tableLabel: 'Table 1',
+      tabName: 'Ella F.',
+      cashierName: 'Miles',
+      items: sampleItems,
+      subtotal: 700,
+      total: 700,
+      paymentMethod: 'CASH',
+      tendered: 1000,
+      change: 300,
+    };
+
+    const bytes57 = buildReceiptBytes(receiptData, false, '57mm');
+    expect(bytes57).toBeInstanceOf(Uint8Array);
+    const text57 = new TextDecoder().decode(bytes57);
+
+    expect(text57).toContain('JAZZ BAR AND CAFE');
+    expect(text57).toContain('CHECK #: MD-57MM-001');
+    expect(text57).toContain('TOTAL DUE:');
+    expect(text57).toContain('--------------------------------');
+  });
 });

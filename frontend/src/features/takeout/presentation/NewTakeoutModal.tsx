@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, Pressable, TextInput, StyleSheet, Switch } from 'react-native';
+import {
+  View,
+  Text,
+  Modal,
+  Pressable,
+  TextInput,
+  StyleSheet,
+  Switch,
+  ScrollView,
+} from 'react-native';
 import { X, ShoppingBag, ArrowRight } from 'lucide-react-native';
 import { useVirtualKeyboard } from '../../shared';
 
@@ -65,14 +74,9 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
           <View style={styles.header}>
             <View style={styles.headerTitleGroup}>
               <View style={styles.badge}>
-                <ShoppingBag size={15} color="#ffffff" strokeWidth={2.4} />
+                <ShoppingBag size={16} color="#ffffff" strokeWidth={2.4} />
               </View>
-              <View>
-                <Text style={styles.title}>New Walk-In Takeout Order</Text>
-                <Text style={styles.ticketSub}>
-                  Assigned Ticket: <Text style={styles.ticketHighlight}>#{nextTicketNumber}</Text>
-                </Text>
-              </View>
+              <Text style={styles.title}>Takeout · #{nextTicketNumber}</Text>
             </View>
 
             <Pressable
@@ -81,105 +85,107 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close takeout modal"
             >
-              <X size={20} color="#6b7280" />
+              <X size={20} color="#1c1917" />
             </Pressable>
           </View>
 
           {/* Form */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Customer Name:</Text>
-            <View style={{ position: 'relative', justifyContent: 'center' }}>
-              <TextInput
-                style={[styles.input, customerName.length > 0 && { paddingRight: 40 }]}
-                placeholder="e.g. Sarah, David, Alex..."
-                placeholderTextColor="#9ca3af"
-                value={customerName}
-                onChangeText={setCustomerName}
-                autoFocus
-              />
-              {customerName.length > 0 && (
-                <Pressable
-                  onPress={() => setCustomerName('')}
-                  hitSlop={8}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    width: 28,
-                    height: 28,
-                    borderRadius: 14,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#e5e7eb',
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear name"
-                >
-                  <X size={14} color="#4b5563" />
-                </Pressable>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.formGroup}>
-            <View
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 6,
-              }}
-            >
-              <Text style={styles.label}>Packaging & Takeout Notes:</Text>
-              {notes.length > 0 && (
-                <Pressable
-                  onPress={() => setNotes('')}
-                  hitSlop={8}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: '#f3f4f6',
-                    paddingHorizontal: 8,
-                    paddingVertical: 3,
-                    borderRadius: 6,
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear packaging notes"
-                >
-                  <X size={12} color="#6b7280" />
-                  <Text
-                    style={{ marginLeft: 4, fontSize: 11, fontWeight: '700', color: '#4b5563' }}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 12 }}
+          >
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Customer Name:</Text>
+              <View style={{ position: 'relative', justifyContent: 'center' }}>
+                <TextInput
+                  style={[styles.input, customerName.length > 0 && { paddingRight: 40 }]}
+                  placeholder="Customer Name (Optional)"
+                  placeholderTextColor="#a8a29e"
+                  value={customerName}
+                  onChangeText={setCustomerName}
+                  autoFocus
+                />
+                {customerName.length > 0 && (
+                  <Pressable
+                    onPress={() => setCustomerName('')}
+                    hitSlop={8}
+                    style={{
+                      position: 'absolute',
+                      right: 12,
+                      width: 28,
+                      height: 28,
+                      borderRadius: 14,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#e7e5e4',
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear name"
                   >
-                    Clear
-                  </Text>
-                </Pressable>
-              )}
+                    <X size={14} color="#44403c" />
+                  </Pressable>
+                )}
+              </View>
             </View>
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="e.g. Disposable to-go cups, separate paper bag, utensils..."
-              placeholderTextColor="#9ca3af"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              numberOfLines={2}
-            />
-          </View>
 
-          {/* Prepaid Toggle */}
-          <View style={styles.toggleRow}>
-            <View style={styles.toggleInfo}>
-              <Text style={styles.toggleTitle}>Prepaid at Counter</Text>
-              <Text style={styles.toggleSub}>
-                Customer pays immediately before preparation starts
-              </Text>
+            <View style={styles.formGroup}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 6,
+                }}
+              >
+                <Text style={styles.label}>Notes:</Text>
+                {notes.length > 0 && (
+                  <Pressable
+                    onPress={() => setNotes('')}
+                    hitSlop={8}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      backgroundColor: '#FAF8F5',
+                      borderWidth: 1,
+                      borderColor: '#e7e5e4',
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: 6,
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear notes"
+                  >
+                    <X size={12} color="#78716C" />
+                    <Text
+                      style={{ marginLeft: 4, fontSize: 11, fontWeight: '700', color: '#44403c' }}
+                    >
+                      Clear
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Packaging, utensils, etc..."
+                placeholderTextColor="#a8a29e"
+                value={notes}
+                onChangeText={setNotes}
+                multiline
+                numberOfLines={2}
+              />
             </View>
-            <Switch
-              value={isPrepaid}
-              onValueChange={setIsPrepaid}
-              trackColor={{ false: '#d1d5db', true: '#86efac' }}
-              thumbColor={isPrepaid ? '#15803d' : '#f4f3f4'}
-            />
-          </View>
+
+            {/* Prepaid Toggle */}
+            <View style={styles.toggleRow}>
+              <Text style={styles.toggleTitle}>Prepaid at Counter</Text>
+              <Switch
+                value={isPrepaid}
+                onValueChange={setIsPrepaid}
+                trackColor={{ false: '#e7e5e4', true: '#810021' }}
+                thumbColor={isPrepaid ? '#ffffff' : '#ffffff'}
+              />
+            </View>
+          </ScrollView>
 
           {/* Buttons */}
           <View style={styles.btnRow}>
@@ -188,7 +194,7 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
             </Pressable>
 
             <Pressable onPress={handleProceed} style={styles.proceedBtn}>
-              <Text style={styles.proceedBtnText}>Select Menu Items</Text>
+              <Text style={styles.proceedBtnText}>Start Order</Text>
               <ArrowRight size={16} color="#ffffff" strokeWidth={2.4} />
             </Pressable>
           </View>
@@ -211,7 +217,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     width: '100%',
     maxWidth: 500,
-    padding: 24,
+    maxHeight: '96%',
+    padding: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
@@ -240,22 +247,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  ticketSub: {
-    fontSize: 13.5,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  ticketHighlight: {
-    color: '#810021',
-    fontWeight: '800',
+    color: '#1C1917',
   },
   closeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -263,21 +263,21 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   label: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#374151',
+    color: '#1C1917',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#FAF8F5',
     borderWidth: 1.5,
-    borderColor: '#e5e7eb',
+    borderColor: '#e7e5e4',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
     minHeight: 48,
     fontSize: 16,
-    color: '#111827',
+    color: '#1C1917',
     fontWeight: '600',
   },
   textArea: {
@@ -289,25 +289,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     padding: 14,
     borderRadius: 14,
     marginBottom: 22,
     minHeight: 52,
   },
-  toggleInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
   toggleTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  toggleSub: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 2,
+    color: '#1C1917',
   },
   btnRow: {
     flexDirection: 'row',
@@ -319,15 +312,15 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#FAF8F5',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#e7e5e4',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtnText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#4b5563',
+    color: '#44403c',
   },
   proceedBtn: {
     flex: 2,

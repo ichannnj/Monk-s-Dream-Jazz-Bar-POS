@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useResponsive, useVirtualKeyboard } from '@/features/shared';
 import { styles } from './BillSettlementModal.styles';
@@ -9,6 +9,7 @@ import { BillSeniorPwdDiscountSection } from './components/BillSeniorPwdDiscount
 import { BillPaymentMethodPane } from './components/BillPaymentMethodPane';
 import { BillThermalReceiptMockup } from './components/BillThermalReceiptMockup';
 import { BillConfirmSettlementDialog } from './components/BillConfirmSettlementDialog';
+import type { QrPaymentChannel } from '../../data/qrPaymentChannels.api';
 
 export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   visible,
@@ -20,8 +21,16 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
   onDeferTakeoutPayment,
   onConfirmPayment,
 }) => {
-  const { isMobile } = useResponsive();
+  const { isMobile, width, height } = useResponsive();
+  const isShortHeight = height < 520;
+  const showReceiptMockup = !isMobile && width >= 900 && height >= 520;
+  const isStackedLayout = isMobile || width < 900;
   const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
+  const [fullscreenQrTarget, setFullscreenQrTarget] = useState<{
+    channel: QrPaymentChannel;
+    amount: number;
+  } | null>(null);
+
   const ctrl = useBillSettlementController({
     visible,
     table,
@@ -42,12 +51,24 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
     onClose();
   };
 
+  const handleOpenSplitQr = (channel: QrPaymentChannel, amount: number) => {
+    setFullscreenQrTarget({ channel, amount });
+    ctrl.setIsFullscreenQrOpen(true);
+  };
+
+  const handleCloseFullscreenQr = (open: boolean) => {
+    ctrl.setIsFullscreenQrOpen(open);
+    if (!open) {
+      setFullscreenQrTarget(null);
+    }
+  };
+
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View
         style={[
           styles.backdrop,
-          isMobile && { padding: 8 },
+          (isMobile || isShortHeight) && { padding: 8 },
           isKeyboardOpen && {
             justifyContent: 'flex-start',
             paddingTop: 8,
@@ -63,7 +84,8 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
         <View
           style={[
             styles.modalCard,
-            isMobile && { padding: 16 },
+            (isMobile || isShortHeight) && { padding: 12 },
+            isShortHeight && { maxHeight: '98%' },
             isKeyboardOpen
               ? { maxHeight: Math.max(260, viewportHeight - 20) }
               : isMobile && { maxHeight: '95%' },
@@ -79,6 +101,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             setSettlementMode={ctrl.setSettlementMode}
             grandTotal={ctrl.grandTotal}
             onClose={onClose}
+            isShortHeight={isShortHeight}
           />
 
           <ScrollView
@@ -86,9 +109,11 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             contentContainerStyle={isKeyboardOpen ? { paddingBottom: 48 } : { paddingBottom: 8 }}
             showsVerticalScrollIndicator={false}
           >
-            <View style={[styles.splitRow, isMobile && { flexDirection: 'column', gap: 14 }]}>
+            <View
+              style={[styles.splitRow, isStackedLayout && { flexDirection: 'column', gap: 14 }]}
+            >
               {/* Left Column: Discounts & Payment Method */}
-              <View style={styles.leftCol}>
+              <View style={[styles.leftCol, !showReceiptMockup && { flex: 1 }]}>
                 <BillSeniorPwdDiscountSection
                   discountType={ctrl.discountType}
                   setDiscountType={ctrl.setDiscountType}
@@ -120,6 +145,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                   onUpdateTender={ctrl.handleUpdateTender}
                   onRemoveTender={ctrl.handleRemoveTender}
                   onFillRemaining={ctrl.handleFillRemaining}
+                  onOpenFullscreenQr={handleOpenSplitQr}
                   quickCashOptions={ctrl.quickCashOptions}
                   numericTendered={ctrl.numericTendered}
                   tenderedCash={ctrl.tenderedCash}
@@ -140,36 +166,36 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                 />
               </View>
 
-              {/* Right Column: Thermal Receipt Preview */}
-              <BillThermalReceiptMockup
-                isTakeout={ctrl.isTakeout}
-                takeoutOrder={takeoutOrder}
-                activeTab={activeTab}
-                table={table}
-                operatingMode={ctrl.effectiveOperatingMode}
-                currentUserDisplayName={ctrl.currentUser?.displayName}
-                rawItems={ctrl.rawItems}
-                subtotal={ctrl.subtotal}
-                billing={ctrl.billing}
-                discountType={ctrl.discountType}
-                serviceCharge={ctrl.serviceCharge}
-                grandTotal={ctrl.grandTotal}
-                tenderTabMode={ctrl.tenderTabMode}
-                splitTenders={ctrl.splitTenders}
-                selectedMethod={ctrl.selectedMethod}
-                selectedQrChannel={ctrl.selectedQrChannel}
-                isRefNumberValid={ctrl.isRefNumberValid}
-                referenceNumber={ctrl.referenceNumber}
-                numericTendered={ctrl.numericTendered}
-                changeDue={ctrl.changeDue}
-                vatableSales={ctrl.vatableSales}
-                vatAmount={ctrl.vatAmount}
-                vatExemptSales={ctrl.vatExemptSales}
-                seniorPwdId={ctrl.seniorPwdId}
-                seniorPwdName={ctrl.seniorPwdName}
-                onPrintBill={ctrl.handlePrintBillStatement}
-                isPrintingBill={ctrl.isPrintingBill}
-              />
+              {/* Right Column: Thermal Receipt Preview (Desktop & Tall Tablets Only) */}
+              {showReceiptMockup ? (
+                <BillThermalReceiptMockup
+                  isTakeout={ctrl.isTakeout}
+                  takeoutOrder={takeoutOrder}
+                  activeTab={activeTab}
+                  table={table}
+                  operatingMode={ctrl.effectiveOperatingMode}
+                  currentUserDisplayName={ctrl.currentUser?.displayName}
+                  rawItems={ctrl.rawItems}
+                  subtotal={ctrl.subtotal}
+                  billing={ctrl.billing}
+                  discountType={ctrl.discountType}
+                  serviceCharge={ctrl.serviceCharge}
+                  grandTotal={ctrl.grandTotal}
+                  tenderTabMode={ctrl.tenderTabMode}
+                  splitTenders={ctrl.splitTenders}
+                  selectedMethod={ctrl.selectedMethod}
+                  selectedQrChannel={ctrl.selectedQrChannel}
+                  isRefNumberValid={ctrl.isRefNumberValid}
+                  referenceNumber={ctrl.referenceNumber}
+                  numericTendered={ctrl.numericTendered}
+                  changeDue={ctrl.changeDue}
+                  vatableSales={ctrl.vatableSales}
+                  vatAmount={ctrl.vatAmount}
+                  vatExemptSales={ctrl.vatExemptSales}
+                  seniorPwdId={ctrl.seniorPwdId}
+                  seniorPwdName={ctrl.seniorPwdName}
+                />
+              ) : null}
             </View>
           </ScrollView>
 
@@ -196,7 +222,8 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             settlementMode={ctrl.settlementMode}
             activeTab={activeTab}
             isFullscreenQrOpen={ctrl.isFullscreenQrOpen}
-            setIsFullscreenQrOpen={ctrl.setIsFullscreenQrOpen}
+            setIsFullscreenQrOpen={handleCloseFullscreenQr}
+            fullscreenQrTarget={fullscreenQrTarget}
             handlePrintBillStatement={ctrl.handlePrintBillStatement}
             isPrintingBill={ctrl.isPrintingBill}
           />

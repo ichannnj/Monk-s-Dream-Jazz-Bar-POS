@@ -46,9 +46,9 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
     <View className="bg-[#FAF8F5] border border-stone-200 rounded-2xl p-4 mb-4">
       {/* Header Row */}
       <View className="flex-row justify-between items-center pb-3 border-b border-stone-200 mb-3">
-        <Text className="text-base font-extrabold text-stone-800">
-          Tab #{selectedTabIndex}: {currentTab?.guestName || 'Guest Tab'} (
-          {currentTab?.items.length || 0} items)
+        <Text className="text-base font-extrabold text-stone-900">
+          Tab #{selectedTabIndex}: {currentTab?.guestName || 'Guest'} ·{' '}
+          {currentTab?.items.length || 0} items
         </Text>
         <Text className="text-lg font-black text-[#810021]">{formatCurrency(tabTotal)}</Text>
       </View>
@@ -63,12 +63,11 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
               </View>
               <View>
                 <Text className="text-sm font-bold text-stone-900">
-                  Door Charge: {doorChargeItem.quantity} Pax @{' '}
-                  {formatCurrency(doorChargeItem.unitPrice)}
+                  Cover: {doorChargeItem.quantity} Pax ·{' '}
+                  {formatCurrency(doorChargeItem.unitPrice * doorChargeItem.quantity)}
                 </Text>
                 <Text className="text-xs text-stone-500 font-medium">
-                  Total: {formatCurrency(doorChargeItem.unitPrice * doorChargeItem.quantity)} ·
-                  Direct Admission
+                  {formatCurrency(doorChargeItem.unitPrice)} / head
                 </Text>
               </View>
             </View>
@@ -77,7 +76,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
               {onEditDoorCharge && (
                 <Pressable
                   onPress={onEditDoorCharge}
-                  className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-stone-200 active:bg-stone-100"
+                  className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-stone-200 active:bg-stone-100 min-h-[36px]"
                 >
                   <Edit3 size={13} color="#810021" />
                   <Text className="text-xs font-bold text-[#810021]">Edit</Text>
@@ -85,7 +84,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
               )}
               <Pressable
                 onPress={() => onOpenVoidModal(doorChargeItem)}
-                className="p-1.5 rounded-lg bg-stone-50 border border-stone-200 active:bg-stone-100"
+                className="p-1.5 rounded-lg bg-stone-50 border border-stone-200 active:bg-stone-100 min-h-[36px] min-w-[36px] items-center justify-center"
                 accessibilityLabel="Void Door Charge"
               >
                 <Trash2 size={13} color="#78716C" />
@@ -95,18 +94,16 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
         ) : (
           <View className="flex-row justify-between items-center">
             <View className="flex-row items-center gap-2">
-              <Ticket size={16} color="#78716C" />
-              <Text className="text-xs text-stone-600 font-semibold">
-                No Door Charge on this tab
-              </Text>
+              <Ticket size={15} color="#78716C" />
+              <Text className="text-xs text-stone-500 font-semibold">No door cover</Text>
             </View>
             {onAddDoorCharge && (
               <Pressable
                 onPress={onAddDoorCharge}
-                className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-stone-200 active:bg-stone-100"
+                className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-stone-200 active:bg-stone-100 min-h-[36px]"
               >
                 <Plus size={13} color="#810021" />
-                <Text className="text-xs font-bold text-[#810021]">+ Add Cover</Text>
+                <Text className="text-xs font-bold text-[#810021]">+ Cover</Text>
               </Pressable>
             )}
           </View>

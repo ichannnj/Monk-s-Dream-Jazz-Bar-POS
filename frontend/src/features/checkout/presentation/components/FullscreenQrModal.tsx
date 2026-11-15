@@ -1,5 +1,14 @@
 import React from 'react';
-import { View, Text, Modal, Pressable, Image, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  Modal,
+  Pressable,
+  Image,
+  StyleSheet,
+  ScrollView,
+  useWindowDimensions,
+} from 'react-native';
 import { X, QrCode, Check } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import type { QrPaymentChannel } from '../../data/qrPaymentChannels.api';
@@ -17,23 +26,33 @@ export const FullscreenQrModal: React.FC<FullscreenQrModalProps> = ({
   amount,
   onClose,
 }) => {
+  const { width, height } = useWindowDimensions();
+  const isCompactHeight = height < 520;
+  const isLandscape = width > height && isCompactHeight;
+
   if (!visible || !channel) return null;
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, isCompactHeight && { padding: 8 }]}>
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
           accessibilityLabel="Dismiss fullscreen QR scanner"
         />
 
-        <View style={styles.card}>
+        <View
+          style={[
+            styles.card,
+            isLandscape ? { maxWidth: 640 } : { maxWidth: 420 },
+            isCompactHeight && { maxHeight: '98%', padding: 14 },
+          ]}
+        >
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleRow}>
               <View style={styles.iconCircle}>
-                <QrCode size={20} color="#800020" />
+                <QrCode size={18} color="#810021" />
               </View>
               <View>
                 <Text style={styles.channelTitle}>{channel.name} Payment</Text>
@@ -47,50 +66,81 @@ export const FullscreenQrModal: React.FC<FullscreenQrModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close QR scanner"
             >
-              <X size={20} color="#64748b" />
+              <X size={18} color="#1C1917" />
             </Pressable>
           </View>
 
-          {/* Amount Due Banner */}
-          <View style={styles.amountBanner}>
-            <Text style={styles.amountLabel}>EXACT AMOUNT DUE</Text>
-            <Text style={styles.amountValue}>{formatCurrency(amount)}</Text>
-          </View>
-
-          {/* High-Resolution QR Card */}
-          <View style={styles.qrContainer}>
-            <Image
-              source={{ uri: channel.qr_image_url }}
-              style={styles.qrImage}
-              resizeMode="contain"
-              accessibilityLabel={`${channel.name} QR Code`}
-            />
-          </View>
-
-          {/* Account Details Box */}
-          <View style={styles.accountBox}>
-            <View style={styles.accountRow}>
-              <Text style={styles.accountLabel}>Account Name:</Text>
-              <Text style={styles.accountValue} numberOfLines={1}>
-                {channel.account_name}
-              </Text>
-            </View>
-            <View style={styles.accountRow}>
-              <Text style={styles.accountLabel}>Account / Mobile:</Text>
-              <Text style={styles.accountNumber}>{channel.account_number}</Text>
-            </View>
-          </View>
-
-          {/* Action / Done Button */}
-          <Pressable
-            onPress={onClose}
-            style={styles.doneBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Done scanning, return to checkout"
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            style={{ width: '100%' }}
+            contentContainerStyle={
+              isLandscape
+                ? { flexDirection: 'row', alignItems: 'center', gap: 16 }
+                : { alignItems: 'center' }
+            }
           >
-            <Check size={18} color="#ffffff" strokeWidth={2.5} />
-            <Text style={styles.doneBtnText}>Done Scanning · Input Reference #</Text>
-          </Pressable>
+            {/* High-Resolution QR Card */}
+            <View
+              style={[
+                styles.qrContainer,
+                isLandscape
+                  ? { width: 170, height: 170, marginBottom: 0 }
+                  : isCompactHeight
+                    ? { width: 170, height: 170 }
+                    : null,
+              ]}
+            >
+              <Image
+                source={{ uri: channel.qr_image_url }}
+                style={styles.qrImage}
+                resizeMode="contain"
+                accessibilityLabel={`${channel.name} QR Code`}
+              />
+            </View>
+
+            {/* Right Side / Bottom Details */}
+            <View style={isLandscape ? { flex: 1, gap: 8 } : { width: '100%' }}>
+              {/* Amount Due Banner */}
+              <View
+                style={[
+                  styles.amountBanner,
+                  isCompactHeight && { paddingVertical: 6, marginBottom: 8 },
+                ]}
+              >
+                <Text style={styles.amountLabel}>EXACT AMOUNT DUE</Text>
+                <Text style={[styles.amountValue, isCompactHeight && { fontSize: 20 }]}>
+                  {formatCurrency(amount)}
+                </Text>
+              </View>
+
+              {/* Account Details Box */}
+              <View
+                style={[styles.accountBox, isCompactHeight && { padding: 8, marginBottom: 10 }]}
+              >
+                <View style={styles.accountRow}>
+                  <Text style={styles.accountLabel}>Account Name:</Text>
+                  <Text style={styles.accountValue} numberOfLines={1}>
+                    {channel.account_name}
+                  </Text>
+                </View>
+                <View style={styles.accountRow}>
+                  <Text style={styles.accountLabel}>Account / Mobile:</Text>
+                  <Text style={styles.accountNumber}>{channel.account_number}</Text>
+                </View>
+              </View>
+
+              {/* Action / Done Button */}
+              <Pressable
+                onPress={onClose}
+                style={styles.doneBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Done scanning, return to checkout"
+              >
+                <Check size={18} color="#ffffff" strokeWidth={2.5} />
+                <Text style={styles.doneBtnText}>Done Scanning · Input Reference #</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -100,103 +150,104 @@ export const FullscreenQrModal: React.FC<FullscreenQrModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.85)',
+    backgroundColor: 'rgba(26, 26, 30, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
   },
   card: {
     width: '100%',
-    maxWidth: 420,
     backgroundColor: '#ffffff',
     borderRadius: 24,
-    padding: 24,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.35,
+    shadowOpacity: 0.25,
     shadowRadius: 28,
-    elevation: 24,
-    alignItems: 'center',
+    elevation: 20,
+    maxHeight: '94%',
   },
   header: {
     width: '100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: 'rgba(128, 0, 32, 0.1)',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     justifyContent: 'center',
     alignItems: 'center',
   },
   channelTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#0f172a',
-    letterSpacing: -0.3,
+    color: '#1C1917',
   },
   scanNotice: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
-    color: '#64748b',
+    color: '#78716C',
   },
   closeBtn: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     justifyContent: 'center',
     alignItems: 'center',
   },
   amountBanner: {
     width: '100%',
-    backgroundColor: '#f8fafc',
-    borderRadius: 14,
+    backgroundColor: '#FAF8F5',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    borderColor: '#e7e5e4',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   amountLabel: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.8,
-    color: '#64748b',
+    color: '#78716C',
     marginBottom: 2,
   },
   amountValue: {
-    fontSize: 26,
+    fontSize: 24,
     fontWeight: '900',
-    color: '#800020',
-    letterSpacing: -0.5,
+    color: '#810021',
   },
   qrContainer: {
-    width: 250,
-    height: 250,
+    width: 220,
+    height: 220,
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#e2e8f0',
-    padding: 12,
+    borderWidth: 1.5,
+    borderColor: '#e7e5e4',
+    padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   qrImage: {
     width: '100%',
@@ -204,13 +255,13 @@ const styles = StyleSheet.create({
   },
   accountBox: {
     width: '100%',
-    backgroundColor: '#fdf8f6',
-    borderRadius: 14,
+    backgroundColor: '#FAF8F5',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#fde4d8',
-    padding: 12,
-    gap: 6,
-    marginBottom: 18,
+    borderColor: '#e7e5e4',
+    padding: 10,
+    gap: 4,
+    marginBottom: 14,
   },
   accountRow: {
     flexDirection: 'row',
@@ -220,38 +271,32 @@ const styles = StyleSheet.create({
   accountLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#7c2d12',
+    color: '#78716C',
   },
   accountValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#431407',
+    color: '#1C1917',
     maxWidth: '65%',
   },
   accountNumber: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
-    fontFamily: 'monospace',
-    color: '#800020',
+    color: '#810021',
   },
   doneBtn: {
     width: '100%',
     minHeight: 48,
-    backgroundColor: '#800020',
+    backgroundColor: '#810021',
     borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#800020',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
   },
   doneBtnText: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#ffffff',
   },
 });

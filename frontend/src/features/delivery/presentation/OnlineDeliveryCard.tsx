@@ -23,7 +23,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
   const liveTimer = useLiveElapsedTimer(order.createdAt, order.elapsedTime, 'kitchen');
 
   return (
-    <View style={[styles.cardContainer, isGrab ? styles.cardGrab : styles.cardFoodpanda]}>
+    <View style={[styles.cardContainer, isReady ? styles.cardReady : styles.cardPreparing]}>
       <Pressable
         onPress={() => onPress(order)}
         style={({ pressed }) => [styles.mainPressableArea, pressed && styles.cardPressed]}
@@ -34,8 +34,8 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
         <View style={styles.cardHeader}>
           <View style={styles.codeCol}>
             <View style={styles.platformBadgeRow}>
-              <Bike size={13} color={isGrab ? '#059669' : '#db2777'} strokeWidth={2.4} />
-              <Text style={[styles.platformCodeText, { color: isGrab ? '#059669' : '#db2777' }]}>
+              <Bike size={13} color="#810021" strokeWidth={2.4} />
+              <Text style={[styles.platformCodeText, { color: '#810021' }]}>
                 {isGrab ? 'Grab' : 'Panda'} #{order.platformOrderRef}
               </Text>
             </View>
@@ -48,12 +48,12 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
             style={[styles.statusBadge, isReady ? styles.statusBadgeReady : styles.statusBadgePrep]}
           >
             <View
-              style={[styles.statusDot, { backgroundColor: isReady ? '#16a34a' : '#d97706' }]}
+              style={[styles.statusDot, { backgroundColor: isReady ? '#10b981' : '#f59e0b' }]}
             />
-            <Text style={[styles.statusText, { color: isReady ? '#15803d' : '#b45309' }]}>
+            <Text style={[styles.statusText, { color: isReady ? '#047857' : '#b45309' }]}>
               {isReady ? 'READY' : 'PREP'}
             </Text>
-            <Text style={[styles.timeText, { color: isReady ? '#15803d' : '#b45309' }]}>
+            <Text style={[styles.timeText, { color: isReady ? '#047857' : '#b45309' }]}>
               · {liveTimer.formattedTimer}
             </Text>
           </View>
@@ -117,13 +117,20 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'space-between',
   },
-  cardGrab: {
-    borderColor: '#bbf7d0',
-    backgroundColor: '#f6fdf8',
+  cardPreparing: {
+    borderColor: '#f59e0b',
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
   },
-  cardFoodpanda: {
-    borderColor: '#fbcfe8',
-    backgroundColor: '#fdf2f8',
+  cardReady: {
+    borderColor: '#10b981',
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   cardPressed: {
     transform: [{ scale: 0.985 }],
@@ -163,10 +170,10 @@ const styles = StyleSheet.create({
     borderRadius: 11,
   },
   statusBadgePrep: {
-    backgroundColor: '#fef7e6',
+    backgroundColor: '#fffbeb',
   },
   statusBadgeReady: {
-    backgroundColor: '#e8f9ee',
+    backgroundColor: '#ecfdf5',
   },
   statusDot: {
     width: 7,

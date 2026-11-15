@@ -6,6 +6,7 @@ import {
   handleRealtimeInventoryAlert,
 } from './realtimeNotificationHelpers';
 import { applyTableTransferToLocalTables } from './realtimeTableTransfer';
+import { deriveTableStatus, deriveTableStateTimestamp } from './order.helpers';
 
 export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
   let hydrateTimer: ReturnType<typeof setTimeout> | null = null;
@@ -92,14 +93,20 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
             const isPrepaid = Boolean(payload.new.is_prepaid);
 
             set((state) => ({
-              tables: state.tables.map((t) => ({
-                ...t,
-                tabs: isClosedOrBilled
+              tables: state.tables.map((t) => {
+                const updatedTabs = isClosedOrBilled
                   ? (t.tabs || []).filter((tab) => tab.id !== tabId)
                   : (t.tabs || []).map((tab) =>
                       tab.id === tabId ? { ...tab, status: 'open' as const } : tab
-                    ),
-              })),
+                    );
+                const hasActive = updatedTabs.length > 0;
+                return {
+                  ...t,
+                  tabs: updatedTabs,
+                  hasOpenCheck: hasActive,
+                  status: hasActive ? deriveTableStatus(true, updatedTabs) : 'empty',
+                };
+              }),
               takeoutOrders: state.takeoutOrders.map((o) => {
                 if (o.id !== tabId && o.tabId !== tabId) return o;
                 return {
@@ -147,21 +154,17 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
 
               if (!tableModified) return table;
 
-              const allItems = updatedTabs.flatMap((t) => t.items);
-              let nextStatus = table.status;
-              if (allItems.length > 0) {
-                if (allItems.every((i) => i.status === 'served')) {
-                  nextStatus = 'served';
-                } else if (allItems.every((i) => i.status === 'ready')) {
-                  nextStatus = 'ready';
-                } else if (allItems.some((i) => i.status === 'preparing')) {
-                  nextStatus = 'preparing';
-                }
-              }
+              const hasActive = Boolean(table.hasOpenCheck || updatedTabs.length > 0);
+              const nextStatus = deriveTableStatus(hasActive, updatedTabs);
+              const nextStateChangedAt =
+                nextStatus !== table.status
+                  ? deriveTableStateTimestamp(nextStatus, updatedTabs, table.occupiedSinceIso)
+                  : table.stateChangedAt;
 
               return {
                 ...table,
                 status: nextStatus,
+                stateChangedAt: nextStateChangedAt,
                 tabs: updatedTabs,
               };
             });

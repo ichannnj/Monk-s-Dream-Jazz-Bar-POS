@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Modal, Pressable, StyleSheet } from 'react-native';
 import { OrderLineItem } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
-import { AdminItemImageModal } from '../admin-item-image/AdminItemImageModal';
 import { ConfirmationModal, useResponsive } from '@/features/shared';
 import { OrderCategoryBar } from './OrderCategoryBar';
 import { OrderMenuItemGrid } from './OrderMenuItemGrid';
@@ -39,7 +38,6 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   const { isMobile } = useResponsive();
 
   const {
-    isAdmin,
     selectedCategory,
     setSelectedCategory,
     searchQuery,
@@ -49,10 +47,6 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     filteredMenuItems,
     isMobileCartOpen,
     setIsMobileCartOpen,
-    editingImageItem,
-    setEditingImageItem,
-    isImageModalOpen,
-    setIsImageModalOpen,
     isConfirmDispatchOpen,
     setIsConfirmDispatchOpen,
     activeCustomizingItem,
@@ -73,8 +67,6 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
     vatableSales,
     grandTotal,
     totalCartQty,
-    handleOpenImageEditor,
-    handleSaveProductImage,
     handleItemClick,
     handleConfirmCustomize,
     handleSelectVariantOption,
@@ -122,12 +114,7 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
                 />
-                <OrderMenuItemGrid
-                  items={filteredMenuItems}
-                  isAdmin={isAdmin}
-                  onItemClick={handleItemClick}
-                  onOpenImageEditor={handleOpenImageEditor}
-                />
+                <OrderMenuItemGrid items={filteredMenuItems} onItemClick={handleItemClick} />
 
                 {/* Mobile Sticky Bottom Cart Bar */}
                 {isMobile ? (
@@ -176,17 +163,6 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
             onChangeNotes={setItemNotes}
             onClose={() => setActiveCustomizingItem(null)}
             onConfirm={handleConfirmCustomize}
-          />
-
-          {/* ADMIN IMAGE MODAL */}
-          <AdminItemImageModal
-            visible={isImageModalOpen}
-            item={editingImageItem}
-            onClose={() => {
-              setIsImageModalOpen(false);
-              setEditingImageItem(null);
-            }}
-            onSaveImage={handleSaveProductImage}
           />
 
           {/* CONFIRMATION MODAL FOR ORDER DISPATCH */}

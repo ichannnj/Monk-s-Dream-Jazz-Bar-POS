@@ -13,8 +13,8 @@ export const RecipeBomCostingTab: React.FC<RecipeBomCostingTabProps> = ({
   onConfigureRecipe,
 }) => {
   return (
-    <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
-      <View className="space-y-4">
+    <View className="rounded-2xl border border-stone-200/80 bg-white p-3.5 sm:p-5 lg:p-6 shadow-xs">
+      <View className="space-y-3.5">
         {products.map((prod) => {
           const cogs = (prod.ingredients || []).reduce((acc, ing) => {
             const unitCost = ing.inventory_item?.unit_cost || 0;
@@ -26,63 +26,62 @@ export const RecipeBomCostingTab: React.FC<RecipeBomCostingTabProps> = ({
           return (
             <View
               key={prod.id}
-              className="rounded-xl border border-stone-200 bg-white p-4 shadow-xs"
+              className="rounded-xl border border-stone-200/90 bg-white p-3.5 sm:p-4 shadow-2xs"
             >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1 pr-4">
-                  <Text className="text-lg font-bold text-stone-900">{prod.name}</Text>
-                  <View className="flex-row items-center space-x-3 mt-1">
-                    <Text className="text-base text-stone-500">
+              <View className="flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <View className="flex-1 min-w-0 pr-2">
+                  <Text
+                    className="text-base sm:text-lg font-bold text-stone-900 tracking-tight"
+                    numberOfLines={1}
+                  >
+                    {prod.name}
+                  </Text>
+                  <View className="flex-row items-center flex-wrap gap-2 mt-1">
+                    <Text className="text-xs text-stone-500 font-medium">
                       Price:{' '}
                       <Text className="font-bold text-stone-800">₱{numPrice.toFixed(2)}</Text>
                     </Text>
-                    <Text className="text-stone-300">•</Text>
-                    <Text className="text-base text-stone-500">
+                    <Text className="text-stone-300 text-xs">•</Text>
+                    <Text className="text-xs text-stone-500 font-medium">
                       COGS: <Text className="font-bold text-[#800020]">₱{cogs.toFixed(2)}</Text>
                     </Text>
-                    <Text className="text-stone-300">•</Text>
-                    <View
-                      className={`rounded-md px-2.5 py-0.5 border ${
-                        margin >= 70
-                          ? 'bg-emerald-50 border-emerald-200'
-                          : 'bg-amber-50 border-amber-200'
-                      }`}
-                    >
-                      <Text
-                        className={`text-base font-bold ${
-                          margin >= 70 ? 'text-emerald-800' : 'text-amber-800'
-                        }`}
-                      >
+                    <Text className="text-stone-300 text-xs">•</Text>
+                    <View className="rounded-md bg-stone-100 border border-stone-200 px-2 py-0.5">
+                      <Text className="text-xs font-bold text-stone-700">
                         {margin.toFixed(1)}% Margin
                       </Text>
                     </View>
                   </View>
                 </View>
+
                 <Pressable
                   onPress={() => onConfigureRecipe(prod)}
-                  className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020] px-4 active:opacity-90"
+                  className="min-h-[44px] sm:min-h-[48px] px-3.5 sm:px-4 flex-row items-center justify-center rounded-xl bg-[#800020] active:bg-[#600018] flex-shrink-0"
+                  accessibilityLabel={`Configure recipe for ${prod.name}`}
                 >
-                  <Layers size={18} color="#ffffff" />
-                  <Text className="ml-1.5 text-base font-bold text-white">Configure Recipe</Text>
+                  <Layers size={17} color="#ffffff" />
+                  <Text className="ml-1.5 text-xs sm:text-sm font-bold text-white">
+                    Configure Recipe
+                  </Text>
                 </Pressable>
               </View>
 
-              <View className="mt-3 border-t border-stone-200 pt-2">
+              <View className="mt-3 border-t border-stone-100 pt-2.5">
                 {prod.ingredients && prod.ingredients.length > 0 ? (
-                  <View className="flex-row flex-wrap gap-2">
+                  <View className="flex-row flex-wrap gap-1.5">
                     {prod.ingredients.map((ing) => (
                       <View
                         key={ing.id}
-                        className="rounded-lg bg-white border border-stone-300 px-3 py-1.5"
+                        className="rounded-lg bg-stone-50 border border-stone-200 px-2.5 py-1"
                       >
-                        <Text className="text-base text-stone-800">
-                          {ing.inventory_item?.name || 'Raw Item'} — {ing.amount} {ing.unit}
+                        <Text className="text-xs text-stone-800 font-medium">
+                          {ing.inventory_item?.name || 'Raw Item'} · {ing.amount} {ing.unit}
                         </Text>
                       </View>
                     ))}
                   </View>
                 ) : (
-                  <Text className="text-base text-stone-400">
+                  <Text className="text-xs text-stone-400 font-medium">
                     Direct inventory item (1:1 unit depletion or no sub-ingredients)
                   </Text>
                 )}

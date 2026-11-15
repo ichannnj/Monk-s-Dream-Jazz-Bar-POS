@@ -46,6 +46,7 @@ interface BillPaymentMethodPaneProps {
   selectedQrChannel: QrPaymentChannel | null;
   setSelectedQrChannel: (channel: QrPaymentChannel | null) => void;
   setIsFullscreenQrOpen: (open: boolean) => void;
+  onOpenFullscreenQr?: (channel: QrPaymentChannel, amount: number) => void;
   referenceNumber: string;
   setReferenceNumber: (val: string) => void;
   isRefNumberValid: boolean;
@@ -77,6 +78,7 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
   selectedQrChannel,
   setSelectedQrChannel,
   setIsFullscreenQrOpen,
+  onOpenFullscreenQr,
   referenceNumber,
   setReferenceNumber,
   isRefNumberValid,
@@ -213,6 +215,7 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
           onUpdateTender={onUpdateTender}
           onRemoveTender={onRemoveTender}
           onFillRemaining={onFillRemaining}
+          onOpenFullscreenQr={onOpenFullscreenQr}
         />
       ) : (
         <>

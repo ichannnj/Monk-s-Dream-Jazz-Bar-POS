@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, Pressable, TextInput, StyleSheet } from 'react-native';
+import { View, Text, Modal, Pressable, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { X, Plus, Utensils, Check } from 'lucide-react-native';
 import { TableItem } from '../../../types/floor';
 import { toast } from '../../shared/toast/useToastStore';
@@ -119,209 +119,210 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
         >
           {/* Header */}
           <View style={styles.header}>
-            <View>
-              <Text style={styles.title}>
-                {effectiveIsSplit
-                  ? `Open Split Tab · Table ${table.code}`
-                  : `Open Tab · Table ${table.code}`}
-              </Text>
-              <Text style={styles.subtitle}>
-                {effectiveIsSplit
-                  ? `Add another party tab to Table ${table.code}`
-                  : `Start a new named guest tab at Table ${table.code}`}
-              </Text>
-            </View>
+            <Text style={styles.title}>
+              {effectiveIsSplit
+                ? `Split Tab · Table ${table.code}`
+                : `Open Tab · Table ${table.code}`}
+            </Text>
             <Pressable
               onPress={onClose}
               style={styles.closeBtn}
               accessibilityRole="button"
               accessibilityLabel="Close open table modal"
             >
-              <X size={20} color="#6b7280" />
+              <X size={20} color="#1c1917" />
             </Pressable>
           </View>
 
-          {/* Guest Name Input */}
-          <View style={styles.inputGroup}>
-            <Text style={styles.sectionLabel}>Customer / Guest Tab Name:</Text>
-            <View style={{ position: 'relative', justifyContent: 'center' }}>
-              <TextInput
-                style={[styles.textInput, guestName.length > 0 && { paddingRight: 40 }]}
-                placeholder="e.g. Miles, Coltrane, Sarah..."
-                placeholderTextColor="#9ca3af"
-                value={guestName}
-                onChangeText={setGuestName}
-                autoFocus
-              />
-              {guestName.length > 0 && (
-                <Pressable
-                  onPress={() => setGuestName('')}
-                  hitSlop={8}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    width: 28,
-                    height: 28,
-                    borderRadius: 14,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: '#e5e7eb',
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel="Clear name"
-                >
-                  <X size={14} color="#4b5563" />
-                </Pressable>
-              )}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 10 }}
+          >
+            {/* Guest Name Input */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.sectionLabel}>Guest Name:</Text>
+              <View style={{ position: 'relative', justifyContent: 'center' }}>
+                <TextInput
+                  style={[styles.textInput, guestName.length > 0 && { paddingRight: 40 }]}
+                  placeholder="Guest Name (Optional)"
+                  placeholderTextColor="#a8a29e"
+                  value={guestName}
+                  onChangeText={setGuestName}
+                  autoFocus
+                />
+                {guestName.length > 0 && (
+                  <Pressable
+                    onPress={() => setGuestName('')}
+                    hitSlop={8}
+                    style={{
+                      position: 'absolute',
+                      right: 12,
+                      width: 28,
+                      height: 28,
+                      borderRadius: 14,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#e7e5e4',
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Clear name"
+                  >
+                    <X size={14} color="#44403c" />
+                  </Pressable>
+                )}
+              </View>
             </View>
-          </View>
 
-          {/* Guest Count Stepper */}
-          <View style={styles.stepperSection}>
-            <Text style={styles.sectionLabel}>Guests Seated:</Text>
-            <View style={styles.stepperRow}>
-              {[1, 2, 3, 4, 5, 6, 8, 10].map((num) => (
+            {/* Guest Count Stepper */}
+            <View style={styles.stepperSection}>
+              <Text style={styles.sectionLabel}>Guests:</Text>
+              <View style={styles.stepperRow}>
+                {[1, 2, 3, 4, 5, 6, 8].map((num) => (
+                  <Pressable
+                    key={num}
+                    onPress={() => setGuestCount(num)}
+                    style={[styles.guestCountBtn, guestCount === num && styles.guestCountBtnActive]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${num} guests`}
+                  >
+                    <Text
+                      style={[
+                        styles.guestCountText,
+                        guestCount === num && styles.guestCountTextActive,
+                      ]}
+                    >
+                      {num}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            {/* Door Charge Quick Toggle & Adjustment */}
+            {todayEvent?.has_door_charge && (todayEvent?.door_charge_amount || 0) > 0 && (
+              <View style={{ marginBottom: 16 }}>
                 <Pressable
-                  key={num}
-                  onPress={() => setGuestCount(num)}
-                  style={[styles.guestCountBtn, guestCount === num && styles.guestCountBtnActive]}
-                  accessibilityRole="button"
-                  accessibilityLabel={`${num} guests`}
+                  onPress={() => setIncludeDoorCharge(!includeDoorCharge)}
+                  style={({ pressed }) => [
+                    styles.doorChargeRow,
+                    includeDoorCharge && styles.doorChargeRowActive,
+                    pressed && { opacity: 0.8 },
+                  ]}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: includeDoorCharge }}
                 >
-                  <Text
+                  <View
                     style={[
-                      styles.guestCountText,
-                      guestCount === num && styles.guestCountTextActive,
+                      styles.doorChargeCheck,
+                      includeDoorCharge && styles.doorChargeCheckActive,
                     ]}
                   >
-                    {num}
-                  </Text>
+                    {includeDoorCharge && <Check size={14} color="#ffffff" strokeWidth={3} />}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.doorChargeTitle}>
+                      Door Cover: ₱{(parseFloat(doorChargePrice) || 0).toLocaleString()} ×{' '}
+                      {doorChargePax} = ₱
+                      {((parseFloat(doorChargePrice) || 0) * doorChargePax).toLocaleString()}
+                    </Text>
+                  </View>
                 </Pressable>
-              ))}
-            </View>
-          </View>
 
-          {/* Door Charge Quick Toggle & Adjustment */}
-          {todayEvent?.has_door_charge && (todayEvent?.door_charge_amount || 0) > 0 && (
-            <View style={{ marginBottom: 16 }}>
-              <Pressable
-                onPress={() => setIncludeDoorCharge(!includeDoorCharge)}
-                style={({ pressed }) => [
-                  styles.doorChargeRow,
-                  includeDoorCharge && styles.doorChargeRowActive,
-                  pressed && { opacity: 0.8 },
-                ]}
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: includeDoorCharge }}
-              >
-                <View
-                  style={[
-                    styles.doorChargeCheck,
-                    includeDoorCharge && styles.doorChargeCheckActive,
-                  ]}
-                >
-                  {includeDoorCharge && <Check size={14} color="#ffffff" strokeWidth={3} />}
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.doorChargeTitle}>
-                    Add Door Charge: ₱{(parseFloat(doorChargePrice) || 0).toLocaleString()} ×{' '}
-                    {doorChargePax} = ₱
-                    {((parseFloat(doorChargePrice) || 0) * doorChargePax).toLocaleString()}
-                  </Text>
-                  <Text style={styles.doorChargeSubtitle}>
-                    Tonight: {todayEvent.title || 'Live Jazz Event'}
-                  </Text>
-                </View>
-              </Pressable>
+                {/* Inline Adjustment when Checked */}
+                {includeDoorCharge && (
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      marginTop: 8,
+                      paddingHorizontal: 12,
+                      paddingVertical: 8,
+                      backgroundColor: '#FAF8F5',
+                      borderRadius: 12,
+                      borderWidth: 1,
+                      borderColor: '#e7e5e4',
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#1C1917' }}>
+                        Pax:
+                      </Text>
+                      <Pressable
+                        onPress={() => setDoorChargePax((p) => Math.max(1, p - 1))}
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          backgroundColor: '#ffffff',
+                          borderWidth: 1,
+                          borderColor: '#d6d3d1',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1C1917' }}>
+                          -
+                        </Text>
+                      </Pressable>
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '800',
+                          color: '#810021',
+                          minWidth: 20,
+                          textAlign: 'center',
+                        }}
+                      >
+                        {doorChargePax}
+                      </Text>
+                      <Pressable
+                        onPress={() => setDoorChargePax((p) => p + 1)}
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 8,
+                          backgroundColor: '#ffffff',
+                          borderWidth: 1,
+                          borderColor: '#d6d3d1',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1C1917' }}>
+                          +
+                        </Text>
+                      </Pressable>
+                    </View>
 
-              {/* Inline Adjustment when Checked */}
-              {includeDoorCharge && (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginTop: 8,
-                    paddingHorizontal: 12,
-                    paddingVertical: 8,
-                    backgroundColor: '#FAF8F5',
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: '#e7e5e4',
-                  }}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#1C1917' }}>Pax:</Text>
-                    <Pressable
-                      onPress={() => setDoorChargePax((p) => Math.max(1, p - 1))}
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 6,
-                        backgroundColor: '#ffffff',
-                        borderWidth: 1,
-                        borderColor: '#d6d3d1',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1C1917' }}>-</Text>
-                    </Pressable>
-                    <Text
-                      style={{
-                        fontSize: 14,
-                        fontWeight: '800',
-                        color: '#810021',
-                        minWidth: 20,
-                        textAlign: 'center',
-                      }}
-                    >
-                      {doorChargePax}
-                    </Text>
-                    <Pressable
-                      onPress={() => setDoorChargePax((p) => p + 1)}
-                      style={{
-                        width: 28,
-                        height: 28,
-                        borderRadius: 6,
-                        backgroundColor: '#ffffff',
-                        borderWidth: 1,
-                        borderColor: '#d6d3d1',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1C1917' }}>+</Text>
-                    </Pressable>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#1C1917' }}>
+                        ₱ / head:
+                      </Text>
+                      <TextInput
+                        style={{
+                          width: 72,
+                          height: 32,
+                          backgroundColor: '#ffffff',
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: '#d6d3d1',
+                          textAlign: 'center',
+                          fontSize: 14,
+                          fontWeight: '700',
+                          color: '#1C1917',
+                          padding: 0,
+                        }}
+                        value={doorChargePrice}
+                        onChangeText={setDoorChargePrice}
+                        keyboardType="numeric"
+                      />
+                    </View>
                   </View>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#1C1917' }}>
-                      ₱ / head:
-                    </Text>
-                    <TextInput
-                      style={{
-                        width: 72,
-                        height: 32,
-                        backgroundColor: '#ffffff',
-                        borderRadius: 6,
-                        borderWidth: 1,
-                        borderColor: '#d6d3d1',
-                        textAlign: 'center',
-                        fontSize: 14,
-                        fontWeight: '700',
-                        color: '#1C1917',
-                        padding: 0,
-                      }}
-                      value={doorChargePrice}
-                      onChangeText={setDoorChargePrice}
-                      keyboardType="numeric"
-                    />
-                  </View>
-                </View>
-              )}
-            </View>
-          )}
+                )}
+              </View>
+            )}
+          </ScrollView>
 
           {/* Action Buttons */}
           <View style={styles.actionRow}>
@@ -333,13 +334,11 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
               onPress={handleConfirm}
               style={styles.confirmBtn}
               accessibilityRole="button"
-              accessibilityLabel={
-                effectiveIsSplit ? 'Open Split Tab & Order' : 'Open Tab & Start Order'
-              }
+              accessibilityLabel={effectiveIsSplit ? 'Split Tab' : 'Open Tab'}
             >
               <Plus size={18} color="#ffffff" strokeWidth={2.4} />
               <Text style={styles.confirmBtnText}>
-                {effectiveIsSplit ? 'Open Split Tab & Order' : 'Open Tab & Start Order'}
+                {effectiveIsSplit ? 'Split Tab' : 'Open Tab'}
               </Text>
             </Pressable>
           </View>
@@ -362,7 +361,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     width: '100%',
     maxWidth: 540,
-    padding: 24,
+    maxHeight: '96%',
+    padding: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
@@ -389,7 +389,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     alignItems: 'center',
     justifyContent: 'center',
   },

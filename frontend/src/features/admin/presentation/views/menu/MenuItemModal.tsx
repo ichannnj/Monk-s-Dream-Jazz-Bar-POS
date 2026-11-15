@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Utensils, ShieldAlert, Leaf } from 'lucide-react-native';
+import { Utensils, ShieldAlert, Leaf, Trash2 } from 'lucide-react-native';
 import { PosMultiSelectDropdown } from '@/features/shared';
 import { AdminModal } from '../../components/AdminModal';
 import { AdminInput } from '../../components/AdminInput';
@@ -22,6 +22,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
   onSuccess,
   product,
   categories,
+  onDelete,
 }) => {
   const ctrl = useMenuItemModalController({
     visible,
@@ -31,25 +32,55 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
     onSuccess,
   });
 
+  const handleDelete = () => {
+    if (!product || !onDelete) return;
+    const confirmed =
+      typeof window !== 'undefined' && window.confirm
+        ? window.confirm(
+            `Are you sure you want to delete "${product.name}"? This action cannot be undone.`
+          )
+        : true;
+    if (confirmed) {
+      onDelete(product);
+      onClose();
+    }
+  };
+
   const footer = (
-    <>
-      <Pressable
-        onPress={onClose}
-        disabled={ctrl.isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
-      >
-        <Text className="text-base font-bold text-stone-700">Cancel</Text>
-      </Pressable>
-      <Pressable
-        onPress={ctrl.handleSubmit}
-        disabled={ctrl.isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
-      >
-        <Text className="text-base font-bold text-white">
-          {ctrl.isSubmitting ? 'Saving...' : product ? 'Save Changes' : 'Create Product'}
-        </Text>
-      </Pressable>
-    </>
+    <View className="flex-1 flex-row items-center justify-between w-full flex-wrap gap-2">
+      {product && onDelete ? (
+        <Pressable
+          onPress={handleDelete}
+          disabled={ctrl.isSubmitting}
+          className="min-h-[48px] px-4 flex-row items-center justify-center rounded-xl bg-stone-100 border border-stone-200 active:bg-stone-200"
+          accessibilityLabel={`Delete ${product.name}`}
+        >
+          <Trash2 size={16} color="#800020" />
+          <Text className="ml-2 text-sm font-bold text-[#800020]">Delete Item</Text>
+        </Pressable>
+      ) : (
+        <View />
+      )}
+
+      <View className="flex-row items-center gap-2">
+        <Pressable
+          onPress={onClose}
+          disabled={ctrl.isSubmitting}
+          className="min-h-[48px] px-5 sm:px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+        >
+          <Text className="text-base font-bold text-stone-700">Cancel</Text>
+        </Pressable>
+        <Pressable
+          onPress={ctrl.handleSubmit}
+          disabled={ctrl.isSubmitting}
+          className="min-h-[48px] px-5 sm:px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+        >
+          <Text className="text-base font-bold text-white">
+            {ctrl.isSubmitting ? 'Saving...' : product ? 'Save Changes' : 'Create Product'}
+          </Text>
+        </Pressable>
+      </View>
+    </View>
   );
 
   return (

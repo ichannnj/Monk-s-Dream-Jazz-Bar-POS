@@ -15,6 +15,7 @@ interface BillModalHeaderAndScopeProps {
   setSettlementMode: (mode: 'single_tab' | 'entire_table') => void;
   grandTotal: number;
   onClose: () => void;
+  isShortHeight?: boolean;
 }
 
 export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = ({
@@ -27,6 +28,7 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
   setSettlementMode,
   grandTotal,
   onClose,
+  isShortHeight = false,
 }) => {
   const scopeOptions: PosDropdownOption<'single_tab' | 'entire_table'>[] = [
     {
@@ -46,7 +48,12 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <View style={styles.badge}>
+          <View
+            style={[
+              styles.badge,
+              { width: 'auto', paddingHorizontal: 12, height: 38, borderRadius: 12 },
+            ]}
+          >
             <Text style={{ fontSize: 13, fontWeight: '800', color: '#ffffff' }}>
               {isTakeout
                 ? `Takeout #${takeoutOrder?.ticketNumber || 'T-001'}`
@@ -56,10 +63,10 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
           <View>
             <Text style={styles.title}>
               {isTakeout
-                ? `Takeout Check: ${takeoutOrder?.customerName || 'Walk-in Guest'}`
+                ? `Takeout: ${takeoutOrder?.customerName || 'Walk-in'}`
                 : settlementMode === 'entire_table'
-                  ? `Table ${table?.code || ''} Entire Bill (${activeTabsCount} Tabs)`
-                  : `Guest Tab: ${activeTab?.guestName || 'Table Guest'}`}
+                  ? `Table ${table?.code || ''} (${activeTabsCount} Tabs)`
+                  : `Table ${table?.code || ''} · ${activeTab?.guestName || 'Guest'}`}
             </Text>
           </View>
         </View>
@@ -70,38 +77,38 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
           accessibilityRole="button"
           accessibilityLabel="Close billing modal"
         >
-          <X size={20} color="#4b5563" />
+          <X size={20} color="#1c1917" />
         </Pressable>
       </View>
 
       {/* Settlement Scope Dropdown if multiple tabs on Dine-In */}
       {!isTakeout && table?.tabs && table.tabs.length > 1 ? (
-        <View className="mb-4">
+        <View className="mb-3">
           <PosDropdown
             options={scopeOptions}
             value={settlementMode}
             onChange={setSettlementMode}
-            prefixLabel="Settlement Scope:"
-            sheetTitle="Select Settlement Scope"
+            prefixLabel="Scope:"
+            sheetTitle="Select Scope"
             className="w-full"
           />
         </View>
       ) : null}
 
       {/* Total Display Card */}
-      <View style={[styles.totalDisplayCard, isTakeout && { borderColor: '#16a34a' }]}>
-        <View>
-          <Text style={styles.totalCardLabel}>TOTAL AMOUNT DUE</Text>
-          <Text style={[styles.totalCardAmount, isTakeout && { color: '#15803d' }]}>
-            {formatCurrency(grandTotal)}
-          </Text>
+      {isShortHeight ? (
+        <View style={styles.totalDisplayCardCompact}>
+          <Text style={styles.totalCardLabelCompact}>Total Due</Text>
+          <Text style={styles.totalCardAmountCompact}>{formatCurrency(grandTotal)}</Text>
         </View>
-        <Text style={styles.totalCardSub}>
-          {isTakeout
-            ? 'Takeout Bill • 0% Service Charge'
-            : 'VAT-Inclusive • Service Charge applied'}
-        </Text>
-      </View>
+      ) : (
+        <View style={styles.totalDisplayCard}>
+          <View style={{ alignItems: 'center' }}>
+            <Text style={styles.totalCardLabel}>Total Due</Text>
+            <Text style={styles.totalCardAmount}>{formatCurrency(grandTotal)}</Text>
+          </View>
+        </View>
+      )}
     </>
   );
 };

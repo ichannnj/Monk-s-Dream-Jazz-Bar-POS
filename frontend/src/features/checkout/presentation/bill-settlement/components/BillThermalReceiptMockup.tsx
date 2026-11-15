@@ -1,15 +1,14 @@
 import React, { useMemo } from 'react';
 import { View, Text, Image, Pressable } from 'react-native';
-import { Printer } from 'lucide-react-native';
 import { TableItem, CustomerTab, TakeoutOrder } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 import { DiscountType } from '../../../utils/taxAndDiscountCalculator';
 import { QrPaymentChannel } from '../../../data/qrPaymentChannels.api';
-import { aggregateReceiptItems } from '@/features/printer';
+import { aggregateReceiptItems, usePrinterStationStore } from '@/features/printer';
 import { styles } from '../BillSettlementModal.styles';
 import type { PaymentTender } from '../../../domain/splitTender.types';
 
-const MONKS_DREAM_LOGO = require('../../../../../../assets/Monks Dream Logo files-02.png');
+const MONKS_DREAM_LOGO = require('../../../../../../assets/monks-dream-logo-lockup.png');
 
 interface BillThermalReceiptMockupProps {
   isTakeout: boolean;
@@ -37,8 +36,6 @@ interface BillThermalReceiptMockupProps {
   vatExemptSales: number;
   seniorPwdId: string;
   seniorPwdName: string;
-  onPrintBill?: () => void;
-  isPrintingBill?: boolean;
 }
 
 export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> = ({
@@ -67,53 +64,126 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
   vatExemptSales,
   seniorPwdId,
   seniorPwdName,
-  onPrintBill,
-  isPrintingBill = false,
 }) => {
   const displayItems = useMemo(() => aggregateReceiptItems(rawItems), [rawItems]);
+  const { paperWidth, setPaperWidth } = usePrinterStationStore();
+  const is57mm = paperWidth === '57mm';
+
+  const dividerDash = is57mm
+    ? '--------------------------------'
+    : '------------------------------------------------';
+  const dividerEqual = is57mm
+    ? '================================'
+    : '================================================';
 
   return (
     <View style={styles.rightCol}>
-      {onPrintBill && (
+      {/* Paper Width Switcher */}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          marginBottom: 10,
+        }}
+      >
         <Pressable
-          onPress={onPrintBill}
-          disabled={isPrintingBill}
-          style={[styles.receiptQuickPrintBtn, isPrintingBill && { opacity: 0.6 }]}
-          accessibilityRole="button"
-          accessibilityLabel="Quick print pre-payment bill"
+          onPress={() => setPaperWidth('80mm')}
+          style={{
+            paddingVertical: 5,
+            paddingHorizontal: 12,
+            borderRadius: 8,
+            backgroundColor: !is57mm ? '#810021' : '#f5f5f4',
+            borderWidth: 1,
+            borderColor: !is57mm ? '#810021' : '#e7e5e4',
+          }}
         >
-          <Printer size={15} color="#810021" strokeWidth={2.2} />
-          <Text style={styles.receiptQuickPrintBtnText}>
-            {isPrintingBill ? 'Printing Bill...' : 'Quick Print Bill (Guest Check)'}
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '700',
+              color: !is57mm ? '#ffffff' : '#78716c',
+            }}
+          >
+            80mm Standard
           </Text>
         </Pressable>
-      )}
+        <Pressable
+          onPress={() => setPaperWidth('57mm')}
+          style={{
+            paddingVertical: 5,
+            paddingHorizontal: 12,
+            borderRadius: 8,
+            backgroundColor: is57mm ? '#810021' : '#f5f5f4',
+            borderWidth: 1,
+            borderColor: is57mm ? '#810021' : '#e7e5e4',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '700',
+              color: is57mm ? '#ffffff' : '#78716c',
+            }}
+          >
+            57mm Compact
+          </Text>
+        </Pressable>
+      </View>
 
-      <View style={styles.receiptPaper}>
-        {/* Receipt Header with Logo */}
+      <View style={[styles.receiptPaper, { maxWidth: is57mm ? 300 : 380, width: '100%' }]}>
+        {/* Receipt Header with Combined Logo Lockup */}
         <View style={{ alignItems: 'center', marginBottom: 6 }}>
           <Image
             source={MONKS_DREAM_LOGO}
-            style={{ width: 54, height: 54, resizeMode: 'contain', marginBottom: 4 }}
+            style={{
+              width: is57mm ? 165 : 200,
+              height: is57mm ? 55 : 67,
+              resizeMode: 'contain',
+              marginBottom: 4,
+            }}
           />
-          <Text style={styles.receiptLogo}>MONK'S DREAM</Text>
           <Text style={styles.receiptSubLogo}>JAZZ BAR AND CAFE</Text>
           <Text style={styles.receiptTagline}>Craft Cocktails &amp; Fine Jazz</Text>
-          <Text style={styles.receiptContact}>Tel: +63 917 555 1957 • IG/FB: @monksdreamjazz</Text>
+          <Text style={styles.receiptContact}>
+            {is57mm
+              ? 'Tel: +63 917 555 1957\nIG/FB: @monksdreamjazz'
+              : 'Tel: +63 917 555 1957 • IG/FB: @monksdreamjazz'}
+          </Text>
         </View>
-        <Text style={styles.receiptDivider}>--------------------------------</Text>
+        <Text style={styles.receiptDivider} numberOfLines={1}>
+          {dividerDash}
+        </Text>
 
         {/* Metadata */}
-        <View style={styles.receiptRow}>
-          <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
-            {isTakeout
-              ? `CHECK: #${takeoutOrder?.ticketNumber || 'T-001'}`
-              : `CHECK: #${(activeTab?.id || 'REC-001').slice(0, 8).toUpperCase()}`}
-          </Text>
-          <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
-            MODE: {operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE'}
-          </Text>
-        </View>
+        {is57mm ? (
+          <>
+            <View style={styles.receiptRow}>
+              <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
+                {isTakeout
+                  ? `CHECK: #${takeoutOrder?.ticketNumber || 'T-001'}`
+                  : `CHECK: #${(activeTab?.id || 'REC-001').slice(0, 8).toUpperCase()}`}
+              </Text>
+            </View>
+            <View style={styles.receiptRow}>
+              <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
+                MODE: {operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE'}
+              </Text>
+            </View>
+          </>
+        ) : (
+          <View style={styles.receiptRow}>
+            <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
+              {isTakeout
+                ? `CHECK: #${takeoutOrder?.ticketNumber || 'T-001'}`
+                : `CHECK: #${(activeTab?.id || 'REC-001').slice(0, 8).toUpperCase()}`}
+            </Text>
+            <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
+              MODE: {operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE'}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.receiptRow}>
           <Text style={styles.receiptMeta}>
@@ -129,37 +199,61 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           </Text>
         </View>
 
-        <View style={styles.receiptRow}>
-          <Text style={styles.receiptMeta}>
-            {isTakeout
-              ? `TAKEOUT: #${takeoutOrder?.ticketNumber}`
-              : `TABLE: ${table?.code ? `Table ${table.code}` : 'Floor'}`}
-          </Text>
-          <Text style={styles.receiptMeta}>
-            TAB:{' '}
-            {isTakeout
-              ? takeoutOrder?.customerName || 'Walk-in'
-              : activeTab?.guestName || 'Table Guest'}
-          </Text>
-        </View>
+        {is57mm ? (
+          <>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptMeta}>
+                {isTakeout
+                  ? `TAKEOUT: #${takeoutOrder?.ticketNumber}`
+                  : `TABLE: ${table?.code ? `Table ${table.code}` : 'Floor'}`}
+              </Text>
+            </View>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptMeta}>
+                TAB:{' '}
+                {isTakeout
+                  ? takeoutOrder?.customerName || 'Walk-in'
+                  : activeTab?.guestName || 'Table Guest'}
+              </Text>
+            </View>
+          </>
+        ) : (
+          <View style={styles.receiptRow}>
+            <Text style={styles.receiptMeta}>
+              {isTakeout
+                ? `TAKEOUT: #${takeoutOrder?.ticketNumber}`
+                : `TABLE: ${table?.code ? `Table ${table.code}` : 'Floor'}`}
+            </Text>
+            <Text style={styles.receiptMeta}>
+              TAB:{' '}
+              {isTakeout
+                ? takeoutOrder?.customerName || 'Walk-in'
+                : activeTab?.guestName || 'Table Guest'}
+            </Text>
+          </View>
+        )}
 
         <View style={styles.receiptRow}>
           <Text style={styles.receiptMeta}>STAFF: {currentUserDisplayName || 'Cashier'}</Text>
-          <Text style={styles.receiptMeta}>TERMINAL: TILL-1</Text>
+          {!is57mm && <Text style={styles.receiptMeta}>TERMINAL: TILL-1</Text>}
         </View>
 
-        <Text style={styles.receiptDivider}>================================</Text>
+        <Text style={styles.receiptDivider} numberOfLines={1}>
+          {dividerEqual}
+        </Text>
         <View style={styles.receiptRow}>
           <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>QTY DESCRIPTION</Text>
           <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>AMOUNT (PHP)</Text>
         </View>
-        <Text style={styles.receiptDivider}>================================</Text>
+        <Text style={styles.receiptDivider} numberOfLines={1}>
+          {dividerEqual}
+        </Text>
 
         {/* Itemized Line Items (Aggregated across rounds) */}
         {displayItems.map((item, idx) => (
           <View key={idx} style={{ marginBottom: 4 }}>
             <View style={styles.receiptRow}>
-              <Text style={styles.receiptItemName}>
+              <Text style={[styles.receiptItemName, is57mm && { maxWidth: 180 }]}>
                 {item.quantity}x {item.productName}
               </Text>
               <Text style={styles.receiptItemPrice}>
@@ -177,17 +271,23 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           </View>
         ))}
 
-        <Text style={styles.receiptDivider}>--------------------------------</Text>
+        <Text style={styles.receiptDivider} numberOfLines={1}>
+          {dividerDash}
+        </Text>
 
         {/* Financial Summary */}
         <View style={styles.receiptRow}>
-          <Text style={styles.receiptMeta}>SUBTOTAL (Gross Sales):</Text>
+          <Text style={styles.receiptMeta}>
+            {is57mm ? 'SUBTOTAL (Gross):' : 'SUBTOTAL (Gross Sales):'}
+          </Text>
           <Text style={styles.receiptMeta}>{formatCurrency(subtotal)}</Text>
         </View>
 
         {billing.vatExemptSales > 0 ? (
           <View style={styles.receiptRow}>
-            <Text style={styles.receiptMeta}>LESS: VAT EXEMPTION (12%):</Text>
+            <Text style={styles.receiptMeta}>
+              {is57mm ? 'LESS: VAT EXEMPT (12%):' : 'LESS: VAT EXEMPTION (12%):'}
+            </Text>
             <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
               -{formatCurrency(billing.seniorItemsGross - billing.vatExemptSales)}
             </Text>
@@ -197,7 +297,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         {billing.seniorDiscountAmount > 0 ? (
           <View style={styles.receiptRow}>
             <Text style={styles.receiptMeta}>
-              LESS: {discountType === 'SENIOR_CITIZEN' ? 'SC' : 'PWD'} DISCOUNT (20%):
+              LESS: {discountType === 'SENIOR_CITIZEN' ? 'SC' : 'PWD'} (20%):
             </Text>
             <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
               -{formatCurrency(billing.seniorDiscountAmount)}
@@ -207,7 +307,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
 
         {billing.customDiscountAmount > 0 ? (
           <View style={styles.receiptRow}>
-            <Text style={styles.receiptMeta}>LESS: PROMO DISCOUNT:</Text>
+            <Text style={styles.receiptMeta}>LESS: DISCOUNT:</Text>
             <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
               -{formatCurrency(billing.customDiscountAmount)}
             </Text>
@@ -217,7 +317,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         {serviceCharge > 0 ? (
           <View style={styles.receiptRow}>
             <Text style={styles.receiptMeta}>
-              SERVICE CHARGE ({operatingMode === 'EVENT' ? 'EVENT 10%' : 'CAFE FOOD 10%'}):
+              SERVICE CHARGE ({operatingMode === 'EVENT' ? '10%' : 'FOOD 10%'}):
             </Text>
             <Text style={styles.receiptMeta}>{formatCurrency(serviceCharge)}</Text>
           </View>
@@ -231,14 +331,20 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         ) : null}
 
         {/* Bold Grand Total */}
-        <Text style={styles.receiptDivider}>================================</Text>
+        <Text style={styles.receiptDivider} numberOfLines={1}>
+          {dividerEqual}
+        </Text>
         <View style={styles.receiptRow}>
-          <Text style={[styles.receiptBold, { fontSize: 16 }]}>TOTAL AMOUNT DUE:</Text>
+          <Text style={[styles.receiptBold, { fontSize: 16 }]}>
+            {is57mm ? 'TOTAL DUE:' : 'TOTAL AMOUNT DUE:'}
+          </Text>
           <Text style={[styles.receiptBold, { fontSize: 16, color: '#810021' }]}>
             {formatCurrency(grandTotal)}
           </Text>
         </View>
-        <Text style={styles.receiptDivider}>================================</Text>
+        <Text style={styles.receiptDivider} numberOfLines={1}>
+          {dividerEqual}
+        </Text>
 
         {/* Payment Details */}
         {tenderTabMode === 'split' ? (
@@ -246,7 +352,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
             <View style={styles.receiptRow}>
               <Text style={styles.receiptMeta}>PAYMENT METHOD:</Text>
               <Text style={[styles.receiptMeta, { fontWeight: '800', color: '#810021' }]}>
-                SPLIT-TENDER ({splitTenders.length})
+                SPLIT ({splitTenders.length})
               </Text>
             </View>
             {splitTenders.map((t, idx) => (
@@ -278,7 +384,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
               <Text style={styles.receiptMeta}>PAYMENT METHOD:</Text>
               <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
                 {selectedMethod === 'digital_wallet'
-                  ? `${(selectedQrChannel?.name || 'DIGITAL WALLET').toUpperCase()} QR`
+                  ? `${(selectedQrChannel?.name || 'WALLET').toUpperCase()} QR`
                   : selectedMethod.toUpperCase()}
               </Text>
             </View>
@@ -320,9 +426,11 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         )}
 
         {/* Philippine VAT Breakdown */}
-        <Text style={styles.receiptDivider}>--------------------------------</Text>
+        <Text style={styles.receiptDivider} numberOfLines={1}>
+          {dividerDash}
+        </Text>
         <Text style={[styles.receiptMeta, { fontWeight: '700', marginBottom: 2 }]}>
-          TAX &amp; STATUTORY BREAKDOWN:
+          {is57mm ? 'TAX & STATUTORY BREAKDOWN:' : 'PHILIPPINE STATUTORY TAX BREAKDOWN:'}
         </Text>
         <View style={styles.receiptRow}>
           <Text style={styles.receiptTaxSub}> VATable Sales (12%):</Text>
@@ -343,7 +451,9 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
 
         {billing.vatExemptSales > 0 ? (
           <>
-            <Text style={styles.receiptDivider}>--------------------------------</Text>
+            <Text style={styles.receiptDivider} numberOfLines={1}>
+              {dividerDash}
+            </Text>
             <Text style={[styles.receiptMeta, { fontWeight: '700', marginBottom: 2 }]}>
               BENEFICIARY INFORMATION:
             </Text>
@@ -367,7 +477,9 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         ) : null}
 
         {/* Jazz Club Cultural Quote & Notice */}
-        <Text style={styles.receiptDivider}>--------------------------------</Text>
+        <Text style={styles.receiptDivider} numberOfLines={1}>
+          {dividerDash}
+        </Text>
         <View style={{ alignItems: 'center', marginVertical: 4 }}>
           <Text style={styles.receiptQuote}>"Writing about music is like dancing</Text>
           <Text style={styles.receiptQuote}>about architecture."</Text>
@@ -379,7 +491,9 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           </Text>
           <Text style={styles.receiptFooter}>Please come back for the next set.</Text>
         </View>
-        <Text style={styles.receiptDivider}>--------------------------------</Text>
+        <Text style={styles.receiptDivider} numberOfLines={1}>
+          {dividerDash}
+        </Text>
         <Text style={styles.receiptNotOfficial}>THIS IS NOT AN OFFICIAL RECEIPT</Text>
       </View>
     </View>

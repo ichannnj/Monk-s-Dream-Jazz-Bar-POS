@@ -335,6 +335,10 @@ export class UsbEscPosPrinter implements IPrinterService {
     this.columns = columns;
   }
 
+  public getPaperWidth(): '80mm' | '57mm' {
+    return this.columns === 32 ? '57mm' : '80mm';
+  }
+
   public async printReceipt(payload: CustomerReceiptPayload): Promise<boolean> {
     const escpos = this.renderReceiptBytes(payload);
     return this.writeBytes(escpos);
@@ -392,6 +396,10 @@ export class UsbEscPosPrinter implements IPrinterService {
     const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
+    const cols = this.columns;
+    const is57mm = cols === 32;
+    const paperWidth = this.getPaperWidth();
+
     // Initialize printer: ESC @
     cmd([0x1b, 0x40]);
 
@@ -405,21 +413,29 @@ export class UsbEscPosPrinter implements IPrinterService {
     }
 
     // 1. Bitonal High-Contrast Graphic Logo
-    const logoBytes = getMonksDreamLogoRasterBytes();
+    const logoBytes = getMonksDreamLogoRasterBytes(paperWidth);
     if (logoBytes && logoBytes.length > 0) {
       parts.push(Buffer.from(logoBytes));
       push('\n');
+    } else {
+      cmd([0x1b, 0x45, 0x01]); // Bold
+      cmd([0x1d, 0x21, 0x01]); // Double height
+      push("MONK'S DREAM\n");
+      cmd([0x1d, 0x21, 0x00]); // Normal size
+      cmd([0x1b, 0x45, 0x00]); // Normal weight
     }
 
     // 2. Business Header
     cmd([0x1b, 0x45, 0x01]); // Bold
-    cmd([0x1d, 0x21, 0x01]); // Double height
-    push("MONK'S DREAM\nJAZZ BAR AND CAFE\n");
-    cmd([0x1d, 0x21, 0x00]); // Normal size
+    push('JAZZ BAR AND CAFE\n');
     cmd([0x1b, 0x45, 0x00]); // Normal weight
     push('Craft Cocktails & Fine Jazz\n');
-    push('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz\n');
-    push(divider('-', 48));
+    if (is57mm) {
+      push('Tel: +63 917 555 1957\nIG/FB: @monksdreamjazz\n');
+    } else {
+      push('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz\n');
+    }
+    push(divider('-', cols));
 
     // 3. Metadata Section
     cmd([0x1b, 0x61, 0x00]); // Left
@@ -427,28 +443,43 @@ export class UsbEscPosPrinter implements IPrinterService {
     const operatingMode = (payload.operatingMode || 'CAFE').toUpperCase();
     const modeLabel = operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE';
 
-    cmd([0x1b, 0x45, 0x01]);
-    push(padLine(`CHECK #: ${receiptNo}`, `MODE: ${modeLabel}`, 48));
-    cmd([0x1b, 0x45, 0x00]);
+    if (is57mm) {
+      cmd([0x1b, 0x45, 0x01]);
+      push(`CHECK #: ${receiptNo}\n`);
+      cmd([0x1b, 0x45, 0x00]);
+      push(`MODE:    ${modeLabel}\n`);
+    } else {
+      cmd([0x1b, 0x45, 0x01]);
+      push(padLine(`CHECK #: ${receiptNo}`, `MODE: ${modeLabel}`, cols));
+      cmd([0x1b, 0x45, 0x00]);
+    }
     push(`DATE:    ${payload.settledAt || payload.timestamp}\n`);
 
     if (payload.tableNumber || payload.tableLabel) {
       const tableStr = payload.tableLabel || `Table ${payload.tableNumber}`;
       const tabStr = payload.tabName || 'Main Tab';
-      push(`TABLE:   ${tableStr.padEnd(16)} TAB: ${tabStr}\n`);
+      if (is57mm) {
+        push(`TABLE:   ${tableStr}\nTAB:     ${tabStr}\n`);
+      } else {
+        push(`TABLE:   ${tableStr.padEnd(16)} TAB: ${tabStr}\n`);
+      }
     } else {
       push(`TAB:     ${payload.tabName || 'Takeout / Counter'}\n`);
     }
 
     const staff = cleanStaffName(payload.cashierName || payload.waiterName);
-    push(`STAFF:   ${staff.padEnd(16)} TERMINAL: TILL-1\n`);
-    push(divider('=', 48));
+    if (is57mm) {
+      push(`STAFF:   ${staff}\n`);
+    } else {
+      push(`STAFF:   ${staff.padEnd(16)} TERMINAL: TILL-1\n`);
+    }
+    push(divider('=', cols));
 
     // 4. Items Table Header
     cmd([0x1b, 0x45, 0x01]);
-    push(padLine('QTY  DESCRIPTION', 'AMOUNT (PHP)', 48));
+    push(padLine('QTY  DESCRIPTION', 'AMOUNT (PHP)', cols));
     cmd([0x1b, 0x45, 0x00]);
-    push(divider('=', 48));
+    push(divider('=', cols));
 
     // 5. Line Items (Aggregated across rounds)
     for (const item of aggregateReceiptItems(payload.items)) {
@@ -466,7 +497,7 @@ export class UsbEscPosPrinter implements IPrinterService {
       const itemTotal = toPesos(
         item.total ?? toPesos(item.price || item.unit_price) * (item.quantity || 1)
       );
-      push(formatItemLine(qtyStr, desc, formatPhp(itemTotal), 48));
+      push(formatItemLine(qtyStr, desc, formatPhp(itemTotal), cols));
 
       if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
         for (const mod of item.modifiers) {
@@ -483,36 +514,38 @@ export class UsbEscPosPrinter implements IPrinterService {
       }
     }
 
-    push(divider('-', 48));
+    push(divider('-', cols));
 
     // 6. Financial Summary & Totals
     const subtotal = toPesos(payload.subtotal || payload.total || 0);
-    push(padLine('SUBTOTAL (Gross Sales):', formatPhp(subtotal), 48));
+    const subtotalLabel = is57mm ? 'SUBTOTAL (Gross):' : 'SUBTOTAL (Gross Sales):';
+    push(padLine(subtotalLabel, formatPhp(subtotal), cols));
 
     const corkage = toPesos(payload.corkageFee || 0);
     if (corkage > 0) {
-      push(padLine('CORKAGE FEE:', formatPhp(corkage), 48));
+      push(padLine('CORKAGE FEE:', formatPhp(corkage), cols));
     }
 
     const discount = toPesos(payload.discount || 0);
     if (discount > 0) {
-      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, 48));
+      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, cols));
     }
 
     const serviceCharge = toPesos(payload.serviceCharge || 0);
     if (serviceCharge > 0) {
-      push(padLine('SERVICE CHARGE (10%):', formatPhp(serviceCharge), 48));
+      push(padLine('SERVICE CHARGE:', formatPhp(serviceCharge), cols));
     }
 
     // Bold Grand Total
-    push(divider('=', 48));
+    push(divider('=', cols));
     cmd([0x1b, 0x45, 0x01]); // Bold
     cmd([0x1d, 0x21, 0x01]); // Double height
     const total = toPesos(payload.total || subtotal + corkage - discount + serviceCharge);
-    push(padLine('TOTAL AMOUNT DUE:', `PHP ${formatPhp(total)}`, 48));
+    const totalLabel = is57mm ? 'TOTAL DUE:' : 'TOTAL AMOUNT DUE:';
+    push(padLine(totalLabel, `PHP ${formatPhp(total)}`, cols));
     cmd([0x1d, 0x21, 0x00]); // Normal size
     cmd([0x1b, 0x45, 0x00]); // Normal weight
-    push(divider('=', 48));
+    push(divider('=', cols));
 
     // 7. Payment Tendered & Change
     const paymentMethod = (payload.paymentMethod || 'CASH').toUpperCase();
@@ -520,19 +553,20 @@ export class UsbEscPosPrinter implements IPrinterService {
     const isSplit = paymentMethod === 'SPLIT' || (Array.isArray(tenders) && tenders.length > 0);
 
     if (isSplit && Array.isArray(tenders) && tenders.length > 0) {
-      push(padLine('PAYMENT BREAKDOWN (SPLIT):', `PHP ${formatPhp(total)}`, 48));
+      const splitLabel = is57mm ? 'PAYMENT (SPLIT):' : 'PAYMENT BREAKDOWN (SPLIT):';
+      push(padLine(splitLabel, `PHP ${formatPhp(total)}`, cols));
       for (const t of tenders) {
         const rawMethod = String(
           t.method || t.payment_method || t.paymentMethod || ''
         ).toLowerCase();
         const amt = toPesos(t.amount);
         if (rawMethod === 'cash') {
-          push(padLine('  CASH:', `PHP ${formatPhp(amt)}`, 48));
+          push(padLine('  CASH:', `PHP ${formatPhp(amt)}`, cols));
           const tTendered = toPesos(t.tendered);
           if (tTendered > amt) {
-            push(padLine('    Cash Tendered:', `PHP ${formatPhp(tTendered)}`, 48));
+            push(padLine('    Cash Tendered:', `PHP ${formatPhp(tTendered)}`, cols));
             const tChange = toPesos(t.change ?? tTendered - amt);
-            push(padLine('    Change:', `PHP ${formatPhp(tChange)}`, 48));
+            push(padLine('    Change:', `PHP ${formatPhp(tChange)}`, cols));
           }
         } else if (rawMethod === 'digital_wallet' || rawMethod === 'wallet' || rawMethod === 'qr') {
           const chan = (
@@ -543,26 +577,26 @@ export class UsbEscPosPrinter implements IPrinterService {
           ).toUpperCase();
           const ref = t.referenceNumber || t.reference_number;
           const refLabel = ref ? ` [Ref: ${ref}]` : '';
-          push(padLine(`  ${chan}${refLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+          push(padLine(`  ${chan}${refLabel}:`, `PHP ${formatPhp(amt)}`, cols));
         } else if (rawMethod === 'card') {
           const last4 = t.last4Digits || t.last4_digits;
           const cardLabel = last4 ? `CARD [**** ${last4}]` : 'CARD';
-          push(padLine(`  ${cardLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+          push(padLine(`  ${cardLabel}:`, `PHP ${formatPhp(amt)}`, cols));
         } else if (rawMethod === 'comp') {
           const reason = t.reason || t.notes;
           const compLabel = reason ? `COMP [${reason}]` : 'COMPLIMENTARY';
-          push(padLine(`  ${compLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+          push(padLine(`  ${compLabel}:`, `PHP ${formatPhp(amt)}`, cols));
         } else {
-          push(padLine(`  ${rawMethod.toUpperCase()}:`, `PHP ${formatPhp(amt)}`, 48));
+          push(padLine(`  ${rawMethod.toUpperCase()}:`, `PHP ${formatPhp(amt)}`, cols));
         }
       }
     } else {
       const paymentChannel = payload.paymentChannel;
       const paymentLabel = paymentChannel ? `${paymentChannel.toUpperCase()} QR` : paymentMethod;
-      push(padLine('PAYMENT METHOD:', paymentLabel, 48));
+      push(padLine('PAYMENT METHOD:', paymentLabel, cols));
 
       if (payload.referenceNumber) {
-        push(padLine('REFERENCE NO:', `#${payload.referenceNumber}`, 48));
+        push(padLine('REFERENCE NO:', `#${payload.referenceNumber}`, cols));
       }
 
       const tendered = toPesos(payload.tendered || total);
@@ -571,16 +605,16 @@ export class UsbEscPosPrinter implements IPrinterService {
       );
 
       if (paymentMethod === 'CASH') {
-        push(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, 48));
-        push(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, 48));
+        push(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, cols));
+        push(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, cols));
       } else {
-        push(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, 48));
+        push(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, cols));
       }
     }
 
     // 8. Philippine VAT & Statutory Tax Breakdown
-    push(divider('-', 48));
-    push('TAX & STATUTORY BREAKDOWN:\n');
+    push(divider('-', cols));
+    push(is57mm ? 'TAX & STATUTORY BREAKDOWN:\n' : 'PHILIPPINE STATUTORY TAX BREAKDOWN:\n');
     const vatableSales = toPesos(
       payload.vatableSales ?? (discount > 0 ? 0 : Number((total / 1.12).toFixed(2)))
     );
@@ -591,28 +625,29 @@ export class UsbEscPosPrinter implements IPrinterService {
       payload.vatExemptSales ?? (discount > 0 ? Number(total.toFixed(2)) : 0)
     );
 
-    push(padLine('  VATable Sales (12%):', formatPhp(vatableSales), 48));
-    push(padLine('  VAT Amount (12%):', formatPhp(vatAmount), 48));
-    push(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), 48));
-    push(padLine('  Zero-Rated Sales:', '0.00', 48));
+    push(padLine('  VATable Sales (12%):', formatPhp(vatableSales), cols));
+    push(padLine('  VAT Amount (12%):', formatPhp(vatAmount), cols));
+    push(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), cols));
+    push(padLine('  Zero-Rated Sales:', '0.00', cols));
 
     if (discount > 0) {
-      push(divider('-', 48));
+      push(divider('-', cols));
       push('SC / PWD BENEFICIARY ACKNOWLEDGMENT:\n');
-      push('Name:      _________________________________\n');
-      push('ID Number: _________________________________\n');
-      push('Signature: _________________________________\n');
+      const sigLine = is57mm ? '________________' : '_________________________________';
+      push(`Name:      ${sigLine}\n`);
+      push(`ID Number: ${sigLine}\n`);
+      push(`Signature: ${sigLine}\n`);
     }
 
     // 9. Footer: Quote, Appreciation & Statutory Notice
-    push(divider('-', 48));
+    push(divider('-', cols));
     cmd([0x1b, 0x61, 0x01]); // Center
     push('"Writing about music is like dancing\n');
     push('about architecture."\n');
     push('- Thelonious Monk\n\n');
     push('Thank you for supporting live music!\n');
     push('Please come back for the next set.\n');
-    push(divider('-', 48));
+    push(divider('-', cols));
     cmd([0x1b, 0x45, 0x01]);
     push('THIS IS NOT AN OFFICIAL RECEIPT\n');
     cmd([0x1b, 0x45, 0x00]);
@@ -629,6 +664,10 @@ export class UsbEscPosPrinter implements IPrinterService {
     const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
+    const cols = this.columns;
+    const is57mm = cols === 32;
+    const paperWidth = this.getPaperWidth();
+
     // Initialize printer: ESC @
     cmd([0x1b, 0x40]);
 
@@ -642,30 +681,37 @@ export class UsbEscPosPrinter implements IPrinterService {
     }
 
     // 1. Bitonal High-Contrast Graphic Logo
-    const logoBytes = getMonksDreamLogoRasterBytes();
+    const logoBytes = getMonksDreamLogoRasterBytes(paperWidth);
     if (logoBytes && logoBytes.length > 0) {
       cmd([0x1b, 0x61, 0x01]);
       parts.push(Buffer.from(logoBytes));
       push('\n');
+    } else {
+      cmd([0x1b, 0x45, 0x01]); // Bold
+      cmd([0x1d, 0x21, 0x01]); // Double height
+      push("MONK'S DREAM\n");
+      cmd([0x1d, 0x21, 0x00]);
+      cmd([0x1b, 0x45, 0x00]);
     }
 
     // 2. Business Header
     cmd([0x1b, 0x45, 0x01]); // Bold on
-    cmd([0x1d, 0x21, 0x11]); // Double height & width
-    push("MONK'S DREAM\n");
     push('JAZZ BAR AND CAFE\n');
-    cmd([0x1d, 0x21, 0x00]); // Normal size
     cmd([0x1b, 0x45, 0x00]); // Bold off
     push('Craft Cocktails & Fine Jazz\n');
-    push('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz\n');
-    push(divider('-', 48));
+    if (is57mm) {
+      push('Tel: +63 917 555 1957\nIG/FB: @monksdreamjazz\n');
+    } else {
+      push('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz\n');
+    }
+    push(divider('-', cols));
 
     // 3. Bill Statement Banner
     cmd([0x1b, 0x45, 0x01]);
     push('*** BILL STATEMENT / GUEST CHECK ***\n');
     push('*** UNPAID — PLEASE PAY AT CASHIER ***\n');
     cmd([0x1b, 0x45, 0x00]);
-    push(divider('=', 48));
+    push(divider('=', cols));
 
     // 4. Metadata Section
     cmd([0x1b, 0x61, 0x00]); // Left
@@ -673,28 +719,43 @@ export class UsbEscPosPrinter implements IPrinterService {
     const operatingMode = (payload.operatingMode || 'CAFE').toUpperCase();
     const modeLabel = operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE';
 
-    cmd([0x1b, 0x45, 0x01]);
-    push(padLine(`BILL #:  ${billNo}`, `MODE: ${modeLabel}`, 48));
-    cmd([0x1b, 0x45, 0x00]);
+    if (is57mm) {
+      cmd([0x1b, 0x45, 0x01]);
+      push(`BILL #:  ${billNo}\n`);
+      cmd([0x1b, 0x45, 0x00]);
+      push(`MODE:    ${modeLabel}\n`);
+    } else {
+      cmd([0x1b, 0x45, 0x01]);
+      push(padLine(`BILL #:  ${billNo}`, `MODE: ${modeLabel}`, cols));
+      cmd([0x1b, 0x45, 0x00]);
+    }
     push(`DATE:    ${payload.timestamp}\n`);
 
     if (payload.tableNumber || payload.tableLabel) {
       const tableStr = payload.tableLabel || `Table ${payload.tableNumber}`;
       const tabStr = payload.tabName || 'Main Tab';
-      push(`TABLE:   ${tableStr.padEnd(16)} TAB: ${tabStr}\n`);
+      if (is57mm) {
+        push(`TABLE:   ${tableStr}\nTAB:     ${tabStr}\n`);
+      } else {
+        push(`TABLE:   ${tableStr.padEnd(16)} TAB: ${tabStr}\n`);
+      }
     } else {
       push(`TAB:     ${payload.tabName || 'Takeout / Counter'}\n`);
     }
 
     const staff = cleanStaffName(payload.serverName || payload.waiterName || payload.cashierName);
-    push(`SERVER:  ${staff.padEnd(16)} TERMINAL: TILL-1\n`);
-    push(divider('=', 48));
+    if (is57mm) {
+      push(`SERVER:  ${staff}\n`);
+    } else {
+      push(`SERVER:  ${staff.padEnd(16)} TERMINAL: TILL-1\n`);
+    }
+    push(divider('=', cols));
 
     // 5. Items Table Header
     cmd([0x1b, 0x45, 0x01]);
-    push(padLine('QTY  DESCRIPTION', 'AMOUNT (PHP)', 48));
+    push(padLine('QTY  DESCRIPTION', 'AMOUNT (PHP)', cols));
     cmd([0x1b, 0x45, 0x00]);
-    push(divider('=', 48));
+    push(divider('=', cols));
 
     // 6. Line Items (Aggregated across rounds)
     for (const item of aggregateReceiptItems(payload.items || [])) {
@@ -712,7 +773,7 @@ export class UsbEscPosPrinter implements IPrinterService {
       const itemTotal = toPesos(
         item.total ?? toPesos(item.price || item.unit_price) * (item.quantity || 1)
       );
-      push(formatItemLine(qtyStr, desc, formatPhp(itemTotal), 48));
+      push(formatItemLine(qtyStr, desc, formatPhp(itemTotal), cols));
 
       if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
         for (const mod of item.modifiers) {
@@ -729,40 +790,42 @@ export class UsbEscPosPrinter implements IPrinterService {
       }
     }
 
-    push(divider('-', 48));
+    push(divider('-', cols));
 
     // 7. Financial Summary & Totals
     const subtotal = toPesos(payload.subtotal || payload.total || 0);
-    push(padLine('SUBTOTAL (Gross Sales):', formatPhp(subtotal), 48));
+    const subtotalLabel = is57mm ? 'SUBTOTAL (Gross):' : 'SUBTOTAL (Gross Sales):';
+    push(padLine(subtotalLabel, formatPhp(subtotal), cols));
 
     const corkage = toPesos(payload.corkageFee || 0);
     if (corkage > 0) {
-      push(padLine('CORKAGE FEE:', formatPhp(corkage), 48));
+      push(padLine('CORKAGE FEE:', formatPhp(corkage), cols));
     }
 
     const discount = toPesos(payload.discount || 0);
     if (discount > 0) {
-      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, 48));
+      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, cols));
     }
 
     const serviceCharge = toPesos(payload.serviceCharge || 0);
     if (serviceCharge > 0) {
-      push(padLine('SERVICE CHARGE (10%):', formatPhp(serviceCharge), 48));
+      push(padLine('SERVICE CHARGE:', formatPhp(serviceCharge), cols));
     }
 
     // Bold Total Amount Due
-    push(divider('=', 48));
+    push(divider('=', cols));
     cmd([0x1b, 0x45, 0x01]); // Bold
     cmd([0x1d, 0x21, 0x01]); // Double height
     const total = toPesos(payload.total || subtotal + corkage - discount + serviceCharge);
-    push(padLine('TOTAL AMOUNT DUE:', `PHP ${formatPhp(total)}`, 48));
+    const totalLabel = is57mm ? 'TOTAL DUE:' : 'TOTAL AMOUNT DUE:';
+    push(padLine(totalLabel, `PHP ${formatPhp(total)}`, cols));
     cmd([0x1d, 0x21, 0x00]); // Normal size
     cmd([0x1b, 0x45, 0x00]); // Normal weight
-    push(divider('=', 48));
+    push(divider('=', cols));
 
     // 8. Philippine VAT & Statutory Breakdown (Estimate)
-    push(divider('-', 48));
-    push('TAX & STATUTORY BREAKDOWN (ESTIMATE):\n');
+    push(divider('-', cols));
+    push(is57mm ? 'TAX & STATUTORY (EST.):\n' : 'TAX & STATUTORY BREAKDOWN (ESTIMATE):\n');
     const vatableSales = toPesos(
       payload.vatableSales ?? (discount > 0 ? 0 : Number((total / 1.12).toFixed(2)))
     );
@@ -773,20 +836,20 @@ export class UsbEscPosPrinter implements IPrinterService {
       payload.vatExemptSales ?? (discount > 0 ? Number(total.toFixed(2)) : 0)
     );
 
-    push(padLine('  VATable Sales (12%):', formatPhp(vatableSales), 48));
-    push(padLine('  VAT Amount (12%):', formatPhp(vatAmount), 48));
-    push(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), 48));
-    push(padLine('  Zero-Rated Sales:', '0.00', 48));
+    push(padLine('  VATable Sales (12%):', formatPhp(vatableSales), cols));
+    push(padLine('  VAT Amount (12%):', formatPhp(vatAmount), cols));
+    push(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), cols));
+    push(padLine('  Zero-Rated Sales:', '0.00', cols));
 
     // 9. Payment Instructions & Footer
-    push(divider('-', 48));
+    push(divider('-', cols));
     cmd([0x1b, 0x61, 0x01]); // Center
     cmd([0x1b, 0x45, 0x01]);
     push('*** UNPAID — PLEASE PAY AT CASHIER ***\n');
     cmd([0x1b, 0x45, 0x00]);
     push('This slip is for order review and billing verification.\n');
     push('Please present this bill when paying at the till.\n');
-    push(divider('-', 48));
+    push(divider('-', cols));
     cmd([0x1b, 0x45, 0x01]);
     push('THIS IS NOT AN OFFICIAL RECEIPT\n');
     cmd([0x1b, 0x45, 0x00]);
@@ -802,6 +865,9 @@ export class UsbEscPosPrinter implements IPrinterService {
     const parts: Buffer[] = [];
     const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
+
+    const cols = this.columns;
+    const is57mm = cols === 32;
 
     cmd([0x1b, 0x40]); // Reset
     cmd([0x1b, 0x61, 0x01]); // Center
@@ -822,18 +888,30 @@ export class UsbEscPosPrinter implements IPrinterService {
     cmd([0x1b, 0x45, 0x00]);
 
     const orderNo = payload.orderNumber || 'N/A';
-    push(padLine(`ORDER #: ${orderNo}`, `TIME: ${payload.timestamp}`, 48));
-    push(divider('-', 48));
+    if (is57mm) {
+      push(`ORDER #: ${orderNo}\nTIME:    ${payload.timestamp}\n`);
+    } else {
+      push(padLine(`ORDER #: ${orderNo}`, `TIME: ${payload.timestamp}`, cols));
+    }
+    push(divider('-', cols));
 
     cmd([0x1b, 0x61, 0x00]); // Left
     if (payload.tableNumber || payload.tableLabel) {
       const tableStr = payload.tableLabel || `Table ${payload.tableNumber}`;
-      push(`DESTINATION: ${tableStr.padEnd(16)} TAB: ${payload.tabName || 'Main'}\n`);
+      if (is57mm) {
+        push(`DEST: ${tableStr}\nTAB:  ${payload.tabName || 'Main'}\n`);
+      } else {
+        push(`DESTINATION: ${tableStr.padEnd(16)} TAB: ${payload.tabName || 'Main'}\n`);
+      }
     } else {
-      push(`DESTINATION: TAKEOUT / COUNTER  TAB: ${payload.tabName || 'Walk-in'}\n`);
+      if (is57mm) {
+        push(`DEST: TAKEOUT/COUNTER\nTAB:  ${payload.tabName || 'Walk-in'}\n`);
+      } else {
+        push(`DESTINATION: TAKEOUT / COUNTER  TAB: ${payload.tabName || 'Walk-in'}\n`);
+      }
     }
     push(`SERVER:      ${cleanStaffName(payload.waiterName)}\n`);
-    push(divider('=', 48));
+    push(divider('=', cols));
 
     // Checklist format for FOH Runner / Expediter
     for (const item of payload.items) {
@@ -853,9 +931,15 @@ export class UsbEscPosPrinter implements IPrinterService {
       const stationTag = `[${station}]`;
       const itemLeft = `[ ]  ${qty}x  ${name}`;
 
-      cmd([0x1b, 0x45, 0x01]);
-      push(padLine(itemLeft, stationTag, 48));
-      cmd([0x1b, 0x45, 0x00]);
+      if (itemLeft.length + stationTag.length < cols) {
+        cmd([0x1b, 0x45, 0x01]);
+        push(padLine(itemLeft, stationTag, cols));
+        cmd([0x1b, 0x45, 0x00]);
+      } else {
+        cmd([0x1b, 0x45, 0x01]);
+        push(`${itemLeft}\n     ${stationTag}\n`);
+        cmd([0x1b, 0x45, 0x00]);
+      }
 
       if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
         for (const mod of item.modifiers) {
@@ -868,9 +952,9 @@ export class UsbEscPosPrinter implements IPrinterService {
       }
     }
 
-    push(divider('=', 48));
+    push(divider('=', cols));
     cmd([0x1b, 0x61, 0x01]); // Center
-    push("Monk's Dream Jazz Bar • Expediter Checklist\n\n\n\n");
+    push("Monk's Dream Jazz Bar • Expediter\n\n\n\n");
     cmd([0x1d, 0x56, 0x00]); // Cut
 
     return Buffer.concat(parts);
@@ -881,6 +965,8 @@ export class UsbEscPosPrinter implements IPrinterService {
     const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
+    const cols = this.columns;
+
     cmd([0x1b, 0x40]);
     cmd([0x1b, 0x61, 0x01]);
 
@@ -889,7 +975,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     push(`Order #${payload.orderNumber}\n`);
     cmd([0x1d, 0x21, 0x00]);
 
-    push('------------------------------------------------\n');
+    push(divider('-', cols));
     cmd([0x1b, 0x61, 0x00]);
     push(`Customer:    ${payload.customerName}\n`);
     push(`Status:      ${payload.isPrepaid ? '[PREPAID]' : '[PAY ON PICKUP]'}\n`);
@@ -897,7 +983,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     if (payload.notes) {
       push(`Packaging:   ${payload.notes}\n`);
     }
-    push('------------------------------------------------\n');
+    push(divider('-', cols));
 
     for (const item of payload.items) {
       push(`[ ] ${item.quantity}x ${item.name}\n`);
@@ -906,7 +992,7 @@ export class UsbEscPosPrinter implements IPrinterService {
       }
     }
 
-    push('------------------------------------------------\n');
+    push(divider('-', cols));
     cmd([0x1b, 0x61, 0x01]);
     push('Keep with bagged order at Takeout counter.\n\n\n\n');
     cmd([0x1d, 0x56, 0x00]);
@@ -919,6 +1005,8 @@ export class UsbEscPosPrinter implements IPrinterService {
     const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
+    const cols = this.columns;
+
     cmd([0x1b, 0x40]);
     cmd([0x1b, 0x61, 0x01]);
 
@@ -927,7 +1015,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     push(`${payload.platform} #${payload.platformReference}\n`);
     cmd([0x1d, 0x21, 0x00]);
 
-    push('------------------------------------------------\n');
+    push(divider('-', cols));
     cmd([0x1b, 0x61, 0x00]);
     push(`Customer:    ${payload.customerName}\n`);
     if (payload.riderName) {
@@ -938,7 +1026,7 @@ export class UsbEscPosPrinter implements IPrinterService {
       push(`Address:     ${payload.address}\n`);
     }
     push(`Time:        ${payload.timestamp}\n`);
-    push('------------------------------------------------\n');
+    push(divider('-', cols));
 
     if (payload.items && payload.items.length > 0) {
       for (const item of payload.items) {
@@ -947,7 +1035,7 @@ export class UsbEscPosPrinter implements IPrinterService {
           push(`    Note: ${item.notes}\n`);
         }
       }
-      push('------------------------------------------------\n');
+      push(divider('-', cols));
     }
 
     cmd([0x1b, 0x61, 0x01]);
@@ -962,13 +1050,16 @@ export class UsbEscPosPrinter implements IPrinterService {
     const push = (str: string) => parts.push(Buffer.from(sanitizeForEscPos(str), 'utf-8'));
     const cmd = (bytes: number[]) => parts.push(Buffer.from(bytes));
 
+    const cols = this.columns;
+    const is57mm = cols === 32;
+
     const fmt = (num: unknown = 0) =>
       toPesos(num).toLocaleString('en-PH', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
     const parseDate = (d: unknown) => (d ? new Date(d as string | number | Date) : new Date());
-    const padLine = (label: string, value: string, cols: number = 48) => {
+    const padLine = (label: string, value: string) => {
       const spaceCount = Math.max(1, cols - label.length - value.length);
       return label + ' '.repeat(spaceCount) + value + '\n';
     };
@@ -1002,7 +1093,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     cmd([0x1b, 0x45, 0x00]);
     push(`Scope: ${drawer.toUpperCase()}\n`);
     push(`Generated: ${parseDate(reading.generated_at || reading.closed_at).toLocaleString()}\n`);
-    push('================================================\n');
+    push(divider('=', cols));
 
     // Left alignment: ESC a 0
     cmd([0x1b, 0x61, 0x00]);
@@ -1028,7 +1119,7 @@ export class UsbEscPosPrinter implements IPrinterService {
       );
     }
     push(padLine('Settled Tabs:', `${reading.transaction_count || 0}`));
-    push('------------------------------------------------\n');
+    push(divider('-', cols));
 
     // 1. Sales Breakdown
     cmd([0x1b, 0x45, 0x01]);
@@ -1039,7 +1130,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     cmd([0x1b, 0x45, 0x01]);
     push(padLine('NET SALES:', `P ${fmt(reading.net_sales)}`));
     cmd([0x1b, 0x45, 0x00]);
-    push('------------------------------------------------\n');
+    push(divider('-', cols));
 
     // 2. Tax & Charges
     cmd([0x1b, 0x45, 0x01]);
@@ -1048,7 +1139,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     push(padLine('VATable Sales:', `P ${fmt(reading.vatable_sales)}`));
     push(padLine('12% VAT:', `P ${fmt(reading.vat_amount)}`));
     push(padLine('10% Service Charge:', `P ${fmt(reading.service_charge)}`));
-    push('------------------------------------------------\n');
+    push(divider('-', cols));
 
     // 3. Tenders
     cmd([0x1b, 0x45, 0x01]);
@@ -1063,7 +1154,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     cmd([0x1b, 0x45, 0x01]);
     push(padLine('TOTAL TENDER:', `P ${fmt(reading.total_tender)}`));
     cmd([0x1b, 0x45, 0x00]);
-    push('------------------------------------------------\n');
+    push(divider('-', cols));
 
     // 4. Drawer Reconciliation
     cmd([0x1b, 0x45, 0x01]);
@@ -1086,18 +1177,19 @@ export class UsbEscPosPrinter implements IPrinterService {
 
     // Signatures for Y-Reading
     if (type === 'Y_READING') {
-      push('------------------------------------------------\n');
+      push(divider('-', cols));
       cmd([0x1b, 0x45, 0x01]);
       push('STAFF SHIFT HANDOVER\n');
       cmd([0x1b, 0x45, 0x00]);
       push(`Outgoing: ${reading.outgoing_staff_name || 'Staff'}\n`);
-      push('Signature: ___________________________\n\n');
+      const sigLine = is57mm ? '____________________' : '___________________________';
+      push(`Signature: ${sigLine}\n\n`);
       push(`Incoming: ${reading.incoming_staff_name || 'Staff'}\n`);
-      push('Signature: ___________________________\n');
+      push(`Signature: ${sigLine}\n`);
     }
 
     // Cut paper: GS V 0
-    push('================================================\n');
+    push(divider('=', cols));
     cmd([0x1b, 0x61, 0x01]);
     push('*** END OF SHIFT REPORT ***\n\n\n\n');
     cmd([0x1d, 0x56, 0x00]);

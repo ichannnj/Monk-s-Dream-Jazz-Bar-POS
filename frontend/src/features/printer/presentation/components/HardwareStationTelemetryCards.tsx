@@ -20,12 +20,18 @@ const BAUD_RATE_OPTIONS: PosDropdownOption<string>[] = [
   { value: '115200', label: '115200 baud', description: 'Ultra high speed USB-VCP printers' },
 ];
 
+const PAPER_WIDTH_OPTIONS: PosDropdownOption<string>[] = [
+  { value: '80mm', label: '80mm Roll', description: 'Standard 48-column thermal roll' },
+  { value: '57mm', label: '57mm Roll', description: 'Compact 32-column thermal roll' },
+];
+
 interface HardwareStationTelemetryCardsProps {
   connectionStatus: string;
   drawerStatus: string;
   isSupported: boolean;
   portInfo: SerialPortInfo | null;
   baudRate: number;
+  paperWidth?: '80mm' | '57mm';
   autoPrintEnabled: boolean;
   chimeEnabled: boolean;
   isTestingChit: boolean;
@@ -34,6 +40,7 @@ interface HardwareStationTelemetryCardsProps {
   onConnect: () => void;
   onDisconnect: () => void;
   onSetBaudRate: (rate: number) => void;
+  onSetPaperWidth?: (width: '80mm' | '57mm') => void;
   onToggleAutoPrint: () => void;
   onToggleChime: () => void;
   onTestPrintChit: () => void;
@@ -47,6 +54,7 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
   isSupported,
   portInfo,
   baudRate,
+  paperWidth = '80mm',
   autoPrintEnabled,
   chimeEnabled,
   isTestingChit,
@@ -55,6 +63,7 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
   onConnect,
   onDisconnect,
   onSetBaudRate,
+  onSetPaperWidth,
   onToggleAutoPrint,
   onToggleChime,
   onTestPrintChit,
@@ -70,7 +79,7 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
             <View className="flex-row items-center space-x-2">
               <Printer size={18} color="#94a3b8" />
               <Text className="text-sm font-bold text-stone-300 uppercase tracking-wider">
-                80mm Thermal Printer
+                {paperWidth} Thermal Printer
               </Text>
             </View>
             {connectionStatus === 'CONNECTED' ? (
@@ -125,7 +134,19 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
                 </Pressable>
               )}
 
-              <View className="w-32">
+              {onSetPaperWidth && (
+                <View className="w-28">
+                  <PosDropdown
+                    options={PAPER_WIDTH_OPTIONS}
+                    value={paperWidth}
+                    onChange={(val) => onSetPaperWidth(val as '80mm' | '57mm')}
+                    sheetTitle="Paper Width"
+                    className="h-[36px]"
+                  />
+                </View>
+              )}
+
+              <View className="w-28">
                 <PosDropdown
                   options={BAUD_RATE_OPTIONS}
                   value={String(baudRate)}

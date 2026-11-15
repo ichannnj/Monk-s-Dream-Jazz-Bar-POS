@@ -15,6 +15,7 @@ import {
 
 export type StationConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
 export type DrawerStatus = 'IDLE' | 'KICKING';
+export type ThermalPaperWidth = '80mm' | '57mm';
 
 export interface StationLogItem {
   id: string;
@@ -29,6 +30,7 @@ interface PrinterStationState {
   drawerStatus: DrawerStatus;
   isLeader: boolean;
   baudRate: number;
+  paperWidth: ThermalPaperWidth;
   autoPrintEnabled: boolean;
   chimeEnabled: boolean;
   portInfo: SerialPortInfo | null;
@@ -43,6 +45,7 @@ interface PrinterStationState {
   toggleAutoPrint: () => void;
   toggleChime: () => void;
   setBaudRate: (rate: number) => void;
+  setPaperWidth: (width: ThermalPaperWidth) => void;
   processJob: (job: PrintJobItem) => Promise<boolean>;
   reprintJob: (job: PrintJobItem) => Promise<void>;
   testPrintChit: () => Promise<void>;
@@ -87,12 +90,28 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
   drawerStatus: 'IDLE',
   isLeader: false,
   baudRate: 9600,
+  paperWidth:
+    typeof localStorage !== 'undefined' && localStorage.getItem('monks_pos_paper_width') === '57mm'
+      ? '57mm'
+      : '80mm',
   autoPrintEnabled: true,
   chimeEnabled: true,
   portInfo: null,
   recentJobs: [],
   stationLogs: [],
   isProcessing: false,
+
+  setPaperWidth: (width: ThermalPaperWidth) => {
+    set({ paperWidth: width });
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('monks_pos_paper_width', width);
+      }
+    } catch {
+      // LocalStorage quota or access denied in private/iframe browsing
+    }
+    get().addLog('info', `Paper width set to ${width}`);
+  },
 
   addLog: (level, message) => {
     const newLog: StationLogItem = {
@@ -188,6 +207,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     try {
       const jobType = (job.job_type || '').toUpperCase();
       const rawData = job.receipt_data || {};
+      const paperWidth = get().paperWidth;
       let bytes: Uint8Array | null = null;
       let isCashSettlement = false;
 
@@ -221,7 +241,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
               });
             // Cash drawer kicks ONLY on real Cash payment settlement (never on reprint or pure cashless)
             isCashSettlement = (method === 'CASH' || hasCashTender) && !rawData.isReprint;
-            bytes = buildReceiptBytes(rawData, isCashSettlement);
+            bytes = buildReceiptBytes(rawData, isCashSettlement, paperWidth);
           }
           break;
         }
@@ -230,26 +250,26 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
         case 'BILL': {
           // Pre-payment bill statement: paper slip only, NEVER kicks cash drawer
           isCashSettlement = false;
-          bytes = buildBillStatementBytes(rawData);
+          bytes = buildBillStatementBytes(rawData, paperWidth);
           break;
         }
 
         case 'RUNNER_CHIT':
-          bytes = buildRunnerChitBytes(rawData);
+          bytes = buildRunnerChitBytes(rawData, paperWidth);
           break;
 
         case 'TAKEOUT_SLIP':
-          bytes = buildTakeoutSlipBytes(rawData);
+          bytes = buildTakeoutSlipBytes(rawData, paperWidth);
           break;
 
         case 'DELIVERY_TAG':
-          bytes = buildDeliveryTagBytes(rawData);
+          bytes = buildDeliveryTagBytes(rawData, paperWidth);
           break;
 
         case 'X_READING':
         case 'Y_READING':
         case 'Z_READING':
-          bytes = buildReadingSlipBytes(rawData);
+          bytes = buildReadingSlipBytes(rawData, paperWidth);
           break;
 
         default:
@@ -320,7 +340,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
           { name: 'Truffle Mushroom Pasta', quantity: 1, station: 'KITCHEN' },
         ],
       };
-      const bytes = buildRunnerChitBytes(sampleChit);
+      const bytes = buildRunnerChitBytes(sampleChit, get().paperWidth);
       await webSerialPrinter.writeBytes(bytes);
       get().playOrderChime();
       addLog('success', 'Printed sample test runner chit');
@@ -393,7 +413,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
         vatExemptSales: 0,
       };
 
-      const bytes = buildReceiptBytes(sampleReceipt, false);
+      const bytes = buildReceiptBytes(sampleReceipt, false, get().paperWidth);
       await webSerialPrinter.writeBytes(bytes);
       get().playOrderChime();
       addLog('success', 'Printed sample business customer receipt');

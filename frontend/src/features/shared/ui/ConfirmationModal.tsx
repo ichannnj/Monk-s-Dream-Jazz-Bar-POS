@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, Pressable, Modal, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  Modal,
+  StyleSheet,
+  ScrollView,
+  useWindowDimensions,
+} from 'react-native';
 import { LucideIcon, AlertCircle, CheckCircle2, AlertTriangle, Info, X } from 'lucide-react-native';
 
 export type ConfirmationVariant = 'primary' | 'danger' | 'warning' | 'success';
@@ -29,6 +37,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   onConfirm,
   onCancel,
 }) => {
+  const { height } = useWindowDimensions();
+  const isCompactHeight = height < 520;
+
   if (!visible) return null;
 
   // Determine icon & theme based on variant
@@ -75,7 +86,9 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
-      <View className="flex-1 bg-black/60 justify-center items-center p-6">
+      <View
+        className={`flex-1 bg-black/60 justify-center items-center ${isCompactHeight ? 'p-2.5' : 'p-6'}`}
+      >
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onCancel}
@@ -83,17 +96,28 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           accessibilityLabel="Dismiss confirmation modal backdrop"
         />
 
-        <View className="w-full max-w-lg bg-white rounded-3xl p-6 shadow-2xl elevation-8 z-10">
+        <View
+          className={`w-full max-w-lg bg-white rounded-3xl ${isCompactHeight ? 'p-4 max-h-[96%]' : 'p-6'} shadow-2xl elevation-8 z-10`}
+        >
           {/* Header */}
-          <View className="flex-row items-start justify-between mb-4">
+          <View
+            className={`flex-row items-start justify-between ${isCompactHeight ? 'mb-2' : 'mb-4'}`}
+          >
             <View className="flex-row items-center gap-3.5 flex-1 mr-3">
               <View
-                className={`w-14 h-14 rounded-2xl ${currentVariant.iconBg} items-center justify-center`}
+                className={`${isCompactHeight ? 'w-10 h-10' : 'w-14 h-14'} rounded-2xl ${currentVariant.iconBg} items-center justify-center`}
               >
-                <IconComponent size={28} color={currentVariant.iconColor} strokeWidth={2.4} />
+                <IconComponent
+                  size={isCompactHeight ? 20 : 28}
+                  color={currentVariant.iconColor}
+                  strokeWidth={2.4}
+                />
               </View>
               <View className="flex-1">
-                <Text className="text-xl font-extrabold text-gray-900" numberOfLines={2}>
+                <Text
+                  className={`${isCompactHeight ? 'text-lg' : 'text-xl'} font-extrabold text-gray-900`}
+                  numberOfLines={2}
+                >
                   {title}
                 </Text>
               </View>
@@ -101,25 +125,33 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
             <Pressable
               onPress={onCancel}
-              className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-gray-100 active:bg-gray-200"
+              className="min-h-[44px] min-w-[44px] items-center justify-center rounded-xl bg-gray-100 active:bg-gray-200"
               accessibilityRole="button"
               accessibilityLabel="Close confirmation modal"
             >
-              <X size={20} color="#4b5563" strokeWidth={2.2} />
+              <X size={18} color="#4b5563" strokeWidth={2.2} />
             </Pressable>
           </View>
 
           {/* Body Message */}
-          <View className="bg-gray-50 rounded-2xl p-4 mb-6 border border-gray-100">
-            <Text className="text-base text-gray-700 font-medium leading-relaxed">{message}</Text>
-          </View>
+          <ScrollView
+            style={{ maxHeight: isCompactHeight ? 120 : 200 }}
+            className={`bg-gray-50 rounded-2xl ${isCompactHeight ? 'p-3 mb-3' : 'p-4 mb-6'} border border-gray-100`}
+            showsVerticalScrollIndicator={false}
+          >
+            <Text
+              className={`${isCompactHeight ? 'text-sm' : 'text-base'} text-gray-700 font-medium leading-relaxed`}
+            >
+              {message}
+            </Text>
+          </ScrollView>
 
           {/* Action Buttons */}
           <View className="flex-row items-center gap-3">
             <Pressable
               onPress={onCancel}
               disabled={isLoading}
-              className="flex-1 min-h-[52px] rounded-2xl bg-gray-100 active:bg-gray-200 items-center justify-center px-4"
+              className="flex-1 min-h-[48px] rounded-2xl bg-gray-100 active:bg-gray-200 items-center justify-center px-4"
               accessibilityRole="button"
               accessibilityLabel={cancelText}
             >
@@ -129,7 +161,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <Pressable
               onPress={onConfirm}
               disabled={isLoading}
-              className={`flex-1 min-h-[52px] rounded-2xl ${currentVariant.confirmBtn} items-center justify-center px-4 shadow-sm`}
+              className={`flex-1 min-h-[48px] rounded-2xl ${currentVariant.confirmBtn} items-center justify-center px-4 shadow-sm`}
               accessibilityRole="button"
               accessibilityLabel={confirmText}
             >

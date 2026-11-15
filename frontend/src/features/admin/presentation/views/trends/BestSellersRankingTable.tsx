@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Flame, Crown, DollarSign, ShoppingBag, Layers, Filter } from 'lucide-react-native';
+import { Flame, Crown, DollarSign, ShoppingBag, Layers } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { PosDropdown, type PosDropdownOption } from '@/features/shared';
 import type { BestSellerTrendItem } from '../../../domain/trends.types';
@@ -17,7 +17,6 @@ interface BestSellersRankingTableProps {
 export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = ({
   items,
   availableCategories,
-  totalGrossSales = 0,
 }) => {
   const [metric, setMetric] = useState<SortMetric>('revenue');
   const [selectedCategory, setSelectedCategory] = useState<string>('All Categories');
@@ -71,63 +70,49 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
   const getRankBadge = (rank: number) => {
     if (rank === 1) {
       return (
-        <View className="w-7 h-7 rounded-full bg-amber-100 border border-amber-300 items-center justify-center">
-          <Crown size={15} color="#b45309" />
-        </View>
-      );
-    }
-    if (rank === 2) {
-      return (
-        <View className="w-7 h-7 rounded-full bg-slate-200 border border-slate-300 items-center justify-center">
-          <Text className="text-xs font-black text-slate-700">2</Text>
-        </View>
-      );
-    }
-    if (rank === 3) {
-      return (
-        <View className="w-7 h-7 rounded-full bg-amber-700/20 border border-amber-700/30 items-center justify-center">
-          <Text className="text-xs font-black text-amber-900">3</Text>
+        <View className="w-7 h-7 rounded-full bg-stone-100 border border-stone-200 items-center justify-center">
+          <Crown size={14} color="#800020" />
         </View>
       );
     }
     return (
       <View className="w-7 h-7 rounded-full bg-stone-100 border border-stone-200 items-center justify-center">
-        <Text className="text-xs font-bold text-stone-600">{rank}</Text>
+        <Text className="text-xs font-bold text-stone-700">{rank}</Text>
       </View>
     );
   };
 
   return (
-    <View className="w-full min-w-0 rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
+    <View className="w-full min-w-0 rounded-xl border border-stone-200/90 bg-white p-3.5 sm:p-5 shadow-xs overflow-hidden">
       {/* Header */}
-      <View className="flex-row items-center justify-between mb-4 flex-wrap gap-3">
-        <View className="flex-row items-center gap-3 flex-1 min-w-[200px]">
-          <View className="w-10 h-10 shrink-0 rounded-xl bg-rose-50 border border-rose-200 items-center justify-center">
-            <Flame size={20} color="#e11d48" />
+      <View className="flex-row items-center justify-between mb-3.5 flex-wrap gap-2.5">
+        <View className="flex-row items-center gap-2.5 flex-1 min-w-[180px]">
+          <View className="w-8 h-8 shrink-0 rounded-lg bg-stone-100 border border-stone-200 items-center justify-center">
+            <Flame size={16} color="#800020" />
           </View>
           <View className="flex-1 min-w-0">
-            <Text className="text-lg font-extrabold text-stone-900 leading-snug">
-              Best Sellers &amp; Menu Product Demand
+            <Text className="text-base sm:text-lg font-bold text-stone-900 leading-snug">
+              Best Sellers
             </Text>
-            <Text className="text-base text-stone-500 font-medium mt-0.5">
-              Ranked items by gross earnings and units sold with category segmentation
+            <Text className="text-xs text-stone-500 font-medium mt-0.5">
+              Ranked items by revenue and units sold
             </Text>
           </View>
         </View>
 
         {/* Dual Metric Toggle Buttons */}
-        <View className="flex-row items-center bg-stone-100 p-1 rounded-xl border border-stone-200/80 shrink-0">
+        <View className="flex-row items-center bg-[#FAF8F5] p-1 rounded-xl border border-stone-200 shrink-0">
           <Pressable
             onPress={() => setMetric('revenue')}
-            className={`px-3 py-1.5 rounded-lg flex-row items-center gap-1.5 ${
+            className={`min-h-[36px] px-3 rounded-lg flex-row items-center gap-1.5 ${
               metric === 'revenue'
-                ? 'bg-white shadow-xs border border-stone-200/60'
-                : 'active:bg-stone-200'
+                ? 'bg-white shadow-2xs border border-stone-200'
+                : 'active:bg-stone-200/50'
             }`}
           >
-            <DollarSign size={15} color={metric === 'revenue' ? '#800020' : '#78716c'} />
+            <DollarSign size={13} color={metric === 'revenue' ? '#800020' : '#78716c'} />
             <Text
-              className={`text-xs sm:text-base font-bold ${
+              className={`text-xs font-bold ${
                 metric === 'revenue' ? 'text-stone-900' : 'text-stone-600'
               }`}
             >
@@ -137,15 +122,15 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
 
           <Pressable
             onPress={() => setMetric('quantity')}
-            className={`px-3 py-1.5 rounded-lg flex-row items-center gap-1.5 ${
+            className={`min-h-[36px] px-3 rounded-lg flex-row items-center gap-1.5 ${
               metric === 'quantity'
-                ? 'bg-white shadow-xs border border-stone-200/60'
-                : 'active:bg-stone-200'
+                ? 'bg-white shadow-2xs border border-stone-200'
+                : 'active:bg-stone-200/50'
             }`}
           >
-            <ShoppingBag size={15} color={metric === 'quantity' ? '#800020' : '#78716c'} />
+            <ShoppingBag size={13} color={metric === 'quantity' ? '#800020' : '#78716c'} />
             <Text
-              className={`text-xs sm:text-base font-bold ${
+              className={`text-xs font-bold ${
                 metric === 'quantity' ? 'text-stone-900' : 'text-stone-600'
               }`}
             >
@@ -156,14 +141,14 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
       </View>
 
       {/* Filter Row: Category & Limit Dropdowns */}
-      <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-4 mb-4 gap-3 print-hidden">
+      <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-3 mb-3 gap-2.5 print-hidden">
         <PosDropdown
           options={categoryOptions}
           value={selectedCategory}
           onChange={setSelectedCategory}
           prefixLabel="Category:"
           sheetTitle="Filter Best Sellers by Category"
-          className="flex-1 min-w-[200px]"
+          className="flex-1 min-w-[180px]"
         />
 
         <PosDropdown
@@ -172,19 +157,19 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
           onChange={setLimit}
           prefixLabel="Display:"
           sheetTitle="Select Best Sellers Limit"
-          className="w-full sm:w-48"
+          className="w-full sm:w-44"
         />
       </View>
 
-      {/* Items List / Table */}
+      {/* Items List */}
       {processedItems.length === 0 ? (
-        <View className="py-12 items-center justify-center border border-dashed border-stone-200 rounded-xl">
-          <Text className="text-base text-stone-500 font-medium">
+        <View className="py-10 items-center justify-center border border-dashed border-stone-200 rounded-xl">
+          <Text className="text-sm text-stone-500 font-medium">
             No items recorded for "{selectedCategory}" in this timeframe.
           </Text>
         </View>
       ) : (
-        <View className="space-y-3">
+        <View className="space-y-2">
           {processedItems.map((item, idx) => {
             const rank = idx + 1;
             const currentVal = metric === 'revenue' ? item.salesAmount : item.soldCount;
@@ -194,53 +179,50 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
                 : 8;
 
             return (
-              <View
-                key={item.id}
-                className="p-3.5 rounded-xl border border-stone-100 bg-[#fbfaf8] hover:border-stone-200 transition-colors"
-              >
-                <View className="flex-row items-center justify-between gap-3 flex-wrap">
+              <View key={item.id} className="p-3 rounded-xl border border-stone-100 bg-[#FAF8F5]">
+                <View className="flex-row items-center justify-between gap-2.5 flex-wrap">
                   {/* Left: Rank, Item Name, Category, Price */}
-                  <View className="flex-row items-center gap-3 flex-1 min-w-[200px]">
+                  <View className="flex-row items-center gap-2.5 flex-1 min-w-[180px]">
                     {getRankBadge(rank)}
                     <View className="flex-1 min-w-0">
-                      <View className="flex-row items-center gap-2 flex-wrap">
-                        <Text className="text-base font-bold text-stone-900" numberOfLines={1}>
+                      <View className="flex-row items-center gap-1.5 flex-wrap">
+                        <Text className="text-sm font-bold text-stone-900" numberOfLines={1}>
                           {item.name}
                         </Text>
-                        <View className="px-2 py-0.5 rounded-md bg-stone-200/80 border border-stone-300">
-                          <Text className="text-xs font-semibold text-stone-700">
+                        <View className="px-1.5 py-0.2 rounded bg-white border border-stone-200">
+                          <Text className="text-[11px] font-semibold text-stone-600">
                             {item.category}
                           </Text>
                         </View>
                       </View>
-                      <Text className="text-xs text-stone-400 mt-0.5">
-                        Base Price: {formatCurrency(item.unitPrice)}
+                      <Text className="text-xs text-stone-500 mt-0.5">
+                        Price: {formatCurrency(item.unitPrice)}
                       </Text>
                     </View>
                   </View>
 
                   {/* Right: Quantity & Gross Sales */}
-                  <View className="flex-row items-center gap-4 sm:gap-6 shrink-0">
+                  <View className="flex-row items-center gap-3 sm:gap-5 shrink-0">
                     <View className="items-end">
-                      <Text className="text-base font-bold text-stone-800">
+                      <Text className="text-xs sm:text-sm font-bold text-stone-800">
                         {item.soldCount} {item.soldCount === 1 ? 'unit' : 'units'}
                       </Text>
-                      <Text className="text-xs text-stone-400">volume sold</Text>
+                      <Text className="text-[11px] text-stone-400">volume</Text>
                     </View>
 
-                    <View className="items-end min-w-[90px]">
-                      <Text className="text-base sm:text-lg font-black text-stone-900">
+                    <View className="items-end min-w-[80px]">
+                      <Text className="text-sm sm:text-base font-black text-stone-900">
                         {formatCurrency(item.salesAmount)}
                       </Text>
                       <Text className="text-xs font-bold text-[#800020]">
-                        {item.revenueSharePercent}% of sales
+                        {item.revenueSharePercent}% share
                       </Text>
                     </View>
                   </View>
                 </View>
 
-                {/* Burgundy Progress Bar */}
-                <View className="mt-2.5 h-2 w-full rounded-full bg-stone-200/80 overflow-hidden">
+                {/* Progress Bar */}
+                <View className="mt-2 h-1.5 w-full rounded-full bg-stone-200/80 overflow-hidden">
                   <View
                     style={{ width: `${progress}%` }}
                     className="h-full rounded-full bg-[#800020]"
@@ -253,13 +235,13 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
       )}
 
       {/* Footer Info */}
-      <View className="mt-4 pt-3 border-t border-stone-100 flex-row items-center justify-between flex-wrap gap-2">
+      <View className="mt-3.5 pt-2.5 border-t border-stone-100 flex-row items-center justify-between flex-wrap gap-2">
         <Text className="text-xs text-stone-500">
           Showing {processedItems.length} ranked item{processedItems.length === 1 ? '' : 's'} ·
           Sorted by {metric === 'revenue' ? 'Gross Revenue' : 'Units Sold'}
         </Text>
         <Text className="text-xs font-medium text-stone-400">
-          Calculated from fulfilled customer order items
+          Calculated from fulfilled order items
         </Text>
       </View>
     </View>

@@ -31,6 +31,7 @@ interface BillConfirmSettlementDialogProps {
   activeTab?: any;
   isFullscreenQrOpen: boolean;
   setIsFullscreenQrOpen: (open: boolean) => void;
+  fullscreenQrTarget?: { channel: QrPaymentChannel; amount: number } | null;
   handlePrintBillStatement?: () => void;
   isPrintingBill?: boolean;
 }
@@ -58,6 +59,7 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
   activeTab,
   isFullscreenQrOpen,
   setIsFullscreenQrOpen,
+  fullscreenQrTarget,
   handlePrintBillStatement,
   isPrintingBill = false,
 }) => {
@@ -153,8 +155,8 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
       {/* Guest Fullscreen QR Scan Modal */}
       <FullscreenQrModal
         visible={isFullscreenQrOpen}
-        channel={selectedQrChannel}
-        amount={grandTotal}
+        channel={fullscreenQrTarget?.channel || selectedQrChannel}
+        amount={fullscreenQrTarget?.amount ?? grandTotal}
         onClose={() => setIsFullscreenQrOpen(false)}
       />
     </>

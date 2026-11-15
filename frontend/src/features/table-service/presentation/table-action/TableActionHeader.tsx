@@ -20,15 +20,14 @@ export const TableActionHeader: React.FC<TableActionHeaderProps> = ({ table, onC
             Table {table.code}
           </Text>
           <Text className="text-sm text-stone-500 font-medium">
-            {table.guests > 0 ? `${table.guests} Guests · ` : ''}Status:{' '}
-            {table.status.toUpperCase()}
+            {table.guests > 0 ? `${table.guests} Guests` : 'Dine-In'}
           </Text>
         </View>
       </View>
 
       <Pressable
         onPress={onClose}
-        className="min-w-[44px] min-h-[44px] rounded-xl bg-[#FAF8F5] border border-stone-200 items-center justify-center active:bg-stone-100"
+        className="min-w-[48px] min-h-[48px] rounded-xl bg-[#FAF8F5] border border-stone-200 items-center justify-center active:bg-stone-100"
         accessibilityRole="button"
         accessibilityLabel="Close modal"
       >

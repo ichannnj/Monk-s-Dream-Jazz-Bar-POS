@@ -4,7 +4,7 @@
  * Uses standard browser Uint8Array and TextEncoder - zero external Node dependencies.
  */
 
-import { getMonksDreamLogoRasterBytes } from '../assets/logoRasterBytes';
+import { getMonksDreamLogoRasterBytes, ThermalPaperWidth } from '../assets/logoRasterBytes';
 import { EscPosBuilder, ESCPOS } from './escposEngine';
 import {
   cleanStaffName,
@@ -22,9 +22,15 @@ export { aggregateReceiptItems };
 export * from './escposSpecialSlips';
 
 /**
- * Builds standard 80mm ESC/POS Customer Receipt for Monk's Dream Jazz Bar and Cafe
+ * Builds standard 80mm or 57mm ESC/POS Customer Receipt for Monk's Dream Jazz Bar and Cafe
  */
-export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false): Uint8Array {
+export function buildReceiptBytes(
+  data: any,
+  shouldKickDrawer: boolean = false,
+  paperWidth: ThermalPaperWidth = '80mm'
+): Uint8Array {
+  const is57mm = paperWidth === '57mm' || paperWidth === '58mm';
+  const cols = is57mm ? 32 : 48;
   const builder = new EscPosBuilder();
 
   builder.center();
@@ -32,23 +38,24 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
     builder.bold(true).line('*** REPRINT / DUPLICATE ***').bold(false).line();
   }
 
-  // 1. Bitonal High-Contrast Graphic Logo
-  const logoBytes = getMonksDreamLogoRasterBytes();
+  // 1. Bitonal High-Contrast Graphic Logo Lockup (Brand Typography + Jazz Emblem)
+  const logoBytes = getMonksDreamLogoRasterBytes(paperWidth);
   if (logoBytes && logoBytes.length > 0) {
     builder.center().imageRaster(logoBytes).feed(1);
+  } else {
+    // Fallback if bitmap is unavailable
+    builder.bold(true).doubleHeight(true).line("MONK'S DREAM").doubleHeight(false);
   }
 
   // 2. Business Header
-  builder
-    .bold(true)
-    .doubleHeight(true)
-    .line("MONK'S DREAM")
-    .line('JAZZ BAR AND CAFE')
-    .doubleHeight(false)
-    .bold(false)
-    .line('Craft Cocktails & Fine Jazz')
-    .line('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz')
-    .line(divider('-', 48));
+  builder.bold(true).line('JAZZ BAR AND CAFE').bold(false).line('Craft Cocktails & Fine Jazz');
+
+  if (is57mm) {
+    builder.line('Tel: +63 917 555 1957').line('IG/FB: @monksdreamjazz');
+  } else {
+    builder.line('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz');
+  }
+  builder.line(divider('-', cols));
 
   // 3. Metadata Section
   builder.left();
@@ -59,31 +66,45 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
   const operatingMode = (data.operatingMode || data.operating_mode || 'CAFE').toUpperCase();
   const modeLabel = operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE';
 
-  builder
-    .bold(true)
-    .text(padLine(`CHECK #: ${receiptNo}`, `MODE: ${modeLabel}`, 48))
-    .bold(false);
+  if (is57mm) {
+    builder.bold(true).line(`CHECK #: ${receiptNo}`).bold(false);
+    builder.line(`MODE:    ${modeLabel}`);
+  } else {
+    builder
+      .bold(true)
+      .text(padLine(`CHECK #: ${receiptNo}`, `MODE: ${modeLabel}`, cols))
+      .bold(false);
+  }
   builder.line(`DATE:    ${formatDateTime(data.settledAt || data.timestamp)}`);
 
   if (data.tableNumber || data.tableLabel) {
     const tableStr = data.tableLabel || `Table ${data.tableNumber}`;
     const tabStr = data.tabName || data.customerName || data.guestName || 'Main Tab';
-    builder.line(`TABLE:   ${tableStr.padEnd(16)} TAB: ${tabStr}`);
+    if (is57mm) {
+      builder.line(`TABLE:   ${tableStr}`);
+      builder.line(`TAB:     ${tabStr}`);
+    } else {
+      builder.line(`TABLE:   ${tableStr.padEnd(16)} TAB: ${tabStr}`);
+    }
   } else {
     const tabStr = data.tabName || data.customerName || data.guestName || 'Takeout / Counter';
     builder.line(`TAB:     ${tabStr}`);
   }
 
   const staff = cleanStaffName(data.cashierName || data.waiterName || data.staff_name);
-  builder.line(`STAFF:   ${staff.padEnd(16)} TERMINAL: TILL-1`);
-  builder.line(divider('=', 48));
+  if (is57mm) {
+    builder.line(`STAFF:   ${staff}`);
+  } else {
+    builder.line(`STAFF:   ${staff.padEnd(16)} TERMINAL: TILL-1`);
+  }
+  builder.line(divider('=', cols));
 
   // 4. Items Table Header
   builder
     .bold(true)
-    .text(padLine('QTY  DESCRIPTION', 'AMOUNT (PHP)', 48))
+    .text(padLine('QTY  DESCRIPTION', 'AMOUNT (PHP)', cols))
     .bold(false);
-  builder.line(divider('=', 48));
+  builder.line(divider('=', cols));
 
   // 5. Line Items (Aggregated across rounds)
   const items = aggregateReceiptItems(data.items || []);
@@ -108,7 +129,7 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
     const itemTotal = toPesos(
       item.total ?? toPesos(item.price || item.unit_price) * (item.quantity || 1)
     );
-    builder.text(formatItemLine(qtyStr, desc, formatPhp(itemTotal), 48));
+    builder.text(formatItemLine(qtyStr, desc, formatPhp(itemTotal), cols));
 
     if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
       for (const mod of item.modifiers) {
@@ -125,40 +146,43 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
     }
   }
 
-  builder.line(divider('-', 48));
+  builder.line(divider('-', cols));
 
   // 6. Financial Summary & Totals
   const subtotal = toPesos(data.subtotal || data.amount || 0);
-  builder.text(padLine('SUBTOTAL (Gross Sales):', formatPhp(subtotal), 48));
+  const subtotalLabel = is57mm ? 'SUBTOTAL (Gross):' : 'SUBTOTAL (Gross Sales):';
+  builder.text(padLine(subtotalLabel, formatPhp(subtotal), cols));
 
   const corkage = toPesos(data.corkageFee || data.corkageAmount || data.corkage_amount || 0);
   if (corkage > 0) {
-    builder.text(padLine('CORKAGE FEE:', formatPhp(corkage), 48));
+    builder.text(padLine('CORKAGE FEE:', formatPhp(corkage), cols));
   }
 
   const rawVatExempt = toPesos(data.vatExemptSales || data.vat_exempt_sales || 0);
   if (rawVatExempt > 0 && subtotal > rawVatExempt) {
     const vatRelief = subtotal - rawVatExempt;
-    builder.text(padLine('LESS: VAT EXEMPTION (12%):', `-${formatPhp(vatRelief)}`, 48));
+    const vatExemptLabel = is57mm ? 'LESS: VAT EXEMPT (12%):' : 'LESS: VAT EXEMPTION (12%):';
+    builder.text(padLine(vatExemptLabel, `-${formatPhp(vatRelief)}`, cols));
   }
 
   const discount = toPesos(data.discountAmount || data.discount || data.discount_amount || 0);
   if (discount > 0) {
-    builder.text(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, 48));
+    builder.text(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, cols));
   }
 
   const serviceCharge = toPesos(data.serviceCharge || data.service_charge || 0);
   if (serviceCharge > 0) {
-    builder.text(padLine('SERVICE CHARGE:', formatPhp(serviceCharge), 48));
+    builder.text(padLine('SERVICE CHARGE:', formatPhp(serviceCharge), cols));
   }
 
   // Bold Grand Total
-  builder.line(divider('=', 48));
+  builder.line(divider('=', cols));
   builder.bold(true).doubleHeight(true);
   const total = toPesos(data.total || data.amount || subtotal + corkage - discount + serviceCharge);
-  builder.text(padLine('TOTAL AMOUNT DUE:', `PHP ${formatPhp(total)}`, 48));
+  const totalLabel = is57mm ? 'TOTAL DUE:' : 'TOTAL AMOUNT DUE:';
+  builder.text(padLine(totalLabel, `PHP ${formatPhp(total)}`, cols));
   builder.doubleHeight(false).bold(false);
-  builder.line(divider('=', 48));
+  builder.line(divider('=', cols));
 
   // 7. Payment Tendered & Change
   const paymentMethod = (data.paymentMethod || data.payment_method || 'CASH').toUpperCase();
@@ -166,43 +190,44 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
   const isSplit = paymentMethod === 'SPLIT' || (Array.isArray(tenders) && tenders.length > 0);
 
   if (isSplit && Array.isArray(tenders) && tenders.length > 0) {
-    builder.text(padLine('PAYMENT BREAKDOWN (SPLIT):', `PHP ${formatPhp(total)}`, 48));
+    const splitLabel = is57mm ? 'PAYMENT (SPLIT):' : 'PAYMENT BREAKDOWN (SPLIT):';
+    builder.text(padLine(splitLabel, `PHP ${formatPhp(total)}`, cols));
     for (const t of tenders) {
       const rawMethod = String(t.method || t.payment_method || t.paymentMethod || '').toLowerCase();
       const amt = toPesos(t.amount);
       if (rawMethod === 'cash') {
-        builder.text(padLine('  CASH:', `PHP ${formatPhp(amt)}`, 48));
+        builder.text(padLine('  CASH:', `PHP ${formatPhp(amt)}`, cols));
         const tTendered = toPesos(t.tendered);
         if (tTendered > amt) {
-          builder.text(padLine('    Cash Tendered:', `PHP ${formatPhp(tTendered)}`, 48));
+          builder.text(padLine('    Tendered:', `PHP ${formatPhp(tTendered)}`, cols));
           const tChange = toPesos(t.change ?? tTendered - amt);
-          builder.text(padLine('    Change:', `PHP ${formatPhp(tChange)}`, 48));
+          builder.text(padLine('    Change:', `PHP ${formatPhp(tChange)}`, cols));
         }
       } else if (rawMethod === 'digital_wallet' || rawMethod === 'wallet' || rawMethod === 'qr') {
         const chan = (t.channel || t.paymentChannel || t.payment_channel || 'Wallet').toUpperCase();
         const ref = t.referenceNumber || t.reference_number;
         const refLabel = ref ? ` [Ref: ${ref}]` : '';
-        builder.text(padLine(`  ${chan}${refLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+        builder.text(padLine(`  ${chan}${refLabel}:`, `PHP ${formatPhp(amt)}`, cols));
       } else if (rawMethod === 'card') {
         const last4 = t.last4Digits || t.last4_digits;
         const cardLabel = last4 ? `CARD [**** ${last4}]` : 'CARD';
-        builder.text(padLine(`  ${cardLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+        builder.text(padLine(`  ${cardLabel}:`, `PHP ${formatPhp(amt)}`, cols));
       } else if (rawMethod === 'comp') {
         const reason = t.reason || t.notes;
         const compLabel = reason ? `COMP [${reason}]` : 'COMPLIMENTARY';
-        builder.text(padLine(`  ${compLabel}:`, `PHP ${formatPhp(amt)}`, 48));
+        builder.text(padLine(`  ${compLabel}:`, `PHP ${formatPhp(amt)}`, cols));
       } else {
-        builder.text(padLine(`  ${rawMethod.toUpperCase()}:`, `PHP ${formatPhp(amt)}`, 48));
+        builder.text(padLine(`  ${rawMethod.toUpperCase()}:`, `PHP ${formatPhp(amt)}`, cols));
       }
     }
   } else {
     const paymentChannel = data.paymentChannel || data.payment_channel;
     const paymentLabel = paymentChannel ? `${paymentChannel.toUpperCase()} QR` : paymentMethod;
-    builder.text(padLine('PAYMENT METHOD:', paymentLabel, 48));
+    builder.text(padLine('PAYMENT METHOD:', paymentLabel, cols));
 
     const refNo = data.referenceNumber || data.reference_number;
     if (refNo) {
-      builder.text(padLine('REFERENCE NO:', `#${refNo}`, 48));
+      builder.text(padLine('REFERENCE NO:', `#${refNo}`, cols));
     }
 
     const tendered = toPesos(data.tendered || total);
@@ -211,16 +236,16 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
     );
 
     if (paymentMethod === 'CASH') {
-      builder.text(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, 48));
-      builder.text(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, 48));
+      builder.text(padLine('CASH TENDERED:', `PHP ${formatPhp(tendered)}`, cols));
+      builder.text(padLine('CHANGE DUE:', `PHP ${formatPhp(change)}`, cols));
     } else {
-      builder.text(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, 48));
+      builder.text(padLine('AMOUNT PAID:', `PHP ${formatPhp(total)}`, cols));
     }
   }
 
   // 8. Philippine VAT & Statutory Tax Breakdown
-  builder.line(divider('-', 48));
-  builder.line('TAX & STATUTORY BREAKDOWN:');
+  builder.line(divider('-', cols));
+  builder.line(is57mm ? 'TAX & STATUTORY BREAKDOWN:' : 'PHILIPPINE STATUTORY TAX BREAKDOWN:');
   const vatableSales = toPesos(
     data.vatableSales ?? (discount > 0 ? 0 : Number((total / 1.12).toFixed(2)))
   );
@@ -229,10 +254,10 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
   );
   const vatExempt = toPesos(data.vatExemptSales ?? (discount > 0 ? Number(total.toFixed(2)) : 0));
 
-  builder.text(padLine('  VATable Sales (12%):', formatPhp(vatableSales), 48));
-  builder.text(padLine('  VAT Amount (12%):', formatPhp(vatAmount), 48));
-  builder.text(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), 48));
-  builder.text(padLine('  Zero-Rated Sales:', '0.00', 48));
+  builder.text(padLine('  VATable Sales (12%):', formatPhp(vatableSales), cols));
+  builder.text(padLine('  VAT Amount (12%):', formatPhp(vatAmount), cols));
+  builder.text(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), cols));
+  builder.text(padLine('  Zero-Rated Sales:', '0.00', cols));
 
   // Statutory SC / PWD signature block if discount was granted
   const seniorId = data.seniorPwdId || data.senior_pwd_id;
@@ -240,22 +265,22 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
   const discountType = (data.discountType || data.discount_type || '').toUpperCase();
 
   if (seniorId || discountType === 'SENIOR_CITIZEN' || discountType === 'PWD') {
-    builder.line(divider('-', 48));
-    builder.line('SC / PWD BENEFICIARY ACKNOWLEDGMENT:');
+    builder.line(divider('-', cols));
+    builder.line(is57mm ? 'SC / PWD ACKNOWLEDGMENT:' : 'SC / PWD BENEFICIARY ACKNOWLEDGMENT:');
     if (discountType === 'PWD') {
       builder.line('Type:      PERSON WITH DISABILITY (PWD)');
     } else {
       builder.line('Type:      SENIOR CITIZEN (OSCA)');
     }
-    builder.line(`ID Number: ${seniorId || '_________________________________'}`);
-    builder.line(
-      `Name:      ${seniorName ? String(seniorName).toUpperCase() : '_________________________________'}`
-    );
-    builder.line('Signature: _________________________________');
+    const idPad = is57mm ? '________________' : '_________________________________';
+    const namePad = is57mm ? '________________' : '_________________________________';
+    builder.line(`ID Number: ${seniorId || idPad}`);
+    builder.line(`Name:      ${seniorName ? String(seniorName).toUpperCase() : namePad}`);
+    builder.line(`Signature: ${idPad}`);
   }
 
   // 9. Footer
-  builder.line(divider('-', 48));
+  builder.line(divider('-', cols));
   builder.center();
   builder.line('"Writing about music is like dancing');
   builder.line('about architecture."');
@@ -263,7 +288,7 @@ export function buildReceiptBytes(data: any, shouldKickDrawer: boolean = false):
   builder.line();
   builder.line('Thank you for supporting live music!');
   builder.line('Please come back for the next set.');
-  builder.line(divider('-', 48));
+  builder.line(divider('-', cols));
   builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').bold(false);
   builder.cut(true);
 

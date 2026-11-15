@@ -93,8 +93,8 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
                 <View className="space-y-1">
                   <View className="flex-row justify-between py-1">
                     <View className="flex-row items-center gap-1.5">
-                      <View className="w-2 h-2 rounded-full bg-amber-500" />
-                      <Text className="text-xs text-stone-700 font-semibold">☀️ Cafe Mode</Text>
+                      <View className="w-2 h-2 rounded-full bg-stone-700" />
+                      <Text className="text-xs text-stone-700 font-semibold">Cafe Mode</Text>
                       {reading.cafe_tx_count !== undefined && (
                         <Text className="text-[11px] text-stone-400">
                           ({reading.cafe_tx_count})
@@ -243,10 +243,10 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
                   >
                     <Text className="text-xs font-black">
                       {reading.variance === 0
-                        ? '✓ Balanced'
+                        ? 'Balanced'
                         : reading.variance && reading.variance > 0
-                          ? '▲ Surplus (Over)'
-                          : '▼ Discrepancy (Short)'}
+                          ? 'Surplus (Over)'
+                          : 'Discrepancy (Short)'}
                     </Text>
                     <Text className="text-xs font-black">
                       {reading.variance && reading.variance > 0 ? '+' : ''}

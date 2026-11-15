@@ -1,6 +1,15 @@
 import React from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
-import { Plus, Trash2, Banknote, CreditCard, QrCode, Gift, Sparkles } from 'lucide-react-native';
+import { View, Text, Pressable, TextInput, Image } from 'react-native';
+import {
+  Plus,
+  Trash2,
+  Banknote,
+  CreditCard,
+  QrCode,
+  Gift,
+  Sparkles,
+  Maximize2,
+} from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import type { PaymentTender } from '../../../domain/splitTender.types';
 import type {
@@ -19,6 +28,7 @@ interface SplitTenderBuilderProps {
   onUpdateTender: (id: string, updated: Partial<PaymentTender>) => void;
   onRemoveTender: (id: string) => void;
   onFillRemaining: (id: string) => void;
+  onOpenFullscreenQr?: (channel: QrPaymentChannel, amount: number) => void;
 }
 
 export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
@@ -31,6 +41,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
   onUpdateTender,
   onRemoveTender,
   onFillRemaining,
+  onOpenFullscreenQr,
 }) => {
   const addTenderWithMethod = (method: 'cash' | 'card' | 'digital_wallet' | 'comp') => {
     const id = `tnd-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`;
@@ -360,6 +371,85 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                     })}
                   </View>
                 )}
+
+                {/* QR Code Action Card & Account Preview */}
+                {(() => {
+                  const currentChannel =
+                    qrChannels.find((ch) => ch.name === (tender.channel || 'GCash')) ||
+                    qrChannels[0];
+                  if (!currentChannel) return null;
+                  return (
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        backgroundColor: '#FAF8F5',
+                        borderRadius: 10,
+                        padding: 8,
+                        borderWidth: 1,
+                        borderColor: '#e7e5e4',
+                        gap: 8,
+                      }}
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+                        {currentChannel.qr_image_url ? (
+                          <Image
+                            source={{ uri: currentChannel.qr_image_url }}
+                            style={{
+                              width: 36,
+                              height: 36,
+                              borderRadius: 6,
+                              backgroundColor: '#ffffff',
+                            }}
+                            resizeMode="contain"
+                          />
+                        ) : (
+                          <QrCode size={24} color="#810021" />
+                        )}
+                        <View style={{ flex: 1 }}>
+                          <Text
+                            style={{ fontSize: 12, fontWeight: '800', color: '#1C1917' }}
+                            numberOfLines={1}
+                          >
+                            {currentChannel.name} • {currentChannel.account_name}
+                          </Text>
+                          <Text
+                            style={{ fontSize: 11, fontWeight: '600', color: '#78716C' }}
+                            numberOfLines={1}
+                          >
+                            {currentChannel.account_number}
+                          </Text>
+                        </View>
+                      </View>
+
+                      {onOpenFullscreenQr && (
+                        <Pressable
+                          onPress={() => onOpenFullscreenQr(currentChannel, tender.amount)}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 4,
+                            backgroundColor: '#ffffff',
+                            paddingHorizontal: 8,
+                            paddingVertical: 6,
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: '#810021',
+                            minHeight: 36,
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Show ${currentChannel.name} QR code for ${formatCurrency(tender.amount)}`}
+                        >
+                          <Maximize2 size={13} color="#810021" />
+                          <Text style={{ fontSize: 11, fontWeight: '800', color: '#810021' }}>
+                            Show QR
+                          </Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  );
+                })()}
 
                 {/* 4-Digit Ref Input */}
                 <View

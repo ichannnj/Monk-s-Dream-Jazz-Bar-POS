@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Modal, Pressable, TextInput, StyleSheet } from 'react-native';
+import { View, Text, Modal, Pressable, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { X, Trash2, Check, Ticket } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 
@@ -96,7 +96,7 @@ export const DoorChargeEditorModal: React.FC<DoorChargeEditorModalProps> = ({
                 <Ticket size={20} color="#810021" />
               </View>
               <View>
-                <Text style={styles.title}>Edit Door Charge</Text>
+                <Text style={styles.title}>Door Cover</Text>
                 <Text style={styles.subtitle}>{tableName}</Text>
               </View>
             </View>
@@ -106,54 +106,53 @@ export const DoorChargeEditorModal: React.FC<DoorChargeEditorModalProps> = ({
           </View>
 
           {/* Stepper & Price Input */}
-          <View style={styles.body}>
-            {/* Pax Counter */}
-            <View style={styles.inputRow}>
-              <View>
-                <Text style={styles.label}>Headcount / Pax</Text>
-                <Text style={styles.hint}>Number of admission covers</Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 8 }}
+          >
+            <View style={styles.body}>
+              {/* Pax Counter */}
+              <View style={styles.inputRow}>
+                <Text style={styles.label}>Pax</Text>
+                <View style={styles.stepperContainer}>
+                  <Pressable
+                    onPress={() => setPax((p) => Math.max(1, p - 1))}
+                    style={styles.stepperBtn}
+                  >
+                    <Text style={styles.stepperBtnText}>−</Text>
+                  </Pressable>
+                  <Text style={styles.paxText}>{pax}</Text>
+                  <Pressable onPress={() => setPax((p) => p + 1)} style={styles.stepperBtn}>
+                    <Text style={styles.stepperBtnText}>+</Text>
+                  </Pressable>
+                </View>
               </View>
-              <View style={styles.stepperContainer}>
-                <Pressable
-                  onPress={() => setPax((p) => Math.max(1, p - 1))}
-                  style={styles.stepperBtn}
-                >
-                  <Text style={styles.stepperBtnText}>−</Text>
-                </Pressable>
-                <Text style={styles.paxText}>{pax}</Text>
-                <Pressable onPress={() => setPax((p) => p + 1)} style={styles.stepperBtn}>
-                  <Text style={styles.stepperBtnText}>+</Text>
-                </Pressable>
-              </View>
-            </View>
 
-            {/* Price Per Head */}
-            <View style={styles.inputRow}>
-              <View>
-                <Text style={styles.label}>Price per Head</Text>
-                <Text style={styles.hint}>Admission rate per guest</Text>
+              {/* Price Per Head */}
+              <View style={styles.inputRow}>
+                <Text style={styles.label}>Rate per Head</Text>
+                <View style={styles.priceContainer}>
+                  <Text style={styles.currencyPrefix}>₱</Text>
+                  <TextInput
+                    style={styles.priceInput}
+                    value={priceText}
+                    onChangeText={setPriceText}
+                    keyboardType="numeric"
+                    placeholder="300"
+                    placeholderTextColor="#78716c"
+                  />
+                </View>
               </View>
-              <View style={styles.priceContainer}>
-                <Text style={styles.currencyPrefix}>₱</Text>
-                <TextInput
-                  style={styles.priceInput}
-                  value={priceText}
-                  onChangeText={setPriceText}
-                  keyboardType="numeric"
-                  placeholder="300"
-                  placeholderTextColor="#78716c"
-                />
-              </View>
-            </View>
 
-            {/* Summary calculation */}
-            <View style={styles.summaryCard}>
-              <Text style={styles.summaryLabel}>Total Door Charge</Text>
-              <Text style={styles.summaryValue}>
-                ₱{totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-              </Text>
+              {/* Summary calculation */}
+              <View style={styles.summaryCard}>
+                <Text style={styles.summaryLabel}>Total Cover</Text>
+                <Text style={styles.summaryValue}>
+                  ₱{totalAmount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                </Text>
+              </View>
             </View>
-          </View>
+          </ScrollView>
 
           {/* Actions */}
           <View style={styles.footer}>
@@ -167,7 +166,7 @@ export const DoorChargeEditorModal: React.FC<DoorChargeEditorModalProps> = ({
               ]}
             >
               <Trash2 size={16} color="#dc2626" />
-              <Text style={styles.voidBtnText}>Remove Cover</Text>
+              <Text style={styles.voidBtnText}>Remove</Text>
             </Pressable>
 
             <Pressable
@@ -180,7 +179,7 @@ export const DoorChargeEditorModal: React.FC<DoorChargeEditorModalProps> = ({
               ]}
             >
               <Check size={18} color="#FFFFFF" strokeWidth={2.5} />
-              <Text style={styles.saveBtnText}>{isSubmitting ? 'Saving...' : 'Update Tab'}</Text>
+              <Text style={styles.saveBtnText}>{isSubmitting ? 'Saving...' : 'Save Cover'}</Text>
             </Pressable>
           </View>
         </View>
@@ -200,6 +199,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 440,
+    maxHeight: '96%',
     backgroundColor: '#FAF8F5',
     borderRadius: 20,
     padding: 24,

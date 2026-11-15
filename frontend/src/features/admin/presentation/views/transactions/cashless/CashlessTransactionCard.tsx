@@ -10,6 +10,9 @@ import {
   ChevronUp,
   User,
   Clock,
+  QrCode,
+  CreditCard,
+  Building2,
 } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import type { SettledCheckItem } from '@/features/check-history/domain/check.types';
@@ -40,117 +43,89 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
     const label = channel || method || 'ONLINE';
     const upper = label.toUpperCase();
 
+    let icon = <QrCode size={12} color="#1c1917" />;
+    let text = label;
+
     if (upper.includes('GCASH')) {
-      return (
-        <View className="flex-row items-center rounded-lg bg-blue-50 border border-blue-200 px-2.5 py-1">
-          <View className="h-1.5 w-1.5 rounded-full bg-blue-600 mr-1.5" />
-          <Text className="text-xs font-black text-blue-700">GCash</Text>
-        </View>
-      );
+      text = 'GCash';
+    } else if (upper.includes('MAYA')) {
+      text = 'Maya';
+    } else if (upper.includes('QRPH') || upper.includes('BPI')) {
+      text = 'QRPH';
+    } else if (upper.includes('BANK')) {
+      text = 'Bank Transfer';
+      icon = <Building2 size={12} color="#1c1917" />;
+    } else if (upper.includes('CARD')) {
+      text = 'Card';
+      icon = <CreditCard size={12} color="#1c1917" />;
     }
-    if (upper.includes('MAYA')) {
-      return (
-        <View className="flex-row items-center rounded-lg bg-emerald-50 border border-emerald-200 px-2.5 py-1">
-          <View className="h-1.5 w-1.5 rounded-full bg-emerald-600 mr-1.5" />
-          <Text className="text-xs font-black text-emerald-700">Maya</Text>
-        </View>
-      );
-    }
-    if (upper.includes('QRPH') || upper.includes('BPI')) {
-      return (
-        <View className="flex-row items-center rounded-lg bg-purple-50 border border-purple-200 px-2.5 py-1">
-          <View className="h-1.5 w-1.5 rounded-full bg-purple-600 mr-1.5" />
-          <Text className="text-xs font-black text-purple-700">QRPH</Text>
-        </View>
-      );
-    }
-    if (upper.includes('BANK')) {
-      return (
-        <View className="flex-row items-center rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1">
-          <View className="h-1.5 w-1.5 rounded-full bg-amber-600 mr-1.5" />
-          <Text className="text-xs font-black text-amber-800">Bank Transfer</Text>
-        </View>
-      );
-    }
-    if (upper.includes('CARD')) {
-      return (
-        <View className="flex-row items-center rounded-lg bg-slate-100 border border-slate-300 px-2.5 py-1">
-          <View className="h-1.5 w-1.5 rounded-full bg-slate-600 mr-1.5" />
-          <Text className="text-xs font-black text-slate-800">Credit / Debit Card</Text>
-        </View>
-      );
-    }
+
     return (
-      <View className="flex-row items-center rounded-lg bg-stone-100 border border-stone-200 px-2.5 py-1">
-        <Text className="text-xs font-bold text-stone-700">{label}</Text>
+      <View className="flex-row items-center rounded-lg bg-stone-100 border border-stone-200 px-2 py-0.5">
+        {icon}
+        <Text className="ml-1 text-xs font-bold text-stone-800">{text}</Text>
       </View>
     );
   };
 
   return (
-    <View className="mb-3 rounded-2xl border border-stone-200/90 bg-white p-4 sm:p-5 shadow-xs">
+    <View className="mb-2.5 rounded-xl border border-stone-200/90 bg-white p-3.5 sm:p-4 shadow-xs">
       {/* Top Row: Ref #, Channel, Amount, Mode */}
-      <View className="flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <View className="flex-row flex-wrap items-center gap-2.5">
+      <View className="flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+        <View className="flex-row flex-wrap items-center gap-2">
           {hasRef ? (
             <Pressable
               onPress={() => onCopyRef(item.referenceNumber!)}
-              className="flex-row items-center rounded-xl bg-amber-500/10 border border-amber-500/40 px-3 py-1.5 active:bg-amber-500/20"
+              className="flex-row items-center rounded-lg bg-[#FAF8F5] border border-stone-300 px-2.5 py-1 active:bg-stone-100"
               accessibilityLabel={`Reference Number ${item.referenceNumber}. Tap to copy.`}
             >
-              <Text className="text-xs font-black text-amber-900 tracking-wider font-mono">
+              <Text className="text-xs font-bold text-stone-900 tracking-wider font-mono">
                 REF #{item.referenceNumber}
               </Text>
               {copiedRef === item.referenceNumber ? (
-                <Check size={13} color="#15803d" className="ml-1.5" />
+                <Check size={12} color="#800020" className="ml-1.5" />
               ) : (
-                <Copy size={13} color="#b45309" className="ml-1.5" />
+                <Copy size={12} color="#78716c" className="ml-1.5" />
               )}
             </Pressable>
           ) : (
-            <View className="rounded-xl bg-stone-100 border border-stone-200 px-3 py-1.5">
+            <View className="rounded-lg bg-stone-100 border border-stone-200 px-2.5 py-1">
               <Text className="text-xs font-bold text-stone-500">NO REF #</Text>
             </View>
           )}
 
           {getChannelBadge(item.paymentChannel, item.paymentMethod)}
 
-          <View
-            className={`rounded-lg px-2.5 py-1 flex-row items-center border ${
-              isEvent
-                ? 'bg-amber-50 border-amber-200/80 text-amber-800'
-                : 'bg-sky-50 border-sky-200/80 text-sky-800'
-            }`}
-          >
+          <View className="rounded-lg px-2 py-0.5 flex-row items-center border border-stone-200 bg-[#FAF8F5]">
             {isEvent ? (
-              <Sparkles size={11} color="#d97706" />
+              <Sparkles size={11} color="#800020" />
             ) : (
-              <Coffee size={11} color="#0284c7" />
+              <Coffee size={11} color="#1c1917" />
             )}
-            <Text
-              className={`ml-1 text-xs font-bold ${isEvent ? 'text-amber-800' : 'text-sky-800'}`}
-            >
+            <Text className="ml-1 text-xs font-bold text-stone-700">
               {isEvent ? 'Event' : 'Cafe'}
             </Text>
           </View>
         </View>
 
-        <Text className="text-xl font-black text-stone-900">{formatCurrency(item.total)}</Text>
+        <Text className="text-lg sm:text-xl font-black text-stone-900">
+          {formatCurrency(item.total)}
+        </Text>
       </View>
 
-      {/* Middle Row */}
-      <View className="mt-3 flex-row flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-stone-600 border-t border-stone-100 pt-3">
+      {/* Middle Row: Check Metadata */}
+      <View className="mt-2.5 flex-row flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-600 border-t border-stone-100 pt-2">
         <Text className="text-xs font-bold text-stone-800">{item.checkNumber}</Text>
-        <Text className="text-xs text-stone-500">•</Text>
+        <Text className="text-xs text-stone-300">•</Text>
         <Text className="text-xs font-semibold text-stone-700">{item.guestName}</Text>
-        <Text className="text-xs text-stone-500">•</Text>
+        <Text className="text-xs text-stone-300">•</Text>
         <Text className="text-xs text-stone-600">{item.tableOrRef}</Text>
-        <Text className="text-xs text-stone-500">•</Text>
+        <Text className="text-xs text-stone-300">•</Text>
         <View className="flex-row items-center">
           <User size={12} color="#78716c" />
           <Text className="ml-1 text-xs text-stone-600">{item.cashierName}</Text>
         </View>
-        <Text className="text-xs text-stone-500">•</Text>
+        <Text className="text-xs text-stone-300">•</Text>
         <View className="flex-row items-center">
           <Clock size={12} color="#78716c" />
           <Text className="ml-1 text-xs text-stone-500">
@@ -165,12 +140,12 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
 
       {/* Expandable Line Items Preview */}
       {isExpanded && item.items && item.items.length > 0 && (
-        <View className="mt-3 rounded-xl bg-stone-50 p-3 border border-stone-200/80">
-          <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-2">
+        <View className="mt-2.5 rounded-lg bg-[#FAF8F5] p-2.5 border border-stone-200/80">
+          <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
             Ordered Line Items ({item.items.length}):
           </Text>
           {item.items.map((it, idx) => (
-            <View key={idx} className="flex-row items-center justify-between py-1">
+            <View key={idx} className="flex-row items-center justify-between py-0.5">
               <Text className="text-xs font-medium text-stone-800">
                 {it.quantity}x {it.name} {it.notes ? `(${it.notes})` : ''}
               </Text>
@@ -183,7 +158,7 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
       )}
 
       {/* Bottom Action Bar */}
-      <View className="mt-3 flex-row items-center justify-between border-t border-stone-100/80 pt-2.5">
+      <View className="mt-2.5 flex-row items-center justify-between border-t border-stone-100/80 pt-2">
         <Pressable
           onPress={onToggleExpand}
           className="flex-row items-center py-1 text-stone-500 active:opacity-70"
@@ -194,23 +169,23 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
               : `View items (${item.items?.length || item.itemsCount || 0})`}
           </Text>
           {isExpanded ? (
-            <ChevronUp size={14} color="#78716c" className="ml-1" />
+            <ChevronUp size={13} color="#78716c" className="ml-1" />
           ) : (
-            <ChevronDown size={14} color="#78716c" className="ml-1" />
+            <ChevronDown size={13} color="#78716c" className="ml-1" />
           )}
         </Pressable>
 
         <Pressable
           onPress={() => onReprint(item)}
           disabled={reprintingId === item.id}
-          className="flex-row items-center rounded-xl bg-stone-100 px-3 py-1.5 active:bg-stone-200"
+          className="min-h-[44px] flex-row items-center rounded-xl bg-white border border-stone-200 px-3 active:bg-stone-50"
         >
           {reprintingId === item.id ? (
-            <ActivityIndicator size="small" color="#44403c" />
+            <ActivityIndicator size="small" color="#800020" />
           ) : (
-            <RotateCw size={12} color="#44403c" />
+            <RotateCw size={13} color="#800020" />
           )}
-          <Text className="ml-1.5 text-xs font-bold text-stone-800">Reprint Thermal Receipt</Text>
+          <Text className="ml-1.5 text-xs font-bold text-stone-800">Reprint Receipt</Text>
         </Pressable>
       </View>
     </View>

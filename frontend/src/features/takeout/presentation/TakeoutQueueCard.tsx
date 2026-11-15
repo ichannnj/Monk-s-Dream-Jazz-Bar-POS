@@ -35,7 +35,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
         <View style={styles.cardHeader}>
           <View style={styles.codeCol}>
             <View style={styles.ticketBadgeRow}>
-              <ShoppingBag size={13} color="#15803d" strokeWidth={2.4} />
+              <ShoppingBag size={13} color="#810021" strokeWidth={2.4} />
               <Text style={styles.ticketCodeText}>Takeout #{order.ticketNumber}</Text>
             </View>
             <Text style={styles.customerNameText} numberOfLines={1}>
@@ -47,12 +47,12 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
             style={[styles.statusBadge, isReady ? styles.statusBadgeReady : styles.statusBadgePrep]}
           >
             <View
-              style={[styles.statusDot, { backgroundColor: isReady ? '#16a34a' : '#d97706' }]}
+              style={[styles.statusDot, { backgroundColor: isReady ? '#10b981' : '#f59e0b' }]}
             />
-            <Text style={[styles.statusText, { color: isReady ? '#15803d' : '#b45309' }]}>
+            <Text style={[styles.statusText, { color: isReady ? '#047857' : '#b45309' }]}>
               {isReady ? 'READY' : 'PREP'}
             </Text>
-            <Text style={[styles.timeText, { color: isReady ? '#15803d' : '#b45309' }]}>
+            <Text style={[styles.timeText, { color: isReady ? '#047857' : '#b45309' }]}>
               · {liveTimer.formattedTimer}
             </Text>
           </View>
@@ -65,7 +65,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
           </Text>
           <View style={styles.amountCol}>
             <Text style={styles.amountText}>{formatCurrency(order.total)}</Text>
-            <Text style={[styles.paidText, { color: order.isPrepaid ? '#15803d' : '#b45309' }]}>
+            <Text style={[styles.paidText, { color: order.isPrepaid ? '#810021' : '#78716c' }]}>
               {order.isPrepaid ? 'PAID' : 'DUE'}
             </Text>
           </View>
@@ -154,12 +154,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   cardPreparing: {
-    borderColor: '#fde68a',
-    backgroundColor: '#fffdfa',
+    borderColor: '#f59e0b',
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
   },
   cardReady: {
-    borderColor: '#bbf7d0',
-    backgroundColor: '#f6fdf8',
+    borderColor: '#10b981',
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    shadowColor: '#10b981',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 3,
   },
   cardPressed: {
     transform: [{ scale: 0.985 }],
@@ -184,12 +191,12 @@ const styles = StyleSheet.create({
   ticketCodeText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#15803d',
+    color: '#810021',
   },
   customerNameText: {
     fontSize: 17,
     fontWeight: '900',
-    color: '#111827',
+    color: '#1c1917',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -200,10 +207,10 @@ const styles = StyleSheet.create({
     borderRadius: 11,
   },
   statusBadgePrep: {
-    backgroundColor: '#fef7e6',
+    backgroundColor: '#fffbeb',
   },
   statusBadgeReady: {
-    backgroundColor: '#e8f9ee',
+    backgroundColor: '#ecfdf5',
   },
   statusDot: {
     width: 7,

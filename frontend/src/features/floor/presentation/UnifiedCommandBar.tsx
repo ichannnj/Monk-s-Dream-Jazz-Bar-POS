@@ -71,35 +71,30 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
       label: 'All Channels',
       badge: channelCounts.all,
       icon: Sparkles,
-      description: 'Show all tables, takeout, and delivery orders',
     },
     {
       value: 'cafe',
       label: 'Cafe Area',
       badge: channelCounts.cafe,
       icon: Coffee,
-      description: 'Daytime cafe tables and counter service',
     },
     {
       value: 'bar',
       label: 'Bar Area',
       badge: channelCounts.bar,
       icon: Wine,
-      description: 'Live jazz stage and cocktail bar seating',
     },
     {
       value: 'takeout',
       label: 'Takeout',
       badge: channelCounts.takeout,
       icon: ShoppingBag,
-      description: 'Walk-in to-go pickup queue',
     },
     {
       value: 'online',
       label: 'Delivery',
       badge: channelCounts.online,
       icon: Bike,
-      description: 'GrabFood & Foodpanda courier queue',
     },
   ];
 
@@ -109,25 +104,31 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
       value: 'occupied',
       label: 'Occupied',
       badge: statusCounts.occupied,
-      dotColor: '#be123c',
+      dotColor: '#64748b',
     },
     {
       value: 'preparing',
       label: 'Preparing',
       badge: statusCounts.preparing,
-      dotColor: '#b45309',
+      dotColor: '#f59e0b',
     },
     {
       value: 'ready',
       label: 'Ready',
       badge: statusCounts.ready,
-      dotColor: '#15803d',
+      dotColor: '#10b981',
+    },
+    {
+      value: 'served',
+      label: 'Served',
+      badge: statusCounts.served,
+      dotColor: '#810021',
     },
     {
       value: 'empty',
       label: 'Available',
       badge: statusCounts.empty,
-      dotColor: '#6b7280',
+      dotColor: '#a8a29e',
     },
   ];
 
@@ -137,7 +138,6 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           {
             value: 'tab' as const,
             label: '+ Open Table Tab',
-            description: 'Assign a new dine-in guest tab to a table',
             icon: PlusCircle,
           },
         ]
@@ -147,7 +147,6 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           {
             value: 'takeout' as const,
             label: '+ New Walk-In Takeout',
-            description: 'Create a counter to-go order ticket',
             icon: ShoppingBag,
           },
         ]
@@ -157,7 +156,6 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           {
             value: 'delivery' as const,
             label: '+ Input Delivery Order',
-            description: 'Log a GrabFood or Foodpanda courier order',
             icon: Bike,
           },
         ]
@@ -232,13 +230,13 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
         >
           {operatingMode === 'EVENT' ? (
             <>
-              <Sparkles size={16} color="#d97706" />
-              <Text style={styles.modeTextEvent}>🎷 Event</Text>
+              <Sparkles size={16} color="#ffffff" />
+              <Text style={styles.modeTextEvent}>Event</Text>
             </>
           ) : (
             <>
-              <Coffee size={16} color="#0284c7" />
-              <Text style={styles.modeTextCafe}>☀️ Cafe</Text>
+              <Coffee size={16} color="#1c1917" />
+              <Text style={styles.modeTextCafe}>Cafe</Text>
             </>
           )}
         </Pressable>
@@ -255,7 +253,7 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Hardware Printer & Cash Drawer Station Settings"
         >
-          <Printer size={16} color={isHardwareStation ? '#d97706' : '#57534e'} />
+          <Printer size={16} color={isHardwareStation ? '#810021' : '#78716c'} />
           <Text style={[styles.printerText, isHardwareStation && styles.printerTextActive]}>
             {isHardwareStation ? 'Station Active' : 'Station'}
           </Text>
@@ -444,17 +442,17 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    minHeight: 44,
-    borderRadius: 13,
-    backgroundColor: '#fceeed',
+    minHeight: 48,
+    borderRadius: 14,
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#fad4db',
+    borderColor: '#e7e5e4',
   },
   staffAvatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#641b2a',
+    backgroundColor: '#810021',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -464,9 +462,9 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   staffNameText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#832238',
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1c1917',
   },
   modePill: {
     flexDirection: 'row',
@@ -480,22 +478,22 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   modePillCafe: {
-    backgroundColor: '#f0f9ff',
-    borderColor: '#bae6fd',
+    backgroundColor: '#ffffff',
+    borderColor: '#e7e5e4',
   },
   modePillEvent: {
-    backgroundColor: '#fffbeb',
-    borderColor: '#fde68a',
+    backgroundColor: '#810021',
+    borderColor: '#810021',
   },
   modeTextCafe: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
-    color: '#0369a1',
+    color: '#1c1917',
   },
   modeTextEvent: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
-    color: '#b45309',
+    color: '#ffffff',
   },
   printerPill: {
     flexDirection: 'row',
@@ -505,21 +503,21 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     minHeight: 48,
     borderRadius: 14,
-    backgroundColor: '#f5f5f4',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
     borderColor: '#e7e5e4',
   },
   printerPillActive: {
-    backgroundColor: '#fffbeb',
-    borderColor: '#fde68a',
+    backgroundColor: '#faf8f5',
+    borderColor: '#810021',
   },
   printerText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#57534e',
+    color: '#78716c',
   },
   printerTextActive: {
-    color: '#b45309',
+    color: '#810021',
   },
   offlinePill: {
     flexDirection: 'row',

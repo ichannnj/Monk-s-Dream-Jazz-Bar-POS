@@ -37,54 +37,59 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
     return new Set([...fromActiveTabs, ...fromTabs]).size;
   }, [table.tabs, activeTabs]);
 
-  // Derive 1-line items snippet preview
+  // Derive clean items preview without filler text
   const itemsSummary = useMemo(() => {
-    if (isEmpty) return 'Available · Ready for guests';
+    if (isEmpty) return seats ? `${seats} seats` : '';
     const allItems = (table.tabs || []).flatMap((t) => t.items || []);
     if (allItems.length === 0) {
-      return hasOpenCheck ? 'Tab active · No items added yet' : 'No items';
+      return hasOpenCheck ? 'Open tab' : '';
     }
     return allItems.map((i) => `${i.quantity}x ${i.productName}`).join(', ');
-  }, [table.tabs, isEmpty, hasOpenCheck]);
+  }, [table.tabs, isEmpty, hasOpenCheck, seats]);
 
-  // Status configuration badge
+  // Improved minimalist status configuration badge for instant waiter recognition
   const statusConfig = useMemo(() => {
     switch (status) {
       case 'ready':
         return {
           label: 'READY',
-          bg: '#e8f9ee',
-          color: '#15803d',
-          dotColor: '#16a34a',
+          bg: '#ecfdf5',
+          color: '#047857',
+          dotColor: '#10b981',
+          actionText: 'Deliver Order',
         };
       case 'preparing':
         return {
           label: 'PREP',
-          bg: '#fef7e6',
+          bg: '#fffbeb',
           color: '#b45309',
-          dotColor: '#d97706',
+          dotColor: '#f59e0b',
+          actionText: 'View / Order',
         };
       case 'served':
         return {
           label: 'SERVED',
-          bg: '#fff1f2',
-          color: '#be123c',
-          dotColor: '#e11d48',
+          bg: '#fdf2f4',
+          color: '#810021',
+          dotColor: '#810021',
+          actionText: 'Settle / Order',
         };
       case 'occupied':
         return {
           label: 'OCCUPIED',
-          bg: '#FAF8F5',
-          color: '#810021',
-          dotColor: '#810021',
+          bg: '#f8fafc',
+          color: '#334155',
+          dotColor: '#64748b',
+          actionText: 'Take Order',
         };
       case 'empty':
       default:
         return {
           label: 'AVAILABLE',
-          bg: '#f3f4f6',
-          color: '#6b7280',
-          dotColor: '#9ca3af',
+          bg: '#f5f5f4',
+          color: '#78716c',
+          dotColor: '#a8a29e',
+          actionText: '+ Open Tab',
         };
     }
   }, [status]);
@@ -193,13 +198,17 @@ export const TableCard: React.FC<TableCardProps> = React.memo(({ table, onPress 
         ) : (
           <Pressable
             onPress={() => onPress(table)}
-            style={({ pressed }) => [styles.actionBtnManage, pressed && styles.cardPressed]}
+            style={({ pressed }) => [
+              styles.actionBtnManage,
+              isReady && { borderColor: '#10b981', backgroundColor: '#ecfdf5' },
+              pressed && styles.cardPressed,
+            ]}
             accessibilityRole="button"
             accessibilityLabel={`Manage Table ${code}`}
           >
-            <Utensils size={18} color="#810021" strokeWidth={2.3} />
-            <Text style={styles.actionBtnManageText}>
-              {status === 'served' ? 'Settle / Order' : 'View / Order'}
+            <Utensils size={18} color={statusConfig.color} strokeWidth={2.3} />
+            <Text style={[styles.actionBtnManageText, { color: statusConfig.color }]}>
+              {statusConfig.actionText}
             </Text>
           </Pressable>
         )}

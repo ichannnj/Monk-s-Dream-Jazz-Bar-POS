@@ -157,23 +157,18 @@ export const CheckMobileDetailSheet: React.FC<CheckMobileDetailSheetProps> = ({
             </View>
           </ScrollView>
 
-          {/* Action Buttons */}
-          <View className="pt-3 border-t border-stone-200 flex-row gap-2">
-            <Pressable
-              onPress={onBrowserPrint}
-              className="flex-1 min-h-[48px] rounded-xl border border-stone-300 bg-white items-center justify-center active:bg-stone-50 flex-row gap-2"
-            >
-              <Printer size={18} color="#44403c" />
-              <Text className="text-base font-bold text-stone-800">Print</Text>
-            </Pressable>
+          {/* Action Buttons: Consolidated Single Reprint Button */}
+          <View className="pt-3 border-t border-stone-200">
             <Pressable
               onPress={onReprintThermal}
               disabled={isReprinting}
-              className="flex-1 min-h-[48px] rounded-xl bg-[#800020] items-center justify-center active:bg-[#600018] flex-row gap-2"
+              className="w-full min-h-[48px] rounded-xl bg-[#810021] items-center justify-center active:opacity-90 flex-row gap-2 shadow-xs"
+              accessibilityRole="button"
+              accessibilityLabel="Reprint receipt"
             >
               <Printer size={18} color="#ffffff" />
               <Text className="text-base font-bold text-white">
-                {isReprinting ? 'Sending...' : 'Reprint'}
+                {isReprinting ? 'Printing...' : 'Reprint Receipt'}
               </Text>
             </Pressable>
           </View>

@@ -7,7 +7,6 @@ import {
   Wine,
   Pizza,
   Cake,
-  Camera,
   Leaf,
   AlertTriangle,
   AlertCircle,
@@ -20,9 +19,7 @@ import { styles } from './OrderEntryModal.styles';
 
 export interface OrderMenuItemGridProps {
   items: MenuItem[];
-  isAdmin: boolean;
   onItemClick: (item: MenuItem) => void;
-  onOpenImageEditor: (item: MenuItem) => void;
 }
 
 const getCategoryIcon = (category: string) => {
@@ -44,10 +41,8 @@ const getCategoryIcon = (category: string) => {
 
 const MenuItemCard: React.FC<{
   item: MenuItem;
-  isAdmin: boolean;
   onItemClick: (item: MenuItem) => void;
-  onOpenImageEditor: (item: MenuItem) => void;
-}> = ({ item, isAdmin, onItemClick, onOpenImageEditor }) => {
+}> = ({ item, onItemClick }) => {
   const [imageFailed, setImageFailed] = useState(false);
   const isExplicitlyDisabled = !item.isAvailable;
   const isDepleted = item.stockStatus === 'depleted';
@@ -155,21 +150,6 @@ const MenuItemCard: React.FC<{
             </Text>
           </View>
         )}
-
-        {/* Admin Camera / Edit Image Button */}
-        {isAdmin && (
-          <Pressable
-            onPress={(e) => {
-              e.stopPropagation?.();
-              onOpenImageEditor(item);
-            }}
-            style={styles.adminEditImageBtn}
-            accessibilityRole="button"
-            accessibilityLabel={`Change photo for ${item.name}`}
-          >
-            <Camera size={13} color="#ffffff" strokeWidth={2.4} />
-          </Pressable>
-        )}
       </View>
 
       {/* Product Card Body: Name, Price, Description & Badges */}
@@ -223,12 +203,7 @@ const MenuItemCard: React.FC<{
   );
 };
 
-export const OrderMenuItemGrid: React.FC<OrderMenuItemGridProps> = ({
-  items,
-  isAdmin,
-  onItemClick,
-  onOpenImageEditor,
-}) => {
+export const OrderMenuItemGrid: React.FC<OrderMenuItemGridProps> = ({ items, onItemClick }) => {
   return (
     <ScrollView
       style={styles.productsScroll}
@@ -236,13 +211,7 @@ export const OrderMenuItemGrid: React.FC<OrderMenuItemGridProps> = ({
       showsVerticalScrollIndicator={false}
     >
       {items.map((item) => (
-        <MenuItemCard
-          key={item.id}
-          item={item}
-          isAdmin={isAdmin}
-          onItemClick={onItemClick}
-          onOpenImageEditor={onOpenImageEditor}
-        />
+        <MenuItemCard key={item.id} item={item} onItemClick={onItemClick} />
       ))}
     </ScrollView>
   );

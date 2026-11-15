@@ -181,7 +181,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                           : styles.variantBadgeTextCold
                       }
                     >
-                      {currentVariant.temperature === 'HOT' ? '🔥 HOT' : '❄️ ICED'} ·{' '}
+                      {currentVariant.temperature === 'HOT' ? 'HOT' : 'ICED'} ·{' '}
                       {currentVariant.sizeLabel}
                     </Text>
                   </View>
@@ -222,16 +222,16 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                     marginBottom: 6,
                   }}
                 >
-                  <Text style={styles.customizerSectionTitle}>{grp.name}:</Text>
+                  <Text style={styles.customizerSectionTitle}>{grp.name}</Text>
                   <Text
                     style={{
                       fontSize: 11,
                       fontWeight: '700',
-                      color: grp.isRequired ? '#dc2626' : '#6b7280',
+                      color: grp.isRequired ? '#810021' : '#78716C',
                       textTransform: 'uppercase',
                     }}
                   >
-                    {grp.isRequired ? 'Required · Single Choice' : 'Optional · Single Choice'}
+                    {grp.isRequired ? 'Required' : 'Optional'}
                   </Text>
                 </View>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -248,8 +248,8 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                           paddingHorizontal: 14,
                           borderRadius: 10,
                           borderWidth: 1.5,
-                          borderColor: isSelected ? '#800020' : '#e5e7eb',
-                          backgroundColor: isSelected ? '#fff1f2' : '#ffffff',
+                          borderColor: isSelected ? '#810021' : '#e7e5e4',
+                          backgroundColor: isSelected ? '#FAF8F5' : '#ffffff',
                           gap: 8,
                         }}
                         accessibilityRole="radio"
@@ -261,10 +261,10 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                             height: 18,
                             borderRadius: 9,
                             borderWidth: 1.5,
-                            borderColor: isSelected ? '#800020' : '#9ca3af',
+                            borderColor: isSelected ? '#810021' : '#9ca3af',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            backgroundColor: isSelected ? '#800020' : '#ffffff',
+                            backgroundColor: isSelected ? '#810021' : '#ffffff',
                           }}
                         >
                           {isSelected && (
@@ -282,7 +282,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                           style={{
                             fontSize: 13,
                             fontWeight: isSelected ? '700' : '600',
-                            color: isSelected ? '#800020' : '#1f2937',
+                            color: isSelected ? '#810021' : '#1C1917',
                           }}
                         >
                           {opt.name}
@@ -291,7 +291,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                           style={{
                             fontSize: 12,
                             fontWeight: '600',
-                            color: isSelected ? '#800020' : '#6b7280',
+                            color: isSelected ? '#810021' : '#78716C',
                           }}
                         >
                           {opt.priceDelta > 0 ? `+${formatCurrency(opt.priceDelta)}` : 'Standard'}
@@ -307,7 +307,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           {/* Temperature Selector (Hot / Cold) */}
           {availableTemperatures.length > 1 ? (
             <View style={{ marginBottom: 14 }}>
-              <Text style={styles.customizerSectionTitle}>Temperature:</Text>
+              <Text style={styles.customizerSectionTitle}>Temperature</Text>
               <View style={styles.tempSelectorRow}>
                 {availableTemperatures.includes('HOT') ? (
                   <Pressable
@@ -319,7 +319,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                   >
                     <Flame
                       size={18}
-                      color={selectedTemperature === 'HOT' ? '#810021' : '#6b7280'}
+                      color={selectedTemperature === 'HOT' ? '#810021' : '#78716C'}
                     />
                     <Text
                       style={[
@@ -342,7 +342,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                   >
                     <Snowflake
                       size={18}
-                      color={selectedTemperature === 'COLD' ? '#810021' : '#6b7280'}
+                      color={selectedTemperature === 'COLD' ? '#810021' : '#78716C'}
                     />
                     <Text
                       style={[
@@ -350,7 +350,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                         selectedTemperature === 'COLD' && styles.tempButtonTextColdSelected,
                       ]}
                     >
-                      Iced / Cold
+                      Cold
                     </Text>
                   </Pressable>
                 ) : null}
@@ -361,7 +361,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           {/* Size Selector */}
           {availableSizes.length > 1 ? (
             <View style={{ marginBottom: 14 }}>
-              <Text style={styles.customizerSectionTitle}>Cup Size & Volume:</Text>
+              <Text style={styles.customizerSectionTitle}>Size</Text>
               <View style={styles.sizeSelectorRow}>
                 {availableSizes.map((s) => {
                   const isSelected = selectedSize === s.sizeLabel;
@@ -391,7 +391,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
             </View>
           ) : null}
 
-          {/* Modifiers List (Multi-Select Add-ons) */}
+          {/* Modifiers List */}
           {item.modifiers && item.modifiers.length > 0 ? (
             <View style={{ marginBottom: 14 }}>
               <View
@@ -402,17 +402,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                   marginBottom: 6,
                 }}
               >
-                <Text style={styles.customizerSectionTitle}>Custom Add-ons & Modifiers:</Text>
-                <Text
-                  style={{
-                    fontSize: 11,
-                    fontWeight: '700',
-                    color: '#6b7280',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  Multi-Select Add-ons
-                </Text>
+                <Text style={styles.customizerSectionTitle}>Add-ons</Text>
               </View>
               <View style={styles.modList}>
                 {item.modifiers.map((mod) => {
@@ -435,8 +425,8 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                             height: 20,
                             borderRadius: 6,
                             borderWidth: 1.5,
-                            borderColor: isSelected ? '#15803d' : '#9ca3af',
-                            backgroundColor: isSelected ? '#15803d' : '#ffffff',
+                            borderColor: isSelected ? '#810021' : '#9ca3af',
+                            backgroundColor: isSelected ? '#810021' : '#ffffff',
                             alignItems: 'center',
                             justifyContent: 'center',
                           }}
@@ -466,7 +456,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
               marginBottom: 6,
             }}
           >
-            <Text style={styles.customizerSectionTitle}>Special Instructions:</Text>
+            <Text style={styles.customizerSectionTitle}>Special Instructions</Text>
             {notes.length > 0 && (
               <Pressable
                 onPress={() => onChangeNotes('')}
@@ -491,7 +481,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           </View>
           <TextInput
             style={styles.customizerInput}
-            placeholder="e.g. Extra hot oat milk, light ice, less sweet..."
+            placeholder="Special instructions..."
             placeholderTextColor="#9ca3af"
             value={notes}
             onChangeText={onChangeNotes}
@@ -502,12 +492,19 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
         <View style={styles.customizerFooterWrapper}>
           {missingRequiredGroup ? (
             <View
-              style={{ backgroundColor: '#fee2e2', padding: 8, borderRadius: 8, marginBottom: 8 }}
+              style={{
+                backgroundColor: '#FAF8F5',
+                borderWidth: 1,
+                borderColor: '#810021',
+                padding: 8,
+                borderRadius: 8,
+                marginBottom: 8,
+              }}
             >
               <Text
-                style={{ color: '#991b1b', fontSize: 12, fontWeight: '700', textAlign: 'center' }}
+                style={{ color: '#810021', fontSize: 12, fontWeight: '700', textAlign: 'center' }}
               >
-                Please select an option for {missingRequiredGroup}
+                Select an option for {missingRequiredGroup}
               </Text>
             </View>
           ) : null}
@@ -519,7 +516,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           >
             <CheckCircle2 size={18} color="#ffffff" strokeWidth={2.4} />
             <Text style={styles.confirmCustomizeBtnText}>
-              Add to Cart • {formatCurrency(totalEffectivePrice)}
+              Add to Order · {formatCurrency(totalEffectivePrice)}
             </Text>
           </Pressable>
         </View>

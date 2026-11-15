@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, Pressable, TextInput, StyleSheet } from 'react-native';
-import { X, Bike, ArrowRight, CheckCircle2 } from 'lucide-react-native';
+import { View, Text, Modal, Pressable, TextInput, StyleSheet, ScrollView } from 'react-native';
+import { X, Bike, ArrowRight } from 'lucide-react-native';
 import { useVirtualKeyboard } from '../../shared';
 
 interface OnlineDeliveryModalProps {
@@ -74,20 +74,10 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerTitleGroup}>
-              <View
-                style={[
-                  styles.badge,
-                  platform === 'grabfood' ? styles.badgeGrab : styles.badgePanda,
-                ]}
-              >
+              <View style={styles.badge}>
                 <Bike size={16} color="#ffffff" strokeWidth={2.4} />
               </View>
-              <View>
-                <Text style={styles.title}>Manual Online Delivery Intake</Text>
-                <Text style={styles.subtitle}>
-                  Key in orders from merchant tablet (GrabFood / Foodpanda)
-                </Text>
-              </View>
+              <Text style={styles.title}>Delivery Intake</Text>
             </View>
 
             <Pressable
@@ -96,91 +86,90 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close online delivery intake"
             >
-              <X size={20} color="#6b7280" />
+              <X size={20} color="#1c1917" />
             </Pressable>
           </View>
 
-          {/* Platform Toggle */}
-          <Text style={styles.label}>Select Delivery Platform:</Text>
-          <View style={styles.platformRow}>
-            <Pressable
-              onPress={() => setPlatform('grabfood')}
-              style={[styles.platformOption, platform === 'grabfood' && styles.platformOptionGrab]}
-            >
-              <Text
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 12 }}
+          >
+            {/* Platform Toggle */}
+            <Text style={styles.label}>Platform:</Text>
+            <View style={styles.platformRow}>
+              <Pressable
+                onPress={() => setPlatform('grabfood')}
                 style={[
-                  styles.platformOptionText,
-                  platform === 'grabfood' && styles.platformOptionTextActive,
+                  styles.platformOption,
+                  platform === 'grabfood' && styles.platformOptionActive,
                 ]}
               >
-                🟢 GrabFood
-              </Text>
-            </Pressable>
+                <Text
+                  style={[
+                    styles.platformOptionText,
+                    platform === 'grabfood' && styles.platformOptionTextActive,
+                  ]}
+                >
+                  GrabFood
+                </Text>
+              </Pressable>
 
-            <Pressable
-              onPress={() => setPlatform('foodpanda')}
-              style={[
-                styles.platformOption,
-                platform === 'foodpanda' && styles.platformOptionPanda,
-              ]}
-            >
-              <Text
+              <Pressable
+                onPress={() => setPlatform('foodpanda')}
                 style={[
-                  styles.platformOptionText,
-                  platform === 'foodpanda' && styles.platformOptionTextActive,
+                  styles.platformOption,
+                  platform === 'foodpanda' && styles.platformOptionActive,
                 ]}
               >
-                🐼 Foodpanda
-              </Text>
-            </Pressable>
-          </View>
+                <Text
+                  style={[
+                    styles.platformOptionText,
+                    platform === 'foodpanda' && styles.platformOptionTextActive,
+                  ]}
+                >
+                  Foodpanda
+                </Text>
+              </Pressable>
+            </View>
 
-          {/* Form Fields */}
-          <View style={styles.formGroup}>
-            <Text style={styles.label}>Platform Order # (from tablet):</Text>
-            <TextInput
-              style={styles.input}
-              placeholder={platform === 'grabfood' ? 'e.g. GF-8842' : 'e.g. FP-3012'}
-              placeholderTextColor="#9ca3af"
-              value={platformRef}
-              onChangeText={setPlatformRef}
-              autoCapitalize="characters"
-              autoFocus
-            />
-          </View>
-
-          <View style={styles.formRow}>
-            <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Rider Name:</Text>
+            {/* Form Fields */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Order #:</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g. Mike (GrabBike)"
-                placeholderTextColor="#9ca3af"
-                value={riderName}
-                onChangeText={setRiderName}
+                placeholder={platform === 'grabfood' ? 'GF-0000' : 'FP-0000'}
+                placeholderTextColor="#a8a29e"
+                value={platformRef}
+                onChangeText={setPlatformRef}
+                autoCapitalize="characters"
+                autoFocus
               />
             </View>
 
-            <View style={[styles.formGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Customer Name:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. Kevin Zhao"
-                placeholderTextColor="#9ca3af"
-                value={customerName}
-                onChangeText={setCustomerName}
-              />
-            </View>
-          </View>
+            <View style={styles.formRow}>
+              <View style={[styles.formGroup, { flex: 1 }]}>
+                <Text style={styles.label}>Rider Name:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Rider Name (Optional)"
+                  placeholderTextColor="#a8a29e"
+                  value={riderName}
+                  onChangeText={setRiderName}
+                />
+              </View>
 
-          {/* Auto Settlement Banner */}
-          <View style={styles.prepaidBanner}>
-            <CheckCircle2 size={16} color="#059669" />
-            <Text style={styles.prepaidBannerText}>
-              Prepaid via {platform === 'grabfood' ? 'GrabPay' : 'Foodpanda in-app'}. No counter
-              payment required.
-            </Text>
-          </View>
+              <View style={[styles.formGroup, { flex: 1 }]}>
+                <Text style={styles.label}>Customer Name:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Customer Name (Optional)"
+                  placeholderTextColor="#a8a29e"
+                  value={customerName}
+                  onChangeText={setCustomerName}
+                />
+              </View>
+            </View>
+          </ScrollView>
 
           {/* Action Buttons */}
           <View style={styles.btnRow}>
@@ -188,14 +177,8 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </Pressable>
 
-            <Pressable
-              onPress={handleProceed}
-              style={[
-                styles.proceedBtn,
-                platform === 'grabfood' ? styles.proceedGrab : styles.proceedPanda,
-              ]}
-            >
-              <Text style={styles.proceedBtnText}>Key In Ordered Items</Text>
+            <Pressable onPress={handleProceed} style={styles.proceedBtn}>
+              <Text style={styles.proceedBtnText}>Start Order</Text>
               <ArrowRight size={16} color="#ffffff" strokeWidth={2.4} />
             </Pressable>
           </View>
@@ -218,7 +201,8 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     width: '100%',
     maxWidth: 540,
-    padding: 24,
+    maxHeight: '96%',
+    padding: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
@@ -240,42 +224,34 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 12,
+    backgroundColor: '#810021',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  badgeGrab: {
-    backgroundColor: '#059669',
-  },
-  badgePanda: {
-    backgroundColor: '#db2777',
   },
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  subtitle: {
-    fontSize: 13.5,
-    color: '#6b7280',
-    marginTop: 2,
+    color: '#1C1917',
   },
   closeBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
-    fontSize: 13.5,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#374151',
+    color: '#1C1917',
     marginBottom: 8,
   },
   platformRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
     marginBottom: 16,
   },
   platformOption: {
@@ -283,27 +259,23 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#FAF8F5',
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: '#e7e5e4',
   },
-  platformOptionGrab: {
-    backgroundColor: '#ecfdf5',
-    borderColor: '#059669',
-  },
-  platformOptionPanda: {
-    backgroundColor: '#fdf2f8',
-    borderColor: '#db2777',
+  platformOptionActive: {
+    backgroundColor: '#810021',
+    borderColor: '#810021',
   },
   platformOptionText: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#4b5563',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#44403c',
   },
   platformOptionTextActive: {
-    color: '#111827',
+    color: '#ffffff',
   },
   formGroup: {
     marginBottom: 16,
@@ -313,31 +285,16 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   input: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#FAF8F5',
     borderWidth: 1.5,
-    borderColor: '#e5e7eb',
+    borderColor: '#e7e5e4',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
     minHeight: 48,
     fontSize: 16,
-    color: '#111827',
+    color: '#1C1917',
     fontWeight: '600',
-  },
-  prepaidBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#ecfdf5',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 22,
-  },
-  prepaidBannerText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#065f46',
-    flex: 1,
   },
   btnRow: {
     flexDirection: 'row',
@@ -349,34 +306,29 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 14,
     backgroundColor: '#FAF8F5',
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#e7e5e4',
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtnText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#4b5563',
+    color: '#44403c',
   },
   proceedBtn: {
     flex: 2,
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
+    backgroundColor: '#810021',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-  },
-  proceedGrab: {
-    backgroundColor: '#059669',
-  },
-  proceedPanda: {
-    backgroundColor: '#db2777',
+    gap: 6,
   },
   proceedBtnText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '800',
     color: '#ffffff',
   },

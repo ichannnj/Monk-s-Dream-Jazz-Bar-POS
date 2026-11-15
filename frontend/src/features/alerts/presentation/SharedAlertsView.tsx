@@ -21,21 +21,31 @@ export interface SharedAlertsViewProps {
 }
 
 export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
-  title = 'Floor Buzzout Alerts & Notifications',
-  subtitle = 'Live station ready chimes, Out-of-Stock inventory alerts, and table re-routes',
+  title = 'Alerts',
   onBack,
-  backLabel = 'Back to Board',
+  backLabel = 'Back',
 }) => {
   const { alerts, markAlertRead } = useOrderStore();
+  const unreadAlerts = alerts.filter((a) => !a.isRead);
+
+  const handleDismissAll = () => {
+    unreadAlerts.forEach((a) => markAlertRead(a.id));
+    toast.info('All active alerts dismissed', { title: 'Alerts Cleared' });
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Minimalist Header */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           {onBack ? (
-            <Pressable onPress={onBack} style={styles.backBtn}>
-              <ArrowLeft size={16} color="#0284c7" strokeWidth={2.4} />
+            <Pressable
+              onPress={onBack}
+              style={styles.backBtn}
+              accessibilityRole="button"
+              accessibilityLabel={backLabel}
+            >
+              <ArrowLeft size={16} color="#1c1917" strokeWidth={2.4} />
               <Text style={styles.backBtnText}>{backLabel}</Text>
             </Pressable>
           ) : null}
@@ -43,15 +53,32 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
           <View style={styles.badge}>
             <Bell size={18} color="#ffffff" strokeWidth={2.4} />
           </View>
-          <View>
+          <View style={styles.titleRow}>
             <Text style={styles.title}>{title}</Text>
-            <Text style={styles.subtitle}>{subtitle}</Text>
+            {unreadAlerts.length > 0 && (
+              <View style={styles.unreadCountPill}>
+                <Text style={styles.unreadCountText}>{unreadAlerts.length}</Text>
+              </View>
+            )}
           </View>
         </View>
 
-        <View style={styles.liveIndicator}>
-          <Radio size={14} color="#15803d" />
-          <Text style={styles.liveText}>WebSocket Live Feed</Text>
+        <View style={styles.headerRight}>
+          {unreadAlerts.length > 0 && (
+            <Pressable
+              onPress={handleDismissAll}
+              style={styles.dismissAllBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss all alerts"
+            >
+              <Text style={styles.dismissAllText}>Dismiss All</Text>
+            </Pressable>
+          )}
+
+          <View style={styles.liveIndicator}>
+            <View style={styles.liveDot} />
+            <Text style={styles.liveText}>Live</Text>
+          </View>
         </View>
       </View>
 
@@ -63,10 +90,10 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
       >
         {alerts.length === 0 ? (
           <View style={styles.emptyState}>
-            <Sparkles size={28} color="#9ca3af" />
-            <Text style={styles.emptyTitle}>All caught up!</Text>
+            <Sparkles size={28} color="#78716c" />
+            <Text style={styles.emptyTitle}>All caught up</Text>
             <Text style={styles.emptySub}>
-              Station ready and out-of-stock alerts will appear here in real time.
+              Station chimes and inventory notifications will appear here.
             </Text>
           </View>
         ) : (
@@ -80,34 +107,29 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
                 style={[styles.alertCard, !alert.isRead && styles.alertCardUnread]}
               >
                 <View style={styles.alertCardLeft}>
-                  <View
-                    style={[
-                      styles.iconCircle,
-                      isReady
-                        ? styles.iconCircleGreen
-                        : is86
-                          ? styles.iconCircleRed
-                          : styles.iconCircleWine,
-                    ]}
-                  >
+                  <View style={styles.iconCircle}>
                     {isReady ? (
-                      <CheckCircle2 size={18} color="#15803d" />
+                      <CheckCircle2 size={18} color="#810021" />
                     ) : is86 ? (
-                      <AlertTriangle size={18} color="#dc2626" />
+                      <AlertTriangle size={18} color="#810021" />
                     ) : (
-                      <Repeat size={18} color="#832238" />
+                      <Repeat size={18} color="#1c1917" />
                     )}
                   </View>
 
                   <View style={styles.alertTextCol}>
                     <Text style={styles.alertTitle}>{alert.title}</Text>
-                    <Text style={styles.alertDesc}>{alert.description}</Text>
+                    {alert.description ? (
+                      <Text style={styles.alertDesc} numberOfLines={2}>
+                        {alert.description}
+                      </Text>
+                    ) : null}
                     <View style={styles.metaRow}>
-                      <Clock size={11} color="#9ca3af" />
+                      <Clock size={11} color="#78716c" />
                       <Text style={styles.alertTime}>{alert.time}</Text>
                       {alert.targetRef ? (
                         <View style={styles.refPill}>
-                          <Text style={styles.refPillText}>Target: {alert.targetRef}</Text>
+                          <Text style={styles.refPillText}>{alert.targetRef}</Text>
                         </View>
                       ) : null}
                     </View>
@@ -120,10 +142,12 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
                       markAlertRead(alert.id);
                       toast.info(`Dismissed: ${alert.title}`, {
                         title: 'Alert Acknowledged',
-                        duration: 2000,
+                        duration: 1500,
                       });
                     }}
                     style={styles.ackBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Dismiss ${alert.title}`}
                   >
                     <Text style={styles.ackBtnText}>Dismiss</Text>
                   </Pressable>
@@ -143,135 +167,164 @@ const styles = StyleSheet.create({
   },
   header: {
     backgroundColor: '#ffffff',
-    borderRadius: 22,
-    paddingHorizontal: 22,
-    paddingVertical: 14,
+    borderRadius: 18,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  unreadCountPill: {
+    backgroundColor: '#810021',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  unreadCountText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  dismissAllBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
+  },
+  dismissAllText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#810021',
   },
   backBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#f0f9ff',
+    backgroundColor: '#FAF8F5',
     borderWidth: 1,
-    borderColor: '#bae6fd',
+    borderColor: '#e7e5e4',
   },
   backBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#0284c7',
+    color: '#1c1917',
   },
   badge: {
-    width: 38,
-    height: 38,
+    width: 36,
+    height: 36,
     borderRadius: 12,
-    backgroundColor: '#0284c7',
+    backgroundColor: '#810021',
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  subtitle: {
-    fontSize: 12.5,
-    color: '#6b7280',
-    marginTop: 1,
+    color: '#1c1917',
   },
   liveIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#f0fdf4',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    gap: 5,
+    backgroundColor: '#FAF8F5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#bbf7d0',
+    borderColor: '#e7e5e4',
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#1c1917',
   },
   liveText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#15803d',
+    color: '#78716c',
   },
   alertsScroll: {
     flex: 1,
   },
   alertsScrollContent: {
-    gap: 12,
+    gap: 10,
     paddingBottom: 24,
   },
   emptyState: {
     backgroundColor: '#ffffff',
-    borderRadius: 22,
-    padding: 36,
+    borderRadius: 18,
+    padding: 32,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    marginTop: 12,
+    borderColor: '#e7e5e4',
+    marginTop: 10,
   },
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#374151',
+    color: '#1c1917',
   },
   emptySub: {
     fontSize: 13,
-    color: '#9ca3af',
+    color: '#78716c',
     textAlign: 'center',
   },
   alertCard: {
     backgroundColor: '#ffffff',
-    borderRadius: 18,
-    padding: 16,
+    borderRadius: 16,
+    padding: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#e7e5e4',
     gap: 12,
   },
   alertCardUnread: {
-    borderColor: '#fed7aa',
-    backgroundColor: '#fffbeb',
+    borderLeftWidth: 4,
+    borderLeftColor: '#810021',
   },
   alertCardLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
+    gap: 12,
     flex: 1,
   },
   iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FAF8F5',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  iconCircleGreen: {
-    backgroundColor: '#dcfce7',
-  },
-  iconCircleRed: {
-    backgroundColor: '#fee2e2',
-  },
-  iconCircleWine: {
-    backgroundColor: '#fce7f3',
   },
   alertTextCol: {
     flex: 1,
@@ -280,11 +333,11 @@ const styles = StyleSheet.create({
   alertTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#111827',
+    color: '#1c1917',
   },
   alertDesc: {
     fontSize: 12.5,
-    color: '#4b5563',
+    color: '#57534e',
     lineHeight: 17,
   },
   metaRow: {
@@ -295,31 +348,35 @@ const styles = StyleSheet.create({
   },
   alertTime: {
     fontSize: 11,
-    color: '#9ca3af',
+    color: '#78716c',
   },
   refPill: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#FAF8F5',
+    borderWidth: 1,
+    borderColor: '#e7e5e4',
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 1,
     borderRadius: 6,
-    marginLeft: 6,
+    marginLeft: 4,
   },
   refPillText: {
     fontSize: 10,
-    color: '#4b5563',
+    color: '#57534e',
     fontWeight: '600',
   },
   ackBtn: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FAF8F5',
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    borderColor: '#e7e5e4',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 10,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   ackBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#374151',
+    color: '#1c1917',
   },
 });

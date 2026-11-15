@@ -48,10 +48,10 @@ export const ShiftReconciliationControls: React.FC<ShiftReconciliationControlsPr
               }`}
             >
               {variance === 0
-                ? '✓ PERFECT BALANCE'
+                ? 'Balanced'
                 : variance > 0
-                  ? '▲ CASH SURPLUS (OVER)'
-                  : '▼ CASH SHORTAGE (DEFICIT)'}
+                  ? 'Cash Surplus (Over)'
+                  : 'Cash Shortage (Deficit)'}
             </Text>
           </View>
           <Text

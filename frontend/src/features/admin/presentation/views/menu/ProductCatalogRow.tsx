@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Image } from 'expo-image';
-import { Wine, Utensils, Layers, Edit, Trash2 } from 'lucide-react-native';
+import { Wine, Utensils, Layers, Edit } from 'lucide-react-native';
 import type { ProductAdmin } from '../../../data/admin.api';
 
 interface ProductCatalogRowProps {
@@ -9,7 +9,7 @@ interface ProductCatalogRowProps {
   onToggleAuto86: (prod: ProductAdmin) => void;
   onOpenBom: (prod: ProductAdmin) => void;
   onEdit: (prod: ProductAdmin) => void;
-  onDelete: (prod: ProductAdmin) => void;
+  onDelete?: (prod: ProductAdmin) => void;
 }
 
 export const ProductCatalogRow: React.FC<ProductCatalogRowProps> = ({
@@ -17,13 +17,19 @@ export const ProductCatalogRow: React.FC<ProductCatalogRowProps> = ({
   onToggleAuto86,
   onOpenBom,
   onEdit,
-  onDelete,
 }) => {
+  const numPrice = Number(prod.base_price || 0);
+  const modifierCount = prod.modifiers?.length || 0;
+
   return (
-    <View className="flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-stone-200 bg-white p-4 gap-3.5 transition-all">
-      {/* Left Side: Thumbnail & Product Info */}
-      <View className="flex-1 flex-row items-center sm:pr-4">
-        <View className="h-14 w-14 rounded-xl overflow-hidden bg-stone-100 border border-stone-200 mr-3.5 items-center justify-center flex-shrink-0">
+    <View className="flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-stone-200/90 bg-white p-3.5 sm:p-4 gap-3 transition-colors">
+      {/* Left: Thumbnail & Minimal Product Info */}
+      <Pressable
+        onPress={() => onEdit(prod)}
+        className="flex-1 flex-row items-center sm:pr-3 active:opacity-85"
+        accessibilityLabel={`Edit ${prod.name}`}
+      >
+        <View className="h-12 w-12 rounded-xl overflow-hidden bg-stone-100 border border-stone-200 mr-3.5 items-center justify-center flex-shrink-0">
           {prod.image_url ? (
             <Image
               source={{ uri: prod.image_url }}
@@ -32,103 +38,95 @@ export const ProductCatalogRow: React.FC<ProductCatalogRowProps> = ({
               cachePolicy="memory-disk"
             />
           ) : prod.station_target === 'bar' ? (
-            <Wine size={22} color="#a8a29e" />
+            <Wine size={20} color="#78716c" />
           ) : (
-            <Utensils size={22} color="#a8a29e" />
+            <Utensils size={20} color="#78716c" />
           )}
         </View>
 
-        <View className="flex-1">
-          <View className="flex-row items-center space-x-2.5 flex-wrap gap-1.5">
-            <Text className="text-lg font-bold text-stone-900">{prod.name}</Text>
-            <View
-              className={`rounded-md px-2.5 py-0.5 border ${
-                prod.station_target === 'bar'
-                  ? 'bg-purple-50 border-purple-200'
-                  : 'bg-amber-50 border-amber-200'
-              }`}
+        <View className="flex-1 min-w-0">
+          {/* Line 1: Name & Price */}
+          <View className="flex-row items-baseline justify-between gap-2 pr-1">
+            <Text
+              className="text-base font-bold text-stone-900 tracking-tight flex-1"
+              numberOfLines={1}
             >
-              <Text
-                className={`text-base font-bold ${
-                  prod.station_target === 'bar' ? 'text-purple-800' : 'text-amber-800'
-                }`}
-              >
-                {prod.station_target === 'bar' ? 'Bar' : 'Kitchen'}
-              </Text>
-            </View>
-            {prod.is_resold_outside_food && (
-              <View className="rounded-md bg-stone-100 border border-stone-300 px-2.5 py-0.5">
-                <Text className="text-base font-medium text-stone-700">+20% Partner</Text>
-              </View>
-            )}
+              {prod.name}
+            </Text>
+            <Text className="text-base font-black text-[#800020] ml-2">₱{numPrice.toFixed(2)}</Text>
           </View>
 
-          <View className="flex-row items-center space-x-2 mt-1">
-            <Text className="text-base text-stone-500">
+          {/* Line 2: Unified Minimalist Subtitle */}
+          <View className="flex-row items-center flex-wrap gap-1 mt-0.5">
+            <Text className="text-xs text-stone-500 font-medium">
               {prod.categories?.name || 'Unassigned'}
             </Text>
-            <Text className="text-stone-300">•</Text>
-            <Text className="text-base font-extrabold text-[#800020]">
-              ₱{Number(prod.base_price || 0).toFixed(2)}
+            <Text className="text-stone-300 text-xs">•</Text>
+            <Text className="text-xs text-stone-500 font-medium">
+              {prod.station_target === 'bar' ? 'Bar' : 'Kitchen'}
             </Text>
-            {prod.modifiers && prod.modifiers.length > 0 ? (
+            {prod.is_resold_outside_food && (
               <>
-                <Text className="text-stone-300">•</Text>
-                <View className="rounded-md bg-purple-50 border border-purple-200 px-2 py-0.5">
-                  <Text className="text-xs font-bold text-purple-700">
-                    {prod.modifiers.length} Modifiers
-                  </Text>
-                </View>
+                <Text className="text-stone-300 text-xs">•</Text>
+                <Text className="text-xs text-stone-500 font-medium">Partner</Text>
               </>
-            ) : null}
+            )}
+            {modifierCount > 0 && (
+              <>
+                <Text className="text-stone-300 text-xs">•</Text>
+                <Text className="text-xs text-stone-500 font-medium">
+                  {modifierCount} mod{modifierCount > 1 ? 's' : ''}
+                </Text>
+              </>
+            )}
           </View>
         </View>
-      </View>
+      </Pressable>
 
-      {/* Right Side: Availability Pill & Action Icons */}
-      <View className="flex-row items-center gap-2 flex-wrap pt-2 sm:pt-0 border-t border-stone-100 sm:border-t-0">
+      {/* Right: Consolidated Minimal Actions */}
+      <View className="flex-row items-center justify-end gap-2 pt-2 sm:pt-0 border-t border-stone-100 sm:border-t-0 flex-shrink-0">
+        {/* 1-Tap Status Pill (Available vs Sold Out) */}
         <Pressable
           onPress={() => onToggleAuto86(prod)}
-          className={`min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border transition-all ${
+          className={`min-h-[44px] sm:min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border transition-colors ${
             prod.auto_86
-              ? 'bg-rose-50 border-rose-300 active:bg-rose-100'
-              : 'bg-emerald-50 border-emerald-300 active:bg-emerald-100'
+              ? 'bg-stone-200 border-stone-300 active:bg-stone-300'
+              : 'bg-white border-stone-200 active:bg-stone-50'
+          }`}
+          accessibilityLabel={`Toggle availability for ${prod.name}, currently ${
+            prod.auto_86 ? 'Sold Out' : 'Available'
           }`}
         >
           <View
-            className={`h-2.5 w-2.5 rounded-full mr-2 ${
-              prod.auto_86 ? 'bg-rose-600' : 'bg-emerald-600'
+            className={`h-2 w-2 rounded-full mr-2 ${
+              prod.auto_86 ? 'bg-stone-500' : 'bg-stone-800'
             }`}
           />
           <Text
-            className={`text-base font-bold ${prod.auto_86 ? 'text-rose-800' : 'text-emerald-800'}`}
+            className={`text-xs sm:text-sm font-bold ${
+              prod.auto_86 ? 'text-stone-700' : 'text-stone-800'
+            }`}
           >
             {prod.auto_86 ? 'Sold Out' : 'Available'}
           </Text>
         </Pressable>
 
+        {/* Recipe BOM Icon Button */}
         <Pressable
           onPress={() => onOpenBom(prod)}
-          className="min-h-[48px] flex-row items-center rounded-xl border border-stone-300 bg-stone-50 px-3.5 active:bg-stone-100"
+          className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50"
+          accessibilityLabel="Recipe BOM & Costing"
         >
           <Layers size={18} color="#800020" />
-          <Text className="ml-1.5 text-base font-bold text-[#800020]">Recipe</Text>
         </Pressable>
 
+        {/* Edit Button */}
         <Pressable
           onPress={() => onEdit(prod)}
-          className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-stone-300 bg-white active:bg-stone-100"
+          className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50"
           accessibilityLabel="Edit product"
         >
-          <Edit size={18} color="#44403c" />
-        </Pressable>
-
-        <Pressable
-          onPress={() => onDelete(prod)}
-          className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-rose-200 bg-rose-50 active:bg-rose-100"
-          accessibilityLabel="Delete product"
-        >
-          <Trash2 size={18} color="#e11d48" />
+          <Edit size={18} color="#1c1917" />
         </Pressable>
       </View>
     </View>

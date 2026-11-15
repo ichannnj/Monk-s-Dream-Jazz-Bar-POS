@@ -64,14 +64,40 @@ test('UsbEscPosPrinter renders customer receipt with branded jazz bar footer', (
   const buffer = printer.renderReceiptBytes(payload);
   const text = buffer.toString('utf-8');
 
-  assert.ok(text.includes("MONK'S DREAM"));
   assert.ok(text.includes('JAZZ BAR AND CAFE'));
   assert.ok(text.includes('REC-9001'));
   assert.ok(text.includes('950.00'));
   assert.ok(text.includes('1,000.00'));
   assert.ok(text.includes('50.00'));
+  assert.ok(text.includes('Thelonious Monk'));
   assert.ok(text.includes('THIS IS NOT AN OFFICIAL RECEIPT'));
   assert.ok(text.includes('Please come back for the next set.'));
+});
+
+test('UsbEscPosPrinter renders 57mm compact roll paper (32 cols)', () => {
+  const printer57 = new UsbEscPosPrinter('/dev/null', 32);
+  const payload: CustomerReceiptPayload = {
+    receiptNumber: 'REC-5701',
+    tableNumber: 2,
+    tabName: 'Ella F.',
+    waiterName: 'Sarah K.',
+    timestamp: '2026-10-29 01:30',
+    items: [{ name: 'Monks Cold Brew (Iced · 16oz)', quantity: 2, price: 230.0, total: 460.0 }],
+    subtotal: 460.0,
+    total: 460.0,
+    tendered: 500.0,
+    change: 40.0,
+    paymentMethod: 'CASH',
+  };
+
+  const buffer = printer57.renderReceiptBytes(payload);
+  const text = buffer.toString('utf-8');
+
+  assert.ok(text.includes('JAZZ BAR AND CAFE'));
+  assert.ok(text.includes('REC-5701'));
+  assert.ok(text.includes('TOTAL DUE:'));
+  // 32-column divider length
+  assert.ok(text.includes('--------------------------------\n'));
 });
 
 test('UsbEscPosPrinter renders takeout and delivery tags', () => {

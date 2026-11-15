@@ -206,16 +206,16 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
             />
           </View>
 
-          <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
+          <View className="rounded-2xl border border-stone-200/80 bg-white p-3.5 sm:p-5 lg:p-6 shadow-xs">
             {filteredProducts.length === 0 ? (
               <View className="py-12 items-center justify-center">
-                <Utensils size={40} color="#a8a29e" />
+                <Utensils size={36} color="#a8a29e" />
                 <Text className="mt-2 text-base text-stone-500">
                   No menu products match the selected criteria.
                 </Text>
               </View>
             ) : (
-              <View className="space-y-3">
+              <View className="space-y-2.5">
                 {filteredProducts.map((prod) => (
                   <ProductCatalogRow
                     key={prod.id}
@@ -281,6 +281,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
         onSuccess={handleRefreshAll}
         product={editingProduct}
         categories={categories}
+        onDelete={handleDeleteProduct}
       />
 
       <CategoryModal

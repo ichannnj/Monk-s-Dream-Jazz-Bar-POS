@@ -7,7 +7,6 @@ import {
   ProductVariant,
 } from '@/types/floor';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { useAuthStore } from '@/features/auth';
 import { useVenueStore } from '@/features/shared/stores/useVenueStore';
 import { useEventStore } from '@/features/events/application/useEventStore';
 import {
@@ -41,9 +40,6 @@ export function useOrderEntryController({
   onClose,
   onSendOrder,
 }: UseOrderEntryControllerProps) {
-  const { currentUser } = useAuthStore();
-  const isAdmin = currentUser?.role === 'admin';
-
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>('coffee');
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItems, setCartItems] = useState<OrderLineItem[]>(initialItems);
@@ -51,8 +47,6 @@ export function useOrderEntryController({
   const [menuItemsList, setMenuItemsList] = useState<MenuItem[]>([]);
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
 
-  const [editingImageItem, setEditingImageItem] = useState<MenuItem | null>(null);
-  const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
   const [isConfirmDispatchOpen, setIsConfirmDispatchOpen] = useState<boolean>(false);
   const [isDispatching, setIsDispatching] = useState<boolean>(false);
 
@@ -131,29 +125,6 @@ export function useOrderEntryController({
       return item.category === selectedCategory;
     });
   }, [menuItemsList, selectedCategory, searchQuery]);
-
-  const handleOpenImageEditor = (item: MenuItem) => {
-    setEditingImageItem(item);
-    setIsImageModalOpen(true);
-  };
-
-  const handleSaveProductImage = async (itemId: string, newImageUrl: string) => {
-    try {
-      const res = await menuApi.updateProductImage(itemId, newImageUrl);
-      if (res && res.success) {
-        setMenuItemsList((prev) =>
-          prev.map((i) => (i.id === itemId ? { ...i, imageUrl: newImageUrl } : i))
-        );
-        toast.success(`Photo updated for item!`, { title: 'Product Updated' });
-        return true;
-      }
-      toast.error('Failed to update product photo in database.');
-      return false;
-    } catch (e: any) {
-      toast.error(e?.message || 'Error updating product photo.');
-      return false;
-    }
-  };
 
   const { operatingMode, serviceChargeEnabled, cafeFoodServiceChargeRate, eventServiceChargeRate } =
     useVenueStore();
@@ -380,7 +351,6 @@ export function useOrderEntryController({
   );
 
   return {
-    isAdmin,
     selectedCategory,
     setSelectedCategory,
     searchQuery,
@@ -390,10 +360,6 @@ export function useOrderEntryController({
     filteredMenuItems,
     isMobileCartOpen,
     setIsMobileCartOpen,
-    editingImageItem,
-    setEditingImageItem,
-    isImageModalOpen,
-    setIsImageModalOpen,
     isConfirmDispatchOpen,
     setIsConfirmDispatchOpen,
     activeCustomizingItem,
@@ -414,8 +380,6 @@ export function useOrderEntryController({
     vatableSales,
     grandTotal,
     totalCartQty,
-    handleOpenImageEditor,
-    handleSaveProductImage,
     handleItemClick,
     handleConfirmCustomize,
     handleSelectVariantOption,

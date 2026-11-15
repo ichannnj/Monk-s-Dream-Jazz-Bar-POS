@@ -89,31 +89,31 @@ export const PrinterTerminalScreen: React.FC = () => {
     switch (status) {
       case 'COMPLETED':
         return (
-          <View className="flex-row items-center rounded-full bg-emerald-100 px-3 py-1">
-            <CheckCircle2 size={16} color="#059669" />
-            <Text className="ml-1 text-base font-medium text-emerald-800">Printed</Text>
+          <View className="flex-row items-center rounded-lg bg-[#FAF8F5] border border-stone-200 px-2.5 py-1">
+            <CheckCircle2 size={14} color="#1c1917" />
+            <Text className="ml-1 text-xs font-bold text-stone-800 uppercase">Printed</Text>
           </View>
         );
       case 'PRINTING':
         return (
-          <View className="flex-row items-center rounded-full bg-sky-100 px-3 py-1">
-            <ActivityIndicator size="small" color="#0284c7" />
-            <Text className="ml-1 text-base font-medium text-sky-800">Printing...</Text>
+          <View className="flex-row items-center rounded-lg bg-[#FAF8F5] border border-[#810021] px-2.5 py-1">
+            <ActivityIndicator size="small" color="#810021" />
+            <Text className="ml-1 text-xs font-bold text-[#810021] uppercase">Printing</Text>
           </View>
         );
       case 'FAILED':
         return (
-          <View className="flex-row items-center rounded-full bg-rose-100 px-3 py-1">
-            <AlertCircle size={16} color="#e11d48" />
-            <Text className="ml-1 text-base font-medium text-rose-800">Failed</Text>
+          <View className="flex-row items-center rounded-lg bg-[#FAF8F5] border border-stone-400 px-2.5 py-1">
+            <AlertCircle size={14} color="#810021" />
+            <Text className="ml-1 text-xs font-bold text-[#810021] uppercase">Failed</Text>
           </View>
         );
       case 'PENDING':
       default:
         return (
-          <View className="flex-row items-center rounded-full bg-amber-100 px-3 py-1">
-            <Clock size={16} color="#d97706" />
-            <Text className="ml-1 text-base font-medium text-amber-800">Queued</Text>
+          <View className="flex-row items-center rounded-lg bg-[#FAF8F5] border border-stone-200 px-2.5 py-1">
+            <Clock size={14} color="#78716c" />
+            <Text className="ml-1 text-xs font-bold text-stone-700 uppercase">Queued</Text>
           </View>
         );
     }
@@ -127,79 +127,59 @@ export const PrinterTerminalScreen: React.FC = () => {
         : item.job_type === 'CUSTOMER_RECEIPT' || item.job_type === 'RECEIPT'
           ? `Receipt #${rawData.receiptNumber || ''} (${rawData.tabName || rawData.customerName || 'Guest'})`
           : item.job_type === 'DRAWER_KICK'
-            ? `Cash Drawer Solenoid Pulse (${(rawData.drawerTarget || 'Main').toUpperCase()} Till)`
+            ? `Cash Drawer Solenoid (${(rawData.drawerTarget || 'Main').toUpperCase()} Till)`
             : `${item.job_type} - ${rawData.customerName || 'Order'}`;
 
+    const itemsCount = rawData.items?.length || 0;
+    const timeFormatted = new Date(item.created_at).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
     return (
-      <View className="mb-3 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center space-x-2">
-            <FileText size={20} color="#78716c" />
-            <Text className="text-lg font-bold text-stone-900">{title}</Text>
+      <View className="mb-2.5 rounded-2xl border border-stone-200 bg-white p-3.5 sm:p-4 shadow-xs">
+        {/* Row 1: Title + Status Badge */}
+        <View className="flex-row items-center justify-between gap-2">
+          <View className="flex-row items-center gap-2 flex-1 min-w-0">
+            <FileText size={18} color="#1c1917" />
+            <Text className="text-base font-bold text-stone-900 truncate" numberOfLines={1}>
+              {title}
+            </Text>
           </View>
           {getStatusBadge(item.status)}
         </View>
 
-        <View className="mt-2 flex-row flex-wrap items-center text-stone-600">
-          <Text className="text-base text-stone-600">
-            Type: <Text className="font-semibold text-stone-800">{item.job_type}</Text>
-          </Text>
-          {rawData.roundNumber && (
-            <Text className="ml-4 text-base text-stone-600">
-              Round: <Text className="font-semibold text-stone-800">#{rawData.roundNumber}</Text>
+        {/* Row 2: Metadata & 1-Tap Reprint */}
+        <View className="mt-2.5 pt-2.5 border-t border-stone-100 flex-row items-center justify-between gap-2">
+          <View className="flex-row items-center gap-3">
+            <Text className="text-xs font-black text-stone-800 uppercase tracking-wider">
+              {item.job_type}
             </Text>
-          )}
-          {(rawData.paymentMethod || rawData.payment_method) && (
-            <Text className="ml-4 text-base text-stone-600">
-              Payment:{' '}
-              <Text className="font-semibold text-stone-800">
-                {rawData.payment_channel ||
-                  rawData.paymentChannel ||
-                  rawData.payment_method ||
-                  rawData.paymentMethod}
-                {rawData.reference_number || rawData.referenceNumber
-                  ? ` (Ref: #${rawData.reference_number || rawData.referenceNumber})`
-                  : ''}
-              </Text>
-            </Text>
-          )}
-          <Text className="ml-4 text-base text-stone-500">
-            {new Date(item.created_at).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            })}
-          </Text>
-        </View>
-
-        {rawData.items && rawData.items.length > 0 && (
-          <View className="mt-3 rounded-lg bg-stone-50 p-2.5">
-            {rawData.items.slice(0, 3).map((it: any, idx: number) => (
-              <Text key={idx} className="text-base text-stone-700">
-                • {it.quantity}x {it.name} {it.notes ? `(${it.notes})` : ''}
-              </Text>
-            ))}
-            {rawData.items.length > 3 && (
-              <Text className="text-base italic text-stone-500">
-                + {rawData.items.length - 3} more items
-              </Text>
+            <Text className="text-sm text-stone-400 font-normal">·</Text>
+            <Text className="text-sm text-stone-500">{timeFormatted}</Text>
+            {itemsCount > 0 && (
+              <>
+                <Text className="text-sm text-stone-400 font-normal">·</Text>
+                <Text className="text-sm text-stone-500">
+                  {itemsCount} {itemsCount === 1 ? 'item' : 'items'}
+                </Text>
+              </>
             )}
           </View>
-        )}
 
-        {/* Action Button: Reprint */}
-        <View className="mt-4 flex-row justify-end border-t border-stone-100 pt-3">
           <Pressable
             onPress={() => handleReprint(item)}
             disabled={reprintingId === item.id}
-            className="min-h-[48px] min-w-[48px] flex-row items-center rounded-xl bg-stone-100 px-4 py-2 active:bg-stone-200"
+            className="min-h-[48px] px-3.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-stone-200 active:bg-stone-100 flex-row items-center gap-1.5"
+            accessibilityRole="button"
+            accessibilityLabel={`Reprint ticket for ${title}`}
           >
             {reprintingId === item.id ? (
-              <ActivityIndicator size="small" color="#44403c" />
+              <ActivityIndicator size="small" color="#810021" />
             ) : (
-              <RotateCw size={18} color="#44403c" />
+              <RotateCw size={15} color="#1c1917" />
             )}
-            <Text className="ml-2 text-base font-semibold text-stone-800">Reprint Ticket</Text>
+            <Text className="text-sm font-bold text-stone-900">Reprint</Text>
           </Pressable>
         </View>
       </View>
@@ -226,70 +206,55 @@ export const PrinterTerminalScreen: React.FC = () => {
   return (
     <View className="flex-1 bg-stone-100 p-3 sm:p-6">
       {/* Top Bar Header */}
-      <View className="mb-4 flex-col lg:flex-row lg:items-center justify-between rounded-2xl border border-stone-200 bg-white p-4 sm:p-5 shadow-sm gap-3">
+      <View className="mb-4 flex-col sm:flex-row sm:items-center justify-between rounded-2xl border border-stone-200 bg-white p-3.5 sm:p-4 shadow-xs gap-3">
         <View className="flex-row items-center gap-3">
-          <View className="rounded-2xl bg-amber-100 p-2.5">
-            <Printer size={24} color="#d97706" />
+          <View className="w-10 h-10 rounded-xl bg-[#810021] items-center justify-center shadow-xs">
+            <Printer size={18} color="#ffffff" strokeWidth={2.4} />
           </View>
           <View>
-            <Text className="text-xl font-black text-stone-900">Thermal Print Queue</Text>
+            <Text className="text-xl font-black text-stone-900 tracking-tight">Print Queue</Text>
             <View className="mt-0.5 flex-row items-center">
-              <View className="h-2 w-2 rounded-full bg-emerald-500" />
-              <Text className="ml-2 text-base font-medium text-stone-600">Realtime CDC Active</Text>
+              <View className="h-1.5 w-1.5 rounded-full bg-[#1c1917]" />
+              <Text className="ml-1.5 text-xs font-semibold text-stone-500">Live Queue</Text>
             </View>
           </View>
         </View>
 
-        <View className="flex-row flex-wrap items-center gap-2.5">
+        <View className="flex-row flex-wrap items-center gap-2">
           <PosDropdown
             options={filterOptions}
             value={jobFilter}
             onChange={setJobFilter}
             sheetTitle="Filter Print Queue"
-            className="flex-1 sm:flex-initial min-w-[165px]"
+            className="flex-1 sm:flex-initial min-w-[150px]"
           />
-
-          {/* Launch Dedicated Hardware Tab */}
-          <Pressable
-            onPress={() => window.open('?mode=printer', '_blank')}
-            className="min-h-[48px] min-w-[48px] flex-row items-center justify-center rounded-xl border border-stone-800 bg-stone-900 px-4 py-2 active:bg-stone-800 shadow-sm"
-          >
-            <Printer size={18} color="#f59e0b" />
-            <Text className="ml-2 text-base font-bold text-amber-400">
-              Launch Print Station Tab
-            </Text>
-            <ExternalLink size={14} color="#f59e0b" className="ml-1.5" />
-          </Pressable>
 
           {/* Diagnostic Kick Cash Drawer */}
           <Pressable
             onPress={handleKickDrawer}
             disabled={isKickingDrawer}
-            className="min-h-[48px] min-w-[48px] flex-row items-center justify-center rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 active:bg-amber-100"
+            className="min-h-[48px] px-3.5 py-2 flex-row items-center justify-center rounded-xl border border-stone-300 bg-white active:bg-stone-50"
+            accessibilityRole="button"
+            accessibilityLabel="Kick cash drawer"
           >
             {isKickingDrawer ? (
-              <ActivityIndicator size="small" color="#d97706" />
+              <ActivityIndicator size="small" color="#810021" />
             ) : (
-              <Coins size={18} color="#d97706" />
+              <Coins size={16} color="#1c1917" />
             )}
-            <Text className="ml-2 text-base font-bold text-amber-800">Kick Drawer</Text>
+            <Text className="ml-1.5 text-sm font-bold text-stone-900">Kick Drawer</Text>
           </Pressable>
 
-          {/* Refresh List */}
+          {/* Launch Dedicated Hardware Tab */}
           <Pressable
-            onPress={() => {
-              setIsRefreshing(true);
-              fetchJobs();
-            }}
-            disabled={isRefreshing}
-            className="min-h-[48px] min-w-[48px] flex-row items-center justify-center rounded-xl bg-stone-800 px-4 py-2 active:bg-stone-900"
+            onPress={() => window.open('?mode=printer', '_blank')}
+            className="min-h-[48px] px-3.5 py-2 flex-row items-center justify-center rounded-xl bg-[#1c1917] active:opacity-90 shadow-xs"
+            accessibilityRole="button"
+            accessibilityLabel="Launch dedicated print station tab"
           >
-            {isRefreshing ? (
-              <ActivityIndicator size="small" color="#ffffff" />
-            ) : (
-              <RefreshCw size={18} color="#ffffff" />
-            )}
-            <Text className="ml-2 text-base font-semibold text-white">Refresh</Text>
+            <Printer size={16} color="#ffffff" />
+            <Text className="ml-1.5 text-sm font-bold text-white">Station Tab</Text>
+            <ExternalLink size={13} color="#ffffff" className="ml-1" />
           </Pressable>
         </View>
       </View>
