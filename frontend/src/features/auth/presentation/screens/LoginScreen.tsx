@@ -253,6 +253,9 @@ export const LoginScreen: React.FC = () => {
               <View style={styles.formBody}>
                 {/* Username / Staff ID Pill */}
                 <View style={[styles.inputGroup, !isTablet && styles.inputGroupMobile]}>
+                  <Text style={[styles.inputLabel, !isTablet && styles.inputLabelMobile]}>
+                    {authMode === 'admin' ? 'Username or Email' : 'Staff ID / Username'}
+                  </Text>
                   <View
                     style={[
                       styles.roundedInputWrapper,
@@ -266,7 +269,9 @@ export const LoginScreen: React.FC = () => {
                         setUsername(val);
                         if (errorMessage) setErrorMessage(null);
                       }}
-                      placeholder={authMode === 'admin' ? 'Username or Email' : 'Staff ID'}
+                      placeholder={
+                        authMode === 'admin' ? 'Enter username or email' : 'Enter staff ID'
+                      }
                       placeholderTextColor="#a8a29e"
                       autoCapitalize="none"
                       autoCorrect={false}

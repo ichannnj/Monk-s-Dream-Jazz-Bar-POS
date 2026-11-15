@@ -75,7 +75,14 @@ export function mapDineInTableTickets(
             : undefined;
 
         const roundCreatedAt =
-          activeRoundItems.find((i) => i.createdAt)?.createdAt ||
+          activeRoundItems
+            .map((i) => i.createdAt)
+            .filter((ts): ts is string => Boolean(ts))
+            .sort()[0] ||
+          roundItems
+            .map((i) => i.createdAt)
+            .filter((ts): ts is string => Boolean(ts))
+            .sort()[0] ||
           tab.openedAtIso ||
           table.occupiedSinceIso;
 

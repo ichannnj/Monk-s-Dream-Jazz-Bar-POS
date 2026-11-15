@@ -36,7 +36,7 @@ export const BaristaTicketCard: React.FC<BaristaTicketCardProps> = ({
 
   const stationCategory = ticket.items[0]?.stationTarget === 'kitchen' ? 'kitchen' : 'bar';
   const liveTimer = useLiveElapsedTimer(
-    ticket.stageTimestamp || ticket.createdAt,
+    ticket.createdAt || ticket.stageTimestamp,
     elapsedTime,
     stationCategory
   );

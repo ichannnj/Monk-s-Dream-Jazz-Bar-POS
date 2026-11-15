@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TextInput, Pressable } from 'react-native';
+import { View, Text, TextInput, Pressable } from 'react-native';
 import { Lock, Eye, EyeOff } from 'lucide-react-native';
 import { styles } from '../screens/LoginScreen.styles';
 
@@ -24,6 +24,9 @@ export const AdminPasswordLoginForm: React.FC<AdminPasswordLoginFormProps> = ({
 }) => {
   return (
     <View style={[styles.inputGroup, !isTablet && styles.inputGroupMobile]}>
+      <Text style={[styles.inputLabel, !isTablet && styles.inputLabelMobile]}>
+        Admin Portal Password
+      </Text>
       <View style={[styles.roundedInputWrapper, !isTablet && styles.roundedInputWrapperMobile]}>
         <Lock size={18} color="#a8a29e" style={styles.inputIcon} />
         <TextInput
@@ -32,7 +35,7 @@ export const AdminPasswordLoginForm: React.FC<AdminPasswordLoginFormProps> = ({
             setAdminPassword(val);
             onClearErrors();
           }}
-          placeholder="Password"
+          placeholder="Enter password"
           placeholderTextColor="#a8a29e"
           secureTextEntry={!showPassword}
           autoCapitalize="none"

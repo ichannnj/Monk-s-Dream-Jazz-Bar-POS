@@ -182,11 +182,21 @@ export function useRunnerTickets() {
       }
     });
 
-    // Strict FIFO / FCFS sorting: Fully ready orders at the top, then sorted by oldest elapsed time
+    // Strict FIFO sorting: Fully ready orders at the top, then sorted by oldest creation time
     return list.sort((a, b) => {
       if (a.allDone && !b.allDone) return -1;
       if (!a.allDone && b.allDone) return 1;
-      return (b.minutesElapsed || 0) - (a.minutesElapsed || 0);
+
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (timeA > 0 && timeB > 0 && timeA !== timeB) {
+        return timeA - timeB; // Oldest first
+      }
+
+      const elapsedDiff = (b.minutesElapsed || 0) - (a.minutesElapsed || 0);
+      if (elapsedDiff !== 0) return elapsedDiff;
+
+      return a.id.localeCompare(b.id);
     });
   }, [tables, takeoutOrders, onlineOrders]);
 

@@ -21,21 +21,24 @@ export const LoginHeader: React.FC<LoginHeaderProps> = ({
 }) => {
   return (
     <>
-      <View style={[styles.formHeader, !isTablet && styles.formHeaderMobile]}>
-        <Text style={styles.welcomeEyebrow}>WELCOME TO</Text>
-        <View style={[styles.logoWrapper, !isTablet && styles.logoWrapperMobile]}>
-          <ExpoImage
-            source={MONKS_DREAM_LOGO}
-            style={isTablet ? styles.officialBarLogo : styles.officialBarLogoMobile}
-            contentFit="contain"
-            priority="high"
-            accessibilityLabel="Monk's Dream Jazz Bar logo"
-          />
+      {/* On tablet, show header with logo. On mobile, the top hero banner already showcases the logo! */}
+      {isTablet ? (
+        <View style={styles.formHeader}>
+          <Text style={styles.welcomeEyebrow}>WELCOME TO</Text>
+          <View style={styles.logoWrapper}>
+            <ExpoImage
+              source={MONKS_DREAM_LOGO}
+              style={styles.officialBarLogo}
+              contentFit="contain"
+              priority="high"
+              accessibilityLabel="Monk's Dream Jazz Bar logo"
+            />
+          </View>
+          <Text style={styles.headerSubtitle}>
+            Sign in to access your station terminal and start your shift.
+          </Text>
         </View>
-        <Text style={[styles.headerSubtitle, !isTablet && styles.headerSubtitleMobile]}>
-          Sign in to access your station terminal and start your shift.
-        </Text>
-      </View>
+      ) : null}
 
       {/* Mode Toggle Pills */}
       <View

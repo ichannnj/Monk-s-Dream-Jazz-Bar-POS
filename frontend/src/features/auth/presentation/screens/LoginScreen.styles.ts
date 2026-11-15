@@ -35,7 +35,8 @@ export const styles = StyleSheet.create({
     padding: 24,
   },
   scrollContentMobile: {
-    padding: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 16,
     justifyContent: 'center',
   },
   outerCanvas: {
@@ -46,7 +47,7 @@ export const styles = StyleSheet.create({
   // Floating Card inspired by modern minimal card UI
   cardContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 24,
+    borderRadius: 28,
     overflow: 'hidden',
     shadowColor: '#2b0f16',
     shadowOffset: { width: 0, height: 18 },
@@ -54,16 +55,16 @@ export const styles = StyleSheet.create({
     shadowRadius: 36,
     elevation: 10,
     width: '100%',
-    maxWidth: 880,
+    maxWidth: 960,
   },
   cardTablet: {
     flexDirection: 'row',
-    minHeight: 520,
+    minHeight: 580,
   },
   cardMobile: {
     flexDirection: 'column',
     borderRadius: 20,
-    maxWidth: 420,
+    maxWidth: 440,
     shadowOpacity: 0.1,
     shadowRadius: 20,
     elevation: 6,
@@ -76,23 +77,24 @@ export const styles = StyleSheet.create({
   },
   formPaneTablet: {
     width: '52%',
-    paddingVertical: 44,
+    paddingVertical: 48,
     paddingHorizontal: 48,
+    minHeight: 580,
   },
   formPaneMobile: {
     width: '100%',
-    paddingVertical: 28,
-    paddingHorizontal: 22,
+    paddingVertical: 24,
+    paddingHorizontal: 20,
   },
   formHeader: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 22,
   },
   formHeaderMobile: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   welcomeEyebrow: {
-    fontSize: 11,
+    fontSize: 16,
     fontWeight: '700',
     letterSpacing: 2.5,
     color: '#810021',
@@ -106,46 +108,47 @@ export const styles = StyleSheet.create({
   logoWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   logoWrapperMobile: {
     marginBottom: 8,
   },
   officialBarLogo: {
-    width: 210,
-    height: 60,
+    width: 230,
+    height: 66,
   },
   officialBarLogoMobile: {
-    width: 175,
-    height: 50,
+    width: 190,
+    height: 54,
   },
   headerSubtitle: {
-    fontSize: 13,
+    fontSize: 16,
     color: '#78716c',
     textAlign: 'center',
     marginTop: 0,
     marginBottom: 4,
-    lineHeight: 18,
+    lineHeight: 22,
     fontFamily: Platform.select({
       web: 'Plus Jakarta Sans, Inter, sans-serif',
       default: 'sans-serif',
     }),
   },
   headerSubtitleMobile: {
-    fontSize: 12,
+    fontSize: 16,
+    lineHeight: 22,
   },
 
   // Mode Toggle Pill
   modeToggleContainer: {
     flexDirection: 'row',
     backgroundColor: '#f5f5f4',
-    borderRadius: 24,
-    padding: 3,
-    marginBottom: 20,
+    borderRadius: 28,
+    padding: 4,
+    marginBottom: 22,
     width: '100%',
   },
   modeToggleContainerMobile: {
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 3,
     marginBottom: 16,
   },
@@ -155,13 +158,14 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
   },
   modeToggleTabMobile: {
-    paddingVertical: 7,
-    gap: 4,
-    borderRadius: 18,
+    paddingVertical: 10,
+    gap: 5,
+    borderRadius: 20,
+    minHeight: 44, // Touch target invariant
   },
   modeToggleTabActive: {
     backgroundColor: '#ffffff',
@@ -172,12 +176,13 @@ export const styles = StyleSheet.create({
     elevation: 2,
   },
   modeToggleText: {
-    fontSize: 12.5,
+    fontSize: 16,
     fontWeight: '600',
     color: '#78716c',
   },
   modeToggleTextMobile: {
-    fontSize: 11.5,
+    fontSize: 16,
+    fontWeight: '600',
   },
   modeToggleTextActive: {
     color: '#810021',
@@ -189,13 +194,13 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   inputGroupMobile: {
-    marginBottom: 14,
+    marginBottom: 16,
   },
   inputLabel: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
     color: '#57534e',
     marginBottom: 8,
@@ -206,7 +211,7 @@ export const styles = StyleSheet.create({
     }),
   },
   inputLabelMobile: {
-    fontSize: 11.5,
+    fontSize: 16,
     marginBottom: 6,
   },
   roundedInputWrapper: {
@@ -214,15 +219,15 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: '#e7e5e4',
-    borderRadius: 24,
+    borderRadius: 28,
     backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    height: 50,
+    paddingHorizontal: 18,
+    height: 54,
   },
   roundedInputWrapperMobile: {
-    height: 48,
-    borderRadius: 24,
-    paddingHorizontal: 14,
+    height: 52,
+    borderRadius: 26,
+    paddingHorizontal: 16,
   },
   inputIcon: {
     marginRight: 10,
@@ -246,18 +251,18 @@ export const styles = StyleSheet.create({
   // Primary Action Button (Rounded Pill with Soft Glow Shadow)
   submitButtonWrapper: {
     width: '100%',
+    marginTop: 8,
+    marginBottom: 18,
+  },
+  submitButtonWrapperMobile: {
     marginTop: 6,
     marginBottom: 16,
   },
-  submitButtonWrapperMobile: {
-    marginTop: 4,
-    marginBottom: 14,
-  },
   submitButton: {
     width: '100%',
-    height: 48,
+    height: 52,
     backgroundColor: '#810021',
-    borderRadius: 24,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#810021',
@@ -267,8 +272,8 @@ export const styles = StyleSheet.create({
     elevation: 4,
   },
   submitButtonMobile: {
-    height: 46,
-    borderRadius: 22,
+    height: 50,
+    borderRadius: 25,
   },
   submitButtonDisabled: {
     opacity: 0.5,
@@ -277,13 +282,13 @@ export const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '700',
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
   submitButtonTextMobile: {
-    fontSize: 13,
+    fontSize: 16,
     letterSpacing: 1,
   },
 
@@ -304,18 +309,18 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   trainingModeLabel: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '500',
     color: '#78716c',
   },
   forgotPinPressable: {
     paddingVertical: 6,
     paddingHorizontal: 4,
-    minHeight: 40,
+    minHeight: 44,
     justifyContent: 'center',
   },
   forgotPinText: {
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
     color: '#810021',
   },
@@ -327,17 +332,17 @@ export const styles = StyleSheet.create({
     backgroundColor: '#fef2f2',
     borderWidth: 1,
     borderColor: '#fecdd3',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    marginBottom: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    marginBottom: 16,
   },
   errorText: {
     color: '#be123c',
-    fontSize: 12,
+    fontSize: 16,
     fontWeight: '600',
     flex: 1,
-    lineHeight: 16,
+    lineHeight: 20,
   },
 
   // ---------------- LEFT PANE: Natural Stage Photography ----------------
@@ -348,11 +353,11 @@ export const styles = StyleSheet.create({
   },
   heroPaneTablet: {
     width: '48%',
-    minHeight: 520,
+    minHeight: 580,
   },
   heroPaneMobile: {
     width: '100%',
-    height: 140,
+    height: 120,
   },
   heroImageOverlay: {
     ...StyleSheet.absoluteFill,
@@ -367,7 +372,7 @@ export const styles = StyleSheet.create({
     zIndex: 2,
   },
   heroContentMobile: {
-    padding: 12,
+    padding: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -379,23 +384,23 @@ export const styles = StyleSheet.create({
     // Zero border, pure clean floating logo with ambient depth
   },
   heroLogoBadgeMobile: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   heroBrandLockup: {
-    width: 240,
-    height: 72,
-    marginBottom: 8,
+    width: 250,
+    height: 76,
+    marginBottom: 10,
   },
   heroBrandLockupMobile: {
-    width: 170,
+    width: 190,
     height: 52,
     marginBottom: 0,
   },
   heroTagline: {
     color: '#ffffff',
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 16,
+    lineHeight: 22,
     textAlign: 'center',
     fontWeight: '600',
     letterSpacing: 0.4,

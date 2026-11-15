@@ -15,6 +15,30 @@ interface UseKdsTicketsProps {
   inventory: StockInventoryItem[];
 }
 
+/**
+ * Strict FIFO comparison helper:
+ * The ticket placed earliest (oldest `createdAt` timestamp) appears first (top of queue).
+ * Subsequent/newer orders are placed beneath it.
+ * Falls back to minutesElapsed descending if timestamps are unavailable.
+ */
+function compareTicketsFifo(a: BarTicket, b: BarTicket): number {
+  const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+  const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+
+  if (timeA > 0 && timeB > 0 && timeA !== timeB) {
+    return timeA - timeB; // Oldest timestamp first (ascending order)
+  }
+
+  // Fallback to elapsed minutes (higher elapsed = older = top)
+  const elapsedDiff = (b.minutesElapsed || 0) - (a.minutesElapsed || 0);
+  if (elapsedDiff !== 0) {
+    return elapsedDiff;
+  }
+
+  // Deterministic secondary tie-breaker
+  return a.id.localeCompare(b.id);
+}
+
 export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) {
   const {
     tables,
@@ -47,7 +71,7 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
     );
 
     const combined = [...dineInTickets, ...takeoutTicketList, ...onlineTicketList];
-    return combined.sort((a, b) => (b.minutesElapsed || 0) - (a.minutesElapsed || 0));
+    return combined.sort(compareTicketsFifo);
   }, [tables, takeoutOrders, onlineOrders, inventory, stationTarget, dismissedTicketIds]);
 
   const cancelledTickets = useMemo(

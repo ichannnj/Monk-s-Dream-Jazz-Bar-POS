@@ -73,10 +73,10 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
         {total === 0 && <View className="h-full w-full bg-stone-200" />}
       </View>
 
-      {/* Metric Cards Flex Grid */}
-      <View className="flex-row flex-wrap gap-2.5">
+      {/* Metric Cards Grid: 2 columns on mobile/tablet/desktop */}
+      <View className="grid grid-cols-2 gap-2.5">
         {/* Cash */}
-        <View className="w-full sm:w-[48%] flex-1 min-w-[130px] p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
+        <View className="p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
           <View className="flex-row items-center justify-between mb-0.5">
             <View className="flex-row items-center gap-1.5">
               <View className="w-2 h-2 rounded-full bg-stone-800" />
@@ -88,7 +88,7 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
         </View>
 
         {/* Digital */}
-        <View className="w-full sm:w-[48%] flex-1 min-w-[130px] p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
+        <View className="p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
           <View className="flex-row items-center justify-between mb-0.5">
             <View className="flex-row items-center gap-1.5">
               <View className="w-2 h-2 rounded-full bg-[#800020]" />
@@ -102,7 +102,7 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
         </View>
 
         {/* Card */}
-        <View className="w-full sm:w-[48%] flex-1 min-w-[130px] p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
+        <View className="p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
           <View className="flex-row items-center justify-between mb-0.5">
             <View className="flex-row items-center gap-1.5">
               <View className="w-2 h-2 rounded-full bg-stone-500" />
@@ -114,8 +114,8 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
         </View>
 
         {/* Delivery */}
-        {deliveryPct > 0 && (
-          <View className="w-full sm:w-[48%] flex-1 min-w-[130px] p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
+        {deliveryPct > 0 ? (
+          <View className="p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
             <View className="flex-row items-center justify-between mb-0.5">
               <View className="flex-row items-center gap-1.5">
                 <View className="w-2 h-2 rounded-full bg-stone-400" />
@@ -126,6 +126,17 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
             <Text className="text-base font-black text-stone-900">
               {formatCurrency(data.delivery)}
             </Text>
+          </View>
+        ) : (
+          <View className="p-3 rounded-xl border border-stone-200/60 bg-[#FAF8F5]/60 opacity-60">
+            <View className="flex-row items-center justify-between mb-0.5">
+              <View className="flex-row items-center gap-1.5">
+                <View className="w-2 h-2 rounded-full bg-stone-400" />
+                <Text className="text-xs font-bold text-stone-500">Delivery</Text>
+              </View>
+              <Text className="text-xs font-bold text-stone-400">0.0%</Text>
+            </View>
+            <Text className="text-base font-black text-stone-600">{formatCurrency(0)}</Text>
           </View>
         )}
       </View>
