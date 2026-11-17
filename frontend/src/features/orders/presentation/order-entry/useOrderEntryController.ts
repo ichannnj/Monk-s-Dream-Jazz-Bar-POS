@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   MenuItem,
   MenuCategory,
+  MenuCategoryItem,
   OrderLineItem,
   BeverageTemperature,
   ProductVariant,
@@ -9,11 +10,13 @@ import {
 import { toast } from '@/features/shared/toast/useToastStore';
 import { useVenueStore } from '@/features/shared/stores/useVenueStore';
 import { useEventStore } from '@/features/events/application/useEventStore';
+import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 import {
   calculateTabBilling,
   PricingLineItem,
 } from '@/features/checkout/utils/taxAndDiscountCalculator';
 import { menuApi } from '@/features/menu/data/menu.api';
+import { DEFAULT_CATEGORIES, buildDynamicCategories } from './orderCategoryResolution';
 import {
   appendOrIncrementCartItem,
   computeServiceChargeLabel,
@@ -40,6 +43,7 @@ export function useOrderEntryController({
   onClose,
   onSendOrder,
 }: UseOrderEntryControllerProps) {
+  const [categoriesList, setCategoriesList] = useState<MenuCategoryItem[]>(DEFAULT_CATEGORIES);
   const [selectedCategory, setSelectedCategory] = useState<MenuCategory>('coffee');
   const [searchQuery, setSearchQuery] = useState('');
   const [cartItems, setCartItems] = useState<OrderLineItem[]>(initialItems);
@@ -75,42 +79,67 @@ export function useOrderEntryController({
     }
   }, [todayEvent]);
 
-  useEffect(() => {
-    let isMounted = true;
-    async function loadDbMenuItems() {
-      try {
-        let items = await menuApi.getMenuItems();
-        if (isMounted && items.length > 0) {
-          const todayEvent = useEventStore.getState().getTodayActiveEvent();
-          if (todayEvent?.has_door_charge && Number(todayEvent.door_charge_amount) > 0) {
-            items = items.map((item) => {
-              if (
-                item.category === 'door_charge' ||
-                item.name.toLowerCase().includes('door charge')
-              ) {
-                return {
-                  ...item,
-                  price: Number(todayEvent.door_charge_amount),
-                  description: `Admission for "${todayEvent.title}" (₱${Number(todayEvent.door_charge_amount).toFixed(2)} / head)`,
-                };
-              }
-              return item;
-            });
-          }
-          setMenuItemsList(items);
-        }
-      } catch (err) {
-        console.warn('Failed to load DB menu items in OrderEntryModal:', err);
-      }
-    }
+  const loadDbMenuData = useCallback(async () => {
+    try {
+      const [itemsRes, catsRes] = await Promise.allSettled([
+        menuApi.getMenuItems(),
+        menuApi.getCategories(),
+      ]);
 
-    if (visible) {
-      loadDbMenuItems();
+      let items: MenuItem[] = itemsRes.status === 'fulfilled' ? itemsRes.value : [];
+      const dbCats = catsRes.status === 'fulfilled' ? catsRes.value : [];
+
+      if (items.length > 0) {
+        const todayEv = useEventStore.getState().getTodayActiveEvent();
+        if (todayEv?.has_door_charge && Number(todayEv.door_charge_amount) > 0) {
+          items = items.map((item) => {
+            if (
+              item.category === 'door_charge' ||
+              item.name.toLowerCase().includes('door charge')
+            ) {
+              return {
+                ...item,
+                price: Number(todayEv.door_charge_amount),
+                description: `Admission for "${todayEv.title}" (₱${Number(todayEv.door_charge_amount).toFixed(2)} / head)`,
+              };
+            }
+            return item;
+          });
+        }
+        setMenuItemsList(items);
+      }
+
+      // Map dynamic categories from database and menu items
+      const finalCats = buildDynamicCategories(dbCats, items);
+      setCategoriesList(finalCats);
+
+      // Validate selected category against active list
+      setSelectedCategory((prev) => {
+        if (finalCats.some((c) => c.id === prev)) {
+          return prev;
+        }
+        return (finalCats[0]?.id as MenuCategory) || 'coffee';
+      });
+    } catch (err) {
+      console.warn('Failed to load DB menu items in OrderEntryModal:', err);
     }
+  }, []);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    loadDbMenuData();
+
+    const unsubRealtime = realtimeGateway.subscribeGlobalPOSRealtime({
+      onCategoryChange: () => loadDbMenuData(),
+      onProductChange: () => loadDbMenuData(),
+      onPosSyncNeeded: () => loadDbMenuData(),
+    });
+
     return () => {
-      isMounted = false;
+      unsubRealtime();
     };
-  }, [visible]);
+  }, [visible, loadDbMenuData]);
 
   useEffect(() => {
     setCartItems(initialItems);
@@ -350,8 +379,15 @@ export function useOrderEntryController({
     [cartItems]
   );
 
+  const selectedCategoryLabel = useMemo(() => {
+    const found = categoriesList.find((c) => c.id === selectedCategory);
+    return found?.label || selectedCategory;
+  }, [categoriesList, selectedCategory]);
+
   return {
+    categoriesList,
     selectedCategory,
+    selectedCategoryLabel,
     setSelectedCategory,
     searchQuery,
     setSearchQuery,

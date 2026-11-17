@@ -3,41 +3,26 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import { Image } from 'expo-image';
 import {
   UtensilsCrossed,
-  Coffee,
-  Wine,
-  Pizza,
-  Cake,
   Leaf,
   AlertTriangle,
   AlertCircle,
   Ban,
+  Search,
+  FolderPlus,
 } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { MenuItem } from '../../../../types/floor';
+import { resolveCategoryIcon } from './OrderCategoryBar';
 import { styles } from './OrderEntryModal.styles';
 
 export interface OrderMenuItemGridProps {
   items: MenuItem[];
   onItemClick: (item: MenuItem) => void;
+  searchQuery?: string;
+  selectedCategoryLabel?: string;
+  onClearSearch?: () => void;
 }
-
-const getCategoryIcon = (category: string) => {
-  switch (category) {
-    case 'coffee':
-      return Coffee;
-    case 'cocktails_wine':
-      return Wine;
-    case 'mains_pasta':
-      return Pizza;
-    case 'small_plates':
-      return UtensilsCrossed;
-    case 'desserts':
-      return Cake;
-    default:
-      return UtensilsCrossed;
-  }
-};
 
 const MenuItemCard: React.FC<{
   item: MenuItem;
@@ -47,7 +32,7 @@ const MenuItemCard: React.FC<{
   const isExplicitlyDisabled = !item.isAvailable;
   const isDepleted = item.stockStatus === 'depleted';
   const isLowStock = item.stockStatus === 'low_stock';
-  const CategoryIcon = getCategoryIcon(item.category);
+  const CategoryIcon = resolveCategoryIcon(item.category, item.categoryName);
 
   // Step 4.3: Resold outside food +20% locked price calculation
   // Resold outside food +20% locked price calculation or variant pricing
@@ -203,7 +188,55 @@ const MenuItemCard: React.FC<{
   );
 };
 
-export const OrderMenuItemGrid: React.FC<OrderMenuItemGridProps> = ({ items, onItemClick }) => {
+export const OrderMenuItemGrid: React.FC<OrderMenuItemGridProps> = ({
+  items,
+  onItemClick,
+  searchQuery = '',
+  selectedCategoryLabel = 'this category',
+  onClearSearch,
+}) => {
+  if (items.length === 0) {
+    const isSearching = searchQuery.trim().length > 0;
+    return (
+      <ScrollView
+        style={styles.productsScroll}
+        contentContainerStyle={[
+          styles.productsGrid,
+          { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 48 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="items-center justify-center max-w-sm px-6 py-10 bg-stone-50 rounded-2xl border border-stone-200/80">
+          {isSearching ? (
+            <Search size={36} color="#a8a29e" />
+          ) : (
+            <FolderPlus size={36} color="#a8a29e" />
+          )}
+          <Text className="mt-3 text-base font-bold text-stone-800 text-center">
+            {isSearching
+              ? `No dishes or drinks match "${searchQuery.trim()}"`
+              : `No menu items in "${selectedCategoryLabel}" yet`}
+          </Text>
+          <Text className="mt-1 text-xs text-stone-500 text-center leading-relaxed">
+            {isSearching
+              ? 'Check the spelling or try searching for another menu item.'
+              : 'Products assigned to this category in Admin Back-Office > Menu Recipes will appear here.'}
+          </Text>
+          {isSearching && onClearSearch ? (
+            <Pressable
+              onPress={onClearSearch}
+              className="mt-4 px-4 py-2 bg-stone-200 active:bg-stone-300 rounded-lg"
+              accessibilityRole="button"
+              accessibilityLabel="Clear search filter"
+            >
+              <Text className="text-xs font-bold text-stone-700">Clear Search</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </ScrollView>
+    );
+  }
+
   return (
     <ScrollView
       style={styles.productsScroll}

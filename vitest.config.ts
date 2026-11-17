@@ -17,10 +17,18 @@ export default defineConfig({
     exclude: ['**/node_modules/**', '**/dist/**'],
   },
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './frontend/src'),
-      '@monks/shared': path.resolve(__dirname, './packages/shared/src'),
-      '@monks/printing': path.resolve(__dirname, './packages/printing/src'),
-    },
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, './frontend/src') },
+      { find: '@monks/shared', replacement: path.resolve(__dirname, './packages/shared/src') },
+      { find: '@monks/printing', replacement: path.resolve(__dirname, './packages/printing/src') },
+      {
+        find: /^react-native$/,
+        replacement: path.resolve(__dirname, './frontend/src/test/shims/react-native.ts'),
+      },
+      {
+        find: /^react-native-svg$/,
+        replacement: path.resolve(__dirname, './frontend/src/test/shims/react-native-svg.ts'),
+      },
+    ],
   },
 });

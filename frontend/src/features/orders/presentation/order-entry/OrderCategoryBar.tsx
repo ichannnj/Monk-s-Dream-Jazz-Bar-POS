@@ -1,36 +1,40 @@
 import React from 'react';
 import { View, Pressable, TextInput } from 'react-native';
-import { Search, X, Coffee, Wine, Pizza, UtensilsCrossed, Cake, Ticket } from 'lucide-react-native';
-import { MenuCategory } from '../../../../types/floor';
+import { Search, X } from 'lucide-react-native';
+import { MenuCategoryItem } from '../../../../types/floor';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
+import {
+  resolveCategoryIcon,
+  DEFAULT_CATEGORIES,
+  buildDynamicCategories,
+} from './orderCategoryResolution';
 import { styles } from './OrderEntryModal.styles';
 
+export { resolveCategoryIcon, DEFAULT_CATEGORIES, buildDynamicCategories };
+
 export interface OrderCategoryBarProps {
-  selectedCategory: MenuCategory;
-  onSelectCategory: (category: MenuCategory) => void;
+  selectedCategory: string;
+  onSelectCategory: (category: string) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
+  categories?: MenuCategoryItem[];
 }
 
-export const CATEGORIES: { id: MenuCategory; label: string; Icon: any }[] = [
-  { id: 'coffee', label: 'Coffee & Espresso', Icon: Coffee },
-  { id: 'cocktails_wine', label: 'Bar & Wine', Icon: Wine },
-  { id: 'mains_pasta', label: 'Pasta & Mains', Icon: Pizza },
-  { id: 'small_plates', label: 'Small Bites', Icon: UtensilsCrossed },
-  { id: 'desserts', label: 'Desserts', Icon: Cake },
-  { id: 'door_charge', label: 'Door Charge', Icon: Ticket },
-];
+/** Backward-compatibility alias */
+export const CATEGORIES = DEFAULT_CATEGORIES;
 
 export const OrderCategoryBar: React.FC<OrderCategoryBarProps> = ({
   selectedCategory,
   onSelectCategory,
   searchQuery,
   onSearchChange,
+  categories,
 }) => {
-  const categoryOptions: PosDropdownOption<MenuCategory>[] = CATEGORIES.map((cat) => ({
+  const activeCategories = categories && categories.length > 0 ? categories : DEFAULT_CATEGORIES;
+  const categoryOptions: PosDropdownOption<string>[] = activeCategories.map((cat) => ({
     value: cat.id,
     label: cat.label,
-    icon: cat.Icon,
+    icon: cat.Icon || resolveCategoryIcon(cat.id, cat.label),
   }));
 
   return (

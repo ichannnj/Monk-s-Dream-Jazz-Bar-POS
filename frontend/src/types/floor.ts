@@ -135,13 +135,28 @@ export interface TableItem {
 }
 
 export type MenuCategory =
-  'coffee' | 'cocktails_wine' | 'mains_pasta' | 'small_plates' | 'desserts' | 'door_charge';
+  | 'coffee'
+  | 'cocktails_wine'
+  | 'mains_pasta'
+  | 'small_plates'
+  | 'desserts'
+  | 'door_charge'
+  | (string & {});
+
+export interface MenuCategoryItem {
+  id: string;
+  label: string;
+  Icon?: any;
+  sortOrder?: number;
+}
 
 export interface MenuItem {
   id: string;
   name: string;
   imageUrl?: string;
   category: MenuCategory;
+  categoryId?: string;
+  categoryName?: string;
   price: number;
   stationTarget: 'bar' | 'kitchen';
   description: string;

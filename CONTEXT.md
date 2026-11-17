@@ -271,6 +271,15 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 
 ---
 
+### 14. Dynamic Menu Categories, Smart Lucide Icon Resolution & Realtime Floor POS Synchronization (`OrderCategoryBar.tsx`, `orderCategoryResolution.ts`, `useOrderEntryController.ts`, `OrderMenuItemGrid.tsx`)
+
+- **Universal Dynamic Categories:** Floor POS Order Entry modal (`OrderEntryModal.tsx`) dynamically loads all custom categories created in Admin Back-Office (`categories` PostgreSQL table) via `menuApi.getCategories()` (sorted by `sort_order` ASC then `name` ASC). Merges seamlessly with active products via `buildDynamicCategories()`, preventing custom category lock-in.
+- **Smart Lucide Icon Mapping (`resolveCategoryIcon`):** Automatically maps category keywords across name and slug to appropriate Lucide SVG icons (Coffee for espresso/teas, Beer for ales/drafts/ciders, Wine for cocktails/spirits/liquor, GlassWater for sodas/juices/mocktails, Pizza for pasta/pizza/mains, Cake for desserts/pastries/bakery, Ticket for door charges/admissions, UtensilsCrossed for small bites/plates/tapas, and Utensils as fallback).
+- **Live Realtime CDC Sync:** Order entry registers real-time Supabase subscriptions (`onCategoryChange`, `onProductChange`, `onPosSyncNeeded`) while open, instantly synchronizing category and menu modifications from other terminals without requiring modal reloads or page refreshes.
+- **Informative Empty State UX:** When a category contains no items or search returns 0 results, `OrderMenuItemGrid` renders an informative branded empty state with clear guidance ("No menu items in this category yet" / "No dishes or drinks match...") and a 1-tap "Clear Search" button instead of a blank screen.
+
+---
+
 ## 📚 Related Documentation
 
 - Architecture & File Tree Map: [AGENTS.md](file:///home/ichannnj/orca/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)

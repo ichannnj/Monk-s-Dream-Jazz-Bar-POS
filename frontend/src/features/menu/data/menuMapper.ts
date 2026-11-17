@@ -39,6 +39,8 @@ export function mapRawProductToMenuItem(p: any): MenuItem {
     name: p.name,
     imageUrl: p.image_url || undefined,
     category: (p.categories?.slug || 'coffee') as any,
+    categoryId: p.category_id || p.categories?.id || undefined,
+    categoryName: p.categories?.name || undefined,
     price: parseFloat(p.base_price) || 0,
     stationTarget: (p.station_target || 'bar') as 'bar' | 'kitchen',
     description: p.description || '',

@@ -38,7 +38,9 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
   const { isMobile } = useResponsive();
 
   const {
+    categoriesList,
     selectedCategory,
+    selectedCategoryLabel,
     setSelectedCategory,
     searchQuery,
     setSearchQuery,
@@ -109,12 +111,19 @@ export const OrderEntryModal: React.FC<OrderEntryModalProps> = ({
             {(!isMobile || !isMobileCartOpen) && (
               <View style={styles.catalogPanel}>
                 <OrderCategoryBar
+                  categories={categoriesList}
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
                   searchQuery={searchQuery}
                   onSearchChange={setSearchQuery}
                 />
-                <OrderMenuItemGrid items={filteredMenuItems} onItemClick={handleItemClick} />
+                <OrderMenuItemGrid
+                  items={filteredMenuItems}
+                  onItemClick={handleItemClick}
+                  searchQuery={searchQuery}
+                  selectedCategoryLabel={selectedCategoryLabel}
+                  onClearSearch={() => setSearchQuery('')}
+                />
 
                 {/* Mobile Sticky Bottom Cart Bar */}
                 {isMobile ? (

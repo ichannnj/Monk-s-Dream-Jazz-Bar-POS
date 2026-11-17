@@ -348,15 +348,16 @@ export class MenuApi {
   /**
    * Fetch all product categories (Cocktails, Wine, Beer, Kitchen, Non-Alcoholic, etc.).
    */
-  async getCategories() {
+  async getCategories(): Promise<{ id: string; name: string; slug: string; sort_order: number }[]> {
     try {
       const { data, error } = await supabase
         .from('categories')
         .select('id, name, slug, sort_order')
-        .order('sort_order', { ascending: true });
+        .order('sort_order', { ascending: true })
+        .order('name', { ascending: true });
 
       if (error) throw new Error(error.message);
-      return data || [];
+      return (data || []) as { id: string; name: string; slug: string; sort_order: number }[];
     } catch (err) {
       console.warn('getCategories error:', err);
       return [];
