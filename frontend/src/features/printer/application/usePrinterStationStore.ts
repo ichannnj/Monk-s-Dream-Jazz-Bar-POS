@@ -2,7 +2,11 @@ import { create } from 'zustand';
 import { supabase } from '@/features/shared/infrastructure/supabase';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { printerApi, type PrintJobItem } from '../data/printer.api';
-import { webSerialPrinter, type SerialPortInfo } from '../services/webSerialPrinter';
+import {
+  webSerialPrinter,
+  type SerialPortInfo,
+  type BoundPrinterDevice,
+} from '../services/webSerialPrinter';
 import {
   buildReceiptBytes,
   buildBillStatementBytes,
@@ -16,6 +20,7 @@ import {
 export type StationConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
 export type DrawerStatus = 'IDLE' | 'KICKING';
 export type ThermalPaperWidth = '80mm' | '57mm';
+export type PrinterTransportMode = 'auto' | 'usb' | 'serial';
 
 export interface StationLogItem {
   id: string;
@@ -31,17 +36,21 @@ interface PrinterStationState {
   isLeader: boolean;
   baudRate: number;
   paperWidth: ThermalPaperWidth;
+  preferredTransport: PrinterTransportMode;
   autoPrintEnabled: boolean;
   chimeEnabled: boolean;
   portInfo: SerialPortInfo | null;
+  boundDevice: BoundPrinterDevice | null;
   recentJobs: PrintJobItem[];
   stationLogs: StationLogItem[];
   isProcessing: boolean;
 
   // Actions
   initStation: () => () => void;
-  connectDevice: () => Promise<boolean>;
+  connectDevice: (transportOverride?: PrinterTransportMode) => Promise<boolean>;
   disconnectDevice: () => Promise<void>;
+  forgetDevice: () => Promise<void>;
+  setPreferredTransport: (transport: PrinterTransportMode) => void;
   toggleAutoPrint: () => void;
   toggleChime: () => void;
   setBaudRate: (rate: number) => void;
@@ -94,12 +103,33 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     typeof localStorage !== 'undefined' && localStorage.getItem('monks_pos_paper_width') === '57mm'
       ? '57mm'
       : '80mm',
+  preferredTransport:
+    typeof localStorage !== 'undefined' &&
+    localStorage.getItem('monks_pos_preferred_transport') === 'serial'
+      ? 'serial'
+      : typeof localStorage !== 'undefined' &&
+          localStorage.getItem('monks_pos_preferred_transport') === 'usb'
+        ? 'usb'
+        : 'auto',
   autoPrintEnabled: true,
   chimeEnabled: true,
   portInfo: null,
+  boundDevice: webSerialPrinter.getBoundPrinter(),
   recentJobs: [],
   stationLogs: [],
   isProcessing: false,
+
+  setPreferredTransport: (transport: PrinterTransportMode) => {
+    set({ preferredTransport: transport });
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('monks_pos_preferred_transport', transport);
+      }
+    } catch {
+      // Storage unavailable
+    }
+    get().addLog('info', `Preferred transport set to ${transport.toUpperCase()}`);
+  },
 
   setPaperWidth: (width: ThermalPaperWidth) => {
     set({ paperWidth: width });
@@ -143,16 +173,21 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     set({ baudRate: rate });
   },
 
-  connectDevice: async () => {
+  connectDevice: async (transportOverride?: PrinterTransportMode) => {
     set({ connectionStatus: 'CONNECTING' });
+    const transport = transportOverride || get().preferredTransport;
     try {
-      await webSerialPrinter.requestAndConnect(get().baudRate);
+      await webSerialPrinter.requestAndConnect(get().baudRate, transport);
       const portInfo = webSerialPrinter.getPortInfo();
-      set({ connectionStatus: 'CONNECTED', portInfo });
+      const boundDevice = webSerialPrinter.getBoundPrinter();
+      set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
       const deviceTitle = portInfo?.deviceName
         ? `${portInfo.deviceName}${portInfo.manufacturerName ? ` (${portInfo.manufacturerName})` : ''}`
         : 'USB Thermal Printer';
-      get().addLog('success', `${deviceTitle} connected successfully`);
+      get().addLog(
+        'success',
+        `${deviceTitle} connected successfully [${portInfo?.type?.toUpperCase()}]`
+      );
       toast.success(`${deviceTitle} paired and online`, { title: 'Hardware Connected' });
 
       // Drain any pending jobs queued while disconnected
@@ -184,6 +219,13 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     set({ connectionStatus: 'DISCONNECTED', portInfo: null });
     get().addLog('info', 'Printer disconnected');
     toast.info('Printer disconnected', { title: 'Hardware Disconnected' });
+  },
+
+  forgetDevice: async () => {
+    await webSerialPrinter.forgetDevice();
+    set({ connectionStatus: 'DISCONNECTED', portInfo: null, boundDevice: null });
+    get().addLog('info', 'Printer device binding cleared');
+    toast.info('Printer unlinked from station', { title: 'Device Forgotten' });
   },
 
   processJob: async (job: PrintJobItem) => {
@@ -453,6 +495,27 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     let activeLockRelease: (() => void) | null = null;
     const abortController = new AbortController();
 
+    // Register hotplug watchdog callbacks
+    webSerialPrinter.setHotplugCallbacks({
+      onDisconnect: () => {
+        set({ connectionStatus: 'DISCONNECTED', portInfo: null });
+        get().addLog('warn', 'Thermal printer was disconnected or powered off');
+      },
+      onConnect: () => {
+        const portInfo = webSerialPrinter.getPortInfo();
+        const boundDevice = webSerialPrinter.getBoundPrinter();
+        set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
+        get().addLog('success', 'Thermal printer reconnected via hotplug watchdog');
+        if (get().isLeader) {
+          printerApi.getPendingPrintJobs().then((pending) => {
+            for (const job of pending) {
+              get().processJob(job);
+            }
+          });
+        }
+      },
+    });
+
     // 1. Web Locks API Leader Election: ensure only ONE active tab drives the printer
     if (typeof navigator !== 'undefined' && 'locks' in navigator) {
       navigator.locks
@@ -463,7 +526,11 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
           // Attempt silent auto-reconnect to remembered serial port
           const connected = await webSerialPrinter.autoConnect(get().baudRate);
           if (connected) {
-            set({ connectionStatus: 'CONNECTED', portInfo: webSerialPrinter.getPortInfo() });
+            set({
+              connectionStatus: 'CONNECTED',
+              portInfo: webSerialPrinter.getPortInfo(),
+              boundDevice: webSerialPrinter.getBoundPrinter(),
+            });
             get().addLog('success', 'Automatically reconnected to authorized thermal printer');
             printerApi.getPendingPrintJobs().then((pending) => {
               for (const job of pending) {
@@ -487,7 +554,11 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       set({ isLeader: true });
       webSerialPrinter.autoConnect(get().baudRate).then((connected) => {
         if (connected) {
-          set({ connectionStatus: 'CONNECTED', portInfo: webSerialPrinter.getPortInfo() });
+          set({
+            connectionStatus: 'CONNECTED',
+            portInfo: webSerialPrinter.getPortInfo(),
+            boundDevice: webSerialPrinter.getBoundPrinter(),
+          });
         }
       });
     }

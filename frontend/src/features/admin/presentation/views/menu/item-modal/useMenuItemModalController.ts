@@ -97,7 +97,12 @@ export function useMenuItemModalController({
 
   // Flavor Group State
   const [hasFlavorGroup, setHasFlavorGroup] = useState(false);
+  const [flavorGroupName, setFlavorGroupName] = useState('Flavor');
+  const [flavorGroupRequired, setFlavorGroupRequired] = useState(false);
   const [flavorOptions, setFlavorOptions] = useState<ProductFlavorOptionStateItem[]>([]);
+  const [catalogFlavorPool, setCatalogFlavorPool] = useState<ProductFlavorOptionStateItem[]>([]);
+  const [customFlavorName, setCustomFlavorName] = useState('');
+  const [customFlavorPrice, setCustomFlavorPrice] = useState('0.00');
 
   const [catalogModifiers, setCatalogModifiers] = useState<ProductModifierOptionAdmin[]>([]);
   const [productModifiers, setProductModifiers] = useState<ProductModifierStateItem[]>([]);
@@ -130,89 +135,106 @@ export function useMenuItemModalController({
       try {
         const isLatteProduct = product?.name?.trim().toLowerCase() === 'latte';
 
-        const { data: grpData, error: grpError } = await (supabase.from as any)(
-          'product_variant_groups'
-        )
-          .select('id, code, name')
-          .eq('code', 'flavor')
-          .maybeSingle();
+        // 1. Fetch all catalog options
+        const { data: allOpts } = await (supabase.from as any)('product_variant_options')
+          .select('id, group_id, code, name, default_price_delta, sort_order')
+          .eq('is_active', true)
+          .order('sort_order');
 
-        if (grpData && !grpError) {
-          const { data: optData } = await (supabase.from as any)('product_variant_options')
-            .select('id, code, name, default_price_delta, sort_order')
-            .eq('group_id', grpData.id)
-            .order('sort_order');
+        const pool: ProductFlavorOptionStateItem[] = (
+          allOpts && allOpts.length > 0 ? allOpts : FALLBACK_FLAVOR_OPTIONS
+        ).map((o: any) => ({
+          id: o.id,
+          groupId: o.group_id || DEFAULT_FLAVOR_GROUP_ID,
+          code: o.code,
+          name: o.name,
+          price_delta: (o.default_price_delta ?? 0).toString(),
+          is_assigned: false,
+          is_available: true,
+          is_default: false,
+        }));
+        setCatalogFlavorPool(pool);
 
-          let assignedGroup = false;
-          const assignedOpts = new Map<string, { delta: number; isDefault: boolean }>();
+        let assignedGroup = false;
+        let groupTitle = 'Flavor';
+        let groupRequired = false;
+        const assignedOpts = new Map<string, { delta: number; isDefault: boolean }>();
 
-          if (product?.id) {
-            const { data: grpAssign } = await (supabase.from as any)(
-              'product_variant_group_assignments'
+        if (product?.id) {
+          const { data: grpAssigns } = await (supabase.from as any)(
+            'product_variant_group_assignments'
+          )
+            .select(
+              `
+              group_id,
+              is_active,
+              is_required,
+              product_variant_groups (
+                id,
+                code,
+                name
+              )
+            `
             )
-              .select('is_active')
-              .match({ product_id: product.id, group_id: grpData.id })
-              .maybeSingle();
+            .eq('product_id', product.id);
 
-            if (grpAssign?.is_active) {
-              assignedGroup = true;
-            }
-
-            const { data: optAssigns } = await (supabase.from as any)(
-              'product_variant_option_assignments'
-            )
-              .select('option_id, price_delta, is_default, is_available')
-              .match({ product_id: product.id, is_available: true });
-
-            (optAssigns || []).forEach((oa: any) => {
-              assignedOpts.set(oa.option_id, {
-                delta: Number(oa.price_delta),
-                isDefault: Boolean(oa.is_default),
-              });
-            });
-          }
-
-          // If product is Latte and not yet configured, default enabled
-          if (isLatteProduct && !assignedGroup && assignedOpts.size === 0) {
+          const activeGrp = (grpAssigns || []).find((g: any) => g.is_active);
+          if (activeGrp) {
             assignedGroup = true;
+            groupTitle = activeGrp.product_variant_groups?.name || 'Flavor';
+            groupRequired = Boolean(activeGrp.is_required);
           }
 
-          setHasFlavorGroup(assignedGroup);
-          const mappedOpts: ProductFlavorOptionStateItem[] = (
-            optData && optData.length > 0 ? optData : FALLBACK_FLAVOR_OPTIONS
-          ).map((o: any) => {
-            const assigned = assignedOpts.get(o.id);
-            const isAssigned = assigned ? true : isLatteProduct ? true : false;
-            return {
-              id: o.id,
-              groupId: grpData.id,
-              code: o.code,
-              name: o.name,
-              price_delta: assigned
-                ? assigned.delta.toString()
-                : (o.default_price_delta ?? o.price_delta ?? 0).toString(),
-              is_assigned: isAssigned,
-              is_available: true,
-              is_default: assigned ? Boolean(assigned.isDefault) : o.code === 'classic',
-            };
+          const { data: optAssigns } = await (supabase.from as any)(
+            'product_variant_option_assignments'
+          )
+            .select('option_id, price_delta, is_default, is_available')
+            .match({ product_id: product.id, is_available: true });
+
+          (optAssigns || []).forEach((oa: any) => {
+            assignedOpts.set(oa.option_id, {
+              delta: Number(oa.price_delta),
+              isDefault: Boolean(oa.is_default),
+            });
           });
-          setFlavorOptions(mappedOpts);
-        } else {
-          // Fallback if product_variant_groups table is not yet deployed or unreachable
-          const isLatte = isLatteProduct;
-          setHasFlavorGroup(isLatte);
-          setFlavorOptions(
-            FALLBACK_FLAVOR_OPTIONS.map((o) => ({
-              ...o,
-              is_assigned: isLatte,
-              is_default: o.code === 'classic',
-            }))
-          );
         }
+
+        // If product is Latte and not yet configured, default enabled
+        if (isLatteProduct && !assignedGroup && assignedOpts.size === 0) {
+          assignedGroup = true;
+        }
+
+        setHasFlavorGroup(assignedGroup);
+        setFlavorGroupName(groupTitle);
+        setFlavorGroupRequired(groupRequired);
+
+        // Build active options list for this product
+        const initialFlavorOptions: ProductFlavorOptionStateItem[] = pool.map((o) => {
+          const assigned = assignedOpts.get(o.id);
+          const isAssigned = assigned ? true : isLatteProduct && !product?.id ? true : false;
+          return {
+            ...o,
+            price_delta: assigned ? assigned.delta.toString() : o.price_delta,
+            is_assigned: isAssigned,
+            is_default: assigned ? Boolean(assigned.isDefault) : o.code === 'classic',
+          };
+        });
+
+        // Ensure at least 1 default if group is enabled and has assigned options
+        if (assignedGroup && initialFlavorOptions.some((o) => o.is_assigned)) {
+          if (!initialFlavorOptions.some((o) => o.is_assigned && o.is_default)) {
+            const firstAssigned = initialFlavorOptions.find((o) => o.is_assigned);
+            if (firstAssigned) firstAssigned.is_default = true;
+          }
+        }
+
+        setFlavorOptions(initialFlavorOptions);
       } catch (err) {
         console.warn('Error loading flavor group data, applying fallback:', err);
         const isLatte = product?.name?.trim().toLowerCase() === 'latte';
         setHasFlavorGroup(isLatte);
+        setFlavorGroupName('Flavor');
+        setFlavorGroupRequired(false);
         setFlavorOptions(
           FALLBACK_FLAVOR_OPTIONS.map((o) => ({
             ...o,
@@ -437,10 +459,10 @@ export function useMenuItemModalController({
       } else if (!flavorOptions.some((o) => o.is_assigned)) {
         // Auto-assign all options with default delta
         setFlavorOptions((prev) =>
-          prev.map((o) => ({
+          prev.map((o, idx) => ({
             ...o,
             is_assigned: true,
-            is_default: o.code === 'classic',
+            is_default: idx === 0,
           }))
         );
       }
@@ -448,17 +470,108 @@ export function useMenuItemModalController({
   };
 
   const handleToggleOptionAssignment = (optId: string) => {
-    setFlavorOptions((prev) =>
-      prev.map((o) => (o.id === optId ? { ...o, is_assigned: !o.is_assigned } : o))
-    );
+    setFlavorOptions((prev) => {
+      const exists = prev.some((o) => o.id === optId);
+      if (exists) {
+        return prev.map((o) => (o.id === optId ? { ...o, is_assigned: !o.is_assigned } : o));
+      }
+      const fromPool = catalogFlavorPool.find((c) => c.id === optId);
+      if (fromPool) {
+        const hasDefault = prev.some((o) => o.is_assigned && o.is_default);
+        return [
+          ...prev,
+          {
+            ...fromPool,
+            is_assigned: true,
+            is_available: true,
+            is_default: !hasDefault,
+          },
+        ];
+      }
+      return prev;
+    });
   };
 
   const handleUpdateOptionPriceDelta = (optId: string, val: string) => {
     setFlavorOptions((prev) => prev.map((o) => (o.id === optId ? { ...o, price_delta: val } : o)));
   };
 
+  const handleUpdateOptionName = (optId: string, val: string) => {
+    setFlavorOptions((prev) => prev.map((o) => (o.id === optId ? { ...o, name: val } : o)));
+  };
+
   const handleSetDefaultOption = (optId: string) => {
     setFlavorOptions((prev) => prev.map((o) => ({ ...o, is_default: o.id === optId })));
+  };
+
+  const handleRemoveFlavorOption = (optId: string) => {
+    setFlavorOptions((prev) => {
+      const target = prev.find((o) => o.id === optId);
+      const updated = prev.map((o) =>
+        o.id === optId ? { ...o, is_assigned: false, is_default: false } : o
+      );
+      if (target?.is_default) {
+        const nextDefault = updated.find((o) => o.is_assigned);
+        if (nextDefault) {
+          nextDefault.is_default = true;
+        }
+      }
+      return [...updated];
+    });
+  };
+
+  const handleAddCustomFlavor = () => {
+    const trimmed = customFlavorName.trim();
+    if (!trimmed) {
+      toast.error('Flavor name cannot be empty', { title: 'Validation Error' });
+      return;
+    }
+    const cleanCode = trimmed.toLowerCase().replace(/[^a-z0-9]+/g, '_');
+    const priceVal = customFlavorPrice.trim() || '0.00';
+
+    const existingIndex = flavorOptions.findIndex(
+      (o) => o.code === cleanCode || o.name.toLowerCase() === trimmed.toLowerCase()
+    );
+
+    if (existingIndex >= 0) {
+      setFlavorOptions((prev) =>
+        prev.map((o, idx) =>
+          idx === existingIndex
+            ? {
+                ...o,
+                is_assigned: true,
+                is_available: true,
+                price_delta: priceVal,
+                name: trimmed,
+              }
+            : o
+        )
+      );
+    } else {
+      const newId =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : 'flavor-' + Date.now();
+
+      const hasAnyDefault = flavorOptions.some((o) => o.is_assigned && o.is_default);
+
+      const newOption: ProductFlavorOptionStateItem = {
+        id: newId,
+        groupId: flavorOptions[0]?.groupId || DEFAULT_FLAVOR_GROUP_ID,
+        code: cleanCode,
+        name: trimmed,
+        price_delta: priceVal,
+        is_assigned: true,
+        is_available: true,
+        is_default: !hasAnyDefault,
+        is_new: true,
+      };
+
+      setFlavorOptions((prev) => [...prev, newOption]);
+    }
+
+    setCustomFlavorName('');
+    setCustomFlavorPrice('0.00');
   };
 
   const handleSubmit = () => {
@@ -478,6 +591,8 @@ export function useMenuItemModalController({
       hasVariants,
       variantsMatrix,
       hasFlavorGroup,
+      flavorGroupName,
+      flavorGroupRequired,
       flavorOptions,
       productModifiers,
       currentUserId: currentUser?.id,
@@ -528,12 +643,24 @@ export function useMenuItemModalController({
     regenerateMatrix,
     hasFlavorGroup,
     setHasFlavorGroup,
+    flavorGroupName,
+    setFlavorGroupName,
+    flavorGroupRequired,
+    setFlavorGroupRequired,
     flavorOptions,
     setFlavorOptions,
+    catalogFlavorPool,
+    customFlavorName,
+    setCustomFlavorName,
+    customFlavorPrice,
+    setCustomFlavorPrice,
     handleToggleFlavorGroup,
     handleToggleOptionAssignment,
     handleUpdateOptionPriceDelta,
+    handleUpdateOptionName,
     handleSetDefaultOption,
+    handleRemoveFlavorOption,
+    handleAddCustomFlavor,
     catalogModifiers,
     productModifiers,
     modifierFilterCategory,

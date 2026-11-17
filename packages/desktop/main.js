@@ -37,6 +37,32 @@ function createWindow() {
     }
   );
 
+  // 2. Automatically select USB thermal printer for WebUSB requests
+  mainWindow.webContents.session.on('select-usb-device', (event, details, callback) => {
+    event.preventDefault();
+    const deviceList = details.deviceList;
+    if (deviceList && deviceList.length > 0) {
+      const printer =
+        deviceList.find((d) => {
+          const name = (d.productName || '').toLowerCase();
+          return (
+            name.includes('print') ||
+            name.includes('pos') ||
+            name.includes('receipt') ||
+            name.includes('thermal') ||
+            name.includes('epson') ||
+            name.includes('xprinter')
+          );
+        }) || deviceList[0];
+      console.info(
+        `[Electron Main] Auto-authorizing USB Device: ${printer.productName || printer.deviceId}`
+      );
+      callback(printer.deviceId);
+    } else {
+      callback('');
+    }
+  });
+
   // 2. Grant permissions without user prompt
   mainWindow.webContents.session.setPermissionCheckHandler((webContents, permission) => {
     if (permission === 'serial' || permission === 'usb') return true;

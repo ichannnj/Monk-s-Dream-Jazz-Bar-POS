@@ -29,6 +29,7 @@ export const HardwarePrintStationScreen: React.FC = () => {
     isLeader,
     baudRate,
     paperWidth,
+    preferredTransport,
     autoPrintEnabled,
     chimeEnabled,
     portInfo,
@@ -37,6 +38,8 @@ export const HardwarePrintStationScreen: React.FC = () => {
     initStation,
     connectDevice,
     disconnectDevice,
+    forgetDevice,
+    setPreferredTransport,
     toggleAutoPrint,
     toggleChime,
     setBaudRate,
@@ -175,6 +178,7 @@ export const HardwarePrintStationScreen: React.FC = () => {
         portInfo={portInfo}
         baudRate={baudRate}
         paperWidth={paperWidth}
+        preferredTransport={preferredTransport}
         autoPrintEnabled={autoPrintEnabled}
         chimeEnabled={chimeEnabled}
         isTestingChit={isTestingChit}
@@ -182,8 +186,10 @@ export const HardwarePrintStationScreen: React.FC = () => {
         isTestingDrawer={isTestingDrawer}
         onConnect={handleConnect}
         onDisconnect={disconnectDevice}
+        onForgetDevice={forgetDevice}
         onSetBaudRate={setBaudRate}
         onSetPaperWidth={setPaperWidth}
+        onSetTransport={setPreferredTransport}
         onToggleAutoPrint={toggleAutoPrint}
         onToggleChime={toggleChime}
         onTestPrintChit={handleTestPrint}

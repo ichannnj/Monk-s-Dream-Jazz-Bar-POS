@@ -28,6 +28,8 @@ export interface SubmitProductParams {
   hasVariants: boolean;
   variantsMatrix: VariantMatrixRow[];
   hasFlavorGroup?: boolean;
+  flavorGroupName?: string;
+  flavorGroupRequired?: boolean;
   flavorOptions?: ProductFlavorOptionStateItem[];
   productModifiers: ProductModifierStateItem[];
   currentUserId?: string;
@@ -52,6 +54,8 @@ export async function executeProductSubmit({
   hasVariants,
   variantsMatrix,
   hasFlavorGroup = false,
+  flavorGroupName = 'Flavor',
+  flavorGroupRequired = false,
   flavorOptions = [],
   productModifiers,
   currentUserId,
@@ -142,7 +146,13 @@ export async function executeProductSubmit({
       await adminApi.upsertProductModifiers(product.id, modifiersToSave);
 
       // Save Flavor Group & Options
-      await saveFlavorAssignments(product.id, hasFlavorGroup, flavorOptions);
+      await saveFlavorAssignments(
+        product.id,
+        hasFlavorGroup,
+        flavorGroupName,
+        flavorGroupRequired,
+        flavorOptions
+      );
 
       toast.success(`Updated "${name}"`, { title: 'Menu Item Saved' });
     } else {
@@ -196,7 +206,13 @@ export async function executeProductSubmit({
         await adminApi.upsertProductModifiers(newProduct.id, modifiersToSave);
 
         // Save Flavor Group & Options
-        await saveFlavorAssignments(newProduct.id, hasFlavorGroup, flavorOptions);
+        await saveFlavorAssignments(
+          newProduct.id,
+          hasFlavorGroup,
+          flavorGroupName,
+          flavorGroupRequired,
+          flavorOptions
+        );
       }
       toast.success(`Created "${name}"`, { title: 'Menu Item Created' });
     }
@@ -212,32 +228,100 @@ export async function executeProductSubmit({
 async function saveFlavorAssignments(
   productId: string,
   hasFlavorGroup: boolean,
-  flavorOptions: ProductFlavorOptionStateItem[]
+  flavorGroupName: string = 'Flavor',
+  flavorGroupRequired: boolean = false,
+  flavorOptions: ProductFlavorOptionStateItem[] = []
 ) {
   try {
-    if (!flavorOptions || flavorOptions.length === 0) return;
-    const groupId = flavorOptions[0].groupId;
-
     if (!hasFlavorGroup) {
-      // Deactivate group assignment
-      const { error } = await (supabase.from as any)('product_variant_group_assignments')
+      // Deactivate group assignment and option assignments for this product
+      const { error: deactGrpErr } = await (supabase.from as any)(
+        'product_variant_group_assignments'
+      )
         .update({ is_active: false, updated_at: new Date().toISOString() })
-        .match({ product_id: productId, group_id: groupId });
-      if (error)
-        console.info('Note: variant group assignments table not yet present:', error.message);
+        .eq('product_id', productId);
+      if (deactGrpErr) {
+        console.info('Note: variant group assignments table not yet present:', deactGrpErr.message);
+      }
+
+      const { error: deactOptErr } = await (supabase.from as any)(
+        'product_variant_option_assignments'
+      )
+        .update({ is_available: false, updated_at: new Date().toISOString() })
+        .eq('product_id', productId);
+      if (deactOptErr) {
+        console.info('Note: option assignments update failed:', deactOptErr.message);
+      }
       return;
     }
 
-    // Upsert group assignment
+    // 1. Locate or create reusable variant group
+    const cleanGroupCode =
+      (flavorGroupName || 'flavor')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_') || 'flavor';
+    let targetGroupId = flavorOptions.find((o) => o.groupId)?.groupId;
+
+    const { data: existingGroup } = await (supabase.from as any)('product_variant_groups')
+      .select('id, code, name')
+      .or(
+        `code.eq.${cleanGroupCode},id.eq.${targetGroupId || '00000000-0000-0000-0000-000000000000'}`
+      )
+      .maybeSingle();
+
+    if (existingGroup) {
+      targetGroupId = existingGroup.id;
+      if (existingGroup.name !== flavorGroupName) {
+        await (supabase.from as any)('product_variant_groups')
+          .update({ name: flavorGroupName, updated_at: new Date().toISOString() })
+          .eq('id', targetGroupId);
+      }
+    } else {
+      const newGroupId =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : '20000000-0000-0000-0000-' +
+            Math.floor(Math.random() * 1e12)
+              .toString(16)
+              .padStart(12, '0');
+
+      const { data: createdGroup, error: crtErr } = await (supabase.from as any)(
+        'product_variant_groups'
+      )
+        .insert({
+          id: newGroupId,
+          code: cleanGroupCode,
+          name: flavorGroupName || 'Flavor',
+          min_selections: flavorGroupRequired ? 1 : 0,
+          max_selections: 1,
+          is_required: flavorGroupRequired,
+          allows_duplicates: false,
+          is_active: true,
+        })
+        .select('id')
+        .single();
+
+      if (crtErr) {
+        console.warn('Could not insert product_variant_groups:', crtErr.message);
+      }
+      if (createdGroup?.id) {
+        targetGroupId = createdGroup.id;
+      }
+    }
+
+    if (!targetGroupId) return;
+
+    // 2. Upsert group assignment for this product
     const { error: grpErr } = await (supabase.from as any)(
       'product_variant_group_assignments'
     ).upsert({
       product_id: productId,
-      group_id: groupId,
+      group_id: targetGroupId,
       is_active: true,
-      min_selections: 0,
+      min_selections: flavorGroupRequired ? 1 : 0,
       max_selections: 1,
-      is_required: false,
+      is_required: flavorGroupRequired,
       sort_order: 1,
       updated_at: new Date().toISOString(),
     });
@@ -246,21 +330,55 @@ async function saveFlavorAssignments(
       return;
     }
 
-    // Upsert options
+    // 3. Upsert or update options
     for (const opt of flavorOptions) {
+      let optId = opt.id;
+      const isCustomNew = opt.is_new || optId.startsWith('flavor-');
+
+      if (isCustomNew) {
+        const optionIdToInsert =
+          typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined;
+        const { data: insOpt, error: insErr } = await (supabase.from as any)(
+          'product_variant_options'
+        )
+          .insert({
+            ...(optionIdToInsert ? { id: optionIdToInsert } : {}),
+            group_id: targetGroupId,
+            code: opt.code,
+            name: opt.name,
+            default_price_delta: parseFloat(opt.price_delta) || 0,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (insOpt?.id) {
+          optId = insOpt.id;
+        } else if (insErr) {
+          console.warn('Could not insert new product_variant_option:', insErr.message);
+        }
+      } else {
+        await (supabase.from as any)('product_variant_options')
+          .update({
+            name: opt.name,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', optId);
+      }
+
       if (opt.is_assigned) {
         await (supabase.from as any)('product_variant_option_assignments').upsert({
           product_id: productId,
-          option_id: opt.id,
+          option_id: optId,
           price_delta: parseFloat(opt.price_delta) || 0,
-          is_default: opt.is_default,
+          is_default: Boolean(opt.is_default),
           is_available: true,
           updated_at: new Date().toISOString(),
         });
       } else {
         await (supabase.from as any)('product_variant_option_assignments')
           .update({ is_available: false, updated_at: new Date().toISOString() })
-          .match({ product_id: productId, option_id: opt.id });
+          .match({ product_id: productId, option_id: optId });
       }
     }
   } catch (err) {

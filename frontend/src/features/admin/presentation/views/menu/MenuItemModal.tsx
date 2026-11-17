@@ -132,10 +132,22 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
         <MenuItemFlavorOptionsSection
           hasFlavorGroup={ctrl.hasFlavorGroup}
           onToggleFlavorGroup={ctrl.handleToggleFlavorGroup}
+          flavorGroupName={ctrl.flavorGroupName}
+          onChangeFlavorGroupName={ctrl.setFlavorGroupName}
+          flavorGroupRequired={ctrl.flavorGroupRequired}
+          onToggleFlavorGroupRequired={ctrl.setFlavorGroupRequired}
           flavorOptions={ctrl.flavorOptions}
+          catalogFlavorPool={ctrl.catalogFlavorPool}
           onToggleOptionAssignment={ctrl.handleToggleOptionAssignment}
           onUpdateOptionPriceDelta={ctrl.handleUpdateOptionPriceDelta}
+          onUpdateOptionName={ctrl.handleUpdateOptionName}
           onSetDefaultOption={ctrl.handleSetDefaultOption}
+          onRemoveOption={ctrl.handleRemoveFlavorOption}
+          customFlavorName={ctrl.customFlavorName}
+          onChangeCustomFlavorName={ctrl.setCustomFlavorName}
+          customFlavorPrice={ctrl.customFlavorPrice}
+          onChangeCustomFlavorPrice={ctrl.setCustomFlavorPrice}
+          onAddCustomFlavor={ctrl.handleAddCustomFlavor}
         />
 
         <MenuItemModifiersSection

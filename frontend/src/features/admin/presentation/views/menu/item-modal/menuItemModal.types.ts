@@ -29,13 +29,14 @@ export interface VariantMatrixRow {
 
 export interface ProductFlavorOptionStateItem {
   id: string; // option_id
-  groupId: string;
+  groupId?: string;
   code: string;
   name: string;
   price_delta: string;
   is_assigned: boolean;
   is_available: boolean;
   is_default: boolean;
+  is_new?: boolean;
 }
 
 export const ALLERGEN_OPTIONS = [

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Modal, Pressable, StyleSheet, Switch } from 'react-native';
-import { Printer, X } from 'lucide-react-native';
+import { Printer, X, ShieldCheck, RefreshCw } from 'lucide-react-native';
 import { useDeviceHardwareStation } from '../../application/useDeviceHardwareStation';
 import { usePrinterStationStore } from '../../application/usePrinterStationStore';
 
@@ -105,43 +105,69 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
                 </View>
 
                 {connectionStatus === 'CONNECTED' && portInfo && (
-                  <View className="mt-2 pt-2 border-t border-stone-100 flex-row items-center justify-between">
-                    <Text
-                      className="text-[11px] font-bold text-stone-800 flex-1 mr-2"
-                      numberOfLines={1}
-                    >
-                      {portInfo.deviceName || 'USB Thermal Printer'}
-                      {portInfo.manufacturerName ? ` • ${portInfo.manufacturerName}` : ''}
-                    </Text>
-                    <View className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200">
-                      <Text className="text-[10px] font-mono font-medium text-stone-600">
-                        {portInfo.type === 'usb'
-                          ? `USB (VID: 0x${portInfo.usbVendorId?.toString(16) || '?'})`
-                          : portInfo.type === 'bridge'
-                            ? 'Linux /dev/usb/lp0'
-                            : 'Serial Port'}
+                  <View className="mt-2 pt-2 border-t border-stone-100">
+                    <View className="flex-row items-center justify-between">
+                      <Text
+                        className="text-[11px] font-bold text-stone-800 flex-1 mr-2"
+                        numberOfLines={1}
+                      >
+                        {portInfo.deviceName || 'USB Thermal Printer'}
+                        {portInfo.manufacturerName ? ` • ${portInfo.manufacturerName}` : ''}
                       </Text>
+                      <View className="px-1.5 py-0.5 rounded bg-stone-100 border border-stone-200">
+                        <Text className="text-[10px] font-mono font-medium text-stone-600">
+                          {portInfo.type === 'usb'
+                            ? `USB (VID: 0x${portInfo.usbVendorId?.toString(16) || '?'}, PID: 0x${portInfo.usbProductId?.toString(16) || '?'})`
+                            : portInfo.type === 'bridge'
+                              ? 'Linux /dev/usb/lp0'
+                              : 'Serial Port'}
+                        </Text>
+                      </View>
                     </View>
+
+                    {portInfo.endpointOut !== undefined && (
+                      <Text className="text-[10px] text-stone-400 mt-0.5">
+                        Bulk Endpoint: {portInfo.endpointOut} • Interface:{' '}
+                        {portInfo.interfaceNumber ?? 0}
+                      </Text>
+                    )}
                   </View>
                 )}
+
+                {/* Device Isolation Chip */}
+                <View className="mt-2 pt-2 border-t border-stone-100 flex-row items-center space-x-1.5">
+                  <ShieldCheck size={12} color="#10b981" />
+                  <Text className="text-[10px] font-medium text-stone-500">
+                    Mouse, keyboard and general USB devices isolated safely
+                  </Text>
+                </View>
               </View>
 
               {/* Action Buttons */}
               <View className="flex-row gap-2">
                 {connectionStatus === 'CONNECTED' ? (
-                  <Pressable
-                    onPress={disconnectDevice}
-                    className="flex-1 py-2.5 rounded-xl bg-stone-100 items-center justify-center active:bg-stone-200"
-                  >
-                    <Text className="text-xs font-bold text-stone-700">Disconnect</Text>
-                  </Pressable>
+                  <>
+                    <Pressable
+                      onPress={() => connectDevice()}
+                      className="flex-1 py-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 items-center justify-center active:bg-amber-500/20 flex-row space-x-1"
+                    >
+                      <RefreshCw size={12} color="#d97706" />
+                      <Text className="text-xs font-bold text-amber-700 ml-1">Change Device</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={disconnectDevice}
+                      className="flex-1 py-2.5 rounded-xl bg-stone-100 items-center justify-center active:bg-stone-200"
+                    >
+                      <Text className="text-xs font-bold text-stone-700">Disconnect</Text>
+                    </Pressable>
+                  </>
                 ) : (
                   <Pressable
                     onPress={() => connectDevice()}
                     disabled={!isSupported}
                     className="flex-1 py-2.5 rounded-xl bg-amber-500 items-center justify-center active:bg-amber-600 disabled:opacity-50"
                   >
-                    <Text className="text-xs font-bold text-stone-950">Pair USB Printer</Text>
+                    <Text className="text-xs font-bold text-stone-950">Pair Thermal Printer</Text>
                   </Pressable>
                 )}
 
@@ -150,7 +176,7 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
                   disabled={connectionStatus !== 'CONNECTED'}
                   className="flex-1 py-2.5 rounded-xl border border-amber-500/40 bg-amber-50 items-center justify-center active:bg-amber-100 disabled:opacity-40"
                 >
-                  <Text className="text-xs font-bold text-amber-800">⚡ Test Drawer Kick</Text>
+                  <Text className="text-xs font-bold text-amber-800">⚡ Test Drawer</Text>
                 </Pressable>
               </View>
             </View>
