@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { styles } from '../screens/LoginScreen.styles';
 
-const JAZZ_HERO_IMAGE = require('../../../../../assets/images/jazz-club-stage-blurred.jpg');
+const COCKTAIL_HERO_IMAGE = require('../../../../../assets/images/cocktail-neon-sign.jpg');
 const MONKS_DREAM_LOGO_WHITE = require('../../../../../assets/monks-dream-logo-lockup-white.png');
 
 interface LoginHeroPaneProps {
@@ -13,14 +13,14 @@ interface LoginHeroPaneProps {
 export const LoginHeroPane: React.FC<LoginHeroPaneProps> = ({ isTablet }) => {
   return (
     <View style={[styles.heroPane, isTablet ? styles.heroPaneTablet : styles.heroPaneMobile]}>
-      {/* Blurred atmospheric stage photography adding visual depth */}
+      {/* Cocktail with neon sign backdrop adding vibrant bar aesthetic */}
       <ExpoImage
-        source={JAZZ_HERO_IMAGE}
+        source={COCKTAIL_HERO_IMAGE}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         transition={300}
         priority="high"
-        accessibilityLabel="Monk's Dream Jazz Club Stage"
+        accessibilityLabel="Monk's Dream Signature Cocktail with Neon Sign"
       />
       <View style={styles.heroImageOverlay} />
 
@@ -34,7 +34,9 @@ export const LoginHeroPane: React.FC<LoginHeroPaneProps> = ({ isTablet }) => {
             priority="high"
             accessibilityLabel="Monk's Dream logo"
           />
-          {isTablet && <Text style={styles.heroTagline}>Live sound · Artisan pours</Text>}
+          {isTablet && (
+            <Text style={styles.heroTagline}>Coffee. Food. Music and Conversations.</Text>
+          )}
         </View>
       </View>
     </View>

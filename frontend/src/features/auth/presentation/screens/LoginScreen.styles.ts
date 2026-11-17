@@ -3,30 +3,16 @@ import { StyleSheet, Platform } from 'react-native';
 export const styles = StyleSheet.create({
   keyboardContainer: {
     flex: 1,
-    backgroundColor: '#FAF7F2', // Elegant Warm Cream canvas behind login card, complementing #810021
+    backgroundColor: '#F5F2EB', // Softer warm muted linen canvas, gentle on the eyes
     position: 'relative',
     overflow: 'hidden',
   },
-  // Circular organic decorative gradients matching inspiration art
+  // Circular organic decorative gradients (hidden for clean pure white presentation)
   decorCircleTopLeft: {
-    position: 'absolute',
-    top: -120,
-    left: -120,
-    width: 320,
-    height: 320,
-    borderRadius: 160,
-    backgroundColor: 'rgba(129, 0, 33, 0.08)',
-    pointerEvents: 'none',
+    display: 'none',
   },
   decorCircleBottomRight: {
-    position: 'absolute',
-    bottom: -140,
-    right: -140,
-    width: 380,
-    height: 380,
-    borderRadius: 190,
-    backgroundColor: 'rgba(129, 0, 33, 0.06)',
-    pointerEvents: 'none',
+    display: 'none',
   },
   scrollContent: {
     flexGrow: 1,
@@ -361,41 +347,76 @@ export const styles = StyleSheet.create({
   },
   heroImageOverlay: {
     ...StyleSheet.absoluteFill,
-    // Subtle central atmospheric darkening behind the white logo and badge
-    backgroundColor: 'rgba(0, 0, 0, 0.32)',
+    // Multi-layer rich atmospheric vignette and gradient for dramatic depth
+    ...Platform.select({
+      web: {
+        backgroundImage:
+          'linear-gradient(to top, rgba(14, 11, 14, 0.88) 0%, rgba(14, 11, 14, 0.45) 45%, rgba(0, 0, 0, 0.1) 75%, rgba(10, 8, 12, 0.4) 100%), radial-gradient(circle at 75% 20%, rgba(255, 30, 86, 0.12) 0%, transparent 60%)',
+      },
+      default: {
+        backgroundColor: 'rgba(0, 0, 0, 0.42)',
+      },
+    }),
   },
   heroContent: {
     flex: 1,
     padding: 32,
     alignItems: 'center',
-    justifyContent: 'center', // Centered vertically and horizontally
+    justifyContent: 'flex-end',
+    paddingBottom: 96,
     zIndex: 2,
   },
   heroContentMobile: {
     padding: 8,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 24,
   },
   heroLogoBadge: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
     paddingHorizontal: 16,
-    // Zero border, pure clean floating logo with ambient depth
+    backgroundColor: 'transparent',
   },
   heroLogoBadgeMobile: {
     paddingVertical: 4,
     paddingHorizontal: 8,
+    backgroundColor: 'transparent',
   },
   heroBrandLockup: {
     width: 250,
     height: 76,
     marginBottom: 10,
+    ...Platform.select({
+      web: {
+        filter:
+          'drop-shadow(0 4px 16px rgba(0, 0, 0, 0.85)) drop-shadow(0 1px 3px rgba(0, 0, 0, 0.9))',
+      },
+      default: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.85,
+        shadowRadius: 10,
+      },
+    }),
   },
   heroBrandLockupMobile: {
     width: 190,
     height: 52,
     marginBottom: 0,
+    ...Platform.select({
+      web: {
+        filter:
+          'drop-shadow(0 3px 12px rgba(0, 0, 0, 0.85)) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9))',
+      },
+      default: {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.85,
+        shadowRadius: 8,
+      },
+    }),
   },
   heroTagline: {
     color: '#ffffff',
@@ -405,9 +426,14 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.4,
     marginTop: 2,
-    textShadowColor: 'rgba(0, 0, 0, 0.75)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 6,
+    textShadowColor: 'rgba(0, 0, 0, 0.9)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 12,
+    ...Platform.select({
+      web: {
+        textShadow: '0 2px 10px rgba(0, 0, 0, 0.85), 0 1px 3px rgba(0, 0, 0, 0.95)',
+      },
+    }),
     fontFamily: Platform.select({
       web: 'Plus Jakarta Sans, Inter, sans-serif',
       default: 'sans-serif',
