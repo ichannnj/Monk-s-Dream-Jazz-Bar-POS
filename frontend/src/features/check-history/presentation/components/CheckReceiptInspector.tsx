@@ -234,20 +234,6 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
             </View>
           )}
 
-          <View className="flex-row justify-between items-center">
-            <Text className="text-base font-semibold text-stone-500">VATable Sales (Net)</Text>
-            <Text className="text-base font-medium text-stone-600">
-              {formatCurrency(selectedCheck.vatableSales)}
-            </Text>
-          </View>
-
-          <View className="flex-row justify-between items-center">
-            <Text className="text-base font-semibold text-stone-500">12% VAT Included</Text>
-            <Text className="text-base font-medium text-stone-600">
-              {formatCurrency(selectedCheck.vatAmount)}
-            </Text>
-          </View>
-
           <View className="flex-row justify-between items-center pt-3 border-t border-stone-200">
             <Text className="text-xl font-black text-stone-900">Grand Total Settled</Text>
             <Text className="text-2xl font-black text-[#800020]">
@@ -263,7 +249,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
           </Text>
           <Text className="text-xs text-stone-500 italic mt-0.5">— THELONIOUS MONK —</Text>
           <Text className="text-xs font-bold text-stone-900 tracking-widest mt-3">
-            *** THIS IS NOT AN OFFICIAL RECEIPT ***
+            *** THIS IS NOT AN OFFICIAL RECEIPT YET ***
           </Text>
         </View>
       </View>

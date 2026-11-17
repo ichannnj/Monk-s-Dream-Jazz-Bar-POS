@@ -63,18 +63,8 @@ export function buildReceiptBytes(
     data.receiptNumber ||
     data.checkNumber ||
     `MD-${(data.paymentId || data.id || '001').slice(0, 8).toUpperCase()}`;
-  const operatingMode = (data.operatingMode || data.operating_mode || 'CAFE').toUpperCase();
-  const modeLabel = operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE';
 
-  if (is57mm) {
-    builder.bold(true).line(`CHECK #: ${receiptNo}`).bold(false);
-    builder.line(`MODE:    ${modeLabel}`);
-  } else {
-    builder
-      .bold(true)
-      .text(padLine(`CHECK #: ${receiptNo}`, `MODE: ${modeLabel}`, cols))
-      .bold(false);
-  }
+  builder.bold(true).line(`CHECK #: ${receiptNo}`).bold(false);
   builder.line(`DATE:    ${formatDateTime(data.settledAt || data.timestamp)}`);
 
   if (data.tableNumber || data.tableLabel) {
@@ -158,16 +148,14 @@ export function buildReceiptBytes(
     builder.text(padLine('CORKAGE FEE:', formatPhp(corkage), cols));
   }
 
+  // Combine discounts (e.g. Senior/PWD + custom discount) without advertising 12% VAT exemption on provisional receipts
   const rawVatExempt = toPesos(data.vatExemptSales || data.vat_exempt_sales || 0);
-  if (rawVatExempt > 0 && subtotal > rawVatExempt) {
-    const vatRelief = subtotal - rawVatExempt;
-    const vatExemptLabel = is57mm ? 'LESS: VAT EXEMPT (12%):' : 'LESS: VAT EXEMPTION (12%):';
-    builder.text(padLine(vatExemptLabel, `-${formatPhp(vatRelief)}`, cols));
-  }
+  const vatRelief = rawVatExempt > 0 && subtotal > rawVatExempt ? subtotal - rawVatExempt : 0;
+  const rawDiscount = toPesos(data.discountAmount || data.discount || data.discount_amount || 0);
+  const totalDiscount = rawDiscount + vatRelief;
 
-  const discount = toPesos(data.discountAmount || data.discount || data.discount_amount || 0);
-  if (discount > 0) {
-    builder.text(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, cols));
+  if (totalDiscount > 0) {
+    builder.text(padLine('LESS: DISCOUNT:', `-${formatPhp(totalDiscount)}`, cols));
   }
 
   const serviceCharge = toPesos(data.serviceCharge || data.service_charge || 0);
@@ -178,7 +166,9 @@ export function buildReceiptBytes(
   // Bold Grand Total
   builder.line(divider('=', cols));
   builder.bold(true).doubleHeight(true);
-  const total = toPesos(data.total || data.amount || subtotal + corkage - discount + serviceCharge);
+  const total = toPesos(
+    data.total || data.amount || subtotal + corkage - totalDiscount + serviceCharge
+  );
   const totalLabel = is57mm ? 'TOTAL DUE:' : 'TOTAL AMOUNT DUE:';
   builder.text(padLine(totalLabel, `PHP ${formatPhp(total)}`, cols));
   builder.doubleHeight(false).bold(false);
@@ -243,23 +233,7 @@ export function buildReceiptBytes(
     }
   }
 
-  // 8. Philippine VAT & Statutory Tax Breakdown
-  builder.line(divider('-', cols));
-  builder.line(is57mm ? 'TAX & STATUTORY BREAKDOWN:' : 'PHILIPPINE STATUTORY TAX BREAKDOWN:');
-  const vatableSales = toPesos(
-    data.vatableSales ?? (discount > 0 ? 0 : Number((total / 1.12).toFixed(2)))
-  );
-  const vatAmount = toPesos(
-    data.vatAmount ?? (discount > 0 ? 0 : Number((total - vatableSales).toFixed(2)))
-  );
-  const vatExempt = toPesos(data.vatExemptSales ?? (discount > 0 ? Number(total.toFixed(2)) : 0));
-
-  builder.text(padLine('  VATable Sales (12%):', formatPhp(vatableSales), cols));
-  builder.text(padLine('  VAT Amount (12%):', formatPhp(vatAmount), cols));
-  builder.text(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), cols));
-  builder.text(padLine('  Zero-Rated Sales:', '0.00', cols));
-
-  // Statutory SC / PWD signature block if discount was granted
+  // 8. Statutory SC / PWD signature block if discount was granted (retained without tax statutory breakdown)
   const seniorId = data.seniorPwdId || data.senior_pwd_id;
   const seniorName = data.seniorPwdName || data.senior_pwd_name;
   const discountType = (data.discountType || data.discount_type || '').toUpperCase();
@@ -289,7 +263,7 @@ export function buildReceiptBytes(
   builder.line('Thank you for supporting live music!');
   builder.line('Please come back for the next set.');
   builder.line(divider('-', cols));
-  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').bold(false);
+  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT YET').bold(false);
   builder.cut(true);
 
   if (shouldKickDrawer) {

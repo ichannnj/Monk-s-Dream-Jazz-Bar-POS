@@ -440,19 +440,10 @@ export class UsbEscPosPrinter implements IPrinterService {
     // 3. Metadata Section
     cmd([0x1b, 0x61, 0x00]); // Left
     const receiptNo = payload.receiptNumber || 'MD-REC-001';
-    const operatingMode = (payload.operatingMode || 'CAFE').toUpperCase();
-    const modeLabel = operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE';
 
-    if (is57mm) {
-      cmd([0x1b, 0x45, 0x01]);
-      push(`CHECK #: ${receiptNo}\n`);
-      cmd([0x1b, 0x45, 0x00]);
-      push(`MODE:    ${modeLabel}\n`);
-    } else {
-      cmd([0x1b, 0x45, 0x01]);
-      push(padLine(`CHECK #: ${receiptNo}`, `MODE: ${modeLabel}`, cols));
-      cmd([0x1b, 0x45, 0x00]);
-    }
+    cmd([0x1b, 0x45, 0x01]);
+    push(`CHECK #: ${receiptNo}\n`);
+    cmd([0x1b, 0x45, 0x00]);
     push(`DATE:    ${payload.settledAt || payload.timestamp}\n`);
 
     if (payload.tableNumber || payload.tableLabel) {
@@ -612,24 +603,7 @@ export class UsbEscPosPrinter implements IPrinterService {
       }
     }
 
-    // 8. Philippine VAT & Statutory Tax Breakdown
-    push(divider('-', cols));
-    push(is57mm ? 'TAX & STATUTORY BREAKDOWN:\n' : 'PHILIPPINE STATUTORY TAX BREAKDOWN:\n');
-    const vatableSales = toPesos(
-      payload.vatableSales ?? (discount > 0 ? 0 : Number((total / 1.12).toFixed(2)))
-    );
-    const vatAmount = toPesos(
-      payload.vatAmount ?? (discount > 0 ? 0 : Number((total - vatableSales).toFixed(2)))
-    );
-    const vatExempt = toPesos(
-      payload.vatExemptSales ?? (discount > 0 ? Number(total.toFixed(2)) : 0)
-    );
-
-    push(padLine('  VATable Sales (12%):', formatPhp(vatableSales), cols));
-    push(padLine('  VAT Amount (12%):', formatPhp(vatAmount), cols));
-    push(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), cols));
-    push(padLine('  Zero-Rated Sales:', '0.00', cols));
-
+    // 8. SC / PWD signature block if discount was granted (without tax statutory breakdown)
     if (discount > 0) {
       push(divider('-', cols));
       push('SC / PWD BENEFICIARY ACKNOWLEDGMENT:\n');
@@ -649,7 +623,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     push('Please come back for the next set.\n');
     push(divider('-', cols));
     cmd([0x1b, 0x45, 0x01]);
-    push('THIS IS NOT AN OFFICIAL RECEIPT\n');
+    push('THIS IS NOT AN OFFICIAL RECEIPT YET\n');
     cmd([0x1b, 0x45, 0x00]);
     push('\n\n\n');
 
@@ -716,19 +690,10 @@ export class UsbEscPosPrinter implements IPrinterService {
     // 4. Metadata Section
     cmd([0x1b, 0x61, 0x00]); // Left
     const billNo = payload.receiptNumber || 'MD-BILL-001';
-    const operatingMode = (payload.operatingMode || 'CAFE').toUpperCase();
-    const modeLabel = operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE';
 
-    if (is57mm) {
-      cmd([0x1b, 0x45, 0x01]);
-      push(`BILL #:  ${billNo}\n`);
-      cmd([0x1b, 0x45, 0x00]);
-      push(`MODE:    ${modeLabel}\n`);
-    } else {
-      cmd([0x1b, 0x45, 0x01]);
-      push(padLine(`BILL #:  ${billNo}`, `MODE: ${modeLabel}`, cols));
-      cmd([0x1b, 0x45, 0x00]);
-    }
+    cmd([0x1b, 0x45, 0x01]);
+    push(`BILL #:  ${billNo}\n`);
+    cmd([0x1b, 0x45, 0x00]);
     push(`DATE:    ${payload.timestamp}\n`);
 
     if (payload.tableNumber || payload.tableLabel) {
@@ -823,25 +788,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     cmd([0x1b, 0x45, 0x00]); // Normal weight
     push(divider('=', cols));
 
-    // 8. Philippine VAT & Statutory Breakdown (Estimate)
-    push(divider('-', cols));
-    push(is57mm ? 'TAX & STATUTORY (EST.):\n' : 'TAX & STATUTORY BREAKDOWN (ESTIMATE):\n');
-    const vatableSales = toPesos(
-      payload.vatableSales ?? (discount > 0 ? 0 : Number((total / 1.12).toFixed(2)))
-    );
-    const vatAmount = toPesos(
-      payload.vatAmount ?? (discount > 0 ? 0 : Number((total - vatableSales).toFixed(2)))
-    );
-    const vatExempt = toPesos(
-      payload.vatExemptSales ?? (discount > 0 ? Number(total.toFixed(2)) : 0)
-    );
-
-    push(padLine('  VATable Sales (12%):', formatPhp(vatableSales), cols));
-    push(padLine('  VAT Amount (12%):', formatPhp(vatAmount), cols));
-    push(padLine('  VAT-Exempt Sales:', formatPhp(vatExempt), cols));
-    push(padLine('  Zero-Rated Sales:', '0.00', cols));
-
-    // 9. Payment Instructions & Footer
+    // 8. Instructions & Footer (Tax statutory breakdown temporarily suppressed for non-BIR POS)
     push(divider('-', cols));
     cmd([0x1b, 0x61, 0x01]); // Center
     cmd([0x1b, 0x45, 0x01]);
@@ -851,7 +798,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     push('Please present this bill when paying at the till.\n');
     push(divider('-', cols));
     cmd([0x1b, 0x45, 0x01]);
-    push('THIS IS NOT AN OFFICIAL RECEIPT\n');
+    push('THIS IS NOT AN OFFICIAL RECEIPT YET\n');
     cmd([0x1b, 0x45, 0x00]);
     push('\n\n\n');
 

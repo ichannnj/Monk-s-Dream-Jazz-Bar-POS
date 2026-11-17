@@ -1,4 +1,4 @@
-import { test, expect } from 'vitest';
+import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import {
   UsbEscPosPrinter,
@@ -70,8 +70,11 @@ test('UsbEscPosPrinter renders customer receipt with branded jazz bar footer', (
   assert.ok(text.includes('1,000.00'));
   assert.ok(text.includes('50.00'));
   assert.ok(text.includes('Thelonious Monk'));
-  assert.ok(text.includes('THIS IS NOT AN OFFICIAL RECEIPT'));
+  assert.ok(text.includes('THIS IS NOT AN OFFICIAL RECEIPT YET'));
   assert.ok(text.includes('Please come back for the next set.'));
+  assert.ok(!text.includes('MODE:'));
+  assert.ok(!text.includes('TAX & STATUTORY'));
+  assert.ok(!text.includes('VATable Sales'));
 });
 
 test('UsbEscPosPrinter renders 57mm compact roll paper (32 cols)', () => {

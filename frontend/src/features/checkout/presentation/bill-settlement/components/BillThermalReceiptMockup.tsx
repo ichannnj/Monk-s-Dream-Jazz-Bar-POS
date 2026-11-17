@@ -157,33 +157,13 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         </Text>
 
         {/* Metadata */}
-        {is57mm ? (
-          <>
-            <View style={styles.receiptRow}>
-              <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
-                {isTakeout
-                  ? `CHECK: #${takeoutOrder?.ticketNumber || 'T-001'}`
-                  : `CHECK: #${(activeTab?.id || 'REC-001').slice(0, 8).toUpperCase()}`}
-              </Text>
-            </View>
-            <View style={styles.receiptRow}>
-              <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
-                MODE: {operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE'}
-              </Text>
-            </View>
-          </>
-        ) : (
-          <View style={styles.receiptRow}>
-            <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
-              {isTakeout
-                ? `CHECK: #${takeoutOrder?.ticketNumber || 'T-001'}`
-                : `CHECK: #${(activeTab?.id || 'REC-001').slice(0, 8).toUpperCase()}`}
-            </Text>
-            <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
-              MODE: {operatingMode === 'EVENT' ? 'EVENT NIGHT' : 'DAYTIME CAFE'}
-            </Text>
-          </View>
-        )}
+        <View style={styles.receiptRow}>
+          <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
+            {isTakeout
+              ? `CHECK: #${takeoutOrder?.ticketNumber || 'T-001'}`
+              : `CHECK: #${(activeTab?.id || 'REC-001').slice(0, 8).toUpperCase()}`}
+          </Text>
+        </View>
 
         <View style={styles.receiptRow}>
           <Text style={styles.receiptMeta}>
@@ -283,33 +263,20 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           <Text style={styles.receiptMeta}>{formatCurrency(subtotal)}</Text>
         </View>
 
-        {billing.vatExemptSales > 0 ? (
-          <View style={styles.receiptRow}>
-            <Text style={styles.receiptMeta}>
-              {is57mm ? 'LESS: VAT EXEMPT (12%):' : 'LESS: VAT EXEMPTION (12%):'}
-            </Text>
-            <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
-              -{formatCurrency(billing.seniorItemsGross - billing.vatExemptSales)}
-            </Text>
-          </View>
-        ) : null}
-
-        {billing.seniorDiscountAmount > 0 ? (
-          <View style={styles.receiptRow}>
-            <Text style={styles.receiptMeta}>
-              LESS: {discountType === 'SENIOR_CITIZEN' ? 'SC' : 'PWD'} (20%):
-            </Text>
-            <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
-              -{formatCurrency(billing.seniorDiscountAmount)}
-            </Text>
-          </View>
-        ) : null}
-
-        {billing.customDiscountAmount > 0 ? (
+        {billing.seniorDiscountAmount > 0 ||
+        billing.customDiscountAmount > 0 ||
+        billing.vatExemptSales > 0 ? (
           <View style={styles.receiptRow}>
             <Text style={styles.receiptMeta}>LESS: DISCOUNT:</Text>
             <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
-              -{formatCurrency(billing.customDiscountAmount)}
+              -
+              {formatCurrency(
+                billing.seniorDiscountAmount +
+                  billing.customDiscountAmount +
+                  (billing.vatExemptSales > 0
+                    ? Math.max(0, billing.seniorItemsGross - billing.vatExemptSales)
+                    : 0)
+              )}
             </Text>
           </View>
         ) : null}
@@ -425,30 +392,6 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           </>
         )}
 
-        {/* Philippine VAT Breakdown */}
-        <Text style={styles.receiptDivider} numberOfLines={1}>
-          {dividerDash}
-        </Text>
-        <Text style={[styles.receiptMeta, { fontWeight: '700', marginBottom: 2 }]}>
-          {is57mm ? 'TAX & STATUTORY BREAKDOWN:' : 'PHILIPPINE STATUTORY TAX BREAKDOWN:'}
-        </Text>
-        <View style={styles.receiptRow}>
-          <Text style={styles.receiptTaxSub}> VATable Sales (12%):</Text>
-          <Text style={styles.receiptTaxSub}>{formatCurrency(vatableSales)}</Text>
-        </View>
-        <View style={styles.receiptRow}>
-          <Text style={styles.receiptTaxSub}> VAT Amount (12%):</Text>
-          <Text style={styles.receiptTaxSub}>{formatCurrency(vatAmount)}</Text>
-        </View>
-        <View style={styles.receiptRow}>
-          <Text style={styles.receiptTaxSub}> VAT-Exempt Sales:</Text>
-          <Text style={styles.receiptTaxSub}>{formatCurrency(vatExemptSales)}</Text>
-        </View>
-        <View style={styles.receiptRow}>
-          <Text style={styles.receiptTaxSub}> Zero-Rated Sales:</Text>
-          <Text style={styles.receiptTaxSub}>₱0.00</Text>
-        </View>
-
         {billing.vatExemptSales > 0 ? (
           <>
             <Text style={styles.receiptDivider} numberOfLines={1}>
@@ -494,7 +437,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         <Text style={styles.receiptDivider} numberOfLines={1}>
           {dividerDash}
         </Text>
-        <Text style={styles.receiptNotOfficial}>THIS IS NOT AN OFFICIAL RECEIPT</Text>
+        <Text style={styles.receiptNotOfficial}>THIS IS NOT AN OFFICIAL RECEIPT YET</Text>
       </View>
     </View>
   );

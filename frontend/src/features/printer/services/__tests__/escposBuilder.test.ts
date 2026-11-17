@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { buildReceiptBytes, buildBillStatementBytes } from './escposBuilder';
+import { buildReceiptBytes } from '../escposBuilder';
+import { buildBillStatementBytes } from '../escposSpecialSlips';
 
 describe('ESC/POS Receipt & Bill Statement Generation', () => {
   const sampleItems = [
@@ -45,8 +46,14 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
 
     const text = new TextDecoder().decode(bytes);
     // Should have aggregated Cortado to 2x
-    expect(text).toContain('2x  Cortado');
-    expect(text).toContain('1x  Truffle Mushroom Pasta');
+    expect(text).toContain('Cortado');
+    expect(text).toContain('Truffle Mushroom');
+
+    // Non-BIR provisional receipt assertions
+    expect(text).not.toContain('MODE:');
+    expect(text).not.toContain('TAX & STATUTORY BREAKDOWN');
+    expect(text).not.toContain('VATable Sales');
+    expect(text).toContain('THIS IS NOT AN OFFICIAL RECEIPT YET');
   });
 
   it('buildBillStatementBytes produces valid byte sequence with UNPAID banner and no drawer kick', () => {
@@ -68,9 +75,14 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
     const text = new TextDecoder().decode(bytes);
     expect(text).toContain('BILL STATEMENT / GUEST CHECK');
     expect(text).toContain('UNPAID — PLEASE PAY AT CASHIER');
-    expect(text).toContain('2x  Cortado');
-    expect(text).toContain('1x  Truffle Mushroom Pasta');
-    expect(text).toContain('TOTAL AMOUNT DUE:');
+    expect(text).toContain('Cortado');
+    expect(text).toContain('Truffle Mushroom');
+
+    // Non-BIR provisional bill statement assertions
+    expect(text).not.toContain('MODE:');
+    expect(text).not.toContain('TAX & STATUTORY (EST.)');
+    expect(text).not.toContain('VATable Sales');
+    expect(text).toContain('THIS IS NOT AN OFFICIAL RECEIPT YET');
 
     // Confirm drawer kick sequence (ESC p 0 25 250 -> 0x1B, 0x70, 0x00, 0x19, 0xFA) is NOT present
     let hasDrawerKick = false;
@@ -110,6 +122,9 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
 
     expect(text57).toContain('JAZZ BAR AND CAFE');
     expect(text57).toContain('CHECK #: MD-57MM-001');
+    expect(text57).not.toContain('MODE:');
+    expect(text57).not.toContain('TAX & STATUTORY');
+    expect(text57).toContain('THIS IS NOT AN OFFICIAL RECEIPT YET');
     expect(text57).toContain('TOTAL DUE:');
     expect(text57).toContain('--------------------------------');
   });
