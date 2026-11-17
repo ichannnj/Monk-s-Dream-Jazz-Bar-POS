@@ -3,6 +3,14 @@ import { usePrinterStationStore } from './usePrinterStationStore';
 
 const STORAGE_KEY = 'monks_is_hardware_station';
 
+const getInitialStationStatus = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  if (window.location?.search?.includes('mode=printer')) return true;
+  if (localStorage.getItem(STORAGE_KEY) === 'true') return true;
+  if (localStorage.getItem('monks_bound_printer_device') !== null) return true;
+  return false;
+};
+
 interface DeviceHardwareStationState {
   isHardwareStation: boolean;
   isInitialized: boolean;
@@ -11,8 +19,7 @@ interface DeviceHardwareStationState {
 }
 
 export const useDeviceHardwareStation = create<DeviceHardwareStationState>((set, get) => ({
-  isHardwareStation:
-    typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) === 'true' : false,
+  isHardwareStation: getInitialStationStatus(),
   isInitialized: false,
 
   setHardwareStation: (enabled: boolean) => {

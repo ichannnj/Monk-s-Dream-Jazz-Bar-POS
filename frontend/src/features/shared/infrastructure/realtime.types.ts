@@ -60,6 +60,7 @@ export interface GlobalRealtimeCallbacks {
   onStockMovementChange?: (payload: any) => void;
   onWasteLogChange?: (payload: any) => void;
   onAttendanceChange?: (payload: any) => void;
+  onPrintJobChange?: (payload: any) => void;
   onPosSyncNeeded?: (payload: { reason: string; timestamp: string }) => void;
 }
 

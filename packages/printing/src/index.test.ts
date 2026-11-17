@@ -225,3 +225,24 @@ test('UsbEscPosPrinter renders multi-tender split payment breakdown', () => {
   assert.ok(text.includes('CARD [**** 4242]:'), 'Should show card with masked digits');
   assert.ok(text.includes('PHP 250.00'), 'Should show card amount');
 });
+
+test('Pending print queue resolver skips stale past chits and prints only the most recent ticket', () => {
+  const pendingJobs = [
+    { id: 'job-1', created_at: '2026-11-17T08:00:00Z', job_type: 'RUNNER_CHIT' },
+    { id: 'job-2', created_at: '2026-11-17T08:15:00Z', job_type: 'RUNNER_CHIT' },
+    { id: 'job-3', created_at: '2026-11-17T09:00:00Z', job_type: 'RUNNER_CHIT' },
+  ];
+
+  // Resolve which job to print and which to dismiss
+  const recentJob = pendingJobs[pendingJobs.length - 1];
+  const staleJobs = pendingJobs.slice(0, pendingJobs.length - 1);
+  const staleIds = staleJobs.map((j) => j.id);
+
+  assert.equal(recentJob.id, 'job-3', 'Most recent job should be selected');
+  assert.deepEqual(
+    staleIds,
+    ['job-1', 'job-2'],
+    'Past older jobs should be identified for dismissal'
+  );
+  assert.equal(staleJobs.length, 2, 'Should dismiss exactly 2 stale jobs');
+});

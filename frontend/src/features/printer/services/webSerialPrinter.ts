@@ -225,7 +225,7 @@ export class WebSerialPrinterService {
           if (usbDevices.length > 0) {
             // Sort/filter: prioritize device matching bound printer or printer class
             let targetDevices: any[] = [];
-            if (bound && bound.transport === 'usb') {
+            if (bound) {
               const matched = usbDevices.filter((d: any) => matchesSavedPrinter(d, bound));
               if (matched.length > 0) {
                 targetDevices = matched;
@@ -264,7 +264,18 @@ export class WebSerialPrinterService {
         try {
           const serialPorts = await (navigator as any).serial.getPorts();
           if (serialPorts.length > 0) {
-            for (const port of serialPorts) {
+            let targetPorts = serialPorts;
+            if (bound) {
+              const matched = serialPorts.filter((p: any) => {
+                const info = typeof p.getInfo === 'function' ? p.getInfo() : {};
+                return matchesSavedPrinter(info, bound);
+              });
+              if (matched.length > 0) {
+                targetPorts = matched;
+              }
+            }
+            const candidates = targetPorts.length > 0 ? targetPorts : serialPorts;
+            for (const port of candidates) {
               try {
                 await this.openSerialPort(port, baudRate);
                 console.info('[WebPrinter] Silently reconnected to authorized Serial port');

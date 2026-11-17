@@ -108,6 +108,7 @@ export class PrinterStationDaemon {
   private readonly printer: IPrinterService;
   private isRunning: boolean = false;
   private channel: RealtimeChannel | null = null;
+  private pollTimer: NodeJS.Timeout | null = null;
 
   constructor(config: PrinterDaemonConfig) {
     this.client = createClient(config.supabaseUrl, config.supabaseKey);
@@ -141,10 +142,21 @@ export class PrinterStationDaemon {
       .subscribe((status) => {
         console.log(`[PrinterStationDaemon] CDC subscription status: ${status}`);
       });
+
+    // 3. Fallback polling watchdog: ensure chits print even if CDC websocket is throttled or drops
+    this.pollTimer = setInterval(async () => {
+      if (this.isRunning) {
+        await this.processPendingQueue();
+      }
+    }, 2000);
   }
 
   public async stop(): Promise<void> {
     this.isRunning = false;
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
     if (this.channel) {
       await this.client.removeChannel(this.channel);
       this.channel = null;
@@ -158,14 +170,28 @@ export class PrinterStationDaemon {
       .eq('status', 'PENDING')
       .order('created_at', { ascending: true });
 
-    if (error || !jobs) {
-      console.error('[PrinterStationDaemon] Failed to fetch pending jobs:', error);
+    if (error || !jobs || jobs.length === 0) {
+      if (error) console.error('[PrinterStationDaemon] Failed to fetch pending jobs:', error);
       return;
     }
 
-    for (const job of jobs) {
-      await this.processJob(job as PrintJobRecord);
+    if (jobs.length === 1) {
+      await this.processJob(jobs[0] as PrintJobRecord);
+      return;
     }
+
+    // Only print the most recent job, skip older stale ones
+    const recentJob = jobs[jobs.length - 1];
+    const staleJobs = jobs.slice(0, jobs.length - 1);
+    const staleIds = staleJobs.map((j) => j.id);
+
+    console.log(
+      `[PrinterStationDaemon] Skipping ${staleJobs.length} past pending chit(s); auto-printing only the most recent ticket (${recentJob.job_type})`
+    );
+
+    await this.client.from('print_jobs').update({ status: 'FAILED' }).in('id', staleIds);
+
+    await this.processJob(recentJob as PrintJobRecord);
   }
 
   public async processJob(job: PrintJobRecord): Promise<boolean> {

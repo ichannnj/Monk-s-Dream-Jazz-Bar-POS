@@ -50,6 +50,21 @@ export const printerApi = {
   },
 
   /**
+   * Dismiss stale pending jobs so past backlog is not auto-printed
+   */
+  async dismissStalePendingJobs(jobIds: string[]): Promise<void> {
+    if (!jobIds || jobIds.length === 0) return;
+    const { error } = await supabase
+      .from('print_jobs')
+      .update({ status: 'FAILED' })
+      .in('id', jobIds);
+
+    if (error) {
+      console.warn('[printerApi.dismissStalePendingJobs] Failed to dismiss stale jobs:', error);
+    }
+  },
+
+  /**
    * Optimistically claim a print job so only one workstation tab prints it
    */
   async claimJob(jobId: string): Promise<boolean> {

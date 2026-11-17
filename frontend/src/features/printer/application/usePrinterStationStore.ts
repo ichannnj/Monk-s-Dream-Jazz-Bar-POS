@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { supabase } from '@/features/shared/infrastructure/supabase';
+import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { printerApi, type PrintJobItem } from '../data/printer.api';
 import {
@@ -47,6 +48,7 @@ interface PrinterStationState {
 
   // Actions
   initStation: () => () => void;
+  ensureConnected: () => Promise<boolean>;
   connectDevice: (transportOverride?: PrinterTransportMode) => Promise<boolean>;
   disconnectDevice: () => Promise<void>;
   forgetDevice: () => Promise<void>;
@@ -56,6 +58,8 @@ interface PrinterStationState {
   setBaudRate: (rate: number) => void;
   setPaperWidth: (width: ThermalPaperWidth) => void;
   processJob: (job: PrintJobItem) => Promise<boolean>;
+  _executeProcessJob: (job: PrintJobItem) => Promise<boolean>;
+  drainPendingJobsQueue: () => Promise<void>;
   reprintJob: (job: PrintJobItem) => Promise<void>;
   testPrintChit: () => Promise<void>;
   testPrintReceipt: () => Promise<void>;
@@ -92,6 +96,9 @@ function playChimeSound() {
     console.warn('[PrinterStationStore] Web Audio chime error:', err);
   }
 }
+
+// Sequential promise chain to serialize writeBytes and prevent USB/Serial port collisions
+let printQueuePromise: Promise<any> = Promise.resolve();
 
 export const usePrinterStationStore = create<PrinterStationState>((set, get) => ({
   isSupported: typeof navigator !== 'undefined' && ('usb' in navigator || 'serial' in navigator),
@@ -173,6 +180,37 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     set({ baudRate: rate });
   },
 
+  ensureConnected: async (): Promise<boolean> => {
+    // 1. If store connectionStatus is CONNECTED and driver is physically connected, we are good
+    if (get().connectionStatus === 'CONNECTED' && webSerialPrinter.isConnected()) {
+      return true;
+    }
+
+    // 2. If the physical driver is already open, sync up the store state
+    if (webSerialPrinter.isConnected()) {
+      const portInfo = webSerialPrinter.getPortInfo();
+      const boundDevice = webSerialPrinter.getBoundPrinter();
+      set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
+      return true;
+    }
+
+    // 3. Otherwise attempt autoConnect to remembered/authorized USB or Serial printer
+    try {
+      const connected = await webSerialPrinter.autoConnect(get().baudRate);
+      if (connected) {
+        const portInfo = webSerialPrinter.getPortInfo();
+        const boundDevice = webSerialPrinter.getBoundPrinter();
+        set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
+        get().addLog('success', 'Connected to authorized thermal printer');
+        return true;
+      }
+    } catch (err: any) {
+      console.warn('[PrinterStationStore] Silent ensureConnected failed:', err);
+    }
+
+    return false;
+  },
+
   connectDevice: async (transportOverride?: PrinterTransportMode) => {
     set({ connectionStatus: 'CONNECTING' });
     const transport = transportOverride || get().preferredTransport;
@@ -181,6 +219,9 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       const portInfo = webSerialPrinter.getPortInfo();
       const boundDevice = webSerialPrinter.getBoundPrinter();
       set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('monks_is_hardware_station', 'true');
+      }
       const deviceTitle = portInfo?.deviceName
         ? `${portInfo.deviceName}${portInfo.manufacturerName ? ` (${portInfo.manufacturerName})` : ''}`
         : 'USB Thermal Printer';
@@ -190,12 +231,8 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       );
       toast.success(`${deviceTitle} paired and online`, { title: 'Hardware Connected' });
 
-      // Drain any pending jobs queued while disconnected
-      printerApi.getPendingPrintJobs().then((pending) => {
-        for (const job of pending) {
-          get().processJob(job);
-        }
-      });
+      // Drain pending jobs queued while disconnected (prints only recent, skips stale backlog)
+      get().drainPendingJobsQueue();
 
       return true;
     } catch (err: any) {
@@ -228,11 +265,30 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     toast.info('Printer unlinked from station', { title: 'Device Forgotten' });
   },
 
-  processJob: async (job: PrintJobItem) => {
-    const { isLeader, autoPrintEnabled, connectionStatus, addLog, playOrderChime } = get();
+  processJob: (job: PrintJobItem) => {
+    return new Promise<boolean>((resolve) => {
+      printQueuePromise = printQueuePromise
+        .then(async () => {
+          const res = await get()._executeProcessJob(job);
+          resolve(res);
+        })
+        .catch(() => {
+          resolve(false);
+        });
+    });
+  },
 
-    // If auto-print is disabled, not leader, or physical printer not connected, leave in queue
-    if (!autoPrintEnabled || !isLeader || connectionStatus !== 'CONNECTED') {
+  _executeProcessJob: async (job: PrintJobItem) => {
+    const { isLeader, autoPrintEnabled, addLog, playOrderChime } = get();
+
+    // If auto-print is disabled or not leader, leave in queue
+    if (!autoPrintEnabled || !isLeader) {
+      return false;
+    }
+
+    // Attempt lazy hardware connection if needed
+    const isConnected = await get().ensureConnected();
+    if (!isConnected) {
       return false;
     }
 
@@ -344,6 +400,54 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       await printerApi.markJobFailed(job.id);
       set({ isProcessing: false });
       return false;
+    }
+  },
+
+  drainPendingJobsQueue: async () => {
+    const { isLeader, autoPrintEnabled, addLog } = get();
+    if (!autoPrintEnabled || !isLeader) {
+      return;
+    }
+
+    try {
+      const pending = await printerApi.getPendingPrintJobs();
+      if (!pending || pending.length === 0) return;
+
+      // Ensure hardware printer is connected before attempting to claim and print
+      const isConnected = await get().ensureConnected();
+      if (!isConnected) return;
+
+      if (pending.length === 1) {
+        await get().processJob(pending[0]);
+        return;
+      }
+
+      // When multiple pending jobs exist in queue:
+      // "dont auto reprint the past chits in queue, just the recent one."
+      // pending is sorted ascending by created_at, so the last element is the most recent
+      const recentJob = pending[pending.length - 1];
+      const staleJobs = pending.slice(0, pending.length - 1);
+      const staleIds = staleJobs.map((j) => j.id);
+
+      addLog(
+        'info',
+        `Skipped ${staleJobs.length} past pending chit(s); auto-printing only the most recent ticket (${recentJob.job_type})`
+      );
+
+      // Dismiss stale jobs so they don't block subsequent prints or replay on next connect
+      await printerApi.dismissStalePendingJobs(staleIds);
+
+      // Update recentJobs state so UI reflects the dismissal
+      set((state) => ({
+        recentJobs: state.recentJobs.map((j) =>
+          staleIds.includes(j.id) ? { ...j, status: 'FAILED' } : j
+        ),
+      }));
+
+      // Process exclusively the most recent job
+      await get().processJob(recentJob);
+    } catch (err: any) {
+      console.warn('[PrinterStationStore] Error draining pending jobs queue:', err);
     }
   },
 
@@ -507,11 +611,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
         set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
         get().addLog('success', 'Thermal printer reconnected via hotplug watchdog');
         if (get().isLeader) {
-          printerApi.getPendingPrintJobs().then((pending) => {
-            for (const job of pending) {
-              get().processJob(job);
-            }
-          });
+          get().drainPendingJobsQueue();
         }
       },
     });
@@ -532,11 +632,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
               boundDevice: webSerialPrinter.getBoundPrinter(),
             });
             get().addLog('success', 'Automatically reconnected to authorized thermal printer');
-            printerApi.getPendingPrintJobs().then((pending) => {
-              for (const job of pending) {
-                get().processJob(job);
-              }
-            });
+            get().drainPendingJobsQueue();
           }
 
           // Return a hanging Promise that keeps the lock active until unmounted
@@ -568,12 +664,10 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       .getRecentPrintJobs(50)
       .then((jobs) => {
         set({ recentJobs: jobs });
-        // Process any pending jobs if leader
-        printerApi.getPendingPrintJobs().then((pending) => {
-          for (const job of pending) {
-            get().processJob(job);
-          }
-        });
+        // Process only the most recent pending job if leader, skipping stale backlog
+        if (get().isLeader) {
+          get().drainPendingJobsQueue();
+        }
       })
       .catch((err) => {
         console.warn('[PrinterStationStore] Initial jobs fetch error:', err);
@@ -606,8 +700,41 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
 
     get().addLog('info', 'Listening to live store orders and payment settlements');
 
+    // 4. Background polling watchdog: checks every 2 seconds
+    // Guarantees chits print in real time even if CDC websocket is throttled or drops packets
+    const pollingInterval = setInterval(() => {
+      if (get().isLeader && get().autoPrintEnabled) {
+        get().drainPendingJobsQueue();
+      }
+    }, 2000);
+
+    // 5. Global POS Realtime subscription: triggers instant queue drain on order dispatch or settlement
+    const unsubGlobal = realtimeGateway.subscribeGlobalPOSRealtime({
+      onOrderChange: () => {
+        if (get().isLeader && get().autoPrintEnabled) {
+          get().drainPendingJobsQueue();
+        }
+      },
+      onPaymentChange: () => {
+        if (get().isLeader && get().autoPrintEnabled) {
+          get().drainPendingJobsQueue();
+        }
+      },
+      onPrintJobChange: (payload: any) => {
+        if (payload?.eventType === 'INSERT') {
+          const newJob = payload.new as PrintJobItem;
+          set((state) => ({ recentJobs: [newJob, ...state.recentJobs] }));
+          if (newJob.status === 'PENDING') {
+            get().processJob(newJob);
+          }
+        }
+      },
+    });
+
     // Return cleanup function
     return () => {
+      clearInterval(pollingInterval);
+      unsubGlobal();
       abortController.abort();
       if (activeLockRelease) {
         activeLockRelease();

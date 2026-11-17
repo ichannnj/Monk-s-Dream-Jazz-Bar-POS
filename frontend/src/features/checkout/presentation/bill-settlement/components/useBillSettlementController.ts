@@ -11,7 +11,7 @@ import {
 } from '../../../utils/taxAndDiscountCalculator';
 import { qrPaymentChannelsApi, type QrPaymentChannel } from '../../../data/qrPaymentChannels.api';
 import { extractRawOrderItems, computePricingLineItems } from './settlementItemExtractors';
-import { printerApi } from '@/features/printer';
+import { printerApi, usePrinterStationStore } from '@/features/printer';
 import type { PaymentTender } from '../../../domain/splitTender.types';
 import {
   calculateTenderBalance,
@@ -331,6 +331,7 @@ export function useBillSettlementController({
           tenders: isSplit ? splitTenders : undefined,
         }
       );
+      usePrinterStationStore.getState().drainPendingJobsQueue();
       setTenderedCash('');
       setReferenceNumber('');
       setSplitTenders([]);
@@ -389,6 +390,7 @@ export function useBillSettlementController({
       };
 
       await printerApi.enqueueBillStatement(billData);
+      usePrinterStationStore.getState().drainPendingJobsQueue();
       toast.success('Bill statement sent to printer', { title: 'Bill Printed' });
     } catch (err: any) {
       console.error('[useBillSettlementController] Failed to print bill statement:', err);

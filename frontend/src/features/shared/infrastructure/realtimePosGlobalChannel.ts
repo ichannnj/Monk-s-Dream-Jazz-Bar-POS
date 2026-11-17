@@ -96,6 +96,9 @@ export const ensureGlobalPOSRealtimeChannel = (
         globalPosListeners.forEach((cb) => cb.onWasteLogChange?.(payload));
       }
     )
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'print_jobs' }, (payload) => {
+      globalPosListeners.forEach((cb) => cb.onPrintJobChange?.(payload));
+    })
     .on('broadcast', { event: 'foh:buzzout' }, (event) => {
       globalPosListeners.forEach((cb) => cb.onBuzzout?.(event.payload));
     })

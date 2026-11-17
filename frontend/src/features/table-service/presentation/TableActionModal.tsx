@@ -24,7 +24,7 @@ import { useOrderStore } from '@/features/orders';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { ConfirmationModal, useVenueStore } from '@/features/shared';
 import { CustomerBillModal } from '@/features/checkout';
-import { printerApi } from '@/features/printer';
+import { printerApi, usePrinterStationStore } from '@/features/printer';
 import {
   calculateTabBilling,
   PricingLineItem,
@@ -278,6 +278,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
         vatExemptSales: billing.vatExemptSales,
       };
       await printerApi.enqueueBillStatement(billData);
+      usePrinterStationStore.getState().drainPendingJobsQueue();
       toast.success('Bill statement sent to printer', { title: 'Bill Printed' });
     } catch (err: any) {
       console.error('[TableActionModal] Failed to print bill:', err);
