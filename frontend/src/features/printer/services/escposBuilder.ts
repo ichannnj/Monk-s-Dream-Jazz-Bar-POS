@@ -14,6 +14,8 @@ import {
   divider,
   formatDateTime,
   formatItemLine,
+  formatModifierLine,
+  sanitizeForEscPos,
 } from './escposFormatters';
 import { aggregateReceiptItems } from './receiptItemAggregator';
 
@@ -123,12 +125,13 @@ export function buildReceiptBytes(
 
     if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
       for (const mod of item.modifiers) {
-        builder.line(`     + ${mod}`);
+        builder.text(formatModifierLine(mod, cols));
       }
     }
 
     if (item.notes && item.notes.trim()) {
-      builder.line(`     >> Note: ${item.notes.trim()}`);
+      const cleanNote = sanitizeForEscPos(item.notes.trim());
+      builder.line(`     >> Note: ${cleanNote}`);
     }
 
     if (item.isCorkage || item.is_corkage) {

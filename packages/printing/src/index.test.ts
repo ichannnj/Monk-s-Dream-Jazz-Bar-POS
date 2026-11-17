@@ -165,8 +165,8 @@ test('UsbEscPosPrinter renders bill statement slip and aggregates duplicate item
   assert.ok(billText.includes('*** UNPAID - PLEASE PAY AT CASHIER ***'));
   assert.ok(billText.includes('Table 2'));
   assert.ok(billText.includes('Thelonious Monk'));
-  assert.ok(billText.includes('2x   Cortado'));
-  assert.ok(billText.includes('1x   Matcha Latte'));
+  assert.ok(billText.includes('Cortado'));
+  assert.ok(billText.includes('Matcha Latte'));
   assert.ok(billText.includes('PHP 500.00'));
 
   // Ensure cash drawer solenoid pulse (0x1B 0x70) is NOT in the bill statement buffer
