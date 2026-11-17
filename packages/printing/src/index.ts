@@ -330,7 +330,7 @@ export class UsbEscPosPrinter implements IPrinterService {
   private readonly devicePath: string;
   private readonly columns: number;
 
-  constructor(devicePath: string = '/dev/usb/receipt-printer', columns: number = 48) {
+  constructor(devicePath: string = '/dev/usb/receipt-printer', columns: number = 32) {
     this.devicePath = devicePath;
     this.columns = columns;
   }

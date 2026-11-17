@@ -27,7 +27,7 @@ export * from './escposSpecialSlips';
 export function buildReceiptBytes(
   data: any,
   shouldKickDrawer: boolean = false,
-  paperWidth: ThermalPaperWidth = '80mm'
+  paperWidth: ThermalPaperWidth = '57mm'
 ): Uint8Array {
   const is57mm = paperWidth === '57mm' || paperWidth === '58mm';
   const cols = is57mm ? 32 : 48;

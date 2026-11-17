@@ -16,7 +16,7 @@ import { aggregateReceiptItems } from './receiptItemAggregator';
  */
 export function buildRunnerChitBytes(
   data: any,
-  paperWidth: ThermalPaperWidth = '80mm'
+  paperWidth: ThermalPaperWidth = '57mm'
 ): Uint8Array {
   const is57mm = paperWidth === '57mm' || paperWidth === '58mm';
   const cols = is57mm ? 32 : 48;
@@ -107,7 +107,7 @@ export function buildRunnerChitBytes(
  */
 export function buildTakeoutSlipBytes(
   data: any,
-  paperWidth: ThermalPaperWidth = '80mm'
+  paperWidth: ThermalPaperWidth = '57mm'
 ): Uint8Array {
   const is57mm = paperWidth === '57mm' || paperWidth === '58mm';
   const cols = is57mm ? 32 : 48;
@@ -156,7 +156,7 @@ export function buildTakeoutSlipBytes(
  */
 export function buildDeliveryTagBytes(
   data: any,
-  paperWidth: ThermalPaperWidth = '80mm'
+  paperWidth: ThermalPaperWidth = '57mm'
 ): Uint8Array {
   const is57mm = paperWidth === '57mm' || paperWidth === '58mm';
   const cols = is57mm ? 32 : 48;
@@ -207,7 +207,7 @@ export function buildDeliveryTagBytes(
  */
 export function buildReadingSlipBytes(
   reading: any,
-  paperWidth: ThermalPaperWidth = '80mm'
+  paperWidth: ThermalPaperWidth = '57mm'
 ): Uint8Array {
   const is57mm = paperWidth === '57mm' || paperWidth === '58mm';
   const cols = is57mm ? 32 : 48;
@@ -335,7 +335,7 @@ export function buildReadingSlipBytes(
  */
 export function buildBillStatementBytes(
   data: any,
-  paperWidth: ThermalPaperWidth = '80mm'
+  paperWidth: ThermalPaperWidth = '57mm'
 ): Uint8Array {
   const is57mm = paperWidth === '57mm' || paperWidth === '58mm';
   const cols = is57mm ? 32 : 48;

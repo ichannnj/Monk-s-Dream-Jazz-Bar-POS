@@ -100,9 +100,9 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
   isLeader: false,
   baudRate: 9600,
   paperWidth:
-    typeof localStorage !== 'undefined' && localStorage.getItem('monks_pos_paper_width') === '57mm'
-      ? '57mm'
-      : '80mm',
+    typeof localStorage !== 'undefined' && localStorage.getItem('monks_pos_paper_width') === '80mm'
+      ? '80mm'
+      : '57mm',
   preferredTransport:
     typeof localStorage !== 'undefined' &&
     localStorage.getItem('monks_pos_preferred_transport') === 'serial'

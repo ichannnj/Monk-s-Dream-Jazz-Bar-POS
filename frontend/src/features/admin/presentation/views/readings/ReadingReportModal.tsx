@@ -47,7 +47,7 @@ export const ReadingReportModal: React.FC<ReadingReportModalProps> = ({
       printHtmlElement(targetId, {
         title: `${title} - Monk's Dream POS`,
         isThermal,
-        pageSize: isThermal ? '80mm' : 'A4',
+        pageSize: isThermal ? '57mm' : 'A4',
       });
     } else {
       toast.info('Printing is supported in web desktop view.');

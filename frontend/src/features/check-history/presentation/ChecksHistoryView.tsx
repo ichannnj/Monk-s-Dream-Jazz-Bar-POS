@@ -117,7 +117,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
       printHtmlElement('monks-check-receipt-printable', {
         title: `${checkTitle} - Monk's Dream POS`,
         isThermal: true,
-        pageSize: '80mm',
+        pageSize: '57mm',
       });
     } else {
       toast.info('Browser receipt printing is supported on web desktop view.');

@@ -89,6 +89,27 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         }}
       >
         <Pressable
+          onPress={() => setPaperWidth('57mm')}
+          style={{
+            paddingVertical: 5,
+            paddingHorizontal: 12,
+            borderRadius: 8,
+            backgroundColor: is57mm ? '#810021' : '#f5f5f4',
+            borderWidth: 1,
+            borderColor: is57mm ? '#810021' : '#e7e5e4',
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 12,
+              fontWeight: '700',
+              color: is57mm ? '#ffffff' : '#78716c',
+            }}
+          >
+            57mm Compact (Default)
+          </Text>
+        </Pressable>
+        <Pressable
           onPress={() => setPaperWidth('80mm')}
           style={{
             paddingVertical: 5,
@@ -107,27 +128,6 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
             }}
           >
             80mm Standard
-          </Text>
-        </Pressable>
-        <Pressable
-          onPress={() => setPaperWidth('57mm')}
-          style={{
-            paddingVertical: 5,
-            paddingHorizontal: 12,
-            borderRadius: 8,
-            backgroundColor: is57mm ? '#810021' : '#f5f5f4',
-            borderWidth: 1,
-            borderColor: is57mm ? '#810021' : '#e7e5e4',
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 12,
-              fontWeight: '700',
-              color: is57mm ? '#ffffff' : '#78716c',
-            }}
-          >
-            57mm Compact
           </Text>
         </Pressable>
       </View>

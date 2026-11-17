@@ -3,7 +3,7 @@ import { Platform } from 'react-native';
 export interface PrintOptions {
   title?: string;
   isThermal?: boolean;
-  pageSize?: 'A4' | '80mm';
+  pageSize?: 'A4' | '80mm' | '57mm';
   customStyles?: string;
 }
 
@@ -28,7 +28,9 @@ export function printHtmlElement(elementId: string, options?: PrintOptions): boo
     return false;
   }
 
-  const isThermal = Boolean(options?.isThermal || options?.pageSize === '80mm');
+  const isThermal = Boolean(
+    options?.isThermal || options?.pageSize === '80mm' || options?.pageSize === '57mm'
+  );
   const styleTagId = 'monks-pos-active-print-stylesheet';
 
   // Mark all ancestors of targetEl so they don't hide or clip the target in print
@@ -56,9 +58,10 @@ export function printHtmlElement(elementId: string, options?: PrintOptions): boo
   const styleEl = document.createElement('style');
   styleEl.id = styleTagId;
 
-  const pageSize = isThermal ? '80mm auto' : 'A4 portrait';
+  const is80mm = options?.pageSize === '80mm';
+  const pageSize = isThermal ? (is80mm ? '80mm auto' : '57mm auto') : 'A4 portrait';
   const pageMargin = isThermal ? '2mm' : '6mm 8mm';
-  const targetWidth = isThermal ? '76mm' : '100%';
+  const targetWidth = isThermal ? (is80mm ? '76mm' : '54mm') : '100%';
 
   styleEl.innerHTML = `
     @media print {

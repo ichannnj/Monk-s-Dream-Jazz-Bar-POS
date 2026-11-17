@@ -208,7 +208,10 @@ test('UsbEscPosPrinter renders multi-tender split payment breakdown', () => {
   const buffer = printer.renderReceiptBytes(payload);
   const text = buffer.toString('utf-8');
 
-  assert.ok(text.includes('PAYMENT BREAKDOWN (SPLIT):'), 'Should show split header');
+  assert.ok(
+    text.includes('PAYMENT (SPLIT):') || text.includes('PAYMENT BREAKDOWN (SPLIT):'),
+    'Should show split header'
+  );
   assert.ok(text.includes('CASH:'), 'Should show cash line');
   assert.ok(text.includes('PHP 500.00'), 'Should show cash amount');
   assert.ok(text.includes('Cash Tendered:'), 'Should show cash tendered detail');

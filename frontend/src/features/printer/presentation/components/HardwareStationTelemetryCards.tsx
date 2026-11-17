@@ -25,8 +25,8 @@ const BAUD_RATE_OPTIONS: PosDropdownOption<string>[] = [
 ];
 
 const PAPER_WIDTH_OPTIONS: PosDropdownOption<string>[] = [
+  { value: '57mm', label: '57mm Roll', description: 'Compact 32-column thermal roll (Default)' },
   { value: '80mm', label: '80mm Roll', description: 'Standard 48-column thermal roll' },
-  { value: '57mm', label: '57mm Roll', description: 'Compact 32-column thermal roll' },
 ];
 
 const TRANSPORT_OPTIONS: PosDropdownOption<string>[] = [
@@ -71,7 +71,7 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
   isSupported,
   portInfo,
   baudRate,
-  paperWidth = '80mm',
+  paperWidth = '57mm',
   preferredTransport = 'auto',
   autoPrintEnabled,
   chimeEnabled,

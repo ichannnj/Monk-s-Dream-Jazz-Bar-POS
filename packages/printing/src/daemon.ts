@@ -113,7 +113,7 @@ export class PrinterStationDaemon {
     this.client = createClient(config.supabaseUrl, config.supabaseKey);
     this.printer = config.useMock
       ? new MockPrinter()
-      : new UsbEscPosPrinter(config.devicePath || '/dev/usb/receipt-printer', config.columns || 48);
+      : new UsbEscPosPrinter(config.devicePath || '/dev/usb/receipt-printer', config.columns || 32);
   }
 
   public async start(): Promise<void> {

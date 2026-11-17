@@ -40,7 +40,7 @@ function decodeBase64ToBytes(base64Str: string): Uint8Array {
   return new Uint8Array(0);
 }
 
-export function getMonksDreamLogoRasterBytes(paperWidth: ThermalPaperWidth = '80mm'): Uint8Array {
+export function getMonksDreamLogoRasterBytes(paperWidth: ThermalPaperWidth = '57mm'): Uint8Array {
   const is57mm = paperWidth === '57mm' || paperWidth === '58mm';
 
   if (is57mm) {
