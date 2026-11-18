@@ -17,10 +17,10 @@ import {
   formatModifierLine,
   sanitizeForEscPos,
 } from './escposFormatters';
-import { aggregateReceiptItems } from './receiptItemAggregator';
+import { aggregateReceiptItems, VENUE_RECEIPT_CONFIG } from './receiptItemAggregator';
 
 export { EscPosBuilder, ESCPOS };
-export { aggregateReceiptItems };
+export { aggregateReceiptItems, VENUE_RECEIPT_CONFIG };
 export * from './escposSpecialSlips';
 
 /**
@@ -51,6 +51,13 @@ export function buildReceiptBytes(
 
   // 2. Business Header
   builder.bold(true).line('Jazz Cafe and Bar').bold(false);
+  builder.line('Craft Cocktails & Fine Jazz');
+  if (is57mm) {
+    builder.line('Mobile: +63 917 833 3445');
+    builder.line('IG/FB: @monksdreamjazz');
+  } else {
+    builder.line('Mobile: +63 917 833 3445 | IG/FB: @monksdreamjazz');
+  }
   builder.line(divider('-', cols));
 
   // 3. Metadata Section
@@ -108,7 +115,7 @@ export function buildReceiptBytes(
         parts.push(item.size);
       }
       if (parts.length > 0) {
-        desc = `${desc} (${parts.join(' · ')})`;
+        desc = `${desc} (${parts.join(' - ')})`;
       }
     }
 
@@ -253,7 +260,7 @@ export function buildReceiptBytes(
   // 9. Footer
   builder.line(divider('-', cols));
   builder.center();
-  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').line('YET ( •◡-)-♡').bold(false);
+  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').line('YET').bold(false);
   builder.cut(true);
 
   if (shouldKickDrawer) {

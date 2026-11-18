@@ -32,7 +32,7 @@ export function buildRunnerChitBytes(
   builder.doubleHeight(true).bold(true).line('ORDER DISPATCH SLIP').doubleHeight(false).bold(false);
 
   const roundNum = data.roundNumber || 1;
-  builder.bold(true).line(`*** ROUND ${roundNum} • EXPEDITER ***`).bold(false);
+  builder.bold(true).line(`*** ROUND ${roundNum} - EXPEDITER ***`).bold(false);
 
   const orderNo = data.orderNumber || data.orderId?.slice(0, 8) || 'N/A';
   const timeStr = data.timestamp || new Date().toLocaleTimeString();
@@ -68,7 +68,7 @@ export function buildRunnerChitBytes(
 
     if (item.temperature && item.temperature !== 'NONE' && !name.includes('(')) {
       const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
-      const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
+      const size = item.size && item.size !== 'Standard' ? ` - ${item.size}` : '';
       name = `${name} (${temp}${size})`;
     } else if (item.size && item.size !== 'Standard' && !name.includes('(')) {
       name = `${name} (${item.size})`;
@@ -101,7 +101,7 @@ export function buildRunnerChitBytes(
     }
   }
 
-  builder.line(divider('=', cols)).center().line("Monk's Dream Jazz Bar • Expediter").cut(true);
+  builder.line(divider('=', cols)).center().line("Monk's Dream Jazz Bar - Expediter").cut(true);
 
   return builder.toBytes();
 }
@@ -360,13 +360,20 @@ export function buildBillStatementBytes(
 
   // 2. Business Header
   builder.bold(true).line('Jazz Cafe and Bar').bold(false);
+  builder.line('Craft Cocktails & Fine Jazz');
+  if (is57mm) {
+    builder.line('Mobile: +63 917 833 3445');
+    builder.line('IG/FB: @monksdreamjazz');
+  } else {
+    builder.line('Mobile: +63 917 833 3445 | IG/FB: @monksdreamjazz');
+  }
   builder.line(divider('-', cols));
 
   // 3. Bill Statement Banner
   builder
     .bold(true)
     .line('*** BILL STATEMENT / GUEST CHECK ***')
-    .line('*** UNPAID — PLEASE PAY AT CASHIER ***')
+    .line('*** UNPAID - PLEASE PAY AT CASHIER ***')
     .bold(false)
     .line(divider('=', cols));
 
@@ -429,7 +436,7 @@ export function buildBillStatementBytes(
         parts.push(item.size);
       }
       if (parts.length > 0) {
-        desc = `${desc} (${parts.join(' · ')})`;
+        desc = `${desc} (${parts.join(' - ')})`;
       }
     }
 
@@ -495,11 +502,11 @@ export function buildBillStatementBytes(
   // 8. Instructions & Closing (Tax statutory breakdown temporarily suppressed for non-BIR POS)
   builder.line(divider('-', cols));
   builder.center();
-  builder.bold(true).line('*** UNPAID — PLEASE PAY AT CASHIER ***').bold(false);
+  builder.bold(true).line('*** UNPAID - PLEASE PAY AT CASHIER ***').bold(false);
   builder.line('This slip is for order review and billing verification.');
   builder.line('Please present this bill when paying at the till.');
   builder.line(divider('-', cols));
-  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').line('YET ( •◡-)-♡').bold(false);
+  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').line('YET').bold(false);
   builder.cut(true);
 
   return builder.toBytes();

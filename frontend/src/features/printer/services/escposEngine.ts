@@ -1,3 +1,5 @@
+import { sanitizeForEscPos } from './escposFormatters';
+
 const encoder = new TextEncoder();
 
 export const ESCPOS = {
@@ -34,12 +36,16 @@ export class EscPosBuilder {
   }
 
   public text(str: string): this {
-    this.chunks.push(encoder.encode(str));
+    const safe = sanitizeForEscPos(String(str ?? ''));
+    if (safe.length > 0) {
+      this.chunks.push(encoder.encode(safe));
+    }
     return this;
   }
 
   public line(str: string = ''): this {
-    this.chunks.push(encoder.encode(str + '\n'));
+    const safe = sanitizeForEscPos(String(str ?? ''));
+    this.chunks.push(encoder.encode(safe + '\n'));
     return this;
   }
 

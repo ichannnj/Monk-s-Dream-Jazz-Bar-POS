@@ -1,6 +1,6 @@
 export function cleanStaffName(name?: string): string {
   if (!name || !name.trim()) return 'Staff';
-  const clean = name.trim();
+  const clean = sanitizeForEscPos(name.trim());
   const parenthesisIndex = clean.indexOf('(');
   if (parenthesisIndex > 0) {
     const namePart = clean.substring(0, parenthesisIndex).trim();
@@ -23,8 +23,10 @@ export function formatPhp(amount: number = 0): string {
 }
 
 export function padLine(left: string, right: string, cols: number = 48): string {
-  const spaceCount = Math.max(1, cols - left.length - right.length);
-  return left + ' '.repeat(spaceCount) + right + '\n';
+  const safeLeft = sanitizeForEscPos(left);
+  const safeRight = sanitizeForEscPos(right);
+  const spaceCount = Math.max(1, cols - safeLeft.length - safeRight.length);
+  return safeLeft + ' '.repeat(spaceCount) + safeRight + '\n';
 }
 
 export function divider(char: string = '-', cols: number = 48): string {
@@ -43,14 +45,20 @@ export function sanitizeForEscPos(text: string): string {
   if (!text) return '';
   return text
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+    .replace(/[\u0300-\u036f]/g, '') // remove diacritics / accents
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
-    .replace(/[–—]/g, '-')
+    .replace(/[–—―‒−]/g, '-')
     .replace(/…/g, '...')
-    .replace(/[·•]/g, '-')
+    .replace(/[·•∙⋅○●◦]/g, '-')
     .replace(/₱/g, 'PHP ')
-    .replace(/[^\x20-\x7E\n]/g, ''); // strip any byte outside printable ASCII range
+    .replace(/€/g, 'EUR ')
+    .replace(/£/g, 'GBP ')
+    .replace(/¥/g, 'JPY ')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\t/g, '    ')
+    .replace(/[^\x20-\x7E\n]/g, ''); // strictly enforce printable ASCII (0x20-0x7E) plus newline
 }
 
 export function formatModifierLine(rawMod: any, cols: number = 48): string {

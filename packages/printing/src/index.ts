@@ -8,11 +8,17 @@ export function sanitizeForEscPos(text: string): string {
     .replace(/[\u0300-\u036f]/g, '') // remove diacritics / accents
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
-    .replace(/[–—]/g, '-')
+    .replace(/[–—―‒−]/g, '-')
     .replace(/…/g, '...')
-    .replace(/[·•]/g, '-')
+    .replace(/[·•∙⋅○●◦]/g, '-')
     .replace(/₱/g, 'PHP ')
-    .replace(/[^\x20-\x7E\n]/g, ''); // strip any byte outside printable ASCII range
+    .replace(/€/g, 'EUR ')
+    .replace(/£/g, 'GBP ')
+    .replace(/¥/g, 'JPY ')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\t/g, '    ')
+    .replace(/[^\x20-\x7E\n]/g, ''); // strictly enforce printable ASCII (0x20-0x7E) plus newline
 }
 
 export function formatModifierLine(rawMod: any, cols: number = 48): string {
@@ -543,9 +549,9 @@ export class UsbEscPosPrinter implements IPrinterService {
     cmd([0x1b, 0x45, 0x00]); // Normal weight
     push('Craft Cocktails & Fine Jazz\n');
     if (is57mm) {
-      push('Tel: +63 917 555 1957\nIG/FB: @monksdreamjazz\n');
+      push('Mobile: +63 917 833 3445\nIG/FB: @monksdreamjazz\n');
     } else {
-      push('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz\n');
+      push('Mobile: +63 917 833 3445 | IG/FB: @monksdreamjazz\n');
     }
     push(divider('-', cols));
 
@@ -591,7 +597,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
       if (item.temperature && item.temperature !== 'NONE' && !desc.includes('(')) {
         const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
-        const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
+        const size = item.size && item.size !== 'Standard' ? ` - ${item.size}` : '';
         desc = `${desc} (${temp}${size})`;
       } else if (item.size && item.size !== 'Standard' && !desc.includes('(')) {
         desc = `${desc} (${item.size})`;
@@ -787,16 +793,16 @@ export class UsbEscPosPrinter implements IPrinterService {
     cmd([0x1b, 0x45, 0x00]); // Bold off
     push('Craft Cocktails & Fine Jazz\n');
     if (is57mm) {
-      push('Tel: +63 917 555 1957\nIG/FB: @monksdreamjazz\n');
+      push('Mobile: +63 917 833 3445\nIG/FB: @monksdreamjazz\n');
     } else {
-      push('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz\n');
+      push('Mobile: +63 917 833 3445 | IG/FB: @monksdreamjazz\n');
     }
     push(divider('-', cols));
 
     // 3. Bill Statement Banner
     cmd([0x1b, 0x45, 0x01]);
     push('*** BILL STATEMENT / GUEST CHECK ***\n');
-    push('*** UNPAID — PLEASE PAY AT CASHIER ***\n');
+    push('*** UNPAID - PLEASE PAY AT CASHIER ***\n');
     cmd([0x1b, 0x45, 0x00]);
     push(divider('=', cols));
 
@@ -842,7 +848,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
       if (item.temperature && item.temperature !== 'NONE' && !desc.includes('(')) {
         const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
-        const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
+        const size = item.size && item.size !== 'Standard' ? ` - ${item.size}` : '';
         desc = `${desc} (${temp}${size})`;
       } else if (item.size && item.size !== 'Standard' && !desc.includes('(')) {
         desc = `${desc} (${item.size})`;
@@ -906,7 +912,7 @@ export class UsbEscPosPrinter implements IPrinterService {
     push(divider('-', cols));
     cmd([0x1b, 0x61, 0x01]); // Center
     cmd([0x1b, 0x45, 0x01]);
-    push('*** UNPAID — PLEASE PAY AT CASHIER ***\n');
+    push('*** UNPAID - PLEASE PAY AT CASHIER ***\n');
     cmd([0x1b, 0x45, 0x00]);
     push('This slip is for order review and billing verification.\n');
     push('Please present this bill when paying at the till.\n');
@@ -945,7 +951,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
     const roundNum = payload.roundNumber || 1;
     cmd([0x1b, 0x45, 0x01]);
-    push(`*** ROUND ${roundNum} • EXPEDITER ***\n`);
+    push(`*** ROUND ${roundNum} - EXPEDITER ***\n`);
     cmd([0x1b, 0x45, 0x00]);
 
     const orderNo = payload.orderNumber || 'N/A';
@@ -981,7 +987,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
       if (item.temperature && item.temperature !== 'NONE' && !name.includes('(')) {
         const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
-        const size = item.size && item.size !== 'Standard' ? ` · ${item.size}` : '';
+        const size = item.size && item.size !== 'Standard' ? ` - ${item.size}` : '';
         name = `${name} (${temp}${size})`;
       } else if (item.size && item.size !== 'Standard' && !name.includes('(')) {
         name = `${name} (${item.size})`;
@@ -1015,7 +1021,7 @@ export class UsbEscPosPrinter implements IPrinterService {
 
     push(divider('=', cols));
     cmd([0x1b, 0x61, 0x01]); // Center
-    push("Monk's Dream Jazz Bar • Expediter\n\n\n\n");
+    push("Monk's Dream Jazz Bar - Expediter\n\n\n\n");
     cmd([0x1d, 0x56, 0x00]); // Cut
 
     return Buffer.concat(parts);

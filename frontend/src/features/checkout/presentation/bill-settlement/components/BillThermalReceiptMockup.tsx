@@ -146,6 +146,8 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
             }}
           />
           <Text style={styles.receiptSubLogo}>Jazz Cafe and Bar</Text>
+          <Text style={styles.receiptMeta}>Craft Cocktails & Fine Jazz</Text>
+          <Text style={styles.receiptMeta}>Mobile: +63 917 833 3445</Text>
         </View>
         <Text style={styles.receiptDivider} numberOfLines={1}>
           {dividerDash}
@@ -414,13 +416,13 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           </>
         ) : null}
 
-        {/* Jazz Club Cultural Quote & Notice */}
+        {/* Jazz Club Cultural Notice */}
         <Text style={styles.receiptDivider} numberOfLines={1}>
           {dividerDash}
         </Text>
         <View style={{ alignItems: 'center', marginVertical: 4 }}>
           <Text style={styles.receiptNotOfficial}>THIS IS NOT AN OFFICIAL RECEIPT</Text>
-          <Text style={styles.receiptNotOfficial}>YET ( •◡-)-♡</Text>
+          <Text style={styles.receiptNotOfficial}>YET</Text>
         </View>
       </View>
     </View>

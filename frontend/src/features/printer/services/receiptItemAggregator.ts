@@ -13,6 +13,17 @@
  * to maintain transparent order preparation details.
  */
 
+/**
+ * Official Venue Contact Information for Receipts & Guest Slips
+ */
+export const VENUE_RECEIPT_CONFIG = {
+  venueName: "MONK'S DREAM",
+  businessType: 'Jazz Cafe and Bar',
+  tagline: 'Craft Cocktails & Fine Jazz',
+  mobileNumber: '+63 917 833 3445',
+  social: '@monksdreamjazz',
+} as const;
+
 export interface ReceiptItemInput {
   id?: string;
   productId?: string;

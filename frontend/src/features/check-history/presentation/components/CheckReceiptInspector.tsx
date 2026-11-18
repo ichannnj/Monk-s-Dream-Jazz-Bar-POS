@@ -64,7 +64,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
             Craft Cocktails &amp; Fine Jazz
           </Text>
           <Text className="text-xs text-center text-stone-500">
-            Tel: +63 917 555 1957 · @monksdreamjazz
+            Mobile: +63 917 833 3445 | @monksdreamjazz
           </Text>
           <Text className="text-xs text-center mt-1">
             Check: {selectedCheck.checkNumber} · Date:{' '}
