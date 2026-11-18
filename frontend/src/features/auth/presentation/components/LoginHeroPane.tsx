@@ -34,9 +34,7 @@ export const LoginHeroPane: React.FC<LoginHeroPaneProps> = ({ isTablet }) => {
             priority="high"
             accessibilityLabel="Monk's Dream logo"
           />
-          {isTablet && (
-            <Text style={styles.heroTagline}>Coffee. Food. Music and Conversations.</Text>
-          )}
+          {isTablet && <Text style={styles.heroTagline}>Coffee. Food. Music. Conversations.</Text>}
         </View>
       </View>
     </View>

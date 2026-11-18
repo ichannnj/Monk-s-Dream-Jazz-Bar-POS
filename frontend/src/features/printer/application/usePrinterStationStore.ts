@@ -20,7 +20,7 @@ import {
 
 export type StationConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
 export type DrawerStatus = 'IDLE' | 'KICKING';
-export type ThermalPaperWidth = '80mm' | '57mm';
+export type ThermalPaperWidth = '80mm' | '58mm' | '57mm';
 export type PrinterTransportMode = 'auto' | 'usb' | 'serial';
 
 export interface StationLogItem {
@@ -109,7 +109,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
   paperWidth:
     typeof localStorage !== 'undefined' && localStorage.getItem('monks_pos_paper_width') === '80mm'
       ? '80mm'
-      : '57mm',
+      : '58mm',
   preferredTransport:
     typeof localStorage !== 'undefined' &&
     localStorage.getItem('monks_pos_preferred_transport') === 'serial'

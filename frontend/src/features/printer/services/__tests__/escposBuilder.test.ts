@@ -53,7 +53,8 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
     expect(text).not.toContain('MODE:');
     expect(text).not.toContain('TAX & STATUTORY BREAKDOWN');
     expect(text).not.toContain('VATable Sales');
-    expect(text).toContain('THIS IS NOT AN OFFICIAL RECEIPT YET');
+    expect(text).toContain('THIS IS NOT AN OFFICIAL RECEIPT');
+    expect(text).toContain('YET ( •◡-)-♡');
   });
 
   it('buildBillStatementBytes produces valid byte sequence with UNPAID banner and no drawer kick', () => {
@@ -82,7 +83,8 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
     expect(text).not.toContain('MODE:');
     expect(text).not.toContain('TAX & STATUTORY (EST.)');
     expect(text).not.toContain('VATable Sales');
-    expect(text).toContain('THIS IS NOT AN OFFICIAL RECEIPT YET');
+    expect(text).toContain('THIS IS NOT AN OFFICIAL RECEIPT');
+    expect(text).toContain('YET ( •◡-)-♡');
 
     // Confirm drawer kick sequence (ESC p 0 25 250 -> 0x1B, 0x70, 0x00, 0x19, 0xFA) is NOT present
     let hasDrawerKick = false;
@@ -120,11 +122,12 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
     expect(bytes57).toBeInstanceOf(Uint8Array);
     const text57 = new TextDecoder().decode(bytes57);
 
-    expect(text57).toContain('JAZZ BAR AND CAFE');
+    expect(text57).toContain('Jazz Cafe and Bar');
     expect(text57).toContain('CHECK #: MD-57MM-001');
     expect(text57).not.toContain('MODE:');
     expect(text57).not.toContain('TAX & STATUTORY');
-    expect(text57).toContain('THIS IS NOT AN OFFICIAL RECEIPT YET');
+    expect(text57).toContain('THIS IS NOT AN OFFICIAL RECEIPT');
+    expect(text57).toContain('YET ( •◡-)-♡');
     expect(text57).toContain('TOTAL DUE:');
     expect(text57).toContain('--------------------------------');
   });

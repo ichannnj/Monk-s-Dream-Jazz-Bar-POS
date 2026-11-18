@@ -25,7 +25,7 @@ const BAUD_RATE_OPTIONS: PosDropdownOption<string>[] = [
 ];
 
 const PAPER_WIDTH_OPTIONS: PosDropdownOption<string>[] = [
-  { value: '57mm', label: '57mm Roll', description: 'Compact 32-column thermal roll (Default)' },
+  { value: '58mm', label: '58mm Roll', description: 'Compact 32-column thermal roll (Default)' },
   { value: '80mm', label: '80mm Roll', description: 'Standard 48-column thermal roll' },
 ];
 
@@ -45,7 +45,7 @@ interface HardwareStationTelemetryCardsProps {
   isSupported: boolean;
   portInfo: SerialPortInfo | null;
   baudRate: number;
-  paperWidth?: '80mm' | '57mm';
+  paperWidth?: '80mm' | '58mm' | '57mm';
   preferredTransport?: PrinterTransportMode;
   autoPrintEnabled: boolean;
   chimeEnabled: boolean;
@@ -56,7 +56,7 @@ interface HardwareStationTelemetryCardsProps {
   onDisconnect: () => void;
   onForgetDevice?: () => void;
   onSetBaudRate: (rate: number) => void;
-  onSetPaperWidth?: (width: '80mm' | '57mm') => void;
+  onSetPaperWidth?: (width: '80mm' | '58mm' | '57mm') => void;
   onSetTransport?: (mode: PrinterTransportMode) => void;
   onToggleAutoPrint: () => void;
   onToggleChime: () => void;
@@ -71,7 +71,7 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
   isSupported,
   portInfo,
   baudRate,
-  paperWidth = '57mm',
+  paperWidth = '58mm',
   preferredTransport = 'auto',
   autoPrintEnabled,
   chimeEnabled,
@@ -199,7 +199,7 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
                   <PosDropdown
                     options={PAPER_WIDTH_OPTIONS}
                     value={paperWidth}
-                    onChange={(val) => onSetPaperWidth(val as '80mm' | '57mm')}
+                    onChange={(val) => onSetPaperWidth(val as '80mm' | '58mm' | '57mm')}
                     sheetTitle="Paper Width"
                     className="h-[36px]"
                   />

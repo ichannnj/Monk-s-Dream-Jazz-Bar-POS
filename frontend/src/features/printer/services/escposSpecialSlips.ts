@@ -359,13 +359,7 @@ export function buildBillStatementBytes(
   }
 
   // 2. Business Header
-  builder.bold(true).line('JAZZ BAR AND CAFE').bold(false).line('Craft Cocktails & Fine Jazz');
-
-  if (is57mm) {
-    builder.line('Tel: +63 917 555 1957').line('IG/FB: @monksdreamjazz');
-  } else {
-    builder.line('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz');
-  }
+  builder.bold(true).line('Jazz Cafe and Bar').bold(false);
   builder.line(divider('-', cols));
 
   // 3. Bill Statement Banner
@@ -505,7 +499,7 @@ export function buildBillStatementBytes(
   builder.line('This slip is for order review and billing verification.');
   builder.line('Please present this bill when paying at the till.');
   builder.line(divider('-', cols));
-  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT YET').bold(false);
+  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').line('YET ( •◡-)-♡').bold(false);
   builder.cut(true);
 
   return builder.toBytes();

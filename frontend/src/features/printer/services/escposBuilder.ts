@@ -50,13 +50,7 @@ export function buildReceiptBytes(
   }
 
   // 2. Business Header
-  builder.bold(true).line('JAZZ BAR AND CAFE').bold(false).line('Craft Cocktails & Fine Jazz');
-
-  if (is57mm) {
-    builder.line('Tel: +63 917 555 1957').line('IG/FB: @monksdreamjazz');
-  } else {
-    builder.line('Tel: +63 917 555 1957  •  IG/FB: @monksdreamjazz');
-  }
+  builder.bold(true).line('Jazz Cafe and Bar').bold(false);
   builder.line(divider('-', cols));
 
   // 3. Metadata Section
@@ -259,14 +253,7 @@ export function buildReceiptBytes(
   // 9. Footer
   builder.line(divider('-', cols));
   builder.center();
-  builder.line('"Writing about music is like dancing');
-  builder.line('about architecture."');
-  builder.line('- Thelonious Monk');
-  builder.line();
-  builder.line('Thank you for supporting live music!');
-  builder.line('Please come back for the next set.');
-  builder.line(divider('-', cols));
-  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT YET').bold(false);
+  builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').line('YET ( •◡-)-♡').bold(false);
   builder.cut(true);
 
   if (shouldKickDrawer) {

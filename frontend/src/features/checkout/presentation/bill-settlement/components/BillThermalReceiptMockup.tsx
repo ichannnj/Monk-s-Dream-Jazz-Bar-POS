@@ -67,12 +67,13 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
 }) => {
   const displayItems = useMemo(() => aggregateReceiptItems(rawItems), [rawItems]);
   const { paperWidth, setPaperWidth } = usePrinterStationStore();
-  const is57mm = paperWidth === '57mm';
+  const is58mm = paperWidth === '58mm' || paperWidth === '57mm';
+  const is57mm = is58mm; // Alias for backward compatibility across slip layout computations
 
-  const dividerDash = is57mm
+  const dividerDash = is58mm
     ? '--------------------------------'
     : '------------------------------------------------';
-  const dividerEqual = is57mm
+  const dividerEqual = is58mm
     ? '================================'
     : '================================================';
 
@@ -89,24 +90,24 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         }}
       >
         <Pressable
-          onPress={() => setPaperWidth('57mm')}
+          onPress={() => setPaperWidth('58mm')}
           style={{
             paddingVertical: 5,
             paddingHorizontal: 12,
             borderRadius: 8,
-            backgroundColor: is57mm ? '#810021' : '#f5f5f4',
+            backgroundColor: is58mm ? '#810021' : '#f5f5f4',
             borderWidth: 1,
-            borderColor: is57mm ? '#810021' : '#e7e5e4',
+            borderColor: is58mm ? '#810021' : '#e7e5e4',
           }}
         >
           <Text
             style={{
               fontSize: 12,
               fontWeight: '700',
-              color: is57mm ? '#ffffff' : '#78716c',
+              color: is58mm ? '#ffffff' : '#78716c',
             }}
           >
-            57mm Compact (Default)
+            58mm Compact (Default)
           </Text>
         </Pressable>
         <Pressable
@@ -115,16 +116,16 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
             paddingVertical: 5,
             paddingHorizontal: 12,
             borderRadius: 8,
-            backgroundColor: !is57mm ? '#810021' : '#f5f5f4',
+            backgroundColor: !is58mm ? '#810021' : '#f5f5f4',
             borderWidth: 1,
-            borderColor: !is57mm ? '#810021' : '#e7e5e4',
+            borderColor: !is58mm ? '#810021' : '#e7e5e4',
           }}
         >
           <Text
             style={{
               fontSize: 12,
               fontWeight: '700',
-              color: !is57mm ? '#ffffff' : '#78716c',
+              color: !is58mm ? '#ffffff' : '#78716c',
             }}
           >
             80mm Standard
@@ -132,7 +133,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         </Pressable>
       </View>
 
-      <View style={[styles.receiptPaper, { maxWidth: is57mm ? 300 : 380, width: '100%' }]}>
+      <View style={[styles.receiptPaper, { maxWidth: is58mm ? 300 : 380, width: '100%' }]}>
         {/* Receipt Header with Combined Logo Lockup */}
         <View style={{ alignItems: 'center', marginBottom: 6 }}>
           <Image
@@ -144,13 +145,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
               marginBottom: 4,
             }}
           />
-          <Text style={styles.receiptSubLogo}>JAZZ BAR AND CAFE</Text>
-          <Text style={styles.receiptTagline}>Craft Cocktails &amp; Fine Jazz</Text>
-          <Text style={styles.receiptContact}>
-            {is57mm
-              ? 'Tel: +63 917 555 1957\nIG/FB: @monksdreamjazz'
-              : 'Tel: +63 917 555 1957 • IG/FB: @monksdreamjazz'}
-          </Text>
+          <Text style={styles.receiptSubLogo}>Jazz Cafe and Bar</Text>
         </View>
         <Text style={styles.receiptDivider} numberOfLines={1}>
           {dividerDash}
@@ -424,20 +419,9 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           {dividerDash}
         </Text>
         <View style={{ alignItems: 'center', marginVertical: 4 }}>
-          <Text style={styles.receiptQuote}>"Writing about music is like dancing</Text>
-          <Text style={styles.receiptQuote}>about architecture."</Text>
-          <Text style={[styles.receiptQuote, { fontWeight: '700', marginTop: 1 }]}>
-            - Thelonious Monk
-          </Text>
-          <Text style={[styles.receiptFooter, { marginTop: 4 }]}>
-            Thank you for supporting live music!
-          </Text>
-          <Text style={styles.receiptFooter}>Please come back for the next set.</Text>
+          <Text style={styles.receiptNotOfficial}>THIS IS NOT AN OFFICIAL RECEIPT</Text>
+          <Text style={styles.receiptNotOfficial}>YET ( •◡-)-♡</Text>
         </View>
-        <Text style={styles.receiptDivider} numberOfLines={1}>
-          {dividerDash}
-        </Text>
-        <Text style={styles.receiptNotOfficial}>THIS IS NOT AN OFFICIAL RECEIPT YET</Text>
       </View>
     </View>
   );
