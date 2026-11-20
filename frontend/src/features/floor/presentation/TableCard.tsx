@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { Plus, UtensilsCrossed, CreditCard, CheckCircle2, User } from 'lucide-react-native';
-import { TableItem } from '../../../types/floor';
+import { TableItem, TableStatus } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
 import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
 import {
@@ -9,9 +9,7 @@ import {
   deriveTabStatus,
   formatTableDisplayName,
   summarizeTabItems,
-  TAB_STATUS_DOT_COLORS,
 } from '../domain/tableTabHelpers';
-import { styles } from './TableCard.styles';
 
 interface TableCardProps {
   table: TableItem;
@@ -20,13 +18,66 @@ interface TableCardProps {
   onQuickSettle?: (table: TableItem, tabIndex?: number) => void;
 }
 
+const STATUS_STYLE_MAP: Record<
+  TableStatus,
+  {
+    label: string;
+    cardBorder: string;
+    badgeBg: string;
+    badgeText: string;
+    dotBg: string;
+  }
+> = {
+  ready: {
+    label: 'READY',
+    cardBorder: 'border-2 border-emerald-500',
+    badgeBg: 'bg-emerald-50',
+    badgeText: 'text-emerald-800',
+    dotBg: 'bg-emerald-500',
+  },
+  preparing: {
+    label: 'PREP',
+    cardBorder: 'border-2 border-amber-500',
+    badgeBg: 'bg-amber-50',
+    badgeText: 'text-amber-800',
+    dotBg: 'bg-amber-500',
+  },
+  served: {
+    label: 'SERVED',
+    cardBorder: 'border-2 border-[#810021]',
+    badgeBg: 'bg-[#fdf2f4]',
+    badgeText: 'text-[#810021]',
+    dotBg: 'bg-[#810021]',
+  },
+  occupied: {
+    label: 'OPEN',
+    cardBorder: 'border-2 border-stone-400',
+    badgeBg: 'bg-stone-100',
+    badgeText: 'text-[#1c1917]',
+    dotBg: 'bg-stone-600',
+  },
+  empty: {
+    label: 'AVAILABLE',
+    cardBorder: 'border border-stone-200',
+    badgeBg: 'bg-[#faf8f5]',
+    badgeText: 'text-[#57534E]',
+    dotBg: 'bg-stone-400',
+  },
+};
+
+const TAB_DOT_CLASS_MAP: Record<Exclude<TableStatus, 'empty'>, string> = {
+  ready: 'bg-emerald-500',
+  preparing: 'bg-amber-500',
+  served: 'bg-[#810021]',
+  occupied: 'bg-stone-500',
+};
+
 export const TableCard: React.FC<TableCardProps> = React.memo(
   ({ table, onPress, onQuickOrder, onQuickSettle }) => {
     const { code, area, seats, status, elapsedTime, totalAmount } = table;
 
     const isEmpty = status === 'empty';
     const isReady = status === 'ready';
-    const isPrep = status === 'preparing';
     const isServed = status === 'served';
 
     const openTabs = useMemo(() => getOpenTabs(table), [table]);
@@ -48,222 +99,209 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
       [isEmpty, openTabs]
     );
 
-    const statusConfig = useMemo(() => {
-      switch (status) {
-        case 'ready':
-          return {
-            label: 'READY',
-            bg: '#ecfdf5',
-            color: '#047857',
-            dotColor: '#10b981',
-          };
-        case 'preparing':
-          return {
-            label: 'PREP',
-            bg: '#fffbeb',
-            color: '#b45309',
-            dotColor: '#f59e0b',
-          };
-        case 'served':
-          return {
-            label: 'SERVED',
-            bg: '#fdf2f4',
-            color: '#810021',
-            dotColor: '#810021',
-          };
-        case 'occupied':
-          return {
-            label: 'OCCUPIED',
-            bg: '#f8fafc',
-            color: '#334155',
-            dotColor: '#64748b',
-          };
-        case 'empty':
-        default:
-          return {
-            label: 'AVAILABLE',
-            bg: '#f5f5f4',
-            color: '#78716c',
-            dotColor: '#a8a29e',
-          };
-      }
-    }, [status]);
-
+    const statusVisual = STATUS_STYLE_MAP[status] ?? STATUS_STYLE_MAP.empty;
     const formattedAmount =
       totalAmount !== undefined && totalAmount > 0 ? formatCurrency(totalAmount) : '₱0.00';
-
-    const getCardVariantStyle = () => {
-      if (isEmpty) return styles.cardEmpty;
-      if (isReady) return styles.cardReady;
-      if (isPrep) return styles.cardPrep;
-      if (isServed) return styles.cardServed;
-      return styles.cardOccupied;
-    };
-
     const displayName = useMemo(() => formatTableDisplayName(code, area), [code, area]);
 
     return (
-      <View style={[styles.cardContainer, getCardVariantStyle()]}>
-        <Pressable
-          onPress={() => onPress(table)}
-          style={({ pressed }) => [styles.mainPressableArea, pressed && styles.cardPressed]}
-          accessibilityLabel={
-            isEmpty
-              ? `${displayName}, available. Tap to open tab.`
-              : `${displayName}, ${status}, ${openTabs.length} tab${openTabs.length === 1 ? '' : 's'}, total ${formattedAmount}`
-          }
-        >
-          {/* 1. Top Row: Table Identifier + Status Badge */}
-          <View style={styles.cardHeader}>
-            <View style={styles.codeCol}>
-              <Text
-                style={[
-                  styles.tableCodeText,
-                  isEmpty && styles.tableCodeTextEmpty,
-                  displayName.length > 10 && styles.tableCodeTextLong,
-                ]}
-                numberOfLines={1}
-                ellipsizeMode="tail"
-              >
-                {displayName}
-              </Text>
-            </View>
-
-            <View style={[styles.statusBadge, { backgroundColor: statusConfig.bg }]}>
-              <View style={[styles.statusDot, { backgroundColor: statusConfig.dotColor }]} />
-              <Text style={[styles.statusText, { color: statusConfig.color }]}>
-                {statusConfig.label}
-              </Text>
-              {!isEmpty && (stateTimerIso || elapsedTime) ? (
-                <Text style={[styles.timeText, { color: statusConfig.color }]}>
-                  · {liveTimer.formattedTimer}
+      <View
+        className={`h-[228px] justify-between rounded-2xl bg-white p-3.5 ${statusVisual.cardBorder}`}
+      >
+        <View className="flex-1 justify-between">
+          {/* 1. Top Clickable Header & Primary Summary (never wraps nested Pressable chips) */}
+          <Pressable
+            onPress={() => onPress(table)}
+            className={`${isEmpty ? 'flex-1 justify-between ' : ''}active:opacity-90`}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isEmpty
+                ? `${displayName}, available. Tap to open tab.`
+                : `${displayName}, ${status}, ${openTabs.length} tab${openTabs.length === 1 ? '' : 's'}, total ${formattedAmount}`
+            }
+          >
+            {/* Top Row: Table Identifier + Status/Timer Pill */}
+            <View className="mb-2.5 flex-row items-center justify-between gap-2">
+              <View className="min-w-0 flex-1 justify-center">
+                <Text
+                  className={`font-black tracking-tight ${
+                    displayName.length > 10 ? 'text-pos-lg' : 'text-pos-xl'
+                  } ${isEmpty ? 'text-[#44403C]' : 'text-[#1c1917]'}`}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {displayName}
                 </Text>
-              ) : null}
-            </View>
-          </View>
-
-          {/* 2. Middle Content: Empty Meta vs. Active Guest/Tabs + Amount */}
-          {isEmpty ? (
-            <View style={styles.emptyMetaRow}>
-              <Text style={styles.emptyMetaText}>
-                {seats ? `${seats} ${seats === 1 ? 'seat' : 'seats'} · ` : ''}
-                {area === 'bar' ? 'Bar Area' : 'Cafe Area'}
-              </Text>
-            </View>
-          ) : (
-            <View>
-              <View style={styles.guestAndAmountRow}>
-                <View style={styles.guestRowLeft}>
-                  {isMultiTab ? (
-                    <>
-                      {visibleTabs.map((tab) => {
-                        const tabStatus = deriveTabStatus(tab);
-                        const dotColor = TAB_STATUS_DOT_COLORS[tabStatus];
-                        const isTabReady = tabStatus === 'ready';
-                        return (
-                          <Pressable
-                            key={tab.id || tab.tabIndex}
-                            onPress={() => onPress(table, tab.tabIndex)}
-                            style={({ pressed }) => [
-                              styles.tabChip,
-                              isTabReady && styles.tabChipReady,
-                              pressed && styles.cardPressed,
-                            ]}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Open tab for ${tab.guestName}`}
-                          >
-                            <View style={[styles.tabChipDot, { backgroundColor: dotColor }]} />
-                            <Text style={styles.tabChipText} numberOfLines={1}>
-                              {tab.guestName}
-                            </Text>
-                          </Pressable>
-                        );
-                      })}
-                      {overflowCount > 0 ? (
-                        <Pressable
-                          onPress={() => onPress(table, openTabs[2]?.tabIndex)}
-                          style={({ pressed }) => [
-                            styles.overflowBadge,
-                            pressed && styles.cardPressed,
-                          ]}
-                          accessibilityRole="button"
-                          accessibilityLabel={`View ${overflowCount} more tabs`}
-                        >
-                          <Text style={styles.overflowBadgeText}>+{overflowCount}</Text>
-                        </Pressable>
-                      ) : null}
-                    </>
-                  ) : (
-                    <View style={styles.singleGuestRow}>
-                      <User size={15} color="#78716C" strokeWidth={2.3} />
-                      <Text style={styles.singleGuestName} numberOfLines={1}>
-                        {openTabs[0]?.guestName || 'Guest 1'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-
-                <View style={styles.amountCol}>
-                  <Text style={styles.amountText}>{formattedAmount}</Text>
-                  {isMultiTab ? <Text style={styles.tagWine}>{openTabs.length} TABS</Text> : null}
-                </View>
               </View>
 
-              <Text style={styles.itemsSummaryText} numberOfLines={1}>
-                {itemsSummary}
-              </Text>
+              <View
+                className={`shrink-0 flex-row items-center gap-1.5 rounded-xl px-3 py-1.5 ${statusVisual.badgeBg}`}
+              >
+                <View className={`h-2.5 w-2.5 rounded-full ${statusVisual.dotBg}`} />
+                <Text className={`text-base font-bold ${statusVisual.badgeText}`}>
+                  {statusVisual.label}
+                </Text>
+                {!isEmpty && (stateTimerIso || elapsedTime) ? (
+                  <Text className={`text-base font-bold tabular-nums ${statusVisual.badgeText}`}>
+                    · {liveTimer.formattedTimer}
+                  </Text>
+                ) : null}
+              </View>
             </View>
-          )}
-        </Pressable>
 
-        {/* 3. Bottom Row: Direct Action Footer */}
-        <View style={styles.actionRow}>
+            {/* Available Metadata */}
+            {isEmpty ? (
+              <View className="flex-1 justify-center border-t border-stone-100 py-2">
+                <Text className="text-base font-medium text-[#57534E]">
+                  {seats ? `${seats} ${seats === 1 ? 'seat' : 'seats'} · ` : ''}
+                  {area === 'bar' ? 'Bar Area' : 'Cafe Area'}
+                </Text>
+              </View>
+            ) : null}
+          </Pressable>
+
+          {/* 2. Active Middle Body: Single-Row Guest/Tabs + Amount, then 1-line Items Summary */}
+          {!isEmpty ? (
+            <View className="flex-1 justify-between border-t border-stone-200/80 pt-2.5">
+              <View className="flex-row items-center justify-between gap-2">
+                {isMultiTab ? (
+                  <View className="min-w-0 flex-1 flex-row items-center gap-1.5">
+                    {visibleTabs.map((tab) => {
+                      const tabStatus = deriveTabStatus(tab);
+                      const dotClass = TAB_DOT_CLASS_MAP[tabStatus];
+                      const isTabReady = tabStatus === 'ready';
+                      return (
+                        <Pressable
+                          key={tab.id || tab.tabIndex}
+                          onPress={() => onPress(table, tab.tabIndex)}
+                          className={`min-h-[48px] shrink flex-row items-center gap-1.5 rounded-xl border px-2.5 py-2 active:opacity-85 ${
+                            isTabReady
+                              ? 'border-emerald-500 bg-emerald-50'
+                              : 'border-stone-300 bg-[#faf8f5]'
+                          }`}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Open tab for ${tab.guestName}`}
+                        >
+                          <View className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotClass}`} />
+                          <Text
+                            className="max-w-[84px] text-base font-semibold text-[#1c1917]"
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {tab.guestName}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                    {overflowCount > 0 ? (
+                      <Pressable
+                        onPress={() => onPress(table, openTabs[2]?.tabIndex)}
+                        className="min-h-[48px] min-w-[48px] shrink-0 items-center justify-center rounded-xl border border-[#810021]/25 bg-[#fdf2f4] px-2.5 active:opacity-85"
+                        accessibilityRole="button"
+                        accessibilityLabel={`View ${overflowCount} more tabs`}
+                      >
+                        <Text className="text-base font-bold tabular-nums text-[#810021]">
+                          +{overflowCount}
+                        </Text>
+                      </Pressable>
+                    ) : null}
+                  </View>
+                ) : (
+                  <Pressable
+                    onPress={() => onPress(table)}
+                    className="min-h-[48px] min-w-0 flex-1 flex-row items-center gap-2 active:opacity-85"
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open tab for ${openTabs[0]?.guestName || 'Guest 1'}`}
+                  >
+                    <User size={18} color="#57534E" strokeWidth={2.2} />
+                    <Text
+                      className="shrink text-base font-bold text-[#1c1917]"
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {openTabs[0]?.guestName || 'Guest 1'}
+                    </Text>
+                  </Pressable>
+                )}
+
+                <Pressable
+                  onPress={() => onPress(table)}
+                  className="shrink-0 active:opacity-85"
+                  accessibilityRole="button"
+                  accessibilityLabel={`Total ${formattedAmount} for ${displayName}`}
+                >
+                  <Text className="text-pos-xl font-black tabular-nums text-[#1c1917]">
+                    {formattedAmount}
+                  </Text>
+                </Pressable>
+              </View>
+
+              <Pressable
+                onPress={() => onPress(table)}
+                className="justify-center py-1 active:opacity-90"
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${displayName} items summary`}
+              >
+                <Text
+                  className="text-base font-medium text-[#57534E]"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {itemsSummary}
+                </Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+
+        {/* 3. Bottom Row: Direct Action Footer (≥ 48px touch targets) */}
+        <View className="flex-row gap-2.5 pt-1">
           {isEmpty ? (
             <Pressable
               onPress={() => onPress(table)}
-              style={({ pressed }) => [styles.actionBtnOpenTab, pressed && styles.cardPressed]}
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-stone-300 bg-[#faf8f5] px-4 py-2.5 active:bg-stone-200"
               accessibilityRole="button"
               accessibilityLabel={`Open Tab at ${displayName}`}
             >
-              <Plus size={18} color="#ffffff" strokeWidth={2.5} />
-              <Text style={styles.actionBtnOpenTabText}>Open Tab</Text>
+              <Plus size={18} color="#810021" strokeWidth={2.5} />
+              <Text className="text-base font-bold text-[#1c1917]">Open Tab</Text>
             </Pressable>
           ) : (
             <>
               <Pressable
                 onPress={() => (isReady ? onPress(table) : (onQuickOrder || onPress)(table))}
-                style={({ pressed }) => [
-                  styles.actionBtnPrimary,
-                  isReady && styles.actionBtnReady,
-                  pressed && styles.cardPressed,
-                ]}
+                className={`min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl px-3 py-2.5 active:opacity-85 ${
+                  isReady ? 'bg-emerald-700' : 'border border-stone-300 bg-[#faf8f5]'
+                }`}
                 accessibilityRole="button"
                 accessibilityLabel={
                   isReady ? `Deliver order for ${displayName}` : `Add order for ${displayName}`
                 }
               >
                 {isReady ? (
-                  <CheckCircle2 size={16} color="#047857" strokeWidth={2.4} />
+                  <CheckCircle2 size={18} color="#ffffff" strokeWidth={2.4} />
                 ) : (
-                  <UtensilsCrossed size={16} color="#1C1917" strokeWidth={2.3} />
+                  <UtensilsCrossed size={18} color="#1c1917" strokeWidth={2.3} />
                 )}
-                <Text style={[styles.actionBtnText, isReady && { color: '#047857' }]}>
+                <Text
+                  className={`text-base font-bold ${isReady ? 'text-white' : 'text-[#1c1917]'}`}
+                >
                   {isReady ? 'Deliver' : '+ Order'}
                 </Text>
               </Pressable>
 
               <Pressable
                 onPress={() => (onQuickSettle || onPress)(table)}
-                style={({ pressed }) => [
-                  styles.actionBtnSettle,
-                  isServed && styles.actionBtnSettleHighlight,
-                  pressed && styles.cardPressed,
-                ]}
+                className={`min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl px-3 py-2.5 active:opacity-85 ${
+                  isServed ? 'bg-[#810021]' : 'border-[1.5px] border-[#810021]/35 bg-white'
+                }`}
                 accessibilityRole="button"
                 accessibilityLabel={`Settle bill for ${displayName}`}
               >
-                <CreditCard size={16} color={isServed ? '#ffffff' : '#810021'} strokeWidth={2.3} />
-                <Text style={[styles.actionBtnText, { color: isServed ? '#ffffff' : '#810021' }]}>
+                <CreditCard size={18} color={isServed ? '#ffffff' : '#810021'} strokeWidth={2.3} />
+                <Text
+                  className={`text-base font-bold ${isServed ? 'text-white' : 'text-[#810021]'}`}
+                >
                   Settle
                 </Text>
               </Pressable>

@@ -28,9 +28,9 @@ export interface FloorGridViewProps {
 }
 
 const SectionHeader: React.FC<{ title: string; badge: string }> = ({ title, badge }) => (
-  <View className="w-full flex-row items-center justify-between pt-2 pb-1 px-1">
-    <Text className="text-xs font-extrabold uppercase tracking-wider text-stone-500">{title}</Text>
-    <Text className="text-xs font-bold text-stone-400">{badge}</Text>
+  <View className="w-full flex-row items-center justify-between pt-3 pb-1 px-1">
+    <Text className="text-base font-bold tracking-wide text-[#1c1917]">{title}</Text>
+    <Text className="text-base font-semibold tabular-nums text-[#57534E]">{badge}</Text>
   </View>
 );
 
