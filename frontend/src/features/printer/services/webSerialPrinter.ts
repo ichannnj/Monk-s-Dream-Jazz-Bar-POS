@@ -237,9 +237,8 @@ export class WebSerialPrinterService {
               targetDevices = usbDevices.filter((d: any) => isPrinterDevice(d));
             }
 
-            // If still no filter matches, try devices sequentially
-            const candidates = targetDevices.length > 0 ? targetDevices : usbDevices;
-            for (const candidate of candidates) {
+            // Never fall back to non-printer USB devices (e.g. Wireless_Device / HID / storage)
+            for (const candidate of targetDevices) {
               try {
                 await this.openUsbDevice(candidate);
                 console.info(
@@ -430,6 +429,13 @@ export class WebSerialPrinterService {
     try {
       await device.claimInterface(interfaceNumber);
     } catch (claimErr: any) {
+      if (claimErr?.name === 'SecurityError') {
+        throw new Error(
+          `USB device "${device.productName || 'Device'}" implements a protected interface class and cannot be claimed as a printer.`,
+          { cause: claimErr }
+        );
+      }
+
       console.warn(
         '[WebPrinter] Primary claimInterface failed, attempting device reset & retry:',
         claimErr

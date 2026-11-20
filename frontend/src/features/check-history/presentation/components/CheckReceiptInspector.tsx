@@ -35,6 +35,25 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
               <View className="bg-[#FAF8F5] border border-stone-300 px-2.5 py-0.5 rounded-full">
                 <Text className="text-xs font-bold text-stone-800 uppercase">SETTLED</Text>
               </View>
+              {selectedCheck.orderType === 'dine_in' &&
+              selectedCheck.total >
+                selectedCheck.subtotal +
+                  (selectedCheck.serviceCharge || 0) +
+                  (selectedCheck.corkageFee || 0) +
+                  1 ? (
+                <View className="bg-[#fdf2f4] border border-[#810021]/25 px-2.5 py-0.5 rounded-full">
+                  <Text className="text-xs font-extrabold text-[#810021] uppercase">
+                    TABLE GROUP PAY
+                  </Text>
+                </View>
+              ) : selectedCheck.orderType === 'dine_in' &&
+                selectedCheck.total === 0 &&
+                selectedCheck.subtotal > 0 &&
+                selectedCheck.paymentMethod !== 'COMP' ? (
+                <View className="bg-stone-100 border border-stone-300 px-2.5 py-0.5 rounded-full">
+                  <Text className="text-xs font-bold text-stone-600 uppercase">PAID W/ TABLE</Text>
+                </View>
+              ) : null}
             </View>
             <Text className="text-base text-stone-500 mt-0.5">
               {new Date(selectedCheck.settledAt).toLocaleDateString()} · {selectedCheck.timestamp}

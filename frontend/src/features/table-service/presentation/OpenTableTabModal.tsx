@@ -5,6 +5,7 @@ import { TableItem } from '../../../types/floor';
 import { toast } from '../../shared/toast/useToastStore';
 import { useVirtualKeyboard } from '../../shared';
 import { useEventStore } from '@/features/events';
+import { sortTablesInOrder } from '@/features/floor/domain/tableTabHelpers';
 
 interface OpenTableTabModalProps {
   visible: boolean;
@@ -153,13 +154,17 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
             style={styles.tableScroll}
             contentContainerStyle={styles.tableScrollContent}
           >
-            {tables.map((t) => {
+            {sortTablesInOrder(tables).map((t) => {
               const isSelected = selectedTableId === t.id;
-              const activeCount =
-                t.tabs && t.tabs.length > 0
-                  ? t.tabs.filter((tab) => tab.status !== 'closed').length
-                  : t.activeTabs.length;
+              const openTabs = (t.tabs || []).filter((tab) => tab.status !== 'closed');
+              const activeCount = openTabs.length > 0 ? openTabs.length : t.activeTabs.length;
               const isEmpty = t.status === 'empty' || activeCount === 0;
+              const tabPreview =
+                openTabs.length === 1
+                  ? openTabs[0].guestName
+                  : openTabs.length > 1
+                    ? `${openTabs[0].guestName} +${openTabs.length - 1}`
+                    : `${activeCount} ${activeCount === 1 ? 'tab' : 'tabs'}`;
 
               return (
                 <Pressable
@@ -174,8 +179,8 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                   <Text style={[styles.tableChipText, isSelected && styles.tableChipTextSelected]}>
                     {t.code}
                   </Text>
-                  <Text style={styles.tableChipSub}>
-                    {isEmpty ? 'Available' : `${activeCount} ${activeCount === 1 ? 'tab' : 'tabs'}`}
+                  <Text style={styles.tableChipSub} numberOfLines={1}>
+                    {isEmpty ? 'Available' : tabPreview}
                   </Text>
                 </Pressable>
               );

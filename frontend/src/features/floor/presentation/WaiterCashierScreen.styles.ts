@@ -33,5 +33,7 @@ export const styles = StyleSheet.create({
   },
   cardCol: {
     minWidth: 0,
+    flexGrow: 0,
+    flexShrink: 0,
   },
 });

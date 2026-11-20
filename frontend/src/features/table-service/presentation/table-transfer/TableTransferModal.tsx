@@ -4,6 +4,7 @@ import { Repeat, X, Coffee, Wine, ArrowRight } from 'lucide-react-native';
 import { TableItem, TableArea } from '../../../../types/floor';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '../../../shared/toast/useToastStore';
+import { sortTablesInOrder } from '@/features/floor/domain/tableTabHelpers';
 import { styles } from './TableTransferModal.styles';
 
 interface TableTransferModalProps {
@@ -43,14 +44,15 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
     setSelectedTargetId(null);
   }, [originTable, visible]);
 
-  // Destination tables (exclude origin)
+  // Destination tables (exclude origin, sorted in Cafe -> Bar numeric order)
   const availableTargets = useMemo(() => {
     if (!originTable) return [];
-    return allTables.filter((t) => {
+    const filtered = allTables.filter((t) => {
       if (t.id === originTable.id) return false;
       if (targetAreaFilter !== 'all' && t.area !== targetAreaFilter) return false;
       return true;
     });
+    return sortTablesInOrder(filtered);
   }, [allTables, originTable, targetAreaFilter]);
 
   if (!originTable) return null;
@@ -273,11 +275,16 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
               <View style={styles.tableGrid}>
                 {availableTargets.map((target) => {
                   const isSelected = selectedTargetId === target.id;
+                  const targetOpenTabs = (target.tabs || []).filter((t) => t.status !== 'closed');
                   const targetActiveCount =
-                    target.tabs && target.tabs.length > 0
-                      ? target.tabs.filter((t) => t.status !== 'closed').length
-                      : target.activeTabs.length;
+                    targetOpenTabs.length > 0 ? targetOpenTabs.length : target.activeTabs.length;
                   const isTargetEmpty = target.status === 'empty' || targetActiveCount === 0;
+                  const targetTabPreview =
+                    targetOpenTabs.length === 1
+                      ? targetOpenTabs[0].guestName
+                      : targetOpenTabs.length > 1
+                        ? `${targetOpenTabs[0].guestName} +${targetOpenTabs.length - 1}`
+                        : `${targetActiveCount} tabs`;
 
                   return (
                     <Pressable
@@ -292,8 +299,11 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                       <Text style={[styles.targetCode, isSelected && styles.targetCodeSelected]}>
                         {target.code}
                       </Text>
-                      <Text style={[styles.targetStatus, isSelected && { color: '#ffffff' }]}>
-                        {isTargetEmpty ? 'Available' : `${targetActiveCount} tabs`}
+                      <Text
+                        style={[styles.targetStatus, isSelected && { color: '#ffffff' }]}
+                        numberOfLines={1}
+                      >
+                        {isTargetEmpty ? 'Available' : targetTabPreview}
                       </Text>
                     </Pressable>
                   );

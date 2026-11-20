@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, TextInput } from 'react-native';
 import {
   Sparkles,
   Coffee,
@@ -9,6 +9,8 @@ import {
   PlusCircle,
   Printer,
   CloudOff,
+  Search,
+  X,
 } from 'lucide-react-native';
 import { ChannelCategory, TableStatus } from '../../../types/floor';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
@@ -23,6 +25,8 @@ interface UnifiedCommandBarProps {
   onChannelChange: (channel: ChannelCategory) => void;
   selectedStatus: StatusFilter;
   onStatusChange: (status: StatusFilter) => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
   channelCounts: {
     all: number;
     cafe: number;
@@ -52,6 +56,8 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
   onChannelChange,
   selectedStatus,
   onStatusChange,
+  searchQuery = '',
+  onSearchChange,
   channelCounts,
   statusCounts,
   onOpenTableTab,
@@ -187,6 +193,32 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           sheetTitle="Filter Floor by Status"
           className="flex-1 sm:flex-initial min-w-[140px]"
         />
+
+        {onSearchChange ? (
+          <View className="flex-row items-center bg-[#FAF8F5] border border-stone-200 rounded-xl px-3 min-h-[48px] flex-1 sm:flex-initial min-w-[175px] max-w-[260px]">
+            <Search size={16} color="#78716C" strokeWidth={2.2} />
+            <TextInput
+              value={searchQuery}
+              onChangeText={onSearchChange}
+              placeholder="Table or guest..."
+              placeholderTextColor="#a8a29e"
+              className="flex-1 ml-2 text-[#1C1917] font-semibold"
+              style={{ fontSize: 16, minHeight: 40 }}
+              accessibilityLabel="Search tables or guest names"
+            />
+            {searchQuery.length > 0 ? (
+              <Pressable
+                onPress={() => onSearchChange('')}
+                hitSlop={8}
+                className="w-7 h-7 rounded-full bg-stone-200 items-center justify-center ml-1"
+                accessibilityRole="button"
+                accessibilityLabel="Clear floor search"
+              >
+                <X size={14} color="#44403C" />
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
 
         {/* Tonight's Event Quick Indicator */}
         <TodaysEventBanner compact />

@@ -1,0 +1,396 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-20T22:06:00+08:00",
+  "title": "Design System: Monk's Dream Jazz Bar POS",
+  "extensions": {
+    "colorMeta": {
+      "velvet-wine": {
+        "role": "primary",
+        "displayName": "Monk's Velvet Wine",
+        "canonical": "#810021",
+        "tonalRamp": [
+          "#210c14",
+          "#3d1420",
+          "#501521",
+          "#641b2a",
+          "#810021",
+          "#b93a52",
+          "#f0b6c1",
+          "#fdf5f6"
+        ]
+      },
+      "wine-action": {
+        "role": "primary",
+        "displayName": "Wine Action",
+        "canonical": "#641b2a",
+        "tonalRamp": [
+          "#120609",
+          "#210c14",
+          "#3d1420",
+          "#501521",
+          "#641b2a",
+          "#7e2235",
+          "#d87083",
+          "#f7e8eb"
+        ]
+      },
+      "admin-primary": {
+        "role": "primary",
+        "displayName": "Back-Office Bordeaux",
+        "canonical": "#6e1d2c",
+        "tonalRamp": [
+          "#26080e",
+          "#3d1019",
+          "#541521",
+          "#6e1d2c",
+          "#8e2d3f",
+          "#be576a",
+          "#ebbbc3",
+          "#fdf2f4"
+        ]
+      },
+      "warm-sand": {
+        "role": "neutral",
+        "displayName": "Warm Sand",
+        "canonical": "#faf8f5",
+        "tonalRamp": [
+          "#292524",
+          "#44403c",
+          "#78716c",
+          "#a8a29e",
+          "#d6d3d1",
+          "#e7e5e4",
+          "#f5f2ed",
+          "#faf8f5"
+        ]
+      },
+      "admin-canvas": {
+        "role": "neutral",
+        "displayName": "Linen Canvas",
+        "canonical": "#f8f6f4",
+        "tonalRamp": [
+          "#242021",
+          "#44403c",
+          "#6a6562",
+          "#938e8a",
+          "#d5cec4",
+          "#e6e1da",
+          "#f3f0ec",
+          "#f8f6f4"
+        ]
+      },
+      "pure-surface": {
+        "role": "neutral",
+        "displayName": "Pure Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#1c1917",
+          "#44403c",
+          "#78716c",
+          "#a8a29e",
+          "#d6d3d1",
+          "#eee8e3",
+          "#faf8f8",
+          "#ffffff"
+        ]
+      },
+      "stone-border": {
+        "role": "neutral",
+        "displayName": "Stone Hairline",
+        "canonical": "#e7e5e4",
+        "tonalRamp": [
+          "#1c1917",
+          "#44403c",
+          "#78716c",
+          "#a8a29e",
+          "#d6d3d1",
+          "#e7e5e4",
+          "#f5f5f4",
+          "#fafaf9"
+        ]
+      },
+      "admin-border": {
+        "role": "neutral",
+        "displayName": "Parchment Divider",
+        "canonical": "#e6e1da",
+        "tonalRamp": [
+          "#242021",
+          "#49433e",
+          "#6a6562",
+          "#938e8a",
+          "#d5cec4",
+          "#e6e1da",
+          "#f3f0ec",
+          "#f8f6f4"
+        ]
+      },
+      "deep-charcoal": {
+        "role": "neutral",
+        "displayName": "Deep Charcoal",
+        "canonical": "#1c1917",
+        "tonalRamp": [
+          "#0c0a09",
+          "#1c1917",
+          "#292524",
+          "#44403c",
+          "#57534e",
+          "#78716c",
+          "#d6d3d1",
+          "#f5f5f4"
+        ]
+      },
+      "muted-stone": {
+        "role": "neutral",
+        "displayName": "Muted Stone",
+        "canonical": "#78716c",
+        "tonalRamp": [
+          "#1c1917",
+          "#292524",
+          "#44403c",
+          "#57534e",
+          "#78716c",
+          "#a8a29e",
+          "#e7e5e4",
+          "#faf8f5"
+        ]
+      },
+      "admin-muted": {
+        "role": "neutral",
+        "displayName": "Warm Slate Muted",
+        "canonical": "#6a6562",
+        "tonalRamp": [
+          "#242021",
+          "#3a3634",
+          "#524d4a",
+          "#6a6562",
+          "#938e8a",
+          "#c2bcb6",
+          "#e6e1da",
+          "#f8f6f4"
+        ]
+      },
+      "brass-accent": {
+        "role": "secondary",
+        "displayName": "Warm Brass",
+        "canonical": "#b48a3c",
+        "tonalRamp": [
+          "#2b1e08",
+          "#4d3610",
+          "#73531c",
+          "#966f2b",
+          "#b48a3c",
+          "#cfa961",
+          "#ebd6a7",
+          "#fbf6ec"
+        ]
+      },
+      "ready-emerald": {
+        "role": "tertiary",
+        "displayName": "Ready Emerald",
+        "canonical": "#10b981",
+        "tonalRamp": [
+          "#022c22",
+          "#064e3b",
+          "#047857",
+          "#059669",
+          "#10b981",
+          "#34d399",
+          "#a7f3d0",
+          "#ecfdf5"
+        ]
+      },
+      "prep-amber": {
+        "role": "tertiary",
+        "displayName": "Prep Amber",
+        "canonical": "#f59e0b",
+        "tonalRamp": [
+          "#451a03",
+          "#78350f",
+          "#92400e",
+          "#b45309",
+          "#d97706",
+          "#f59e0b",
+          "#fde68a",
+          "#fef3c7"
+        ]
+      },
+      "danger-rose": {
+        "role": "tertiary",
+        "displayName": "Void Crimson",
+        "canonical": "#b32638",
+        "tonalRamp": [
+          "#35070e",
+          "#5c0e18",
+          "#881625",
+          "#b32638",
+          "#d44658",
+          "#ec7c8a",
+          "#fad1d6",
+          "#fef2f3"
+        ]
+      },
+      "jazz-obsidian": {
+        "role": "neutral",
+        "displayName": "Jazz Obsidian",
+        "canonical": "#0d1117",
+        "tonalRamp": [
+          "#07090e",
+          "#0d1117",
+          "#131822",
+          "#171d2b",
+          "#232b3e",
+          "#344059",
+          "#4e5d7d",
+          "#94a3b8"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display (Raconteur NF)",
+        "purpose": "Venue brand wordmarks and station headers."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Modal titles, drawer balances, and order totals."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Table codes, section headers, and primary action labels."
+      },
+      "body": {
+        "displayName": "Body (16px Floor)",
+        "purpose": "Inputs, menu items, timestamps, and operational copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Touch-ready buttons, chips, and navigation tabs."
+      }
+    },
+    "shadows": [
+      {
+        "name": "card-ambient",
+        "value": "0 3px 10px rgba(43, 15, 22, 0.05)",
+        "purpose": "Subtle wine-tinted elevation on floor table cards."
+      },
+      {
+        "name": "ready-glow",
+        "value": "0 2px 6px rgba(16, 185, 129, 0.14)",
+        "purpose": "Soft halo on food/drink-ready table cards."
+      },
+      {
+        "name": "action-sm",
+        "value": "0 1px 2px rgba(0, 0, 0, 0.10)",
+        "purpose": "Crisp lift on command-bar primary action buttons."
+      }
+    ],
+    "motion": [
+      {
+        "name": "press-tactile",
+        "value": "transform 0.12s ease, opacity 0.12s ease",
+        "purpose": "Immediate tap feedback (scale 0.985, opacity 0.92) on Pressable controls."
+      }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "360px" },
+      { "name": "tablet", "value": "768px" },
+      { "name": "tablet-lg", "value": "1024px" },
+      { "name": "pos", "value": "1180px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Velvet Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary POS CTA meeting the 48px touch target and 16px text floor.",
+      "html": "<button class=\"ds-btn-primary\" type=\"button\">Settle Check</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; min-width: 48px; padding: 12px 20px; border-radius: 12px; border: none; background: #810021; color: #ffffff; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.10); transition: background 0.15s ease, transform 0.12s ease, opacity 0.12s ease; } .ds-btn-primary:hover { background: #641b2a; } .ds-btn-primary:active { transform: scale(0.98); opacity: 0.88; } .ds-btn-primary:focus-visible { outline: 2px solid #810021; outline-offset: 2px; }"
+    },
+    {
+      "name": "Mode Toggle Pill",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Command-bar Cafe / Event mode switch pill.",
+      "html": "<button class=\"ds-mode-pill\" type=\"button\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M17 8h1a4 4 0 1 1 0 8h-1\"/><path d=\"M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z\"/></svg><span>Cafe Mode</span></button>",
+      "css": ".ds-mode-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 48px; min-width: 48px; padding: 10px 14px; border-radius: 14px; border: 1.5px solid #e7e5e4; background: #ffffff; color: #1c1917; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 800; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease; } .ds-mode-pill:hover { border-color: #810021; background: #faf8f5; } .ds-mode-pill:active { transform: scale(0.98); } .ds-mode-pill:focus-visible { outline: 2px solid #810021; outline-offset: 2px; }"
+    },
+    {
+      "name": "Touch Text Input",
+      "kind": "input",
+      "refersTo": "input-touch",
+      "description": "48px anti-zoom 16px input with Velvet Wine focus ring and 1-tap clear.",
+      "html": "<div class=\"ds-input-wrap\"><label class=\"ds-input-label\" for=\"ds-search\">Guest or Tab Name</label><div class=\"ds-input-box\"><input id=\"ds-search\" class=\"ds-input-field\" type=\"text\" value=\"Table 04 — Coltrane\" /><button class=\"ds-input-clear\" type=\"button\" aria-label=\"Clear text\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#78716c\" stroke-width=\"2\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button></div></div>",
+      "css": ".ds-input-wrap { display: flex; flex-direction: column; gap: 6px; width: 100%; font-family: 'Plus Jakarta Sans', sans-serif; } .ds-input-label { font-size: 16px; font-weight: 600; color: #292524; } .ds-input-box { display: flex; align-items: center; min-height: 48px; padding: 0 14px; border-radius: 12px; border: 1px solid #d6d3d1; background: #ffffff; transition: border-color 0.15s ease, box-shadow 0.15s ease; } .ds-input-box:focus-within { border-color: #800020; box-shadow: 0 0 0 2px rgba(128, 0, 32, 0.2); } .ds-input-field { flex: 1; border: none; background: transparent; font-size: 16px; color: #1c1917; outline: none; min-height: 46px; } .ds-input-clear { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 9999px; border: none; background: transparent; cursor: pointer; } .ds-input-clear:hover { background: #f5f5f4; }"
+    },
+    {
+      "name": "Floor Table Card",
+      "kind": "card",
+      "refersTo": "card-table",
+      "description": "Tablet-expanded floor table tile with tabular timer and Velvet Wine served border.",
+      "html": "<article class=\"ds-table-card\" tabindex=\"0\"><header class=\"ds-table-head\"><span class=\"ds-table-code\">Table 04</span><span class=\"ds-table-badge\">SERVED</span></header><div class=\"ds-table-meta\"><span>2 Guests · 28m</span><span class=\"ds-table-amount\">₱1,480.00</span></div></article>",
+      "css": ".ds-table-card { display: flex; flex-direction: column; justify-content: space-between; min-width: 320px; height: 196px; padding: 15px; border-radius: 20px; border: 2px solid #810021; background: #ffffff; color: #1c1917; font-family: 'Plus Jakarta Sans', sans-serif; box-shadow: 0 3px 10px rgba(43, 15, 22, 0.05); cursor: pointer; transition: transform 0.12s ease, opacity 0.12s ease; } .ds-table-card:active { transform: scale(0.985); opacity: 0.92; } .ds-table-card:focus-visible { outline: 2px solid #810021; outline-offset: 2px; } .ds-table-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; } .ds-table-code { font-size: 22px; font-weight: 900; letter-spacing: -0.02em; color: #1c1917; } .ds-table-badge { padding: 5px 10px; border-radius: 12px; background: #fdf5f6; color: #810021; font-size: 16px; font-weight: 700; } .ds-table-meta { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(0, 0, 0, 0.06); font-size: 16px; font-weight: 600; color: #78716c; font-variant-numeric: tabular-nums; } .ds-table-amount { font-size: 20px; font-weight: 800; color: #1c1917; }"
+    },
+    {
+      "name": "Status Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip-status",
+      "description": "Command-bar filter chip with semantic dot and tabular item count.",
+      "html": "<button class=\"ds-status-chip\" type=\"button\"><span class=\"ds-status-dot\"></span><span>Ready</span><span class=\"ds-status-count\">3</span></button>",
+      "css": ".ds-status-chip { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; padding: 9px 12px; border-radius: 12px; border: 1px solid #e7e5e4; background: #faf8f5; color: #1c1917; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; font-variant-numeric: tabular-nums; transition: background 0.15s ease, color 0.15s ease; } .ds-status-chip:hover { background: #1c1917; border-color: #1c1917; color: #ffffff; } .ds-status-chip:focus-visible { outline: 2px solid #810021; outline-offset: 2px; } .ds-status-dot { width: 8px; height: 8px; border-radius: 9999px; background: #10b981; } .ds-status-count { color: #78716c; font-weight: 800; } .ds-status-chip:hover .ds-status-count { color: rgba(255, 255, 255, 0.85); }"
+    },
+    {
+      "name": "Sidebar Navigation Item",
+      "kind": "nav",
+      "refersTo": "button-primary",
+      "description": "Persistent POS rail tab with active Velvet Wine state and tabular badge.",
+      "html": "<a class=\"ds-nav-item\" href=\"#tables\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect width=\"7\" height=\"7\" x=\"3\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"14\" y=\"3\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"14\" y=\"14\" rx=\"1\"/><rect width=\"7\" height=\"7\" x=\"3\" y=\"14\" rx=\"1\"/></svg><span>Tables</span><span class=\"ds-nav-badge\">4</span></a>",
+      "css": ".ds-nav-item { display: inline-flex; align-items: center; gap: 10px; min-height: 48px; min-width: 160px; padding: 10px 14px; border-radius: 12px; background: #810021; color: #ffffff; text-decoration: none; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; transition: background 0.15s ease; } .ds-nav-item:hover { background: #641b2a; } .ds-nav-item:focus-visible { outline: 2px solid #810021; outline-offset: 2px; } .ds-nav-badge { margin-left: auto; padding: 2px 8px; border-radius: 9999px; background: rgba(255, 255, 255, 0.2); font-size: 16px; font-weight: 700; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Velvet Ledger",
+    "overview": "Monk's Dream Jazz Bar POS pairs the calm tactility of an espresso-and-vinyl hospitality ledger with high-speed operational clarity. Floor, modal, and back-office surfaces sit on Warm Sand (#faf8f5) and crisp white cards (#ffffff) anchored by Deep Charcoal ink (#1c1917), while Monk's Dream Velvet Wine (#810021) marks primary actions, active selections, and Event Mode authority.\n\nBecause staff operate handheld tablets and touch terminals at arm's length under both sunlit daytime cafe service and dim evening jazz lighting, decoration and explanatory clutter stay out of the way. Status meaning comes from crisp 2px card borders, tabular-numeral timers, and generous touch targets rather than multi-color gradients or dense microcopy.",
+    "keyCharacteristics": [
+      "Strictly 3-color core floor & modal palette: Velvet Wine, Warm Sand / White, and Deep Charcoal (with Muted Stone for secondary metadata).",
+      "Tablet-first ergonomics: ≥ 48px touch targets and a strict ≥ 16px text/input floor on all new and modified components.",
+      "Crisp hairline borders (#e7e5e4) and flat-by-default surfaces with whisper-quiet ambient depth on interactive cards.",
+      "NativeWind v4 utility styling for all new/added JSX alongside untouched legacy StyleSheet.create views (Isolated Hybrid invariant)."
+    ],
+    "rules": [
+      {
+        "name": "The Three-Color Floor Rule",
+        "body": "Floor and modal surfaces rely solely on Warm Sand/White surfaces, Deep Charcoal typography, and Velvet Wine emphasis; semantic Emerald/Amber/Rose appear strictly for live prep status, errors, or offline warnings.",
+        "section": "colors"
+      },
+      {
+        "name": "The 16px Anti-Zoom Floor Rule",
+        "body": "Every text element and form input in new or modified views must be at least 16px (text-base / text-pos-base). Never introduce text-xs, text-sm, text-pos-xs, or text-pos-sm in new or edited JSX—this guarantees arm's-length readability and prevents WebKit/iOS Safari input auto-zoom.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Numerals Rule",
+        "body": "All timers, currency amounts (₱), table counts, and receipt lines inherit font-variant-numeric: tabular-nums so numbers never jitter during live updates.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tactile Press Rule",
+        "body": "Interactive cards and buttons confirm touch through subtle scale (0.98–0.985) and opacity (0.85–0.92) rather than heavy hover elevation.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do enforce min-h-[48px] min-w-[48px] on every interactive Pressable, button, chip, tab, and input.",
+      "Do keep every new or modified text element and all form inputs at ≥ 16px (text-base / text-pos-base).",
+      "Do use React Native primitives (View, Text, Pressable, TextInput, ScrollView) with NativeWind v4 className utilities for all new components and new elements inside existing files.",
+      "Do keep floor and modal UI strictly within Velvet Wine (#810021), Warm Sand/White (#faf8f5/#ffffff), and Deep Charcoal (#1c1917), reserving Emerald/Amber/Rose strictly for live status or alerts.",
+      "Do preserve existing StyleSheet.create declarations and *.styles.ts files untouched (Isolated Hybrid rule)."
+    ],
+    "donts": [
+      "Don't rewrite or convert legacy StyleSheet.create files to NativeWind, or create new *.styles.ts files for new views.",
+      "Don't use web DOM tags (<div>, <span>, <button>, <input>) in frontend TSX files.",
+      "Don't use text-xs, text-sm, text-pos-xs, or text-pos-sm in new or modified views.",
+      "Don't introduce purple/cyan gradients, glowing neon dark-mode clutter, nested card stacks, or public customer-facing KDS screens."
+    ]
+  }
+}

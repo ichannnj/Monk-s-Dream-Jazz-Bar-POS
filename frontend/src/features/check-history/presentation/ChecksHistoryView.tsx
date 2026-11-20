@@ -255,6 +255,27 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                                       {chk.operatingMode === 'EVENT' ? 'EVENT' : 'CAFE'}
                                     </Text>
                                   </View>
+                                  {chk.orderType === 'dine_in' &&
+                                  chk.total >
+                                    chk.subtotal +
+                                      (chk.serviceCharge || 0) +
+                                      (chk.corkageFee || 0) +
+                                      1 ? (
+                                    <View className="px-2 py-0.5 rounded-md border bg-[#fdf2f4] border-[#810021]/25">
+                                      <Text className="text-xs font-extrabold text-[#810021]">
+                                        TABLE PAY
+                                      </Text>
+                                    </View>
+                                  ) : chk.orderType === 'dine_in' &&
+                                    chk.total === 0 &&
+                                    chk.subtotal > 0 &&
+                                    chk.paymentMethod !== 'COMP' ? (
+                                    <View className="px-2 py-0.5 rounded-md border bg-stone-100 border-stone-300">
+                                      <Text className="text-xs font-bold text-stone-600">
+                                        W/ TABLE
+                                      </Text>
+                                    </View>
+                                  ) : null}
                                 </View>
                                 <Text className="text-base text-stone-500 font-medium mt-0.5">
                                   {chk.tableOrRef} · {chk.timestamp}

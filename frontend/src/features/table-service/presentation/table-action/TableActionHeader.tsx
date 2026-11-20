@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { X } from 'lucide-react-native';
 import { TableItem } from '../../../../types/floor';
+import { formatCurrency } from '@monks/shared';
+import { formatTableDisplayName, getOpenTabs } from '@/features/floor/domain/tableTabHelpers';
 
 interface TableActionHeaderProps {
   table: TableItem;
@@ -9,18 +11,34 @@ interface TableActionHeaderProps {
 }
 
 export const TableActionHeader: React.FC<TableActionHeaderProps> = ({ table, onClose }) => {
+  const displayName = formatTableDisplayName(table.code, table.area);
+  const openTabs = getOpenTabs(table);
+  const tabCount = openTabs.length;
+  const tableTotal =
+    table.totalAmount ?? openTabs.reduce((sum, t) => sum + (t.totalAmount || 0), 0);
+
   return (
-    <View className="flex-row justify-between items-center mb-4">
-      <View className="flex-row items-center gap-3">
-        <View className="w-12 h-12 rounded-2xl bg-[#810021] items-center justify-center shadow-xs">
-          <Text className="text-white text-xl font-black">{table.code}</Text>
+    <View className="flex-row justify-between items-center mb-3.5">
+      <View className="flex-row items-center gap-3 flex-1 min-w-0 pr-2">
+        <View className="px-3.5 h-12 rounded-2xl bg-[#810021] items-center justify-center shadow-xs">
+          <Text className="text-white text-lg font-black">{displayName}</Text>
         </View>
-        <View>
-          <Text className="text-xl font-extrabold text-stone-900 tracking-tight">
-            Table {table.code}
-          </Text>
-          <Text className="text-sm text-stone-500 font-medium">
-            {table.guests > 0 ? `${table.guests} Guests` : 'Dine-In'}
+        <View className="flex-1 min-w-0">
+          <View className="flex-row items-center gap-2 flex-wrap">
+            {tabCount > 1 ? (
+              <View className="px-2.5 py-1 rounded-lg bg-[#fdf2f4] border border-[#810021]/20">
+                <Text className="text-sm font-extrabold text-[#810021]">
+                  {tabCount} Tabs · {formatCurrency(tableTotal)}
+                </Text>
+              </View>
+            ) : (
+              <Text className="text-base font-extrabold text-stone-900">
+                {openTabs[0]?.guestName || 'Active Tab'}
+              </Text>
+            )}
+          </View>
+          <Text className="text-xs text-stone-500 font-semibold mt-0.5">
+            {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
           </Text>
         </View>
       </View>

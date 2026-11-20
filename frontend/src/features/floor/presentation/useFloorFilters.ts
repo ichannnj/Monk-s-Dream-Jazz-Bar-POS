@@ -12,8 +12,10 @@ export function useFloorFilters(
   takeoutOrders: TakeoutOrder[],
   onlineOrders: OnlineDeliveryOrder[],
   selectedChannel: ChannelCategory,
-  selectedStatus: StatusFilter
+  selectedStatus: StatusFilter,
+  searchQuery = ''
 ) {
+  const normalizedQuery = searchQuery.trim().toLowerCase();
   // Channel Counts
   const channelCounts = useMemo(() => {
     return {
@@ -56,6 +58,14 @@ export function useFloorFilters(
       if (selectedStatus !== 'all' && table.status !== selectedStatus) {
         return false;
       }
+      if (normalizedQuery) {
+        const matchesCode = table.code.toLowerCase().includes(normalizedQuery);
+        const matchesArea = table.area.toLowerCase().includes(normalizedQuery);
+        const matchesGuest = (table.tabs || []).some(
+          (t) => t.status === 'open' && t.guestName?.toLowerCase().includes(normalizedQuery)
+        );
+        if (!matchesCode && !matchesArea && !matchesGuest) return false;
+      }
       return true;
     });
 
@@ -70,7 +80,7 @@ export function useFloorFilters(
       }
       return parseTableNum(a.code) - parseTableNum(b.code);
     });
-  }, [tables, selectedChannel, selectedStatus]);
+  }, [tables, selectedChannel, selectedStatus, normalizedQuery]);
 
   // Filtered Takeout Orders
   const filteredTakeoutOrders = useMemo(() => {
@@ -87,9 +97,14 @@ export function useFloorFilters(
         selectedStatus === 'served'
       )
         return false;
+      if (normalizedQuery) {
+        const matchesName = o.customerName?.toLowerCase().includes(normalizedQuery);
+        const matchesTicket = o.ticketNumber?.toLowerCase().includes(normalizedQuery);
+        if (!matchesName && !matchesTicket) return false;
+      }
       return true;
     });
-  }, [takeoutOrders, selectedChannel, selectedStatus]);
+  }, [takeoutOrders, selectedChannel, selectedStatus, normalizedQuery]);
 
   // Filtered Online Orders
   const filteredOnlineOrders = useMemo(() => {
@@ -106,9 +121,14 @@ export function useFloorFilters(
         selectedStatus === 'served'
       )
         return false;
+      if (normalizedQuery) {
+        const matchesName = o.customerName?.toLowerCase().includes(normalizedQuery);
+        const matchesRef = o.platformOrderRef?.toLowerCase().includes(normalizedQuery);
+        if (!matchesName && !matchesRef) return false;
+      }
       return true;
     });
-  }, [onlineOrders, selectedChannel, selectedStatus]);
+  }, [onlineOrders, selectedChannel, selectedStatus, normalizedQuery]);
 
   return {
     channelCounts,

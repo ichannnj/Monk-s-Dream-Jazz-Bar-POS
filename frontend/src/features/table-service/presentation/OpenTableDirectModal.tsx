@@ -138,6 +138,46 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 10 }}
           >
+            {effectiveIsSplit && table.tabs && table.tabs.length > 0 ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  gap: 6,
+                  marginBottom: 14,
+                  padding: 10,
+                  borderRadius: 12,
+                  backgroundColor: '#FAF8F5',
+                  borderWidth: 1,
+                  borderColor: '#e7e5e4',
+                }}
+              >
+                <Text style={{ fontSize: 12, fontWeight: '800', color: '#78716C' }}>
+                  Open tabs:
+                </Text>
+                {table.tabs
+                  .filter((t) => t.status !== 'closed')
+                  .map((t) => (
+                    <View
+                      key={t.id || t.tabIndex}
+                      style={{
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: 8,
+                        backgroundColor: '#ffffff',
+                        borderWidth: 1,
+                        borderColor: '#e7e5e4',
+                      }}
+                    >
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#1C1917' }}>
+                        {t.guestName}
+                      </Text>
+                    </View>
+                  ))}
+              </View>
+            ) : null}
+
             {/* Guest Name Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.sectionLabel}>Guest Name:</Text>

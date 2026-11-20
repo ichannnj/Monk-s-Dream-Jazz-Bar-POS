@@ -40,6 +40,7 @@ import { useEventStore } from '@/features/events';
 interface TableActionModalProps {
   visible: boolean;
   table: TableItem | null;
+  initialTabIndex?: number;
   onClose: () => void;
   onTransferTable: (table: TableItem) => void;
   onOpenOrderEntry: (table: TableItem, tabIndex: number, roundNumber?: number) => void;
@@ -50,6 +51,7 @@ interface TableActionModalProps {
 export const TableActionModal: React.FC<TableActionModalProps> = ({
   visible,
   table,
+  initialTabIndex,
   onClose,
   onTransferTable,
   onOpenOrderEntry,
@@ -76,13 +78,20 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
 
   useEffect(() => {
     if (table) {
+      if (
+        initialTabIndex !== undefined &&
+        table.tabs?.some((t) => t.tabIndex === initialTabIndex)
+      ) {
+        setSelectedTabIndex(initialTabIndex);
+        return;
+      }
       const firstTab = table.tabs?.[0]?.tabIndex ?? table.activeTabs?.[0] ?? 1;
       setSelectedTabIndex((prev) => {
         const stillExists = table.tabs?.some((t) => t.tabIndex === prev);
         return stillExists ? prev : firstTab;
       });
     }
-  }, [table]);
+  }, [table, initialTabIndex, visible]);
 
   if (!table) return null;
 
@@ -311,6 +320,10 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                 tabs={table.tabs}
                 selectedTabIndex={selectedTabIndex}
                 onSelectTab={setSelectedTabIndex}
+                onAddSplitTab={() => {
+                  onClose();
+                  onOpenNewTab(table);
+                }}
               />
             ) : null}
 

@@ -27,9 +27,10 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
   const { currentUser } = useAuthStore();
   const { width: windowWidth } = useWindowDimensions();
 
-  // Channel & Status Filter state
+  // Channel, Status & Search Filter state
   const [selectedChannel, setSelectedChannel] = useState<ChannelCategory>('all');
   const [selectedStatus, setSelectedStatus] = useState<StatusFilter>('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Venue operating mode & Manager mode switch modal state
   const { operatingMode, setOperatingMode } = useVenueStore();
@@ -50,7 +51,8 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
     workflows.takeoutOrders,
     workflows.onlineOrders,
     selectedChannel,
-    selectedStatus
+    selectedStatus,
+    searchQuery
   );
 
   const [gridWidth, setGridWidth] = useState<number>(0);
@@ -92,6 +94,8 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
           onChannelChange={setSelectedChannel}
           selectedStatus={selectedStatus}
           onStatusChange={setSelectedStatus}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
           channelCounts={channelCounts}
           statusCounts={statusCounts}
           onOpenTableTab={() => workflows.setIsOpenTabModalOpen(true)}
@@ -109,11 +113,15 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
           filteredTables={filteredTables}
           filteredTakeoutOrders={filteredTakeoutOrders}
           filteredOnlineOrders={filteredOnlineOrders}
+          showSectionHeaders={selectedChannel === 'all'}
           onResetFilters={() => {
             setSelectedChannel('all');
             setSelectedStatus('all');
+            setSearchQuery('');
           }}
           onTablePress={workflows.handleTablePress}
+          onQuickOrder={workflows.handleQuickOrder}
+          onQuickSettle={workflows.handleQuickSettle}
           onTakeoutPress={(o) => {
             workflows.setOrderEntryContext({
               type: 'takeout',
@@ -197,6 +205,7 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
         tables={workflows.tables}
         takeoutOrdersCount={workflows.takeoutOrders.length}
         selectedTable={workflows.liveSelectedTable}
+        initialActionTabIndex={workflows.initialActionTabIndex}
         isActionModalOpen={workflows.isActionModalOpen}
         onCloseActionModal={() => workflows.setIsActionModalOpen(false)}
         onOpenOrderEntryFromModal={workflows.handleOpenOrderEntryFromModal}

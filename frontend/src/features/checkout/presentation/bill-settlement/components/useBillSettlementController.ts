@@ -47,6 +47,7 @@ export function useBillSettlementController({
   const { operatingMode, cafeFoodServiceChargeRate, eventServiceChargeRate, serviceChargeEnabled } =
     useVenueStore();
   const [settlementMode, setSettlementMode] = useState<'single_tab' | 'entire_table'>('single_tab');
+  const [selectedTabIndex, setSelectedTabIndex] = useState<number>(activeTab?.tabIndex || 1);
   const [tenderTabMode, setTenderTabMode] = useState<'single' | 'split'>('single');
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'digital_wallet' | 'comp'>(
     'cash'
@@ -86,6 +87,7 @@ export function useBillSettlementController({
       setTenderedCash('');
       setReferenceNumber('');
       setSettlementMode('single_tab');
+      setSelectedTabIndex(activeTab?.tabIndex || table?.tabs?.[0]?.tabIndex || 1);
       setTenderTabMode('single');
       setSelectedMethod('cash');
       setSplitTenders([]);
@@ -117,12 +119,27 @@ export function useBillSettlementController({
 
   const isTakeout = Boolean(takeoutOrder);
 
+  const resolvedActiveTab = useMemo(() => {
+    if (isTakeout) return activeTab;
+    return table?.tabs?.find((t) => t.tabIndex === selectedTabIndex) || activeTab;
+  }, [isTakeout, table?.tabs, selectedTabIndex, activeTab]);
+
+  const handleSelectTabScope = (mode: 'single_tab' | 'entire_table', tabIndex?: number) => {
+    setSettlementMode(mode);
+    if (tabIndex !== undefined) {
+      setSelectedTabIndex(tabIndex);
+    }
+    setSelectedSeniorItemIds(new Set());
+  };
+
   const effectiveOperatingMode =
-    (isTakeout ? takeoutOrder?.operatingMode : activeTab?.operatingMode) || operatingMode || 'CAFE';
+    (isTakeout ? takeoutOrder?.operatingMode : resolvedActiveTab?.operatingMode) ||
+    operatingMode ||
+    'CAFE';
 
   const rawItems = useMemo(() => {
-    return extractRawOrderItems(isTakeout, takeoutOrder, settlementMode, activeTab, table);
-  }, [isTakeout, takeoutOrder, settlementMode, activeTab, table]);
+    return extractRawOrderItems(isTakeout, takeoutOrder, settlementMode, resolvedActiveTab, table);
+  }, [isTakeout, takeoutOrder, settlementMode, resolvedActiveTab, table]);
 
   const isSeniorOrPwd = discountType === 'SENIOR_CITIZEN' || discountType === 'PWD';
   const pricingItems: PricingLineItem[] = useMemo(() => {
@@ -140,8 +157,8 @@ export function useBillSettlementController({
     if (settlementMode === 'entire_table' && table?.tabs) {
       return table.tabs.reduce((sum, t) => sum + (t.corkageAmount || 0), 0);
     }
-    return activeTab?.corkageAmount || 0;
-  }, [settlementMode, table?.tabs, activeTab?.corkageAmount]);
+    return resolvedActiveTab?.corkageAmount || 0;
+  }, [settlementMode, table?.tabs, resolvedActiveTab?.corkageAmount]);
 
   const billing = useMemo(() => {
     const calculated = calculateTabBilling(pricingItems, {
@@ -309,7 +326,7 @@ export function useBillSettlementController({
 
       await onConfirmPayment(
         isTakeout ? 'takeout' : settlementMode,
-        activeTab?.tabIndex || 1,
+        resolvedActiveTab?.tabIndex || 1,
         isSplit ? 'split' : selectedMethod,
         isSplit ? cashPortion : selectedMethod === 'cash' ? numericTendered : undefined,
         !isSplit && selectedMethod === 'digital_wallet'
@@ -355,8 +372,8 @@ export function useBillSettlementController({
       setIsPrintingBill(true);
       const billData = {
         isBillStatement: true,
-        receiptNumber: `BILL-${(activeTab?.id || takeoutOrder?.id || '001').slice(0, 8).toUpperCase()}`,
-        tabId: activeTab?.id || takeoutOrder?.id,
+        receiptNumber: `BILL-${(resolvedActiveTab?.id || takeoutOrder?.id || '001').slice(0, 8).toUpperCase()}`,
+        tabId: resolvedActiveTab?.id || takeoutOrder?.id,
         operatingMode: effectiveOperatingMode,
         timestamp: new Date().toISOString(),
         tableNumber: table?.code,
@@ -367,10 +384,14 @@ export function useBillSettlementController({
           : undefined,
         tabName: isTakeout
           ? takeoutOrder?.customerName || 'Takeout / Counter'
-          : activeTab?.guestName || 'Table Guest',
+          : settlementMode === 'entire_table'
+            ? `All ${table?.tabs?.filter((t) => t.status === 'open').length || 1} Tabs`
+            : resolvedActiveTab?.guestName || 'Table Guest',
         customerName: isTakeout
           ? takeoutOrder?.customerName || 'Takeout / Counter'
-          : activeTab?.guestName || 'Table Guest',
+          : settlementMode === 'entire_table'
+            ? `Table ${table?.code || ''} (Group)`
+            : resolvedActiveTab?.guestName || 'Table Guest',
         serverName: currentUser?.displayName || 'Cashier',
         waiterName: currentUser?.displayName || 'Cashier',
         items: rawItems,
@@ -412,6 +433,9 @@ export function useBillSettlementController({
   return {
     settlementMode,
     setSettlementMode,
+    selectedTabIndex,
+    resolvedActiveTab,
+    handleSelectTabScope,
     tenderTabMode,
     setTenderTabMode,
     selectedMethod,

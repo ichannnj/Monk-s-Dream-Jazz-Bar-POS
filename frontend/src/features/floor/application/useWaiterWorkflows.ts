@@ -37,6 +37,7 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
 
   // Modal Visibility States
   const [selectedTable, setSelectedTable] = useState<TableItem | null>(null);
+  const [initialActionTabIndex, setInitialActionTabIndex] = useState<number | undefined>(undefined);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
 
   // Always derive fresh live selected table from store
@@ -106,15 +107,40 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
   };
 
   // Card click handlers
-  const handleTablePress = (table: TableItem) => {
+  const handleTablePress = (table: TableItem, tabIndex?: number) => {
     if (table.status === 'empty') {
       setSelectedTable(table);
+      setInitialActionTabIndex(undefined);
       setIsSplitTabDirect(false);
       setIsOpenDirectModalOpen(true);
     } else {
       setSelectedTable(table);
+      setInitialActionTabIndex(tabIndex);
       setIsActionModalOpen(true);
     }
+  };
+
+  const handleQuickOrder = (table: TableItem, tabIndex?: number) => {
+    const openTabs = (table.tabs || []).filter((t) => t.status === 'open');
+    if (tabIndex !== undefined) {
+      handleOpenOrderEntryFromModal(table, tabIndex);
+      return;
+    }
+    if (openTabs.length <= 1) {
+      const targetIndex = openTabs[0]?.tabIndex ?? table.activeTabs?.[0] ?? 1;
+      handleOpenOrderEntryFromModal(table, targetIndex);
+      return;
+    }
+    // 2+ tabs: open TableActionModal with tab pills highlighted so waiter picks which guest is ordering
+    setSelectedTable(table);
+    setInitialActionTabIndex(openTabs[0]?.tabIndex);
+    setIsActionModalOpen(true);
+  };
+
+  const handleQuickSettle = (table: TableItem, tabIndex?: number) => {
+    const openTabs = (table.tabs || []).filter((t) => t.status === 'open');
+    const targetIndex = tabIndex ?? openTabs[0]?.tabIndex ?? table.activeTabs?.[0] ?? 1;
+    handleOpenCheckout(table, targetIndex);
   };
 
   const handleOpenOrderEntryFromModal = (
@@ -283,7 +309,9 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
 
       if (!checkoutContext.table) return;
       const tableCode = checkoutContext.table.code;
-      const tabName = checkoutContext.activeTab?.guestName || `Tab #${tabIndex}`;
+      const matchedTab = checkoutContext.table.tabs?.find((t) => t.tabIndex === tabIndex);
+      const tabName =
+        matchedTab?.guestName || checkoutContext.activeTab?.guestName || `Tab #${tabIndex}`;
       const totalDue =
         billingDetails?.totalAmountDue ??
         (mode === 'single_tab' && checkoutContext.activeTab
@@ -337,6 +365,7 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
     onlineOrders,
     selectedTable,
     setSelectedTable,
+    initialActionTabIndex,
     liveSelectedTable,
     isActionModalOpen,
     setIsActionModalOpen,
@@ -365,6 +394,8 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
     setConfirmFloorAction,
     handleExecuteFloorAction,
     handleTablePress,
+    handleQuickOrder,
+    handleQuickSettle,
     handleOpenOrderEntryFromModal,
     handleOpenNewSplitTab,
     handleOpenCheckout,

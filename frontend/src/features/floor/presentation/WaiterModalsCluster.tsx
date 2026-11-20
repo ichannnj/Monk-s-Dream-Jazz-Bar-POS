@@ -17,6 +17,7 @@ export interface WaiterModalsClusterProps {
 
   // Table Action Modal
   selectedTable: TableItem | null;
+  initialActionTabIndex?: number;
   isActionModalOpen: boolean;
   onCloseActionModal: () => void;
   onOpenOrderEntryFromModal: (table: TableItem, tabIndex: number, roundNumber?: number) => void;
@@ -106,6 +107,7 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
   tables,
   takeoutOrdersCount,
   selectedTable,
+  initialActionTabIndex,
   isActionModalOpen,
   onCloseActionModal,
   onOpenOrderEntryFromModal,
@@ -145,6 +147,7 @@ export const WaiterModalsCluster: React.FC<WaiterModalsClusterProps> = ({
         <TableActionModal
           visible={isActionModalOpen}
           table={selectedTable}
+          initialTabIndex={initialActionTabIndex}
           onClose={onCloseActionModal}
           onTransferTable={onTransferTableFromModal}
           onOpenOrderEntry={onOpenOrderEntryFromModal}
