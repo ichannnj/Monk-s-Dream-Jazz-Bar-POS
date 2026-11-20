@@ -311,7 +311,9 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FDFCFB',
+    borderWidth: 1.5,
+    borderColor: '#D6CFC7',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
@@ -476,9 +478,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minHeight: 48,
     borderRadius: 14,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e7e5e4',
+    backgroundColor: '#FDFCFB',
+    borderWidth: 1.5,
+    borderColor: '#D6CFC7',
   },
   staffAvatar: {
     width: 28,
@@ -510,7 +512,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   modePillCafe: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FAF8F5',
     borderColor: '#e7e5e4',
   },
   modePillEvent: {
@@ -535,9 +537,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     minHeight: 48,
     borderRadius: 14,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e7e5e4',
+    backgroundColor: '#FDFCFB',
+    borderWidth: 1.5,
+    borderColor: '#D6CFC7',
   },
   printerPillActive: {
     backgroundColor: '#faf8f5',

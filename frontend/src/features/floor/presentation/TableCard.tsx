@@ -58,10 +58,10 @@ const STATUS_STYLE_MAP: Record<
   },
   empty: {
     label: 'AVAILABLE',
-    cardBorder: 'border border-stone-200',
-    badgeBg: 'bg-[#faf8f5]',
-    badgeText: 'text-[#57534E]',
-    dotBg: 'bg-stone-400',
+    cardBorder: 'border-[1.5px] border-[#D6CFC7]',
+    badgeBg: 'bg-[#EFE9E2]',
+    badgeText: 'text-[#44403C]',
+    dotBg: 'bg-stone-500',
   },
 };
 
@@ -106,7 +106,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
 
     return (
       <View
-        className={`h-[228px] justify-between rounded-2xl bg-white p-3.5 ${statusVisual.cardBorder}`}
+        className={`h-[228px] justify-between rounded-2xl bg-[#FDFCFB] p-3.5 ${statusVisual.cardBorder}`}
       >
         <View className="flex-1 justify-between">
           {/* 1. Top Clickable Header & Primary Summary (never wraps nested Pressable chips) */}
@@ -151,8 +151,8 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
 
             {/* Available Metadata */}
             {isEmpty ? (
-              <View className="flex-1 justify-center border-t border-stone-100 py-2">
-                <Text className="text-base font-medium text-[#57534E]">
+              <View className="flex-1 justify-center border-t border-stone-200 py-2">
+                <Text className="text-base font-medium text-[#44403C]">
                   {seats ? `${seats} ${seats === 1 ? 'seat' : 'seats'} · ` : ''}
                   {area === 'bar' ? 'Bar Area' : 'Cafe Area'}
                 </Text>
@@ -259,12 +259,12 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
           {isEmpty ? (
             <Pressable
               onPress={() => onPress(table)}
-              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl border border-stone-300 bg-[#faf8f5] px-4 py-2.5 active:bg-stone-200"
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#810021] px-4 py-2.5 active:opacity-85"
               accessibilityRole="button"
               accessibilityLabel={`Open Tab at ${displayName}`}
             >
-              <Plus size={18} color="#810021" strokeWidth={2.5} />
-              <Text className="text-base font-bold text-[#1c1917]">Open Tab</Text>
+              <Plus size={18} color="#ffffff" strokeWidth={2.5} />
+              <Text className="text-base font-bold text-white">Open Tab</Text>
             </Pressable>
           ) : (
             <>
