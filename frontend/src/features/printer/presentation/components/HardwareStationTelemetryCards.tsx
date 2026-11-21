@@ -37,6 +37,11 @@ const TRANSPORT_OPTIONS: PosDropdownOption<string>[] = [
   },
   { value: 'usb', label: 'WebUSB Direct', description: 'Raw USB bulk transfer (Class 07)' },
   { value: 'serial', label: 'WebSerial (COM)', description: 'Virtual COM port (CH340/FTDI/CDC)' },
+  {
+    value: 'bridge',
+    label: 'Local Bridge',
+    description: 'Windows Spooler / Linux Daemon (127.0.0.1:12111)',
+  },
 ];
 
 interface HardwareStationTelemetryCardsProps {

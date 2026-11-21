@@ -98,8 +98,8 @@ export class WebSerialPrinterService {
       return {
         usbVendorId: 0x0483,
         usbProductId: 0x070b,
-        deviceName: 'Local Hardware Bridge (/dev/usb/lp0)',
-        manufacturerName: "Monk's Dream Linux Daemon",
+        deviceName: 'Local Hardware Bridge (127.0.0.1:12111)',
+        manufacturerName: "Monk's Dream Local Print Bridge",
         type: 'bridge',
       };
     }
@@ -338,7 +338,7 @@ export class WebSerialPrinterService {
    */
   public async requestAndConnect(
     baudRate: number = 9600,
-    preferredTransport: 'auto' | 'usb' | 'serial' = 'auto'
+    preferredTransport: 'auto' | 'usb' | 'serial' | 'bridge' = 'auto'
   ): Promise<boolean> {
     try {
       this.isConnecting = true;
@@ -351,6 +351,21 @@ export class WebSerialPrinterService {
         typeof window !== 'undefined' &&
         (localStorage.getItem('monks_enable_bridge_daemon') === 'true' ||
           window.location?.search?.includes('mode=printer'));
+
+      if (preferredTransport === 'bridge') {
+        const bridgeConnected = await this.checkBridge();
+        if (bridgeConnected) {
+          this.connectionType = 'bridge';
+          this.saveBoundPrinter({
+            deviceName: 'Local Hardware Bridge',
+            transport: 'bridge',
+          });
+          return true;
+        }
+        throw new Error(
+          'Local Print Bridge not detected at http://127.0.0.1:12111. Start the bridge on this PC, or install WinUSB via Zadig (zadig.akeo.ie) for direct WebUSB.'
+        );
+      }
 
       if (isBridgeEnabled && preferredTransport === 'auto') {
         const bridgeConnected = await this.checkBridge();

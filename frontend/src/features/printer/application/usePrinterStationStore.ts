@@ -21,7 +21,7 @@ import {
 export type StationConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
 export type DrawerStatus = 'IDLE' | 'KICKING';
 export type ThermalPaperWidth = '80mm' | '58mm' | '57mm';
-export type PrinterTransportMode = 'auto' | 'usb' | 'serial';
+export type PrinterTransportMode = 'auto' | 'usb' | 'serial' | 'bridge';
 
 export interface StationLogItem {
   id: string;
@@ -118,7 +118,10 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       : typeof localStorage !== 'undefined' &&
           localStorage.getItem('monks_pos_preferred_transport') === 'usb'
         ? 'usb'
-        : 'auto',
+        : typeof localStorage !== 'undefined' &&
+            localStorage.getItem('monks_pos_preferred_transport') === 'bridge'
+          ? 'bridge'
+          : 'auto',
   autoPrintEnabled: true,
   chimeEnabled: true,
   portInfo: null,
@@ -133,6 +136,11 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     try {
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('monks_pos_preferred_transport', transport);
+        if (transport === 'bridge') {
+          localStorage.setItem('monks_enable_bridge_daemon', 'true');
+        } else {
+          localStorage.removeItem('monks_enable_bridge_daemon');
+        }
       }
     } catch {
       // Storage unavailable

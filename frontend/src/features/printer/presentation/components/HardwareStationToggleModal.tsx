@@ -2,7 +2,17 @@ import React from 'react';
 import { View, Text, Modal, Pressable, StyleSheet, Switch } from 'react-native';
 import { Printer, X, ShieldCheck, RefreshCw } from 'lucide-react-native';
 import { useDeviceHardwareStation } from '../../application/useDeviceHardwareStation';
-import { usePrinterStationStore } from '../../application/usePrinterStationStore';
+import {
+  usePrinterStationStore,
+  type PrinterTransportMode,
+} from '../../application/usePrinterStationStore';
+
+const MODAL_TRANSPORT_OPTIONS: Array<{ value: PrinterTransportMode; label: string }> = [
+  { value: 'auto', label: 'Auto' },
+  { value: 'usb', label: 'WebUSB' },
+  { value: 'serial', label: 'WebSerial (COM)' },
+  { value: 'bridge', label: 'Local Bridge' },
+];
 
 interface HardwareStationToggleModalProps {
   visible: boolean;
@@ -18,6 +28,8 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
     connectionStatus,
     portInfo,
     lastError,
+    preferredTransport,
+    setPreferredTransport,
     connectDevice,
     disconnectDevice,
     testKickDrawer,
@@ -120,7 +132,7 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
                           {portInfo.type === 'usb'
                             ? `USB (VID: 0x${portInfo.usbVendorId?.toString(16) || '?'}, PID: 0x${portInfo.usbProductId?.toString(16) || '?'})`
                             : portInfo.type === 'bridge'
-                              ? 'Linux /dev/usb/lp0'
+                              ? 'Local Bridge (127.0.0.1)'
                               : 'Serial Port'}
                         </Text>
                       </View>
@@ -144,12 +156,67 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
                 </View>
 
                 {connectionStatus !== 'CONNECTED' && lastError ? (
-                  <View className="mt-2 rounded-lg bg-rose-50 border border-rose-200 px-2.5 py-2">
+                  <View className="mt-2 rounded-lg bg-rose-50 border border-rose-200 px-2.5 py-2 space-y-2">
                     <Text className="text-[11px] font-semibold text-rose-700 leading-relaxed">
                       {lastError}
                     </Text>
+                    <View className="flex-row flex-wrap gap-1.5">
+                      <Pressable
+                        onPress={() => {
+                          setPreferredTransport('serial');
+                          connectDevice('serial');
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-white border border-rose-300 active:bg-rose-100"
+                      >
+                        <Text className="text-[11px] font-bold text-rose-800">
+                          Try WebSerial (COM)
+                        </Text>
+                      </Pressable>
+                      <Pressable
+                        onPress={() => {
+                          setPreferredTransport('bridge');
+                          connectDevice('bridge');
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-white border border-rose-300 active:bg-rose-100"
+                      >
+                        <Text className="text-[11px] font-bold text-rose-800">
+                          Try Local Bridge
+                        </Text>
+                      </Pressable>
+                    </View>
                   </View>
                 ) : null}
+
+                {/* Transport Mode Selector */}
+                <View className="mt-2.5 pt-2 border-t border-stone-100">
+                  <Text className="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-1.5">
+                    Transport Mode
+                  </Text>
+                  <View className="flex-row flex-wrap gap-1.5">
+                    {MODAL_TRANSPORT_OPTIONS.map((opt) => {
+                      const active = preferredTransport === opt.value;
+                      return (
+                        <Pressable
+                          key={opt.value}
+                          onPress={() => setPreferredTransport(opt.value)}
+                          className={`px-2.5 py-1 rounded-lg border ${
+                            active
+                              ? 'bg-stone-900 border-stone-900'
+                              : 'bg-stone-50 border-stone-200 active:bg-stone-100'
+                          }`}
+                        >
+                          <Text
+                            className={`text-[11px] font-bold ${
+                              active ? 'text-white' : 'text-stone-600'
+                            }`}
+                          >
+                            {opt.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
               </View>
 
               {/* Action Buttons */}
