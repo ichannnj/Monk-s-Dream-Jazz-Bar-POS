@@ -35,6 +35,11 @@ const TRANSPORT_OPTIONS: PosDropdownOption<string>[] = [
     label: 'Auto (USB/Serial)',
     description: 'Auto-detect WebUSB with Serial fallback',
   },
+  {
+    value: 'browser',
+    label: 'Plug & Play (Browser)',
+    description: 'Uses Windows/OS Print Spooler (no driver changes)',
+  },
   { value: 'usb', label: 'WebUSB Direct', description: 'Raw USB bulk transfer (Class 07)' },
   { value: 'serial', label: 'WebSerial (COM)', description: 'Virtual COM port (CH340/FTDI/CDC)' },
   {
@@ -138,7 +143,7 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
               </Text>
               <Text className="text-[11px] text-stone-500">
                 {connectionStatus === 'CONNECTED'
-                  ? `${portInfo?.type === 'usb' ? 'Direct WebUSB' : portInfo?.type === 'bridge' ? 'Linux Bridge (/dev/usb/lp0)' : 'Serial Port'}${portInfo?.manufacturerName ? ` • ${portInfo.manufacturerName}` : ''}${portInfo?.usbVendorId ? ` (VID: 0x${portInfo.usbVendorId.toString(16).toUpperCase()}, PID: 0x${portInfo.usbProductId?.toString(16).toUpperCase()})` : ''}${portInfo?.endpointOut ? ` • EP ${portInfo.endpointOut}` : ''}`
+                  ? `${portInfo?.type === 'usb' ? 'Direct WebUSB' : portInfo?.type === 'bridge' ? 'Local Print Bridge (127.0.0.1)' : portInfo?.type === 'browser' ? 'Plug & Play Browser Print' : 'Serial Port'}${portInfo?.manufacturerName ? ` • ${portInfo.manufacturerName}` : ''}${portInfo?.usbVendorId ? ` (VID: 0x${portInfo.usbVendorId.toString(16).toUpperCase()}, PID: 0x${portInfo.usbProductId?.toString(16).toUpperCase()})` : ''}${portInfo?.endpointOut ? ` • EP ${portInfo.endpointOut}` : ''}`
                   : !isSupported
                     ? 'WebUSB / WebSerial is not supported in this browser. Please use Chrome or Edge.'
                     : 'Thermal printer offline. Click Pair Device to select from USB/Serial devices.'}

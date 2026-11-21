@@ -1,4 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+vi.mock('../../../shared/utils/printHelpers', () => ({
+  printHtmlElement: vi.fn(() => true),
+}));
+
 import { WebSerialPrinterService } from '../webSerialPrinter';
 
 describe('WebSerialPrinterService Device Binding and Persistence', () => {

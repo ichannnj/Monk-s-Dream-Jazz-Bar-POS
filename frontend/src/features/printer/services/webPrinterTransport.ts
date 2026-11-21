@@ -1,7 +1,7 @@
 export interface SerialPortInfo {
   usbVendorId?: number;
   usbProductId?: number;
-  type?: 'bridge' | 'usb' | 'serial';
+  type?: 'bridge' | 'usb' | 'serial' | 'browser';
   deviceName?: string;
   manufacturerName?: string;
   serialNumber?: string;
@@ -15,7 +15,7 @@ export interface BoundPrinterDevice {
   serialNumber?: string;
   deviceName?: string;
   manufacturerName?: string;
-  transport: 'usb' | 'serial' | 'bridge';
+  transport: 'usb' | 'serial' | 'bridge' | 'browser';
 }
 
 export const BRIDGE_URL = 'http://127.0.0.1:12111';

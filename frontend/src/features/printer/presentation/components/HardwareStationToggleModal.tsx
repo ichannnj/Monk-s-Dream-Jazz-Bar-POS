@@ -9,6 +9,7 @@ import {
 
 const MODAL_TRANSPORT_OPTIONS: Array<{ value: PrinterTransportMode; label: string }> = [
   { value: 'auto', label: 'Auto' },
+  { value: 'browser', label: 'Plug & Play' },
   { value: 'usb', label: 'WebUSB' },
   { value: 'serial', label: 'WebSerial (COM)' },
   { value: 'bridge', label: 'Local Bridge' },
@@ -133,7 +134,9 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
                             ? `USB (VID: 0x${portInfo.usbVendorId?.toString(16) || '?'}, PID: 0x${portInfo.usbProductId?.toString(16) || '?'})`
                             : portInfo.type === 'bridge'
                               ? 'Local Bridge (127.0.0.1)'
-                              : 'Serial Port'}
+                              : portInfo.type === 'browser'
+                                ? 'Browser Print Spooler'
+                                : 'Serial Port'}
                         </Text>
                       </View>
                     </View>
@@ -161,6 +164,17 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
                       {lastError}
                     </Text>
                     <View className="flex-row flex-wrap gap-1.5">
+                      <Pressable
+                        onPress={() => {
+                          setPreferredTransport('browser');
+                          connectDevice('browser');
+                        }}
+                        className="px-2.5 py-1.5 rounded-lg bg-amber-500 active:bg-amber-600"
+                      >
+                        <Text className="text-[11px] font-extrabold text-stone-950">
+                          Use Plug &amp; Play Browser Print
+                        </Text>
+                      </Pressable>
                       <Pressable
                         onPress={() => {
                           setPreferredTransport('serial');

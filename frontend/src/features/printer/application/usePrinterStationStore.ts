@@ -21,7 +21,7 @@ import {
 export type StationConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
 export type DrawerStatus = 'IDLE' | 'KICKING';
 export type ThermalPaperWidth = '80mm' | '58mm' | '57mm';
-export type PrinterTransportMode = 'auto' | 'usb' | 'serial' | 'bridge';
+export type PrinterTransportMode = 'auto' | 'usb' | 'serial' | 'bridge' | 'browser';
 
 export interface StationLogItem {
   id: string;
@@ -121,7 +121,10 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
         : typeof localStorage !== 'undefined' &&
             localStorage.getItem('monks_pos_preferred_transport') === 'bridge'
           ? 'bridge'
-          : 'auto',
+          : typeof localStorage !== 'undefined' &&
+              localStorage.getItem('monks_pos_preferred_transport') === 'browser'
+            ? 'browser'
+            : 'auto',
   autoPrintEnabled: true,
   chimeEnabled: true,
   portInfo: null,
@@ -592,9 +595,18 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
   },
 
   testKickDrawer: async () => {
-    const { connectionStatus, addLog } = get();
+    const { connectionStatus, portInfo, addLog } = get();
     if (connectionStatus !== 'CONNECTED') {
       toast.error('Connect your USB thermal printer first', { title: 'Printer Disconnected' });
+      return;
+    }
+
+    if (portInfo?.type === 'browser') {
+      toast.info(
+        'Browser Print uses your Windows Printer Driver "Open Cash Drawer" setting on receipt print. Use Zadig WinUSB or Local Bridge for standalone drawer kicks.',
+        { title: 'Browser Print Mode' }
+      );
+      addLog('info', 'Cash drawer kick skipped in Browser Print mode (driver-managed on print)');
       return;
     }
 

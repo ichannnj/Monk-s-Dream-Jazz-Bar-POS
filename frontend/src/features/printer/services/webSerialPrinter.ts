@@ -5,6 +5,7 @@
  */
 
 import { buildCashDrawerKickBytes } from './escposBuilder';
+import { printEscPosViaBrowser } from './browserPrintFallback';
 import {
   type SerialPortInfo,
   type BoundPrinterDevice,
@@ -27,7 +28,7 @@ export class WebSerialPrinterService {
   private usbInterfaceNumber: number = 0;
   private isConnecting: boolean = false;
   private baudRate: number = 9600;
-  private connectionType: 'none' | 'bridge' | 'serial' | 'usb' = 'none';
+  private connectionType: 'none' | 'bridge' | 'serial' | 'usb' | 'browser' = 'none';
   private lastError: string | null = null;
   private lastLoggedAutoError: string | null = null;
 
@@ -50,11 +51,13 @@ export class WebSerialPrinterService {
   }
 
   public isSupported(): boolean {
+    if (typeof window !== 'undefined' && typeof window.print === 'function') return true;
     if (typeof navigator === 'undefined') return false;
     return 'usb' in navigator || 'serial' in navigator;
   }
 
   public isConnected(): boolean {
+    if (this.connectionType === 'browser') return true;
     if (this.connectionType === 'bridge') return true;
     if (this.connectionType === 'usb') {
       return this.usbDevice !== null && this.usbDevice.opened === true;
@@ -94,6 +97,13 @@ export class WebSerialPrinterService {
   }
 
   public getPortInfo(): SerialPortInfo | null {
+    if (this.connectionType === 'browser') {
+      return {
+        deviceName: 'Windows / Browser Print Spooler',
+        manufacturerName: 'Plug & Play (window.print)',
+        type: 'browser',
+      };
+    }
     if (this.connectionType === 'bridge') {
       return {
         usbVendorId: 0x0483,
@@ -233,6 +243,15 @@ export class WebSerialPrinterService {
       this.attachHotplugListeners();
 
       const bound = this.getBoundPrinter();
+      const savedTransport =
+        typeof localStorage !== 'undefined'
+          ? localStorage.getItem('monks_pos_preferred_transport')
+          : null;
+
+      if (savedTransport === 'browser' || bound?.transport === 'browser') {
+        this.connectionType = 'browser';
+        return true;
+      }
 
       // 1. Try WebUSB authorized devices
       if (typeof navigator !== 'undefined' && 'usb' in navigator) {
@@ -338,7 +357,7 @@ export class WebSerialPrinterService {
    */
   public async requestAndConnect(
     baudRate: number = 9600,
-    preferredTransport: 'auto' | 'usb' | 'serial' | 'bridge' = 'auto'
+    preferredTransport: 'auto' | 'usb' | 'serial' | 'bridge' | 'browser' = 'auto'
   ): Promise<boolean> {
     try {
       this.isConnecting = true;
@@ -346,6 +365,19 @@ export class WebSerialPrinterService {
       this.lastError = null;
       this.lastLoggedAutoError = null;
       this.attachHotplugListeners();
+
+      if (preferredTransport === 'browser') {
+        if (typeof window === 'undefined' || typeof window.print !== 'function') {
+          throw new Error('Browser print is not available on this device.');
+        }
+        this.connectionType = 'browser';
+        this.saveBoundPrinter({
+          deviceName: 'Windows / Browser Print Spooler',
+          manufacturerName: 'Plug & Play (window.print)',
+          transport: 'browser',
+        });
+        return true;
+      }
 
       const isBridgeEnabled =
         typeof window !== 'undefined' &&
@@ -566,6 +598,15 @@ export class WebSerialPrinterService {
       }
     }
 
+    if (this.connectionType === 'browser') {
+      const storedWidth =
+        typeof localStorage !== 'undefined' &&
+        localStorage.getItem('monks_pos_paper_width') === '80mm'
+          ? '80mm'
+          : '58mm';
+      printEscPosViaBrowser(bytes, storedWidth);
+      return true;
+    }
     if (this.connectionType === 'bridge') {
       const res = await fetch(`${BRIDGE_URL}/print`, {
         method: 'POST',
@@ -590,6 +631,9 @@ export class WebSerialPrinterService {
   }
 
   public async kickCashDrawer(): Promise<boolean> {
+    if (this.connectionType === 'browser') {
+      return false;
+    }
     if (this.connectionType === 'bridge') {
       try {
         const res = await fetch(`${BRIDGE_URL}/kick`, { method: 'POST' });
