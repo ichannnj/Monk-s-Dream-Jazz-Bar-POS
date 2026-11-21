@@ -114,12 +114,15 @@ export function appendOrIncrementCartItem(
       (i.variantId || undefined) === (variant?.id || undefined) &&
       (i.notes || '') === (notesStr || '') &&
       normalizeSelections(i.variantSelections) === incomingSelectionsKey &&
-      JSON.stringify(i.modifiers?.sort() || []) === JSON.stringify(formattedMods.sort())
+      JSON.stringify([...(i.modifiers || [])].sort()) === JSON.stringify([...formattedMods].sort())
   );
 
   if (existingIdx >= 0) {
     const copy = [...prev];
-    copy[existingIdx].quantity += 1;
+    copy[existingIdx] = {
+      ...copy[existingIdx],
+      quantity: copy[existingIdx].quantity + 1,
+    };
     return copy;
   }
   return [...prev, newItem];

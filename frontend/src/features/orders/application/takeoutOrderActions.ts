@@ -6,6 +6,7 @@ import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { toast } from '../../shared/toast/useToastStore';
+import { ensureUuid } from '../data/durableQueue';
 import { trackTabWrite } from './tabWriteTracker';
 
 export const createTakeoutOrderAction = (
@@ -26,9 +27,9 @@ export const createTakeoutOrderAction = (
   const operatingMode = useVenueStore.getState().operatingMode;
   const currentUserId = useAuthStore.getState().currentUser?.id;
 
-  const taggedItems: OrderLineItem[] = items.map((item, idx) => ({
+  const taggedItems: OrderLineItem[] = items.map((item) => ({
     ...item,
-    id: item.id || `item-${localOrderId}-r1-${Date.now()}-${idx}`,
+    id: ensureUuid(item.id),
     roundNumber: item.roundNumber || 1,
     status: item.status || ('pending' as const),
     createdAt: item.createdAt || nowIso,
@@ -75,6 +76,7 @@ export const createTakeoutOrderAction = (
       ticketNumber: nextTicketNum,
       orderType: 'TAKEOUT',
       orderChannel: 'TAKEOUT_COUNTER',
+      externalOrderRef: localOrderId,
       roundNumber: 1,
       isPrepaid,
       notes,
@@ -163,9 +165,9 @@ export const addItemsToTakeoutOrderAction = (
   const nextRound = maxRound + 1;
   const nowIso = new Date().toISOString();
 
-  const taggedItems: OrderLineItem[] = items.map((item, idx) => ({
+  const taggedItems: OrderLineItem[] = items.map((item) => ({
     ...item,
-    id: item.id || `item-to-${takeoutId}-r${nextRound}-${Date.now()}-${idx}`,
+    id: ensureUuid(item.id),
     roundNumber: nextRound,
     status: item.status || ('pending' as const),
     createdAt: nowIso,
@@ -194,6 +196,7 @@ export const addItemsToTakeoutOrderAction = (
       ticketNumber: existing.ticketNumber,
       orderType: 'TAKEOUT',
       orderChannel: 'TAKEOUT_COUNTER',
+      externalOrderRef: `${existing.ticketNumber}-R${nextRound}-${taggedItems[0]?.id || Date.now()}`,
       roundNumber: nextRound,
       isPrepaid: existing.isPrepaid,
       notes: existing.notes,

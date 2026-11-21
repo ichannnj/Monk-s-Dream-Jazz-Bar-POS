@@ -11,6 +11,26 @@ import type { QueuedMutation } from '../domain/order.types';
 
 export const STORAGE_KEY_OFFLINE_QUEUE = 'monks_pos_offline_queue';
 
+const inFlightMutationIds = new Set<string>();
+
+/**
+ * Tracks mutations currently executing directly so background queue drains
+ * never pick up and duplicate an in-flight request.
+ */
+export function markMutationInFlight(id: string): void {
+  if (id) inFlightMutationIds.add(id);
+}
+
+export function clearMutationInFlight(id: string): void {
+  if (id) inFlightMutationIds.delete(id);
+}
+
+export function isMutationInFlight(id: string): boolean {
+  return Boolean(id && inFlightMutationIds.has(id));
+}
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function generateUuid(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -20,6 +40,13 @@ function generateUuid(): string {
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
     return v.toString(16);
   });
+}
+
+export function ensureUuid(existingId?: string): string {
+  if (existingId && UUID_REGEX.test(existingId)) {
+    return existingId;
+  }
+  return generateUuid();
 }
 
 /**
@@ -86,6 +113,7 @@ export function dequeueDurableMutation(id: string): QueuedMutation[] {
  * Clears the entire durable offline queue from storage.
  */
 export function clearDurableQueue(): void {
+  inFlightMutationIds.clear();
   safeStorage.removeItem(STORAGE_KEY_OFFLINE_QUEUE);
 }
 

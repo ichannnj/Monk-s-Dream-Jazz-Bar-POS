@@ -5,6 +5,8 @@ import {
   enqueueDurableMutation,
   dequeueDurableMutation,
   loadDurableQueue,
+  markMutationInFlight,
+  clearMutationInFlight,
 } from '../../orders/data/durableQueue';
 import type { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
@@ -290,6 +292,7 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       reason: reason || 'Guest relocation request',
     };
 
+    markMutationInFlight(transferMutationId);
     enqueueDurableMutation({
       id: transferMutationId,
       hlc: posHlc.now(),
@@ -310,6 +313,9 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
           'Background transferTableTab offline notice (retained in durable queue):',
           err
         );
+      })
+      .finally(() => {
+        clearMutationInFlight(transferMutationId);
       });
   },
 });

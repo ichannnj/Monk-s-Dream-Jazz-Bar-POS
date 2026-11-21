@@ -6,7 +6,12 @@ import { resolveTableUuid } from '../../floor/data/resolver';
 import { mapPaymentMethodToDb } from './settlementHelpers';
 import type { SettlementBillingDetails } from './settlementHelpers';
 import { mapTendersToDbPayload } from '../domain/splitTenderCalculator';
-import { enqueueDurableMutation, dequeueDurableMutation } from '../../orders/data/durableQueue';
+import {
+  enqueueDurableMutation,
+  dequeueDurableMutation,
+  markMutationInFlight,
+  clearMutationInFlight,
+} from '../../orders/data/durableQueue';
 import { posHlc } from '../../orders/application/order.helpers';
 import {
   awaitPendingTabWrites,
@@ -80,6 +85,7 @@ export async function backgroundSettleTableGroupDb({
       };
 
       const mutationId = `mut-grp-settle-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+      markMutationInFlight(mutationId);
       enqueueDurableMutation({
         id: mutationId,
         hlc: posHlc.now(),
@@ -101,6 +107,8 @@ export async function backgroundSettleTableGroupDb({
             { title: 'Group Settlement Sync Error' }
           );
         }
+      } finally {
+        clearMutationInFlight(mutationId);
       }
     }
 

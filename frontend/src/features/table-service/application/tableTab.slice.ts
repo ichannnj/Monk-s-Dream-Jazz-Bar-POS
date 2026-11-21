@@ -5,6 +5,9 @@ import {
   enqueueDurableMutation,
   dequeueDurableMutation,
   loadDurableQueue,
+  markMutationInFlight,
+  clearMutationInFlight,
+  ensureUuid,
 } from '../../orders/data/durableQueue';
 import { posHlc, deriveTabTotal, deriveTableStatus } from '../../orders/application/order.helpers';
 import type { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
@@ -14,7 +17,11 @@ import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { toast } from '../../shared/toast/useToastStore';
 import { transferOrderItemsToTabAction } from './tableTransferAndVoidActions';
 import { closeEmptyTabAction } from './closeEmptyTabAction';
-import { trackTabWrite } from '../../orders/application/tabWriteTracker';
+import {
+  trackTabWrite,
+  awaitPendingTabWrites,
+  isLikelyNetworkError,
+} from '../../orders/application/tabWriteTracker';
 
 export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   openTableTab: (tableId: string, guestName: string, guestCount = 1) => {
@@ -122,9 +129,9 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     const targetRound = maxExistingRound + 1;
     const nowIso = new Date().toISOString();
 
-    const roundTaggedItems = items.map((i, idx) => ({
+    const roundTaggedItems = items.map((i) => ({
       ...i,
-      id: i.id || `item-${tableId}-tab${tabIndex}-r${targetRound}-${Date.now()}-${idx}`,
+      id: ensureUuid(i.id),
       roundNumber: targetRound,
       status: i.status || ('pending' as const),
       createdAt: i.createdAt || nowIso,
@@ -205,7 +212,8 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       variantSelections: i.variantSelections,
     }));
 
-    // Persist mutation to durable storage before network execution with complete order metadata
+    // Mark in-flight before persisting to durable storage so realtime/heartbeat drains never double-send
+    markMutationInFlight(mutationId);
     enqueueDurableMutation({
       id: mutationId,
       hlc: hlcTs,
@@ -218,6 +226,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         orderNumber,
         orderType: 'DINE_IN',
         orderChannel: currentTable?.area === 'bar' ? 'BAR_AREA' : 'CAFE_AREA',
+        externalOrderRef: mutationId,
         roundNumber: targetRound,
         items: mappedItems,
         hasCorkageFee,
@@ -226,18 +235,24 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     });
     set({ offlineQueue: loadDurableQueue() });
 
-    const dispatchPromise = ordersApi
-      .createOrderWithItems({
+    const priorWritesPromise = awaitPendingTabWrites([tabId, tableId]);
+
+    const dispatchPromise = (async () => {
+      await priorWritesPromise;
+      return ordersApi.createOrderWithItems({
         tabId,
         tableId,
         customerName,
         orderNumber,
         orderType: 'DINE_IN',
+        orderChannel: currentTable?.area === 'bar' ? 'BAR_AREA' : 'CAFE_AREA',
+        externalOrderRef: mutationId,
         hasCorkageFee,
         corkageAmount,
         roundNumber: targetRound,
         items: mappedItems,
-      })
+      });
+    })()
       .then((res) => {
         // Mutation successfully reached the server: dequeue from durable offline storage
         dequeueDurableMutation(mutationId);
@@ -291,9 +306,21 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         }
       })
       .catch((err) => {
-        console.warn('Background order dispatch deferred to offline queue:', err);
-        // Mutation was already persisted to durable storage before dispatch; maintain queued state
-        set({ offlineQueue: loadDurableQueue() });
+        if (isLikelyNetworkError(err)) {
+          console.warn('Background order dispatch deferred to offline queue:', err);
+          // Mutation was already persisted to durable storage before dispatch; maintain queued state
+          set({ offlineQueue: loadDurableQueue() });
+        } else {
+          const remaining = dequeueDurableMutation(mutationId);
+          set({ offlineQueue: remaining });
+          console.error('Background order dispatch database rejection:', err);
+          toast.error(err?.message || 'Failed to save order to stations. Please verify tab.', {
+            title: 'Order Sync Error',
+          });
+        }
+      })
+      .finally(() => {
+        clearMutationInFlight(mutationId);
       });
     trackTabWrite([tabId, tableId], dispatchPromise);
   },

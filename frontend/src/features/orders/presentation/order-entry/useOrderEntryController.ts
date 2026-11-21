@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import {
   MenuItem,
   MenuCategory,
@@ -53,6 +53,7 @@ export function useOrderEntryController({
 
   const [isConfirmDispatchOpen, setIsConfirmDispatchOpen] = useState<boolean>(false);
   const [isDispatching, setIsDispatching] = useState<boolean>(false);
+  const isDispatchingRef = useRef<boolean>(false);
 
   const [activeCustomizingItem, setActiveCustomizingItem] = useState<MenuItem | null>(null);
   const [selectedModifiers, setSelectedModifiers] = useState<string[]>([]);
@@ -144,6 +145,9 @@ export function useOrderEntryController({
   useEffect(() => {
     setCartItems(initialItems);
     setHasCorkage(hasExistingCorkage);
+    isDispatchingRef.current = false;
+    setIsDispatching(false);
+    setIsConfirmDispatchOpen(false);
   }, [initialItems, hasExistingCorkage, visible]);
 
   const filteredMenuItems = useMemo(() => {
@@ -326,12 +330,16 @@ export function useOrderEntryController({
 
   const updateQuantity = (index: number, delta: number) => {
     setCartItems((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
       const copy = [...prev];
       const newQty = copy[index].quantity + delta;
       if (newQty <= 0) {
         copy.splice(index, 1);
       } else {
-        copy[index].quantity = newQty;
+        copy[index] = {
+          ...copy[index],
+          quantity: newQty,
+        };
       }
       return copy;
     });
@@ -359,13 +367,15 @@ export function useOrderEntryController({
   };
 
   const handleExecuteDispatch = async () => {
-    if (isDispatching) return;
+    if (isDispatchingRef.current || isDispatching) return;
+    isDispatchingRef.current = true;
     setIsDispatching(true);
     try {
       await onSendOrder(cartItems, hasCorkage, corkageAmount);
       setIsConfirmDispatchOpen(false);
       onClose();
     } catch (err: any) {
+      isDispatchingRef.current = false;
       toast.error(err?.message || 'Failed to dispatch order. Check station connectivity.', {
         title: 'Dispatch Error',
       });

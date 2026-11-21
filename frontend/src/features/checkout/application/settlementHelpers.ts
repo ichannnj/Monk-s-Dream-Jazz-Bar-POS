@@ -6,6 +6,8 @@ import {
   enqueueDurableMutation,
   dequeueDurableMutation,
   loadDurableQueue,
+  markMutationInFlight,
+  clearMutationInFlight,
 } from '../../orders/data/durableQueue';
 import { posHlc } from '../../orders/application/order.helpers';
 import {
@@ -121,6 +123,7 @@ export async function backgroundSettleTabDb({
       };
 
       const mutationId = `mut-settle-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`;
+      markMutationInFlight(mutationId);
       enqueueDurableMutation({
         id: mutationId,
         hlc: posHlc.now(),
@@ -146,6 +149,8 @@ export async function backgroundSettleTabDb({
             { title: 'Settlement Sync Error' }
           );
         }
+      } finally {
+        clearMutationInFlight(mutationId);
       }
     }
   } catch (err) {
