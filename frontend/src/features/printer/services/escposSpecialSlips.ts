@@ -440,10 +440,18 @@ export function buildBillStatementBytes(
       }
     }
 
+    const qty = item.quantity || 1;
     const itemTotal = toPesos(
-      item.total ?? toPesos(item.price || item.unit_price || item.unitPrice) * (item.quantity || 1)
+      item.total ?? toPesos(item.price || item.unit_price || item.unitPrice) * qty
     );
-    builder.text(formatItemLine(qtyStr, desc, formatPhp(itemTotal), cols));
+    const modTotal = Array.isArray(item.modifiers)
+      ? item.modifiers.reduce((sum: number, mod: unknown) => {
+          const match = String(mod).match(/\(\+(?:₱|P)?(\d+(?:\.\d+)?)\)\s*$/i);
+          return sum + (match ? (parseFloat(match[1]) || 0) * qty : 0);
+        }, 0)
+      : 0;
+    const baseItemTotal = modTotal > 0 && itemTotal >= modTotal ? itemTotal - modTotal : itemTotal;
+    builder.text(formatItemLine(qtyStr, desc, formatPhp(baseItemTotal), cols));
 
     if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
       for (const mod of item.modifiers) {

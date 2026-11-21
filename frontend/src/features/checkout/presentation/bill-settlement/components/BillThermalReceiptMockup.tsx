@@ -227,26 +227,49 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         </Text>
 
         {/* Itemized Line Items (Aggregated across rounds) */}
-        {displayItems.map((item, idx) => (
-          <View key={idx} style={{ marginBottom: 4 }}>
-            <View style={styles.receiptRow}>
-              <Text style={[styles.receiptItemName, is57mm && { maxWidth: 180 }]}>
-                {item.quantity}x {item.productName}
-              </Text>
-              <Text style={styles.receiptItemPrice}>
-                {formatCurrency(item.unitPrice * item.quantity)}
-              </Text>
+        {displayItems.map((item, idx) => {
+          const parsedMods: Array<{ label: string; unitDelta: number }> = (
+            item.modifiers ?? []
+          ).map((mod: string) => {
+            const match = mod.match(/^(.*?)\s*\(\+(?:₱|P)?(\d+(?:\.\d+)?)\)\s*$/i);
+            if (!match) return { label: mod, unitDelta: 0 };
+            return { label: match[1].trim(), unitDelta: parseFloat(match[2]) || 0 };
+          });
+          const lineTotal = item.unitPrice * item.quantity;
+          const modTotal = parsedMods.reduce(
+            (sum: number, m: { label: string; unitDelta: number }) =>
+              sum + m.unitDelta * item.quantity,
+            0
+          );
+          const baseLineTotal =
+            modTotal > 0 && lineTotal >= modTotal ? lineTotal - modTotal : lineTotal;
+
+          return (
+            <View key={idx} style={{ marginBottom: 4 }}>
+              <View style={styles.receiptRow}>
+                <Text style={[styles.receiptItemName, is57mm && { maxWidth: 180 }]}>
+                  {item.quantity}x {item.productName}
+                </Text>
+                <Text style={styles.receiptItemPrice}>{formatCurrency(baseLineTotal)}</Text>
+              </View>
+              {parsedMods.map((mod, mIdx) => (
+                <View key={mIdx} style={styles.receiptRow}>
+                  <Text style={[styles.receiptItemNote, { color: '#810021', fontWeight: '600' }]}>
+                    {'   '}+ {mod.label}
+                  </Text>
+                  {mod.unitDelta > 0 ? (
+                    <Text style={[styles.receiptItemNote, { color: '#810021', fontWeight: '600' }]}>
+                      +{formatCurrency(mod.unitDelta * item.quantity)}
+                    </Text>
+                  ) : null}
+                </View>
+              ))}
+              {item.notes ? (
+                <Text style={styles.receiptItemNote}> &gt;&gt; Note: {item.notes}</Text>
+              ) : null}
             </View>
-            {item.modifiers && item.modifiers.length > 0 ? (
-              <Text style={[styles.receiptItemNote, { color: '#810021', fontWeight: '600' }]}>
-                {'   '}+ {item.modifiers.join(', ')}
-              </Text>
-            ) : null}
-            {item.notes ? (
-              <Text style={styles.receiptItemNote}> &gt;&gt; Note: {item.notes}</Text>
-            ) : null}
-          </View>
-        ))}
+          );
+        })}
 
         <Text style={styles.receiptDivider} numberOfLines={1}>
           {dividerDash}
