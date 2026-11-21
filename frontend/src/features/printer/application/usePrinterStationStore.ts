@@ -101,6 +101,8 @@ function playChimeSound() {
 // Sequential promise chain to serialize writeBytes and prevent USB/Serial port collisions
 let printQueuePromise: Promise<any> = Promise.resolve();
 
+let isDrainingQueue = false;
+
 export const usePrinterStationStore = create<PrinterStationState>((set, get) => ({
   isSupported: typeof navigator !== 'undefined' && ('usb' in navigator || 'serial' in navigator),
   connectionStatus: 'DISCONNECTED',
@@ -421,7 +423,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     } catch (err: any) {
       console.error('[PrinterStationStore] Error printing job:', err);
       addLog('error', `Print failure: ${err.message || 'Hardware error'}`);
-      await printerApi.markJobFailed(job.id);
+      await printerApi.releaseJobToPending(job.id);
       set({ isProcessing: false });
       return false;
     }
@@ -429,10 +431,11 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
 
   drainPendingJobsQueue: async () => {
     const { isLeader, autoPrintEnabled, addLog } = get();
-    if (!autoPrintEnabled || !isLeader) {
+    if (!autoPrintEnabled || !isLeader || isDrainingQueue) {
       return;
     }
 
+    isDrainingQueue = true;
     try {
       const pending = await printerApi.getPendingPrintJobs();
       if (!pending || pending.length === 0) return;
@@ -441,37 +444,43 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       const isConnected = await get().ensureConnected();
       if (!isConnected) return;
 
-      if (pending.length === 1) {
-        await get().processJob(pending[0]);
-        return;
-      }
-
-      // When multiple pending jobs exist in queue:
-      // "dont auto reprint the past chits in queue, just the recent one."
-      // pending is sorted ascending by created_at, so the last element is the most recent
-      const recentJob = pending[pending.length - 1];
-      const staleJobs = pending.slice(0, pending.length - 1);
-      const staleIds = staleJobs.map((j) => j.id);
-
-      addLog(
-        'info',
-        `Skipped ${staleJobs.length} past pending chit(s); auto-printing only the most recent ticket (${recentJob.job_type})`
+      const chitJobs = pending.filter((j) => (j.job_type || '').toUpperCase() === 'RUNNER_CHIT');
+      const criticalJobs = pending.filter(
+        (j) => (j.job_type || '').toUpperCase() !== 'RUNNER_CHIT'
       );
 
-      // Dismiss stale jobs so they don't block subsequent prints or replay on next connect
-      await printerApi.dismissStalePendingJobs(staleIds);
+      // Always process financial/receipt/bill/drawer-kick/reading jobs sequentially without skipping
+      for (const job of criticalJobs) {
+        await get().processJob(job);
+      }
 
-      // Update recentJobs state so UI reflects the dismissal
-      set((state) => ({
-        recentJobs: state.recentJobs.map((j) =>
-          staleIds.includes(j.id) ? { ...j, status: 'FAILED' } : j
-        ),
-      }));
+      if (chitJobs.length === 1) {
+        await get().processJob(chitJobs[0]);
+      } else if (chitJobs.length > 1) {
+        // When multiple runner chits back up while disconnected, print only the most recent chit
+        const recentChit = chitJobs[chitJobs.length - 1];
+        const staleChitJobs = chitJobs.slice(0, chitJobs.length - 1);
+        const staleIds = staleChitJobs.map((j) => j.id);
 
-      // Process exclusively the most recent job
-      await get().processJob(recentJob);
+        addLog(
+          'info',
+          `Skipped ${staleChitJobs.length} past pending chit(s); auto-printing only the most recent ticket (${recentChit.job_type})`
+        );
+
+        await printerApi.dismissStalePendingJobs(staleIds);
+
+        set((state) => ({
+          recentJobs: state.recentJobs.map((j) =>
+            staleIds.includes(j.id) ? { ...j, status: 'FAILED' } : j
+          ),
+        }));
+
+        await get().processJob(recentChit);
+      }
     } catch (err: any) {
       console.warn('[PrinterStationStore] Error draining pending jobs queue:', err);
+    } finally {
+      isDrainingQueue = false;
     }
   },
 
@@ -723,7 +732,11 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       .on('postgres_changes', { event: '*', schema: 'public', table: 'print_jobs' }, (payload) => {
         if (payload.eventType === 'INSERT') {
           const newJob = payload.new as PrintJobItem;
-          set((state) => ({ recentJobs: [newJob, ...state.recentJobs] }));
+          set((state) => ({
+            recentJobs: state.recentJobs.some((j) => j.id === newJob.id)
+              ? state.recentJobs
+              : [newJob, ...state.recentJobs],
+          }));
           if (newJob.status === 'PENDING') {
             get().processJob(newJob);
           }
@@ -761,15 +774,6 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       onPaymentChange: () => {
         if (get().isLeader && get().autoPrintEnabled) {
           get().drainPendingJobsQueue();
-        }
-      },
-      onPrintJobChange: (payload: any) => {
-        if (payload?.eventType === 'INSERT') {
-          const newJob = payload.new as PrintJobItem;
-          set((state) => ({ recentJobs: [newJob, ...state.recentJobs] }));
-          if (newJob.status === 'PENDING') {
-            get().processJob(newJob);
-          }
         }
       },
     });

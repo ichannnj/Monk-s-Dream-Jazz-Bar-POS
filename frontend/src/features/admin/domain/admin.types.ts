@@ -91,6 +91,7 @@ export interface DashboardTelemetry {
   cashSales: number;
   digitalSales: number;
   cardSales: number;
+  deliverySales?: number;
 
   // Staff Attendance & Payroll Expense Telemetry (Direct from attendance_records DB)
   totalPayrollExpense: number;

@@ -154,7 +154,7 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
                   id,
                   method: 'cash',
                   amount: grandTotal,
-                  tendered: numericTendered || grandTotal,
+                  tendered: Math.max(numericTendered || 0, grandTotal),
                 });
               } else if (selectedMethod === 'digital_wallet') {
                 onAddTender({

@@ -313,14 +313,14 @@ export async function transferOrderItemsToTab(params: {
 
       if (error) {
         console.warn('transfer_order_items_to_tab RPC warning:', error.message);
-      } else {
-        realtimeGateway.broadcastPosSync('tab_items_transferred');
-        return (data as unknown as { success: boolean; targetTabId?: string }) || { success: true };
+        return { success: false };
       }
+
+      realtimeGateway.broadcastPosSync('tab_items_transferred');
+      return (data as unknown as { success: boolean; targetTabId?: string }) || { success: true };
     }
 
-    realtimeGateway.broadcastPosSync('tab_items_transferred');
-    return { success: true };
+    return { success: false };
   } catch (err: unknown) {
     console.error('transferOrderItemsToTab error:', err);
     return { success: false };

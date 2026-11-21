@@ -33,7 +33,7 @@ export const DashboardChartsAndTendersSection: React.FC<DashboardChartsAndTender
             cash: telemetry.cashSales || 0,
             card: telemetry.cardSales || 0,
             digital: telemetry.digitalSales || 0,
-            delivery: 0,
+            delivery: telemetry.deliverySales || 0,
             total: telemetry.liveSalesTotal || 0,
           }}
         />

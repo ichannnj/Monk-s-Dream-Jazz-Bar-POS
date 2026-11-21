@@ -6,7 +6,7 @@ import {
   handleRealtimeInventoryAlert,
 } from './realtimeNotificationHelpers';
 import { applyTableTransferToLocalTables } from './realtimeTableTransfer';
-import { deriveTableStatus, deriveTableStateTimestamp } from './order.helpers';
+import { deriveTabTotal, deriveTableStatus, deriveTableStateTimestamp } from './order.helpers';
 
 export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
   let hydrateTimer: ReturnType<typeof setTimeout> | null = null;
@@ -147,7 +147,9 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
                   tableModified = true;
                   const itemsCopy = [...tab.items];
                   itemsCopy[itemIdx] = { ...itemsCopy[itemIdx], status: newStatus };
-                  return { ...tab, items: itemsCopy };
+                  const nextTab = { ...tab, items: itemsCopy };
+                  nextTab.totalAmount = deriveTabTotal(nextTab);
+                  return nextTab;
                 }
                 return tab;
               });
@@ -156,6 +158,10 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
 
               const hasActive = Boolean(table.hasOpenCheck || updatedTabs.length > 0);
               const nextStatus = deriveTableStatus(hasActive, updatedTabs);
+              const nextTableTotal = updatedTabs.reduce(
+                (acc, cur) => acc + (cur.totalAmount || 0),
+                0
+              );
               const nextStateChangedAt =
                 nextStatus !== table.status
                   ? deriveTableStateTimestamp(nextStatus, updatedTabs, table.occupiedSinceIso)
@@ -164,6 +170,7 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
               return {
                 ...table,
                 status: nextStatus,
+                totalAmount: nextTableTotal,
                 stateChangedAt: nextStateChangedAt,
                 tabs: updatedTabs,
               };
@@ -174,12 +181,18 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
               if (itemIdx >= 0) {
                 const itemsCopy = [...order.items];
                 itemsCopy[itemIdx] = { ...itemsCopy[itemIdx], status: newStatus };
+                const activeItems = itemsCopy.filter((i) => i.status !== 'cancelled');
+                const allReady =
+                  activeItems.length > 0 &&
+                  activeItems.every((i) => i.status === 'ready' || i.status === 'served');
                 return {
                   ...order,
                   items: itemsCopy,
-                  status: itemsCopy.every((i) => i.status === 'ready')
+                  status: allReady
                     ? ('ready' as const)
-                    : order.status,
+                    : order.status === 'ready'
+                      ? ('preparing' as const)
+                      : order.status,
                 };
               }
               return order;
@@ -190,12 +203,18 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
               if (itemIdx >= 0) {
                 const itemsCopy = [...order.items];
                 itemsCopy[itemIdx] = { ...itemsCopy[itemIdx], status: newStatus };
+                const activeItems = itemsCopy.filter((i) => i.status !== 'cancelled');
+                const allReady =
+                  activeItems.length > 0 &&
+                  activeItems.every((i) => i.status === 'ready' || i.status === 'served');
                 return {
                   ...order,
                   items: itemsCopy,
-                  status: itemsCopy.every((i) => i.status === 'ready')
+                  status: allReady
                     ? ('ready' as const)
-                    : order.status,
+                    : order.status === 'ready'
+                      ? ('preparing' as const)
+                      : order.status,
                 };
               }
               return order;
@@ -275,16 +294,20 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
         onCashDrawerChange: (payload) => {
           if (payload.new) {
             const entry = payload.new;
+            const entryType = (entry.action_type || 'sale').toLowerCase() as any;
+            const entryAmount = parseFloat(entry.amount) || 0;
+            const entryReason = entry.reason || 'Cash movement';
+            const target = (entry.drawer_target || 'main') as 'main' | 'bar';
+
             const alreadyExists = get().drawerEntries.some(
               (d) => d.id === entry.id || (entry.payment_id && d.reason?.includes(entry.payment_id))
             );
             if (!alreadyExists) {
-              const target = (entry.drawer_target || 'main') as 'main' | 'bar';
               const newEntry: DrawerEntry = {
                 id: entry.id,
-                type: (entry.action_type || 'sale').toLowerCase() as any,
-                amount: parseFloat(entry.amount) || 0,
-                reason: entry.reason || 'Cash movement',
+                type: entryType,
+                amount: entryAmount,
+                reason: entryReason,
                 performedBy: 'Staff',
                 timestamp: new Date(entry.created_at || Date.now()).toLocaleTimeString([], {
                   hour: '2-digit',
@@ -292,9 +315,38 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
                 }),
                 drawerTarget: target,
               };
-              set((state) => ({
-                drawerEntries: [newEntry, ...state.drawerEntries],
-              }));
+              set((state) => {
+                // Replace matching local optimistic 'drw-' entry instead of appending a duplicate
+                const nowMs = Date.now();
+                let replacedOptimistic = false;
+                const nextEntries = state.drawerEntries.map((d) => {
+                  const drwTs = d.id.startsWith('drw-') ? Number(d.id.slice(4)) : NaN;
+                  const isFreshOptimistic = Number.isFinite(drwTs) && nowMs - drwTs < 30000;
+                  if (
+                    !replacedOptimistic &&
+                    isFreshOptimistic &&
+                    d.type === entryType &&
+                    Math.abs(d.amount - entryAmount) < 0.01 &&
+                    d.drawerTarget === target &&
+                    (entryType === 'sale' ||
+                      d.reason === entryReason ||
+                      entryReason.includes(d.reason))
+                  ) {
+                    replacedOptimistic = true;
+                    return {
+                      ...newEntry,
+                      performedBy: d.performedBy || newEntry.performedBy,
+                    };
+                  }
+                  return d;
+                });
+
+                return {
+                  drawerEntries: replacedOptimistic
+                    ? nextEntries
+                    : [newEntry, ...state.drawerEntries],
+                };
+              });
             }
           }
         },

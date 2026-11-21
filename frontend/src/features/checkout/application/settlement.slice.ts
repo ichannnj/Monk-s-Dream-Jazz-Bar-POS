@@ -74,7 +74,10 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
 
       const targetTab = table.tabs?.find((t) => t.tabIndex === tabIndex);
       targetTabRef = targetTab;
-      const subtotal = billingDetails?.grossSubtotal ?? (targetTab?.totalAmount || 0);
+      const itemsSubtotalFallback = (targetTab?.items || [])
+        .filter((item) => item.status !== 'cancelled')
+        .reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+      const subtotal = billingDetails?.grossSubtotal ?? itemsSubtotalFallback;
       const effectiveDiscount = discountAmount > 0 ? discountAmount : 0;
       const serviceCharge = billingDetails?.serviceCharge || 0;
       const netSubtotal = Math.max(0, subtotal - effectiveDiscount);
@@ -294,6 +297,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       completeOrder?: boolean;
       cashierName?: string;
       discountAmount?: number;
+      grossSubtotal?: number;
       staffId?: string;
       paymentChannel?: string;
       referenceNumber?: string;
@@ -322,6 +326,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
 
     let targetOrderRef: TakeoutOrder | undefined;
     let grandTotalPaid = 0;
+    let computedDrawerTarget: 'main' | 'bar' = 'main';
 
     set((state) => {
       const targetOrder = state.takeoutOrders.find(
@@ -349,7 +354,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         tableOrRef: `Takeout #${targetOrder.ticketNumber}`,
         guestName: targetOrder.customerName || 'Walk-in Guest',
         itemsCount: targetOrder.items.length || 1,
-        subtotal: netSubtotal,
+        subtotal: options?.grossSubtotal ?? subtotal,
         tax: vatAmount,
         total: grandTotal,
         paymentMethod,
@@ -367,6 +372,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         undefined,
         useAuthStore.getState().currentUser?.role
       );
+      computedDrawerTarget = drawerTarget;
 
       const cashPortion = calculateCashTenderAmount(paymentMethod, options?.tenders, grandTotal);
 
@@ -406,6 +412,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       completeOrder,
       paymentChannel,
       referenceNumber,
+      drawerTarget: computedDrawerTarget,
       options,
       getTakeoutOrders: () => get().takeoutOrders,
     });

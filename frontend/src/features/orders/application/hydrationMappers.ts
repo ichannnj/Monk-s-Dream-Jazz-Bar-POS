@@ -142,15 +142,30 @@ export const mapHydratedTables = (
     const currentLocalTable = currentTables.find(
       (t) => t.id === dbt.id || t.code === dbt.table_number
     );
-    const pendingLocalTabs = (currentLocalTable?.tabs || []).filter(
-      (lt) =>
-        lt.status === 'open' &&
-        !customerTabs.some((ct) => ct.id === lt.id) &&
-        !allOpenDbTabIds.has(lt.id) &&
-        (lt.id.startsWith('tab-') || lt.id.startsWith('to-') || lt.id.startsWith('od-')) &&
-        ((lt.items && lt.items.length > 0) || customerTabs.length === 0) &&
-        !customerTabs.some((ct) => ct.tabIndex === lt.tabIndex)
-    );
+    const usedIndices = new Set(customerTabs.map((ct) => ct.tabIndex));
+    const pendingLocalTabs = (currentLocalTable?.tabs || [])
+      .filter(
+        (lt) =>
+          lt.status === 'open' &&
+          !customerTabs.some((ct) => ct.id === lt.id) &&
+          !allOpenDbTabIds.has(lt.id) &&
+          (hasPendingTabWrite(lt.id) ||
+            hasPendingTabWrite(dbt.id) ||
+            lt.id.startsWith('tab-') ||
+            lt.id.startsWith('to-') ||
+            lt.id.startsWith('od-') ||
+            (lt.items && lt.items.length > 0))
+      )
+      .map((lt) => {
+        if (!usedIndices.has(lt.tabIndex)) {
+          usedIndices.add(lt.tabIndex);
+          return lt;
+        }
+        let nextIdx = lt.tabIndex || 1;
+        while (usedIndices.has(nextIdx)) nextIdx++;
+        usedIndices.add(nextIdx);
+        return { ...lt, tabIndex: nextIdx };
+      });
     const combinedTabs = [...customerTabs, ...pendingLocalTabs];
     const activeTabsIndices = combinedTabs.map((tb, idx) => tb.tabIndex || idx + 1);
 
@@ -325,7 +340,7 @@ export const mapHydratedOffPremiseTabs = (
       const ref =
         t.external_order_ref ||
         t.ticket_number ||
-        rawOrders[0]?.order_number?.split('-R')[0] ||
+        rawOrders[0]?.order_number?.replace(/-R\d+$/, '') ||
         'ONL-101';
 
       dbOnline.push({

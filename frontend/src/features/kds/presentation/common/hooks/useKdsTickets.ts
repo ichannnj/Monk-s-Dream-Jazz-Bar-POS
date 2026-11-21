@@ -169,7 +169,9 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
             i.stationTarget !== stationTarget && i.status !== 'served' && i.status !== 'cancelled'
         );
         if (otherUnserved) {
-          ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'served'));
+          ticket.items
+            .filter((i) => i.status !== 'cancelled')
+            .forEach((item) => updateOrderItemStatus(item.id, 'served'));
         } else {
           markTakeoutServed(orderId);
         }
@@ -181,12 +183,16 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
             i.stationTarget !== stationTarget && i.status !== 'served' && i.status !== 'cancelled'
         );
         if (otherUnserved) {
-          ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'served'));
+          ticket.items
+            .filter((i) => i.status !== 'cancelled')
+            .forEach((item) => updateOrderItemStatus(item.id, 'served'));
         } else {
           markOnlineServed(orderId);
         }
       } else {
-        ticket.items.forEach((item) => updateOrderItemStatus(item.id, 'served'));
+        ticket.items
+          .filter((i) => i.status !== 'cancelled')
+          .forEach((item) => updateOrderItemStatus(item.id, 'served'));
       }
       toast.success(`Picked up: ${ticket.orderNumber}`);
     } catch (err: any) {
@@ -201,6 +207,11 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
       ticket.items
         .filter((i) => i.status !== 'cancelled')
         .forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
+      if (ticket.takeoutId) {
+        updateTakeoutStatus(ticket.takeoutId, 'preparing');
+      } else if (ticket.onlineId) {
+        updateOnlineStatus(ticket.onlineId, 'preparing');
+      }
       toast.info(`Recalled ${ticket.orderNumber} to Preparing`);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to recall ticket.', {
@@ -232,13 +243,13 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
     tableId?: string,
     tabIndex?: number
   ) => {
-    const staffId = currentUser?.id || '11111111-1111-1111-1111-111111111111';
+    const staffId = currentUser?.id || '';
     const success = await voidOrderItem(itemId, staffId, reason, tableId, tabIndex);
     return success;
   };
 
   const handleVoidTicket = async (ticket: BarTicket, reason: string) => {
-    const staffId = currentUser?.id || '11111111-1111-1111-1111-111111111111';
+    const staffId = currentUser?.id || '';
     const activeItems = ticket.items.filter((i) => i.status !== 'cancelled');
     for (const item of activeItems) {
       await voidOrderItem(item.id, staffId, reason, ticket.tableId, ticket.tabIndex);

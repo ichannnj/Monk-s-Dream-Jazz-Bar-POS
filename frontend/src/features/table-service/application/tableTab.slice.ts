@@ -343,6 +343,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
 
     const doorChargeProdId = 'd1000001-0000-0000-0000-000000000001';
     const nowIso = new Date().toISOString();
+    const pendingDcItemId = ensureUuid();
 
     set((state) => {
       const updatedTables = state.tables.map((tbl) => {
@@ -383,7 +384,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
               };
             } else {
               const newItem: OrderLineItem = {
-                id: `dc-${Date.now()}`,
+                id: pendingDcItemId,
                 productId: doorChargeProdId,
                 productName: 'Event Door Charge',
                 unitPrice,
@@ -424,20 +425,51 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       return { tables: updatedTables };
     });
 
-    try {
-      if (tab.id && !tab.id.startsWith('tab-')) {
-        await ordersApi.upsertTabDoorCharge({
-          tabId: tab.id,
-          quantity,
-          unitPrice,
-          eventId,
-          notes,
-        });
-        realtimeGateway.broadcastPosSync('door_charge_updated');
+    const dcPromise = (async () => {
+      try {
+        await awaitPendingTabWrites([tab.id, tableId]);
+        const refreshedTab =
+          get()
+            .tables.find((t) => t.id === tableId)
+            ?.tabs?.find((tb) => tb.tabIndex === tabIndex) || tab;
+
+        if (refreshedTab.id && !refreshedTab.id.startsWith('tab-')) {
+          const rpcRes = await ordersApi.upsertTabDoorCharge({
+            tabId: refreshedTab.id,
+            quantity,
+            unitPrice,
+            eventId,
+            notes,
+          });
+          if (rpcRes?.item_id && rpcRes.item_id !== pendingDcItemId) {
+            set((state) => ({
+              tables: state.tables.map((tbl) => {
+                if (tbl.id !== tableId) return tbl;
+                return {
+                  ...tbl,
+                  tabs: (tbl.tabs || []).map((tb) => {
+                    if (tb.tabIndex !== tabIndex) return tb;
+                    return {
+                      ...tb,
+                      items: tb.items.map((it) =>
+                        it.id === pendingDcItemId ? { ...it, id: rpcRes.item_id } : it
+                      ),
+                    };
+                  }),
+                };
+              }),
+            }));
+          }
+          realtimeGateway.broadcastPosSync('door_charge_updated');
+        }
+      } catch (err) {
+        console.warn('upsertTabDoorCharge backend error:', err);
+        toast.error('Failed to sync door charge update to server.');
       }
-    } catch (err) {
-      console.warn('upsertTabDoorCharge backend error:', err);
-    }
+    })();
+
+    trackTabWrite([tab.id, tableId], dcPromise);
+    await dcPromise;
   },
 
   transferOrderItemsToTab: async (

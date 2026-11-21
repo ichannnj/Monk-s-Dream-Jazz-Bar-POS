@@ -170,6 +170,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
               {showReceiptMockup ? (
                 <BillThermalReceiptMockup
                   isTakeout={ctrl.isTakeout}
+                  settlementMode={ctrl.settlementMode}
                   takeoutOrder={takeoutOrder}
                   activeTab={ctrl.resolvedActiveTab}
                   table={table}

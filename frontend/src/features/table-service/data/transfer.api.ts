@@ -87,21 +87,20 @@ export async function transferTableTab(params: TransferTabParams): Promise<Trans
       tabUuidToTransfer = openTabs?.[0]?.id || null;
     }
 
-    const staffUuid = isUuid(params.staffId)
-      ? params.staffId!
-      : '11111111-1111-1111-1111-111111111111';
+    const staffUuid = isUuid(params.staffId) ? params.staffId! : null;
 
     // 1. Invoke enhanced PostgreSQL procedure
     const { data, error } = await supabase.rpc('transfer_table_tab', {
       p_origin_table_id: originTableUuid,
       p_target_table_id: targetTableUuid,
       p_tab_id: tabUuidToTransfer || undefined,
-      p_staff_id: staffUuid,
+      p_staff_id: staffUuid || undefined,
       p_reason: params.reason || 'Guest relocation request',
     });
 
     if (error) {
       console.warn('transfer_table_tab RPC warning:', error.message);
+      throw error;
     }
 
     // 2. Direct database update guarantee ensuring immediate persistence on public.tabs

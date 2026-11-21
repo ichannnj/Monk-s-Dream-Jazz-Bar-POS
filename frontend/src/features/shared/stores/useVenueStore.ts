@@ -83,6 +83,15 @@ export const useVenueStore = create<VenueState>((set, get) => ({
               operatingMode: newRow.operating_mode,
               venueName: newRow.venue_name || "Monk's Dream Jazz Bar",
               modeSwitchedAt: newRow.mode_switched_at || newRow.updated_at || null,
+              ...(newRow.cafe_food_service_charge_rate !== undefined && {
+                cafeFoodServiceChargeRate: Number(newRow.cafe_food_service_charge_rate),
+              }),
+              ...(newRow.event_service_charge_rate !== undefined && {
+                eventServiceChargeRate: Number(newRow.event_service_charge_rate),
+              }),
+              ...(newRow.service_charge_enabled !== undefined && {
+                serviceChargeEnabled: Boolean(newRow.service_charge_enabled),
+              }),
             });
           }
         }

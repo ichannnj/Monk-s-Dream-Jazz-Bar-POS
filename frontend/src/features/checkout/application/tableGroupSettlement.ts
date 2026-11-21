@@ -122,10 +122,34 @@ export async function backgroundSettleTableGroupDb({
 
       if (remainingOpenTabs && remainingOpenTabs.length > 0) {
         const remIds = remainingOpenTabs.map((r) => r.id);
+        const closedAtIso = new Date().toISOString();
         await supabase
           .from('tabs')
-          .update({ status: 'BILLED', is_prepaid: true, updated_at: new Date().toISOString() })
+          .update({ status: 'BILLED', is_prepaid: true, updated_at: closedAtIso })
           .in('id', remIds);
+
+        const { data: remOrders } = await supabase
+          .from('orders')
+          .select('id')
+          .in('tab_id', remIds)
+          .neq('status', 'CANCELLED');
+
+        if (remOrders && remOrders.length > 0) {
+          const remOrderIds = remOrders.map((o) => o.id);
+          await supabase
+            .from('orders')
+            .update({ status: 'COMPLETED', updated_at: closedAtIso })
+            .in('id', remOrderIds);
+          await (supabase.from as any)('order_items')
+            .update({
+              status: 'SERVED',
+              delivered_at: closedAtIso,
+              state_changed_at: closedAtIso,
+              updated_at: closedAtIso,
+            })
+            .in('order_id', remOrderIds)
+            .not('status', 'in', '(CANCELLED,SERVED)');
+        }
       }
 
       await supabase

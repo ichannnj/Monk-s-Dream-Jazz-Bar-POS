@@ -23,7 +23,7 @@ export const createTakeoutOrderAction = (
   const maxNum = existingNums.length > 0 ? Math.max(106, ...existingNums) : 106;
   const nextTicketNum = `T-${maxNum + 1}`;
   const nowIso = new Date().toISOString();
-  const localOrderId = `to-${Date.now()}`;
+  const localOrderId = ensureUuid();
   const operatingMode = useVenueStore.getState().operatingMode;
   const currentUserId = useAuthStore.getState().currentUser?.id;
 
@@ -76,7 +76,7 @@ export const createTakeoutOrderAction = (
       ticketNumber: nextTicketNum,
       orderType: 'TAKEOUT',
       orderChannel: 'TAKEOUT_COUNTER',
-      externalOrderRef: localOrderId,
+      externalOrderRef: `${localOrderId}-R1`,
       roundNumber: 1,
       isPrepaid,
       notes,

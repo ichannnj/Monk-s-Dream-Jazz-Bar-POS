@@ -4,7 +4,9 @@ import { tablesApi } from '../data/tables.api';
 import { deriveTabTotal, deriveTableStatus } from '../../orders/application/order.helpers';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
-import { awaitPendingTabWrites } from '../../orders/application/tabWriteTracker';
+import { awaitPendingTabWrites, trackTabWrite } from '../../orders/application/tabWriteTracker';
+import { ensureUuid } from '../../orders/data/durableQueue';
+import { toast } from '../../shared/toast/useToastStore';
 
 export const transferOrderItemsToTabAction = async (
   set: OrderStoreSet,
@@ -17,6 +19,7 @@ export const transferOrderItemsToTabAction = async (
   let sourceTabUuid: string | undefined;
   let targetTabUuid: string | undefined;
   let targetTabIndexCaptured: number | undefined;
+  const isNewTargetTab = targetTabIndex === 'new';
   const currentStaffId = useAuthStore.getState().currentUser?.id;
 
   set((state) => {
@@ -31,12 +34,12 @@ export const transferOrderItemsToTabAction = async (
     let targetTab: CustomerTab | undefined;
     const nextTabs = [...(table.tabs || [])];
 
-    if (targetTabIndex === 'new') {
+    if (isNewTargetTab) {
       const existingIndices = [...(table.activeTabs || []), ...nextTabs.map((tb) => tb.tabIndex)];
       effectiveTargetTabIndex = existingIndices.length > 0 ? Math.max(...existingIndices) + 1 : 1;
       const finalName = newTabName?.trim() || `Senior Tab #${effectiveTargetTabIndex}`;
       const newLocalTab: CustomerTab = {
-        id: `tab-${tableId}-${effectiveTargetTabIndex}`,
+        id: ensureUuid(),
         tabIndex: effectiveTargetTabIndex,
         guestName: finalName,
         status: 'open',
@@ -79,7 +82,7 @@ export const transferOrderItemsToTabAction = async (
         });
         transferredItemsToAdd.push({
           ...item,
-          id: `item-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+          id: ensureUuid(),
           quantity: qtyToMove,
         });
       }
@@ -127,37 +130,54 @@ export const transferOrderItemsToTabAction = async (
   });
 
   if (sourceTabUuid) {
-    try {
-      await awaitPendingTabWrites([sourceTabUuid, targetTabUuid, tableId]);
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const validTransfers = itemTransfers.filter((it) => uuidRegex.test(it.orderItemId));
-      if (validTransfers.length === 0) return;
+    const transferPromise = (async () => {
+      try {
+        await awaitPendingTabWrites([sourceTabUuid, targetTabUuid, tableId]);
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const validTransfers = itemTransfers.filter((it) => uuidRegex.test(it.orderItemId));
+        if (validTransfers.length === 0) return;
 
-      const res = await tablesApi.transferOrderItemsToTab({
-        sourceTabId: sourceTabUuid,
-        targetTabId: targetTabUuid && !targetTabUuid.startsWith('tab-') ? targetTabUuid : undefined,
-        tableId,
-        newTabName,
-        itemTransfers: validTransfers,
-        staffId: currentStaffId,
-      });
+        const res = await tablesApi.transferOrderItemsToTab({
+          sourceTabId: sourceTabUuid,
+          targetTabId:
+            !isNewTargetTab && targetTabUuid && !targetTabUuid.startsWith('tab-')
+              ? targetTabUuid
+              : undefined,
+          tableId,
+          newTabName,
+          itemTransfers: validTransfers,
+          staffId: currentStaffId,
+        });
 
-      const returnedTargetTabId = (res as any)?.target_tab_id || (res as any)?.targetTabId;
-      if (returnedTargetTabId && targetTabIndexCaptured !== undefined) {
-        set((state) => ({
-          tables: state.tables.map((t) => {
-            if (t.id !== tableId) return t;
-            return {
-              ...t,
-              tabs: (t.tabs || []).map((tb) =>
-                tb.tabIndex === targetTabIndexCaptured ? { ...tb, id: returnedTargetTabId } : tb
-              ),
-            };
-          }),
-        }));
+        if (!res?.success) {
+          toast.error('Failed to persist item split/transfer to database. Please refresh.');
+          return;
+        }
+
+        const returnedTargetTabId = (res as any)?.target_tab_id || (res as any)?.targetTabId;
+        if (returnedTargetTabId && targetTabIndexCaptured !== undefined) {
+          set((state) => ({
+            tables: state.tables.map((t) => {
+              if (t.id !== tableId) return t;
+              return {
+                ...t,
+                tabs: (t.tabs || []).map((tb) =>
+                  tb.tabIndex === targetTabIndexCaptured ? { ...tb, id: returnedTargetTabId } : tb
+                ),
+              };
+            }),
+          }));
+        }
+      } catch (err) {
+        console.warn('Background transferOrderItemsToTab notice:', err);
+        toast.error('Item transfer failed to sync with server. Please check table tabs.');
       }
-    } catch (err) {
-      console.warn('Background transferOrderItemsToTab notice:', err);
-    }
+    })();
+
+    trackTabWrite(
+      [sourceTabUuid, targetTabUuid, tableId].filter((v): v is string => Boolean(v)),
+      transferPromise
+    );
+    await transferPromise;
   }
 };

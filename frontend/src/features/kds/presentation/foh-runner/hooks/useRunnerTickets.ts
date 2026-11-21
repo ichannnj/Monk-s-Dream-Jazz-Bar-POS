@@ -45,7 +45,9 @@ export function useRunnerTickets() {
           const allServed = roundItems.every((i) => i.status === 'served');
           if (allServed) return;
 
-          const readyCount = roundItems.filter((i) => i.status === 'ready').length;
+          const readyCount = roundItems.filter(
+            (i) => i.status === 'ready' || i.status === 'served'
+          ).length;
           const totalCount = roundItems.length;
           const allDone = readyCount === totalCount && totalCount > 0;
           const roundCreatedAt =
@@ -99,9 +101,11 @@ export function useRunnerTickets() {
         if (activeItems.length === 0) return;
         if (activeItems.every((i) => i.status === 'served')) return;
 
-        const readyCount = activeItems.filter((i) => i.status === 'ready').length;
+        const readyCount = activeItems.filter(
+          (i) => i.status === 'ready' || i.status === 'served'
+        ).length;
         const totalCount = activeItems.length;
-        const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
+        const allDone = readyCount === totalCount && totalCount > 0;
         const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
         const passReadyAt = allDone
           ? activeItems
@@ -126,7 +130,7 @@ export function useRunnerTickets() {
           isPrepaid: order.isPrepaid,
           elapsedTime: formatElapsedTimer(elapsedSecs),
           minutesElapsed: minutes,
-          items: order.items,
+          items: activeItems,
           allDone,
           readyItemsCount: readyCount,
           totalItemsCount: totalCount,
@@ -146,9 +150,11 @@ export function useRunnerTickets() {
         if (activeItems.length === 0) return;
         if (activeItems.every((i) => i.status === 'served')) return;
 
-        const readyCount = activeItems.filter((i) => i.status === 'ready').length;
+        const readyCount = activeItems.filter(
+          (i) => i.status === 'ready' || i.status === 'served'
+        ).length;
         const totalCount = activeItems.length;
-        const allDone = order.status === 'ready' || (readyCount === totalCount && totalCount > 0);
+        const allDone = readyCount === totalCount && totalCount > 0;
         const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
         const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
         const passReadyAt = allDone
@@ -174,7 +180,7 @@ export function useRunnerTickets() {
           isPrepaid: true,
           elapsedTime: formatElapsedTimer(elapsedSecs),
           minutesElapsed: minutes,
-          items: order.items,
+          items: activeItems,
           allDone,
           readyItemsCount: readyCount,
           totalItemsCount: totalCount,
@@ -232,27 +238,26 @@ export function useRunnerTickets() {
           ticket.roundNumber
         ) {
           markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber);
+        } else if (ticket.orderType === 'takeout') {
+          const orderId = ticket.takeoutId || ticket.id.replace('takeout-', '');
+          const toOrder = takeoutOrders.find((o) => o.id === orderId);
+          markTakeoutServed(orderId);
+          if (toOrder && !toOrder.isPrepaid) {
+            toast.info(
+              `Bagged ${ticket.sourceTitle}. Payment is DUE AT COUNTER — settle at Floor POS before handoff!`,
+              { title: 'Payment Required at Counter' }
+            );
+            return;
+          }
+        } else if (ticket.orderType === 'online_delivery') {
+          const orderId = ticket.onlineId || ticket.id.replace('online-', '');
+          markOnlineServed(orderId);
         } else {
           ticket.items.forEach((item) => {
             if (item.status !== 'cancelled') {
               updateOrderItemStatus(item.id, 'served');
             }
           });
-          if (ticket.orderType === 'takeout') {
-            const orderId = ticket.takeoutId || ticket.id.replace('takeout-', '');
-            const toOrder = takeoutOrders.find((o) => o.id === orderId);
-            markTakeoutServed(orderId);
-            if (toOrder && !toOrder.isPrepaid) {
-              toast.info(
-                `Bagged ${ticket.sourceTitle}. Payment is DUE AT COUNTER — settle at Floor POS before handoff!`,
-                { title: 'Payment Required at Counter' }
-              );
-              return;
-            }
-          } else if (ticket.orderType === 'online_delivery') {
-            const orderId = ticket.onlineId || ticket.id.replace('online-', '');
-            markOnlineServed(orderId);
-          }
         }
         toast.success(`Handoff complete for ${ticket.sourceTitle}`);
       }

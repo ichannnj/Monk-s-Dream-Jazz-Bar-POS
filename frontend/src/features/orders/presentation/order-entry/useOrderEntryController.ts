@@ -13,6 +13,7 @@ import { useEventStore } from '@/features/events/application/useEventStore';
 import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
 import {
   calculateTabBilling,
+  roundPhp,
   PricingLineItem,
 } from '@/features/checkout/utils/taxAndDiscountCalculator';
 import { menuApi } from '@/features/menu/data/menu.api';
@@ -70,6 +71,7 @@ export function useOrderEntryController({
           if (item.category === 'door_charge' || item.name.toLowerCase().includes('door charge')) {
             return {
               ...item,
+              eventId: todayEvent.id,
               price: Number(todayEvent.door_charge_amount),
               description: `Admission for "${todayEvent.title}" (₱${Number(todayEvent.door_charge_amount).toFixed(2)} / head)`,
             };
@@ -100,6 +102,7 @@ export function useOrderEntryController({
             ) {
               return {
                 ...item,
+                eventId: todayEv.id,
                 price: Number(todayEv.door_charge_amount),
                 description: `Admission for "${todayEv.title}" (₱${Number(todayEv.door_charge_amount).toFixed(2)} / head)`,
               };
@@ -175,8 +178,17 @@ export function useOrderEntryController({
   }, [cartItems]);
 
   const corkageAmount = useMemo(() => {
-    return hasCorkage ? itemsSubtotal * 0.2 : 0;
-  }, [hasCorkage, itemsSubtotal]);
+    if (!hasCorkage) return 0;
+    const corkageableSubtotal = cartItems
+      .filter(
+        (item) =>
+          item.categorySlug !== 'door_charge' &&
+          item.productId !== 'd1000001-0000-0000-0000-000000000001' &&
+          !item.productName?.toLowerCase().includes('door charge')
+      )
+      .reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
+    return roundPhp(corkageableSubtotal * 0.2);
+  }, [hasCorkage, cartItems]);
 
   const billingResult = useMemo(() => {
     const pricingItems: PricingLineItem[] = cartItems.map((ci) => ({

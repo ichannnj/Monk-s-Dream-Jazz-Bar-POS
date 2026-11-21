@@ -3,6 +3,7 @@ import { ordersApi } from '../data/orders.api';
 import { tablesApi } from '../../table-service/data/tables.api';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
+import { toast } from '../../shared/toast/useToastStore';
 import { deriveTabTotal, deriveTableStatus, deriveTableStateTimestamp } from './order.helpers';
 import type { OrderStoreSet, OrderStoreGet } from '../domain/order.types';
 
@@ -74,7 +75,11 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         return {
           ...order,
           items: updatedItems,
-          status: allReady ? ('ready' as const) : order.status,
+          status: allReady
+            ? ('ready' as const)
+            : order.status === 'ready'
+              ? ('preparing' as const)
+              : order.status,
           stateChangedAt: nowIso,
         };
       });
@@ -101,7 +106,11 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
         return {
           ...order,
           items: updatedItems,
-          status: allReady ? ('ready' as const) : order.status,
+          status: allReady
+            ? ('ready' as const)
+            : order.status === 'ready'
+              ? ('preparing' as const)
+              : order.status,
           stateChangedAt: nowIso,
         };
       });
@@ -121,6 +130,7 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       })
       .catch((err) => {
         console.warn('[itemStatus.slice] Failed to persist item status update:', err);
+        toast.error('Failed to sync item status with station database.');
       });
   },
 
@@ -187,6 +197,7 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       })
       .catch((err) => {
         console.warn('[itemStatus.slice] Failed to persist markRoundServed:', err);
+        toast.error('Failed to sync round delivery with database.');
       });
   },
 
@@ -227,6 +238,7 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       })
       .catch((err) => {
         console.warn('[itemStatus.slice] Failed to persist markTakeoutServed:', err);
+        toast.error('Failed to sync takeout completion with database.');
       });
   },
 
@@ -265,6 +277,7 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       })
       .catch((err) => {
         console.warn('[itemStatus.slice] Failed to persist markOnlineServed:', err);
+        toast.error('Failed to sync delivery completion with database.');
       });
   },
 

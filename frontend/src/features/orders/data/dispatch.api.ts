@@ -107,19 +107,22 @@ export async function createOrderWithItems(params: {
       } | null = null;
 
       if (params.externalOrderRef) {
-        const { data: existingOrder } = await supabase
+        const { data: existingOrders } = await supabase
           .from('orders')
           .select('id, order_number, status, tab_id, created_at')
           .eq('external_order_ref', params.externalOrderRef)
-          .maybeSingle();
+          .order('created_at', { ascending: false })
+          .limit(1);
 
+        const existingOrder = existingOrders?.[0];
         if (existingOrder) {
           orderData = existingOrder;
-          // Fetch existing items to avoid double inserting
+          // Fetch existing items ordered cleanly to avoid double inserting
           const { data: existingItems } = await supabase
             .from('order_items')
             .select('*')
-            .eq('order_id', existingOrder.id);
+            .eq('order_id', existingOrder.id)
+            .order('created_at', { ascending: true });
 
           return {
             order: existingOrder,
@@ -169,6 +172,12 @@ export async function createOrderWithItems(params: {
             : (await resolveProductId(item.productId)) ||
               (await resolveProductId(item.productName || ''));
 
+          if (!resolvedProdId) {
+            throw new Error(
+              `Menu item "${item.productName || item.productId}" could not be resolved in catalog.`
+            );
+          }
+
           const itemDbStatus = isDoorCharge
             ? ('SERVED' as const)
             : item.status &&
@@ -184,7 +193,7 @@ export async function createOrderWithItems(params: {
 
           return {
             id: resolvedItemId,
-            product_id: resolvedProdId || 'e1111111-0000-0000-0000-000000000001',
+            product_id: resolvedProdId,
             event_id: isUuid(item.eventId) ? item.eventId : null,
             variant_id: isUuid(item.variantId) ? item.variantId : null,
             temperature: item.temperature || null,

@@ -12,6 +12,7 @@ const MONKS_DREAM_LOGO = require('../../../../../../assets/monks-dream-logo-lock
 
 interface BillThermalReceiptMockupProps {
   isTakeout: boolean;
+  settlementMode?: 'single_tab' | 'entire_table';
   takeoutOrder?: TakeoutOrder | null;
   activeTab?: CustomerTab | null;
   table?: TableItem | null;
@@ -40,6 +41,7 @@ interface BillThermalReceiptMockupProps {
 
 export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> = ({
   isTakeout,
+  settlementMode = 'single_tab',
   takeoutOrder,
   activeTab,
   table,
@@ -190,7 +192,9 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
                 TAB:{' '}
                 {isTakeout
                   ? takeoutOrder?.customerName || 'Walk-in'
-                  : activeTab?.guestName || 'Table Guest'}
+                  : settlementMode === 'entire_table'
+                    ? `All ${table?.tabs?.filter((t) => t.status === 'open').length || 1} Tabs`
+                    : activeTab?.guestName || 'Table Guest'}
               </Text>
             </View>
           </>
@@ -205,7 +209,9 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
               TAB:{' '}
               {isTakeout
                 ? takeoutOrder?.customerName || 'Walk-in'
-                : activeTab?.guestName || 'Table Guest'}
+                : settlementMode === 'entire_table'
+                  ? `All ${table?.tabs?.filter((t) => t.status === 'open').length || 1} Tabs`
+                  : activeTab?.guestName || 'Table Guest'}
             </Text>
           </View>
         )}
@@ -231,9 +237,12 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           const parsedMods: Array<{ label: string; unitDelta: number }> = (
             item.modifiers ?? []
           ).map((mod: string) => {
-            const match = mod.match(/^(.*?)\s*\(\+(?:₱|P)?(\d+(?:\.\d+)?)\)\s*$/i);
+            const match = mod.match(/^(.*?)\s*\(\+(?:₱|P)?([\d,]+(?:\.\d+)?)\)\s*$/i);
             if (!match) return { label: mod, unitDelta: 0 };
-            return { label: match[1].trim(), unitDelta: parseFloat(match[2]) || 0 };
+            return {
+              label: match[1].trim(),
+              unitDelta: parseFloat(match[2].replace(/,/g, '')) || 0,
+            };
           });
           const lineTotal = item.unitPrice * item.quantity;
           const modTotal = parsedMods.reduce(

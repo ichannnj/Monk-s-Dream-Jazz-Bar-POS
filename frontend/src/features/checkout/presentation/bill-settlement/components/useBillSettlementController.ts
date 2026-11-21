@@ -6,6 +6,7 @@ import { toast } from '@/features/shared/toast/useToastStore';
 import { useVenueStore } from '@/features/shared';
 import {
   calculateTabBilling,
+  roundPhp,
   type PricingLineItem,
   type DiscountType,
 } from '../../../utils/taxAndDiscountCalculator';
@@ -133,6 +134,7 @@ export function useBillSettlementController({
     if (tabIndex !== undefined) {
       setSelectedTabIndex(tabIndex);
     }
+    setSeniorItemSelectionMode('all');
     setSelectedSeniorItemIds(new Set());
   };
 
@@ -160,13 +162,22 @@ export function useBillSettlementController({
   }, [rawItems, isSeniorOrPwd, seniorItemSelectionMode, selectedSeniorItemIds]);
 
   const parsedCustomDiscount = parseFloat(customDiscountValue) || 0;
-  const isComp = selectedMethod === 'comp';
+  const isComp = tenderTabMode !== 'split' && selectedMethod === 'comp';
   const tableGroupCorkage = useMemo(() => {
     if (settlementMode === 'entire_table' && table?.tabs) {
-      return table.tabs.reduce((sum, t) => sum + (t.corkageAmount || 0), 0);
+      return roundPhp(
+        table.tabs
+          .filter((t) => t.status === 'open' && t.hasCorkageFee)
+          .reduce((sum, t) => sum + (t.corkageAmount || 0), 0)
+      );
     }
-    return resolvedActiveTab?.corkageAmount || 0;
-  }, [settlementMode, table?.tabs, resolvedActiveTab?.corkageAmount]);
+    return resolvedActiveTab?.hasCorkageFee ? roundPhp(resolvedActiveTab.corkageAmount || 0) : 0;
+  }, [
+    settlementMode,
+    table?.tabs,
+    resolvedActiveTab?.hasCorkageFee,
+    resolvedActiveTab?.corkageAmount,
+  ]);
 
   const billing = useMemo(() => {
     const calculated = calculateTabBilling(pricingItems, {
@@ -235,8 +246,8 @@ export function useBillSettlementController({
   const numericTendered = parseFloat(tenderedCash) || 0;
   const changeDue =
     tenderTabMode === 'split'
-      ? splitBalance.totalCashChange
-      : Math.max(0, numericTendered - grandTotal);
+      ? roundPhp(splitBalance.totalCashChange)
+      : roundPhp(Math.max(0, numericTendered - grandTotal));
 
   const isRefNumberValid = /^\d{4}$/.test(referenceNumber.trim());
   const isPaymentValid =
@@ -269,8 +280,18 @@ export function useBillSettlementController({
       const otherAllocated = prev
         .filter((t) => t.id !== id)
         .reduce((sum, t) => sum + (t.amount || 0), 0);
-      const remainingForThis = Math.max(0, grandTotal - otherAllocated);
-      return prev.map((t) => (t.id === id ? { ...t, amount: remainingForThis } : t));
+      const remainingForThis = roundPhp(Math.max(0, grandTotal - otherAllocated));
+      return prev.map((t) => {
+        if (t.id !== id) return t;
+        if (t.method === 'cash') {
+          return {
+            ...t,
+            amount: remainingForThis,
+            tendered: Math.max(t.tendered || 0, remainingForThis),
+          };
+        }
+        return { ...t, amount: remainingForThis };
+      });
     });
   };
 
@@ -283,7 +304,7 @@ export function useBillSettlementController({
       return;
     }
 
-    if (isSeniorOrPwd) {
+    if (!isComp && isSeniorOrPwd) {
       if (!seniorPwdId.trim()) {
         toast.warning(
           `Please enter the ${discountType === 'SENIOR_CITIZEN' ? 'OSCA' : 'PWD'} ID Number (Mandatory under BIR RR 7-2010).`,
@@ -339,10 +360,17 @@ export function useBillSettlementController({
     try {
       const isSplit = tenderTabMode === 'split';
       const cashPortion = isSplit
-        ? splitTenders
-            .filter((t): t is PaymentTender & { method: 'cash' } => t.method === 'cash')
-            .reduce((sum, t) => sum + (t.amount || 0), 0)
+        ? roundPhp(
+            splitTenders
+              .filter((t): t is PaymentTender & { method: 'cash' } => t.method === 'cash')
+              .reduce((sum, t) => sum + (t.amount || 0), 0)
+          )
         : numericTendered;
+      const effectiveTenderedAmount = isSplit
+        ? roundPhp(splitBalance.totalCashTendered)
+        : selectedMethod === 'cash'
+          ? numericTendered
+          : grandTotal;
 
       await onConfirmPayment(
         isTakeout ? 'takeout' : settlementMode,
@@ -359,12 +387,8 @@ export function useBillSettlementController({
           seniorPwdId: seniorPwdId.trim(),
           seniorPwdName: seniorPwdName.trim(),
           shouldPrintReceipt,
-          tenderedAmount: isSplit
-            ? cashPortion
-            : selectedMethod === 'cash'
-              ? numericTendered
-              : grandTotal,
-          corkageAmount: tableGroupCorkage,
+          tenderedAmount: effectiveTenderedAmount,
+          corkageAmount: isComp ? 0 : tableGroupCorkage,
           tenders: isSplit ? splitTenders : undefined,
         }
       );
@@ -416,8 +440,8 @@ export function useBillSettlementController({
         waiterName: currentUser?.displayName || 'Cashier',
         items: rawItems,
         subtotal,
-        corkageFee: tableGroupCorkage,
-        corkageAmount: tableGroupCorkage,
+        corkageFee: isComp ? 0 : tableGroupCorkage,
+        corkageAmount: isComp ? 0 : tableGroupCorkage,
         discountAmount: billing.totalDiscountAmount,
         discountType: isComp ? 'COMP' : discountType,
         serviceCharge,

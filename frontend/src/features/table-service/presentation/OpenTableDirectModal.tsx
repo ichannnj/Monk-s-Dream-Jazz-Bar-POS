@@ -41,7 +41,9 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
       setGuestName('');
       setGuestCount(2);
       setDoorChargePax(2);
-      setDoorChargePrice(String(todayEvent?.door_charge_amount || 300));
+      setDoorChargePrice(
+        String(todayEvent?.has_door_charge ? (todayEvent.door_charge_amount ?? 0) : 0)
+      );
       setIncludeDoorCharge(
         Boolean(todayEvent?.has_door_charge && (todayEvent?.door_charge_amount || 0) > 0)
       );

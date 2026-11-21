@@ -96,6 +96,7 @@ export interface YReadingRecord {
   discount_total: number;
   vatable_sales: number;
   vat_amount: number;
+  vat_exempt_sales: number;
   service_charge: number;
   tender_cash: number;
   tender_card: number;

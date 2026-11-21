@@ -185,7 +185,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
           </View>
 
           {/* Scope Selector: All Items on this Tab vs Select Senior Items */}
-          {rawItems.length > 1 && (
+          {rawItems.length >= 1 && (
             <View className="mt-2 pt-2 border-t border-stone-200">
               <Text className="text-[11px] font-extrabold text-gray-700 uppercase mb-1.5">
                 Items Entitled to 20% Discount &amp; VAT Exemption:

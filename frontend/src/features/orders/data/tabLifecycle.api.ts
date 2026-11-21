@@ -124,48 +124,67 @@ export async function ensureTab(params: {
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(params.tabId);
 
     if (isUuid && params.tabId) {
-      if (validTableId) {
-        await supabase
-          .from('tabs')
-          .update({
-            table_id: validTableId,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', params.tabId);
+      const { data: existingTabRow } = await supabase
+        .from('tabs')
+        .select('id, corkage_amount, has_corkage_fee')
+        .eq('id', params.tabId)
+        .maybeSingle();
 
-        await supabase
-          .from('tables')
-          .update({ is_occupied: true, updated_at: new Date().toISOString() })
-          .eq('id', validTableId);
+      if (existingTabRow?.id) {
+        const updatePayload: {
+          table_id?: string;
+          has_corkage_fee?: boolean;
+          corkage_amount?: number;
+          updated_at: string;
+        } = {
+          updated_at: new Date().toISOString(),
+        };
+        if (validTableId) {
+          updatePayload.table_id = validTableId;
+        }
+        if (params.hasCorkageFee || (params.corkageAmount ?? 0) > 0) {
+          const nextCorkage =
+            Math.round(
+              ((Number(existingTabRow.corkage_amount) || 0) +
+                (params.corkageAmount || 0) +
+                Number.EPSILON) *
+                100
+            ) / 100;
+          updatePayload.has_corkage_fee = true;
+          updatePayload.corkage_amount = nextCorkage;
+        }
+        await supabase.from('tabs').update(updatePayload).eq('id', params.tabId);
+
+        if (validTableId) {
+          await supabase
+            .from('tables')
+            .update({ is_occupied: true, updated_at: new Date().toISOString() })
+            .eq('id', validTableId);
+        }
+        return params.tabId;
       }
-      return params.tabId;
+      // If the tab UUID doesn't exist in DB yet (e.g. createTab failed offline), insert with that exact UUID below
     }
 
-    if (validTableId) {
+    if (validTableId && !isUuid) {
       const { data: matchingTabs } = await supabase
         .from('tabs')
         .select('id, customer_name')
         .eq('table_id', validTableId)
         .eq('status', 'OPEN');
 
-      if (matchingTabs && matchingTabs.length > 0) {
-        if (params.customerName) {
-          const found = matchingTabs.find(
-            (t) =>
-              t.customer_name.trim().toLowerCase() === params.customerName?.trim().toLowerCase()
-          );
-          if (found) {
-            return found.id;
-          }
-        }
-        // If only 1 open tab exists on this table, reuse it to avoid duplicate ghost tabs
-        if (matchingTabs.length === 1) {
-          return matchingTabs[0].id;
+      if (matchingTabs && matchingTabs.length > 0 && params.customerName) {
+        const found = matchingTabs.find(
+          (t) => t.customer_name.trim().toLowerCase() === params.customerName?.trim().toLowerCase()
+        );
+        if (found) {
+          return found.id;
         }
       }
     }
 
     const baseTabPayload: Record<string, any> = {
+      ...(isUuid && params.tabId ? { id: params.tabId } : {}),
       table_id: validTableId,
       customer_name: params.customerName || 'Guest',
       order_type: params.orderType || 'DINE_IN',
@@ -191,19 +210,33 @@ export async function ensureTab(params: {
       .select('id')
       .single();
 
+    // If concurrent insert hit PK 23505 on our supplied UUID, that UUID now exists in DB
+    if (error && error.code === '23505' && isUuid && params.tabId) {
+      if (validTableId) {
+        await supabase
+          .from('tables')
+          .update({ is_occupied: true, updated_at: new Date().toISOString() })
+          .eq('id', validTableId);
+      }
+      return params.tabId;
+    }
+
     if (error) {
       const retry = await supabase
         .from('tabs')
         .insert(baseTabPayload as any)
         .select('id')
         .single();
+      if (retry.error?.code === '23505' && isUuid && params.tabId) {
+        return params.tabId;
+      }
       newTab = retry.data;
       error = retry.error;
     }
 
     if (error || !newTab) {
       console.warn('ensureTab insert error:', error?.message);
-      throw error;
+      throw error || new Error('Failed to create or resolve customer tab.');
     }
 
     if (validTableId) {
@@ -215,7 +248,7 @@ export async function ensureTab(params: {
 
     return newTab.id;
   } catch (err) {
-    console.warn('ensureTab fallback:', err);
-    return '00000000-0000-0000-0000-000000000000';
+    console.warn('ensureTab failed:', err);
+    throw err;
   }
 }

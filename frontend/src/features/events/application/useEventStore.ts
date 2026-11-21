@@ -218,9 +218,14 @@ export const useEventStore = create<EventState>((set, get) => ({
 
   getTodayActiveEvent: () => {
     const state = get();
-    // Auto-heal: if store is empty and not already loading, trigger load in background
+    // Auto-heal outside React render phase to avoid Zustand/React state-update-in-render warnings
     if (state.events.length === 0 && !state.isLoading) {
-      state.loadEvents().catch(() => {});
+      queueMicrotask(() => {
+        const latest = useEventStore.getState();
+        if (latest.events.length === 0 && !latest.isLoading) {
+          latest.loadEvents().catch(() => {});
+        }
+      });
     }
 
     const businessDateStr = toBusinessDate();

@@ -14,6 +14,8 @@ import {
   isMutationInFlight,
 } from '../data/durableQueue';
 import { saveAuthoritativeSnapshot } from '../data/venueSnapshot';
+import { hasPendingTabWrite } from './tabWriteTracker';
+import { getLatest6AmCutoff } from '../../admin/data/admin.api';
 
 export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
   let activeDrainPromise: Promise<void> | null = null;
@@ -303,46 +305,82 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
           nowMs
         );
 
-        // Preserve any in-flight optimistic local Takeout/Online orders (< 8s old) not yet in DB
+        // Preserve any in-flight optimistic local Takeout/Online orders not yet returned by DB
         const pendingLocalTakeout = get().takeoutOrders.filter(
           (lo) =>
-            lo.id.startsWith('to-') &&
             lo.status !== 'completed' &&
-            !dbTakeout.some((dbo) => dbo.ticketNumber === lo.ticketNumber) &&
-            nowMs - new Date(lo.createdAt || nowMs).getTime() < 8000
+            !dbTakeout.some((dbo) => dbo.id === lo.id || dbo.tabId === lo.id) &&
+            (hasPendingTabWrite(lo.id) ||
+              (lo.id.startsWith('to-') &&
+                nowMs - new Date(lo.createdAt || nowMs).getTime() < 15000))
         );
         const pendingLocalOnline = get().onlineOrders.filter(
           (lo) =>
-            lo.id.startsWith('od-') &&
             lo.status !== 'completed' &&
-            !dbOnline.some((dbo) => dbo.platformOrderRef === lo.platformOrderRef) &&
-            nowMs - new Date(lo.createdAt || nowMs).getTime() < 8000
+            !dbOnline.some(
+              (dbo) =>
+                dbo.id === lo.id ||
+                dbo.tabId === lo.id ||
+                dbo.platformOrderRef === lo.platformOrderRef
+            ) &&
+            (hasPendingTabWrite(lo.id) ||
+              (lo.id.startsWith('od-') &&
+                nowMs - new Date(lo.createdAt || nowMs).getTime() < 15000))
         );
 
-        // Fetch active cash drawer transactions for today
+        // Fetch active cash drawer transactions scoped to the active shift / business day
         let mappedDrawer: DrawerEntry[] = [];
+        let drawerQuerySucceeded = false;
         try {
-          const { data: dbDrawer } = await supabase
+          const businessCutoffIso = getLatest6AmCutoff().toISOString();
+          const { data: latestZ } = await supabase
+            .from('pos_z_readings')
+            .select('closed_at')
+            .eq('drawer_target', 'consolidated')
+            .order('closed_at', { ascending: false })
+            .limit(1);
+
+          const zClosedAt = latestZ?.[0]?.closed_at;
+          const useStrictAfter = Boolean(zClosedAt);
+          const sinceIso = zClosedAt || businessCutoffIso;
+
+          let drawerQuery = supabase
             .from('cash_drawer_transactions')
             .select(
               'id, action_type, amount, reason, performed_by_id, drawer_target, created_at, users:performed_by_id(display_name)'
-            )
-            .order('created_at', { ascending: false })
-            .limit(100);
+            );
+          drawerQuery = useStrictAfter
+            ? drawerQuery.gt('created_at', sinceIso)
+            : drawerQuery.gte('created_at', sinceIso);
 
-          if (dbDrawer && dbDrawer.length > 0) {
-            mappedDrawer = dbDrawer.map((d: any) => ({
-              id: d.id,
-              type: (d.action_type || 'sale').toLowerCase() as any,
-              amount: parseFloat(d.amount) || 0,
-              reason: d.reason || 'Cash movement',
-              performedBy: d.users?.display_name || 'Staff',
-              timestamp: new Date(d.created_at).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              }),
-              drawerTarget: (d.drawer_target || 'main') as 'main' | 'bar',
-            }));
+          const { data: dbDrawer, error: drawerError } = await drawerQuery
+            .order('created_at', { ascending: false })
+            .limit(200);
+
+          if (!drawerError && Array.isArray(dbDrawer)) {
+            drawerQuerySucceeded = true;
+            mappedDrawer = dbDrawer
+              .filter(
+                (d: any) =>
+                  !(
+                    d.action_type === 'DROP' &&
+                    String(d.reason || '')
+                      .toLowerCase()
+                      .includes('variance')
+                  )
+              )
+              .map((d: any) => ({
+                id: d.id,
+                type: (d.action_type || 'sale').toLowerCase() as any,
+                amount: parseFloat(d.amount) || 0,
+                reason: d.reason || 'Cash movement',
+                performedBy: d.users?.display_name || 'Staff',
+                timestamp: new Date(d.created_at).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                }),
+                drawerTarget: (d.drawer_target || 'main') as 'main' | 'bar',
+              }));
           }
         } catch (drawerErr) {
           console.warn('Hydration cash drawer notice:', drawerErr);
@@ -350,7 +388,22 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
 
         const nextTakeout = [...pendingLocalTakeout, ...dbTakeout];
         const nextOnline = [...pendingLocalOnline, ...dbOnline];
-        const nextDrawer = mappedDrawer.length > 0 ? mappedDrawer : get().drawerEntries;
+        const recentOptimisticDrawer = drawerQuerySucceeded
+          ? get().drawerEntries.filter((entry) => {
+              if (!entry.id.startsWith('drw-')) return false;
+              const ts = Number(entry.id.slice(4));
+              if (!Number.isFinite(ts) || nowMs - ts >= 10000) return false;
+              return !mappedDrawer.some(
+                (m) =>
+                  m.type === entry.type &&
+                  Math.abs(m.amount - entry.amount) < 0.01 &&
+                  m.reason === entry.reason
+              );
+            })
+          : [];
+        const nextDrawer = drawerQuerySucceeded
+          ? [...recentOptimisticDrawer, ...mappedDrawer]
+          : get().drawerEntries;
 
         // Persist authoritative venue snapshot to durable storage on successful hydration
         saveAuthoritativeSnapshot({

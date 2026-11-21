@@ -14,7 +14,11 @@ export function mapDineInTableTickets(
     (table.tabs || []).forEach((tab) => {
       if (tab.status === 'billed' || (tab as any).status === 'closed') return;
       const stationItems = (tab.items || []).filter(
-        (item) => item.stationTarget === stationTarget && item.categorySlug !== 'door_charge'
+        (item) =>
+          item.stationTarget === stationTarget &&
+          item.categorySlug !== 'door_charge' &&
+          item.productId !== 'd1000001-0000-0000-0000-000000000001' &&
+          !item.productName.toLowerCase().includes('door charge')
       );
       if (stationItems.length === 0) return;
 
@@ -32,7 +36,7 @@ export function mapDineInTableTickets(
         const allCancelled =
           roundItems.length > 0 && roundItems.every((i) => i.status === 'cancelled');
 
-        const ticketId = `tbl-${table.id}-tab${tab.tabIndex}-r${roundNum}-${stationTarget}`;
+        const ticketId = `tbl-${table.id}-${tab.id || tab.tabIndex}-r${roundNum}-${stationTarget}`;
         if (activeRoundItems.length === 0) {
           if (!allCancelled || dismissedTicketIds?.has(ticketId)) return;
         }
@@ -42,7 +46,8 @@ export function mapDineInTableTickets(
         if (allServed) return;
 
         const allReady =
-          activeRoundItems.length > 0 && activeRoundItems.every((i) => i.status === 'ready');
+          activeRoundItems.length > 0 &&
+          activeRoundItems.every((i) => i.status === 'ready' || i.status === 'served');
         const hasPrep = activeRoundItems.some((i) => i.status === 'preparing');
         const hasCancelled = roundItems.some((i) => i.status === 'cancelled');
 
@@ -166,12 +171,14 @@ export function mapTakeoutTickets(
     }
     if (activeItems.length > 0 && activeItems.every((i) => i.status === 'served')) return;
 
-    const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
+    const allReady =
+      activeItems.length > 0 &&
+      activeItems.every((i) => i.status === 'ready' || i.status === 'served');
     const hasPrep = activeItems.some((i) => i.status === 'preparing');
     let stage: BarTicket['stage'] = 'new';
     if (allCancelled) stage = 'cancelled';
-    else if (order.status === 'ready' || allReady) stage = 'ready';
-    else if (hasPrep || order.status === 'preparing') stage = 'preparing';
+    else if (allReady) stage = 'ready';
+    else if (hasPrep) stage = 'preparing';
 
     const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
     const stageTimestamp =
@@ -253,12 +260,14 @@ export function mapOnlineDeliveryTickets(
     if (activeItems.length > 0 && activeItems.every((i) => i.status === 'served')) return;
 
     const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
-    const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
+    const allReady =
+      activeItems.length > 0 &&
+      activeItems.every((i) => i.status === 'ready' || i.status === 'served');
     const hasPrep = activeItems.some((i) => i.status === 'preparing');
     let stage: BarTicket['stage'] = 'new';
     if (allCancelled) stage = 'cancelled';
-    else if (order.status === 'ready' || allReady) stage = 'ready';
-    else if (hasPrep || order.status === 'preparing') stage = 'preparing';
+    else if (allReady) stage = 'ready';
+    else if (hasPrep) stage = 'preparing';
 
     const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
     const stageTimestamp =

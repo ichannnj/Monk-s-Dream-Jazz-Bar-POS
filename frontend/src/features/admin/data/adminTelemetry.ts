@@ -181,6 +181,7 @@ export const adminTelemetryService = {
         cashSales: salesMetrics.cashSales,
         digitalSales: salesMetrics.digitalSales,
         cardSales: salesMetrics.cardSales,
+        deliverySales: salesMetrics.deliverySales || 0,
 
         totalPayrollExpense,
         basePayrollTotal,
@@ -254,6 +255,7 @@ export const adminTelemetryService = {
         cashSales: 0,
         digitalSales: 0,
         cardSales: 0,
+        deliverySales: 0,
         totalPayrollExpense: 0,
         basePayrollTotal: 0,
         bonusPayrollTotal: 0,

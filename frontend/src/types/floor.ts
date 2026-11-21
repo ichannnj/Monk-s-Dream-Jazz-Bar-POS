@@ -159,6 +159,7 @@ export interface MenuItem {
   categoryName?: string;
   price: number;
   stationTarget: 'bar' | 'kitchen';
+  eventId?: string;
   description: string;
   allergens: string[]; // Dairy, Gluten, Peanuts, Tree Nuts, Eggs, Soy, etc.
   dietary: string[]; // Vegan, Vegetarian, Gluten-Free

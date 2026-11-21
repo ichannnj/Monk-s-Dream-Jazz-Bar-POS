@@ -5,6 +5,7 @@ import { tablesApi } from '../../table-service/data/tables.api';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
+import { ensureUuid } from '../data/durableQueue';
 import { trackTabWrite } from './tabWriteTracker';
 
 export const createOnlineOrderAction = (
@@ -17,16 +18,16 @@ export const createOnlineOrderAction = (
   items: OrderLineItem[]
 ): OnlineDeliveryOrder => {
   const nowIso = new Date().toISOString();
-  const localOrderId = `od-${Date.now()}`;
+  const localOrderId = ensureUuid();
   const cleanRef = platformOrderRef.trim().toUpperCase();
   const cleanRider = riderName.trim() || 'Rider Assigned';
   const cleanCustomer = customerName.trim() || 'Online Customer';
   const operatingMode = useVenueStore.getState().operatingMode;
   const currentUserId = useAuthStore.getState().currentUser?.id;
 
-  const taggedItems: OrderLineItem[] = items.map((item, idx) => ({
+  const taggedItems: OrderLineItem[] = items.map((item) => ({
     ...item,
-    id: item.id || `item-${localOrderId}-r1-${Date.now()}-${idx}`,
+    id: ensureUuid(item.id),
     roundNumber: item.roundNumber || 1,
     status: item.status || ('pending' as const),
     createdAt: item.createdAt || nowIso,
@@ -153,9 +154,9 @@ export const addItemsToOnlineOrderAction = (
   const nextRound = maxRound + 1;
   const nowIso = new Date().toISOString();
 
-  const taggedItems: OrderLineItem[] = items.map((item, idx) => ({
+  const taggedItems: OrderLineItem[] = items.map((item) => ({
     ...item,
-    id: item.id || `item-od-${onlineId}-r${nextRound}-${Date.now()}-${idx}`,
+    id: ensureUuid(item.id),
     roundNumber: nextRound,
     status: item.status || ('pending' as const),
     createdAt: nowIso,

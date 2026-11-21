@@ -68,10 +68,15 @@ export function buildRunnerChitBytes(
 
     if (item.temperature && item.temperature !== 'NONE' && !name.includes('(')) {
       const temp = item.temperature === 'HOT' ? 'Hot' : 'Iced';
-      const size = item.size && item.size !== 'Standard' ? ` - ${item.size}` : '';
+      const itemSize = item.size ?? item.sizeLabel;
+      const size = itemSize && itemSize !== 'Standard' ? ` - ${itemSize}` : '';
       name = `${name} (${temp}${size})`;
-    } else if (item.size && item.size !== 'Standard' && !name.includes('(')) {
-      name = `${name} (${item.size})`;
+    } else if (
+      (item.size ?? item.sizeLabel) &&
+      (item.size ?? item.sizeLabel) !== 'Standard' &&
+      !name.includes('(')
+    ) {
+      name = `${name} (${item.size ?? item.sizeLabel})`;
     }
 
     const rawStation = (item.station || item.stationTarget || 'BAR').toUpperCase();
@@ -432,8 +437,9 @@ export function buildBillStatementBytes(
       if (item.temperature && item.temperature !== 'NONE') {
         parts.push(item.temperature === 'HOT' ? 'Hot' : 'Iced');
       }
-      if (item.size && item.size !== 'Standard') {
-        parts.push(item.size);
+      const itemSize = item.size ?? item.sizeLabel;
+      if (itemSize && itemSize !== 'Standard') {
+        parts.push(itemSize);
       }
       if (parts.length > 0) {
         desc = `${desc} (${parts.join(' - ')})`;
@@ -446,8 +452,8 @@ export function buildBillStatementBytes(
     );
     const modTotal = Array.isArray(item.modifiers)
       ? item.modifiers.reduce((sum: number, mod: unknown) => {
-          const match = String(mod).match(/\(\+(?:₱|P)?(\d+(?:\.\d+)?)\)\s*$/i);
-          return sum + (match ? (parseFloat(match[1]) || 0) * qty : 0);
+          const match = String(mod).match(/\(\+(?:₱|P)?([\d,]+(?:\.\d+)?)\)\s*$/i);
+          return sum + (match ? (parseFloat(match[1].replace(/,/g, '')) || 0) * qty : 0);
         }, 0)
       : 0;
     const baseItemTotal = modTotal > 0 && itemTotal >= modTotal ? itemTotal - modTotal : itemTotal;
@@ -472,26 +478,38 @@ export function buildBillStatementBytes(
   builder.line(divider('-', cols));
 
   // 7. Financial Summary & Totals
-  const subtotal = toPesos(data.subtotal || data.amount || 0);
+  const subtotal = toPesos(data.subtotal ?? data.amount ?? 0);
   const subtotalLabel = is57mm ? 'SUBTOTAL (Gross):' : 'SUBTOTAL (Gross Sales):';
   builder.text(padLine(subtotalLabel, formatPhp(subtotal), cols));
 
-  const corkage = toPesos(data.corkageFee || data.corkageAmount || data.corkage_amount || 0);
+  const corkage = toPesos(data.corkageFee ?? data.corkageAmount ?? data.corkage_amount ?? 0);
   if (corkage > 0) {
     builder.text(padLine('CORKAGE FEE:', formatPhp(corkage), cols));
   }
 
   // Combine discounts (e.g. Senior/PWD + custom discount) without advertising 12% VAT exemption on provisional bills
-  const rawVatExempt = toPesos(data.vatExemptSales || data.vat_exempt_sales || 0);
-  const vatRelief = rawVatExempt > 0 ? Math.min(subtotal, toPesos(rawVatExempt * 0.12)) : 0;
-  const rawDiscount = toPesos(data.discountAmount || data.discount || data.discount_amount || 0);
-  const totalDiscount = rawDiscount + vatRelief;
+  const serviceCharge = toPesos(data.serviceCharge ?? data.service_charge ?? 0);
+  const rawVatExempt = toPesos(data.vatExemptSales ?? data.vat_exempt_sales ?? 0);
+  const rawDiscount = toPesos(data.discountAmount ?? data.discount ?? data.discount_amount ?? 0);
+  const explicitTotal = data.total ?? data.amount;
+  const vatRelief =
+    rawVatExempt > 0 && explicitTotal !== undefined && toPesos(explicitTotal) > 0
+      ? Math.max(
+          0,
+          Math.min(
+            subtotal,
+            toPesos(subtotal + corkage + serviceCharge - rawDiscount - toPesos(explicitTotal))
+          )
+        )
+      : rawVatExempt > 0
+        ? Math.min(subtotal, toPesos(rawVatExempt * 0.12))
+        : 0;
+  const totalDiscount = toPesos(rawDiscount + vatRelief);
 
   if (totalDiscount > 0) {
     builder.text(padLine('LESS: DISCOUNT:', `-${formatPhp(totalDiscount)}`, cols));
   }
 
-  const serviceCharge = toPesos(data.serviceCharge || data.service_charge || 0);
   if (serviceCharge > 0) {
     builder.text(padLine('SERVICE CHARGE:', formatPhp(serviceCharge), cols));
   }
@@ -500,7 +518,7 @@ export function buildBillStatementBytes(
   builder.line(divider('=', cols));
   builder.bold(true).doubleHeight(true);
   const total = toPesos(
-    data.total || data.amount || subtotal + corkage - totalDiscount + serviceCharge
+    explicitTotal ?? Math.max(0, subtotal + corkage - totalDiscount + serviceCharge)
   );
   const totalLabel = is57mm ? 'TOTAL DUE:' : 'TOTAL AMOUNT DUE:';
   builder.text(padLine(totalLabel, `PHP ${formatPhp(total)}`, cols));

@@ -31,6 +31,7 @@ export const useAdminReadingsController = () => {
   const [selectedReport, setSelectedReport] = useState<ReadingData | null>(null);
   const [zCloseModalVisible, setZCloseModalVisible] = useState(false);
   const [yCloseModalVisible, setYCloseModalVisible] = useState(false);
+  const [yShiftReading, setYShiftReading] = useState<ReadingData | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -72,9 +73,10 @@ export const useAdminReadingsController = () => {
   const handleOpenYClose = async () => {
     try {
       const shiftReading = await readingsApi.fetchCurrentXReading(drawerScope, 'shift');
-      setActiveReading(shiftReading);
+      setYShiftReading(shiftReading);
     } catch (err) {
       console.warn('[AdminReadingsView] Could not pre-fetch shift reading:', err);
+      setYShiftReading(activeReading);
     }
     setYCloseModalVisible(true);
   };
@@ -96,6 +98,10 @@ export const useAdminReadingsController = () => {
       gross_sales: zRecord.gross_sales,
       discount_total: zRecord.discount_total,
       net_sales: zRecord.net_sales,
+      cafe_sales: zRecord.cafe_net_sales ?? 0,
+      event_sales: zRecord.event_net_sales ?? 0,
+      cafe_tx_count: zRecord.cafe_tx_count ?? 0,
+      event_tx_count: zRecord.event_tx_count ?? 0,
       vatable_sales: zRecord.vatable_sales,
       vat_amount: zRecord.vat_amount,
       vat_exempt_sales: zRecord.vat_exempt_sales,
@@ -135,9 +141,13 @@ export const useAdminReadingsController = () => {
       gross_sales: yRecord.gross_sales,
       discount_total: yRecord.discount_total,
       net_sales: yRecord.net_sales,
+      cafe_sales: yRecord.cafe_net_sales ?? 0,
+      event_sales: yRecord.event_net_sales ?? 0,
+      cafe_tx_count: yRecord.cafe_tx_count ?? 0,
+      event_tx_count: yRecord.event_tx_count ?? 0,
       vatable_sales: yRecord.vatable_sales,
       vat_amount: yRecord.vat_amount,
-      vat_exempt_sales: 0,
+      vat_exempt_sales: yRecord.vat_exempt_sales || 0,
       service_charge: yRecord.service_charge,
       tender_cash: yRecord.tender_cash,
       tender_card: yRecord.tender_card,
@@ -227,6 +237,7 @@ export const useAdminReadingsController = () => {
     drawerScope,
     setDrawerScope,
     activeReading,
+    yShiftReading,
     varianceTrend,
     historyTab,
     setHistoryTab,

@@ -28,6 +28,7 @@ export interface CustomerBillModalProps {
   vatableSales?: number;
   vatAmount?: number;
   vatExemptSales?: number;
+  corkageAmount?: number;
   serviceCharge?: number;
   discountAmount?: number;
   discountLabel?: string;
@@ -49,6 +50,7 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
   vatableSales,
   vatAmount,
   vatExemptSales,
+  corkageAmount = 0,
   serviceCharge = 0,
   discountAmount = 0,
   discountLabel,
@@ -203,6 +205,13 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
                   <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
                 </View>
 
+                {corkageAmount > 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={styles.summaryLabel}>Corkage Fee (20%)</Text>
+                    <Text style={styles.summaryValue}>+{formatCurrency(corkageAmount)}</Text>
+                  </View>
+                )}
+
                 {serviceCharge > 0 && (
                   <View style={styles.summaryRow}>
                     <Text style={styles.summaryLabel}>Service Charge (10%)</Text>
@@ -226,13 +235,13 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
                   <View style={styles.taxRow}>
                     <Text style={styles.taxLabel}>VATable Sales (12%)</Text>
                     <Text style={styles.taxValue}>
-                      {formatCurrency(vatableSales || subtotal / 1.12)}
+                      {formatCurrency(vatableSales ?? Number((subtotal / 1.12).toFixed(2)))}
                     </Text>
                   </View>
                   <View style={styles.taxRow}>
                     <Text style={styles.taxLabel}>VAT Amount (12%)</Text>
                     <Text style={styles.taxValue}>
-                      {formatCurrency(vatAmount || subtotal - subtotal / 1.12)}
+                      {formatCurrency(vatAmount ?? Number((subtotal - subtotal / 1.12).toFixed(2)))}
                     </Text>
                   </View>
                   {(vatExemptSales || 0) > 0 && (

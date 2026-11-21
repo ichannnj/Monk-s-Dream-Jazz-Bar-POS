@@ -188,6 +188,18 @@ export function useOrderEntryFlow({
     try {
       const nowIso = new Date().toISOString();
       const processedItems: OrderLineItem[] = items.map((item) => {
+        const isDoorCharge =
+          item.categorySlug === 'door_charge' ||
+          item.productId === 'd1000001-0000-0000-0000-000000000001' ||
+          item.productName?.toLowerCase().includes('door charge');
+        if (isDoorCharge) {
+          return {
+            ...item,
+            status: 'served' as const,
+            createdAt: item.createdAt || nowIso,
+            servedAt: item.servedAt || nowIso,
+          };
+        }
         const isAutoStart = autoStartStation && item.stationTarget === autoStartStation;
         return {
           ...item,

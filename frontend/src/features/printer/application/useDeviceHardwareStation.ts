@@ -18,6 +18,9 @@ interface DeviceHardwareStationState {
   initDeviceStation: () => () => void;
 }
 
+let activeDeviceStationCleanup: (() => void) | null = null;
+let deviceStationRefCount = 0;
+
 export const useDeviceHardwareStation = create<DeviceHardwareStationState>((set, get) => ({
   isHardwareStation: getInitialStationStatus(),
   isInitialized: false,
@@ -39,13 +42,22 @@ export const useDeviceHardwareStation = create<DeviceHardwareStationState>((set,
       return () => {};
     }
 
-    set({ isInitialized: true });
-    // Initialize the background printer station lifecycle
-    const cleanup = usePrinterStationStore.getState().initStation();
+    deviceStationRefCount++;
+    if (!activeDeviceStationCleanup) {
+      set({ isInitialized: true });
+      activeDeviceStationCleanup = usePrinterStationStore.getState().initStation();
+    }
 
+    let released = false;
     return () => {
-      cleanup();
-      set({ isInitialized: false });
+      if (released) return;
+      released = true;
+      deviceStationRefCount = Math.max(0, deviceStationRefCount - 1);
+      if (deviceStationRefCount === 0 && activeDeviceStationCleanup) {
+        activeDeviceStationCleanup();
+        activeDeviceStationCleanup = null;
+        set({ isInitialized: false });
+      }
     };
   },
 }));

@@ -11,6 +11,7 @@ import {
 import type { OrderStoreSet, OrderStoreGet } from '../../orders/domain/order.types';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { useAuthStore } from '../../auth/application/useAuthStore';
+import { awaitPendingTabWrites } from '../../orders/application/tabWriteTracker';
 
 export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   transferTableOrTab: (
@@ -288,7 +289,7 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       tabId: mode === 'entire' ? undefined : tabUuidForRpc,
       originTableCode: initialOriginTable?.code,
       targetTableCode: initialTargetTable?.code,
-      staffId: useAuthStore.getState().currentUser?.id || '11111111-1111-1111-1111-111111111111',
+      staffId: useAuthStore.getState().currentUser?.id || undefined,
       reason: reason || 'Guest relocation request',
     };
 
@@ -302,20 +303,20 @@ export const createTransferSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     set({ offlineQueue: loadDurableQueue() });
 
     // Background asynchronous Supabase RPC execution
-    tablesApi
-      .transferTableTab(transferPayload)
-      .then(() => {
+    (async () => {
+      try {
+        await awaitPendingTabWrites([originId, targetId, tabUuidForRpc]);
+        await tablesApi.transferTableTab(transferPayload);
         dequeueDurableMutation(transferMutationId);
         set({ offlineQueue: loadDurableQueue() });
-      })
-      .catch((err) => {
+      } catch (err) {
         console.warn(
           'Background transferTableTab offline notice (retained in durable queue):',
           err
         );
-      })
-      .finally(() => {
+      } finally {
         clearMutationInFlight(transferMutationId);
-      });
+      }
+    })();
   },
 });

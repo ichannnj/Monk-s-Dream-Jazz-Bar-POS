@@ -30,6 +30,7 @@ export async function backgroundSettleTakeoutDb({
   completeOrder,
   paymentChannel,
   referenceNumber,
+  drawerTarget = 'main',
   options,
   getTakeoutOrders,
 }: {
@@ -43,6 +44,7 @@ export async function backgroundSettleTakeoutDb({
   completeOrder: boolean;
   paymentChannel?: string;
   referenceNumber?: string;
+  drawerTarget?: 'main' | 'bar';
   options?: SettlementBillingDetails;
   getTakeoutOrders: () => TakeoutOrder[];
 }) {
@@ -70,19 +72,6 @@ export async function backgroundSettleTakeoutDb({
       }
     }
 
-    if (!tabUuid || !uuidRegex.test(tabUuid)) {
-      const { data: openTakeoutTabs } = await supabase
-        .from('tabs')
-        .select('id')
-        .eq('order_type', 'TAKEOUT')
-        .eq('status', 'OPEN')
-        .order('created_at', { ascending: false })
-        .limit(1);
-      if (openTakeoutTabs && openTakeoutTabs.length > 0) {
-        tabUuid = openTakeoutTabs[0].id;
-      }
-    }
-
     if (tabUuid && uuidRegex.test(tabUuid)) {
       const settlementPayload = {
         tabId: tabUuid,
@@ -102,7 +91,7 @@ export async function backgroundSettleTakeoutDb({
         seniorPwdId: options?.seniorPwdId,
         seniorPwdName: options?.seniorPwdName,
         tenderedAmount: options?.tenderedAmount,
-        drawerTarget: 'main' as const,
+        drawerTarget,
         shouldPrintReceipt: options?.shouldPrintReceipt,
         tenders: options?.tenders ? mapTendersToDbPayload(options.tenders) : undefined,
       };

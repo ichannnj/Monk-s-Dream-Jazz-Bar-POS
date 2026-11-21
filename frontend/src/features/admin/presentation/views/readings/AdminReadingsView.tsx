@@ -27,6 +27,7 @@ export const AdminReadingsView: React.FC = () => {
     drawerScope,
     setDrawerScope,
     activeReading,
+    yShiftReading,
     varianceTrend,
     historyTab,
     setHistoryTab,
@@ -216,7 +217,7 @@ export const AdminReadingsView: React.FC = () => {
       {/* Y-Close Handover Modal */}
       <YCloseShiftModal
         visible={yCloseModalVisible}
-        activeReading={activeReading}
+        activeReading={yShiftReading || activeReading}
         drawerScope={drawerScope}
         onClose={() => setYCloseModalVisible(false)}
         onYReadingSuccess={handleYSuccess}

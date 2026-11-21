@@ -125,6 +125,7 @@ export interface OrderState {
       completeOrder?: boolean;
       cashierName?: string;
       discountAmount?: number;
+      grossSubtotal?: number;
       staffId?: string;
       paymentChannel?: string;
       referenceNumber?: string;

@@ -182,10 +182,13 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
       serviceChargeEnabled,
       cafeFoodServiceChargeRate,
       eventServiceChargeRate,
+      corkageAmount: currentTab?.hasCorkageFee ? currentTab.corkageAmount || 0 : 0,
     });
   }, [
     pricingItems,
     currentTab?.operatingMode,
+    currentTab?.hasCorkageFee,
+    currentTab?.corkageAmount,
     operatingMode,
     serviceChargeEnabled,
     cafeFoodServiceChargeRate,
@@ -209,11 +212,12 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     if (!itemToVoid || !table) return;
 
     const isPostPrep = itemToVoid.status === 'preparing' || itemToVoid.status === 'ready';
-    const staffId =
-      currentUser?.id ||
-      useAuthStore.getState().currentUser?.id ||
-      '11111111-1111-1111-1111-111111111111';
-    await voidOrderItem(itemToVoid.id, staffId, reason, table.id, selectedTabIndex);
+    const staffId = currentUser?.id || useAuthStore.getState().currentUser?.id || '';
+    const voided = await voidOrderItem(itemToVoid.id, staffId, reason, table.id, selectedTabIndex);
+    if (voided === false) {
+      toast.error('Failed to void item in database. Please verify connection and retry.');
+      return;
+    }
 
     toast.success(
       `${itemToVoid.productName} voided (${isPostPrep ? 'Waste Logged' : 'Stock Restored'})`,
@@ -280,6 +284,8 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
         waiterName: currentUser?.displayName || 'Floor Staff',
         items: activeTabItems,
         subtotal: billing.grossSubtotal,
+        corkageFee: billing.corkageAmount,
+        corkageAmount: billing.corkageAmount,
         discountAmount: billing.totalDiscountAmount,
         serviceCharge: billing.serviceCharge,
         total: billing.totalAmountDue,
@@ -419,11 +425,11 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     }}
                     className="flex-2 flex-row items-center justify-center gap-2 py-3.5 px-4 rounded-2xl bg-[#810021] active:opacity-90 min-h-[48px] shadow-xs"
                     accessibilityRole="button"
-                    accessibilityLabel={`Settle Tab for ${formatCurrency(tabTotal)}`}
+                    accessibilityLabel={`Settle Tab for ${formatCurrency(billing.totalAmountDue)}`}
                   >
                     <CreditCard size={18} color="#ffffff" strokeWidth={2.3} />
                     <Text className="text-base font-extrabold text-white">
-                      Settle Tab · {formatCurrency(tabTotal)}
+                      Settle Tab · {formatCurrency(billing.totalAmountDue)}
                     </Text>
                   </Pressable>
                 </View>
@@ -461,9 +467,10 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
           vatableSales={billing.vatableSales}
           vatAmount={billing.vatAmount}
           vatExemptSales={billing.vatExemptSales}
+          corkageAmount={billing.corkageAmount}
           serviceCharge={billing.serviceCharge}
           discountAmount={billing.totalDiscountAmount}
-          grandTotal={billing.totalAmountDue || tabTotal}
+          grandTotal={billing.totalAmountDue}
           onPrintBill={handlePrintCustomerBill}
           isPrintingBill={isPrintingBill}
           onProceedToPay={() => {
@@ -505,7 +512,11 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
           tabId={currentTab.id}
           tableName={`Table ${table.code} · Tab #${selectedTabIndex}`}
           currentPax={currentDoorChargeItem?.quantity || 1}
-          currentPrice={currentDoorChargeItem?.unitPrice || todayEvent?.door_charge_amount || 300}
+          currentPrice={
+            currentDoorChargeItem?.unitPrice ??
+            (todayEvent?.has_door_charge ? todayEvent.door_charge_amount : 0) ??
+            0
+          }
           onSave={handleSaveDoorCharge}
           onVoid={handleVoidDoorCharge}
         />
