@@ -488,8 +488,8 @@ export class UsbEscPosPrinter implements IPrinterService {
   }
 
   public async kickCashDrawer(): Promise<boolean> {
-    // ESC p 0 25 250 (pulse pin 2 for 50ms)
-    const kickCommand = Buffer.from([0x1b, 0x70, 0x00, 0x19, 0xfa]);
+    // ESC p pulse on both Pin 2 and Pin 5 (120ms)
+    const kickCommand = Buffer.from([0x1b, 0x70, 0x00, 0x3c, 0xff, 0x1b, 0x70, 0x01, 0x3c, 0xff]);
     try {
       await fs.writeFile(this.devicePath, kickCommand);
       return true;

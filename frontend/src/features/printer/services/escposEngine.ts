@@ -6,8 +6,8 @@ export const ESCPOS = {
   INIT: new Uint8Array([0x1b, 0x40]), // ESC @
   CUT_FULL: new Uint8Array([0x1d, 0x56, 0x00]), // GS V 0 (full cut)
   CUT_PARTIAL: new Uint8Array([0x1d, 0x56, 0x01]), // GS V 1 (partial cut)
-  DRAWER_KICK_PIN2: new Uint8Array([0x1b, 0x70, 0x00, 0x19, 0xfa]), // ESC p 0 25 250 (Pin 2 pulse 50ms)
-  DRAWER_KICK_PIN5: new Uint8Array([0x1b, 0x70, 0x01, 0x19, 0xfa]), // ESC p 1 25 250 (Pin 5 pulse 50ms)
+  DRAWER_KICK_PIN2: new Uint8Array([0x1b, 0x70, 0x00, 0x3c, 0xff]), // ESC p 0 60 255 (Pin 2 pulse 120ms)
+  DRAWER_KICK_PIN5: new Uint8Array([0x1b, 0x70, 0x01, 0x3c, 0xff]), // ESC p 1 60 255 (Pin 5 pulse 120ms)
 
   ALIGN_LEFT: new Uint8Array([0x1b, 0x61, 0x00]), // ESC a 0
   ALIGN_CENTER: new Uint8Array([0x1b, 0x61, 0x01]), // ESC a 1
@@ -106,7 +106,9 @@ export class EscPosBuilder {
   }
 
   public kickDrawer(): this {
-    return this.add(ESCPOS.DRAWER_KICK_PIN2);
+    // Pulse both Pin 2 and Pin 5 so all RJ11 cash drawer models trigger reliably
+    this.add(ESCPOS.DRAWER_KICK_PIN2);
+    return this.add(ESCPOS.DRAWER_KICK_PIN5);
   }
 
   public toBytes(): Uint8Array {

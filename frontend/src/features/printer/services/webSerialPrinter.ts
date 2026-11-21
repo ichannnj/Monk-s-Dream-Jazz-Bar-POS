@@ -631,9 +631,6 @@ export class WebSerialPrinterService {
   }
 
   public async kickCashDrawer(): Promise<boolean> {
-    if (this.connectionType === 'browser') {
-      return false;
-    }
     if (this.connectionType === 'bridge') {
       try {
         const res = await fetch(`${BRIDGE_URL}/kick`, { method: 'POST' });

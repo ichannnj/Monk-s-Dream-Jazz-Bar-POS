@@ -98,6 +98,15 @@ export function extractPrintableTextFromEscPos(bytes: Uint8Array): string {
   return chars.join('').replace(/^\n+|\n+$/g, '');
 }
 
+function hasDrawerKickSequence(bytes: Uint8Array): boolean {
+  for (let i = 0; i < bytes.length - 1; i++) {
+    if (bytes[i] === 0x1b && bytes[i + 1] === 0x70) {
+      return true;
+    }
+  }
+  return false;
+}
+
 /**
  * Plug-and-play browser fallback: prints any ESC/POS ticket through Chrome/OS Print Spooler
  * without requiring Zadig WinUSB drivers or local background daemons.
@@ -110,7 +119,13 @@ export function printEscPosViaBrowser(
     return false;
   }
 
-  const text = extractPrintableTextFromEscPos(bytes);
+  let text = extractPrintableTextFromEscPos(bytes);
+  const isPureDrawerKick = !text.trim() && hasDrawerKickSequence(bytes);
+  if (isPureDrawerKick) {
+    // Trigger a minimal spooler print job so Windows thermal drivers configured with
+    // "Open Cash Drawer before/after printing" kick the drawer.
+    text = `--- CASH DRAWER OPEN ---\n${new Date().toLocaleTimeString()}`;
+  }
   if (!text.trim()) {
     return false;
   }

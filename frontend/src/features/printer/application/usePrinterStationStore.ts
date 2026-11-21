@@ -611,11 +611,23 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     }
 
     if (portInfo?.type === 'browser') {
-      toast.info(
-        'Browser Print uses your Windows Printer Driver "Open Cash Drawer" setting on receipt print. Use Zadig WinUSB or Local Bridge for standalone drawer kicks.',
-        { title: 'Browser Print Mode' }
-      );
-      addLog('info', 'Cash drawer kick skipped in Browser Print mode (driver-managed on print)');
+      try {
+        set({ drawerStatus: 'KICKING' });
+        const kickBytes = buildCashDrawerKickBytes();
+        await webSerialPrinter.writeBytes(kickBytes);
+        setTimeout(() => set({ drawerStatus: 'IDLE' }), 1200);
+        toast.info(
+          'Sent spooler job to trigger Windows Driver "Open Cash Drawer on print". For silent direct RJ11 kicks without printing paper, use Local Bridge or Zadig WinUSB.',
+          { title: 'Browser Print Drawer Trigger' }
+        );
+        addLog(
+          'info',
+          'Browser Print drawer trigger sent (requires Windows Printer Driver "Open Cash Drawer" enabled)'
+        );
+      } catch (err: any) {
+        set({ drawerStatus: 'IDLE' });
+        toast.error(err.message || 'Failed to trigger drawer', { title: 'Hardware Error' });
+      }
       return;
     }
 

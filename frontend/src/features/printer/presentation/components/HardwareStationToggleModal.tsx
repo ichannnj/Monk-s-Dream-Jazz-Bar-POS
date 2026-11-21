@@ -6,6 +6,7 @@ import {
   usePrinterStationStore,
   type PrinterTransportMode,
 } from '../../application/usePrinterStationStore';
+import { downloadWindowsPrinterBridgeBat } from '../../services/windowsBridgeDownload';
 
 const MODAL_TRANSPORT_OPTIONS: Array<{ value: PrinterTransportMode; label: string }> = [
   { value: 'auto', label: 'Auto' },
@@ -197,9 +198,50 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
                           Try Local Bridge
                         </Text>
                       </Pressable>
+                      <Pressable
+                        onPress={() => downloadWindowsPrinterBridgeBat()}
+                        className="px-2.5 py-1.5 rounded-lg bg-stone-900 active:bg-stone-800"
+                      >
+                        <Text className="text-[11px] font-bold text-white">
+                          Download Windows Bridge (.bat)
+                        </Text>
+                      </Pressable>
                     </View>
                   </View>
                 ) : null}
+
+                {(preferredTransport === 'bridge' || portInfo?.type === 'browser') && (
+                  <View className="mt-2 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-2 space-y-1.5">
+                    <Text className="text-[11px] font-medium text-amber-900 leading-relaxed">
+                      {portInfo?.type === 'browser'
+                        ? 'Browser Print requires Windows Printer Properties → Device Settings → Cash Drawer = "Open before printing". For instant silent printing & RJ11 drawer kicks without changing drivers, run the Windows Bridge (.bat).'
+                        : 'Double-click monks-dream-printer-bridge.bat on this Windows PC (no Node.js needed), then click Pair / Try Local Bridge.'}
+                    </Text>
+                    <View className="flex-row flex-wrap gap-1.5">
+                      <Pressable
+                        onPress={() => downloadWindowsPrinterBridgeBat()}
+                        className="px-2.5 py-1 rounded-lg bg-stone-900 active:bg-stone-800"
+                      >
+                        <Text className="text-[11px] font-bold text-white">
+                          Download Windows Bridge (.bat)
+                        </Text>
+                      </Pressable>
+                      {portInfo?.type === 'browser' && (
+                        <Pressable
+                          onPress={() => {
+                            setPreferredTransport('bridge');
+                            connectDevice('bridge');
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 active:bg-amber-100"
+                        >
+                          <Text className="text-[11px] font-bold text-amber-900">
+                            Switch to Local Bridge
+                          </Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  </View>
+                )}
 
                 {/* Transport Mode Selector */}
                 <View className="mt-2.5 pt-2 border-t border-stone-100">

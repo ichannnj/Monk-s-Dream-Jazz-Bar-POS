@@ -213,9 +213,9 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Cash drawer kick endpoint
+  // Cash drawer kick endpoint (pulse both Pin 2 and Pin 5)
   if (req.method === 'POST' && req.url === '/kick') {
-    const kickCommand = Buffer.from([0x1b, 0x70, 0x00, 0x19, 0xfa]);
+    const kickCommand = Buffer.from([0x1b, 0x70, 0x00, 0x3c, 0xff, 0x1b, 0x70, 0x01, 0x3c, 0xff]);
     try {
       await sendRawBytes(kickCommand);
       res.writeHead(200, { 'Content-Type': 'application/json' });

@@ -16,6 +16,7 @@ import {
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
 import type { SerialPortInfo } from '../../services/webSerialPrinter';
 import type { PrinterTransportMode } from '../../application/usePrinterStationStore';
+import { downloadWindowsPrinterBridgeBat } from '../../services/windowsBridgeDownload';
 
 const BAUD_RATE_OPTIONS: PosDropdownOption<string>[] = [
   { value: '9600', label: '9600 baud', description: 'Standard ESC/POS thermal printers (Default)' },
@@ -159,10 +160,34 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
             </View>
 
             {connectionStatus !== 'CONNECTED' && lastError ? (
-              <View className="mt-2 rounded-lg bg-rose-950/60 border border-rose-500/40 px-2.5 py-2">
+              <View className="mt-2 rounded-lg bg-rose-950/60 border border-rose-500/40 px-2.5 py-2 space-y-1.5">
                 <Text className="text-[11px] font-semibold text-rose-300 leading-relaxed">
                   {lastError}
                 </Text>
+                <Pressable
+                  onPress={() => downloadWindowsPrinterBridgeBat()}
+                  className="self-start px-2.5 py-1 rounded-lg bg-stone-800 border border-stone-700 active:bg-stone-700"
+                >
+                  <Text className="text-[11px] font-bold text-amber-400">
+                    Download Windows Bridge (.bat)
+                  </Text>
+                </Pressable>
+              </View>
+            ) : preferredTransport === 'bridge' || portInfo?.type === 'browser' ? (
+              <View className="mt-2 rounded-lg bg-amber-950/40 border border-amber-500/30 px-2.5 py-2 space-y-1.5">
+                <Text className="text-[11px] text-amber-200/90 leading-relaxed">
+                  {portInfo?.type === 'browser'
+                    ? 'Browser Print needs Windows Printer Driver "Open Cash Drawer on print". For silent RJ11 kicks, run Windows Bridge (.bat).'
+                    : 'Run monks-dream-printer-bridge.bat on this Windows PC (uses built-in PowerShell), then click Pair Thermal Printer.'}
+                </Text>
+                <Pressable
+                  onPress={() => downloadWindowsPrinterBridgeBat()}
+                  className="self-start px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 active:bg-amber-500/30"
+                >
+                  <Text className="text-[11px] font-bold text-amber-300">
+                    Download Windows Bridge (.bat)
+                  </Text>
+                </Pressable>
               </View>
             ) : null}
 

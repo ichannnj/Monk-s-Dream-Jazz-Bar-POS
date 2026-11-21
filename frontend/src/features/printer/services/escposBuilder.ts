@@ -280,7 +280,6 @@ export function buildReceiptBytes(
   builder.line(divider('-', cols));
   builder.center();
   builder.bold(true).line('THIS IS NOT AN OFFICIAL RECEIPT').line('YET').bold(false);
-  builder.cut(true);
 
   if (shouldKickDrawer) {
     const tenders = data.tenders || data.tenderBreakdown || data.tender_breakdown;
@@ -295,6 +294,8 @@ export function buildReceiptBytes(
       builder.kickDrawer();
     }
   }
+
+  builder.cut(true);
 
   return builder.toBytes();
 }
