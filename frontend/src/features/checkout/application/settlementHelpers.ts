@@ -8,6 +8,11 @@ import {
   loadDurableQueue,
 } from '../../orders/data/durableQueue';
 import { posHlc } from '../../orders/application/order.helpers';
+import {
+  awaitPendingTabWrites,
+  isLikelyNetworkError,
+} from '../../orders/application/tabWriteTracker';
+import { toast } from '../../shared/toast/useToastStore';
 
 import type { PaymentTender } from '../domain/splitTender.types';
 import { mapTendersToDbPayload } from '../domain/splitTenderCalculator';
@@ -21,6 +26,7 @@ export interface SettlementBillingDetails {
   seniorPwdId?: string;
   seniorPwdName?: string;
   grossSubtotal?: number;
+  totalDiscountAmount?: number;
   totalAmountDue?: number;
   corkageAmount?: number;
   tenderedAmount?: number;
@@ -63,6 +69,8 @@ export async function backgroundSettleTabDb({
   computedDrawerTarget: 'main' | 'bar';
 }) {
   try {
+    await awaitPendingTabWrites([targetTabId, tableId]);
+
     let tabUuid = targetTabId;
     const isUuid =
       tabUuid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tabUuid);
@@ -124,11 +132,20 @@ export async function backgroundSettleTabDb({
         await tablesApi.settleTabAndRecordPayment(settlementPayload);
         dequeueDurableMutation(mutationId);
         realtimeGateway.broadcastPosSync('tab_settled');
-      } catch (networkErr) {
-        console.warn(
-          'Background settleTab offline notice (retained in durable queue):',
-          networkErr
-        );
+      } catch (networkErr: any) {
+        if (isLikelyNetworkError(networkErr)) {
+          console.warn(
+            'Background settleTab offline notice (retained in durable queue):',
+            networkErr
+          );
+        } else {
+          dequeueDurableMutation(mutationId);
+          console.error('Background settleTab database rejection:', networkErr);
+          toast.error(
+            networkErr?.message || 'Database failed to save payment. Please verify in Checks.',
+            { title: 'Settlement Sync Error' }
+          );
+        }
       }
     }
   } catch (err) {

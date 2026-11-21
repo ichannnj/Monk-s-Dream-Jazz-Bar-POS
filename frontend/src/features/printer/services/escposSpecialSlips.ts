@@ -475,7 +475,7 @@ export function buildBillStatementBytes(
 
   // Combine discounts (e.g. Senior/PWD + custom discount) without advertising 12% VAT exemption on provisional bills
   const rawVatExempt = toPesos(data.vatExemptSales || data.vat_exempt_sales || 0);
-  const vatRelief = rawVatExempt > 0 && subtotal > rawVatExempt ? subtotal - rawVatExempt : 0;
+  const vatRelief = rawVatExempt > 0 ? Math.min(subtotal, toPesos(rawVatExempt * 0.12)) : 0;
   const rawDiscount = toPesos(data.discountAmount || data.discount || data.discount_amount || 0);
   const totalDiscount = rawDiscount + vatRelief;
 

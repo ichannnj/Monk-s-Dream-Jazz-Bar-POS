@@ -73,9 +73,13 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
     onClose();
   };
 
-  // Reset state when modal opens
+  const wasVisibleRef = React.useRef(false);
+
+  // Reset state ONLY when modal opens (not on 10-second background hydration polling)
   React.useEffect(() => {
-    if (visible) {
+    const justOpened = visible && !wasVisibleRef.current;
+    wasVisibleRef.current = visible;
+    if (justOpened) {
       setSelectedQuantities({});
       setTargetDestination(
         availableTargetTabs.length > 0 ? availableTargetTabs[0].tabIndex : 'new'

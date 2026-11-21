@@ -290,8 +290,9 @@ export function useWaiterWorkflows(options?: UseWaiterWorkflowsOptions) {
           seniorPwdId: billingDetails?.seniorPwdId,
           seniorPwdName: billingDetails?.seniorPwdName,
           totalAmountDue: billingDetails?.totalAmountDue,
-          tenderedAmount: _tenderedAmount,
+          tenderedAmount: billingDetails?.tenderedAmount ?? _tenderedAmount,
           shouldPrintReceipt: billingDetails?.shouldPrintReceipt,
+          tenders: billingDetails?.tenders,
         });
 
         toast.success(

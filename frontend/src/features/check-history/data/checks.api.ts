@@ -33,6 +33,7 @@ export const checksApi = {
           senior_pwd_name,
           notes,
           drawer_target,
+          group_tab_ids,
           created_at,
           tabs:tab_id (
             id,
@@ -67,7 +68,16 @@ export const checksApi = {
         return [];
       }
 
-      const tabIds = Array.from(new Set(paymentsData.map((p: any) => p.tab_id).filter(Boolean)));
+      const allTabIdsSet = new Set<string>();
+      paymentsData.forEach((p: any) => {
+        if (p.tab_id) allTabIdsSet.add(p.tab_id);
+        if (Array.isArray(p.group_tab_ids)) {
+          p.group_tab_ids.forEach((gid: string) => {
+            if (gid) allTabIdsSet.add(gid);
+          });
+        }
+      });
+      const tabIds = Array.from(allTabIdsSet);
       const itemsByTab = new Map<string, CheckLineItem[]>();
       const paymentsByTab = new Map<string, any[]>();
       for (const p of paymentsData) {
@@ -172,10 +182,15 @@ export const checksApi = {
 
         const tabPayments = paymentsByTab.get(p.tab_id) || [p];
         if (tabPayments.length > 1) {
-          // Multi-tender checkout for this tab!
-          // Identify primary payment (one with discounts or earliest/latest created)
+          // Multi-tender checkout: pick the primary tender holding tax/discount/SC metadata
           const primary =
-            tabPayments.find((pay) => Number(pay.discount_amount || 0) > 0) || tabPayments[0];
+            tabPayments.find(
+              (pay) =>
+                Number(pay.discount_amount || 0) > 0 ||
+                Number(pay.service_charge || 0) > 0 ||
+                Number(pay.vatable_sales || 0) > 0 ||
+                Number(pay.vat_exempt_sales || 0) > 0
+            ) || tabPayments[tabPayments.length - 1];
           const grandTotal = tabPayments.reduce((sum, pay) => sum + (Number(pay.amount) || 0), 0);
           const tenders = tabPayments.map((pay) => ({
             id: pay.id,
@@ -198,7 +213,24 @@ export const checksApi = {
         }
       }
 
-      const checks = deduplicatedPayments.map((p: any) => mapRawPaymentToCheck(p, itemsByTab));
+      // If any check is a table-group settlement (group_tab_ids populated), merge secondary tabs' items for inspector & reprint
+      const expandedItemsByTab = new Map(itemsByTab);
+      for (const p of deduplicatedPayments) {
+        if (p.tab_id && Array.isArray(p.group_tab_ids) && p.group_tab_ids.length > 0) {
+          const merged = [...(itemsByTab.get(p.tab_id) || [])];
+          for (const gid of p.group_tab_ids) {
+            const gItems = itemsByTab.get(gid);
+            if (gItems && gItems.length > 0) {
+              merged.push(...gItems);
+            }
+          }
+          expandedItemsByTab.set(p.tab_id, merged);
+        }
+      }
+
+      const checks = deduplicatedPayments.map((p: any) =>
+        mapRawPaymentToCheck(p, expandedItemsByTab)
+      );
       return filterSettledChecks(checks, filter);
     } catch (err: any) {
       console.error('[checksApi] Error in fetchSettledChecks:', err);

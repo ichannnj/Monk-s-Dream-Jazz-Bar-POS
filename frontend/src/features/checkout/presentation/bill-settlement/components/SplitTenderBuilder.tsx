@@ -318,7 +318,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                 <TextInput
                   style={{
                     flex: 1,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: '800',
                     color: '#14532d',
                     paddingVertical: 6,
@@ -474,7 +474,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                   <TextInput
                     style={{
                       flex: 1,
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: '800',
                       color: '#810021',
                       paddingVertical: 6,
@@ -515,7 +515,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                 <TextInput
                   style={{
                     flex: 1,
-                    fontSize: 14,
+                    fontSize: 16,
                     fontWeight: '800',
                     color: '#1e3a8a',
                     paddingVertical: 6,
@@ -552,7 +552,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                 <TextInput
                   style={{
                     flex: 1,
-                    fontSize: 13,
+                    fontSize: 16,
                     fontWeight: '600',
                     color: '#581c87',
                     paddingVertical: 6,

@@ -14,6 +14,7 @@ import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { toast } from '../../shared/toast/useToastStore';
 import { transferOrderItemsToTabAction } from './tableTransferAndVoidActions';
 import { closeEmptyTabAction } from './closeEmptyTabAction';
+import { trackTabWrite } from '../../orders/application/tabWriteTracker';
 
 export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => ({
   openTableTab: (tableId: string, guestName: string, guestCount = 1) => {
@@ -72,7 +73,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     });
 
     const currentUserId = useAuthStore.getState().currentUser?.id;
-    tablesApi
+    const createTabPromise = tablesApi
       .createTab({
         id: localTabId,
         tableId: tableId,
@@ -101,6 +102,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
       .catch((err) => {
         console.warn('Background tab persistence deferred:', err);
       });
+    trackTabWrite([localTabId, tableId], createTabPromise);
 
     return { tabIndex: nextTabIndex, tabId: localTabId };
   },
@@ -224,7 +226,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
     });
     set({ offlineQueue: loadDurableQueue() });
 
-    ordersApi
+    const dispatchPromise = ordersApi
       .createOrderWithItems({
         tabId,
         tableId,
@@ -293,6 +295,7 @@ export const createTableTabSlice = (set: OrderStoreSet, get: OrderStoreGet) => (
         // Mutation was already persisted to durable storage before dispatch; maintain queued state
         set({ offlineQueue: loadDurableQueue() });
       });
+    trackTabWrite([tabId, tableId], dispatchPromise);
   },
 
   closeEmptyTab: (tableId: string, tabIndex: number) => {

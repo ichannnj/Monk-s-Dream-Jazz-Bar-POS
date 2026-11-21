@@ -6,6 +6,7 @@ import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
 import { toast } from '../../shared/toast/useToastStore';
+import { trackTabWrite } from './tabWriteTracker';
 
 export const createTakeoutOrderAction = (
   set: OrderStoreSet,
@@ -66,7 +67,7 @@ export const createTakeoutOrderAction = (
     ],
   }));
 
-  ordersApi
+  const createTakeoutPromise = ordersApi
     .createOrderWithItems({
       tabId: localOrderId,
       customerName: finalName,
@@ -86,6 +87,7 @@ export const createTakeoutOrderAction = (
         quantity: i.quantity,
         unitPrice: i.unitPrice,
         stationTarget: i.stationTarget,
+        categorySlug: i.categorySlug,
         status: i.status,
         variantId: i.variantId,
         temperature: i.temperature,
@@ -142,6 +144,7 @@ export const createTakeoutOrderAction = (
     .catch((err) => {
       console.warn('Background takeout persistence deferred:', err);
     });
+  trackTabWrite([localOrderId], createTakeoutPromise);
 
   return newOrder;
 };
@@ -183,7 +186,7 @@ export const addItemsToTakeoutOrderAction = (
     }),
   }));
 
-  ordersApi
+  const addTakeoutPromise = ordersApi
     .createOrderWithItems({
       tabId: existing.tabId || existing.id,
       customerName: existing.customerName,
@@ -202,6 +205,7 @@ export const addItemsToTakeoutOrderAction = (
         quantity: i.quantity,
         unitPrice: i.unitPrice,
         stationTarget: i.stationTarget,
+        categorySlug: i.categorySlug,
         status: i.status,
         variantId: i.variantId,
         temperature: i.temperature,
@@ -237,6 +241,7 @@ export const addItemsToTakeoutOrderAction = (
     .catch((err) => {
       console.warn('Background addItemsToTakeoutOrder error:', err);
     });
+  trackTabWrite([existing.tabId || existing.id], addTakeoutPromise);
 };
 
 export const updateTakeoutStatusAction = (

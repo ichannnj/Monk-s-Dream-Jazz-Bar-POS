@@ -180,4 +180,39 @@ describe('Philippine Statutory Tax, Station-Aware SC & Discount Engine', () => {
     expect(result.serviceCharge).toBe(60.0); // 10% on both pastas
     expect(result.totalAmountDue).toBe(574.29);
   });
+
+  it('excludes Door Charge from both Event Mode 10% SC and Senior/PWD 20% discount', () => {
+    const items: PricingLineItem[] = [
+      {
+        id: 'dc-1',
+        productName: 'Event Door Charge',
+        unitPrice: 300,
+        quantity: 2,
+        stationTarget: 'bar',
+        categorySlug: 'door_charge',
+        isSeniorDiscounted: true, // even if checked, door charge must be ignored
+      },
+      {
+        id: 'bev-1',
+        productName: 'Beer Bucket',
+        unitPrice: 500,
+        quantity: 1,
+        stationTarget: 'bar',
+        isSeniorDiscounted: false,
+      },
+    ];
+
+    const result = calculateTabBilling(items, {
+      operatingMode: 'EVENT',
+      orderType: 'DINE_IN',
+      discountType: 'SENIOR_CITIZEN',
+      eventServiceChargeRate: 10,
+    });
+
+    expect(result.grossSubtotal).toBe(1100.0);
+    expect(result.serviceCharge).toBe(50.0); // 10% ONLY on 500 Beer Bucket, 0% on 600 Door Charge
+    expect(result.vatExemptSales).toBe(0.0);
+    expect(result.seniorDiscountAmount).toBe(0.0);
+    expect(result.totalAmountDue).toBe(1150.0);
+  });
 });

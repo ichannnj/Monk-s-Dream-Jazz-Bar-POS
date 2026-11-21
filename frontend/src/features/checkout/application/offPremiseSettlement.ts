@@ -11,6 +11,11 @@ import {
   loadDurableQueue,
 } from '../../orders/data/durableQueue';
 import { posHlc } from '../../orders/application/order.helpers';
+import {
+  awaitPendingTabWrites,
+  isLikelyNetworkError,
+} from '../../orders/application/tabWriteTracker';
+import { toast } from '../../shared/toast/useToastStore';
 
 export async function backgroundSettleTakeoutDb({
   takeoutId,
@@ -40,6 +45,8 @@ export async function backgroundSettleTakeoutDb({
   getTakeoutOrders: () => TakeoutOrder[];
 }) {
   try {
+    await awaitPendingTabWrites([takeoutId, targetOrderRef?.tabId, targetOrderRef?.id]);
+
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     let tabUuid = targetOrderRef?.tabId || targetOrderRef?.id;
 
@@ -110,11 +117,20 @@ export async function backgroundSettleTakeoutDb({
         await tablesApi.settleTabAndRecordPayment(settlementPayload);
         dequeueDurableMutation(mutationId);
         realtimeGateway.broadcastPosSync('takeout_settled');
-      } catch (networkErr) {
-        console.warn(
-          'Background settleTakeoutOrder offline notice (retained in durable queue):',
-          networkErr
-        );
+      } catch (networkErr: any) {
+        if (isLikelyNetworkError(networkErr)) {
+          console.warn(
+            'Background settleTakeoutOrder offline notice (retained in durable queue):',
+            networkErr
+          );
+        } else {
+          dequeueDurableMutation(mutationId);
+          console.error('Background settleTakeoutOrder database rejection:', networkErr);
+          toast.error(
+            networkErr?.message || 'Database failed to save takeout payment. Please verify.',
+            { title: 'Takeout Settlement Sync Error' }
+          );
+        }
       }
     }
   } catch (err) {

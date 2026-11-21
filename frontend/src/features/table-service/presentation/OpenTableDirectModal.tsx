@@ -348,7 +348,7 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
                           borderWidth: 1,
                           borderColor: '#d6d3d1',
                           textAlign: 'center',
-                          fontSize: 14,
+                          fontSize: 16,
                           fontWeight: '700',
                           color: '#1C1917',
                           padding: 0,

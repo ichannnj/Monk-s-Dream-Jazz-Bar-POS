@@ -45,33 +45,41 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
               round_number,
               status,
               created_at,
-              order_items (
-                id,
-                product_id,
-                variant_id,
-                temperature,
-                size_label,
-                quantity,
-                unit_price,
-                status,
-                station_target,
-                modifiers,
-                notes,
-                created_at,
-                order_item_variant_selections (
-                  group_id,
-                  option_id,
-                  group_name_snapshot,
-                  option_name_snapshot,
-                  price_delta_snapshot
-                ),
-                products (
-                  name,
-                  base_price,
+                order_items (
+                  id,
+                  product_id,
+                  event_id,
+                  variant_id,
+                  temperature,
+                  size_label,
+                  quantity,
+                  unit_price,
+                  status,
                   station_target,
-                  image_url
+                  modifiers,
+                  notes,
+                  created_at,
+                  preparing_at,
+                  ready_at,
+                  delivered_at,
+                  state_changed_at,
+                  order_item_variant_selections (
+                    group_id,
+                    option_id,
+                    group_name_snapshot,
+                    option_name_snapshot,
+                    price_delta_snapshot
+                  ),
+                  products (
+                    name,
+                    base_price,
+                    station_target,
+                    image_url,
+                    categories (
+                      slug
+                    )
+                  )
                 )
-              )
             )
           )
         `
@@ -109,6 +117,7 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
                 order_items (
                   id,
                   product_id,
+                  event_id,
                   variant_id,
                   temperature,
                   size_label,
@@ -119,11 +128,18 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
                   modifiers,
                   notes,
                   created_at,
+                  preparing_at,
+                  ready_at,
+                  delivered_at,
+                  state_changed_at,
                   products (
                     name,
                     base_price,
                     station_target,
-                    image_url
+                    image_url,
+                    categories (
+                      slug
+                    )
                   )
                 )
               )
@@ -172,6 +188,7 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
             order_items (
               id,
               product_id,
+              event_id,
               variant_id,
               temperature,
               size_label,
@@ -182,6 +199,10 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
               modifiers,
               notes,
               created_at,
+              preparing_at,
+              ready_at,
+              delivered_at,
+              state_changed_at,
               order_item_variant_selections (
                 group_id,
                 option_id,
@@ -193,7 +214,10 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
                 name,
                 base_price,
                 station_target,
-                image_url
+                image_url,
+                categories (
+                  slug
+                )
               )
             )
           ),
@@ -224,6 +248,7 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
               order_items (
                 id,
                 product_id,
+                event_id,
                 variant_id,
                 temperature,
                 size_label,
@@ -234,11 +259,18 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
                 modifiers,
                 notes,
                 created_at,
+                preparing_at,
+                ready_at,
+                delivered_at,
+                state_changed_at,
                 products (
                   name,
                   base_price,
                   station_target,
-                  image_url
+                  image_url,
+                  categories (
+                    slug
+                  )
                 )
               )
             ),

@@ -133,6 +133,7 @@ export async function settleTabAndRecordPayment(params: {
     reference_number?: string;
     notes?: string;
   }>;
+  groupTabIds?: string[];
 }) {
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     params.tabId
@@ -166,6 +167,7 @@ export async function settleTabAndRecordPayment(params: {
       p_drawer_target?: string | null;
       p_should_print_receipt?: boolean;
       p_tenders?: Json | null;
+      p_group_tab_ids?: string[] | null;
     }
 
     const rpcPayload: SettleTabRpcArgs = {
@@ -191,6 +193,8 @@ export async function settleTabAndRecordPayment(params: {
       p_drawer_target: params.drawerTarget || null,
       p_should_print_receipt: params.shouldPrintReceipt !== false,
       p_tenders: params.tenders ? (params.tenders as unknown as Json) : null,
+      p_group_tab_ids:
+        params.groupTabIds && params.groupTabIds.length > 0 ? params.groupTabIds : null,
     };
 
     let { data, error } = await supabase.rpc(
@@ -200,13 +204,15 @@ export async function settleTabAndRecordPayment(params: {
 
     if (
       error &&
-      (error.message?.includes('p_tenders') ||
+      (error.message?.includes('p_group_tab_ids') ||
+        error.message?.includes('p_tenders') ||
         error.message?.includes('p_tendered_amount') ||
         error.message?.includes('p_drawer_target') ||
         error.message?.includes('p_service_charge'))
     ) {
       // Fallback if latest migration parameters not yet updated
       const {
+        p_group_tab_ids: _pgt,
         p_tenders: _pt,
         p_tendered_amount: _ta,
         p_drawer_target: _dtg,

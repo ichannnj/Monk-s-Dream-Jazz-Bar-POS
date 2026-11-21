@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { ShieldCheck, CheckCircle2, X } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { DiscountType } from '../../../utils/taxAndDiscountCalculator';
@@ -228,19 +228,33 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
 
               {/* Interactive Checklist if 'select' mode */}
               {seniorItemSelectionMode === 'select' && (
-                <View className="gap-1.5 max-h-40">
+                <ScrollView
+                  style={{ maxHeight: 168 }}
+                  nestedScrollEnabled
+                  showsVerticalScrollIndicator={true}
+                  contentContainerStyle={{ gap: 6 }}
+                >
                   {rawItems.map((item) => {
-                    const isSelected = selectedSeniorItemIds.has(item.id);
+                    const isDoorCharge =
+                      item.categorySlug === 'door_charge' ||
+                      (item.productName || '').toLowerCase().includes('door charge');
+                    const isSelected = !isDoorCharge && selectedSeniorItemIds.has(item.id);
                     return (
                       <Pressable
                         key={item.id}
+                        disabled={isDoorCharge}
                         onPress={() => {
+                          if (isDoorCharge) return;
                           const next = new Set(selectedSeniorItemIds);
                           if (isSelected) next.delete(item.id);
                           else next.add(item.id);
                           setSelectedSeniorItemIds(next);
                         }}
-                        style={[styles.seniorItemRow, isSelected && styles.seniorItemRowActive]}
+                        style={[
+                          styles.seniorItemRow,
+                          isSelected && styles.seniorItemRowActive,
+                          isDoorCharge && { opacity: 0.55 },
+                        ]}
                       >
                         <View className="flex-row items-center gap-2 flex-1 mr-2">
                           <View
@@ -255,6 +269,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                           <View style={{ flex: 1 }}>
                             <Text className="text-xs font-bold text-gray-800" numberOfLines={1}>
                               {item.quantity}x {item.productName}
+                              {isDoorCharge ? ' (No SC Discount)' : ''}
                             </Text>
                             {item.modifiers && item.modifiers.length > 0 ? (
                               <Text className="text-[10px] text-[#810021] font-semibold mt-0.5">
@@ -269,7 +284,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                       </Pressable>
                     );
                   })}
-                </View>
+                </ScrollView>
               )}
             </View>
           )}

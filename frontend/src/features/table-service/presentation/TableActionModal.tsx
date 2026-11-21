@@ -93,11 +93,11 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     }
   }, [table, initialTabIndex, visible]);
 
-  if (!table) return null;
-
-  // Active customer tab data
-  const currentTab = (table.tabs || []).find((t) => t.tabIndex === selectedTabIndex);
-  const tabTotal = currentTab?.totalAmount ?? (table.totalAmount || 0);
+  // Active customer tab data (safe even when table is null so hooks remain unconditional)
+  const currentTab = table
+    ? (table.tabs || []).find((t) => t.tabIndex === selectedTabIndex)
+    : undefined;
+  const tabTotal = currentTab?.totalAmount ?? (table?.totalAmount || 0);
 
   // Group active customer tab items by round
   const rounds: RoundGroup[] = useMemo(() => {
@@ -159,6 +159,41 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
       });
   }, [currentTab]);
 
+  const activeTabItems = useMemo(() => {
+    return (currentTab?.items || []).filter((i) => i.status !== 'cancelled');
+  }, [currentTab?.items]);
+
+  const pricingItems = useMemo<PricingLineItem[]>(() => {
+    return activeTabItems.map((item) => ({
+      id: item.id,
+      productName: item.productName || 'Item',
+      unitPrice: item.unitPrice ?? 0,
+      quantity: item.quantity || 1,
+      stationTarget: (item.stationTarget as 'bar' | 'kitchen') || 'bar',
+      notes: item.notes,
+      categorySlug: item.categorySlug,
+    }));
+  }, [activeTabItems]);
+
+  const billing = useMemo(() => {
+    return calculateTabBilling(pricingItems, {
+      operatingMode: currentTab?.operatingMode || operatingMode || 'CAFE',
+      orderType: 'DINE_IN',
+      serviceChargeEnabled,
+      cafeFoodServiceChargeRate,
+      eventServiceChargeRate,
+    });
+  }, [
+    pricingItems,
+    currentTab?.operatingMode,
+    operatingMode,
+    serviceChargeEnabled,
+    cafeFoodServiceChargeRate,
+    eventServiceChargeRate,
+  ]);
+
+  if (!table) return null;
+
   const maxRound =
     currentTab && currentTab.items.length > 0
       ? Math.max(...currentTab.items.map((i) => i.roundNumber || 1))
@@ -206,7 +241,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     }
   };
 
-  const hasZeroItems = (currentTab?.items.length || 0) === 0;
+  const hasZeroItems = activeTabItems.length === 0;
 
   // Door charge info for the current tab
   const currentDoorChargeItem = currentTab?.items.find(
@@ -224,39 +259,6 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   const handleVoidDoorCharge = async () => {
     await upsertTabDoorCharge(table.id, selectedTabIndex, 0, 0, todayEvent?.id || undefined);
   };
-
-  const activeTabItems = useMemo(() => {
-    return (currentTab?.items || []).filter((i) => i.status !== 'cancelled');
-  }, [currentTab?.items]);
-
-  const pricingItems = useMemo<PricingLineItem[]>(() => {
-    return activeTabItems.map((item) => ({
-      id: item.id,
-      productName: item.productName || 'Item',
-      unitPrice: item.unitPrice ?? 0,
-      quantity: item.quantity || 1,
-      stationTarget: (item.stationTarget as 'bar' | 'kitchen') || 'bar',
-      notes: item.notes,
-      categorySlug: item.categorySlug,
-    }));
-  }, [activeTabItems]);
-
-  const billing = useMemo(() => {
-    return calculateTabBilling(pricingItems, {
-      operatingMode: currentTab?.operatingMode || operatingMode || 'CAFE',
-      orderType: 'DINE_IN',
-      serviceChargeEnabled,
-      cafeFoodServiceChargeRate,
-      eventServiceChargeRate,
-    });
-  }, [
-    pricingItems,
-    currentTab?.operatingMode,
-    operatingMode,
-    serviceChargeEnabled,
-    cafeFoodServiceChargeRate,
-    eventServiceChargeRate,
-  ]);
 
   const handlePrintCustomerBill = async () => {
     if (isPrintingBill || !currentTab) return;

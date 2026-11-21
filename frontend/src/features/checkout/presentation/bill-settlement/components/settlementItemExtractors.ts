@@ -15,6 +15,7 @@ export function extractRawOrderItems(
       unitPrice: i.unitPrice,
       quantity: i.quantity,
       stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+      categorySlug: i.categorySlug,
       modifiers: i.modifiers,
       notes: i.notes,
     }));
@@ -28,12 +29,14 @@ export function extractRawOrderItems(
         unitPrice: i.unitPrice,
         quantity: i.quantity,
         stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+        categorySlug: i.categorySlug,
         modifiers: i.modifiers,
         notes: i.notes,
       }));
   }
   if (table?.tabs) {
     return table.tabs
+      .filter((t) => t.status === 'open')
       .flatMap((t) => t.items || [])
       .filter((i) => i.status !== 'cancelled')
       .map((i) => ({
@@ -42,6 +45,7 @@ export function extractRawOrderItems(
         unitPrice: i.unitPrice,
         quantity: i.quantity,
         stationTarget: (i.stationTarget as 'bar' | 'kitchen') || 'bar',
+        categorySlug: i.categorySlug,
         modifiers: i.modifiers,
         notes: i.notes,
       }));

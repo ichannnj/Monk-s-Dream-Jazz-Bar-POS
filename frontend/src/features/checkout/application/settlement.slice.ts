@@ -180,14 +180,17 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       const table = state.tables.find((t) => t.id === tableId);
       if (!table) return state;
 
-      tabsToSettle = [...(table.tabs || [])];
+      const openTabs = (table.tabs || []).filter((t) => t.status === 'open');
+      tabsToSettle = [...openTabs];
       const venueState = useVenueStore.getState();
       const allItems: OrderLineItem[] = [];
-      table.tabs?.forEach((tab) => allItems.push(...(tab.items || [])));
+      openTabs.forEach((tab) =>
+        allItems.push(...(tab.items || []).filter((it) => it.status !== 'cancelled'))
+      );
 
       const totalCorkage =
         billingDetails?.corkageAmount ??
-        (table.tabs || []).reduce((acc, tab) => {
+        openTabs.reduce((acc, tab) => {
           return acc + (tab.hasCorkageFee ? tab.corkageAmount || 0 : 0);
         }, 0);
 

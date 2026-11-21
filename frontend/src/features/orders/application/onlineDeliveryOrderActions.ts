@@ -5,6 +5,7 @@ import { tablesApi } from '../../table-service/data/tables.api';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
 import { realtimeGateway } from '../../shared/infrastructure/realtime';
+import { trackTabWrite } from './tabWriteTracker';
 
 export const createOnlineOrderAction = (
   set: OrderStoreSet,
@@ -64,7 +65,7 @@ export const createOnlineOrderAction = (
     ],
   }));
 
-  ordersApi
+  const createOnlinePromise = ordersApi
     .createOrderWithItems({
       tabId: localOrderId,
       customerName: cleanCustomer,
@@ -85,6 +86,7 @@ export const createOnlineOrderAction = (
         quantity: i.quantity,
         unitPrice: i.unitPrice,
         stationTarget: i.stationTarget,
+        categorySlug: i.categorySlug,
         status: i.status,
         variantId: i.variantId,
         temperature: i.temperature,
@@ -132,6 +134,7 @@ export const createOnlineOrderAction = (
     .catch((err) => {
       console.warn('Background online order persistence deferred:', err);
     });
+  trackTabWrite([localOrderId], createOnlinePromise);
 
   return newOrder;
 };
@@ -173,7 +176,7 @@ export const addItemsToOnlineOrderAction = (
     }),
   }));
 
-  ordersApi
+  const addOnlinePromise = ordersApi
     .createOrderWithItems({
       tabId: existing.tabId || existing.id,
       customerName: existing.customerName,
@@ -181,7 +184,7 @@ export const addItemsToOnlineOrderAction = (
       ticketNumber: existing.platformOrderRef,
       orderType: 'ONLINE_DELIVERY',
       orderChannel: existing.platform === 'foodpanda' ? 'FOODPANDA' : 'GRAB_FOOD',
-      externalOrderRef: existing.platformOrderRef,
+      externalOrderRef: `${existing.platformOrderRef}-R${nextRound}`,
       riderName: existing.riderName,
       roundNumber: nextRound,
       isPrepaid: true,
@@ -193,6 +196,7 @@ export const addItemsToOnlineOrderAction = (
         quantity: i.quantity,
         unitPrice: i.unitPrice,
         stationTarget: i.stationTarget,
+        categorySlug: i.categorySlug,
         status: i.status,
         variantId: i.variantId,
         temperature: i.temperature,
@@ -228,6 +232,7 @@ export const addItemsToOnlineOrderAction = (
     .catch((err) => {
       console.warn('Background addItemsToOnlineOrder error:', err);
     });
+  trackTabWrite([existing.tabId || existing.id], addOnlinePromise);
 };
 
 export const updateOnlineStatusAction = (

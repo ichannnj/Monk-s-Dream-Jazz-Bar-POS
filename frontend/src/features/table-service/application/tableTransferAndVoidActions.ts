@@ -1,9 +1,10 @@
 import type { CustomerTab, OrderLineItem } from '../../../types/floor';
 import type { OrderStoreSet } from '../../orders/domain/order.types';
 import { tablesApi } from '../data/tables.api';
-import { deriveTabTotal } from '../../orders/application/order.helpers';
+import { deriveTabTotal, deriveTableStatus } from '../../orders/application/order.helpers';
 import { useAuthStore } from '../../auth/application/useAuthStore';
 import { useVenueStore } from '../../shared/stores/useVenueStore';
+import { awaitPendingTabWrites } from '../../orders/application/tabWriteTracker';
 
 export const transferOrderItemsToTabAction = async (
   set: OrderStoreSet,
@@ -108,6 +109,8 @@ export const transferOrderItemsToTabAction = async (
     const nextActiveTabs = Array.from(
       new Set([...(table.activeTabs || []), effectiveTargetTabIndex])
     );
+    const nextTableTotal = updatedTabs.reduce((acc, cur) => acc + (cur.totalAmount || 0), 0);
+    const nextTableStatus = deriveTableStatus(nextActiveTabs.length > 0, updatedTabs);
 
     const updatedTables = state.tables.map((t) => {
       if (t.id !== tableId) return t;
@@ -115,6 +118,8 @@ export const transferOrderItemsToTabAction = async (
         ...t,
         tabs: updatedTabs,
         activeTabs: nextActiveTabs,
+        totalAmount: nextTableTotal,
+        status: nextTableStatus,
       };
     });
 
@@ -123,12 +128,17 @@ export const transferOrderItemsToTabAction = async (
 
   if (sourceTabUuid) {
     try {
+      await awaitPendingTabWrites([sourceTabUuid, targetTabUuid, tableId]);
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const validTransfers = itemTransfers.filter((it) => uuidRegex.test(it.orderItemId));
+      if (validTransfers.length === 0) return;
+
       const res = await tablesApi.transferOrderItemsToTab({
         sourceTabId: sourceTabUuid,
         targetTabId: targetTabUuid && !targetTabUuid.startsWith('tab-') ? targetTabUuid : undefined,
         tableId,
         newTabName,
-        itemTransfers,
+        itemTransfers: validTransfers,
         staffId: currentStaffId,
       });
 

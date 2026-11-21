@@ -7,6 +7,7 @@ import type {
 } from '../../../types/floor';
 import { deriveTableStatus, deriveTableStateTimestamp } from './order.helpers';
 import { getElapsedSeconds, formatElapsedTimer } from '../../shared/utils/elapsedTime';
+import { hasPendingTabWrite } from './tabWriteTracker';
 
 export const mapHydratedTables = (
   dbTables: any[],
@@ -85,13 +86,25 @@ export const mapHydratedTables = (
         })
       );
 
-      const activeItems = lineItems.filter((i) => i.status !== 'cancelled');
-      const itemsSum = activeItems.reduce((acc, cur) => acc + cur.unitPrice * cur.quantity, 0);
-      const corkage = parseFloat(tb.corkage_amount) || 0;
-
       const localTabMatch = currentTables
         .flatMap((t) => t.tabs || [])
         .find((lt) => lt.id === tb.id);
+
+      // Protect in-flight local items from being momentarily wiped before Supabase write finishes
+      const effectiveLineItems =
+        lineItems.length === 0 &&
+        localTabMatch &&
+        localTabMatch.items.length > 0 &&
+        (hasPendingTabWrite(tb.id) || hasPendingTabWrite(dbt.id))
+          ? localTabMatch.items
+          : lineItems;
+
+      const effectiveActiveItems = effectiveLineItems.filter((i) => i.status !== 'cancelled');
+      const itemsSum = effectiveActiveItems.reduce(
+        (acc, cur) => acc + cur.unitPrice * cur.quantity,
+        0
+      );
+      const corkage = parseFloat(tb.corkage_amount) || 0;
 
       const transferredFrom = tb.transferred_from_table_code
         ? {
@@ -112,7 +125,7 @@ export const mapHydratedTables = (
         status: 'open',
         hasCorkageFee: tb.has_corkage_fee,
         corkageAmount: corkage,
-        items: lineItems,
+        items: effectiveLineItems,
         totalAmount: itemsSum + corkage,
         transferredFrom,
         operatingMode: tb.operating_mode || 'CAFE',

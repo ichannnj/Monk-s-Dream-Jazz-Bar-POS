@@ -78,7 +78,9 @@ export function useFloorFilters(
       if (a.area !== b.area) {
         return a.area === 'cafe' ? -1 : 1;
       }
-      return parseTableNum(a.code) - parseTableNum(b.code);
+      const numDiff = parseTableNum(a.code) - parseTableNum(b.code);
+      if (numDiff !== 0) return numDiff;
+      return (a.code || '').localeCompare(b.code || '');
     });
   }, [tables, selectedChannel, selectedStatus, normalizedQuery]);
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { TableItem, CustomerTab, TakeoutOrder } from '@/types/floor';
 import { formatCurrency } from '@monks/shared';
 import { useAuthStore } from '@/features/auth';
@@ -75,47 +75,51 @@ export function useBillSettlementController({
   const [isFullscreenQrOpen, setIsFullscreenQrOpen] = useState(false);
   const [isLoadingQrChannels, setIsLoadingQrChannels] = useState(false);
 
+  const wasVisibleRef = useRef(false);
+
   useEffect(() => {
-    if (visible) {
-      setDiscountType('NONE');
-      setSeniorPwdId('');
-      setSeniorPwdName('');
-      setSeniorItemSelectionMode('all');
-      setSelectedSeniorItemIds(new Set());
-      setCustomDiscountValue('');
-      setCustomDiscountMode('percent');
-      setTenderedCash('');
-      setReferenceNumber('');
-      setSettlementMode('single_tab');
-      setSelectedTabIndex(activeTab?.tabIndex || table?.tabs?.[0]?.tabIndex || 1);
-      setTenderTabMode('single');
-      setSelectedMethod('cash');
-      setSplitTenders([]);
-      setShouldPrintReceipt(true);
-      setIsSubmitting(false);
+    const justOpened = visible && !wasVisibleRef.current;
+    wasVisibleRef.current = visible;
+    if (!visible || !justOpened) return;
 
-      let isMounted = true;
-      setIsLoadingQrChannels(true);
-      qrPaymentChannelsApi
-        .fetchActiveQrPaymentChannels()
-        .then((channels: QrPaymentChannel[]) => {
-          if (!isMounted) return;
-          setQrChannels(channels);
-          if (channels.length > 0 && !selectedQrChannel) {
-            setSelectedQrChannel(channels[0]);
-          }
-          setIsLoadingQrChannels(false);
-        })
-        .catch((err: unknown) => {
-          console.warn('[BillSettlementModal] Failed to load QR channels:', err);
-          if (isMounted) setIsLoadingQrChannels(false);
-        });
+    setDiscountType('NONE');
+    setSeniorPwdId('');
+    setSeniorPwdName('');
+    setSeniorItemSelectionMode('all');
+    setSelectedSeniorItemIds(new Set());
+    setCustomDiscountValue('');
+    setCustomDiscountMode('percent');
+    setTenderedCash('');
+    setReferenceNumber('');
+    setSettlementMode('single_tab');
+    setSelectedTabIndex(activeTab?.tabIndex || table?.tabs?.[0]?.tabIndex || 1);
+    setTenderTabMode('single');
+    setSelectedMethod('cash');
+    setSplitTenders([]);
+    setShouldPrintReceipt(true);
+    setIsSubmitting(false);
 
-      return () => {
-        isMounted = false;
-      };
-    }
-  }, [visible, activeTab?.id, takeoutOrder?.id]);
+    let isMounted = true;
+    setIsLoadingQrChannels(true);
+    qrPaymentChannelsApi
+      .fetchActiveQrPaymentChannels()
+      .then((channels: QrPaymentChannel[]) => {
+        if (!isMounted) return;
+        setQrChannels(channels);
+        if (channels.length > 0 && !selectedQrChannel) {
+          setSelectedQrChannel(channels[0]);
+        }
+        setIsLoadingQrChannels(false);
+      })
+      .catch((err: unknown) => {
+        console.warn('[BillSettlementModal] Failed to load QR channels:', err);
+        if (isMounted) setIsLoadingQrChannels(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [visible]);
 
   const isTakeout = Boolean(takeoutOrder);
 
@@ -132,10 +136,14 @@ export function useBillSettlementController({
     setSelectedSeniorItemIds(new Set());
   };
 
-  const effectiveOperatingMode =
-    (isTakeout ? takeoutOrder?.operatingMode : resolvedActiveTab?.operatingMode) ||
-    operatingMode ||
-    'CAFE';
+  const effectiveOperatingMode = isTakeout
+    ? takeoutOrder?.operatingMode || operatingMode || 'CAFE'
+    : settlementMode === 'entire_table'
+      ? table?.tabs?.some((t) => t.status === 'open' && t.operatingMode === 'EVENT') ||
+        operatingMode === 'EVENT'
+        ? 'EVENT'
+        : resolvedActiveTab?.operatingMode || operatingMode || 'CAFE'
+      : resolvedActiveTab?.operatingMode || operatingMode || 'CAFE';
 
   const rawItems = useMemo(() => {
     return extractRawOrderItems(isTakeout, takeoutOrder, settlementMode, resolvedActiveTab, table);
@@ -185,6 +193,10 @@ export function useBillSettlementController({
         totalAmountDue: 0,
         totalDiscountAmount: calculated.grossSubtotal,
         customDiscountAmount: calculated.grossSubtotal,
+        seniorDiscountAmount: 0,
+        vatableSales: 0,
+        vatAmount: 0,
+        vatExemptSales: 0,
         serviceCharge: 0,
       };
     }
@@ -263,6 +275,14 @@ export function useBillSettlementController({
   };
 
   const handleOpenConfirm = () => {
+    if (!isTakeout && rawItems.length === 0 && tableGroupCorkage === 0) {
+      toast.warning(
+        'This tab has no active items to settle. Use "Close Empty Tab" on the table menu instead.',
+        { title: 'Empty Tab' }
+      );
+      return;
+    }
+
     if (isSeniorOrPwd) {
       if (!seniorPwdId.trim()) {
         toast.warning(

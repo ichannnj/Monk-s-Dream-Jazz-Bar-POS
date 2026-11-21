@@ -178,4 +178,36 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
     expect(text).not.toContain('♡');
     expect(text).not.toContain('◡');
   });
+
+  it('computes accurate LESS: DISCOUNT for partial Senior/PWD VAT relief on receipts & bills', () => {
+    // 1x Senior Pasta (300) + 1x Regular Pasta (300) = 600 subtotal, 60 SC
+    // vatExemptSales = 267.86, seniorDiscount = 53.57 -> vatRelief = 32.14, totalDiscount = 85.71
+    // total = 600 - 85.71 + 60 = 574.29
+    const partialSeniorData = {
+      receiptNumber: 'MD-PARTIAL-SC',
+      subtotal: 600,
+      discountAmount: 53.57,
+      vatExemptSales: 267.86,
+      serviceCharge: 60,
+      total: 574.29,
+      discountType: 'SENIOR_CITIZEN',
+      seniorPwdId: '1234-5678',
+      seniorPwdName: 'Maria Santos',
+      paymentMethod: 'CASH',
+      tendered: 600,
+      change: 25.71,
+      items: [
+        { productName: 'Senior Pasta', unitPrice: 300, quantity: 1 },
+        { productName: 'Regular Pasta', unitPrice: 300, quantity: 1 },
+      ],
+    };
+
+    const receiptText = new TextDecoder().decode(buildReceiptBytes(partialSeniorData, false));
+    expect(receiptText).toContain('-85.71');
+    expect(receiptText).toContain('574.29');
+
+    const billText = new TextDecoder().decode(buildBillStatementBytes(partialSeniorData));
+    expect(billText).toContain('-85.71');
+    expect(billText).toContain('574.29');
+  });
 });
