@@ -17,6 +17,7 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
   const {
     connectionStatus,
     portInfo,
+    lastError,
     connectDevice,
     disconnectDevice,
     testKickDrawer,
@@ -141,6 +142,14 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
                     Mouse, keyboard and general USB devices isolated safely
                   </Text>
                 </View>
+
+                {connectionStatus !== 'CONNECTED' && lastError ? (
+                  <View className="mt-2 rounded-lg bg-rose-50 border border-rose-200 px-2.5 py-2">
+                    <Text className="text-[11px] font-semibold text-rose-700 leading-relaxed">
+                      {lastError}
+                    </Text>
+                  </View>
+                ) : null}
               </View>
 
               {/* Action Buttons */}

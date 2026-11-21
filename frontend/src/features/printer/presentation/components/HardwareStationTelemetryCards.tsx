@@ -44,6 +44,7 @@ interface HardwareStationTelemetryCardsProps {
   drawerStatus: string;
   isSupported: boolean;
   portInfo: SerialPortInfo | null;
+  lastError?: string | null;
   baudRate: number;
   paperWidth?: '80mm' | '58mm' | '57mm';
   preferredTransport?: PrinterTransportMode;
@@ -70,6 +71,7 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
   drawerStatus,
   isSupported,
   portInfo,
+  lastError,
   baudRate,
   paperWidth = '58mm',
   preferredTransport = 'auto',
@@ -115,7 +117,9 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
             ) : (
               <View className="flex-row items-center rounded-full bg-rose-500/10 border border-rose-500/30 px-2.5 py-0.5">
                 <View className="h-2 w-2 rounded-full bg-rose-500" />
-                <Text className="ml-1.5 text-xs font-bold text-rose-400">OFFLINE</Text>
+                <Text className="ml-1.5 text-xs font-bold text-rose-400">
+                  {connectionStatus === 'ERROR' ? 'DRIVER BLOCKED' : 'OFFLINE'}
+                </Text>
               </View>
             )}
           </View>
@@ -143,6 +147,14 @@ export const HardwareStationTelemetryCards: React.FC<HardwareStationTelemetryCar
                 Peripheral Isolation Active (Mouse &amp; KB Protected)
               </Text>
             </View>
+
+            {connectionStatus !== 'CONNECTED' && lastError ? (
+              <View className="mt-2 rounded-lg bg-rose-950/60 border border-rose-500/40 px-2.5 py-2">
+                <Text className="text-[11px] font-semibold text-rose-300 leading-relaxed">
+                  {lastError}
+                </Text>
+              </View>
+            ) : null}
 
             <View className="mt-3 flex-row items-center space-x-2">
               {connectionStatus === 'CONNECTED' ? (

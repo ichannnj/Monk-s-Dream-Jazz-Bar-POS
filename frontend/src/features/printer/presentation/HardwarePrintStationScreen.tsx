@@ -33,6 +33,7 @@ export const HardwarePrintStationScreen: React.FC = () => {
     autoPrintEnabled,
     chimeEnabled,
     portInfo,
+    lastError,
     recentJobs,
     stationLogs,
     initStation,
@@ -176,6 +177,7 @@ export const HardwarePrintStationScreen: React.FC = () => {
         drawerStatus={drawerStatus}
         isSupported={isSupported}
         portInfo={portInfo}
+        lastError={lastError}
         baudRate={baudRate}
         paperWidth={paperWidth}
         preferredTransport={preferredTransport}

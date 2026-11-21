@@ -42,6 +42,7 @@ interface PrinterStationState {
   chimeEnabled: boolean;
   portInfo: SerialPortInfo | null;
   boundDevice: BoundPrinterDevice | null;
+  lastError: string | null;
   recentJobs: PrintJobItem[];
   stationLogs: StationLogItem[];
   isProcessing: boolean;
@@ -122,6 +123,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
   chimeEnabled: true,
   portInfo: null,
   boundDevice: webSerialPrinter.getBoundPrinter(),
+  lastError: null,
   recentJobs: [],
   stationLogs: [],
   isProcessing: false,
@@ -190,7 +192,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
     if (webSerialPrinter.isConnected()) {
       const portInfo = webSerialPrinter.getPortInfo();
       const boundDevice = webSerialPrinter.getBoundPrinter();
-      set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
+      set({ connectionStatus: 'CONNECTED', portInfo, boundDevice, lastError: null });
       return true;
     }
 
@@ -200,9 +202,20 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       if (connected) {
         const portInfo = webSerialPrinter.getPortInfo();
         const boundDevice = webSerialPrinter.getBoundPrinter();
-        set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
+        set({ connectionStatus: 'CONNECTED', portInfo, boundDevice, lastError: null });
         get().addLog('success', 'Connected to authorized thermal printer');
         return true;
+      }
+      const driverErr =
+        typeof webSerialPrinter.getLastError === 'function'
+          ? webSerialPrinter.getLastError()
+          : null;
+      if (driverErr) {
+        const prevErr = get().lastError;
+        set({ connectionStatus: 'ERROR', lastError: driverErr });
+        if (prevErr !== driverErr) {
+          get().addLog('error', driverErr);
+        }
       }
     } catch (err: any) {
       console.warn('[PrinterStationStore] Silent ensureConnected failed:', err);
@@ -212,13 +225,13 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
   },
 
   connectDevice: async (transportOverride?: PrinterTransportMode) => {
-    set({ connectionStatus: 'CONNECTING' });
+    set({ connectionStatus: 'CONNECTING', lastError: null });
     const transport = transportOverride || get().preferredTransport;
     try {
       await webSerialPrinter.requestAndConnect(get().baudRate, transport);
       const portInfo = webSerialPrinter.getPortInfo();
       const boundDevice = webSerialPrinter.getBoundPrinter();
-      set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
+      set({ connectionStatus: 'CONNECTED', portInfo, boundDevice, lastError: null });
       if (typeof localStorage !== 'undefined') {
         localStorage.setItem('monks_is_hardware_station', 'true');
       }
@@ -243,8 +256,8 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
         return false;
       }
 
-      set({ connectionStatus: 'ERROR' });
       const errorMsg = err.message || 'Access denied or printer unavailable';
+      set({ connectionStatus: 'ERROR', lastError: errorMsg });
       get().addLog('error', `Connection failed: ${errorMsg}`);
       toast.error(errorMsg, { title: 'Printer Connection Error' });
       return false;
@@ -253,14 +266,14 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
 
   disconnectDevice: async () => {
     await webSerialPrinter.disconnect();
-    set({ connectionStatus: 'DISCONNECTED', portInfo: null });
+    set({ connectionStatus: 'DISCONNECTED', portInfo: null, lastError: null });
     get().addLog('info', 'Printer disconnected');
     toast.info('Printer disconnected', { title: 'Hardware Disconnected' });
   },
 
   forgetDevice: async () => {
     await webSerialPrinter.forgetDevice();
-    set({ connectionStatus: 'DISCONNECTED', portInfo: null, boundDevice: null });
+    set({ connectionStatus: 'DISCONNECTED', portInfo: null, boundDevice: null, lastError: null });
     get().addLog('info', 'Printer device binding cleared');
     toast.info('Printer unlinked from station', { title: 'Device Forgotten' });
   },
@@ -608,7 +621,7 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
       onConnect: () => {
         const portInfo = webSerialPrinter.getPortInfo();
         const boundDevice = webSerialPrinter.getBoundPrinter();
-        set({ connectionStatus: 'CONNECTED', portInfo, boundDevice });
+        set({ connectionStatus: 'CONNECTED', portInfo, boundDevice, lastError: null });
         get().addLog('success', 'Thermal printer reconnected via hotplug watchdog');
         if (get().isLeader) {
           get().drainPendingJobsQueue();
@@ -630,9 +643,19 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
               connectionStatus: 'CONNECTED',
               portInfo: webSerialPrinter.getPortInfo(),
               boundDevice: webSerialPrinter.getBoundPrinter(),
+              lastError: null,
             });
             get().addLog('success', 'Automatically reconnected to authorized thermal printer');
             get().drainPendingJobsQueue();
+          } else {
+            const driverErr =
+              typeof webSerialPrinter.getLastError === 'function'
+                ? webSerialPrinter.getLastError()
+                : null;
+            if (driverErr) {
+              set({ connectionStatus: 'ERROR', lastError: driverErr });
+              get().addLog('error', driverErr);
+            }
           }
 
           // Return a hanging Promise that keeps the lock active until unmounted

@@ -28,11 +28,26 @@ export class WebSerialPrinterService {
   private isConnecting: boolean = false;
   private baudRate: number = 9600;
   private connectionType: 'none' | 'bridge' | 'serial' | 'usb' = 'none';
+  private lastError: string | null = null;
+  private lastLoggedAutoError: string | null = null;
 
   // Hotplug watchdog callbacks
   private onDisconnectListener: (() => void) | null = null;
   private onConnectListener: (() => void) | null = null;
   private hotplugAttached: boolean = false;
+
+  public getLastError(): string | null {
+    return this.lastError;
+  }
+
+  private formatUsbAccessDeniedMessage(deviceName: string): string {
+    const isWindows =
+      typeof navigator !== 'undefined' && /windows/i.test(navigator.userAgent || '');
+    if (isWindows) {
+      return `Access denied to "${deviceName}". Windows is using its built-in usbprint driver, which blocks Chrome WebUSB. Install the WinUSB driver for this printer using Zadig (zadig.akeo.ie), or switch Transport Mode to WebSerial (COM).`;
+    }
+    return `Access denied to "${deviceName}". Another program or OS driver (usblp/udev) is using it. On Linux, run 'sudo bash scripts/fix-thermal-printer-permissions.sh' and replug the printer; on Windows, install WinUSB via Zadig (zadig.akeo.ie).`;
+  }
 
   public isSupported(): boolean {
     if (typeof navigator === 'undefined') return false;
@@ -214,6 +229,7 @@ export class WebSerialPrinterService {
     try {
       this.isConnecting = true;
       this.baudRate = baudRate;
+      this.lastError = null;
       this.attachHotplugListeners();
 
       const bound = this.getBoundPrinter();
@@ -241,15 +257,22 @@ export class WebSerialPrinterService {
             for (const candidate of targetDevices) {
               try {
                 await this.openUsbDevice(candidate);
+                this.lastError = null;
+                this.lastLoggedAutoError = null;
                 console.info(
                   `[WebPrinter] Silently reconnected to authorized USB device: ${candidate.productName || 'USB Printer'}`
                 );
                 return true;
-              } catch (devErr) {
-                console.warn(
-                  `[WebPrinter] Candidate USB device ${candidate.productName || 'Device'} failed to open:`,
-                  devErr
-                );
+              } catch (devErr: any) {
+                const msg = devErr?.message || String(devErr);
+                this.lastError = msg;
+                if (this.lastLoggedAutoError !== msg) {
+                  this.lastLoggedAutoError = msg;
+                  console.warn(
+                    `[WebPrinter] Candidate USB device ${candidate.productName || 'Device'} failed to open:`,
+                    devErr
+                  );
+                }
               }
             }
           }
@@ -320,6 +343,8 @@ export class WebSerialPrinterService {
     try {
       this.isConnecting = true;
       this.baudRate = baudRate;
+      this.lastError = null;
+      this.lastLoggedAutoError = null;
       this.attachHotplugListeners();
 
       const isBridgeEnabled =
@@ -370,8 +395,13 @@ export class WebSerialPrinterService {
             console.info('[WebPrinter] USB pairing cancelled by user');
             throw usbErr;
           }
-          // If WebUSB fails with SecurityError or NetworkError, attempt WebSerial fallback if available
-          if ('serial' in navigator) {
+          // If the user already selected a USB device and the OS denied access (e.g. Windows usbprint.sys),
+          // surface the actionable driver message directly instead of hiding it behind a Serial dialog.
+          const isDriverAccessDenied =
+            usbErr.name === 'SecurityError' ||
+            usbErr.message?.includes('Access denied') ||
+            usbErr.message?.includes('WinUSB');
+          if (!isDriverAccessDenied && 'serial' in navigator) {
             console.warn(
               '[WebPrinter] WebUSB failed, attempting WebSerial fallback:',
               usbErr.message
@@ -380,6 +410,7 @@ export class WebSerialPrinterService {
             await this.openSerialPort(port, baudRate);
             return true;
           }
+          this.lastError = usbErr.message || String(usbErr);
           throw usbErr;
         }
       } else if (typeof navigator !== 'undefined' && 'serial' in navigator) {
@@ -405,11 +436,11 @@ export class WebSerialPrinterService {
       await device.open();
     } catch (err: any) {
       if (err.name === 'SecurityError' || err.message?.includes('Access denied')) {
-        throw new Error(
-          `Access denied to USB device "${device.productName || 'Printer'}". Another program or OS driver may be using it.`,
-          { cause: err }
-        );
+        const msg = this.formatUsbAccessDeniedMessage(device.productName || 'Printer');
+        this.lastError = msg;
+        throw new Error(msg, { cause: err });
       }
+      this.lastError = err?.message || String(err);
       throw err;
     }
 
@@ -591,6 +622,8 @@ export class WebSerialPrinterService {
   public async forgetDevice(): Promise<void> {
     await this.disconnect();
     this.clearBoundPrinter();
+    this.lastError = null;
+    this.lastLoggedAutoError = null;
     console.info('[WebPrinter] Printer device pairing forgotten');
   }
 }
