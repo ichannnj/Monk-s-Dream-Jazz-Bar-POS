@@ -7,6 +7,7 @@ import { useAuthStore } from '../../auth/application/useAuthStore';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '../../shared/toast/useToastStore';
 import { PosDropdown, PosDropdownOption } from '../../shared/ui/PosDropdown';
+import { FloorSectionHeader } from '../../shared';
 import { CashDrawerMetricsGrid } from './cash-drawer/CashDrawerMetricsGrid';
 import { CashDrawerLedger } from './cash-drawer/CashDrawerLedger';
 import { CashDrawerActionModal, CashActionType } from './cash-drawer/CashDrawerActionModal';
@@ -166,48 +167,40 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
   ];
 
   return (
-    <View className="flex-1 bg-[#FAF8F5] p-3 sm:p-5">
-      {/* Unified Responsive Top Header Card */}
-      <View className="flex-col sm:flex-row sm:items-center justify-between bg-white p-3.5 sm:p-4 rounded-2xl border border-stone-200 mb-4 shadow-xs gap-3">
-        <View className="flex-row items-center gap-3">
-          <View className="w-10 h-10 rounded-xl bg-[#810021] items-center justify-center shadow-xs">
-            <Coins size={18} color="#ffffff" strokeWidth={2.4} />
-          </View>
-          <Text className="text-xl font-black text-stone-900 tracking-tight">
-            Cash Drawer &amp; Till
-          </Text>
-        </View>
+    <View className="flex-1 bg-[#FAF8F5]">
+      <FloorSectionHeader
+        title="Cash Drawer & Till"
+        rightSlot={
+          <>
+            <PosDropdown
+              options={drawerOptions}
+              value={activeDrawer}
+              onChange={setActiveDrawer}
+              prefixLabel="Till:"
+              sheetTitle="Select Cash Drawer Till"
+              className="flex-1 sm:flex-initial min-w-[170px]"
+            />
 
-        {/* Till Scope Selector + Cash Action Dropdown */}
-        <View className="flex-row flex-wrap items-center gap-2">
-          <PosDropdown
-            options={drawerOptions}
-            value={activeDrawer}
-            onChange={setActiveDrawer}
-            prefixLabel="Till:"
-            sheetTitle="Select Cash Drawer Till"
-            className="flex-1 sm:flex-initial min-w-[170px]"
-          />
-
-          <PosDropdown
-            mode="action"
-            options={drawerActions}
-            onChange={(act) => {
-              if (act === 'kick') {
-                printerApi.kickCashDrawer(activeDrawer);
-                toast.success('Cash drawer pulse signal sent', { title: 'Drawer Solenoid' });
-              } else {
-                setActiveModal(act);
-              }
-            }}
-            triggerLabel="Drawer Actions"
-            triggerIcon={Calculator}
-            variant="wine"
-            sheetTitle="Cash Drawer Operations"
-            className="flex-1 sm:flex-initial min-w-[160px]"
-          />
-        </View>
-      </View>
+            <PosDropdown
+              mode="action"
+              options={drawerActions}
+              onChange={(act) => {
+                if (act === 'kick') {
+                  printerApi.kickCashDrawer(activeDrawer);
+                  toast.success('Cash drawer pulse signal sent', { title: 'Drawer Solenoid' });
+                } else {
+                  setActiveModal(act);
+                }
+              }}
+              triggerLabel="Drawer Actions"
+              triggerIcon={Calculator}
+              variant="wine"
+              sheetTitle="Cash Drawer Operations"
+              className="flex-1 sm:flex-initial min-w-[160px]"
+            />
+          </>
+        }
+      />
 
       {/* KPI Metrics Grid */}
       <CashDrawerMetricsGrid metrics={metrics} />

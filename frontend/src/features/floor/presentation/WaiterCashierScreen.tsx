@@ -7,7 +7,6 @@ import { useOrderStore } from '@/features/orders';
 import { useRunnerTickets } from '@/features/kds/presentation/foh-runner/hooks/useRunnerTickets';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { Sidebar, NavTabId, useResponsive } from '@/features/shared';
-import { styles } from './WaiterCashierScreen.styles';
 import { FloorWorkspaceView } from './FloorWorkspaceView';
 import { FohWorkspaceView } from './foh/FohWorkspaceView';
 import { ChecksHistoryView } from '@/features/check-history';
@@ -85,21 +84,23 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
   );
 
   return (
-    <View style={[styles.screenContainer, isMobile && styles.screenContainerMobile]}>
-      {/* 1. Navigation Sidebar (Top Bar on Mobile <768px | Left Rail on >=768px) */}
-      <Sidebar
-        activeTab={activeNavTab}
-        onTabChange={setActiveNavTab}
-        onLogout={handleLockTerminal}
-        onSwitchToAdmin={onSwitchToAdmin}
-        alertCount={unreadAlerts}
-        unreadChatCount={unreadChatCount}
-        fohBadgeCount={fullyReadyCount}
-        fohHasDot={hasPartialReady}
-      />
+    <View className="flex-1 bg-[#FAF8F5] flex-col md:flex-row md:p-3.5 md:gap-4">
+      {/* 1. Navigation Rail (Left Rail on Tablet/Desktop >=768px) */}
+      {!isMobile ? (
+        <Sidebar
+          activeTab={activeNavTab}
+          onTabChange={setActiveNavTab}
+          onLogout={handleLockTerminal}
+          onSwitchToAdmin={onSwitchToAdmin}
+          alertCount={unreadAlerts}
+          unreadChatCount={unreadChatCount}
+          fohBadgeCount={fullyReadyCount}
+          fohHasDot={hasPartialReady}
+        />
+      ) : null}
 
       {/* 2. Main Viewport */}
-      <View style={styles.mainContent}>
+      <View className="flex-1 min-w-0 px-3 pt-2.5 md:px-0 md:pt-0">
         {activeNavTab === 'tables' ? (
           <FloorWorkspaceView />
         ) : activeNavTab === 'foh' ? (
@@ -118,6 +119,20 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
           <ShiftSettingsModal onLock={handleLockTerminal} onLogout={logout} />
         )}
       </View>
+
+      {/* 3. Mobile Bottom Tab Bar (<768px) */}
+      {isMobile ? (
+        <Sidebar
+          activeTab={activeNavTab}
+          onTabChange={setActiveNavTab}
+          onLogout={handleLockTerminal}
+          onSwitchToAdmin={onSwitchToAdmin}
+          alertCount={unreadAlerts}
+          unreadChatCount={unreadChatCount}
+          fohBadgeCount={fullyReadyCount}
+          fohHasDot={hasPartialReady}
+        />
+      ) : null}
     </View>
   );
 };

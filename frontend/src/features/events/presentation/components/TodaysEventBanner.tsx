@@ -48,8 +48,7 @@ export const TodaysEventBanner: React.FC<TodaysEventBannerProps> = ({
         onPress={handlePress}
         accessibilityRole="button"
         accessibilityLabel={`Today's performance: ${firstEvent.title}`}
-        style={Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined}
-        className="flex-row items-center gap-2 rounded-xl border border-rose-200 bg-rose-50/80 px-3 py-1.5 active:bg-rose-100 shadow-xs"
+        className="min-h-[48px] flex-row items-center gap-2 rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] px-3 py-2 active:opacity-80"
       >
         {firstEvent.poster_url ? (
           <Image
@@ -59,17 +58,14 @@ export const TodaysEventBanner: React.FC<TodaysEventBannerProps> = ({
             accessibilityLabel={`${firstEvent.title} thumbnail`}
           />
         ) : (
-          <Music size={14} color="#800020" aria-hidden={true} />
+          <Music size={16} color="#810021" aria-hidden={true} />
         )}
         <View className="flex-row items-center gap-1.5 min-w-0">
-          <Text className="text-[11px] font-bold text-[#800020] uppercase tracking-wider">
-            Tonight:
-          </Text>
-          <Text numberOfLines={1} className="max-w-[150px] text-xs font-bold text-stone-900">
+          <Text numberOfLines={1} className="max-w-[160px] text-base font-semibold text-[#1C1917]">
             {firstEvent.title}
           </Text>
           {showtime ? (
-            <Text className="text-[11px] font-semibold text-[#800020]">({showtime})</Text>
+            <Text className="text-base font-medium text-[#57534E]">· {showtime}</Text>
           ) : null}
         </View>
       </Pressable>

@@ -25,7 +25,6 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
   staffInitials: propStaffInitials,
 }) => {
   const { currentUser } = useAuthStore();
-  const { width: windowWidth } = useWindowDimensions();
 
   // Channel, Status & Search Filter state
   const [selectedChannel, setSelectedChannel] = useState<ChannelCategory>('all');
@@ -54,28 +53,6 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
     selectedStatus,
     searchQuery
   );
-
-  const [gridWidth, setGridWidth] = useState<number>(0);
-
-  // Phone-to-Desktop dynamic grid column distribution
-  // Tablets (768px-1139px) use 2 columns to give cards generous width (~360px-450px) preventing table name truncation
-  const numColumns = useMemo(() => {
-    if (windowWidth >= 1440) return 4;
-    if (windowWidth >= 1140) return 3;
-    if (windowWidth >= 768) return 2;
-    if (windowWidth >= 480) return 2;
-    return 1;
-  }, [windowWidth]);
-
-  const gridGap = 16;
-  const cardWidth = useMemo(() => {
-    if (numColumns === 1) return '100%' as any;
-    if (gridWidth > 0) {
-      return Math.floor((gridWidth - (numColumns - 1) * gridGap) / numColumns);
-    }
-    const fallbackPercent = ((100 - (numColumns - 1) * 1.6) / numColumns).toFixed(2);
-    return `${fallbackPercent}%` as any;
-  }, [gridWidth, numColumns]);
 
   const activeStaffName = propStaffName || currentUser?.displayName || 'Floor Staff';
   const activeStaffInitials =
@@ -109,7 +86,6 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
 
         {/* Combined Responsive Grid: Tables, Takeout Queue & Online Orders */}
         <FloorGridView
-          cardWidth={cardWidth}
           filteredTables={filteredTables}
           filteredTakeoutOrders={filteredTakeoutOrders}
           filteredOnlineOrders={filteredOnlineOrders}
@@ -196,7 +172,6 @@ export const FloorWorkspaceView: React.FC<FloorWorkspaceViewProps> = ({
               }?`,
             });
           }}
-          onLayoutGrid={(w) => setGridWidth(w)}
         />
       </ScrollView>
 

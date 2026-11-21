@@ -1,9 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, Switch } from 'react-native';
-import { Settings, User, Printer, LogOut, Sparkles, Wifi, Lock } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, Switch, ScrollView } from 'react-native';
+import { User, Printer, LogOut, Sparkles, ExternalLink } from 'lucide-react-native';
 import { useAuthStore } from '@/features/auth';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { getStaffInitials, getStaffRoleLabel } from '@/features/shared/utils/staffHelpers';
+import { FloorSectionHeader } from '@/features/shared';
+import { HardwareStationToggleModal, useDeviceHardwareStation } from '@/features/printer';
 
 interface ShiftSettingsModalProps {
   onClose?: () => void;
@@ -12,92 +14,78 @@ interface ShiftSettingsModalProps {
   onClockOut?: () => void;
 }
 
-export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
-  onClose,
-  onLogout,
-  onLock,
-  onClockOut,
-}) => {
+export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({ onLogout, onLock }) => {
   const { currentUser, isTrainingMode, setIsTrainingMode } = useAuthStore();
+  const isHardwareStation = useDeviceHardwareStation((s) => s.isHardwareStation);
+  const [stationModalVisible, setStationModalVisible] = useState(false);
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.badge}>
-            <Settings size={18} color="#ffffff" strokeWidth={2.4} />
-          </View>
-          <View>
-            <Text style={styles.title}>Station & Shift Settings</Text>
-            <Text style={styles.subtitle}>
-              Staff session parameters, training sandbox, and hardware printer status
-            </Text>
-          </View>
-        </View>
-      </View>
+    <ScrollView className="flex-1 bg-[#FAF8F5]" showsVerticalScrollIndicator={false}>
+      <FloorSectionHeader
+        title="Station & Shift Settings"
+        subtitle="Staff session, training sandbox, and thermal printer station"
+      />
 
-      <View style={styles.cardsGrid}>
+      <View className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-8">
         {/* Staff Profile Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <User size={16} color="#832238" />
-            <Text style={styles.cardTitle}>Active Staff Profile</Text>
-          </View>
-
-          <View style={styles.profileRow}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {getStaffInitials(currentUser?.displayName || 'Floor Staff')}
-              </Text>
+        <View className="bg-white rounded-2xl p-5 border border-[#E7E5E4] justify-between gap-4">
+          <View>
+            <View className="flex-row items-center gap-2 mb-4">
+              <User size={18} color="#810021" />
+              <Text className="text-pos-lg font-bold text-[#1C1917]">Active Staff Profile</Text>
             </View>
 
-            <View>
-              <Text style={styles.staffName}>{currentUser?.displayName || 'Floor Staff'}</Text>
-              <Text style={styles.staffRole}>
-                Role: {getStaffRoleLabel(currentUser?.role)} •{' '}
-                {currentUser?.username ? `@${currentUser.username}` : 'Floor Authenticated'}
-              </Text>
-              {currentUser?.email ? (
-                <Text style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>
-                  {currentUser.email}
+            <View className="flex-row items-center gap-3.5">
+              <View className="w-12 h-12 rounded-full bg-[#810021]/10 border border-[#810021]/20 items-center justify-center shrink-0">
+                <Text className="text-base font-extrabold text-[#810021]">
+                  {getStaffInitials(currentUser?.displayName || 'Floor Staff')}
                 </Text>
-              ) : null}
+              </View>
+
+              <View className="min-w-0 flex-1">
+                <Text className="text-pos-lg font-bold text-[#1C1917]" numberOfLines={1}>
+                  {currentUser?.displayName || 'Floor Staff'}
+                </Text>
+                <Text className="text-base text-[#57534E] mt-0.5" numberOfLines={1}>
+                  {getStaffRoleLabel(currentUser?.role)} ·{' '}
+                  {currentUser?.username ? `@${currentUser.username}` : 'Floor Authenticated'}
+                </Text>
+                {currentUser?.email ? (
+                  <Text className="text-base text-[#78716C] mt-0.5" numberOfLines={1}>
+                    {currentUser.email}
+                  </Text>
+                ) : null}
+              </View>
             </View>
           </View>
 
-          <View style={{ flexDirection: 'column', gap: 8, marginTop: 8 }}>
-            <Pressable
-              onPress={onLogout || onLock}
-              style={[
-                styles.switchStaffBtn,
-                { backgroundColor: '#800020', borderColor: '#600018' },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Log Out and Switch Staff"
-            >
-              <LogOut size={16} color="#ffffff" />
-              <Text style={[styles.switchStaffText, { color: '#ffffff', fontWeight: 'bold' }]}>
-                Log Out / Switch Staff
-              </Text>
-            </Pressable>
-          </View>
+          <Pressable
+            onPress={onLogout || onLock}
+            className="min-h-[48px] w-full rounded-xl bg-[#810021] px-4 flex-row items-center justify-center gap-2 active:opacity-85"
+            accessibilityRole="button"
+            accessibilityLabel="Log Out and Switch Staff"
+          >
+            <LogOut size={18} color="#FFFFFF" />
+            <Text className="text-base font-semibold text-white">Log Out / Switch Staff</Text>
+          </Pressable>
         </View>
 
         {/* Training Mode Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Sparkles size={16} color="#d97706" />
-            <Text style={styles.cardTitle}>Training Mode Sandbox</Text>
+        <View className="bg-white rounded-2xl p-5 border border-[#E7E5E4] justify-between gap-4">
+          <View>
+            <View className="flex-row items-center gap-2 mb-3">
+              <Sparkles size={18} color="#B45309" />
+              <Text className="text-pos-lg font-bold text-[#1C1917]">Training Mode Sandbox</Text>
+            </View>
+
+            <Text className="text-base text-[#57534E] leading-relaxed">
+              Practice ordering, tab splits, and settlements without sending tickets to physical KDS
+              stations or depleting active inventory.
+            </Text>
           </View>
 
-          <Text style={styles.cardDesc}>
-            Practice ordering, tab splits, and settlements without sending tickets to physical KDS
-            stations or depleting active inventory.
-          </Text>
-
-          <View style={styles.trainingToggleRow}>
-            <Text style={styles.trainingLabel}>
+          <View className="min-h-[52px] flex-row items-center justify-between bg-[#FAF8F5] border border-[#E7E5E4] px-4 py-2.5 rounded-xl">
+            <Text className="text-base font-semibold text-[#1C1917]">
               {isTrainingMode ? 'Sandbox Active (Demo)' : 'Live Production Mode'}
             </Text>
             <Switch
@@ -107,211 +95,91 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({
                 if (val) {
                   toast.info(
                     "Training Sandbox Mode active — tickets won't route to live stations.",
-                    {
-                      title: 'Sandbox Mode ON',
-                    }
+                    { title: 'Sandbox Mode ON' }
                   );
                 } else {
-                  toast.info('Live Production Mode active.', {
-                    title: 'Live Mode',
-                  });
+                  toast.info('Live Production Mode active.', { title: 'Live Mode' });
                 }
               }}
-              trackColor={{ false: '#d1d5db', true: '#fde68a' }}
-              thumbColor={isTrainingMode ? '#d97706' : '#f4f3f4'}
+              trackColor={{ false: '#D6D3D1', true: '#FDE68A' }}
+              thumbColor={isTrainingMode ? '#D97706' : '#FAF8F5'}
             />
           </View>
         </View>
 
-        {/* Remote Printer Station Card */}
-        <View style={styles.card}>
-          <View style={styles.cardHeader}>
-            <Printer size={16} color="#15803d" />
-            <Text style={styles.cardTitle}>Thermal Printer Station (PC)</Text>
-          </View>
+        {/* Hardware Print Station Card */}
+        <View className="bg-white rounded-2xl p-5 border border-[#E7E5E4] justify-between gap-4 md:col-span-2">
+          <View>
+            <View className="flex-row flex-wrap items-center justify-between gap-2 mb-3">
+              <View className="flex-row items-center gap-2">
+                <Printer size={18} color="#810021" />
+                <Text className="text-pos-lg font-bold text-[#1C1917]">
+                  Hardware Print &amp; Cash Drawer Station
+                </Text>
+              </View>
 
-          <View style={styles.statusPillRow}>
-            <View style={styles.statusPillGreen}>
-              <Wifi size={12} color="#15803d" />
-              <Text style={styles.statusPillGreenText}>Connected (WebSocket)</Text>
+              <View
+                className={`flex-row items-center gap-1.5 rounded-full border px-3 py-1 ${
+                  isHardwareStation
+                    ? 'bg-emerald-50 border-emerald-200'
+                    : 'bg-[#FAF8F5] border-[#E7E5E4]'
+                }`}
+              >
+                <View
+                  className={`w-2 h-2 rounded-full ${
+                    isHardwareStation ? 'bg-emerald-500' : 'bg-[#78716C]'
+                  }`}
+                />
+                <Text
+                  className={`text-base font-semibold ${
+                    isHardwareStation ? 'text-emerald-800' : 'text-[#57534E]'
+                  }`}
+                >
+                  {isHardwareStation ? 'This Device Bound' : 'Standard Terminal'}
+                </Text>
+              </View>
             </View>
-            <Text style={styles.ipText}>IP: 192.168.1.50:9100</Text>
+
+            <Text className="text-base text-[#57534E] leading-relaxed">
+              Thermal receipts, runner chits, and RJ11 cash drawer kicks are driven via WebUSB /
+              WebSerial on the dedicated Hardware Print Station tab.
+            </Text>
           </View>
 
-          <Text style={styles.cardDesc}>
-            Dedicated printer client is listening for `dispatch:print` (Runner Chits) and
-            `receipt:print` (Customer Receipts) via USB ESC/POS driver.
-          </Text>
+          <View className="flex-row flex-wrap gap-2.5">
+            <Pressable
+              onPress={() => setStationModalVisible(true)}
+              className="min-h-[48px] flex-1 min-w-[200px] rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-4 flex-row items-center justify-center gap-2 active:opacity-80"
+              accessibilityRole="button"
+              accessibilityLabel="Configure Hardware Print Station"
+            >
+              <Printer size={18} color="#1C1917" />
+              <Text className="text-base font-semibold text-[#1C1917]">
+                Configure Device Station
+              </Text>
+            </Pressable>
 
-          <Pressable
-            onPress={() => {
-              toast.success(
-                'Thermal Printer test receipt dispatched: ESC/POS 80mm verified at 192.168.1.50:9100',
-                {
-                  title: 'Printer Online & Ready',
+            <Pressable
+              onPress={() => {
+                if (typeof window !== 'undefined') {
+                  window.open('?mode=printer', '_blank');
                 }
-              );
-            }}
-            style={styles.switchStaffBtn}
-          >
-            <Printer size={14} color="#15803d" />
-            <Text style={[styles.switchStaffText, { color: '#15803d' }]}>
-              Test Thermal Printer Ping
-            </Text>
-          </Pressable>
+              }}
+              className="min-h-[48px] flex-1 min-w-[200px] rounded-xl bg-white border border-[#E7E5E4] px-4 flex-row items-center justify-center gap-2 active:opacity-80"
+              accessibilityRole="button"
+              accessibilityLabel="Open Dedicated Print Station Tab"
+            >
+              <ExternalLink size={18} color="#810021" />
+              <Text className="text-base font-semibold text-[#810021]">Open Print Station Tab</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
-    </View>
+
+      <HardwareStationToggleModal
+        visible={stationModalVisible}
+        onClose={() => setStationModalVisible(false)}
+      />
+    </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    backgroundColor: '#ffffff',
-    borderRadius: 22,
-    paddingHorizontal: 22,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  badge: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: '#374151',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  subtitle: {
-    fontSize: 12.5,
-    color: '#6b7280',
-    marginTop: 1,
-  },
-  cardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  card: {
-    width: '48.5%',
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  cardDesc: {
-    fontSize: 12.5,
-    color: '#6b7280',
-    lineHeight: 18,
-    marginBottom: 14,
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#fceeed',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#832238',
-  },
-  staffName: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#1a1a1e',
-  },
-  staffRole: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  switchStaffBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#fef2f2',
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-  },
-  switchStaffText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  trainingToggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#f9fafb',
-    padding: 12,
-    borderRadius: 12,
-  },
-  trainingLabel: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#374151',
-  },
-  statusPillRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 10,
-  },
-  statusPillGreen: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: '#f0fdf4',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusPillGreenText: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    color: '#15803d',
-  },
-  ipText: {
-    fontSize: 11.5,
-    color: '#6b7280',
-    fontWeight: '600',
-  },
-});

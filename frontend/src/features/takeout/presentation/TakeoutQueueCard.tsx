@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { ShoppingBag, CheckCircle2, PackageCheck, CreditCard } from 'lucide-react-native';
 import { TakeoutOrder } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
@@ -24,311 +24,135 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
   const liveTimer = useLiveElapsedTimer(order.createdAt, order.elapsedTime, 'bar');
 
   return (
-    <View style={[styles.cardContainer, isReady ? styles.cardReady : styles.cardPreparing]}>
+    <View
+      className={`min-h-[188px] sm:min-h-[216px] justify-between rounded-2xl bg-white border p-4 ${
+        isReady ? 'border-emerald-300' : 'border-amber-300'
+      }`}
+    >
       <Pressable
         onPress={() => onPress(order)}
-        style={({ pressed }) => [styles.mainPressableArea, pressed && styles.cardPressed]}
+        className="flex-1 justify-between active:opacity-85"
         accessibilityRole="button"
         accessibilityLabel={`Takeout ticket ${order.ticketNumber} for ${order.customerName}`}
       >
-        {/* 1. Top Row: Ticket Code & Customer + Status Badge */}
-        <View style={styles.cardHeader}>
-          <View style={styles.codeCol}>
-            <View style={styles.ticketBadgeRow}>
-              <ShoppingBag size={13} color="#810021" strokeWidth={2.4} />
-              <Text style={styles.ticketCodeText}>Takeout #{order.ticketNumber}</Text>
+        {/* 1. Top Row: Ticket Code & Customer + Quiet Status Badge */}
+        <View className="flex-row items-start justify-between gap-2 mb-2.5">
+          <View className="min-w-0 flex-1">
+            <View className="flex-row items-center gap-1.5 mb-0.5">
+              <ShoppingBag size={16} color="#810021" strokeWidth={2.2} />
+              <Text className="text-base font-bold text-[#810021]">
+                Takeout #{order.ticketNumber}
+              </Text>
             </View>
-            <Text style={styles.customerNameText} numberOfLines={1}>
+            <Text className="text-pos-lg font-extrabold text-[#1C1917]" numberOfLines={1}>
               {order.customerName}
             </Text>
           </View>
 
           <View
-            style={[styles.statusBadge, isReady ? styles.statusBadgeReady : styles.statusBadgePrep]}
+            className={`shrink-0 flex-row items-center gap-1.5 rounded-full border px-3 py-1 ${
+              isReady ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-200'
+            }`}
           >
             <View
-              style={[styles.statusDot, { backgroundColor: isReady ? '#10b981' : '#f59e0b' }]}
+              className={`h-2 w-2 rounded-full ${isReady ? 'bg-emerald-500' : 'bg-amber-500'}`}
             />
-            <Text style={[styles.statusText, { color: isReady ? '#047857' : '#b45309' }]}>
-              {isReady ? 'READY' : 'PREP'}
+            <Text
+              className={`text-base font-semibold ${
+                isReady ? 'text-emerald-800' : 'text-amber-800'
+              }`}
+            >
+              {isReady ? 'Ready' : 'Prep'}
             </Text>
-            <Text style={[styles.timeText, { color: isReady ? '#047857' : '#b45309' }]}>
+            <Text
+              className={`text-base font-semibold tabular-nums ${
+                isReady ? 'text-emerald-800' : 'text-amber-800'
+              }`}
+            >
               · {liveTimer.formattedTimer}
             </Text>
           </View>
         </View>
 
         {/* 2. Middle Row: Items Line + Amount & Payment Flag */}
-        <View style={styles.midRow}>
-          <Text style={styles.itemsSummaryText} numberOfLines={1}>
+        <View className="flex-row items-center justify-between border-t border-[#E7E5E4]/80 pt-2.5 gap-3">
+          <Text className="flex-1 text-base text-[#57534E]" numberOfLines={1}>
             {order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
           </Text>
-          <View style={styles.amountCol}>
-            <Text style={styles.amountText}>{formatCurrency(order.total)}</Text>
-            <Text style={[styles.paidText, { color: order.isPrepaid ? '#810021' : '#78716c' }]}>
-              {order.isPrepaid ? 'PAID' : 'DUE'}
+          <View className="items-end shrink-0">
+            <Text className="text-pos-lg font-extrabold text-[#1C1917] tabular-nums">
+              {formatCurrency(order.total)}
+            </Text>
+            <Text
+              className={`text-base font-bold ${
+                order.isPrepaid ? 'text-[#810021]' : 'text-[#57534E]'
+              }`}
+            >
+              {order.isPrepaid ? 'Paid' : 'Due'}
             </Text>
           </View>
         </View>
       </Pressable>
 
-      {/* 3. Bottom Row: Direct Action */}
-      <View style={styles.actionRow}>
+      {/* 3. Bottom Row: Direct Action (>= 48px) */}
+      <View className="pt-2.5">
         {isReady ? (
           order.isPrepaid ? (
             <Pressable
               onPress={() => onMarkCollected?.(order.id)}
-              style={styles.actionBtnCollect}
+              className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-300 px-4 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Mark order ${order.ticketNumber} as collected`}
             >
-              <PackageCheck size={16} color="#ffffff" strokeWidth={2.3} />
-              <Text style={styles.actionBtnText}>Collected</Text>
+              <PackageCheck size={18} color="#065F46" strokeWidth={2.2} />
+              <Text className="text-base font-semibold text-emerald-900">Collected</Text>
             </Pressable>
           ) : (
             <Pressable
               onPress={() =>
                 onPayTakeout ? onPayTakeout(order, true) : onMarkCollected?.(order.id)
               }
-              style={styles.actionBtnPayCollect}
+              className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-[#810021] px-4 active:opacity-85"
               accessibilityRole="button"
               accessibilityLabel={`Pay and collect order ${order.ticketNumber}`}
             >
-              <CreditCard size={16} color="#ffffff" strokeWidth={2.3} />
-              <Text style={styles.actionBtnText}>Pay & Collect</Text>
+              <CreditCard size={18} color="#FFFFFF" strokeWidth={2.2} />
+              <Text className="text-base font-semibold text-white">Pay &amp; Collect</Text>
             </Pressable>
           )
         ) : !order.isPrepaid && onPayTakeout ? (
-          <View style={styles.dualActionRow}>
+          <View className="flex-row gap-2.5">
             <Pressable
               onPress={() => onPayTakeout(order, false)}
-              style={styles.actionBtnPayNow}
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-white border border-[#E7E5E4] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Collect payment now for order ${order.ticketNumber}`}
             >
-              <CreditCard size={15} color="#7e2235" strokeWidth={2.3} />
-              <Text style={styles.actionBtnPayNowText}>Pay Now</Text>
+              <CreditCard size={18} color="#810021" strokeWidth={2.1} />
+              <Text className="text-base font-semibold text-[#810021]">Pay Now</Text>
             </Pressable>
             <Pressable
               onPress={() => onMarkReady?.(order.id)}
-              style={[styles.actionBtnReady, { flex: 1 }]}
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Mark order ${order.ticketNumber} as ready`}
             >
-              <CheckCircle2 size={15} color="#92400e" strokeWidth={2.3} />
-              <Text style={styles.actionBtnReadyText}>Mark Ready</Text>
+              <CheckCircle2 size={18} color="#1C1917" strokeWidth={2.1} />
+              <Text className="text-base font-semibold text-[#1C1917]">Mark Ready</Text>
             </Pressable>
           </View>
         ) : (
           <Pressable
             onPress={() => onMarkReady?.(order.id)}
-            style={styles.actionBtnReady}
+            className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-4 active:opacity-80"
             accessibilityRole="button"
             accessibilityLabel={`Mark order ${order.ticketNumber} as ready`}
           >
-            <CheckCircle2 size={16} color="#92400e" strokeWidth={2.3} />
-            <Text style={styles.actionBtnReadyText}>Mark Ready</Text>
+            <CheckCircle2 size={18} color="#1C1917" strokeWidth={2.1} />
+            <Text className="text-base font-semibold text-[#1C1917]">Mark Ready</Text>
           </Pressable>
         )}
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  cardContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    borderWidth: 1.5,
-    padding: 15,
-    shadowColor: '#2b0f16',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    justifyContent: 'space-between',
-    minHeight: 156,
-  },
-  mainPressableArea: {
-    flex: 1,
-    justifyContent: 'space-between',
-  },
-  cardPreparing: {
-    borderColor: '#f59e0b',
-    backgroundColor: '#ffffff',
-    borderWidth: 2,
-  },
-  cardReady: {
-    borderColor: '#10b981',
-    backgroundColor: '#ffffff',
-    borderWidth: 2,
-    shadowColor: '#10b981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  cardPressed: {
-    transform: [{ scale: 0.985 }],
-    opacity: 0.95,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  codeCol: {
-    flex: 1,
-    marginRight: 6,
-  },
-  ticketBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginBottom: 3,
-  },
-  ticketCodeText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#810021',
-  },
-  customerNameText: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#1c1917',
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 11,
-  },
-  statusBadgePrep: {
-    backgroundColor: '#fffbeb',
-  },
-  statusBadgeReady: {
-    backgroundColor: '#ecfdf5',
-  },
-  statusDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '800',
-    letterSpacing: 0.4,
-  },
-  timeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    fontVariant: ['tabular-nums'],
-  },
-  midRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 7,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(0,0,0,0.05)',
-    gap: 8,
-  },
-  itemsSummaryText: {
-    flex: 1,
-    fontSize: 13,
-    color: '#4b5563',
-    fontWeight: '500',
-  },
-  amountCol: {
-    alignItems: 'flex-end',
-  },
-  amountText: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#111827',
-    fontVariant: ['tabular-nums'],
-  },
-  paidText: {
-    fontSize: 11,
-    fontWeight: '800',
-    marginTop: 1,
-  },
-  actionRow: {
-    paddingTop: 6,
-  },
-  dualActionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionBtnPayNow: {
-    flex: 1,
-    backgroundColor: '#fdf2f4',
-    borderWidth: 1,
-    borderColor: '#fbcfe8',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    minHeight: 52,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 14,
-  },
-  actionBtnPayNowText: {
-    color: '#7e2235',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  actionBtnPayCollect: {
-    backgroundColor: '#7e2235',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 52,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-  },
-  actionBtnCollect: {
-    backgroundColor: '#16a34a',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 52,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-  },
-  actionBtnText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-  actionBtnReady: {
-    backgroundColor: '#fef3c7',
-    borderWidth: 1,
-    borderColor: '#fde68a',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    minHeight: 52,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-  },
-  actionBtnReadyText: {
-    color: '#92400e',
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: 0.3,
-  },
-});

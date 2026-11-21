@@ -52,7 +52,7 @@ export const ChecksFilterToolbar: React.FC<ChecksFilterToolbarProps> = ({
   ];
 
   return (
-    <View className="bg-white border-b border-stone-200/80 p-3 sm:p-4">
+    <View className="bg-white border border-[#E7E5E4] rounded-2xl p-3 sm:p-4 mb-3.5">
       <View className="flex-row flex-wrap items-center justify-between gap-2.5">
         {/* Search Input */}
         <View className="flex-row items-center bg-[#FAF8F5] border border-stone-300 rounded-xl px-3.5 py-2 min-h-[48px] flex-1 min-w-[200px]">

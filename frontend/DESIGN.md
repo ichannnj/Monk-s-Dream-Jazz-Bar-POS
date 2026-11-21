@@ -205,8 +205,8 @@ Generous, approachable rounded rectangles (`12px` for inputs, chips, and primary
 
 - **Corner Style:** `20px` radius (`borderRadius: 20`) on `TableCard` floor tiles; `12px–16px` on admin and summary panels.
 - **Background:** Crisp white (`#ffffff`) resting over Warm Sand (`#faf8f5`).
-- **Shadow Strategy:** Restrained wine-tinted ambient shadow (`0 3px 10px rgba(43, 15, 22, 0.05)`).
-- **Border:** `1.5px solid #eee8e3` at rest; `2px` semantic border when occupied (`#64748b`), preparing (`#f59e0b`), ready (`#10b981`), or served (`#810021`).
+- **Shadow Strategy:** Flat-by-default with crisp `1px` borders (`#e7e5e4`)—no competing drop shadows or colored glow halos.
+- **Border & Status:** `1px solid #e7e5e4` at rest; subtle `1px` semantic border (`border-emerald-300`, `border-amber-300`, `border-[#810021]/30`) paired with a leading status dot + `tabular-nums` timer pill.
 - **Internal Padding:** `15px`–`16px` with clear horizontal divider (`rgba(0,0,0,0.06)`).
 
 ### Inputs / Fields (`TouchTextInput`)
@@ -217,8 +217,8 @@ Generous, approachable rounded rectangles (`12px` for inputs, chips, and primary
 
 ### Navigation (`Sidebar` & `UnifiedCommandBar`)
 
-- **Style:** Persistent vertical rail on tablet/POS (`Tables`, `FOH`, `Chat`, `Checks`, `Drawer`, `Printer`, `Alerts`) paired with top `UnifiedCommandBar` channel dropdown, status chips, quick-action triggers, Printer station badge, Mode switch pill, and Staff avatar pill (`#810021` circle).
-- **Mobile Treatment:** Collapses into responsive drawer/tab navigation with inline `< Back to Checks` and `< Chats` headers on `< 900px` / `< 768px` viewports.
+- **Tablet & Desktop (`≥ 768px`):** Quiet Warm Stone vertical rail (`#f3efea` with `1px` `#e7e5e4` border) using `#810021/10` active state (`Tables`, `FOH`, `Checks`, `Chat`, `Drawer`, `Printer`, `Alerts`, `Settings`) paired with `UnifiedCommandBar` (channel/status dropdowns, search, `+ New Order`, Cafe/Event mode switch, Hardware Station pill, and Staff chip).
+- **Mobile (`< 768px`):** Fixed Bottom Navigation Bar with 4 primary tabs (`Tables`, `FOH`, `Checks`, `Chat` — or `Board`, `Tables`, `Checks`, `Chat` in KDS mode) + `"More"` bottom sheet (`Drawer`, `Printer`, `Alerts`, `Station Settings`, `Admin`, `Switch Staff / Lock`), paired with a slim 2-row `UnifiedCommandBar` (Row 1: Search + `+ New`; Row 2: horizontally scrollable filters + Mode toggle) and 1-column floor cards.
 
 ## Do's and Don'ts
 

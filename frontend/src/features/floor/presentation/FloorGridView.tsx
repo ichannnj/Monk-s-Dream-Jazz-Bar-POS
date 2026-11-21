@@ -5,10 +5,8 @@ import { TableItem, TakeoutOrder, OnlineDeliveryOrder } from '@/types/floor';
 import { TableCard } from './TableCard';
 import { TakeoutQueueCard } from '@/features/takeout';
 import { OnlineDeliveryCard } from '@/features/delivery';
-import { styles } from './WaiterCashierScreen.styles';
 
 export interface FloorGridViewProps {
-  cardWidth: any;
   filteredTables: TableItem[];
   filteredTakeoutOrders: TakeoutOrder[];
   filteredOnlineOrders: OnlineDeliveryOrder[];
@@ -23,19 +21,17 @@ export interface FloorGridViewProps {
   onOnlinePress: (order: OnlineDeliveryOrder) => void;
   onOnlineReady: (id: string) => void;
   onOnlineHandToRider: (id: string) => void;
-  onLayoutGrid: (width: number) => void;
   onResetFilters?: () => void;
 }
 
 const SectionHeader: React.FC<{ title: string; badge: string }> = ({ title, badge }) => (
-  <View className="w-full flex-row items-center justify-between pt-3 pb-1 px-1">
-    <Text className="text-base font-bold tracking-wide text-[#1c1917]">{title}</Text>
-    <Text className="text-base font-semibold tabular-nums text-[#57534E]">{badge}</Text>
+  <View className="w-full flex-row items-center justify-between pt-4 pb-2 border-b border-[#E7E5E4]/80 mb-3">
+    <Text className="text-base font-bold text-[#1C1917]">{title}</Text>
+    <Text className="text-base font-medium tabular-nums text-[#57534E]">{badge}</Text>
   </View>
 );
 
 export const FloorGridView: React.FC<FloorGridViewProps> = ({
-  cardWidth,
   filteredTables,
   filteredTakeoutOrders,
   filteredOnlineOrders,
@@ -50,7 +46,6 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
   onOnlinePress,
   onOnlineReady,
   onOnlineHandToRider,
-  onLayoutGrid,
   onResetFilters,
 }) => {
   const cafeTables = useMemo(
@@ -73,28 +68,25 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
 
   if (!hasItems) {
     return (
-      <View
-        onLayout={(e) => onLayoutGrid(e.nativeEvent.layout.width)}
-        className="w-full py-16 px-6 items-center justify-center bg-white/70 rounded-3xl border border-gray-200 my-4"
-      >
-        <View className="w-16 h-16 rounded-2xl bg-wine-50 items-center justify-center mb-4">
-          <LayoutGrid size={32} color="#7e2235" strokeWidth={2.2} />
+      <View className="w-full py-14 px-6 items-center justify-center bg-white rounded-2xl border border-[#E7E5E4] my-4">
+        <View className="w-14 h-14 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center mb-4">
+          <LayoutGrid size={26} color="#57534E" strokeWidth={2} />
         </View>
-        <Text className="text-pos-lg font-bold text-gray-900 text-center mb-1">
+        <Text className="text-pos-lg font-bold text-[#1C1917] text-center mb-1">
           No Tables or Orders Found
         </Text>
-        <Text className="text-base text-gray-600 text-center max-w-md mb-6 leading-relaxed">
+        <Text className="text-base text-[#57534E] text-center max-w-md mb-6 leading-relaxed">
           No dine-in tables, takeout orders, or delivery cards match your search or filter.
         </Text>
         {onResetFilters ? (
           <Pressable
             onPress={onResetFilters}
-            className="min-h-[48px] px-6 rounded-xl bg-wine-700 items-center justify-center active:opacity-90 shadow-sm"
+            className="min-h-[48px] px-6 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center active:opacity-80"
             accessibilityRole="button"
             accessibilityLabel="Clear search and reset filters"
           >
-            <Text className="text-base font-bold text-white tracking-wide">
-              Clear Search & Filters
+            <Text className="text-base font-semibold text-[#1C1917]">
+              Clear Search &amp; Filters
             </Text>
           </Pressable>
         ) : null}
@@ -103,69 +95,83 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
   }
 
   return (
-    <View style={styles.tablesGrid} onLayout={(e) => onLayoutGrid(e.nativeEvent.layout.width)}>
+    <View className="w-full gap-4">
       {/* Cafe Area Tables */}
-      {renderHeaders && cafeTables.length > 0 ? (
-        <SectionHeader
-          title="Cafe Area"
-          badge={`${cafeTables.filter((t) => t.status !== 'empty').length}/${cafeTables.length} occupied`}
-        />
-      ) : null}
-      {cafeTables.map((table) => (
-        <View key={table.id} style={[styles.cardCol, { width: cardWidth }]}>
-          <TableCard
-            table={table}
-            onPress={onTablePress}
-            onQuickOrder={onQuickOrder}
-            onQuickSettle={onQuickSettle}
-          />
+      {cafeTables.length > 0 ? (
+        <View className="w-full">
+          {renderHeaders ? (
+            <SectionHeader
+              title="Cafe Area"
+              badge={`${cafeTables.filter((t) => t.status !== 'empty').length}/${cafeTables.length} occupied`}
+            />
+          ) : null}
+          <View className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-4">
+            {cafeTables.map((table) => (
+              <TableCard
+                key={table.id}
+                table={table}
+                onPress={onTablePress}
+                onQuickOrder={onQuickOrder}
+                onQuickSettle={onQuickSettle}
+              />
+            ))}
+          </View>
         </View>
-      ))}
+      ) : null}
 
       {/* Bar Area Tables */}
-      {renderHeaders && barTables.length > 0 ? (
-        <SectionHeader
-          title="Bar Area"
-          badge={`${barTables.filter((t) => t.status !== 'empty').length}/${barTables.length} occupied`}
-        />
-      ) : null}
-      {barTables.map((table) => (
-        <View key={table.id} style={[styles.cardCol, { width: cardWidth }]}>
-          <TableCard
-            table={table}
-            onPress={onTablePress}
-            onQuickOrder={onQuickOrder}
-            onQuickSettle={onQuickSettle}
-          />
+      {barTables.length > 0 ? (
+        <View className="w-full">
+          {renderHeaders ? (
+            <SectionHeader
+              title="Bar Area"
+              badge={`${barTables.filter((t) => t.status !== 'empty').length}/${barTables.length} occupied`}
+            />
+          ) : null}
+          <View className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-4">
+            {barTables.map((table) => (
+              <TableCard
+                key={table.id}
+                table={table}
+                onPress={onTablePress}
+                onQuickOrder={onQuickOrder}
+                onQuickSettle={onQuickSettle}
+              />
+            ))}
+          </View>
         </View>
-      ))}
+      ) : null}
 
       {/* Takeout & Delivery */}
-      {renderHeaders && offPremiseCount > 0 ? (
-        <SectionHeader title="Takeout & Delivery" badge={`${offPremiseCount} active`} />
-      ) : null}
-      {filteredTakeoutOrders.map((toOrder) => (
-        <View key={toOrder.id} style={[styles.cardCol, { width: cardWidth }]}>
-          <TakeoutQueueCard
-            order={toOrder}
-            onPress={onTakeoutPress}
-            onPayTakeout={onTakeoutPay}
-            onMarkReady={onTakeoutReady}
-            onMarkCollected={onTakeoutCollected}
-          />
-        </View>
-      ))}
+      {offPremiseCount > 0 ? (
+        <View className="w-full">
+          {renderHeaders ? (
+            <SectionHeader title="Takeout & Delivery" badge={`${offPremiseCount} active`} />
+          ) : null}
+          <View className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-4">
+            {filteredTakeoutOrders.map((toOrder) => (
+              <TakeoutQueueCard
+                key={toOrder.id}
+                order={toOrder}
+                onPress={onTakeoutPress}
+                onPayTakeout={onTakeoutPay}
+                onMarkReady={onTakeoutReady}
+                onMarkCollected={onTakeoutCollected}
+              />
+            ))}
 
-      {filteredOnlineOrders.map((olOrder) => (
-        <View key={olOrder.id} style={[styles.cardCol, { width: cardWidth }]}>
-          <OnlineDeliveryCard
-            order={olOrder}
-            onPress={onOnlinePress}
-            onMarkReady={onOnlineReady}
-            onHandToRider={onOnlineHandToRider}
-          />
+            {filteredOnlineOrders.map((olOrder) => (
+              <OnlineDeliveryCard
+                key={olOrder.id}
+                order={olOrder}
+                onPress={onOnlinePress}
+                onMarkReady={onOnlineReady}
+                onHandToRider={onOnlineHandToRider}
+              />
+            ))}
+          </View>
         </View>
-      ))}
+      ) : null}
     </View>
   );
 };

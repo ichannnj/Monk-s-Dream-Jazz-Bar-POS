@@ -1,5 +1,6 @@
 export * from './ui/ConfirmationModal';
 export * from './ui/Header';
+export * from './ui/FloorSectionHeader';
 export * from './ui/PosDropdown';
 export * from './ui/PosMultiSelectDropdown';
 export * from './ui/ErrorBoundary';

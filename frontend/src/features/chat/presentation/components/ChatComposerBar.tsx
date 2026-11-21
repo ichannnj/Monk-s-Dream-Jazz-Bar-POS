@@ -32,11 +32,11 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
                 <Pressable
                   key={idx}
                   onPress={() => onSend(preset)}
-                  className="bg-white border border-stone-200/80 px-3 py-1.5 rounded-full active:bg-stone-100 min-h-[36px] justify-center shadow-2xs"
+                  className="bg-white border border-[#E7E5E4] px-4 py-2 rounded-full active:bg-stone-100 min-h-[48px] justify-center"
                   accessibilityRole="button"
                   accessibilityLabel={preset}
                 >
-                  <Text className="text-xs font-medium text-stone-700">{preset}</Text>
+                  <Text className="text-base font-medium text-[#1C1917]">{preset}</Text>
                 </Pressable>
               ))}
             </View>
@@ -71,11 +71,11 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
 
         <Pressable
           onPress={() => onSend()}
-          className="w-10 h-10 rounded-full bg-[#810021] items-center justify-center active:opacity-90 shadow-2xs shrink-0"
+          className="w-12 h-12 rounded-full bg-[#810021] items-center justify-center active:opacity-85 shrink-0"
           accessibilityRole="button"
           accessibilityLabel="Send message"
         >
-          <SendHorizontal size={17} color="#FFFFFF" strokeWidth={2.4} />
+          <SendHorizontal size={19} color="#FFFFFF" strokeWidth={2.2} />
         </Pressable>
       </View>
     </View>

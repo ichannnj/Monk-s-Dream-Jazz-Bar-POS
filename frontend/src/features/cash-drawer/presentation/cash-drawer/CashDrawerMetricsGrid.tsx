@@ -17,43 +17,35 @@ interface CashDrawerMetricsGridProps {
 
 export const CashDrawerMetricsGrid: React.FC<CashDrawerMetricsGridProps> = ({ metrics }) => {
   return (
-    <View className="flex-row gap-3 mb-4 flex-wrap">
-      {/* Expected in Drawer (Primary Monk's Wine Accent) */}
-      <View className="flex-1 min-w-[150px] sm:min-w-[180px] bg-[#810021] p-4 rounded-2xl shadow-xs justify-center">
-        <Text className="text-xs text-rose-100 font-extrabold uppercase tracking-wider">
-          Expected in Drawer
-        </Text>
-        <Text className="text-2xl font-black text-white tabular-nums mt-1">
+    <View className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      {/* Expected in Drawer */}
+      <View className="bg-white p-4 rounded-2xl border border-[#810021]/30 justify-center">
+        <Text className="text-base text-[#810021] font-semibold">Expected in Drawer</Text>
+        <Text className="text-pos-xl font-extrabold text-[#810021] tabular-nums mt-1">
           {formatCurrency(metrics.expectedBalance)}
         </Text>
       </View>
 
       {/* Starting Float */}
-      <View className="flex-1 min-w-[150px] sm:min-w-[180px] bg-white p-4 rounded-2xl border border-stone-200 shadow-xs justify-center">
-        <Text className="text-xs text-stone-500 font-extrabold uppercase tracking-wider">
-          Starting Float
-        </Text>
-        <Text className="text-xl font-black text-stone-900 tabular-nums mt-1">
+      <View className="bg-white p-4 rounded-2xl border border-[#E7E5E4] justify-center">
+        <Text className="text-base text-[#57534E] font-semibold">Starting Float</Text>
+        <Text className="text-pos-xl font-extrabold text-[#1C1917] tabular-nums mt-1">
           {formatCurrency(metrics.startingFloat)}
         </Text>
       </View>
 
       {/* Cash Sales */}
-      <View className="flex-1 min-w-[150px] sm:min-w-[180px] bg-white p-4 rounded-2xl border border-stone-200 shadow-xs justify-center">
-        <Text className="text-xs text-stone-500 font-extrabold uppercase tracking-wider">
-          Cash Sales
-        </Text>
-        <Text className="text-xl font-black text-stone-900 tabular-nums mt-1">
+      <View className="bg-white p-4 rounded-2xl border border-[#E7E5E4] justify-center">
+        <Text className="text-base text-[#57534E] font-semibold">Cash Sales</Text>
+        <Text className="text-pos-xl font-extrabold text-[#1C1917] tabular-nums mt-1">
           +{formatCurrency(metrics.cashSales)}
         </Text>
       </View>
 
       {/* Cash Out / Safe Drops */}
-      <View className="flex-1 min-w-[150px] sm:min-w-[180px] bg-white p-4 rounded-2xl border border-stone-200 shadow-xs justify-center">
-        <Text className="text-xs text-stone-500 font-extrabold uppercase tracking-wider">
-          Cash Out / Drops
-        </Text>
-        <Text className="text-xl font-black text-stone-900 tabular-nums mt-1">
+      <View className="bg-white p-4 rounded-2xl border border-[#E7E5E4] justify-center">
+        <Text className="text-base text-[#57534E] font-semibold">Cash Out / Drops</Text>
+        <Text className="text-pos-xl font-extrabold text-[#1C1917] tabular-nums mt-1">
           -{formatCurrency(metrics.cashOut + metrics.cashDrops)}
         </Text>
       </View>

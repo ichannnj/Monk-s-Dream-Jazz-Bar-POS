@@ -42,12 +42,12 @@ export const ChatThreadHeader: React.FC<ChatThreadHeaderProps> = ({
         {isCompact && (
           <Pressable
             onPress={onBackToList}
-            className="flex-row items-center mr-2 px-2.5 py-1.5 -ml-1 rounded-lg bg-stone-100 active:bg-stone-200 min-h-[36px] justify-center shrink-0"
+            className="flex-row items-center mr-2 px-3.5 py-2 -ml-1 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] active:opacity-80 min-h-[48px] justify-center shrink-0"
             accessibilityRole="button"
             accessibilityLabel="Back to conversations list"
           >
-            <ArrowLeft size={16} color="#1c1917" />
-            <Text className="ml-1 text-xs font-bold text-stone-900">Chats</Text>
+            <ArrowLeft size={18} color="#1C1917" />
+            <Text className="ml-1.5 text-base font-semibold text-[#1C1917]">Chats</Text>
           </Pressable>
         )}
 
@@ -74,12 +74,12 @@ export const ChatThreadHeader: React.FC<ChatThreadHeaderProps> = ({
       {!isCompact && onBack && (
         <Pressable
           onPress={onBack}
-          className="flex-row items-center px-2.5 py-1.5 rounded-lg bg-stone-100 active:bg-stone-200 min-h-[36px] shrink-0"
+          className="flex-row items-center px-3.5 py-2 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] active:opacity-80 min-h-[48px] shrink-0"
           accessibilityRole="button"
           accessibilityLabel={backLabel}
         >
-          <ArrowLeft size={16} color="#1c1917" />
-          <Text className="ml-1 text-xs font-bold text-stone-900">{backLabel}</Text>
+          <ArrowLeft size={18} color="#1C1917" />
+          <Text className="ml-1.5 text-base font-semibold text-[#1C1917]">{backLabel}</Text>
         </Pressable>
       )}
     </View>

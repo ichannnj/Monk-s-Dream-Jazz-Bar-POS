@@ -36,20 +36,20 @@ export const CashDrawerLedger: React.FC<CashDrawerLedgerProps> = ({ entries }) =
                   }`}
                 >
                   <Text
-                    className={`text-xs font-black uppercase tracking-wider ${
-                      entry.type === 'sale' ? 'text-[#810021]' : 'text-stone-800'
+                    className={`text-base font-bold uppercase ${
+                      entry.type === 'sale' ? 'text-[#810021]' : 'text-[#1C1917]'
                     }`}
                   >
                     {entry.type.replace('_', ' ')}
                   </Text>
                 </View>
 
-                <View className="flex-1">
-                  <Text className="text-base font-bold text-stone-900" numberOfLines={1}>
+                <View className="flex-1 min-w-0">
+                  <Text className="text-base font-bold text-[#1C1917]" numberOfLines={1}>
                     {entry.reason}
                   </Text>
-                  <Text className="text-sm text-stone-500 mt-0.5">
-                    {entry.performedBy} • {entry.timestamp}
+                  <Text className="text-base text-[#57534E] mt-0.5" numberOfLines={1}>
+                    {entry.performedBy} · {entry.timestamp}
                   </Text>
                 </View>
               </View>

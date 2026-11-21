@@ -140,7 +140,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
   };
 
   return (
-    <View className="flex-1 bg-[#fcf9f9]">
+    <View className="flex-1 bg-[#FAF8F5]">
       {/* Top Header & Compact Filter Bar */}
       <ChecksFilterToolbar
         selectedMode={selectedMode}
@@ -168,17 +168,20 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
           {/* If on narrow screen (<900px) and detail is open, show inline receipt inspector without popup modals */}
           {!isWideScreen && isDetailOpen && selectedCheck ? (
             <View className="flex-1 bg-[#FAF8F5]">
-              <View className="bg-white border-b border-stone-200 px-4 py-2.5 flex-row items-center justify-between">
+              <View className="bg-white border-b border-[#E7E5E4] px-3 py-2.5 flex-row items-center justify-between gap-2">
                 <Pressable
                   onPress={() => setIsDetailOpen(false)}
-                  className="flex-row items-center gap-1.5 min-h-[48px] px-3.5 py-1.5 rounded-xl bg-stone-100 active:bg-stone-200"
+                  className="flex-row items-center gap-1.5 min-h-[48px] px-3.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] active:opacity-80 shrink-0"
                   accessibilityRole="button"
                   accessibilityLabel="Back to checks list"
                 >
-                  <ArrowLeft size={18} color="#1c1917" />
-                  <Text className="text-base font-bold text-stone-900">Back to Checks</Text>
+                  <ArrowLeft size={18} color="#1C1917" />
+                  <Text className="text-base font-semibold text-[#1C1917]">Back to Checks</Text>
                 </Pressable>
-                <Text className="text-base font-bold text-stone-600">
+                <Text
+                  className="text-base font-semibold text-[#57534E] min-w-0 flex-1 text-right"
+                  numberOfLines={1}
+                >
                   {selectedCheck.checkNumber} · {selectedCheck.guestName}
                 </Text>
               </View>
@@ -244,12 +247,12 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                                   <Text className="text-base font-semibold text-stone-600 truncate">
                                     {chk.guestName}
                                   </Text>
-                                  <View className="px-2 py-0.5 rounded-md border bg-[#FAF8F5] border-stone-200">
+                                  <View className="px-2 py-0.5 rounded-md border bg-[#FAF8F5] border-[#E7E5E4]">
                                     <Text
-                                      className={`text-xs font-bold ${
+                                      className={`text-base font-semibold ${
                                         chk.operatingMode === 'EVENT'
                                           ? 'text-[#810021]'
-                                          : 'text-stone-700'
+                                          : 'text-[#57534E]'
                                       }`}
                                     >
                                       {chk.operatingMode === 'EVENT' ? 'EVENT' : 'CAFE'}
@@ -261,8 +264,8 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                                       (chk.serviceCharge || 0) +
                                       (chk.corkageFee || 0) +
                                       1 ? (
-                                    <View className="px-2 py-0.5 rounded-md border bg-[#fdf2f4] border-[#810021]/25">
-                                      <Text className="text-xs font-extrabold text-[#810021]">
+                                    <View className="px-2 py-0.5 rounded-md border bg-[#810021]/10 border-[#810021]/25">
+                                      <Text className="text-base font-bold text-[#810021]">
                                         TABLE PAY
                                       </Text>
                                     </View>
@@ -270,8 +273,8 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                                     chk.total === 0 &&
                                     chk.subtotal > 0 &&
                                     chk.paymentMethod !== 'COMP' ? (
-                                    <View className="px-2 py-0.5 rounded-md border bg-stone-100 border-stone-300">
-                                      <Text className="text-xs font-bold text-stone-600">
+                                    <View className="px-2 py-0.5 rounded-md border bg-[#FAF8F5] border-[#E7E5E4]">
+                                      <Text className="text-base font-semibold text-[#57534E]">
                                         W/ TABLE
                                       </Text>
                                     </View>
@@ -289,18 +292,18 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                               </Text>
                               {chk.paymentMethod === 'SPLIT' ||
                               (chk.tenders && chk.tenders.length > 0) ? (
-                                <View className="mt-1 bg-[#FAF8F5] border border-stone-300 px-2 py-0.5 rounded-md flex-row items-center gap-1">
-                                  <Text className="text-xs font-bold text-[#810021] uppercase">
+                                <View className="mt-1 bg-[#FAF8F5] border border-[#E7E5E4] px-2 py-0.5 rounded-md flex-row items-center gap-1">
+                                  <Text className="text-base font-semibold text-[#810021] uppercase">
                                     SPLIT ({chk.tenders?.length || 'MULTI'})
                                   </Text>
                                 </View>
                               ) : (
                                 <View className="mt-1 bg-[#FAF8F5] px-2 py-0.5 rounded-md flex-row items-center gap-1">
-                                  <Text className="text-xs font-bold text-stone-700 uppercase">
+                                  <Text className="text-base font-semibold text-[#57534E] uppercase">
                                     {chk.paymentChannel || chk.paymentMethod.replace('_', ' ')}
                                   </Text>
                                   {chk.referenceNumber ? (
-                                    <Text className="text-xs font-bold text-[#810021] font-mono">
+                                    <Text className="text-base font-semibold text-[#810021] font-mono">
                                       #{chk.referenceNumber}
                                     </Text>
                                   ) : null}

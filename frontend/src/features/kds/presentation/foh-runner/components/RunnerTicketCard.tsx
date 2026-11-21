@@ -4,7 +4,6 @@ import { BellRing, Repeat, Clock, Coffee, Utensils, CheckCircle2 } from 'lucide-
 import { RunnerTicket } from '../types';
 import { RunnerTicketItemList } from './RunnerTicketItemList';
 import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
-import { styles } from './RunnerTicketCard.styles';
 
 interface RunnerTicketCardProps {
   ticket: RunnerTicket;
@@ -46,76 +45,86 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
   );
 
   return (
-    <View style={[styles.ticketCard, ticket.allDone && styles.ticketCardReady]}>
+    <View
+      className={`rounded-2xl bg-white border p-4 gap-3.5 ${
+        ticket.allDone ? 'border-emerald-300' : 'border-[#E7E5E4]'
+      }`}
+    >
       {/* Buzzout Highlight Banner */}
       {ticket.allDone ? (
-        <View style={styles.buzzoutBanner}>
-          <BellRing size={20} color="#ffffff" />
-          <Text style={styles.buzzoutBannerText}>🔔 BUZZOUT: FULL ORDER READY FOR DELIVERY</Text>
+        <View className="flex-row items-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2">
+          <BellRing size={18} color="#065F46" />
+          <Text className="text-base font-bold text-emerald-900">
+            Full Order Ready for Delivery
+          </Text>
         </View>
       ) : null}
 
       {/* Table Relocation Warning Banner */}
       {ticket.transferredFrom ? (
-        <View style={styles.relocatedBanner}>
-          <Repeat size={18} color="#b45309" />
-          <Text style={styles.relocatedBannerText}>
-            MOVED: {ticket.transferredFrom.tableCode} ➔ {ticket.sourceTitle.split(' · ')[0]}
+        <View className="flex-row items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
+          <Repeat size={18} color="#B45309" />
+          <Text className="text-base font-bold text-amber-900">
+            Moved: {ticket.transferredFrom.tableCode} → {ticket.sourceTitle.split(' · ')[0]}
           </Text>
         </View>
       ) : null}
 
       {/* Header */}
-      <View style={styles.ticketHeader}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.sourceText}>{ticket.sourceTitle}</Text>
-          <Text style={styles.guestText}>{ticket.guestName}</Text>
+      <View className="flex-row items-start justify-between gap-2">
+        <View className="min-w-0 flex-1 gap-0.5">
+          <Text className="text-pos-lg font-extrabold text-[#1C1917]" numberOfLines={1}>
+            {ticket.sourceTitle}
+          </Text>
+          <Text className="text-base font-medium text-[#57534E]" numberOfLines={1}>
+            {ticket.guestName}
+          </Text>
           {ticket.orderType === 'takeout' && ticket.isPrepaid !== undefined ? (
             <View
-              style={{
-                alignSelf: 'flex-start',
-                marginTop: 4,
-                paddingHorizontal: 8,
-                paddingVertical: 2,
-                borderRadius: 6,
-                backgroundColor: ticket.isPrepaid ? '#dcfce7' : '#fef3c7',
-              }}
+              className={`self-start mt-1 px-2.5 py-0.5 rounded-lg border ${
+                ticket.isPrepaid
+                  ? 'bg-emerald-50 border-emerald-200'
+                  : 'bg-amber-50 border-amber-200'
+              }`}
             >
               <Text
-                style={{
-                  fontSize: 16,
-                  fontWeight: '800',
-                  color: ticket.isPrepaid ? '#15803d' : '#b45309',
-                }}
+                className={`text-base font-bold ${
+                  ticket.isPrepaid ? 'text-emerald-800' : 'text-amber-800'
+                }`}
               >
-                {ticket.isPrepaid ? 'PAID' : 'DUE AT COUNTER'}
+                {ticket.isPrepaid ? 'Paid' : 'Due at Counter'}
               </Text>
             </View>
           ) : null}
         </View>
+
         <View
-          style={[
-            styles.timerPill,
-            liveTimer.urgency === 'late' && { backgroundColor: '#fee2e2' },
-            liveTimer.urgency === 'warning' && { backgroundColor: '#fef3c7' },
-          ]}
+          className={`flex-row items-center gap-1.5 rounded-full border px-3 py-1 shrink-0 ${
+            liveTimer.urgency === 'late'
+              ? 'bg-rose-50 border-rose-200'
+              : liveTimer.urgency === 'warning'
+                ? 'bg-amber-50 border-amber-200'
+                : 'bg-[#FAF8F5] border-[#E7E5E4]'
+          }`}
         >
           <Clock
             size={16}
             color={
               liveTimer.urgency === 'late'
-                ? '#b91c1c'
+                ? '#B91C1C'
                 : liveTimer.urgency === 'warning'
-                  ? '#b45309'
-                  : '#6b7280'
+                  ? '#B45309'
+                  : '#57534E'
             }
           />
           <Text
-            style={[
-              styles.timerText,
-              liveTimer.urgency === 'late' && { color: '#b91c1c' },
-              liveTimer.urgency === 'warning' && { color: '#b45309' },
-            ]}
+            className={`text-base font-bold tabular-nums ${
+              liveTimer.urgency === 'late'
+                ? 'text-rose-800'
+                : liveTimer.urgency === 'warning'
+                  ? 'text-amber-800'
+                  : 'text-[#1C1917]'
+            }`}
           >
             {liveTimer.formattedTimer}
           </Text>
@@ -123,76 +132,70 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
       </View>
 
       {/* Assembly Progress Bar */}
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBarBg}>
+      <View className="gap-1.5">
+        <View className="h-2 bg-[#FAF8F5] border border-[#E7E5E4] rounded-full overflow-hidden">
           <View
-            style={[
-              styles.progressBarFill,
-              { width: `${progressPct}%` },
-              ticket.allDone && { backgroundColor: '#15803d' },
-            ]}
+            className={`h-full rounded-full ${ticket.allDone ? 'bg-emerald-500' : 'bg-[#810021]'}`}
+            style={{ width: `${progressPct}%` }}
           />
         </View>
-        <Text style={styles.progressText}>
-          {ticket.readyItemsCount} of {ticket.totalItemsCount} items ready (
-          {Math.round(progressPct)}%)
+        <Text className="text-base font-semibold text-[#57534E] tabular-nums">
+          {ticket.readyItemsCount}/{ticket.totalItemsCount} items ready
         </Text>
       </View>
 
-      {/* Items List */}
+      {/* Item Breakdown */}
       <RunnerTicketItemList items={ticket.items} />
 
-      {/* Partial Dispatch Actions */}
-      {!ticket.allDone ? (
-        <View style={styles.partialActionsRow}>
+      {/* Partial Delivery Actions */}
+      {!ticket.allDone && (hasReadyBar || hasReadyKitchen) ? (
+        <View className="flex-row flex-wrap gap-2">
           {hasReadyBar && hasPendingKitchen ? (
             <Pressable
               onPress={() => onDeliverTarget(ticket, 'bar')}
-              style={[styles.btnPartialAction, styles.btnDeliverDrinks]}
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Deliver drinks for ${ticket.sourceTitle}`}
             >
-              <Coffee size={18} color="#0284c7" />
-              <Text style={[styles.btnPartialText, styles.btnDeliverDrinksText]}>
-                Deliver Drinks
-              </Text>
+              <Coffee size={18} color="#810021" />
+              <Text className="text-base font-semibold text-[#1C1917]">Deliver Drinks</Text>
             </Pressable>
           ) : null}
 
           {hasReadyKitchen && hasPendingBar ? (
             <Pressable
               onPress={() => onDeliverTarget(ticket, 'kitchen')}
-              style={[styles.btnPartialAction, styles.btnDeliverFood]}
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Deliver food for ${ticket.sourceTitle}`}
             >
-              <Utensils size={18} color="#d97706" />
-              <Text style={[styles.btnPartialText, styles.btnDeliverFoodText]}>Deliver Food</Text>
+              <Utensils size={18} color="#810021" />
+              <Text className="text-base font-semibold text-[#1C1917]">Deliver Food</Text>
             </Pressable>
           ) : null}
         </View>
       ) : null}
 
-      {/* Handoff Button */}
+      {/* Full Handoff Action */}
       <Pressable
         onPress={() => onHandoff(ticket)}
-        style={({ pressed }) => [
-          styles.handoffBtn,
-          ticket.allDone && styles.handoffBtnReady,
-          pressed && styles.btnPressed,
-        ]}
+        className={`min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl px-4 active:opacity-85 ${
+          ticket.allDone ? 'bg-[#810021]' : 'bg-[#FAF8F5] border border-[#E7E5E4]'
+        }`}
         accessibilityRole="button"
         accessibilityLabel={
           ticket.orderType === 'dine_in'
-            ? `Deliver Round ${ticket.roundNumber || 1} to ${ticket.sourceTitle.split(' · ')[0] || 'Table'}`
-            : 'Hand Off to Courier or Guest'
+            ? `Deliver round ${ticket.roundNumber || 1} to ${ticket.sourceTitle}`
+            : `Complete hand-off for ${ticket.sourceTitle}`
         }
       >
-        <CheckCircle2 size={20} color="#ffffff" />
-        <Text style={styles.handoffBtnText}>
+        <CheckCircle2 size={18} color={ticket.allDone ? '#FFFFFF' : '#1C1917'} />
+        <Text
+          className={`text-base font-semibold ${ticket.allDone ? 'text-white' : 'text-[#1C1917]'}`}
+        >
           {ticket.orderType === 'dine_in'
-            ? `Deliver Round ${ticket.roundNumber || 1} to ${ticket.sourceTitle.split(' · ')[0] || 'Table'}`
-            : 'Hand Off to Courier / Guest'}
+            ? `Deliver Round ${ticket.roundNumber || 1}`
+            : 'Complete Hand-off'}
         </Text>
       </Pressable>
     </View>

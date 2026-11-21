@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, ScrollView, Text, StyleSheet } from 'react-native';
+import { View, ScrollView, Text } from 'react-native';
 import { useResponsive } from '@/features/shared';
 import { ConfirmationModal } from '@/features/shared/ui/ConfirmationModal';
 import { useRunnerTickets } from '@/features/kds/presentation/foh-runner/hooks/useRunnerTickets';
@@ -49,8 +49,7 @@ export const FohWorkspaceView: React.FC = () => {
   }, [runnerTickets, queueFilter]);
 
   return (
-    <View style={styles.container}>
-      {/* Top FOH Command Bar */}
+    <View className="flex-1 bg-[#FAF8F5]">
       <FohCommandBar
         currentFilter={queueFilter}
         onFilterChange={setQueueFilter}
@@ -58,37 +57,35 @@ export const FohWorkspaceView: React.FC = () => {
         isMobile={isMobile}
       />
 
-      {/* Pass Tickets Scroll View */}
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 28 }}
+      >
         {filteredTickets.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyTitle}>Pass Staging Clear</Text>
-            <Text style={styles.emptySubtitle}>
+          <View className="bg-white border border-[#E7E5E4] rounded-2xl py-14 px-6 items-center justify-center my-2">
+            <Text className="text-pos-lg font-bold text-[#1C1917] text-center mb-1">
+              Pass Staging Clear
+            </Text>
+            <Text className="text-base text-[#57534E] text-center max-w-md">
               {queueFilter === 'ready'
                 ? 'No fully prepared orders currently awaiting delivery to tables.'
-                : 'All drinks and dishes are served. Staging pass is completely clear!'}
+                : 'All drinks and dishes are served. Staging pass is completely clear.'}
             </Text>
           </View>
         ) : (
-          <View style={styles.grid}>
+          <View className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
             {filteredTickets.map((ticket) => (
-              <View
+              <RunnerTicketCard
                 key={ticket.id}
-                className="w-full md:w-[48%] xl:w-[32%]"
-                style={styles.cardWrapper}
-              >
-                <RunnerTicketCard
-                  ticket={ticket}
-                  onDeliverTarget={(t, target) => setConfirmHandoff({ ticket: t, target })}
-                  onHandoff={(t) => setConfirmHandoff({ ticket: t })}
-                />
-              </View>
+                ticket={ticket}
+                onDeliverTarget={(t, target) => setConfirmHandoff({ ticket: t, target })}
+                onHandoff={(t) => setConfirmHandoff({ ticket: t })}
+              />
             ))}
           </View>
         )}
       </ScrollView>
 
-      {/* Confirmation Modal for Deliveries & Handoffs */}
       <ConfirmationModal
         visible={!!confirmHandoff}
         title={
@@ -119,46 +116,3 @@ export const FohWorkspaceView: React.FC = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    backgroundColor: '#f8fafc',
-  },
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  emptyContainer: {
-    padding: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    marginTop: 12,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#334155',
-  },
-  emptySubtitle: {
-    fontSize: 15,
-    color: '#94a3b8',
-    textAlign: 'center',
-    maxWidth: 420,
-  },
-  grid: {
-    display: 'flex',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 16,
-  },
-  cardWrapper: {
-    marginBottom: 4,
-  },
-});
