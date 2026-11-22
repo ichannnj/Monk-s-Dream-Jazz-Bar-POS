@@ -151,14 +151,14 @@ isOneToOne: false
                   ]
                 },"inventory_items": {
                   Row: {
-                    "category": Database["public"]['Enums']["inventory_category"],"created_at": string,"current_stock": number,"id": string,"min_alert_level": number,"name": string,"sku": string,"supplier_id": string | null,"supplier_name": string | null,"unit": string,"unit_cost": number,"updated_at": string
+                    "category": Database["public"]['Enums']["inventory_category"],"created_at": string,"current_stock": number,"grocery_note": string | null,"id": string,"min_alert_level": number,"name": string,"reference_image_storage_path": string | null,"reference_image_url": string | null,"sku": string,"supplier_id": string | null,"supplier_name": string | null,"target_stock_level": number | null,"unit": string,"unit_cost": number,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "category": Database["public"]['Enums']["inventory_category"],"created_at"?: string,"current_stock"?: number,"id"?: string,"min_alert_level"?: number,"name": string,"sku": string,"supplier_id"?: string | null,"supplier_name"?: string | null,"unit": string,"unit_cost"?: number,"updated_at"?: string
+                    "category": Database["public"]['Enums']["inventory_category"],"created_at"?: string,"current_stock"?: number,"grocery_note"?: string | null,"id"?: string,"min_alert_level"?: number,"name": string,"reference_image_storage_path"?: string | null,"reference_image_url"?: string | null,"sku": string,"supplier_id"?: string | null,"supplier_name"?: string | null,"target_stock_level"?: number | null,"unit": string,"unit_cost"?: number,"updated_at"?: string
                   }
                   Update: {
-                    "category"?: Database["public"]['Enums']["inventory_category"],"created_at"?: string,"current_stock"?: number,"id"?: string,"min_alert_level"?: number,"name"?: string,"sku"?: string,"supplier_id"?: string | null,"supplier_name"?: string | null,"unit"?: string,"unit_cost"?: number,"updated_at"?: string
+                    "category"?: Database["public"]['Enums']["inventory_category"],"created_at"?: string,"current_stock"?: number,"grocery_note"?: string | null,"id"?: string,"min_alert_level"?: number,"name"?: string,"reference_image_storage_path"?: string | null,"reference_image_url"?: string | null,"sku"?: string,"supplier_id"?: string | null,"supplier_name"?: string | null,"target_stock_level"?: number | null,"unit"?: string,"unit_cost"?: number,"updated_at"?: string
                   }
                   Relationships: [
                     {

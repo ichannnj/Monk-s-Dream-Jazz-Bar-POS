@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import { FileSpreadsheet, Plus, Building2, ClipboardCheck, Trash2 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { InventoryItemAdmin } from '../../../../data/admin.api';
@@ -11,10 +11,8 @@ interface InventoryHeaderAndTabsProps {
   setActiveTab: (tab: InventoryTab) => void;
   inventory: InventoryItemAdmin[];
   categoryFilter: string;
+  toBuyCount: number;
   suppliersCount: number;
-  movementsCount: number;
-  isLoadingSupporting: boolean;
-  handleRefreshAll: () => void;
   onAddItem: () => void;
   onAddSupplier: () => void;
   onRunStocktake: () => void;
@@ -26,134 +24,140 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
   setActiveTab,
   inventory,
   categoryFilter,
+  toBuyCount,
   suppliersCount,
-  movementsCount,
   onAddItem,
   onAddSupplier,
   onRunStocktake,
   onLogSpillage,
 }) => {
-  const inventoryTabItems: Array<{
-    id: InventoryTab;
-    label: string;
-    count?: number;
-  }> = [
-    { id: 'stock', label: 'Stock On-Hand', count: inventory.length },
+  const tabs: Array<{ id: InventoryTab; label: string; count?: number }> = [
+    { id: 'stock', label: 'Stock', count: inventory.length },
+    { id: 'grocery', label: 'To Buy', count: toBuyCount },
     { id: 'suppliers', label: 'Suppliers', count: suppliersCount },
-    { id: 'ledger', label: 'Movements Ledger', count: movementsCount },
-    { id: 'stocktake', label: 'Stocktake Audit' },
-    { id: 'waste', label: 'Spillage & Waste' },
+    { id: 'activity', label: 'Activity & Audits' },
   ];
 
-  return (
-    <>
-      {/* 1. Header (Clean single line, no subtitle, no manual refresh button) */}
-      <View className="mb-5 flex-row items-center justify-between flex-wrap gap-3">
-        <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
-          Inventory Hub
-        </Text>
+  const handleExport = () => {
+    try {
+      exportInventoryValuationToExcel(inventory, categoryFilter);
+      toast.success('Inventory valuation exported to Excel (.xls)', {
+        title: 'Excel Export Ready',
+      });
+    } catch {
+      toast.error('Failed to export inventory spreadsheet', { title: 'Export Error' });
+    }
+  };
 
-        {/* Global Hub Action Buttons */}
+  return (
+    <View className="mb-5 gap-4">
+      {/* Header Row */}
+      <View className="flex-row items-center justify-between flex-wrap gap-3">
+        <Text className="text-2xl font-extrabold tracking-tight text-[#1C1917]">Inventory</Text>
+
         <View className="flex-row items-center gap-2 flex-wrap">
           <Pressable
-            onPress={() => {
-              try {
-                exportInventoryValuationToExcel(inventory, categoryFilter);
-                toast.success('Inventory valuation exported to Excel (.xls)', {
-                  title: 'Excel Export Ready',
-                });
-              } catch (err) {
-                console.error('[AdminInventoryView] Export error:', err);
-                toast.error('Failed to export inventory spreadsheet', { title: 'Export Error' });
-              }
-            }}
-            className="h-10 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white px-3 active:bg-stone-50 shadow-xs"
-            accessibilityLabel="Export Inventory Valuation to Excel"
+            onPress={handleExport}
+            className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-[#E7E5E4] bg-white px-4 active:opacity-80"
+            accessibilityRole="button"
+            accessibilityLabel="Export inventory valuation to Excel"
           >
-            <FileSpreadsheet size={15} color="#800020" />
-            <Text className="ml-1.5 text-xs font-bold text-stone-800">Export</Text>
+            <FileSpreadsheet size={18} color="#810021" />
+            <Text className="ml-2 text-base font-bold text-[#1C1917]">Export</Text>
           </Pressable>
 
-          {activeTab === 'stock' && (
+          {(activeTab === 'stock' || activeTab === 'grocery') && (
             <Pressable
               onPress={onAddItem}
-              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#810021] px-4 active:opacity-85"
+              accessibilityRole="button"
+              accessibilityLabel="Add inventory item"
             >
-              <Plus size={16} color="#ffffff" />
-              <Text className="ml-1.5 text-xs font-bold text-white">Add Item</Text>
+              <Plus size={18} color="#FFFFFF" />
+              <Text className="ml-1.5 text-base font-bold text-white">Add Item</Text>
             </Pressable>
           )}
 
           {activeTab === 'suppliers' && (
             <Pressable
               onPress={onAddSupplier}
-              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs"
+              className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#810021] px-4 active:opacity-85"
+              accessibilityRole="button"
+              accessibilityLabel="Add supplier"
             >
-              <Building2 size={16} color="#ffffff" />
-              <Text className="ml-1.5 text-xs font-bold text-white">Add Supplier</Text>
+              <Building2 size={18} color="#FFFFFF" />
+              <Text className="ml-1.5 text-base font-bold text-white">Add Supplier</Text>
             </Pressable>
           )}
 
-          {activeTab === 'stocktake' && (
-            <Pressable
-              onPress={onRunStocktake}
-              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs"
-            >
-              <ClipboardCheck size={16} color="#ffffff" />
-              <Text className="ml-1.5 text-xs font-bold text-white">Run Stocktake</Text>
-            </Pressable>
-          )}
+          {activeTab === 'activity' && (
+            <>
+              <Pressable
+                onPress={onLogSpillage}
+                className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-[#E7E5E4] bg-white px-4 active:opacity-80"
+                accessibilityRole="button"
+                accessibilityLabel="Log spillage or waste"
+              >
+                <Trash2 size={18} color="#810021" />
+                <Text className="ml-1.5 text-base font-bold text-[#1C1917]">Log Waste</Text>
+              </Pressable>
 
-          {activeTab === 'waste' && (
-            <Pressable
-              onPress={onLogSpillage}
-              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs"
-            >
-              <Trash2 size={16} color="#ffffff" />
-              <Text className="ml-1.5 text-xs font-bold text-white">Log Spillage</Text>
-            </Pressable>
+              <Pressable
+                onPress={onRunStocktake}
+                className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#810021] px-4 active:opacity-85"
+                accessibilityRole="button"
+                accessibilityLabel="Start physical stocktake audit"
+              >
+                <ClipboardCheck size={18} color="#FFFFFF" />
+                <Text className="ml-1.5 text-base font-bold text-white">Stocktake</Text>
+              </Pressable>
+            </>
           )}
         </View>
       </View>
 
-      {/* 2. Top Segmented Navigation Tabs */}
-      <View className="mb-5 rounded-2xl bg-white p-1.5 border border-stone-200/80 shadow-xs">
-        <View className="flex-row items-center gap-1.5 flex-wrap">
-          {inventoryTabItems.map((tab) => {
-            const isActive = activeTab === tab.id;
-            return (
-              <Pressable
-                key={tab.id}
-                onPress={() => setActiveTab(tab.id)}
-                className={`flex-1 min-w-[120px] flex-row items-center justify-center py-2 px-3 rounded-xl transition-all ${
-                  isActive ? 'bg-[#FAF8F5] border border-stone-200' : 'active:bg-stone-50'
-                }`}
-              >
-                <Text
-                  className={`text-xs font-bold ${isActive ? 'text-[#800020]' : 'text-stone-600'}`}
+      {/* Scrollable Segmented Tab Bar */}
+      <View className="rounded-2xl bg-white p-1.5 border border-[#E7E5E4]">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View className="flex-row items-center gap-1.5">
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <Pressable
+                  key={tab.id}
+                  onPress={() => setActiveTab(tab.id)}
+                  className={`min-h-[48px] flex-row items-center justify-center px-4 rounded-xl ${
+                    isActive ? 'bg-[#810021]' : 'bg-transparent active:bg-[#FAF8F5]'
+                  }`}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: isActive }}
                 >
-                  {tab.label}
-                </Text>
-                {tab.count !== undefined && (
-                  <View
-                    className={`ml-1.5 rounded-full px-1.5 py-0.2 ${
-                      isActive ? 'bg-[#800020]' : 'bg-stone-100'
-                    }`}
+                  <Text
+                    className={`text-base font-bold ${isActive ? 'text-white' : 'text-[#1C1917]'}`}
                   >
-                    <Text
-                      className={`text-[10px] font-bold ${
-                        isActive ? 'text-white' : 'text-stone-700'
+                    {tab.label}
+                  </Text>
+                  {tab.count !== undefined && (
+                    <View
+                      className={`ml-2 rounded-full px-2 py-0.5 ${
+                        isActive ? 'bg-white/20' : 'bg-[#FAF8F5] border border-[#E7E5E4]'
                       }`}
                     >
-                      {tab.count}
-                    </Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
+                      <Text
+                        className={`text-base font-bold tabular-nums ${
+                          isActive ? 'text-white' : 'text-[#78716C]'
+                        }`}
+                      >
+                        {tab.count}
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </View>
+        </ScrollView>
       </View>
-    </>
+    </View>
   );
 };

@@ -2,10 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { PackagePlus } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
+import { PosDropdown, type PosDropdownOption } from '@/features/shared';
 import { adminApi, type InventoryItemAdmin, type SupplierAdmin } from '../../../data/admin.api';
+import {
+  uploadInventoryReferenceImage,
+  cleanupInventoryImageObject,
+  type PreparedInventoryImage,
+} from '../../../data/api/inventoryImage.service';
 import { AdminModal } from '../../components/AdminModal';
 import { AdminInput } from '../../components/AdminInput';
 import { AdminNumberInput } from '../../components/AdminNumberInput';
+import { InventoryPhotoField } from './components/InventoryPhotoField';
+import { validateInventoryItemInput } from './utils/inventoryCalculations';
 
 interface InventoryItemModalProps {
   visible: boolean;
@@ -42,20 +50,38 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
   const [currentStock, setCurrentStock] = useState('0');
   const [unit, setUnit] = useState('kg');
   const [minAlertLevel, setMinAlertLevel] = useState('5');
+  const [targetStockLevel, setTargetStockLevel] = useState('');
   const [unitCost, setUnitCost] = useState('0');
   const [supplierId, setSupplierId] = useState<string>('');
+  const [groceryNote, setGroceryNote] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [stagedImage, setStagedImage] = useState<PreparedInventoryImage | null>(null);
+  const [photoCleared, setPhotoCleared] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!visible) return;
+    setErrorMsg(null);
+    setStagedImage(null);
+    setPhotoCleared(false);
+
     if (item) {
       setSku(item.sku);
       setName(item.name);
       setCategory(item.category);
-      setCurrentStock(item.current_stock.toString());
+      setCurrentStock(String(item.current_stock ?? 0));
       setUnit(item.unit);
-      setMinAlertLevel(item.min_alert_level.toString());
-      setUnitCost(item.unit_cost.toString());
+      setMinAlertLevel(String(item.min_alert_level ?? 0));
+      setTargetStockLevel(
+        item.target_stock_level !== null && item.target_stock_level !== undefined
+          ? String(item.target_stock_level)
+          : ''
+      );
+      setUnitCost(String(item.unit_cost ?? 0));
       setSupplierId(item.supplier_id || (item.supplier?.id ?? ''));
+      setGroceryNote(item.grocery_note || '');
+      setImageUrl(item.reference_image_url || '');
     } else {
       setSku('');
       setName('');
@@ -63,104 +89,182 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
       setCurrentStock('0');
       setUnit('kg');
       setMinAlertLevel('5');
+      setTargetStockLevel('');
       setUnitCost('0');
       setSupplierId(suppliers[0]?.id || '');
+      setGroceryNote('');
+      setImageUrl('');
     }
   }, [item, suppliers, visible]);
 
+  const categoryOptions: PosDropdownOption<string>[] = INVENTORY_CATEGORIES.map((c) => ({
+    value: c.key,
+    label: c.label,
+  }));
+
+  const supplierOptions: PosDropdownOption<string>[] = [
+    { value: '', label: 'No Assigned Supplier' },
+    ...suppliers.map((s) => ({
+      value: s.id,
+      label: `${s.name} (${s.lead_time_days}d lead)`,
+    })),
+  ];
+
+  const handleClearPhoto = () => {
+    setStagedImage(null);
+    setImageUrl('');
+    setPhotoCleared(true);
+  };
+
   const handleSubmit = async () => {
-    if (!name.trim()) {
-      toast.error('Item name is required', { title: 'Validation Error' });
-      return;
-    }
-    if (!sku.trim()) {
-      toast.error('SKU is required', { title: 'Validation Error' });
+    const validation = validateInventoryItemInput({
+      name,
+      sku,
+      minAlertLevel,
+      targetStockLevel,
+      unitCost,
+      currentStock,
+      isEditing: Boolean(item),
+    });
+
+    if (!validation.valid) {
+      setErrorMsg(validation.error || 'Please check required fields.');
       return;
     }
 
     const stock = parseFloat(currentStock) || 0;
-    const par = parseFloat(minAlertLevel) || 1;
+    const par = parseFloat(minAlertLevel) || 0;
+    const target = targetStockLevel.trim() !== '' ? parseFloat(targetStockLevel) : null;
     const cost = parseFloat(unitCost) || 0;
 
+    setErrorMsg(null);
     setIsSubmitting(true);
     try {
       const selectedSupplier = suppliers.find((s) => s.id === supplierId);
+      let finalImageUrl: string | null = photoCleared ? null : imageUrl.trim() || null;
+      let finalStoragePath: string | null = photoCleared
+        ? null
+        : item?.reference_image_storage_path || null;
+
       if (item) {
+        if (stagedImage) {
+          const uploadRes = await uploadInventoryReferenceImage(item.id, stagedImage);
+          if (!uploadRes.success) {
+            setErrorMsg(uploadRes.error || 'Failed to upload reference photo.');
+            setIsSubmitting(false);
+            return;
+          }
+          if (item.reference_image_storage_path) {
+            cleanupInventoryImageObject(item.reference_image_storage_path);
+          }
+          finalImageUrl = uploadRes.publicUrl || null;
+          finalStoragePath = uploadRes.storagePath || null;
+        } else if (photoCleared && item.reference_image_storage_path) {
+          cleanupInventoryImageObject(item.reference_image_storage_path);
+        }
+
         await adminApi.updateInventoryItem(item.id, {
-          sku: sku.trim(),
+          sku: sku.trim().toUpperCase(),
           name: name.trim(),
           category: category as any,
           unit: unit.trim(),
           min_alert_level: par,
+          target_stock_level: target,
           unit_cost: cost,
           supplier_id: supplierId || null,
           supplier_name: selectedSupplier?.name || null,
+          reference_image_url: finalImageUrl,
+          reference_image_storage_path: finalStoragePath,
+          grocery_note: groceryNote.trim() || null,
         });
-        toast.success(`Updated "${name}"`, { title: 'Item Saved' });
+        toast.success(`Updated "${name.trim()}"`, { title: 'Item Saved' });
       } else {
-        await adminApi.createInventoryItem({
-          sku: sku.trim(),
+        const created = await adminApi.createInventoryItem({
+          sku: sku.trim().toUpperCase(),
           name: name.trim(),
           category: category as any,
           unit: unit.trim(),
           min_alert_level: par,
+          target_stock_level: target,
           unit_cost: cost,
           current_stock: stock,
           supplier_id: supplierId || null,
           supplier_name: selectedSupplier?.name || null,
+          reference_image_url: finalImageUrl,
+          reference_image_storage_path: null,
+          grocery_note: groceryNote.trim() || null,
         });
-        toast.success(`Created "${name}"`, { title: 'Item Added' });
+
+        if (stagedImage && created?.id) {
+          const uploadRes = await uploadInventoryReferenceImage(created.id, stagedImage);
+          if (uploadRes.success && uploadRes.publicUrl) {
+            await adminApi.updateInventoryItem(created.id, {
+              reference_image_url: uploadRes.publicUrl,
+              reference_image_storage_path: uploadRes.storagePath || null,
+            });
+          } else {
+            toast.warning('Item created, but photo upload failed. You can retry via Edit.', {
+              title: 'Photo Warning',
+            });
+          }
+        }
+        toast.success(`Created "${name.trim()}"`, { title: 'Item Added' });
       }
+
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to save inventory item', { title: 'Error' });
+      setErrorMsg(err?.message || 'Failed to save inventory item.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const footer = (
-    <>
+    <View className="flex-row items-center justify-end gap-2.5 w-full">
       <Pressable
         onPress={onClose}
         disabled={isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
       >
-        <Text className="text-base font-bold text-stone-700">Cancel</Text>
+        <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
       </Pressable>
       <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+        className="min-h-[48px] flex-1 sm:flex-initial px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-85"
       >
         <Text className="text-base font-bold text-white">
           {isSubmitting ? 'Saving...' : item ? 'Save Changes' : 'Create Item'}
         </Text>
       </Pressable>
-    </>
+    </View>
   );
 
   return (
     <AdminModal
       visible={visible}
       onClose={onClose}
-      title={item ? 'Edit Inventory Item' : 'New Inventory Item / Disposable'}
-      subtitle="Configure SKU, inventory category, stock alert thresholds, and unit costs"
-      icon={<PackagePlus size={22} color="#800020" />}
+      title={item ? 'Edit Inventory Item' : 'New Inventory Item'}
+      subtitle="SKU, thresholds, unit cost, and grocery reference"
+      icon={<PackagePlus size={20} color="#810021" />}
       size="lg"
       footer={footer}
     >
-      <View className="space-y-5">
-        {/* Name & SKU */}
-        <View className="flex-col sm:flex-row gap-4">
+      <View className="gap-5">
+        {/* Identity */}
+        <View className="flex-col sm:flex-row gap-3">
           <View className="flex-1">
             <AdminInput
               label="Item Name"
               required
               value={name}
-              onChangeText={setName}
-              placeholder="e.g. Specialty Espresso Beans, 12oz Takeout Cup"
+              onChangeText={(v) => {
+                setErrorMsg(null);
+                setName(v);
+              }}
+              placeholder="e.g. Oatside Barista Blend"
+              clearable
             />
           </View>
           <View className="w-full sm:w-44">
@@ -168,43 +272,43 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
               label="SKU / Code"
               required
               value={sku}
-              onChangeText={setSku}
-              placeholder="e.g. COF-001"
+              onChangeText={(v) => {
+                setErrorMsg(null);
+                setSku(v);
+              }}
+              placeholder="DRY-001"
+              autoCapitalize="characters"
               className="font-bold uppercase"
+              clearable
             />
           </View>
         </View>
 
-        {/* Category Selector */}
-        <View>
-          <Text className="text-base font-semibold text-stone-800 mb-2">Category</Text>
-          <View className="flex-row flex-wrap gap-2">
-            {INVENTORY_CATEGORIES.map((c) => {
-              const isSel = category === c.key;
-              return (
-                <Pressable
-                  key={c.key}
-                  onPress={() => setCategory(c.key)}
-                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
-                    isSel
-                      ? 'bg-[#800020] border-[#800020]'
-                      : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
-                  }`}
-                >
-                  <Text
-                    className={`text-base font-semibold ${isSel ? 'text-white' : 'text-stone-700'}`}
-                  >
-                    {c.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
+        {/* Category & Supplier */}
+        <View className="flex-col sm:flex-row gap-3">
+          <View className="flex-1">
+            <Text className="text-base font-semibold text-[#1C1917] mb-1.5">Category</Text>
+            <PosDropdown
+              mode="select"
+              options={categoryOptions}
+              value={category}
+              onChange={setCategory}
+            />
+          </View>
+          <View className="flex-1">
+            <Text className="text-base font-semibold text-[#1C1917] mb-1.5">Primary Supplier</Text>
+            <PosDropdown
+              mode="select"
+              options={supplierOptions}
+              value={supplierId}
+              onChange={setSupplierId}
+            />
           </View>
         </View>
 
-        {/* Measurement Unit */}
+        {/* Unit Selector */}
         <View>
-          <Text className="text-base font-semibold text-stone-800 mb-2">Measurement Unit</Text>
+          <Text className="text-base font-semibold text-[#1C1917] mb-2">Measurement Unit</Text>
           <View className="flex-row flex-wrap gap-2">
             {STANDARD_UNITS.map((u) => {
               const isSel = unit === u;
@@ -212,14 +316,12 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
                 <Pressable
                   key={u}
                   onPress={() => setUnit(u)}
-                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
-                    isSel
-                      ? 'bg-[#800020] border-[#800020]'
-                      : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
+                  className={`min-h-[48px] min-w-[56px] px-4 items-center justify-center rounded-xl border ${
+                    isSel ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E7E5E4]'
                   }`}
                 >
                   <Text
-                    className={`text-base font-bold ${isSel ? 'text-white' : 'text-stone-700'}`}
+                    className={`text-base font-bold ${isSel ? 'text-white' : 'text-[#1C1917]'}`}
                   >
                     {u}
                   </Text>
@@ -229,20 +331,31 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
           </View>
         </View>
 
-        {/* Par Alert, Stock, & Unit Cost */}
-        <View className="flex-col sm:flex-row gap-4">
+        {/* Stock, Par & Target */}
+        <View className="flex-col sm:flex-row gap-3">
           <View className="flex-1">
             <AdminNumberInput
-              label="Min Par (Alert Level)"
+              label={`Min Par Alert (${unit})`}
               mode="decimal"
               value={minAlertLevel}
               onChangeText={setMinAlertLevel}
               placeholder="5"
               suffix={unit}
-              helperText="Alerts station when below this"
             />
           </View>
+          <View className="flex-1">
+            <AdminNumberInput
+              label={`Target Reorder Level (${unit})`}
+              mode="decimal"
+              value={targetStockLevel}
+              onChangeText={setTargetStockLevel}
+              placeholder="Optional"
+              suffix={unit}
+            />
+          </View>
+        </View>
 
+        <View className="flex-col sm:flex-row gap-3">
           <View className="flex-1">
             <AdminNumberInput
               label={`Unit Cost (₱ / ${unit})`}
@@ -250,72 +363,54 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
               value={unitCost}
               onChangeText={setUnitCost}
               placeholder="0.00"
-              helperText="Moving average cost basis"
+            />
+          </View>
+          <View className="flex-1">
+            <AdminNumberInput
+              label={`On-Hand Stock (${unit})`}
+              mode="decimal"
+              value={currentStock}
+              onChangeText={setCurrentStock}
+              editable={!item}
+              placeholder="0.00"
+              suffix={unit}
+              className={item ? 'bg-[#FAF8F5] text-[#78716C]' : ''}
             />
           </View>
         </View>
 
-        {/* Initial Stock */}
-        <View>
-          <AdminNumberInput
-            label={`Current Stock On-Hand (${unit})`}
-            mode="decimal"
-            value={currentStock}
-            onChangeText={setCurrentStock}
-            editable={!item}
-            placeholder="0.00"
-            suffix={unit}
-            helperText={
-              item
-                ? 'On-hand stock must be adjusted via Restock Intake or Stocktake Audit'
-                : 'Initial counted stock at setup'
-            }
-            className={item ? 'bg-stone-100 text-stone-500' : ''}
+        {/* Grocery Reference Photo & Note */}
+        <View className="pt-2 border-t border-[#E7E5E4] gap-4">
+          <InventoryPhotoField
+            currentImageUrl={photoCleared ? null : item?.reference_image_url}
+            stagedImage={stagedImage}
+            onStagedImageChange={(img) => {
+              setPhotoCleared(false);
+              setStagedImage(img);
+            }}
+            urlValue={imageUrl}
+            onUrlValueChange={(val) => {
+              setPhotoCleared(false);
+              setImageUrl(val);
+            }}
+            onClearPhoto={handleClearPhoto}
+            itemName={name || sku}
+          />
+
+          <AdminInput
+            label="Grocery / Brand Note"
+            value={groceryNote}
+            onChangeText={setGroceryNote}
+            placeholder="e.g. Blue Barista Blend carton, 1L — S&R or Landmark"
+            clearable
           />
         </View>
 
-        {/* Primary Supplier */}
-        <View>
-          <Text className="text-base font-semibold text-stone-800 mb-2">
-            Primary Vendor / Supplier
-          </Text>
-          <View className="flex-row flex-wrap gap-2">
-            <Pressable
-              onPress={() => setSupplierId('')}
-              className={`min-h-[48px] px-4 items-center justify-center rounded-xl border ${
-                !supplierId
-                  ? 'bg-stone-800 border-stone-800'
-                  : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
-              }`}
-            >
-              <Text
-                className={`text-base font-medium ${!supplierId ? 'text-white' : 'text-stone-700'}`}
-              >
-                No Assigned Supplier
-              </Text>
-            </Pressable>
-            {suppliers.map((s) => {
-              const isSel = supplierId === s.id;
-              return (
-                <Pressable
-                  key={s.id}
-                  onPress={() => setSupplierId(s.id)}
-                  className={`min-h-[48px] px-4 items-center justify-center rounded-xl border ${
-                    isSel
-                      ? 'bg-[#800020] border-[#800020]'
-                      : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
-                  }`}
-                >
-                  <Text
-                    className={`text-base font-semibold ${isSel ? 'text-white' : 'text-stone-700'}`}
-                  >
-                    {s.name} ({s.lead_time_days}d lead)
-                  </Text>
-                </Pressable>
-              );
-            })}
+        {errorMsg && (
+          <View className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3">
+            <Text className="text-base font-semibold text-[#b32638]">{errorMsg}</Text>
           </View>
-        </View>
+        )}
       </View>
     </AdminModal>
   );

@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import { Trash2, DollarSign } from 'lucide-react-native';
+import { Trash2, Search } from 'lucide-react-native';
+import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type InventoryItemAdmin } from '../../../data/admin.api';
 import { AdminModal } from '../../components/AdminModal';
+import { AdminInput } from '../../components/AdminInput';
 import { AdminNumberInput } from '../../components/AdminNumberInput';
+import { validateWasteInput } from './utils/inventoryCalculations';
 
 interface WasteLoggerModalProps {
   visible: boolean;
@@ -28,32 +31,48 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
   inventory,
 }) => {
   const [selectedItemId, setSelectedItemId] = useState('');
+  const [itemSearch, setItemSearch] = useState('');
   const [quantity, setQuantity] = useState('');
   const [reason, setReason] = useState('DROPPED_SPILL');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (visible) {
       setSelectedItemId(inventory[0]?.id || '');
+      setItemSearch('');
       setQuantity('');
       setReason('DROPPED_SPILL');
+      setErrorMsg(null);
     }
   }, [inventory, visible]);
 
+  const filteredItems = useMemo(() => {
+    const q = itemSearch.trim().toLowerCase();
+    if (!q) return inventory;
+    return inventory.filter(
+      (i) => i.name.toLowerCase().includes(q) || i.sku.toLowerCase().includes(q)
+    );
+  }, [inventory, itemSearch]);
+
   const selectedItem = inventory.find((inv) => inv.id === selectedItemId);
   const qtyNum = parseFloat(quantity) || 0;
-  const costLost = selectedItem ? qtyNum * selectedItem.unit_cost : 0;
+  const currentStock = Number(selectedItem?.current_stock || 0);
+  const resultingStock = currentStock - qtyNum;
+  const costLost = selectedItem ? qtyNum * Number(selectedItem.unit_cost || 0) : 0;
 
   const handleSubmit = async () => {
     if (!selectedItemId) {
-      toast.error('Select an inventory item', { title: 'Validation Error' });
+      setErrorMsg('Please select an inventory item.');
       return;
     }
-    if (qtyNum <= 0) {
-      toast.error('Waste quantity must be greater than 0', { title: 'Validation Error' });
+    const validation = validateWasteInput(quantity);
+    if (!validation.valid) {
+      setErrorMsg(validation.error || 'Enter a valid waste quantity.');
       return;
     }
 
+    setErrorMsg(null);
     setIsSubmitting(true);
     try {
       await adminApi.logWaste({
@@ -63,37 +82,37 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
       });
 
       toast.success(
-        `Logged waste: ${qtyNum} ${selectedItem?.unit} of ${selectedItem?.name} (Loss: ₱${costLost.toFixed(2)})`,
-        { title: 'Waste Booked to Overheads' }
+        `Logged ${qtyNum} ${selectedItem?.unit} of ${selectedItem?.name} (${formatCurrency(costLost)} loss)`,
+        { title: 'Waste Recorded' }
       );
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to log inventory waste', { title: 'Error' });
+      setErrorMsg(err?.message || 'Failed to log inventory waste.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const footer = (
-    <>
+    <View className="flex-row items-center justify-end gap-2.5 w-full">
       <Pressable
         onPress={onClose}
         disabled={isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
       >
-        <Text className="text-base font-bold text-stone-700">Cancel</Text>
+        <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
       </Pressable>
       <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+        className="min-h-[48px] flex-1 sm:flex-initial px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-85"
       >
         <Text className="text-base font-bold text-white">
           {isSubmitting ? 'Logging...' : 'Confirm Waste Entry'}
         </Text>
       </Pressable>
-    </>
+    </View>
   );
 
   return (
@@ -101,69 +120,96 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
       visible={visible}
       onClose={onClose}
       title="Log Spillage & Waste"
-      subtitle="Record spoiled, spilled, or tasted stock against operational overheads"
-      icon={<Trash2 size={22} color="#e11d48" />}
+      subtitle="Deduct spilled, expired, or spoiled stock"
+      icon={<Trash2 size={20} color="#810021" />}
       size="md"
       footer={footer}
     >
-      <View className="space-y-4">
-        {/* Item Selector */}
-        <View>
-          <Text className="text-base font-semibold text-stone-800 mb-2">Select Item</Text>
-          <ScrollView className="max-h-44" showsVerticalScrollIndicator={true}>
-            <View className="flex-row flex-wrap gap-2">
-              {inventory.map((inv) => {
-                const isSel = selectedItemId === inv.id;
-                return (
-                  <Pressable
-                    key={inv.id}
-                    onPress={() => setSelectedItemId(inv.id)}
-                    className={`min-h-[48px] px-4 items-center justify-center rounded-xl border transition-all ${
-                      isSel
-                        ? 'bg-[#800020] border-[#800020]'
-                        : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
-                    }`}
-                  >
-                    <Text
-                      className={`text-base font-semibold ${isSel ? 'text-white' : 'text-stone-700'}`}
+      <View className="gap-4">
+        {/* Searchable Item Picker */}
+        <View className="gap-2">
+          <Text className="text-base font-semibold text-[#1C1917]">Select Item</Text>
+          <AdminInput
+            value={itemSearch}
+            onChangeText={setItemSearch}
+            placeholder="Search ingredient or SKU..."
+            leftElement={<Search size={18} color="#78716C" />}
+            clearable
+          />
+          <View className="rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] max-h-48 overflow-hidden">
+            <ScrollView nestedScrollEnabled showsVerticalScrollIndicator>
+              <View className="divide-y divide-[#E7E5E4]">
+                {filteredItems.map((inv) => {
+                  const isSel = selectedItemId === inv.id;
+                  return (
+                    <Pressable
+                      key={inv.id}
+                      onPress={() => {
+                        setErrorMsg(null);
+                        setSelectedItemId(inv.id);
+                      }}
+                      className={`min-h-[48px] px-3.5 py-2.5 flex-row items-center justify-between gap-2 ${
+                        isSel ? 'bg-[#810021]' : 'bg-white'
+                      }`}
                     >
-                      {inv.name} ({Number(inv.current_stock || 0).toFixed(1)} {inv.unit})
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </ScrollView>
+                      <Text
+                        className={`flex-1 text-base font-semibold ${
+                          isSel ? 'text-white' : 'text-[#1C1917]'
+                        }`}
+                        numberOfLines={1}
+                      >
+                        {inv.name}
+                      </Text>
+                      <Text
+                        className={`text-base font-bold tabular-nums ${
+                          isSel ? 'text-white' : 'text-[#78716C]'
+                        }`}
+                      >
+                        {Number(inv.current_stock || 0).toFixed(1)} {inv.unit}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+                {filteredItems.length === 0 && (
+                  <View className="p-4 items-center">
+                    <Text className="text-base text-[#78716C]">No matching items.</Text>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          </View>
         </View>
 
-        {/* Quantity */}
         <AdminNumberInput
           label={`Quantity Lost (${selectedItem?.unit || 'unit'})`}
+          required
           mode="decimal"
+          allowNegative={false}
           value={quantity}
-          onChangeText={setQuantity}
-          placeholder="e.g. 1.5"
+          onChangeText={(val) => {
+            setErrorMsg(null);
+            setQuantity(val);
+          }}
+          placeholder="0.00"
           suffix={selectedItem?.unit}
         />
 
-        {/* Waste Reason */}
-        <View>
-          <Text className="text-base font-semibold text-stone-800 mb-2">Loss Reason</Text>
-          <View className="space-y-2">
+        {/* Reason */}
+        <View className="gap-2">
+          <Text className="text-base font-semibold text-[#1C1917]">Loss Reason</Text>
+          <View className="gap-2">
             {WASTE_REASONS.map((r) => {
               const isSel = reason === r.key;
               return (
                 <Pressable
                   key={r.key}
                   onPress={() => setReason(r.key)}
-                  className={`min-h-[48px] px-4 flex-row items-center justify-between rounded-xl border transition-all ${
-                    isSel
-                      ? 'bg-rose-50 border-rose-300'
-                      : 'bg-white border-stone-200 active:bg-stone-100 hover:bg-stone-50'
+                  className={`min-h-[48px] px-4 flex-row items-center justify-between rounded-xl border ${
+                    isSel ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E7E5E4]'
                   }`}
                 >
                   <Text
-                    className={`text-base font-medium ${isSel ? 'text-rose-900 font-bold' : 'text-stone-700'}`}
+                    className={`text-base font-semibold ${isSel ? 'text-white' : 'text-[#1C1917]'}`}
                   >
                     {r.label}
                   </Text>
@@ -173,14 +219,36 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
           </View>
         </View>
 
-        {/* Financial Loss Preview */}
-        <View className="flex-row items-center justify-between rounded-xl bg-stone-100 p-4 border border-stone-200">
-          <View className="flex-row items-center space-x-2">
-            <DollarSign size={20} color="#e11d48" />
-            <Text className="text-base font-medium text-stone-700 ml-1.5">Financial Loss:</Text>
+        {/* Financial Loss & Remaining Stock Preview */}
+        <View className="rounded-xl bg-[#FAF8F5] p-4 border border-[#E7E5E4] gap-2">
+          <View className="flex-row items-center justify-between">
+            <Text className="text-base text-[#78716C]">Estimated Loss</Text>
+            <Text className="text-lg font-extrabold text-[#b32638] tabular-nums">
+              {formatCurrency(costLost)}
+            </Text>
           </View>
-          <Text className="text-lg font-bold text-rose-700">₱{costLost.toFixed(2)}</Text>
+          {selectedItem && qtyNum > 0 && (
+            <View className="flex-row items-center justify-between pt-2 border-t border-[#E7E5E4]">
+              <Text className="text-base text-[#78716C]">Remaining After Waste</Text>
+              <Text
+                className={`text-base font-bold tabular-nums ${
+                  resultingStock <= 0 ? 'text-[#b32638]' : 'text-[#1C1917]'
+                }`}
+              >
+                {resultingStock.toFixed(2)} {selectedItem.unit}
+                {resultingStock <= 0 && (selectedItem.linked_recipes?.length || 0) > 0
+                  ? ' (Auto-86)'
+                  : ''}
+              </Text>
+            </View>
+          )}
         </View>
+
+        {errorMsg && (
+          <View className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3">
+            <Text className="text-base font-semibold text-[#b32638]">{errorMsg}</Text>
+          </View>
+        )}
       </View>
     </AdminModal>
   );

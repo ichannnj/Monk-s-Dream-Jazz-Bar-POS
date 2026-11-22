@@ -40,6 +40,12 @@ export interface SupplierAdmin {
   notes: string | null;
 }
 
+export interface LinkedRecipeSummary {
+  id: string;
+  name: string;
+  auto_86: boolean;
+}
+
 export interface InventoryItemAdmin {
   id: string;
   sku: string;
@@ -48,10 +54,15 @@ export interface InventoryItemAdmin {
   current_stock: number;
   unit: string;
   min_alert_level: number;
+  target_stock_level?: number | null;
   unit_cost: number;
   supplier_name: string | null;
   supplier_id?: string | null;
   supplier?: SupplierAdmin | null;
+  reference_image_url?: string | null;
+  reference_image_storage_path?: string | null;
+  grocery_note?: string | null;
+  linked_recipes?: LinkedRecipeSummary[];
 }
 
 export interface CategoryAdmin {
@@ -196,6 +207,21 @@ export interface StocktakeSessionAdmin {
   status: string;
   total_variance_cost: number;
   created_at: string;
+}
+
+export interface WasteLogAdmin {
+  id: string;
+  inventory_item_id: string;
+  quantity: number;
+  cost_lost: number;
+  reason: string;
+  reported_by_id: string | null;
+  created_at: string;
+  inventory_item?: {
+    name: string;
+    sku: string;
+    unit: string;
+  };
 }
 
 export const PH_MINIMUM_WAGE_DAILY = 645.0;

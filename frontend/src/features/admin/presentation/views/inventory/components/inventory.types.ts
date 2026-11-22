@@ -1,10 +1,6 @@
-import type {
-  InventoryItemAdmin,
-  SupplierAdmin,
-  StockMovementAdmin,
-} from '../../../../data/admin.api';
+import type { InventoryItemAdmin } from '../../../../data/admin.api';
 
-export type InventoryTab = 'stock' | 'suppliers' | 'ledger' | 'stocktake' | 'waste';
+export type InventoryTab = 'stock' | 'grocery' | 'suppliers' | 'activity';
 export type StockStatusFilter = 'ALL' | 'IN_PAR' | 'BELOW_PAR' | 'DEPLETED';
 
 export interface AdminInventoryViewProps {

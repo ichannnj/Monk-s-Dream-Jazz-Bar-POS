@@ -5,6 +5,7 @@ import { useInventoryViewController } from './inventory/components/useInventoryV
 import { InventoryHeaderAndTabs } from './inventory/components/InventoryHeaderAndTabs';
 import { InventoryStockKpiAndFilters } from './inventory/components/InventoryStockKpiAndFilters';
 import { InventoryStockTable } from './inventory/components/InventoryStockTable';
+import { InventoryGroceryListSection } from './inventory/components/InventoryGroceryListSection';
 import { InventorySuppliersSection } from './inventory/components/InventorySuppliersSection';
 import { InventoryMovementsAndAuditSection } from './inventory/components/InventoryMovementsAndAuditSection';
 import { InventoryActionModals } from './inventory/components/InventoryActionModals';
@@ -27,17 +28,10 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
     ledgerTypeFilter,
     setLedgerTypeFilter,
     suppliers,
-    movements,
-    isLoadingSupporting,
+    stocktakeSessions,
+    wasteLogs,
     selectedRestockItem,
     setSelectedRestockItem,
-    restockQty,
-    setRestockQty,
-    restockCost,
-    setRestockCost,
-    restockInvoice,
-    setRestockInvoice,
-    isSubmittingRestock,
     selectedAdjustItem,
     setSelectedAdjustItem,
     isItemModalOpen,
@@ -52,21 +46,29 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
     setIsStocktakeModalOpen,
     isWasteModalOpen,
     setIsWasteModalOpen,
+    itemToDelete,
+    setItemToDelete,
+    supplierToDelete,
+    setSupplierToDelete,
+    isDeleting,
+    lightboxPhoto,
+    setLightboxPhoto,
     totalValuation,
     inParItemsCount,
     belowParItemsCount,
     depletedItemsCount,
+    toBuyItems,
     handleRefreshAll,
-    handleExecuteRestock,
-    handleDeleteItem,
-    handleDeleteSupplier,
+    requestDeleteItem,
+    confirmDeleteItem,
+    confirmDeleteSupplier,
     filteredInventory,
     filteredMovements,
   } = useInventoryViewController(inventory, onRefresh);
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f9] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       <InventoryHeaderAndTabs
@@ -74,10 +76,8 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         setActiveTab={setActiveTab}
         inventory={inventory}
         categoryFilter={categoryFilter}
+        toBuyCount={toBuyItems.length}
         suppliersCount={suppliers.length}
-        movementsCount={movements.length}
-        isLoadingSupporting={isLoadingSupporting}
-        handleRefreshAll={handleRefreshAll}
         onAddItem={() => {
           setEditingItem(null);
           setIsItemModalOpen(true);
@@ -90,9 +90,8 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         onLogSpillage={() => setIsWasteModalOpen(true)}
       />
 
-      {/* TAB 1: STOCK ON-HAND & REAL-TIME ALERTS */}
       {activeTab === 'stock' && (
-        <View className="space-y-6">
+        <View className="gap-4 pb-8">
           <InventoryStockKpiAndFilters
             inventory={inventory}
             totalValuation={totalValuation}
@@ -116,46 +115,57 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
               setEditingItem(item);
               setIsItemModalOpen(true);
             }}
-            onDeleteItem={handleDeleteItem}
+            onDeleteItem={requestDeleteItem}
+            onPreviewPhoto={setLightboxPhoto}
           />
         </View>
       )}
 
-      {/* TAB 2: SUPPLIERS DIRECTORY */}
-      {activeTab === 'suppliers' && (
-        <InventorySuppliersSection
-          suppliers={suppliers}
-          onEditSupplier={(sup) => {
-            setEditingSupplier(sup);
-            setIsSupplierModalOpen(true);
-          }}
-          onDeleteSupplier={handleDeleteSupplier}
-        />
+      {activeTab === 'grocery' && (
+        <View className="pb-8">
+          <InventoryGroceryListSection
+            items={toBuyItems}
+            suppliers={suppliers}
+            onRestock={(item) => setSelectedRestockItem(item)}
+            onEditItem={(item) => {
+              setEditingItem(item);
+              setIsItemModalOpen(true);
+            }}
+            onPreviewPhoto={setLightboxPhoto}
+          />
+        </View>
       )}
 
-      {/* TABS 3, 4, 5: LEDGER, STOCKTAKE, WASTE */}
-      {(activeTab === 'ledger' || activeTab === 'stocktake' || activeTab === 'waste') && (
-        <InventoryMovementsAndAuditSection
-          activeTab={activeTab}
-          filteredMovements={filteredMovements}
-          ledgerTypeFilter={ledgerTypeFilter}
-          setLedgerTypeFilter={setLedgerTypeFilter}
-          onOpenStocktake={() => setIsStocktakeModalOpen(true)}
-          onOpenWaste={() => setIsWasteModalOpen(true)}
-        />
+      {activeTab === 'suppliers' && (
+        <View className="pb-8">
+          <InventorySuppliersSection
+            suppliers={suppliers}
+            onEditSupplier={(sup) => {
+              setEditingSupplier(sup);
+              setIsSupplierModalOpen(true);
+            }}
+            onDeleteSupplier={(sup) => setSupplierToDelete(sup)}
+          />
+        </View>
+      )}
+
+      {activeTab === 'activity' && (
+        <View className="pb-8">
+          <InventoryMovementsAndAuditSection
+            filteredMovements={filteredMovements}
+            stocktakeSessions={stocktakeSessions}
+            wasteLogs={wasteLogs}
+            ledgerTypeFilter={ledgerTypeFilter}
+            setLedgerTypeFilter={setLedgerTypeFilter}
+            onOpenStocktake={() => setIsStocktakeModalOpen(true)}
+            onOpenWaste={() => setIsWasteModalOpen(true)}
+          />
+        </View>
       )}
 
       <InventoryActionModals
         selectedRestockItem={selectedRestockItem}
         onCloseRestock={() => setSelectedRestockItem(null)}
-        restockQty={restockQty}
-        setRestockQty={setRestockQty}
-        restockCost={restockCost}
-        setRestockCost={setRestockCost}
-        restockInvoice={restockInvoice}
-        setRestockInvoice={setRestockInvoice}
-        isSubmittingRestock={isSubmittingRestock}
-        handleExecuteRestock={handleExecuteRestock}
         selectedAdjustItem={selectedAdjustItem}
         onCloseAdjust={() => setSelectedAdjustItem(null)}
         isItemModalOpen={isItemModalOpen}
@@ -168,6 +178,15 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
         onCloseStocktakeModal={() => setIsStocktakeModalOpen(false)}
         isWasteModalOpen={isWasteModalOpen}
         onCloseWasteModal={() => setIsWasteModalOpen(false)}
+        itemToDelete={itemToDelete}
+        onCancelDeleteItem={() => setItemToDelete(null)}
+        onConfirmDeleteItem={confirmDeleteItem}
+        supplierToDelete={supplierToDelete}
+        onCancelDeleteSupplier={() => setSupplierToDelete(null)}
+        onConfirmDeleteSupplier={confirmDeleteSupplier}
+        isDeleting={isDeleting}
+        lightboxPhoto={lightboxPhoto}
+        onCloseLightbox={() => setLightboxPhoto(null)}
         inventory={inventory}
         suppliers={suppliers}
         onRefreshAll={handleRefreshAll}

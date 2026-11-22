@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Linking } from 'react-native';
 import { Building2, Phone, Mail, Clock, MapPin, Edit, Trash2 } from 'lucide-react-native';
 import { SupplierAdmin } from '../../../../data/admin.api';
 
@@ -15,21 +15,19 @@ export const InventorySuppliersSection: React.FC<InventorySuppliersSectionProps>
   onDeleteSupplier,
 }) => {
   return (
-    <View className="space-y-4">
-      <View className="flex-row items-center justify-between mb-2">
-        <Text className="text-lg font-bold text-stone-900">
-          Active Vendor Accounts ({suppliers.length})
-        </Text>
-      </View>
+    <View className="gap-4">
+      <Text className="text-lg font-bold text-[#1C1917]">
+        Active Suppliers ({suppliers.length})
+      </Text>
 
       {suppliers.length === 0 ? (
-        <View className="rounded-2xl border border-stone-200/80 bg-white p-12 items-center justify-center">
-          <Building2 size={44} color="#a8a29e" />
-          <Text className="mt-3 text-base font-bold text-stone-700">
-            No suppliers registered in directory.
+        <View className="rounded-2xl border border-[#E7E5E4] bg-white p-12 items-center justify-center">
+          <Building2 size={40} color="#78716C" />
+          <Text className="mt-3 text-lg font-bold text-[#1C1917] text-center">
+            No suppliers registered yet.
           </Text>
-          <Text className="text-xs text-stone-400 mt-1">
-            Add suppliers to link purchase orders and delivery restocks.
+          <Text className="text-base text-[#78716C] mt-1 text-center">
+            Add vendors to link restock deliveries and contact numbers.
           </Text>
         </View>
       ) : (
@@ -37,85 +35,87 @@ export const InventorySuppliersSection: React.FC<InventorySuppliersSectionProps>
           {suppliers.map((sup) => (
             <View
               key={sup.id}
-              className="rounded-2xl border border-stone-200 bg-white p-5 shadow-xs flex-col justify-between"
+              className="rounded-2xl border border-[#E7E5E4] bg-white p-5 flex-col justify-between gap-4"
             >
-              <View>
-                <View className="flex-row items-center justify-between mb-2">
-                  <View className="flex-row items-center gap-2">
-                    <View className="h-9 w-9 rounded-xl bg-[#800020]/10 items-center justify-center">
-                      <Building2 size={18} color="#800020" />
-                    </View>
-                    <Text className="text-base font-bold text-stone-900">{sup.name}</Text>
+              <View className="gap-2.5">
+                <View className="flex-row items-center gap-3">
+                  <View className="h-11 w-11 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center shrink-0">
+                    <Building2 size={20} color="#810021" />
                   </View>
-                  <View className="rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5">
-                    <Text className="text-[10px] font-bold text-emerald-800">Active Vendor</Text>
-                  </View>
-                </View>
-
-                <View className="space-y-1.5 mt-2">
-                  {sup.contact_person && (
-                    <View className="flex-row items-center gap-2">
-                      <Text className="text-xs text-stone-500">Contact:</Text>
-                      <Text className="text-xs font-semibold text-stone-800">
+                  <View className="flex-1 min-w-0">
+                    <Text className="text-lg font-bold text-[#1C1917]" numberOfLines={1}>
+                      {sup.name}
+                    </Text>
+                    {sup.contact_person ? (
+                      <Text className="text-base text-[#78716C]" numberOfLines={1}>
                         {sup.contact_person}
                       </Text>
-                    </View>
-                  )}
-
-                  {sup.phone && (
-                    <View className="flex-row items-center gap-2">
-                      <Phone size={13} color="#78716c" />
-                      <Text className="text-xs font-mono text-stone-700">{sup.phone}</Text>
-                    </View>
-                  )}
-
-                  {sup.email && (
-                    <View className="flex-row items-center gap-2">
-                      <Mail size={13} color="#78716c" />
-                      <Text className="text-xs text-stone-700">{sup.email}</Text>
-                    </View>
-                  )}
-
-                  {sup.lead_time_days !== undefined && (
-                    <View className="flex-row items-center gap-2 mt-1">
-                      <Clock size={13} color="#78716c" />
-                      <Text className="text-xs text-stone-600">
-                        Delivery Lead Time:{' '}
-                        <Text className="font-bold text-stone-900">{sup.lead_time_days} Days</Text>
-                      </Text>
-                    </View>
-                  )}
-
-                  {sup.address && (
-                    <View className="flex-row items-center gap-2">
-                      <MapPin size={13} color="#78716c" />
-                      <Text className="text-xs text-stone-500 truncate">{sup.address}</Text>
-                    </View>
-                  )}
+                    ) : null}
+                  </View>
                 </View>
 
-                {sup.notes && (
-                  <View className="mt-3 rounded-lg bg-stone-50 p-2.5 border border-stone-200/60">
-                    <Text className="text-xs italic text-stone-600">"{sup.notes}"</Text>
+                <View className="gap-2 pt-1">
+                  {sup.phone ? (
+                    <Pressable
+                      onPress={() => Linking.openURL(`tel:${sup.phone}`)}
+                      className="flex-row items-center gap-2 active:opacity-75"
+                    >
+                      <Phone size={16} color="#810021" />
+                      <Text className="text-base font-semibold text-[#810021] tabular-nums">
+                        {sup.phone}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+
+                  {sup.email ? (
+                    <View className="flex-row items-center gap-2">
+                      <Mail size={16} color="#78716C" />
+                      <Text className="text-base text-[#1C1917] flex-1" numberOfLines={1}>
+                        {sup.email}
+                      </Text>
+                    </View>
+                  ) : null}
+
+                  <View className="flex-row items-center gap-2">
+                    <Clock size={16} color="#78716C" />
+                    <Text className="text-base text-[#78716C] tabular-nums">
+                      Lead time:{' '}
+                      <Text className="font-bold text-[#1C1917]">{sup.lead_time_days}d</Text>
+                    </Text>
                   </View>
-                )}
+
+                  {sup.address ? (
+                    <View className="flex-row items-center gap-2">
+                      <MapPin size={16} color="#78716C" />
+                      <Text className="text-base text-[#78716C] flex-1" numberOfLines={1}>
+                        {sup.address}
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+
+                {sup.notes ? (
+                  <View className="rounded-xl bg-[#FAF8F5] p-3 border border-[#E7E5E4]">
+                    <Text className="text-base text-[#1C1917]">{sup.notes}</Text>
+                  </View>
+                ) : null}
               </View>
 
-              <View className="flex-row items-center justify-end gap-2 pt-3 mt-4 border-t border-stone-100">
+              <View className="flex-row items-center justify-end gap-2 pt-3 border-t border-[#E7E5E4]">
                 <Pressable
                   onPress={() => onEditSupplier(sup)}
-                  className="h-9 px-3 rounded-lg bg-stone-100 border border-stone-200 flex-row items-center active:bg-stone-200"
+                  className="min-h-[48px] px-4 rounded-xl bg-white border border-[#E7E5E4] flex-row items-center active:opacity-80"
                 >
-                  <Edit size={14} color="#44403c" />
-                  <Text className="ml-1 text-xs font-bold text-stone-700">Edit</Text>
+                  <Edit size={16} color="#1C1917" />
+                  <Text className="ml-1.5 text-base font-bold text-[#1C1917]">Edit</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={() => onDeleteSupplier(sup)}
-                  className="h-9 px-3 rounded-lg bg-rose-50 border border-rose-200 flex-row items-center active:bg-rose-100"
+                  className="min-h-[48px] px-4 rounded-xl bg-white border border-[#E7E5E4] flex-row items-center active:opacity-80"
                 >
-                  <Trash2 size={14} color="#e11d48" />
-                  <Text className="ml-1 text-xs font-bold text-rose-700">Delete</Text>
+                  <Trash2 size={16} color="#b32638" />
+                  <Text className="ml-1.5 text-base font-bold text-[#b32638]">Delete</Text>
                 </Pressable>
               </View>
             </View>

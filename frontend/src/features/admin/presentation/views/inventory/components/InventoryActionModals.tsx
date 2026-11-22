@@ -1,25 +1,17 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
-import { Package } from 'lucide-react-native';
-import { AdminModal, AdminInput, AdminNumberInput } from '../../../components';
+import { ConfirmationModal } from '@/features/shared/ui/ConfirmationModal';
 import { InventoryItemAdmin, SupplierAdmin } from '../../../../data/admin.api';
+import { RestockIntakeModal } from '../RestockIntakeModal';
 import { InventoryItemModal } from '../InventoryItemModal';
 import { SupplierModal } from '../SupplierModal';
 import { StocktakeAuditModal } from '../StocktakeAuditModal';
 import { WasteLoggerModal } from '../WasteLoggerModal';
 import { QuickAdjustStockModal } from '../QuickAdjustStockModal';
+import { PhotoLightboxModal, type PhotoLightboxData } from './PhotoLightboxModal';
 
 interface InventoryActionModalsProps {
   selectedRestockItem: InventoryItemAdmin | null;
   onCloseRestock: () => void;
-  restockQty: string;
-  setRestockQty: (val: string) => void;
-  restockCost: string;
-  setRestockCost: (val: string) => void;
-  restockInvoice: string;
-  setRestockInvoice: (val: string) => void;
-  isSubmittingRestock: boolean;
-  handleExecuteRestock: () => void;
   selectedAdjustItem: InventoryItemAdmin | null;
   onCloseAdjust: () => void;
   isItemModalOpen: boolean;
@@ -32,6 +24,15 @@ interface InventoryActionModalsProps {
   onCloseStocktakeModal: () => void;
   isWasteModalOpen: boolean;
   onCloseWasteModal: () => void;
+  itemToDelete: InventoryItemAdmin | null;
+  onCancelDeleteItem: () => void;
+  onConfirmDeleteItem: () => void;
+  supplierToDelete: SupplierAdmin | null;
+  onCancelDeleteSupplier: () => void;
+  onConfirmDeleteSupplier: () => void;
+  isDeleting: boolean;
+  lightboxPhoto: PhotoLightboxData | null;
+  onCloseLightbox: () => void;
   inventory: InventoryItemAdmin[];
   suppliers: SupplierAdmin[];
   onRefreshAll: () => void;
@@ -40,14 +41,6 @@ interface InventoryActionModalsProps {
 export const InventoryActionModals: React.FC<InventoryActionModalsProps> = ({
   selectedRestockItem,
   onCloseRestock,
-  restockQty,
-  setRestockQty,
-  restockCost,
-  setRestockCost,
-  restockInvoice,
-  setRestockInvoice,
-  isSubmittingRestock,
-  handleExecuteRestock,
   selectedAdjustItem,
   onCloseAdjust,
   isItemModalOpen,
@@ -60,69 +53,29 @@ export const InventoryActionModals: React.FC<InventoryActionModalsProps> = ({
   onCloseStocktakeModal,
   isWasteModalOpen,
   onCloseWasteModal,
+  itemToDelete,
+  onCancelDeleteItem,
+  onConfirmDeleteItem,
+  supplierToDelete,
+  onCancelDeleteSupplier,
+  onConfirmDeleteSupplier,
+  isDeleting,
+  lightboxPhoto,
+  onCloseLightbox,
   inventory,
   suppliers,
   onRefreshAll,
 }) => {
   return (
     <>
-      {/* RESTOCK INTAKE MODAL (With Live MAC) */}
-      <AdminModal
+      <RestockIntakeModal
         visible={!!selectedRestockItem}
+        item={selectedRestockItem}
+        suppliers={suppliers}
         onClose={onCloseRestock}
-        title={`Restock Intake: ${selectedRestockItem?.name || ''}`}
-        subtitle={`Current Stock: ${selectedRestockItem?.current_stock || 0} ${selectedRestockItem?.unit || ''} • Current MAC: ₱${Number(selectedRestockItem?.unit_cost || 0).toFixed(2)}`}
-        icon={<Package size={22} color="#800020" />}
-        size="md"
-        footer={
-          <>
-            <Pressable
-              onPress={onCloseRestock}
-              disabled={isSubmittingRestock}
-              className="min-h-[48px] rounded-xl bg-stone-100 px-5 items-center justify-center active:bg-stone-200"
-            >
-              <Text className="text-base font-bold text-stone-700">Cancel</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleExecuteRestock}
-              disabled={isSubmittingRestock}
-              className="min-h-[48px] rounded-xl bg-[#800020] px-6 items-center justify-center active:opacity-90"
-            >
-              <Text className="text-base font-bold text-white">
-                {isSubmittingRestock ? 'Intaking...' : 'Confirm Delivery'}
-              </Text>
-            </Pressable>
-          </>
-        }
-      >
-        <View className="space-y-4">
-          <AdminNumberInput
-            label={`Received Quantity (${selectedRestockItem?.unit || 'unit'})`}
-            mode="decimal"
-            value={restockQty}
-            onChangeText={setRestockQty}
-            placeholder="e.g. 10"
-            suffix={selectedRestockItem?.unit}
-          />
+        onSuccess={onRefreshAll}
+      />
 
-          <AdminNumberInput
-            label={`Invoice Unit Cost (₱ / ${selectedRestockItem?.unit || 'unit'})`}
-            mode="currency"
-            value={restockCost}
-            onChangeText={setRestockCost}
-            placeholder="e.g. 25.50"
-          />
-
-          <AdminInput
-            label="Invoice / PO Reference #:"
-            value={restockInvoice}
-            onChangeText={setRestockInvoice}
-            placeholder="e.g. INV-99218"
-          />
-        </View>
-      </AdminModal>
-
-      {/* FAST IN-LINE STOCK COUNT ADJUST MODAL */}
       <QuickAdjustStockModal
         visible={!!selectedAdjustItem}
         onClose={onCloseAdjust}
@@ -130,7 +83,6 @@ export const InventoryActionModals: React.FC<InventoryActionModalsProps> = ({
         onSuccess={onRefreshAll}
       />
 
-      {/* FULL INVENTORY ITEM CRUD MODAL */}
       <InventoryItemModal
         visible={isItemModalOpen}
         onClose={onCloseItemModal}
@@ -139,7 +91,6 @@ export const InventoryActionModals: React.FC<InventoryActionModalsProps> = ({
         suppliers={suppliers}
       />
 
-      {/* FULL SUPPLIER MODAL */}
       <SupplierModal
         visible={isSupplierModalOpen}
         onClose={onCloseSupplierModal}
@@ -147,7 +98,6 @@ export const InventoryActionModals: React.FC<InventoryActionModalsProps> = ({
         supplier={editingSupplier}
       />
 
-      {/* STOCKTAKE AUDIT MODAL */}
       <StocktakeAuditModal
         visible={isStocktakeModalOpen}
         onClose={onCloseStocktakeModal}
@@ -155,12 +105,35 @@ export const InventoryActionModals: React.FC<InventoryActionModalsProps> = ({
         inventory={inventory}
       />
 
-      {/* WASTE LOGGER MODAL */}
       <WasteLoggerModal
         visible={isWasteModalOpen}
         onClose={onCloseWasteModal}
         onSuccess={onRefreshAll}
         inventory={inventory}
+      />
+
+      <PhotoLightboxModal photo={lightboxPhoto} onClose={onCloseLightbox} />
+
+      <ConfirmationModal
+        visible={!!itemToDelete}
+        title="Delete Inventory Item?"
+        message={`Remove "${itemToDelete?.name || ''}" (${itemToDelete?.sku || ''})? Items with movement history cannot be deleted.`}
+        confirmText="Delete Item"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={onConfirmDeleteItem}
+        onCancel={onCancelDeleteItem}
+      />
+
+      <ConfirmationModal
+        visible={!!supplierToDelete}
+        title="Delete Supplier?"
+        message={`Remove "${supplierToDelete?.name || ''}" from the supplier directory?`}
+        confirmText="Delete Supplier"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={onConfirmDeleteSupplier}
+        onCancel={onCancelDeleteSupplier}
       />
     </>
   );

@@ -47,6 +47,12 @@ const TimeclockKioskScreen = React.lazy(() =>
   }))
 );
 
+const GroceryRunScreen = React.lazy(() =>
+  import('./src/features/inventory/presentation/GroceryRunScreen').then((m) => ({
+    default: m.GroceryRunScreen,
+  }))
+);
+
 // Ensure 1rem = 16px root scale for tablet typography
 try {
   rem.set(16);
@@ -157,12 +163,13 @@ export default function App() {
     };
   }, []);
 
-  // Check if running in dedicated headless station modes (hardware printer, public calendar, timeclock kiosk)
+  // Check if running in dedicated headless station modes (hardware printer, public calendar, timeclock kiosk, grocery run)
   const isHeadlessMode =
     typeof window !== 'undefined' &&
     (window.location?.search?.includes('mode=printer') ||
       window.location?.search?.includes('mode=events') ||
-      window.location?.search?.includes('mode=timeclock'));
+      window.location?.search?.includes('mode=timeclock') ||
+      window.location?.search?.includes('mode=grocery'));
 
   // Session inactivity watchdog: 6h daytime / 3h late-night (12am-6am Manila) + fair attendance auto-clock-out
   const { isWarning, remainingSeconds, isLateNight, staySignedIn, signOutNow } =
@@ -182,6 +189,11 @@ export default function App() {
     // Check if running in dedicated Timeclock Kiosk tab (?mode=timeclock)
     if (typeof window !== 'undefined' && window.location?.search?.includes('mode=timeclock')) {
       return <TimeclockKioskScreen isStandaloneTab />;
+    }
+
+    // Check if running in dedicated Mobile Grocery Run tab (?mode=grocery)
+    if (typeof window !== 'undefined' && window.location?.search?.includes('mode=grocery')) {
+      return <GroceryRunScreen />;
     }
 
     if (!currentUser) {

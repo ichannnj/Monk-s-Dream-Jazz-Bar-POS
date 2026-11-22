@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, ScrollView } from 'react-native';
 import {
   FileText,
   ArrowDownRight,
@@ -7,230 +7,288 @@ import {
   ClipboardCheck,
   Trash2,
 } from 'lucide-react-native';
-import { StockMovementAdmin } from '../../../../data/admin.api';
+import { formatCurrency } from '@monks/shared';
+import type {
+  StockMovementAdmin,
+  StocktakeSessionAdmin,
+  WasteLogAdmin,
+} from '../../../../data/admin.api';
 
 interface InventoryMovementsAndAuditSectionProps {
-  activeTab: 'ledger' | 'stocktake' | 'waste';
   filteredMovements: StockMovementAdmin[];
+  stocktakeSessions: StocktakeSessionAdmin[];
+  wasteLogs: WasteLogAdmin[];
   ledgerTypeFilter: string;
   setLedgerTypeFilter: (val: string) => void;
   onOpenStocktake: () => void;
   onOpenWaste: () => void;
 }
 
+type ActivitySubTab = 'movements' | 'stocktakes' | 'waste';
+
 export const InventoryMovementsAndAuditSection: React.FC<
   InventoryMovementsAndAuditSectionProps
 > = ({
-  activeTab,
   filteredMovements,
+  stocktakeSessions,
+  wasteLogs,
   ledgerTypeFilter,
   setLedgerTypeFilter,
   onOpenStocktake,
   onOpenWaste,
 }) => {
-  if (activeTab === 'stocktake') {
-    return (
-      <View className="rounded-2xl border border-stone-200/80 bg-white p-6 sm:p-8 shadow-xs space-y-6">
-        <View className="flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <View>
-            <Text className="text-2xl font-black text-stone-900">
-              Cycle Counts &amp; Physical Stocktake
-            </Text>
-            <Text className="text-sm font-medium text-stone-500 mt-1">
-              Audit shelf inventory against expected theoretical stock to detect shrinkage and
-              over-pouring
-            </Text>
-          </View>
+  const [subTab, setSubTab] = useState<ActivitySubTab>('movements');
 
-          <Pressable
-            onPress={onOpenStocktake}
-            className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-[#800020] px-6 active:opacity-90 shadow-sm"
-          >
-            <ClipboardCheck size={20} color="#ffffff" />
-            <Text className="ml-2 text-base font-bold text-white">Start Physical Count</Text>
-          </Pressable>
-        </View>
+  const movementFilters = [
+    { key: 'ALL', label: 'All' },
+    { key: 'SALE_DEPLETION', label: 'Sales' },
+    { key: 'RESTOCK_DELIVERY', label: 'Deliveries' },
+    { key: 'MANUAL_ADJUST', label: 'Counts' },
+    { key: 'STOCKTAKE_ADJUST', label: 'Audits' },
+    { key: 'SPOILAGE_WASTE', label: 'Waste' },
+    { key: 'CANCEL_RESTORE', label: 'Voids' },
+  ];
 
-        <View className="rounded-xl bg-stone-50 p-5 border border-stone-200 space-y-2.5">
-          <Text className="text-sm font-bold text-stone-900">Stocktake Operational Standard:</Text>
-          <Text className="text-xs sm:text-sm text-stone-600">
-            • Expected on-hand stock incorporates live recipe depletion on KDS ready tickets and
-            recorded deliveries.
-          </Text>
-          <Text className="text-xs sm:text-sm text-stone-600">
-            • Actual counts are compared instantly:{' '}
-            <Text className="font-mono font-bold text-stone-800">Variance = Actual - Expected</Text>
-            .
-          </Text>
-          <Text className="text-xs sm:text-sm text-stone-600">
-            • Committing updates the ledger with immutable{' '}
-            <Text className="font-mono font-bold text-stone-800">STOCKTAKE_ADJUST</Text> audit
-            movements.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  if (activeTab === 'waste') {
-    return (
-      <View className="rounded-2xl border border-stone-200/80 bg-white p-6 sm:p-8 shadow-xs space-y-6">
-        <View className="flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <View>
-            <Text className="text-2xl font-black text-stone-900">
-              Spillage, Spoilage &amp; Waste Loss Log
-            </Text>
-            <Text className="text-sm font-medium text-stone-500 mt-1">
-              Account for dropped bottles, expired perishables, burned food, or tasting flights
-            </Text>
-          </View>
-
-          <Pressable
-            onPress={onOpenWaste}
-            className="min-h-[48px] flex-row items-center justify-center rounded-xl bg-rose-700 px-6 active:opacity-90 shadow-sm"
-          >
-            <Trash2 size={20} color="#ffffff" />
-            <Text className="ml-2 text-base font-bold text-white">Log Waste Event</Text>
-          </Pressable>
-        </View>
-
-        <View className="rounded-xl bg-rose-50/60 p-5 border border-rose-200 space-y-2.5">
-          <Text className="text-sm font-bold text-rose-950">Loss Accounting Guardrail:</Text>
-          <Text className="text-xs sm:text-sm text-rose-800">
-            Logging waste immediately deducts ingredient quantities from active stock and attributes
-            the financial cost (Quantity × MAC) to operational overhead, maintaining audit
-            transparency.
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  // Active tab === 'ledger'
   return (
-    <View className="space-y-4">
+    <View className="gap-4">
+      {/* Sub-tab bar + Quick Action */}
       <View className="flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <View>
-          <Text className="text-xl font-bold text-stone-900">Immutable Stock Movement Ledger</Text>
-          <Text className="text-xs font-medium text-stone-500 mt-0.5">
-            Audit trail of deliveries, depletions on KDS ready, adjustments, and waste
-          </Text>
-        </View>
-
-        {/* Ledger Movement Type Filters */}
-        <View className="flex-row items-center gap-1.5 flex-wrap">
-          {[
-            { key: 'ALL', label: 'All Events' },
-            { key: 'SALE_DEPLETION', label: 'Sale Depletions' },
-            { key: 'RESTOCK_DELIVERY', label: 'Deliveries' },
-            { key: 'MANUAL_ADJUST', label: 'Manual Counts' },
-            { key: 'SPOILAGE_WASTE', label: 'Waste Logs' },
-            { key: 'CANCEL_RESTORE', label: 'Void Restorals' },
-          ].map((pill) => (
-            <Pressable
-              key={pill.key}
-              onPress={() => setLedgerTypeFilter(pill.key)}
-              className={`rounded-lg px-2.5 py-1.5 border text-xs ${
-                ledgerTypeFilter === pill.key
-                  ? 'bg-stone-900 border-stone-900 text-white font-bold'
-                  : 'bg-white border-stone-200 text-stone-700 active:bg-stone-100'
-              }`}
-            >
-              <Text
-                className={`text-xs ${
-                  ledgerTypeFilter === pill.key
-                    ? 'text-white font-bold'
-                    : 'text-stone-700 font-medium'
-                }`}
-              >
-                {pill.label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <View className="rounded-2xl border border-stone-200/80 bg-white overflow-hidden shadow-xs">
-        {filteredMovements.length === 0 ? (
-          <View className="py-14 items-center justify-center">
-            <FileText size={44} color="#a8a29e" />
-            <Text className="mt-3 text-base font-bold text-stone-700">
-              No stock movements match the filter.
-            </Text>
-          </View>
-        ) : (
-          <View className="divide-y divide-stone-100">
-            {filteredMovements.map((mov) => {
-              const isDeduction = Number(mov.change_amount || 0) < 0;
-              const absAmount = Math.abs(Number(mov.change_amount || 0));
-
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View className="flex-row items-center gap-2">
+            {(
+              [
+                { id: 'movements', label: 'Movements', count: filteredMovements.length },
+                { id: 'stocktakes', label: 'Stocktakes', count: stocktakeSessions.length },
+                { id: 'waste', label: 'Waste Logs', count: wasteLogs.length },
+              ] as Array<{ id: ActivitySubTab; label: string; count: number }>
+            ).map((tab) => {
+              const isActive = subTab === tab.id;
               return (
-                <View
-                  key={mov.id}
-                  className="p-4 sm:px-6 sm:py-3.5 flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-stone-50/50"
+                <Pressable
+                  key={tab.id}
+                  onPress={() => setSubTab(tab.id)}
+                  className={`min-h-[48px] px-4 rounded-xl border flex-row items-center justify-center ${
+                    isActive
+                      ? 'bg-[#810021] border-[#810021]'
+                      : 'bg-white border-[#E7E5E4] active:opacity-80'
+                  }`}
                 >
-                  <View className="flex-row items-center gap-3">
-                    <View
-                      className={`h-9 w-9 items-center justify-center rounded-xl ${
-                        isDeduction ? 'bg-rose-100' : 'bg-emerald-100'
-                      }`}
-                    >
-                      {isDeduction ? (
-                        <ArrowDownRight size={17} color="#e11d48" />
-                      ) : (
-                        <ArrowUpRight size={17} color="#059669" />
-                      )}
-                    </View>
-                    <View>
-                      <Text className="text-sm sm:text-base font-bold text-stone-900">
-                        {mov.inventory_item?.name || 'Inventory Ingredient'}
-                      </Text>
-                      <Text className="text-xs text-stone-500 mt-0.5">
-                        {new Date(mov.created_at).toLocaleString()} • Ref:{' '}
-                        <Text className="font-mono text-stone-700">
-                          {mov.reference_id ? mov.reference_id.slice(0, 8) : 'System'}
-                        </Text>
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View className="flex-row items-center justify-between sm:justify-end gap-3">
-                    <View
-                      className={`rounded-md px-2 py-0.5 border ${
-                        mov.movement_type === 'RESTOCK_DELIVERY'
-                          ? 'bg-emerald-50 border-emerald-300'
-                          : mov.movement_type === 'SALE_DEPLETION'
-                            ? 'bg-stone-100 border-stone-300'
-                            : mov.movement_type === 'CANCEL_RESTORE'
-                              ? 'bg-blue-50 border-blue-300'
-                              : mov.movement_type === 'SPOILAGE_WASTE'
-                                ? 'bg-rose-50 border-rose-300'
-                                : 'bg-amber-50 border-amber-300'
-                      }`}
-                    >
-                      <Text className="text-xs font-bold text-stone-800">{mov.movement_type}</Text>
-                    </View>
-
-                    <View className="items-end">
-                      <Text
-                        className={`text-sm sm:text-base font-black ${
-                          isDeduction ? 'text-rose-700' : 'text-emerald-700'
-                        }`}
-                      >
-                        {isDeduction ? `-${absAmount.toFixed(2)}` : `+${absAmount.toFixed(2)}`}{' '}
-                        {mov.inventory_item?.unit}
-                      </Text>
-                      <Text className="text-[11px] text-stone-500">
-                        Balance: {mov.balance_after} {mov.inventory_item?.unit}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
+                  <Text
+                    className={`text-base font-bold tabular-nums ${
+                      isActive ? 'text-white' : 'text-[#1C1917]'
+                    }`}
+                  >
+                    {tab.label} ({tab.count})
+                  </Text>
+                </Pressable>
               );
             })}
           </View>
+        </ScrollView>
+
+        {subTab === 'stocktakes' && (
+          <Pressable
+            onPress={onOpenStocktake}
+            className="min-h-[48px] px-4 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
+          >
+            <ClipboardCheck size={18} color="#FFFFFF" />
+            <Text className="ml-2 text-base font-bold text-white">Start Stocktake</Text>
+          </Pressable>
+        )}
+
+        {subTab === 'waste' && (
+          <Pressable
+            onPress={onOpenWaste}
+            className="min-h-[48px] px-4 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
+          >
+            <Trash2 size={18} color="#FFFFFF" />
+            <Text className="ml-2 text-base font-bold text-white">Log Waste</Text>
+          </Pressable>
         )}
       </View>
+
+      {/* MOVEMENTS */}
+      {subTab === 'movements' && (
+        <View className="gap-3">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View className="flex-row items-center gap-2">
+              {movementFilters.map((pill) => {
+                const isActive = ledgerTypeFilter === pill.key;
+                return (
+                  <Pressable
+                    key={pill.key}
+                    onPress={() => setLedgerTypeFilter(pill.key)}
+                    className={`min-h-[48px] px-3.5 rounded-xl border items-center justify-center ${
+                      isActive
+                        ? 'bg-[#1C1917] border-[#1C1917]'
+                        : 'bg-white border-[#E7E5E4] active:opacity-80'
+                    }`}
+                  >
+                    <Text
+                      className={`text-base font-semibold ${
+                        isActive ? 'text-white' : 'text-[#1C1917]'
+                      }`}
+                    >
+                      {pill.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+
+          <View className="rounded-2xl border border-[#E7E5E4] bg-white overflow-hidden">
+            {filteredMovements.length === 0 ? (
+              <View className="py-12 items-center justify-center px-4">
+                <FileText size={36} color="#78716C" />
+                <Text className="mt-3 text-base font-bold text-[#1C1917]">
+                  No stock movements match this filter.
+                </Text>
+              </View>
+            ) : (
+              <View className="divide-y divide-[#E7E5E4]">
+                {filteredMovements.map((mov) => {
+                  const isDeduction = Number(mov.change_amount || 0) < 0;
+                  const absAmount = Math.abs(Number(mov.change_amount || 0));
+
+                  return (
+                    <View
+                      key={mov.id}
+                      className="p-4 flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <View className="flex-row items-center gap-3 flex-1 min-w-0">
+                        <View
+                          className={`h-10 w-10 items-center justify-center rounded-xl border ${
+                            isDeduction
+                              ? 'bg-rose-50 border-rose-200'
+                              : 'bg-emerald-50 border-emerald-200'
+                          }`}
+                        >
+                          {isDeduction ? (
+                            <ArrowDownRight size={18} color="#b32638" />
+                          ) : (
+                            <ArrowUpRight size={18} color="#10b981" />
+                          )}
+                        </View>
+                        <View className="flex-1 min-w-0">
+                          <Text className="text-base font-bold text-[#1C1917]" numberOfLines={1}>
+                            {mov.inventory_item?.name || 'Inventory Ingredient'}
+                          </Text>
+                          <Text className="text-base text-[#78716C]" numberOfLines={1}>
+                            {new Date(mov.created_at).toLocaleString()} • {mov.movement_type}
+                          </Text>
+                        </View>
+                      </View>
+
+                      <View className="items-start sm:items-end">
+                        <Text
+                          className={`text-base font-extrabold tabular-nums ${
+                            isDeduction ? 'text-[#b32638]' : 'text-[#10b981]'
+                          }`}
+                        >
+                          {isDeduction ? `-${absAmount.toFixed(2)}` : `+${absAmount.toFixed(2)}`}{' '}
+                          {mov.inventory_item?.unit}
+                        </Text>
+                        <Text className="text-base text-[#78716C] tabular-nums">
+                          Balance: {Number(mov.balance_after || 0).toFixed(2)}{' '}
+                          {mov.inventory_item?.unit}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* STOCKTAKE SESSIONS */}
+      {subTab === 'stocktakes' && (
+        <View className="rounded-2xl border border-[#E7E5E4] bg-white overflow-hidden">
+          {stocktakeSessions.length === 0 ? (
+            <View className="py-12 items-center justify-center px-4">
+              <ClipboardCheck size={36} color="#78716C" />
+              <Text className="mt-3 text-base font-bold text-[#1C1917] text-center">
+                No stocktake audits recorded yet.
+              </Text>
+            </View>
+          ) : (
+            <View className="divide-y divide-[#E7E5E4]">
+              {stocktakeSessions.map((session) => {
+                const variance = Number(session.total_variance_cost || 0);
+                return (
+                  <View
+                    key={session.id}
+                    className="p-4 flex-col sm:flex-row sm:items-center justify-between gap-2"
+                  >
+                    <View className="flex-1 min-w-0">
+                      <Text className="text-base font-bold text-[#1C1917]">
+                        {session.notes || 'Physical Stocktake Count'}
+                      </Text>
+                      <Text className="text-base text-[#78716C]">
+                        {new Date(session.created_at).toLocaleString()}
+                      </Text>
+                    </View>
+                    <Text
+                      className={`text-base font-extrabold tabular-nums ${
+                        variance < 0
+                          ? 'text-[#b32638]'
+                          : variance > 0
+                            ? 'text-[#10b981]'
+                            : 'text-[#1C1917]'
+                      }`}
+                    >
+                      {variance < 0 ? '-' : '+'}
+                      {formatCurrency(Math.abs(variance))}
+                    </Text>
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* WASTE LOGS */}
+      {subTab === 'waste' && (
+        <View className="rounded-2xl border border-[#E7E5E4] bg-white overflow-hidden">
+          {wasteLogs.length === 0 ? (
+            <View className="py-12 items-center justify-center px-4">
+              <Trash2 size={36} color="#78716C" />
+              <Text className="mt-3 text-base font-bold text-[#1C1917] text-center">
+                No spillage or waste events logged.
+              </Text>
+            </View>
+          ) : (
+            <View className="divide-y divide-[#E7E5E4]">
+              {wasteLogs.map((log) => (
+                <View
+                  key={log.id}
+                  className="p-4 flex-col sm:flex-row sm:items-center justify-between gap-2"
+                >
+                  <View className="flex-1 min-w-0">
+                    <Text className="text-base font-bold text-[#1C1917]">
+                      {log.inventory_item?.name || 'Inventory Item'}
+                    </Text>
+                    <Text className="text-base text-[#78716C]">
+                      {log.reason.replace(/_/g, ' ')} • {new Date(log.created_at).toLocaleString()}
+                    </Text>
+                  </View>
+                  <View className="items-start sm:items-end">
+                    <Text className="text-base font-extrabold text-[#b32638] tabular-nums">
+                      -{Number(log.quantity || 0).toFixed(2)} {log.inventory_item?.unit}
+                    </Text>
+                    <Text className="text-base text-[#78716C] tabular-nums">
+                      Loss: {formatCurrency(log.cost_lost)}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 };

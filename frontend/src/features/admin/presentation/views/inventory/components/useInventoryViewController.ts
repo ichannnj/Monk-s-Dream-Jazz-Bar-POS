@@ -5,10 +5,15 @@ import {
   type InventoryItemAdmin,
   type SupplierAdmin,
   type StockMovementAdmin,
+  type StocktakeSessionAdmin,
+  type WasteLogAdmin,
 } from '../../../../data/admin.api';
+import { cleanupInventoryImageObject } from '../../../../data/api/inventoryImage.service';
 import { useWindowVisibilitySync } from '@/features/shared';
 import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
-import { InventoryTab, StockStatusFilter, CATEGORY_FILTERS } from './inventory.types';
+import { InventoryTab, StockStatusFilter } from './inventory.types';
+import { getStockStatus } from '../utils/inventoryCalculations';
+import type { PhotoLightboxData } from './PhotoLightboxModal';
 
 export function useInventoryViewController(inventory: InventoryItemAdmin[], onRefresh: () => void) {
   const [activeTab, setActiveTab] = useState<InventoryTab>('stock');
@@ -19,14 +24,11 @@ export function useInventoryViewController(inventory: InventoryItemAdmin[], onRe
 
   const [suppliers, setSuppliers] = useState<SupplierAdmin[]>([]);
   const [movements, setMovements] = useState<StockMovementAdmin[]>([]);
+  const [stocktakeSessions, setStocktakeSessions] = useState<StocktakeSessionAdmin[]>([]);
+  const [wasteLogs, setWasteLogs] = useState<WasteLogAdmin[]>([]);
   const [isLoadingSupporting, setIsLoadingSupporting] = useState(false);
 
   const [selectedRestockItem, setSelectedRestockItem] = useState<InventoryItemAdmin | null>(null);
-  const [restockQty, setRestockQty] = useState('');
-  const [restockCost, setRestockCost] = useState('');
-  const [restockInvoice, setRestockInvoice] = useState('');
-  const [isSubmittingRestock, setIsSubmittingRestock] = useState(false);
-
   const [selectedAdjustItem, setSelectedAdjustItem] = useState<InventoryItemAdmin | null>(null);
 
   const [isItemModalOpen, setIsItemModalOpen] = useState(false);
@@ -38,6 +40,12 @@ export function useInventoryViewController(inventory: InventoryItemAdmin[], onRe
   const [isStocktakeModalOpen, setIsStocktakeModalOpen] = useState(false);
   const [isWasteModalOpen, setIsWasteModalOpen] = useState(false);
 
+  const [itemToDelete, setItemToDelete] = useState<InventoryItemAdmin | null>(null);
+  const [supplierToDelete, setSupplierToDelete] = useState<SupplierAdmin | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [lightboxPhoto, setLightboxPhoto] = useState<PhotoLightboxData | null>(null);
+
   const totalValuation = useMemo(() => {
     return inventory.reduce((sum, item) => {
       const stock = Math.max(0, Number(item.current_stock || 0));
@@ -46,39 +54,56 @@ export function useInventoryViewController(inventory: InventoryItemAdmin[], onRe
     }, 0);
   }, [inventory]);
 
-  const inParItemsCount = useMemo(() => {
-    return inventory.filter(
-      (item) => Number(item.current_stock || 0) > Number(item.min_alert_level || 0)
-    ).length;
-  }, [inventory]);
+  const inParItemsCount = useMemo(
+    () =>
+      inventory.filter(
+        (item) => getStockStatus(item.current_stock, item.min_alert_level) === 'IN_PAR'
+      ).length,
+    [inventory]
+  );
 
-  const belowParItemsCount = useMemo(() => {
-    return inventory.filter(
-      (item) =>
-        Number(item.current_stock || 0) <= Number(item.min_alert_level || 0) &&
-        Number(item.current_stock || 0) > 0
-    ).length;
-  }, [inventory]);
+  const belowParItemsCount = useMemo(
+    () =>
+      inventory.filter(
+        (item) => getStockStatus(item.current_stock, item.min_alert_level) === 'BELOW_PAR'
+      ).length,
+    [inventory]
+  );
 
-  const depletedItemsCount = useMemo(() => {
-    return inventory.filter((item) => Number(item.current_stock || 0) <= 0).length;
+  const depletedItemsCount = useMemo(
+    () =>
+      inventory.filter(
+        (item) => getStockStatus(item.current_stock, item.min_alert_level) === 'DEPLETED'
+      ).length,
+    [inventory]
+  );
+
+  const toBuyItems = useMemo(() => {
+    return inventory
+      .filter((item) => getStockStatus(item.current_stock, item.min_alert_level) !== 'IN_PAR')
+      .sort((a, b) => {
+        const aOut = Number(a.current_stock || 0) <= 0 ? 0 : 1;
+        const bOut = Number(b.current_stock || 0) <= 0 ? 0 : 1;
+        if (aOut !== bOut) return aOut - bOut;
+        return a.name.localeCompare(b.name);
+      });
   }, [inventory]);
 
   const loadSupportingData = useCallback(async () => {
     setIsLoadingSupporting(true);
     try {
-      const [supsRes, movsRes] = await Promise.allSettled([
+      const [supsRes, movsRes, auditsRes, wasteRes] = await Promise.allSettled([
         adminApi.getSuppliers(),
         adminApi.getStockMovements(80),
+        adminApi.getStocktakeSessions(25),
+        adminApi.getWasteLogs(40),
       ]);
-      if (supsRes.status === 'fulfilled') {
-        setSuppliers(supsRes.value);
-      }
-      if (movsRes.status === 'fulfilled') {
-        setMovements(movsRes.value);
-      }
+      if (supsRes.status === 'fulfilled') setSuppliers(supsRes.value);
+      if (movsRes.status === 'fulfilled') setMovements(movsRes.value);
+      if (auditsRes.status === 'fulfilled') setStocktakeSessions(auditsRes.value);
+      if (wasteRes.status === 'fulfilled') setWasteLogs(wasteRes.value);
     } catch {
-      toast.error('Failed to load inventory movements or suppliers', { title: 'Load Error' });
+      toast.error('Failed to load inventory records', { title: 'Load Error' });
     } finally {
       setIsLoadingSupporting(false);
     }
@@ -108,6 +133,10 @@ export function useInventoryViewController(inventory: InventoryItemAdmin[], onRe
         loadSupportingData();
         onRefresh();
       },
+      onWasteLogChange: () => {
+        loadSupportingData();
+        onRefresh();
+      },
       onPosSyncNeeded: () => {
         loadSupportingData();
         onRefresh();
@@ -120,83 +149,75 @@ export function useInventoryViewController(inventory: InventoryItemAdmin[], onRe
     };
   }, [loadSupportingData, onRefresh]);
 
-  const handleRefreshAll = () => {
+  const handleRefreshAll = useCallback(() => {
     loadSupportingData();
     onRefresh();
+  }, [loadSupportingData, onRefresh]);
+
+  const requestDeleteItem = (item: InventoryItemAdmin) => {
+    const linked = item.linked_recipes || [];
+    if (linked.length > 0) {
+      const names = linked
+        .slice(0, 3)
+        .map((r) => r.name)
+        .join(', ');
+      const extra = linked.length > 3 ? ` (+${linked.length - 3} more)` : '';
+      toast.error(`Used in recipes: ${names}${extra}. Remove it from those recipes first.`, {
+        title: 'Cannot Delete Ingredient',
+      });
+      return;
+    }
+    setItemToDelete(item);
   };
 
-  const handleExecuteRestock = async () => {
-    if (!selectedRestockItem || !restockQty || !restockCost) return;
-    setIsSubmittingRestock(true);
+  const confirmDeleteItem = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
     try {
-      await adminApi.restockDelivery({
-        inventoryItemId: selectedRestockItem.id,
-        quantity: parseFloat(restockQty),
-        invoiceUnitCost: parseFloat(restockCost),
-        supplierName: selectedRestockItem.supplier?.name || undefined,
-        invoiceNumber: restockInvoice.trim() || undefined,
-      });
-      toast.success(
-        `Restocked ${restockQty} ${selectedRestockItem.unit} of ${selectedRestockItem.name} with updated Weighted MAC`,
-        { title: 'Delivery Intake Recorded' }
-      );
-      setSelectedRestockItem(null);
-      setRestockQty('');
-      setRestockCost('');
-      setRestockInvoice('');
+      await adminApi.deleteInventoryItem(itemToDelete.id);
+      if (itemToDelete.reference_image_storage_path) {
+        cleanupInventoryImageObject(itemToDelete.reference_image_storage_path);
+      }
+      toast.success(`Deleted "${itemToDelete.name}"`, { title: 'Item Deleted' });
+      setItemToDelete(null);
       handleRefreshAll();
-    } catch {
-      toast.error('Failed to record restock intake', { title: 'Restock Error' });
+    } catch (err: any) {
+      toast.error(err?.message || 'Cannot delete item with historical ledger entries.', {
+        title: 'Delete Blocked',
+      });
     } finally {
-      setIsSubmittingRestock(false);
+      setIsDeleting(false);
     }
   };
 
-  const handleDeleteItem = async (item: InventoryItemAdmin) => {
+  const confirmDeleteSupplier = async () => {
+    if (!supplierToDelete) return;
+    setIsDeleting(true);
     try {
-      await adminApi.deleteInventoryItem(item.id);
-      toast.success(`Deleted "${item.name}" from inventory`, { title: 'Item Deleted' });
+      await adminApi.deleteSupplier(supplierToDelete.id);
+      toast.success(`Deleted supplier "${supplierToDelete.name}"`, { title: 'Supplier Deleted' });
+      setSupplierToDelete(null);
       handleRefreshAll();
     } catch (err: any) {
-      toast.error(err?.message || 'Cannot delete item linked to active recipes', {
+      toast.error(err?.message || 'Cannot delete supplier with active records.', {
         title: 'Delete Error',
       });
-    }
-  };
-
-  const handleDeleteSupplier = async (sup: SupplierAdmin) => {
-    try {
-      await adminApi.deleteSupplier(sup.id);
-      toast.success(`Deleted supplier "${sup.name}"`, { title: 'Supplier Deleted' });
-      handleRefreshAll();
-    } catch (err: any) {
-      toast.error(err?.message || 'Cannot delete supplier with active purchase history', {
-        title: 'Delete Error',
-      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   const filteredInventory = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
     return inventory.filter((item) => {
-      const stock = Number(item.current_stock || 0);
-      const par = Number(item.min_alert_level || 0);
-
+      const status = getStockStatus(item.current_stock, item.min_alert_level);
       const matchesSearch =
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (item.supplier?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
-
+        !q ||
+        item.name.toLowerCase().includes(q) ||
+        item.sku.toLowerCase().includes(q) ||
+        (item.supplier?.name || '').toLowerCase().includes(q);
       const matchesCat = categoryFilter === 'ALL' || item.category === categoryFilter;
-
-      let matchesStatus = true;
-      if (stockStatusFilter === 'IN_PAR') {
-        matchesStatus = stock > par;
-      } else if (stockStatusFilter === 'BELOW_PAR') {
-        matchesStatus = stock <= par && stock > 0;
-      } else if (stockStatusFilter === 'DEPLETED') {
-        matchesStatus = stock <= 0;
-      }
-
+      const matchesStatus = stockStatusFilter === 'ALL' || status === stockStatusFilter;
       return matchesSearch && matchesCat && matchesStatus;
     });
   }, [inventory, searchQuery, categoryFilter, stockStatusFilter]);
@@ -219,16 +240,11 @@ export function useInventoryViewController(inventory: InventoryItemAdmin[], onRe
     setLedgerTypeFilter,
     suppliers,
     movements,
+    stocktakeSessions,
+    wasteLogs,
     isLoadingSupporting,
     selectedRestockItem,
     setSelectedRestockItem,
-    restockQty,
-    setRestockQty,
-    restockCost,
-    setRestockCost,
-    restockInvoice,
-    setRestockInvoice,
-    isSubmittingRestock,
     selectedAdjustItem,
     setSelectedAdjustItem,
     isItemModalOpen,
@@ -243,14 +259,22 @@ export function useInventoryViewController(inventory: InventoryItemAdmin[], onRe
     setIsStocktakeModalOpen,
     isWasteModalOpen,
     setIsWasteModalOpen,
+    itemToDelete,
+    setItemToDelete,
+    supplierToDelete,
+    setSupplierToDelete,
+    isDeleting,
+    lightboxPhoto,
+    setLightboxPhoto,
     totalValuation,
     inParItemsCount,
     belowParItemsCount,
     depletedItemsCount,
+    toBuyItems,
     handleRefreshAll,
-    handleExecuteRestock,
-    handleDeleteItem,
-    handleDeleteSupplier,
+    requestDeleteItem,
+    confirmDeleteItem,
+    confirmDeleteSupplier,
     filteredInventory,
     filteredMovements,
   };

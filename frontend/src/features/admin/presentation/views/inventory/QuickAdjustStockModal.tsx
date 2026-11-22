@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
-import { Sliders, CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react-native';
+import { View, Text, Pressable } from 'react-native';
+import { Sliders, CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react-native';
+import { formatCurrency } from '@monks/shared';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { adminApi, type InventoryItemAdmin } from '../../../data/admin.api';
 import { AdminModal } from '../../components/AdminModal';
 import { AdminNumberInput } from '../../components/AdminNumberInput';
 import { AdminInput } from '../../components/AdminInput';
-import { formatCurrency } from '@monks/shared';
+import { validateQuickAdjustInput } from './utils/inventoryCalculations';
 
 interface QuickAdjustStockModalProps {
   visible: boolean;
@@ -19,7 +20,7 @@ const PRESET_REASONS = [
   'Routine Cycle Count',
   'Physical Shelf Audit',
   'Unrecorded Prep Spillage',
-  'Supplier Delivery Correction',
+  'Delivery Correction',
   'Shift Handover Count',
 ];
 
@@ -32,33 +33,39 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
   const [newStock, setNewStock] = useState('');
   const [parLevel, setParLevel] = useState('');
   const [reason, setReason] = useState('Routine Cycle Count');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (item) {
-      setNewStock(String(item.current_stock ?? 0));
+    if (visible && item) {
+      setNewStock(String(Math.max(0, Number(item.current_stock ?? 0))));
       setParLevel(String(item.min_alert_level ?? 1));
       setReason('Routine Cycle Count');
+      setErrorMsg(null);
     }
-  }, [item]);
+  }, [item, visible]);
 
   if (!item) return null;
 
   const currentStockNum = Number(item.current_stock || 0);
-  const newStockNum = parseFloat(newStock) || 0;
+  const parsedNewStock = parseFloat(newStock);
+  const newStockNum = Number.isFinite(parsedNewStock) ? parsedNewStock : 0;
   const variance = newStockNum - currentStockNum;
   const unitCost = Number(item.unit_cost || 0);
   const varianceCost = variance * unitCost;
+  const linkedCount = item.linked_recipes?.length || 0;
+  const triggersAuto86 = newStockNum <= 0 && linkedCount > 0;
 
   const handleSave = async () => {
-    if (isNaN(newStockNum)) {
-      toast.error('Please enter a valid stock count', { title: 'Invalid Count' });
+    const validation = validateQuickAdjustInput(newStock, parLevel);
+    if (!validation.valid) {
+      setErrorMsg(validation.error || 'Invalid stock or par level.');
       return;
     }
 
+    setErrorMsg(null);
     setIsSubmitting(true);
     try {
-      // 1. Adjust Stock Count if changed
       if (variance !== 0) {
         await adminApi.quickAdjustStock({
           inventoryItemId: item.id,
@@ -67,24 +74,21 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
         });
       }
 
-      // 2. Adjust Par Level if changed
       const parsedPar = parseFloat(parLevel);
-      if (!isNaN(parsedPar) && parsedPar !== Number(item.min_alert_level || 0)) {
+      if (Number.isFinite(parsedPar) && parsedPar !== Number(item.min_alert_level || 0)) {
         await adminApi.updateParLevel({
           inventoryItemId: item.id,
           newPar: parsedPar,
         });
       }
 
-      toast.success(
-        `Updated "${item.name}" to ${newStockNum.toFixed(2)} ${item.unit} (Variance: ${variance > 0 ? '+' : ''}${variance.toFixed(2)} ${item.unit})`,
-        { title: 'Stock Adjusted' }
-      );
+      toast.success(`Updated "${item.name}" to ${newStockNum.toFixed(2)} ${item.unit}`, {
+        title: 'Stock Adjusted',
+      });
       onSuccess();
       onClose();
     } catch (err: any) {
-      console.error('[QuickAdjustStockModal] Adjustment error:', err);
-      toast.error(err?.message || 'Failed to adjust stock count', { title: 'Adjustment Error' });
+      setErrorMsg(err?.message || 'Failed to adjust stock count.');
     } finally {
       setIsSubmitting(false);
     }
@@ -94,69 +98,69 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
     <AdminModal
       visible={visible}
       onClose={onClose}
-      title="Quick Stock Adjustment"
-      subtitle={`Fast shelf count & alert threshold update for ${item.name}`}
+      title="Quick Stock Count"
+      subtitle={item.name}
+      icon={<Sliders size={20} color="#810021" />}
       size="md"
       footer={
-        <>
+        <View className="flex-row items-center justify-end gap-2.5 w-full">
           <Pressable
             onPress={onClose}
             disabled={isSubmitting}
-            className="min-h-[44px] px-4 rounded-xl border border-stone-200 bg-white items-center justify-center active:bg-stone-50"
+            className="min-h-[48px] px-5 rounded-xl border border-[#E7E5E4] bg-white items-center justify-center active:opacity-80"
           >
-            <Text className="text-sm font-bold text-stone-700">Cancel</Text>
+            <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
           </Pressable>
 
           <Pressable
             onPress={handleSave}
             disabled={isSubmitting}
-            className="min-h-[44px] px-5 rounded-xl bg-[#800020] flex-row items-center justify-center active:opacity-90 shadow-xs"
+            className="min-h-[48px] flex-1 sm:flex-initial px-5 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
           >
-            <Text className="text-sm font-bold text-white">
+            <Text className="text-base font-bold text-white">
               {isSubmitting ? 'Saving...' : 'Save Adjustment'}
             </Text>
-            <ArrowRight size={16} color="#ffffff" className="ml-1.5" />
+            <ArrowRight size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
           </Pressable>
-        </>
+        </View>
       }
     >
-      <ScrollView showsVerticalScrollIndicator={false} className="space-y-4">
-        {/* Item Summary Card */}
-        <View className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-          <View className="flex-row items-center justify-between">
-            <View className="flex-1">
-              <Text className="text-base font-extrabold text-stone-900">{item.name}</Text>
-              <Text className="text-xs font-medium text-stone-500 mt-0.5">
-                SKU: {item.sku} • Category: {item.category}
-              </Text>
-            </View>
-            <View className="items-end">
-              <Text className="text-xs font-semibold text-stone-500">Recorded Stock</Text>
-              <Text className="text-lg font-black text-stone-900">
-                {currentStockNum.toFixed(2)} {item.unit}
-              </Text>
-            </View>
+      <View className="gap-4">
+        {/* Item Snapshot */}
+        <View className="rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] p-4 flex-row items-center justify-between gap-3">
+          <View className="flex-1 min-w-0">
+            <Text className="text-base font-bold text-[#1C1917]" numberOfLines={1}>
+              {item.name}
+            </Text>
+            <Text className="text-base text-[#78716C]">{item.sku}</Text>
+          </View>
+          <View className="items-end">
+            <Text className="text-base text-[#78716C]">Recorded</Text>
+            <Text className="text-lg font-extrabold text-[#1C1917] tabular-nums">
+              {currentStockNum.toFixed(2)} {item.unit}
+            </Text>
           </View>
         </View>
 
-        {/* New Actual Physical Stock Count */}
-        <View className="space-y-1.5">
-          <AdminNumberInput
-            label={`Actual Shelf Stock Count (${item.unit})`}
-            value={newStock}
-            onChangeText={setNewStock}
-            placeholder="0.00"
-            mode="decimal"
-            allowNegative={true}
-            leftElement={<Sliders size={18} color="#78716c" />}
-          />
-        </View>
+        <AdminNumberInput
+          label={`Actual Shelf Count (${item.unit})`}
+          required
+          value={newStock}
+          onChangeText={(val) => {
+            setErrorMsg(null);
+            setNewStock(val);
+          }}
+          placeholder="0.00"
+          mode="decimal"
+          allowNegative={false}
+          suffix={item.unit}
+        />
 
-        {/* Real-Time Variance Pill */}
+        {/* Variance Summary */}
         <View
-          className={`flex-row items-center justify-between rounded-xl px-4 py-2.5 border ${
+          className={`flex-row items-center justify-between flex-wrap gap-2 rounded-xl px-4 py-3 border ${
             variance === 0
-              ? 'bg-stone-100 border-stone-200'
+              ? 'bg-[#FAF8F5] border-[#E7E5E4]'
               : variance > 0
                 ? 'bg-emerald-50 border-emerald-200'
                 : 'bg-rose-50 border-rose-200'
@@ -164,73 +168,64 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
         >
           <View className="flex-row items-center gap-2">
             {variance === 0 ? (
-              <CheckCircle2 size={16} color="#57534e" />
-            ) : variance > 0 ? (
-              <ShieldCheck size={16} color="#047857" />
+              <CheckCircle2 size={18} color="#78716C" />
             ) : (
-              <AlertTriangle size={16} color="#e11d48" />
+              <AlertTriangle size={18} color={variance > 0 ? '#10b981' : '#b32638'} />
             )}
-            <Text
-              className={`text-sm font-bold ${
-                variance === 0
-                  ? 'text-stone-700'
-                  : variance > 0
-                    ? 'text-emerald-800'
-                    : 'text-rose-800'
-              }`}
-            >
+            <Text className="text-base font-bold text-[#1C1917] tabular-nums">
               {variance === 0
-                ? 'Counts match perfectly (0 variance)'
+                ? 'Matches recorded stock'
                 : `Variance: ${variance > 0 ? '+' : ''}${variance.toFixed(2)} ${item.unit}`}
             </Text>
           </View>
 
           {variance !== 0 && (
-            <Text
-              className={`text-xs font-extrabold ${
-                variance > 0 ? 'text-emerald-700' : 'text-rose-700'
-              }`}
-            >
+            <Text className="text-base font-bold text-[#1C1917] tabular-nums">
               {varianceCost > 0 ? '+' : ''}
-              {formatCurrency(varianceCost)} MAC
+              {formatCurrency(varianceCost)}
             </Text>
           )}
         </View>
 
-        {/* Low Stock Alert Threshold (Par Level) */}
-        <View className="space-y-1.5">
-          <AdminNumberInput
-            label={`Low Stock Alert Threshold / Par Level (${item.unit})`}
-            value={parLevel}
-            onChangeText={setParLevel}
-            placeholder="1.00"
-            mode="decimal"
-            allowNegative={false}
-          />
-          <Text className="text-[11px] text-stone-500">
-            When on-hand inventory drops to or below this amount, soft alerts fire across the POS
-            and KDS without blocking orders.
-          </Text>
-        </View>
+        {triggersAuto86 && (
+          <View className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+            <Text className="text-base font-semibold text-amber-900">
+              Setting stock to 0 will Auto-86 {linkedCount} linked menu{' '}
+              {linkedCount === 1 ? 'item' : 'items'}.
+            </Text>
+          </View>
+        )}
 
-        {/* Reason Presets */}
-        <View className="space-y-2">
-          <Text className="text-xs font-bold text-stone-700">Audit / Adjustment Reason</Text>
-          <View className="flex-row flex-wrap gap-1.5">
+        <AdminNumberInput
+          label={`Min Par Alert (${item.unit})`}
+          value={parLevel}
+          onChangeText={(val) => {
+            setErrorMsg(null);
+            setParLevel(val);
+          }}
+          placeholder="1.00"
+          mode="decimal"
+          allowNegative={false}
+          suffix={item.unit}
+        />
+
+        <View className="gap-2">
+          <Text className="text-base font-semibold text-[#1C1917]">Adjustment Reason</Text>
+          <View className="flex-row flex-wrap gap-2">
             {PRESET_REASONS.map((p) => {
               const isSelected = reason === p;
               return (
                 <Pressable
                   key={p}
                   onPress={() => setReason(p)}
-                  className={`rounded-lg px-2.5 py-1.5 border ${
-                    isSelected
-                      ? 'bg-[#800020] border-[#800020]'
-                      : 'bg-white border-stone-200 active:bg-stone-50'
+                  className={`min-h-[48px] px-3.5 rounded-xl border justify-center ${
+                    isSelected ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E7E5E4]'
                   }`}
                 >
                   <Text
-                    className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-stone-700'}`}
+                    className={`text-base font-semibold ${
+                      isSelected ? 'text-white' : 'text-[#1C1917]'
+                    }`}
                   >
                     {p}
                   </Text>
@@ -238,15 +233,20 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
               );
             })}
           </View>
-
           <AdminInput
             value={reason}
             onChangeText={setReason}
-            placeholder="Custom audit reason or note..."
-            className="mt-1"
+            placeholder="Custom reason..."
+            clearable
           />
         </View>
-      </ScrollView>
+
+        {errorMsg && (
+          <View className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3">
+            <Text className="text-base font-semibold text-[#b32638]">{errorMsg}</Text>
+          </View>
+        )}
+      </View>
     </AdminModal>
   );
 };

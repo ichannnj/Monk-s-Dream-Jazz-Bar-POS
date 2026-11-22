@@ -27,16 +27,19 @@ export const SupplierModal: React.FC<SupplierModalProps> = ({
   const [address, setAddress] = useState('');
   const [leadTimeDays, setLeadTimeDays] = useState('2');
   const [notes, setNotes] = useState('');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!visible) return;
+    setErrorMsg(null);
     if (supplier) {
       setName(supplier.name);
       setContactPerson(supplier.contact_person || '');
       setPhone(supplier.phone || '');
       setEmail(supplier.email || '');
       setAddress(supplier.address || '');
-      setLeadTimeDays(supplier.lead_time_days.toString());
+      setLeadTimeDays(String(supplier.lead_time_days ?? 1));
       setNotes(supplier.notes || '');
     } else {
       setName('');
@@ -51,99 +54,109 @@ export const SupplierModal: React.FC<SupplierModalProps> = ({
 
   const handleSubmit = async () => {
     if (!name.trim()) {
-      toast.error('Supplier company name is required', { title: 'Validation Error' });
+      setErrorMsg('Supplier company name is required.');
       return;
     }
 
-    const leadTime = parseInt(leadTimeDays, 10) || 1;
+    const leadTime = parseInt(leadTimeDays, 10);
+    if (!Number.isFinite(leadTime) || leadTime < 0) {
+      setErrorMsg('Lead time must be 0 or more days.');
+      return;
+    }
 
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setErrorMsg('Enter a valid email address.');
+      return;
+    }
+
+    setErrorMsg(null);
     setIsSubmitting(true);
     try {
+      const payload = {
+        name: name.trim(),
+        contact_person: contactPerson.trim() || null,
+        phone: phone.trim() || null,
+        email: email.trim() || null,
+        address: address.trim() || null,
+        lead_time_days: leadTime,
+        notes: notes.trim() || null,
+      };
+
       if (supplier) {
-        await adminApi.updateSupplier(supplier.id, {
-          name: name.trim(),
-          contact_person: contactPerson.trim() || null,
-          phone: phone.trim() || null,
-          email: email.trim() || null,
-          address: address.trim() || null,
-          lead_time_days: leadTime,
-          notes: notes.trim() || null,
-        });
-        toast.success(`Updated "${name}"`, { title: 'Supplier Saved' });
+        await adminApi.updateSupplier(supplier.id, payload);
+        toast.success(`Updated "${name.trim()}"`, { title: 'Supplier Saved' });
       } else {
-        await adminApi.createSupplier({
-          name: name.trim(),
-          contact_person: contactPerson.trim() || null,
-          phone: phone.trim() || null,
-          email: email.trim() || null,
-          address: address.trim() || null,
-          lead_time_days: leadTime,
-          notes: notes.trim() || null,
-        });
-        toast.success(`Created supplier "${name}"`, { title: 'Supplier Created' });
+        await adminApi.createSupplier(payload);
+        toast.success(`Created supplier "${name.trim()}"`, { title: 'Supplier Created' });
       }
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err?.message || 'Failed to save supplier', { title: 'Error' });
+      setErrorMsg(err?.message || 'Failed to save supplier.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const footer = (
-    <>
+    <View className="flex-row items-center justify-end gap-2.5 w-full">
       <Pressable
         onPress={onClose}
         disabled={isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
       >
-        <Text className="text-base font-bold text-stone-700">Cancel</Text>
+        <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
       </Pressable>
       <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+        className="min-h-[48px] flex-1 sm:flex-initial px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-85"
       >
         <Text className="text-base font-bold text-white">
           {isSubmitting ? 'Saving...' : supplier ? 'Save Changes' : 'Create Supplier'}
         </Text>
       </Pressable>
-    </>
+    </View>
   );
 
   return (
     <AdminModal
       visible={visible}
       onClose={onClose}
-      title={supplier ? 'Edit Vendor / Supplier' : 'New Vendor / Supplier'}
-      subtitle="Manage contact records, purchase order lead times, and terms"
-      icon={<Building2 size={22} color="#800020" />}
+      title={supplier ? 'Edit Supplier' : 'New Supplier'}
+      subtitle="Vendor contact details and delivery lead time"
+      icon={<Building2 size={20} color="#810021" />}
       size="md"
       footer={footer}
     >
-      <View className="space-y-4">
+      <View className="gap-4">
         <AdminInput
           label="Company / Vendor Name"
           required
           value={name}
-          onChangeText={setName}
-          placeholder="e.g. Luzon Beverage & Spirits Imports"
+          onChangeText={(v) => {
+            setErrorMsg(null);
+            setName(v);
+          }}
+          placeholder="e.g. Luzon Beverage & Spirits"
+          clearable
         />
 
-        <View className="flex-col sm:flex-row gap-4">
+        <View className="flex-col sm:flex-row gap-3">
           <View className="flex-1">
             <AdminInput
-              label="Contact Representative"
+              label="Contact Person"
               value={contactPerson}
               onChangeText={setContactPerson}
               placeholder="e.g. Marco Santos"
+              clearable
             />
           </View>
           <View className="w-full sm:w-44">
             <AdminNumberInput
-              label="Lead Time (Days)"
+              label="Lead Time"
               mode="integer"
+              allowNegative={false}
               value={leadTimeDays}
               onChangeText={setLeadTimeDays}
               placeholder="2"
@@ -152,7 +165,7 @@ export const SupplierModal: React.FC<SupplierModalProps> = ({
           </View>
         </View>
 
-        <View className="flex-col sm:flex-row gap-4">
+        <View className="flex-col sm:flex-row gap-3">
           <View className="flex-1">
             <AdminInput
               label="Phone Number"
@@ -160,25 +173,31 @@ export const SupplierModal: React.FC<SupplierModalProps> = ({
               onChangeText={setPhone}
               placeholder="+63 917 555 1234"
               keyboardType="phone-pad"
+              clearable
             />
           </View>
           <View className="flex-1">
             <AdminInput
               label="Email Address"
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(v) => {
+                setErrorMsg(null);
+                setEmail(v);
+              }}
               placeholder="orders@supplier.ph"
               keyboardType="email-address"
               autoCapitalize="none"
+              clearable
             />
           </View>
         </View>
 
         <AdminInput
-          label="Physical Address / Depot"
+          label="Depot / Address"
           value={address}
           onChangeText={setAddress}
           placeholder="e.g. Taguig City, Metro Manila"
+          clearable
         />
 
         <AdminInput
@@ -187,9 +206,15 @@ export const SupplierModal: React.FC<SupplierModalProps> = ({
           onChangeText={setNotes}
           multiline
           numberOfLines={2}
-          placeholder="e.g. Minimum order 5 cases. Net 15 invoice terms."
+          placeholder="e.g. Minimum order 5 cases, Net 15 terms"
           className="min-h-[72px] py-2"
         />
+
+        {errorMsg && (
+          <View className="rounded-xl border border-rose-300 bg-rose-50 px-4 py-3">
+            <Text className="text-base font-semibold text-[#b32638]">{errorMsg}</Text>
+          </View>
+        )}
       </View>
     </AdminModal>
   );

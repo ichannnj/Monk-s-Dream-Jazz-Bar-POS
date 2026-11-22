@@ -43,7 +43,8 @@ export function getRealtimeSubscriptionPlan(
   const isPublicEventsMode = mode === 'events';
   const isPrinterMode = mode === 'printer';
   const isTimeclockMode = mode === 'timeclock';
-  const isHeadless = isPublicEventsMode || isPrinterMode || isTimeclockMode;
+  const isGroceryMode = mode === 'grocery';
+  const isHeadless = isPublicEventsMode || isPrinterMode || isTimeclockMode || isGroceryMode;
 
   // 1. Dedicated Public Events Flyer Mode (?mode=events)
   // Subscribes ONLY to public events schedule; zero order/chat leakage.
