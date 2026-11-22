@@ -74,7 +74,7 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
           <View style={styles.header}>
             <View style={styles.headerTitleGroup}>
               <View style={styles.badge}>
-                <ShoppingBag size={16} color="#ffffff" strokeWidth={2.4} />
+                <ShoppingBag size={16} color="#F5F5F5" strokeWidth={2.4} />
               </View>
               <Text style={styles.title}>Takeout · #{nextTicketNumber}</Text>
             </View>
@@ -182,7 +182,7 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
                 value={isPrepaid}
                 onValueChange={setIsPrepaid}
                 trackColor={{ false: '#e7e5e4', true: '#810021' }}
-                thumbColor={isPrepaid ? '#ffffff' : '#ffffff'}
+                thumbColor={isPrepaid ? '#F5F5F5' : '#F5F5F5'}
               />
             </View>
           </ScrollView>
@@ -195,7 +195,7 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
 
             <Pressable onPress={handleProceed} style={styles.proceedBtn}>
               <Text style={styles.proceedBtnText}>Start Order</Text>
-              <ArrowRight size={16} color="#ffffff" strokeWidth={2.4} />
+              <ArrowRight size={16} color="#F5F5F5" strokeWidth={2.4} />
             </Pressable>
           </View>
         </View>
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     width: '100%',
     maxWidth: 500,
@@ -336,6 +336,6 @@ const styles = StyleSheet.create({
   proceedBtnText: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
 });

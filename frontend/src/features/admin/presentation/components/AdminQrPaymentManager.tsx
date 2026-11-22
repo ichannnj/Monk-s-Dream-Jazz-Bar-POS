@@ -205,7 +205,7 @@ export const AdminQrPaymentManager: React.FC = () => {
           onPress={openAddModal}
           className="min-h-[44px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm"
         >
-          <Plus size={18} color="#ffffff" />
+          <Plus size={18} color="#F5F5F5" />
           <Text className="ml-1.5 text-sm font-bold text-white">Add QR Channel</Text>
         </Pressable>
       </View>
@@ -230,7 +230,7 @@ export const AdminQrPaymentManager: React.FC = () => {
             onPress={openAddModal}
             className="mt-4 min-h-[40px] flex-row items-center rounded-xl bg-[#800020] px-4 active:opacity-90"
           >
-            <Plus size={16} color="#ffffff" />
+            <Plus size={16} color="#F5F5F5" />
             <Text className="ml-1 text-sm font-bold text-white">Add First QR Channel</Text>
           </Pressable>
         </View>
@@ -258,7 +258,7 @@ export const AdminQrPaymentManager: React.FC = () => {
                     resizeMode="contain"
                   />
                   <View className="absolute inset-0 bg-black/20 rounded-lg items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <Eye size={16} color="#ffffff" />
+                    <Eye size={16} color="#F5F5F5" />
                   </View>
                 </Pressable>
 
@@ -352,7 +352,7 @@ export const AdminQrPaymentManager: React.FC = () => {
               className="min-h-[44px] px-6 rounded-xl bg-[#800020] items-center justify-center active:opacity-90 shadow-sm"
             >
               {isSaving ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#F5F5F5" />
               ) : (
                 <Text className="text-sm font-bold text-white">
                   {editingChannel ? 'Save Changes' : 'Create Channel'}

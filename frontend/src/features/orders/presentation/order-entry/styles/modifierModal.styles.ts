@@ -14,7 +14,7 @@ export const modifierModalStyles = StyleSheet.create({
     padding: 16,
   },
   customizerCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     width: '100%',
     maxWidth: 500,
@@ -32,7 +32,7 @@ export const modifierModalStyles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
     zIndex: 10,
@@ -50,7 +50,7 @@ export const modifierModalStyles = StyleSheet.create({
   customizerFooterWrapper: {
     paddingHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
     zIndex: 10,
@@ -105,7 +105,7 @@ export const modifierModalStyles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     minHeight: 48,
   },
   modRowSelected: {
@@ -156,7 +156,7 @@ export const modifierModalStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   confirmCustomizeBtnText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 16,
     fontWeight: '800',
   },

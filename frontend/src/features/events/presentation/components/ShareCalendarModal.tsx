@@ -117,9 +117,9 @@ export const ShareCalendarModal: React.FC<ShareCalendarModalProps> = ({
                 className="flex-row items-center gap-1.5 rounded-xl bg-[#800020] px-3.5 py-2 text-white active:bg-[#66001a]"
               >
                 {copied ? (
-                  <Check size={14} color="#ffffff" aria-hidden={true} />
+                  <Check size={14} color="#F5F5F5" aria-hidden={true} />
                 ) : (
-                  <Copy size={14} color="#ffffff" aria-hidden={true} />
+                  <Copy size={14} color="#F5F5F5" aria-hidden={true} />
                 )}
                 <Text className="text-xs font-bold text-white">{copied ? 'Copied' : 'Copy'}</Text>
               </Pressable>

@@ -166,7 +166,7 @@ export const FohStatusModal: React.FC<FohStatusModalProps> = ({
               onPress={handleSendPrompt}
               style={({ pressed }) => [styles.primaryWineBtn, pressed && styles.btnPressed]}
             >
-              <Send size={18} color="#ffffff" />
+              <Send size={18} color="#F5F5F5" />
               <Text style={styles.primaryWineBtnText}>Prompt Floor Waiter with Suggestion</Text>
             </Pressable>
 

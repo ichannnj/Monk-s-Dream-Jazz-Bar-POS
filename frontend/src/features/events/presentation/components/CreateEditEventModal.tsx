@@ -677,7 +677,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                         hasDoorCharge ? 'bg-[#800020]' : 'bg-stone-200'
                       }`}
                     >
-                      <Ticket size={20} color={hasDoorCharge ? '#ffffff' : '#57534e'} />
+                      <Ticket size={20} color={hasDoorCharge ? '#F5F5F5' : '#57534e'} />
                     </View>
                     <View className="flex-1">
                       <Text className="text-sm font-extrabold text-stone-900">
@@ -956,9 +956,9 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
               className="flex-row items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#800020] text-white active:bg-[#66001a] shadow-xs"
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#F5F5F5" />
               ) : (
-                <Check size={16} color="#ffffff" aria-hidden={true} />
+                <Check size={16} color="#F5F5F5" aria-hidden={true} />
               )}
               <Text className="text-xs font-bold text-white">
                 {isSubmitting ? 'Saving…' : event ? 'Save changes' : 'Schedule event'}

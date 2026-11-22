@@ -186,11 +186,11 @@ export const PosMultiSelectDropdown: React.FC<PosMultiSelectDropdownProps> = ({
                           : 'bg-white border-stone-300'
                       }`}
                       style={{
-                        backgroundColor: isSelected ? currentStyles.accent : '#ffffff',
+                        backgroundColor: isSelected ? currentStyles.accent : '#F5F5F5',
                         borderColor: isSelected ? currentStyles.accent : '#d6d3d1',
                       }}
                     >
-                      {isSelected && <Check size={14} color="#ffffff" strokeWidth={3} />}
+                      {isSelected && <Check size={14} color="#F5F5F5" strokeWidth={3} />}
                     </View>
                   </Pressable>
                 );

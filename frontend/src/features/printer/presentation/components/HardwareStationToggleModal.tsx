@@ -88,7 +88,7 @@ export const HardwareStationToggleModal: React.FC<HardwareStationToggleModalProp
                 }
               }}
               trackColor={{ false: '#d6d3d1', true: '#d97706' }}
-              thumbColor="#ffffff"
+              thumbColor="#F5F5F5"
             />
           </View>
 

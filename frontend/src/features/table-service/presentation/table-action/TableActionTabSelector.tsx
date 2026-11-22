@@ -50,7 +50,7 @@ export const TableActionTabSelector: React.FC<TableActionTabSelectorProps> = ({
                   width: 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: isSelected ? '#ffffff' : dotColor,
+                  backgroundColor: isSelected ? '#F5F5F5' : dotColor,
                 }}
               />
               <Text

@@ -116,7 +116,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel={`Pay and collect order ${order.ticketNumber}`}
             >
-              <CreditCard size={18} color="#FFFFFF" strokeWidth={2.2} />
+              <CreditCard size={18} color="#F5F5F5" strokeWidth={2.2} />
               <Text className="text-base font-semibold text-white">Pay &amp; Collect</Text>
             </Pressable>
           )

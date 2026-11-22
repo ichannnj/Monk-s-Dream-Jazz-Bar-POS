@@ -24,7 +24,7 @@ const BUTTON_VARIANTS: Record<
     container: 'bg-[#6e1d2c] border border-[#541521]',
     pressed: 'active:bg-[#541521]',
     text: 'text-white font-bold',
-    iconColor: '#ffffff',
+    iconColor: '#F5F5F5',
   },
   secondary: {
     container: 'bg-white border border-stone-300 shadow-xs',
@@ -48,7 +48,7 @@ const BUTTON_VARIANTS: Record<
     container: 'bg-amber-600 border border-amber-700',
     pressed: 'active:bg-amber-700',
     text: 'text-white font-bold',
-    iconColor: '#ffffff',
+    iconColor: '#F5F5F5',
   },
 };
 

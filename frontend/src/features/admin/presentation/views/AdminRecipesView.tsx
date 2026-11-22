@@ -151,7 +151,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
               }}
               className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
             >
-              <Plus size={16} color="#ffffff" />
+              <Plus size={16} color="#F5F5F5" />
               <Text className="ml-1.5 text-xs font-bold text-white">+ Add Item</Text>
             </Pressable>
           )}
@@ -164,7 +164,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
               }}
               className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
             >
-              <FolderPlus size={16} color="#ffffff" />
+              <FolderPlus size={16} color="#F5F5F5" />
               <Text className="ml-1.5 text-xs font-bold text-white">+ Add Category</Text>
             </Pressable>
           )}
@@ -177,7 +177,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
               }}
               className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
             >
-              <Sliders size={16} color="#ffffff" />
+              <Sliders size={16} color="#F5F5F5" />
               <Text className="ml-1.5 text-xs font-bold text-white">+ Add Group</Text>
             </Pressable>
           )}

@@ -57,7 +57,7 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
 
             <View className="mt-2 flex-row items-center flex-wrap gap-2">
               <View className="flex-row items-center rounded-md bg-white/20 px-2 py-0.5 shrink-0">
-                <TrendingUp size={14} color="#ffffff" />
+                <TrendingUp size={14} color="#F5F5F5" />
                 <Text className="ml-1 text-xs font-bold text-white">
                   {telemetry.salesGrowthPercent >= 0 ? '+' : ''}
                   {telemetry.salesGrowthPercent}%

@@ -223,10 +223,10 @@ export const ResetStationBaselineModal: React.FC<ResetStationBaselineModalProps>
               }`}
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#F5F5F5" />
               ) : (
                 <>
-                  <Check size={16} color="#ffffff" />
+                  <Check size={16} color="#F5F5F5" />
                   <Text className="ml-1.5 text-sm font-bold text-white">Confirm Reset</Text>
                 </>
               )}

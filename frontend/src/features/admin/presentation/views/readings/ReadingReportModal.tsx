@@ -134,9 +134,9 @@ ${reading.counted_cash !== undefined ? `COUNTED CASH:     ${reading.counted_cash
             <View className="flex-row items-center gap-3">
               <View className="w-11 h-11 rounded-xl bg-[#800020] items-center justify-center">
                 {isZReading ? (
-                  <Receipt size={22} color="#ffffff" />
+                  <Receipt size={22} color="#F5F5F5" />
                 ) : (
-                  <FileText size={22} color="#ffffff" />
+                  <FileText size={22} color="#F5F5F5" />
                 )}
               </View>
               <View>
@@ -228,7 +228,7 @@ ${reading.counted_cash !== undefined ? `COUNTED CASH:     ${reading.counted_cash
                 disabled={isSendingToThermal}
                 className="flex-1 sm:flex-initial flex-row items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#800020] active:bg-[#600018] min-h-[48px]"
               >
-                <Receipt size={18} color="#ffffff" />
+                <Receipt size={18} color="#F5F5F5" />
                 <Text className="text-base font-bold text-white">
                   {isSendingToThermal ? 'Sending...' : 'Thermal 80mm'}
                 </Text>

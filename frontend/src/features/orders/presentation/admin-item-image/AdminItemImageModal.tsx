@@ -146,7 +146,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
                       padding: 6,
                     }}
                   >
-                    <X size={14} color="#ffffff" />
+                    <X size={14} color="#F5F5F5" />
                   </Pressable>
                 ) : null}
               </View>
@@ -197,7 +197,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
                   flex: 1,
                   paddingVertical: 8,
                   alignItems: 'center',
-                  backgroundColor: activeTab === 'upload' ? '#ffffff' : 'transparent',
+                  backgroundColor: activeTab === 'upload' ? '#F5F5F5' : 'transparent',
                   borderRadius: 8,
                   shadowColor: '#000',
                   shadowOpacity: activeTab === 'upload' ? 0.05 : 0,
@@ -220,7 +220,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
                   flex: 1,
                   paddingVertical: 8,
                   alignItems: 'center',
-                  backgroundColor: activeTab === 'url' ? '#ffffff' : 'transparent',
+                  backgroundColor: activeTab === 'url' ? '#F5F5F5' : 'transparent',
                   borderRadius: 8,
                   shadowColor: '#000',
                   shadowOpacity: activeTab === 'url' ? 0.05 : 0,
@@ -324,10 +324,10 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
               accessibilityLabel="Save photo to database"
             >
               {isSaving ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#F5F5F5" />
               ) : (
                 <>
-                  <Check size={16} color="#ffffff" strokeWidth={2.4} />
+                  <Check size={16} color="#F5F5F5" strokeWidth={2.4} />
                   <Text style={styles.saveBtnText}>Save to Menu &amp; Database</Text>
                 </>
               )}

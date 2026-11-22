@@ -79,7 +79,7 @@ export function PosDropdown<T extends string = string>({
     }
   };
 
-  const iconColor = isSolidVariant ? '#ffffff' : '#800020';
+  const iconColor = isSolidVariant ? '#F5F5F5' : '#800020';
   const chevronColor = isSolidVariant ? '#f5d0fe' : '#57534e';
 
   return (

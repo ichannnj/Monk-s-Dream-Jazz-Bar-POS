@@ -148,7 +148,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
           disabled={isSaving}
           className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:bg-[#600018] shadow-xs"
         >
-          <Save size={16} color="#ffffff" />
+          <Save size={16} color="#F5F5F5" />
           <Text className="ml-1.5 text-xs font-bold text-white">
             {isSaving ? 'Saving...' : 'Save Settings'}
           </Text>
@@ -225,7 +225,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
                     vatInclusive ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
                   }`}
                 >
-                  {vatInclusive && <Check size={16} color="#ffffff" />}
+                  {vatInclusive && <Check size={16} color="#F5F5F5" />}
                 </View>
               </Pressable>
             </View>
@@ -281,7 +281,7 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
                     : 'bg-white border-stone-400'
                 }`}
               >
-                {serviceChargeEnabled && <Check size={16} color="#ffffff" />}
+                {serviceChargeEnabled && <Check size={16} color="#F5F5F5" />}
               </View>
             </Pressable>
           </View>
@@ -357,9 +357,9 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
               onPress={() => window.open('?mode=printer', '_blank')}
               className="h-9 px-3 rounded-xl bg-[#800020] active:bg-[#600018] flex-row items-center"
             >
-              <Printer size={14} color="#ffffff" />
+              <Printer size={14} color="#F5F5F5" />
               <Text className="ml-1.5 text-xs font-bold text-white">Open Station</Text>
-              <ExternalLink size={12} color="#ffffff" className="ml-1" />
+              <ExternalLink size={12} color="#F5F5F5" className="ml-1" />
             </Pressable>
           </View>
 

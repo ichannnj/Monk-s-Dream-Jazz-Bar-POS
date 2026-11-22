@@ -172,7 +172,7 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                           }}
                           className="h-8 px-2.5 flex-row items-center justify-center rounded-lg bg-stone-900 active:bg-stone-800"
                         >
-                          <CheckCircle2 size={13} color="#ffffff" />
+                          <CheckCircle2 size={13} color="#F5F5F5" />
                           <Text className="ml-1 text-xs font-bold text-white">Clock In</Text>
                         </Pressable>
                       ) : isClockedIn ? (
@@ -195,7 +195,7 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                           }}
                           className="h-8 px-2.5 flex-row items-center justify-center rounded-lg bg-[#800020] active:bg-[#600018]"
                         >
-                          <Clock size={13} color="#ffffff" />
+                          <Clock size={13} color="#F5F5F5" />
                           <Text className="ml-1 text-xs font-bold text-white">Clock Out</Text>
                         </Pressable>
                       ) : isCompleted ? (

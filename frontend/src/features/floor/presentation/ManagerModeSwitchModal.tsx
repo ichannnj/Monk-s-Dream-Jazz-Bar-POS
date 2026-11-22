@@ -199,7 +199,7 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
               accessibilityRole="button"
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#F5F5F5" />
               ) : (
                 <Text className="text-base font-bold text-white">
                   Confirm {nextMode === 'EVENT' ? 'Event' : 'Cafe'} Mode

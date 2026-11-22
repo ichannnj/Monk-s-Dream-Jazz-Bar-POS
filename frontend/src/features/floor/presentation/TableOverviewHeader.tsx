@@ -38,7 +38,7 @@ export const TableOverviewHeader: React.FC<TableOverviewHeaderProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Open Table Tab"
             >
-              <PlusCircle size={16} color="#ffffff" strokeWidth={2.3} />
+              <PlusCircle size={16} color="#F5F5F5" strokeWidth={2.3} />
               <Text style={styles.btnTextWhite}>Open Table Tab</Text>
             </Pressable>
           ) : null}
@@ -55,7 +55,7 @@ export const TableOverviewHeader: React.FC<TableOverviewHeaderProps> = ({
               accessibilityRole="button"
               accessibilityLabel="New Walk-In Takeout"
             >
-              <ShoppingBag size={16} color="#ffffff" strokeWidth={2.3} />
+              <ShoppingBag size={16} color="#F5F5F5" strokeWidth={2.3} />
               <Text style={styles.btnTextWhite}>New Takeout</Text>
             </Pressable>
           ) : null}
@@ -72,7 +72,7 @@ export const TableOverviewHeader: React.FC<TableOverviewHeaderProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Input Online Delivery Order"
             >
-              <Bike size={16} color="#ffffff" strokeWidth={2.3} />
+              <Bike size={16} color="#F5F5F5" strokeWidth={2.3} />
               <Text style={styles.btnTextWhite}>Input Online Order</Text>
             </Pressable>
           ) : null}
@@ -98,7 +98,7 @@ export const TableOverviewHeader: React.FC<TableOverviewHeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     paddingHorizontal: 24,
     paddingVertical: 16,
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
   btnTextWhite: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 13,
     fontWeight: '700',
     letterSpacing: 0.1,

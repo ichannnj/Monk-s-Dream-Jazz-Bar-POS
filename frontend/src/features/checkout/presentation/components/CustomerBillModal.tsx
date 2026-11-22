@@ -297,7 +297,7 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel={`Proceed to settle payment for ${formatCurrency(grandTotal)}`}
               >
-                <CreditCard size={18} color="#ffffff" strokeWidth={2.4} />
+                <CreditCard size={18} color="#F5F5F5" strokeWidth={2.4} />
                 <Text style={styles.payBtnText}>Settle Tab · {formatCurrency(grandTotal)}</Text>
               </Pressable>
             )}

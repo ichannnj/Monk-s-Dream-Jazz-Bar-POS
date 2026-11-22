@@ -29,7 +29,7 @@ export const AdminFloatingChat: React.FC<AdminFloatingChatProps> = ({ unreadCoun
             accessibilityRole="button"
             accessibilityLabel="Open live team chat"
           >
-            <MessageSquare size={24} color="#ffffff" strokeWidth={2.2} />
+            <MessageSquare size={24} color="#F5F5F5" strokeWidth={2.2} />
             {unreadCount > 0 && (
               <View className="absolute -top-1 -right-1 h-5 w-5 items-center justify-center rounded-full bg-rose-600 border-2 border-white shadow-sm">
                 <Text className="text-[11px] font-bold text-white leading-none">{unreadCount}</Text>
@@ -60,7 +60,7 @@ export const AdminFloatingChat: React.FC<AdminFloatingChatProps> = ({ unreadCoun
             <View className="flex-row items-center justify-between border-b border-stone-200 bg-white px-5 py-4">
               <View className="flex-row items-center flex-1 mr-2 min-w-0">
                 <View className="rounded-xl bg-[#800020] p-2 mr-3 shadow-xs shrink-0">
-                  <MessageSquare size={18} color="#ffffff" strokeWidth={2.2} />
+                  <MessageSquare size={18} color="#F5F5F5" strokeWidth={2.2} />
                 </View>
                 <View className="flex-1 min-w-0">
                   <View className="flex-row items-center">

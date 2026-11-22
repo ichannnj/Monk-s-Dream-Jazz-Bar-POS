@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     width: KNOB_SIZE,
     height: KNOB_SIZE,
     borderRadius: KNOB_SIZE / 2,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1.5 },
     shadowOpacity: 0.18,

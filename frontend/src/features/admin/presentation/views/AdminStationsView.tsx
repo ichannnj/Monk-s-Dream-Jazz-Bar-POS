@@ -347,7 +347,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
               <View className="flex-row items-center justify-between mb-3 flex-wrap gap-2">
                 <View className="flex-row items-center space-x-2.5">
                   <View className={`h-9 w-9 items-center justify-center rounded-xl ${st.color}`}>
-                    <IconComp size={18} color="#ffffff" />
+                    <IconComp size={18} color="#F5F5F5" />
                   </View>
                   <View className="ml-2.5">
                     <Text className="text-base font-bold text-stone-900">{st.name}</Text>

@@ -239,9 +239,9 @@ export const PrinterTerminalScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Launch dedicated print station tab"
             >
-              <Printer size={18} color="#FFFFFF" />
+              <Printer size={18} color="#F5F5F5" />
               <Text className="ml-2 text-base font-semibold text-white">Station Tab</Text>
-              <ExternalLink size={15} color="#FFFFFF" className="ml-1.5" />
+              <ExternalLink size={15} color="#F5F5F5" className="ml-1.5" />
             </Pressable>
           </>
         }

@@ -3,7 +3,7 @@ import { styles as badgeStyles } from './BaristaTicketBadges.styles';
 
 const baseStyles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 16,
     padding: 14,
     marginBottom: 14,
@@ -215,7 +215,7 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryWineButtonText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: 0.3,
@@ -269,7 +269,7 @@ const baseStyles = StyleSheet.create({
     borderRadius: 8,
   },
   recallButtonText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -283,7 +283,7 @@ const baseStyles = StyleSheet.create({
     gap: 4,
   },
   dismissButtonText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -335,7 +335,7 @@ const baseStyles = StyleSheet.create({
     color: '#6b7280',
   },
   cancelTicketButton: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderWidth: 1.5,
     borderColor: '#fca5a5',
     paddingVertical: 10,
@@ -357,7 +357,7 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   dismissCancelledButtonText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.2,

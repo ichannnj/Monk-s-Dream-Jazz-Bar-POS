@@ -12,7 +12,7 @@ const coreStyles = StyleSheet.create({
     padding: 16,
   },
   modalCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     width: '100%',
     maxWidth: 980,
@@ -81,7 +81,7 @@ const coreStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   scopeOptionActive: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -199,7 +199,7 @@ const coreStyles = StyleSheet.create({
     color: '#374151',
   },
   methodBtnTextActive: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   cashSection: {
     backgroundColor: '#f9fafb',
@@ -217,7 +217,7 @@ const coreStyles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
     alignItems: 'center',
@@ -234,12 +234,12 @@ const coreStyles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   quickCashTextActive: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   tenderedInputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     paddingHorizontal: 16,
     borderWidth: 1.5,
@@ -364,7 +364,7 @@ const coreStyles = StyleSheet.create({
   confirmPayBtnText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontVariant: ['tabular-nums'],
   },
 });

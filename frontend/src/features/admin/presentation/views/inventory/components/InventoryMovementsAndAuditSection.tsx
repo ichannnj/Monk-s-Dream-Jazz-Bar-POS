@@ -91,7 +91,7 @@ export const InventoryMovementsAndAuditSection: React.FC<
             onPress={onOpenStocktake}
             className="min-h-[48px] px-4 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
           >
-            <ClipboardCheck size={18} color="#FFFFFF" />
+            <ClipboardCheck size={18} color="#F5F5F5" />
             <Text className="ml-2 text-base font-bold text-white">Start Stocktake</Text>
           </Pressable>
         )}
@@ -101,7 +101,7 @@ export const InventoryMovementsAndAuditSection: React.FC<
             onPress={onOpenWaste}
             className="min-h-[48px] px-4 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
           >
-            <Trash2 size={18} color="#FFFFFF" />
+            <Trash2 size={18} color="#F5F5F5" />
             <Text className="ml-2 text-base font-bold text-white">Log Waste</Text>
           </Pressable>
         )}

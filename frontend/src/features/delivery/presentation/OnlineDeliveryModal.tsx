@@ -75,7 +75,7 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
           <View style={styles.header}>
             <View style={styles.headerTitleGroup}>
               <View style={styles.badge}>
-                <Bike size={16} color="#ffffff" strokeWidth={2.4} />
+                <Bike size={16} color="#F5F5F5" strokeWidth={2.4} />
               </View>
               <Text style={styles.title}>Delivery Intake</Text>
             </View>
@@ -179,7 +179,7 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
 
             <Pressable onPress={handleProceed} style={styles.proceedBtn}>
               <Text style={styles.proceedBtnText}>Start Order</Text>
-              <ArrowRight size={16} color="#ffffff" strokeWidth={2.4} />
+              <ArrowRight size={16} color="#F5F5F5" strokeWidth={2.4} />
             </Pressable>
           </View>
         </View>
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     width: '100%',
     maxWidth: 540,
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     color: '#44403c',
   },
   platformOptionTextActive: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   formGroup: {
     marginBottom: 16,
@@ -330,6 +330,6 @@ const styles = StyleSheet.create({
   proceedBtnText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
 });

@@ -264,7 +264,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                                 : 'border-stone-400 bg-white'
                             }`}
                           >
-                            {isSelected && <CheckCircle2 size={12} color="#ffffff" />}
+                            {isSelected && <CheckCircle2 size={12} color="#F5F5F5" />}
                           </View>
                           <View style={{ flex: 1 }}>
                             <Text className="text-xs font-bold text-gray-800" numberOfLines={1}>

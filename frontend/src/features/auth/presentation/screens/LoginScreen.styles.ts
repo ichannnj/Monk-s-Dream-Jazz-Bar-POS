@@ -32,7 +32,7 @@ export const styles = StyleSheet.create({
   },
   // Floating Card inspired by modern minimal card UI
   cardContainer: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 28,
     overflow: 'hidden',
     shadowColor: '#2b0f16',
@@ -58,7 +58,7 @@ export const styles = StyleSheet.create({
 
   // ---------------- LEFT PANE: Clean Form ----------------
   formPane: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
   },
   formPaneTablet: {
@@ -154,7 +154,7 @@ export const styles = StyleSheet.create({
     minHeight: 44, // Touch target invariant
   },
   modeToggleTabActive: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
@@ -206,7 +206,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#e7e5e4',
     borderRadius: 28,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     paddingHorizontal: 18,
     height: 54,
   },
@@ -267,7 +267,7 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.08,
   },
   submitButtonText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 1.2,
@@ -419,7 +419,7 @@ export const styles = StyleSheet.create({
     }),
   },
   heroTagline: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 16,
     lineHeight: 22,
     textAlign: 'center',

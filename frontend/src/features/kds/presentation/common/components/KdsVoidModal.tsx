@@ -147,9 +147,9 @@ export const KdsVoidModal: React.FC<KdsVoidModalProps> = ({
               style={[styles.confirmBtn, isSubmitting && { opacity: 0.7 }]}
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="#ffffff" />
+                <ActivityIndicator size="small" color="#F5F5F5" />
               ) : (
-                <Check size={16} color="#ffffff" />
+                <Check size={16} color="#F5F5F5" />
               )}
               <Text style={styles.confirmBtnText}>
                 {isSubmitting ? 'Cancelling...' : 'Confirm Void'}
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 480,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     fontSize: 16,
     color: '#1c1917',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
   },
   footer: {
     flexDirection: 'row',
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#d6d3d1',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
   },
   cancelBtnText: {
     fontSize: 13,
@@ -322,6 +322,6 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
 });

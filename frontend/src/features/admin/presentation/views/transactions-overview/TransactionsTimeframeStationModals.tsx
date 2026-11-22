@@ -83,7 +83,7 @@ export const TransactionsTimeframeStationModals: React.FC<
                     </Text>
                     {isSelected && (
                       <View className="bg-[#800020] rounded-full p-0.5">
-                        <Check size={14} color="#ffffff" />
+                        <Check size={14} color="#F5F5F5" />
                       </View>
                     )}
                   </View>
@@ -131,7 +131,7 @@ export const TransactionsTimeframeStationModals: React.FC<
                     </Text>
                     {isSelected && (
                       <View className="bg-[#800020] rounded-full p-0.5">
-                        <Check size={14} color="#ffffff" />
+                        <Check size={14} color="#F5F5F5" />
                       </View>
                     )}
                   </View>

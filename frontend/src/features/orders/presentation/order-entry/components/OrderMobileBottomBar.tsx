@@ -25,7 +25,7 @@ export const OrderMobileBottomBar: React.FC<OrderMobileBottomBarProps> = ({
         accessibilityLabel="Open order basket"
       >
         <View style={localStyles.basketLeft}>
-          <ShoppingBag size={18} color="#ffffff" />
+          <ShoppingBag size={18} color="#F5F5F5" />
           <Text style={localStyles.basketText}>Basket ({totalCartQty})</Text>
         </View>
         <Text style={localStyles.basketPrice}>{formatCurrency(grandTotal)}</Text>
@@ -47,7 +47,7 @@ export const OrderMobileBottomBar: React.FC<OrderMobileBottomBarProps> = ({
 
 const localStyles = StyleSheet.create({
   container: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderTopWidth: 1,
     borderTopColor: '#e7e5e4',
     paddingHorizontal: 16,
@@ -76,7 +76,7 @@ const localStyles = StyleSheet.create({
   basketText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   basketPrice: {
     fontSize: 16,
@@ -94,6 +94,6 @@ const localStyles = StyleSheet.create({
   sendButtonText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
 });

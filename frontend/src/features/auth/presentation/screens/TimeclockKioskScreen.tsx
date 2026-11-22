@@ -172,7 +172,7 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
               <View className="relative z-10">
                 <View className="flex-row items-center space-x-3 mb-3">
                   <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/20 border border-white/30">
-                    <Clock size={20} color="#ffffff" />
+                    <Clock size={20} color="#F5F5F5" />
                   </View>
                   <View>
                     <Text className="text-xl font-black tracking-tight text-white">

@@ -284,12 +284,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           accessibilityLabel="Back to Admin Dashboard"
                         >
                           <View className="flex-row items-center gap-3">
-                            <LayoutDashboard size={20} color="#FFFFFF" strokeWidth={2} />
+                            <LayoutDashboard size={20} color="#F5F5F5" strokeWidth={2} />
                             <Text className="text-base font-bold text-white">
                               Admin Back-Office
                             </Text>
                           </View>
-                          <ChevronRight size={18} color="#FFFFFF" />
+                          <ChevronRight size={18} color="#F5F5F5" />
                         </Pressable>
                       ) : null}
 
@@ -359,7 +359,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <View className="relative items-center justify-center">
                 <Icon
                   size={22}
-                  color={isActive ? '#FFFFFF' : '#d8b4bc'}
+                  color={isActive ? '#F5F5F5' : '#d8b4bc'}
                   strokeWidth={isActive ? 2.3 : 1.8}
                 />
                 {badgeCount > 0 ? (
@@ -394,7 +394,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Back to Admin Dashboard"
           >
-            <LayoutDashboard size={20} color="#FFFFFF" />
+            <LayoutDashboard size={20} color="#F5F5F5" />
           </Pressable>
         ) : null}
 
@@ -406,7 +406,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Station Settings"
         >
-          <Settings size={20} color={activeTab === 'settings' ? '#FFFFFF' : '#d8b4bc'} />
+          <Settings size={20} color={activeTab === 'settings' ? '#F5F5F5' : '#d8b4bc'} />
         </Pressable>
 
         {onLogout ? (

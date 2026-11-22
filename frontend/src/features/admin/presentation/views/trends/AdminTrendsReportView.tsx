@@ -170,7 +170,7 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
                 onPress={handlePrintReport}
                 className="h-9 px-3.5 rounded-xl bg-[#800020] active:bg-[#600018] flex-row items-center justify-center shadow-xs cursor-pointer"
               >
-                <Printer size={14} color="#ffffff" />
+                <Printer size={14} color="#F5F5F5" />
                 <Text className="ml-1.5 text-xs font-bold text-white">Print</Text>
               </Pressable>
             </View>

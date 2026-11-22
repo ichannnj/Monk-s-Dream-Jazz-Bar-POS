@@ -116,7 +116,7 @@ export const MenuItemBasicInfoSection: React.FC<MenuItemBasicInfoSectionProps> =
             isResoldOutsideFood ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
           }`}
         >
-          {isResoldOutsideFood && <Check size={16} color="#ffffff" />}
+          {isResoldOutsideFood && <Check size={16} color="#F5F5F5" />}
         </View>
       </Pressable>
 

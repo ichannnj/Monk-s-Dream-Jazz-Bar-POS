@@ -96,7 +96,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
             accessibilityRole="button"
             accessibilityLabel={`Hand over order ${order.platformOrderRef} to rider`}
           >
-            <UserCheck size={18} color="#FFFFFF" strokeWidth={2.2} />
+            <UserCheck size={18} color="#F5F5F5" strokeWidth={2.2} />
             <Text className="text-base font-semibold text-white">Rider Pickup</Text>
           </Pressable>
         ) : (

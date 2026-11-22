@@ -199,7 +199,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   staffNameText: {
     fontSize: 16,

@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 620,
     maxHeight: '90%',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -126,7 +126,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
     borderRadius: 14,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     paddingHorizontal: 14,
   },
   urlInput: {
@@ -158,7 +158,7 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     position: 'relative',
   },
   presetCardSelected: {
@@ -237,6 +237,6 @@ export const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 13.5,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
 });

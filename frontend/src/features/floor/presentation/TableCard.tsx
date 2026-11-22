@@ -260,7 +260,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
               accessibilityRole="button"
               accessibilityLabel={`Open Tab at ${displayName}`}
             >
-              <Plus size={18} color="#FFFFFF" strokeWidth={2.2} />
+              <Plus size={18} color="#F5F5F5" strokeWidth={2.2} />
               <Text className="text-base font-semibold text-white">Open Tab</Text>
             </Pressable>
           ) : (
@@ -299,7 +299,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
                 accessibilityRole="button"
                 accessibilityLabel={`Settle bill for ${displayName}`}
               >
-                <CreditCard size={18} color={isServed ? '#FFFFFF' : '#1C1917'} strokeWidth={2} />
+                <CreditCard size={18} color={isServed ? '#F5F5F5' : '#1C1917'} strokeWidth={2} />
                 <Text
                   className={`text-base font-semibold ${
                     isServed ? 'text-white' : 'text-[#1C1917]'

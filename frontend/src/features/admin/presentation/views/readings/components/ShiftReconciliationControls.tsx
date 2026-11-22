@@ -83,7 +83,7 @@ export const ShiftReconciliationControls: React.FC<ShiftReconciliationControlsPr
               autoPrintThermal ? 'bg-amber-600 border-amber-600' : 'bg-white border-stone-300'
             }`}
           >
-            {autoPrintThermal && <CheckCircle2 size={18} color="#ffffff" />}
+            {autoPrintThermal && <CheckCircle2 size={18} color="#F5F5F5" />}
           </Pressable>
         </View>
 
@@ -100,7 +100,7 @@ export const ShiftReconciliationControls: React.FC<ShiftReconciliationControlsPr
               autoDownloadExcel ? 'bg-amber-600 border-amber-600' : 'bg-white border-stone-300'
             }`}
           >
-            {autoDownloadExcel && <CheckCircle2 size={18} color="#ffffff" />}
+            {autoDownloadExcel && <CheckCircle2 size={18} color="#F5F5F5" />}
           </Pressable>
         </View>
       </View>

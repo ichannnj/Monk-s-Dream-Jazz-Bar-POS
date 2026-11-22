@@ -65,7 +65,7 @@ export const ShiftSettingsModal: React.FC<ShiftSettingsModalProps> = ({ onLogout
             accessibilityRole="button"
             accessibilityLabel="Log Out and Switch Staff"
           >
-            <LogOut size={18} color="#FFFFFF" />
+            <LogOut size={18} color="#F5F5F5" />
             <Text className="text-base font-semibold text-white">Log Out / Switch Staff</Text>
           </Pressable>
         </View>

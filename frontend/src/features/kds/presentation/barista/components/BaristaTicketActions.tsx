@@ -107,7 +107,7 @@ export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
               ]}
             >
               <View style={styles.readyButtonContent}>
-                <Check size={16} color="#ffffff" strokeWidth={3} />
+                <Check size={16} color="#F5F5F5" strokeWidth={3} />
                 <Text style={styles.primaryWineButtonText}>Ready</Text>
               </View>
             </Pressable>
@@ -127,7 +127,7 @@ export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
             onPress={() => onDismiss?.(ticket)}
             style={({ pressed }) => [styles.dismissButton, pressed && styles.buttonPressed]}
           >
-            <Check size={14} color="#ffffff" strokeWidth={3} />
+            <Check size={14} color="#F5F5F5" strokeWidth={3} />
             <Text style={styles.dismissButtonText}>Picked Up</Text>
           </Pressable>
         </View>

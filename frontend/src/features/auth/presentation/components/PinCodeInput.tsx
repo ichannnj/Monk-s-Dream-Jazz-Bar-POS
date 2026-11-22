@@ -140,7 +140,7 @@ const PinCell: React.FC<PinCellProps> = React.memo(
           styles.cell,
           {
             borderColor,
-            backgroundColor: isCurrent ? '#fdf8f9' : '#ffffff',
+            backgroundColor: isCurrent ? '#fdf8f9' : '#F5F5F5',
             shadowColor: isCurrent ? '#641b2a' : 'transparent',
             shadowOpacity: isCurrent ? 0.08 : 0,
             shadowRadius: 4,

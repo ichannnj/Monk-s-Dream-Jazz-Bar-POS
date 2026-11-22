@@ -76,7 +76,7 @@ export const FohCommandBar: React.FC<FohCommandBarProps> = ({
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isActive }}
               >
-                <Icon size={18} color={isActive ? '#FFFFFF' : hasUrgent ? '#065F46' : '#57534E'} />
+                <Icon size={18} color={isActive ? '#F5F5F5' : hasUrgent ? '#065F46' : '#57534E'} />
                 <Text
                   className={`text-base font-semibold ${
                     isActive ? 'text-white' : hasUrgent ? 'text-emerald-900' : 'text-[#1C1917]'

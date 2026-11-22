@@ -399,7 +399,7 @@ export const GroceryRunScreen: React.FC = () => {
                         inBasket ? 'bg-[#FAF8F5] border-[#E7E5E4]' : 'bg-[#810021] border-[#810021]'
                       }`}
                     >
-                      <Check size={18} color={inBasket ? '#10b981' : '#FFFFFF'} />
+                      <Check size={18} color={inBasket ? '#10b981' : '#F5F5F5'} />
                       <Text
                         className={`ml-2 text-base font-bold ${
                           inBasket ? 'text-[#1C1917]' : 'text-white'

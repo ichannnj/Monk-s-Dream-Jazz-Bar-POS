@@ -33,7 +33,7 @@ export const discountStyles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#e7e5e4',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     minHeight: 40,
     justifyContent: 'center',
   },
@@ -47,10 +47,10 @@ export const discountStyles = StyleSheet.create({
     color: '#475569',
   },
   discountPillTextActive: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   seniorFieldsBox: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#e7e5e4',

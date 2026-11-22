@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-22T20:51:00+08:00",
+  "generatedAt": "2026-11-22T20:56:00+08:00",
   "title": "Design System: Monk's Dream Jazz Bar POS",
   "extensions": {
     "colorMeta": {
@@ -82,7 +82,7 @@
       "pure-surface": {
         "role": "neutral",
         "displayName": "Pure Surface",
-        "canonical": "#ffffff",
+        "canonical": "#f5f5f5",
         "tonalRamp": [
           "#1c1917",
           "#44403c",

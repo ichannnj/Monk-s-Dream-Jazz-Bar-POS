@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
     padding: 16,
   },
   card: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     width: '100%',
     maxWidth: 720,
@@ -44,7 +44,7 @@ export const styles = StyleSheet.create({
   badgeText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   title: {
     fontSize: 18,
@@ -135,7 +135,7 @@ export const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 8,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
   },
   instantQrChannel: {
     fontSize: 11,
@@ -227,7 +227,7 @@ export const styles = StyleSheet.create({
     color: '#1C1917',
   },
   taxSubCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 10,
     padding: 8,
     marginVertical: 4,
@@ -326,6 +326,6 @@ export const styles = StyleSheet.create({
   payBtnText: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
 });

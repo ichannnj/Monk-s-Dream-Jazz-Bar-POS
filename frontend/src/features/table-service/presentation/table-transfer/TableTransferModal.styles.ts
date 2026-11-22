@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 580,
     maxHeight: '96%',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 28,
     padding: 18,
     shadowColor: '#000000',
@@ -100,7 +100,7 @@ export const styles = StyleSheet.create({
     color: '#44403c',
   },
   modeBtnTextActive: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   tabListGroup: {
     gap: 8,
@@ -118,7 +118,7 @@ export const styles = StyleSheet.create({
   },
   tabPickerCardSelected: {
     borderColor: '#810021',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
   },
   tabPickerLeft: {
     flexDirection: 'row',
@@ -194,7 +194,7 @@ export const styles = StyleSheet.create({
     color: '#44403c',
   },
   reasonChipTextSelected: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontWeight: '700',
   },
   destinationHeaderRow: {
@@ -229,7 +229,7 @@ export const styles = StyleSheet.create({
     color: '#78716C',
   },
   areaPillTextActive: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   tableGrid: {
     flexDirection: 'row',
@@ -248,7 +248,7 @@ export const styles = StyleSheet.create({
     borderColor: '#e7e5e4',
   },
   targetCardEmpty: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderColor: '#e7e5e4',
   },
   targetCardOccupied: {
@@ -265,7 +265,7 @@ export const styles = StyleSheet.create({
     color: '#1C1917',
   },
   targetCodeSelected: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   targetStatus: {
     fontSize: 12,
@@ -335,6 +335,6 @@ export const styles = StyleSheet.create({
   confirmBtnText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
 });

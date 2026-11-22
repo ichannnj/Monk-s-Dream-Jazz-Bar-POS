@@ -5,6 +5,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        white: '#F5F5F5',
         jazz: {
           950: '#07090e',
           900: '#0d1117',
@@ -44,9 +45,9 @@ module.exports = {
         },
         admin: {
           canvas: '#f8f6f4',
-          surface: '#ffffff',
+          surface: '#F5F5F5',
           'surface-muted': '#f3f0ec',
-          'surface-elevated': '#ffffff',
+          'surface-elevated': '#F5F5F5',
           border: '#e6e1da',
           'border-strong': '#d5cec4',
           primary: '#6e1d2c',

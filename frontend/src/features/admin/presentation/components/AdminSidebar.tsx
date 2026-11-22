@@ -88,7 +88,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               }`}
             >
               <View className="flex-row items-center space-x-3 flex-1 min-w-0">
-                <IconComponent size={18} color={isActive ? '#ffffff' : '#f5d5dc'} />
+                <IconComponent size={18} color={isActive ? '#F5F5F5' : '#f5d5dc'} />
                 <Text
                   numberOfLines={1}
                   className={`ml-2.5 text-sm ${
@@ -119,7 +119,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       {/* Brand Header */}
       <View className="mb-5 flex-row items-center px-1 pt-1 flex-shrink-0">
         <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/20 p-2 border border-white/25">
-          <Music size={22} color="#ffffff" />
+          <Music size={22} color="#F5F5F5" />
         </View>
         <View className="ml-3 flex-1 min-w-0">
           <Text

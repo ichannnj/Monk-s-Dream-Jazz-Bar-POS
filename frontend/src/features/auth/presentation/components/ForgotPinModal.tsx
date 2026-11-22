@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 440,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     padding: 24,
     shadowColor: '#000000',
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dismissBtnText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 14,
     fontWeight: '700',
   },

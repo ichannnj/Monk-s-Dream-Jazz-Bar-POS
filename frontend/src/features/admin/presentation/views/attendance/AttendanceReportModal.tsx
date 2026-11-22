@@ -320,7 +320,7 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
                 className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-900 active:bg-black min-h-[48px]"
                 accessibilityLabel="Print Attendance Report to A4"
               >
-                <Printer size={18} color="#ffffff" />
+                <Printer size={18} color="#F5F5F5" />
                 <Text className="text-base font-bold text-white">Print Document (A4)</Text>
               </Pressable>
 

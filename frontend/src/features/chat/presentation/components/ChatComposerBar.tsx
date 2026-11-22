@@ -75,7 +75,7 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Send message"
         >
-          <SendHorizontal size={19} color="#FFFFFF" strokeWidth={2.2} />
+          <SendHorizontal size={19} color="#F5F5F5" strokeWidth={2.2} />
         </Pressable>
       </View>
     </View>

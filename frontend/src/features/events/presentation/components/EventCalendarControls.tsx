@@ -77,7 +77,7 @@ export const EventCalendarControls: React.FC<EventCalendarControlsProps> = ({
           >
             <CalendarDays
               size={14}
-              color={viewMode === 'month' ? '#ffffff' : '#57534e'}
+              color={viewMode === 'month' ? '#F5F5F5' : '#57534e'}
               aria-hidden={true}
             />
             <Text
@@ -100,7 +100,7 @@ export const EventCalendarControls: React.FC<EventCalendarControlsProps> = ({
           >
             <Columns
               size={14}
-              color={viewMode === 'week' ? '#ffffff' : '#57534e'}
+              color={viewMode === 'week' ? '#F5F5F5' : '#57534e'}
               aria-hidden={true}
             />
             <Text
@@ -123,7 +123,7 @@ export const EventCalendarControls: React.FC<EventCalendarControlsProps> = ({
           >
             <List
               size={14}
-              color={viewMode === 'agenda' ? '#ffffff' : '#57534e'}
+              color={viewMode === 'agenda' ? '#F5F5F5' : '#57534e'}
               aria-hidden={true}
             />
             <Text

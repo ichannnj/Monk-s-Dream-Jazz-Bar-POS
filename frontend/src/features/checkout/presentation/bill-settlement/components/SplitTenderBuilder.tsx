@@ -192,7 +192,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
           <View
             key={tender.id}
             style={{
-              backgroundColor: '#ffffff',
+              backgroundColor: '#F5F5F5',
               borderRadius: 14,
               padding: 12,
               marginBottom: 10,
@@ -361,7 +361,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                             style={{
                               fontSize: 11,
                               fontWeight: '700',
-                              color: isSel ? '#ffffff' : '#374151',
+                              color: isSel ? '#F5F5F5' : '#374151',
                             }}
                           >
                             {ch.name}
@@ -400,7 +400,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                               width: 36,
                               height: 36,
                               borderRadius: 6,
-                              backgroundColor: '#ffffff',
+                              backgroundColor: '#F5F5F5',
                             }}
                             resizeMode="contain"
                           />
@@ -430,7 +430,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                             flexDirection: 'row',
                             alignItems: 'center',
                             gap: 4,
-                            backgroundColor: '#ffffff',
+                            backgroundColor: '#F5F5F5',
                             paddingHorizontal: 8,
                             paddingVertical: 6,
                             borderRadius: 8,

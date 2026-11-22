@@ -181,7 +181,7 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
             >
               {operatingMode === 'EVENT' ? (
                 <>
-                  <Sparkles size={16} color="#FFFFFF" />
+                  <Sparkles size={16} color="#F5F5F5" />
                   <Text className="text-base font-bold text-white">Event</Text>
                 </>
               ) : (
@@ -303,7 +303,7 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
         >
           {operatingMode === 'EVENT' ? (
             <>
-              <Sparkles size={16} color="#FFFFFF" />
+              <Sparkles size={16} color="#F5F5F5" />
               <Text className="text-base font-bold text-white">Event</Text>
             </>
           ) : (

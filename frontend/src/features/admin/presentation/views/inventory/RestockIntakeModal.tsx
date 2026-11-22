@@ -127,7 +127,7 @@ export const RestockIntakeModal: React.FC<RestockIntakeModalProps> = ({
         <Text className="text-base font-bold text-white">
           {isSubmitting ? 'Saving...' : 'Confirm Delivery'}
         </Text>
-        <ArrowRight size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+        <ArrowRight size={18} color="#F5F5F5" style={{ marginLeft: 8 }} />
       </Pressable>
     </View>
   );

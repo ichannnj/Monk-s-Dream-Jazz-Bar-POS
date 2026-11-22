@@ -113,7 +113,7 @@ export const BaristaKanbanColumn: React.FC<BaristaKanbanColumnProps> = ({
               onPress={handleScrollMore}
               style={({ pressed }) => [styles.overflowPill, pressed && styles.overflowPillPressed]}
             >
-              <ChevronDown size={14} color="#ffffff" strokeWidth={2.5} />
+              <ChevronDown size={14} color="#F5F5F5" strokeWidth={2.5} />
               <Text style={styles.overflowPillText}>{overflowCount} more</Text>
             </Pressable>
           </View>
@@ -128,7 +128,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 290,
     maxWidth: 420,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#eee8e3',
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.97 }],
   },
   overflowPillText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 11,
     fontWeight: '800',
   },

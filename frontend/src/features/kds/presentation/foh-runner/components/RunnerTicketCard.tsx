@@ -189,7 +189,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
             : `Complete hand-off for ${ticket.sourceTitle}`
         }
       >
-        <CheckCircle2 size={18} color={ticket.allDone ? '#FFFFFF' : '#1C1917'} />
+        <CheckCircle2 size={18} color={ticket.allDone ? '#F5F5F5' : '#1C1917'} />
         <Text
           className={`text-base font-semibold ${ticket.allDone ? 'text-white' : 'text-[#1C1917]'}`}
         >

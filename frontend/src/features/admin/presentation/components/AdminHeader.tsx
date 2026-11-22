@@ -93,7 +93,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           accessibilityLabel={`Switch operating mode. Current: ${operatingMode}`}
         >
           {operatingMode === 'EVENT' ? (
-            <Flame size={17} color="#ffffff" />
+            <Flame size={17} color="#F5F5F5" />
           ) : (
             <Sun size={17} color="#1c1917" />
           )}

@@ -193,7 +193,7 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                         className="min-h-[48px] px-3 rounded-xl bg-[#810021] flex-row items-center active:opacity-85"
                         accessibilityLabel={`Restock ${item.name}`}
                       >
-                        <Plus size={16} color="#FFFFFF" />
+                        <Plus size={16} color="#F5F5F5" />
                         <Text className="ml-1 text-base font-bold text-white">Restock</Text>
                       </Pressable>
 
@@ -289,7 +289,7 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                         onPress={() => onRestock(item)}
                         className="min-h-[48px] px-3.5 rounded-xl bg-[#810021] flex-row items-center active:opacity-85"
                       >
-                        <Plus size={16} color="#FFFFFF" />
+                        <Plus size={16} color="#F5F5F5" />
                         <Text className="ml-1 text-base font-bold text-white">Restock</Text>
                       </Pressable>
 

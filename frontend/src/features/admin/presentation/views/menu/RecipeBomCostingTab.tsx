@@ -59,7 +59,7 @@ export const RecipeBomCostingTab: React.FC<RecipeBomCostingTabProps> = ({
                   className="min-h-[44px] sm:min-h-[48px] px-3.5 sm:px-4 flex-row items-center justify-center rounded-xl bg-[#800020] active:bg-[#600018] flex-shrink-0"
                   accessibilityLabel={`Configure recipe for ${prod.name}`}
                 >
-                  <Layers size={17} color="#ffffff" />
+                  <Layers size={17} color="#F5F5F5" />
                   <Text className="ml-1.5 text-xs sm:text-sm font-bold text-white">
                     Configure Recipe
                   </Text>

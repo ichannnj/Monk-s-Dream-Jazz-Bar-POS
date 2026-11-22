@@ -129,7 +129,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               accessibilityLabel="Close event details"
               className="h-9 w-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 active:bg-black/70 backdrop-blur-sm"
             >
-              <X size={18} color="#ffffff" aria-hidden={true} />
+              <X size={18} color="#F5F5F5" aria-hidden={true} />
             </Pressable>
           </View>
 
@@ -376,7 +376,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                           onPress={() => setIsPayoutModalOpen(true)}
                           className="w-full py-2 px-3 rounded-xl bg-[#800020] active:bg-[#66001a] items-center justify-center flex-row gap-1.5 shadow-xs"
                         >
-                          <Ticket size={14} color="#ffffff" />
+                          <Ticket size={14} color="#F5F5F5" />
                           <Text className="text-xs font-bold text-white">
                             Mark Artist Paid & Settle Door Charge
                           </Text>
@@ -460,7 +460,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                       accessibilityLabel="Edit event"
                       className="flex-row items-center gap-1.5 rounded-xl bg-[#800020] px-4 py-2 text-white active:bg-[#66001a]"
                     >
-                      <Edit2 size={14} color="#ffffff" aria-hidden={true} />
+                      <Edit2 size={14} color="#F5F5F5" aria-hidden={true} />
                       <Text className="text-xs font-bold text-white">Edit event</Text>
                     </Pressable>
                   ) : null}
@@ -555,9 +555,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   className="px-4 py-2 rounded-xl bg-[#800020] active:bg-[#66001a] flex-row items-center gap-1.5"
                 >
                   {isSubmittingPayout ? (
-                    <ActivityIndicator size="small" color="#ffffff" />
+                    <ActivityIndicator size="small" color="#F5F5F5" />
                   ) : (
-                    <CheckCircle2 size={14} color="#ffffff" />
+                    <CheckCircle2 size={14} color="#F5F5F5" />
                   )}
                   <Text className="text-xs font-bold text-white">
                     {isSubmittingPayout ? 'Recording...' : 'Confirm Paid'}

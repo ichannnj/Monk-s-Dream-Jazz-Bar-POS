@@ -101,7 +101,7 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
             onPress={handleOpenMobileView}
             className="min-h-[48px] px-4 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
           >
-            <ExternalLink size={18} color="#FFFFFF" />
+            <ExternalLink size={18} color="#F5F5F5" />
             <Text className="ml-2 text-base font-bold text-white">Mobile View</Text>
           </Pressable>
         </View>
@@ -237,7 +237,7 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
                     onPress={() => onRestock(item)}
                     className="min-h-[48px] flex-1 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
                   >
-                    <Plus size={18} color="#FFFFFF" />
+                    <Plus size={18} color="#F5F5F5" />
                     <Text className="ml-1.5 text-base font-bold text-white">Restock</Text>
                   </Pressable>
                 </View>

@@ -73,7 +73,7 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Add inventory item"
             >
-              <Plus size={18} color="#FFFFFF" />
+              <Plus size={18} color="#F5F5F5" />
               <Text className="ml-1.5 text-base font-bold text-white">Add Item</Text>
             </Pressable>
           )}
@@ -85,7 +85,7 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Add supplier"
             >
-              <Building2 size={18} color="#FFFFFF" />
+              <Building2 size={18} color="#F5F5F5" />
               <Text className="ml-1.5 text-base font-bold text-white">Add Supplier</Text>
             </Pressable>
           )}
@@ -108,7 +108,7 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Start physical stocktake audit"
               >
-                <ClipboardCheck size={18} color="#FFFFFF" />
+                <ClipboardCheck size={18} color="#F5F5F5" />
                 <Text className="ml-1.5 text-base font-bold text-white">Stocktake</Text>
               </Pressable>
             </>

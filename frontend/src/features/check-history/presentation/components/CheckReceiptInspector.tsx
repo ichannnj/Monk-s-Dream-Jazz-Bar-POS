@@ -68,7 +68,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Reprint receipt"
             >
-              <Printer size={18} color="#ffffff" />
+              <Printer size={18} color="#F5F5F5" />
               <Text className="text-base font-bold text-white">
                 {isReprinting ? 'Printing...' : 'Reprint Receipt'}
               </Text>

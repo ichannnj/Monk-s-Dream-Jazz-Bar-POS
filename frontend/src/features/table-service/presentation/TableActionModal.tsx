@@ -137,7 +137,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
         } else if (allReady) {
           statusText = 'READY';
           statusBg = '#810021';
-          statusColor = '#ffffff';
+          statusColor = '#F5F5F5';
         } else if (hasPrep) {
           statusText = 'PREPARING';
           statusBg = '#FAF8F5';
@@ -359,7 +359,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel={`Order Round ${nextRound}`}
                 >
-                  <UtensilsCrossed size={18} color="#ffffff" strokeWidth={2.3} />
+                  <UtensilsCrossed size={18} color="#F5F5F5" strokeWidth={2.3} />
                   <Text className="text-base font-extrabold text-white">
                     + Order Round {nextRound}
                   </Text>
@@ -427,7 +427,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Settle Tab for ${formatCurrency(billing.totalAmountDue)}`}
                   >
-                    <CreditCard size={18} color="#ffffff" strokeWidth={2.3} />
+                    <CreditCard size={18} color="#F5F5F5" strokeWidth={2.3} />
                     <Text className="text-base font-extrabold text-white">
                       Settle Tab · {formatCurrency(billing.totalAmountDue)}
                     </Text>

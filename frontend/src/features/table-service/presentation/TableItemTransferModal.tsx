@@ -182,7 +182,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
           <View className="flex-row justify-between items-center mb-4 pb-3 border-b border-stone-100">
             <View className="flex-row items-center gap-3">
               <View className="w-10 h-10 rounded-2xl bg-[#810021] items-center justify-center">
-                <ArrowRightLeft size={18} color="#ffffff" strokeWidth={2.5} />
+                <ArrowRightLeft size={18} color="#F5F5F5" strokeWidth={2.5} />
               </View>
               <View>
                 <Text className="text-xl font-extrabold text-stone-900">Move Items</Text>
@@ -233,7 +233,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                       >
                         Tab #{tb.tabIndex}: {tb.guestName}
                       </Text>
-                      {isSelected && <Check size={16} color="#ffffff" strokeWidth={3} />}
+                      {isSelected && <Check size={16} color="#F5F5F5" strokeWidth={3} />}
                     </Pressable>
                   );
                 })}
@@ -248,7 +248,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                 >
                   <Plus
                     size={16}
-                    color={targetDestination === 'new' ? '#ffffff' : '#810021'}
+                    color={targetDestination === 'new' ? '#F5F5F5' : '#810021'}
                     strokeWidth={2.5}
                   />
                   <Text
@@ -259,7 +259,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                     + New Tab
                   </Text>
                   {targetDestination === 'new' && (
-                    <Check size={16} color="#ffffff" strokeWidth={3} />
+                    <Check size={16} color="#F5F5F5" strokeWidth={3} />
                   )}
                 </Pressable>
               </View>
@@ -335,7 +335,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                                   : 'border-stone-300 bg-white'
                               }`}
                             >
-                              {isSelected && <Check size={14} color="#ffffff" strokeWidth={3} />}
+                              {isSelected && <Check size={14} color="#F5F5F5" strokeWidth={3} />}
                             </View>
 
                             <View className="flex-1">
@@ -414,7 +414,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                   : 'bg-[#810021] active:opacity-90 shadow-xs'
               }`}
             >
-              <ArrowRightLeft size={18} color="#ffffff" strokeWidth={2.3} />
+              <ArrowRightLeft size={18} color="#F5F5F5" strokeWidth={2.3} />
               <Text className="text-base font-extrabold text-white">
                 {isSubmitting
                   ? 'Moving...'

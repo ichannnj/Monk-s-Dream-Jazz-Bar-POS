@@ -137,7 +137,7 @@ export const MenuItemFlavorOptionsSection: React.FC<MenuItemFlavorOptionsSection
                       : 'bg-white border-stone-300'
                   }`}
                 >
-                  {flavorGroupRequired && <Check size={12} color="#ffffff" strokeWidth={3} />}
+                  {flavorGroupRequired && <Check size={12} color="#F5F5F5" strokeWidth={3} />}
                 </View>
               </Pressable>
             </View>

@@ -11,7 +11,7 @@ export const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 540,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     padding: 24,
     shadowColor: '#000000',
@@ -147,7 +147,7 @@ export const styles = StyleSheet.create({
   },
   suggestionInput: {
     minHeight: 48,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 12,
@@ -197,7 +197,7 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   primaryWineBtnText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 16,
     fontWeight: '800',
   },

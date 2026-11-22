@@ -172,7 +172,7 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Clear photo"
           >
-            <X size={16} color="#ffffff" />
+            <X size={16} color="#F5F5F5" />
           </Pressable>
         )}
       </View>
@@ -330,7 +330,7 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
                       </View>
                       {isSelected && (
                         <View className="absolute top-1 right-1 h-4 w-4 items-center justify-center rounded-full bg-[#800020]">
-                          <Check size={10} color="#ffffff" strokeWidth={3} />
+                          <Check size={10} color="#F5F5F5" strokeWidth={3} />
                         </View>
                       )}
                     </Pressable>

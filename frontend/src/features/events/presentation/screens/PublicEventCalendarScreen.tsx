@@ -78,7 +78,7 @@ export const PublicEventCalendarScreen: React.FC = () => {
           <View className="max-w-7xl mx-auto flex-row items-center justify-between gap-3">
             <View className="flex-row items-center gap-3">
               <View className="h-10 w-10 rounded-2xl bg-[#800020] items-center justify-center text-white shadow-xs flex-shrink-0">
-                <Music size={20} color="#ffffff" aria-hidden={true} />
+                <Music size={20} color="#F5F5F5" aria-hidden={true} />
               </View>
               <View>
                 <Text className="text-base font-extrabold text-stone-900 tracking-wide uppercase">

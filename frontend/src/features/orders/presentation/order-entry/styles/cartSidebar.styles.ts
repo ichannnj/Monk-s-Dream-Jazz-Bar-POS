@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export const cartSidebarStyles = StyleSheet.create({
   cartPanel: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     padding: 20,
     justifyContent: 'space-between',
   },
@@ -218,7 +218,7 @@ export const cartSidebarStyles = StyleSheet.create({
     elevation: 0,
   },
   sendOrderBtnText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 16,
     fontWeight: '800',
   },

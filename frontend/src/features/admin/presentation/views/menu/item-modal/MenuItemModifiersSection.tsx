@@ -192,7 +192,7 @@ export const MenuItemModifiersSection: React.FC<MenuItemModifiersSectionProps> =
                       isSelected ? 'bg-purple-900 border-purple-900' : 'bg-white border-stone-300'
                     }`}
                   >
-                    {isSelected && <Check size={14} color="#ffffff" />}
+                    {isSelected && <Check size={14} color="#F5F5F5" />}
                   </View>
                   <View className="ml-2">
                     <Text

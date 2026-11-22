@@ -167,7 +167,7 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
                         paddingHorizontal: 8,
                         paddingVertical: 3,
                         borderRadius: 8,
-                        backgroundColor: '#ffffff',
+                        backgroundColor: '#F5F5F5',
                         borderWidth: 1,
                         borderColor: '#e7e5e4',
                       }}
@@ -259,7 +259,7 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
                       includeDoorCharge && styles.doorChargeCheckActive,
                     ]}
                   >
-                    {includeDoorCharge && <Check size={14} color="#ffffff" strokeWidth={3} />}
+                    {includeDoorCharge && <Check size={14} color="#F5F5F5" strokeWidth={3} />}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.doorChargeTitle}>
@@ -296,7 +296,7 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
                           width: 32,
                           height: 32,
                           borderRadius: 8,
-                          backgroundColor: '#ffffff',
+                          backgroundColor: '#F5F5F5',
                           borderWidth: 1,
                           borderColor: '#d6d3d1',
                           alignItems: 'center',
@@ -324,7 +324,7 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
                           width: 32,
                           height: 32,
                           borderRadius: 8,
-                          backgroundColor: '#ffffff',
+                          backgroundColor: '#F5F5F5',
                           borderWidth: 1,
                           borderColor: '#d6d3d1',
                           alignItems: 'center',
@@ -345,7 +345,7 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
                         style={{
                           width: 72,
                           height: 32,
-                          backgroundColor: '#ffffff',
+                          backgroundColor: '#F5F5F5',
                           borderRadius: 8,
                           borderWidth: 1,
                           borderColor: '#d6d3d1',
@@ -378,7 +378,7 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel={effectiveIsSplit ? 'Split Tab' : 'Open Tab'}
             >
-              <Plus size={18} color="#ffffff" strokeWidth={2.4} />
+              <Plus size={18} color="#F5F5F5" strokeWidth={2.4} />
               <Text style={styles.confirmBtnText}>
                 {effectiveIsSplit ? 'Split Tab' : 'Open Tab'}
               </Text>
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     width: '100%',
     maxWidth: 540,
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   guestCountTextActive: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   actionRow: {
     flexDirection: 'row',
@@ -523,7 +523,7 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   doorChargeRow: {
     flexDirection: 'row',
@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     borderColor: '#9ca3af',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
   },
   doorChargeCheckActive: {
     backgroundColor: '#810021',

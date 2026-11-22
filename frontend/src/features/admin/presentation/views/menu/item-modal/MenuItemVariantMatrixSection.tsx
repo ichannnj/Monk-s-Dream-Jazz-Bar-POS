@@ -71,7 +71,7 @@ export const MenuItemVariantMatrixSection: React.FC<MenuItemVariantMatrixSection
             hasVariants ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
           }`}
         >
-          {hasVariants && <Check size={16} color="#ffffff" />}
+          {hasVariants && <Check size={16} color="#F5F5F5" />}
         </View>
       </Pressable>
 

@@ -152,7 +152,7 @@ export const FinancialOverviewToolbar: React.FC<FinancialOverviewToolbarProps> =
             className="min-h-[44px] px-4 rounded-xl bg-[#800020] active:bg-[#600018] flex-row items-center justify-center shadow-2xs"
             accessibilityLabel="Print Financial Report"
           >
-            <Printer size={15} color="#ffffff" />
+            <Printer size={15} color="#F5F5F5" />
             <Text className="ml-1.5 text-xs font-bold text-white">Print</Text>
           </Pressable>
         </View>

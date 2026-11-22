@@ -36,11 +36,11 @@ export const qrPaymentStyles = StyleSheet.create({
     color: '#44403c',
   },
   channelPillTextActive: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   qrDisplayCard: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 14,
     borderWidth: 1,
     borderColor: '#e7e5e4',
@@ -55,7 +55,7 @@ export const qrPaymentStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     padding: 4,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -102,7 +102,7 @@ export const qrPaymentStyles = StyleSheet.create({
     color: '#810021',
   },
   refInputCard: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 14,
     borderWidth: 1,
     borderColor: '#e7e5e4',

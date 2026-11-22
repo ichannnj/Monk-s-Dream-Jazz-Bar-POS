@@ -136,7 +136,7 @@ export const FullscreenQrModal: React.FC<FullscreenQrModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Done scanning, return to checkout"
               >
-                <Check size={18} color="#ffffff" strokeWidth={2.5} />
+                <Check size={18} color="#F5F5F5" strokeWidth={2.5} />
                 <Text style={styles.doneBtnText}>Done Scanning · Input Reference #</Text>
               </Pressable>
             </View>
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 24,
     padding: 20,
     shadowColor: '#000',
@@ -235,7 +235,7 @@ const styles = StyleSheet.create({
   qrContainer: {
     width: 220,
     height: 220,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#e7e5e4',
@@ -297,6 +297,6 @@ const styles = StyleSheet.create({
   doneBtnText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
 });

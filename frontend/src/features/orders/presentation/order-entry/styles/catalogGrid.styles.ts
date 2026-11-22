@@ -12,7 +12,7 @@ export const catalogGridStyles = StyleSheet.create({
   },
   productCard: {
     width: '48.5%',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderRadius: 18,
     borderWidth: 1,
     borderColor: '#e5e7eb',

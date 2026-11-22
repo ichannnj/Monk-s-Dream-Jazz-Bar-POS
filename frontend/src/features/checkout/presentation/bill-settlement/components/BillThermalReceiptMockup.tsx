@@ -106,7 +106,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
             style={{
               fontSize: 12,
               fontWeight: '700',
-              color: is58mm ? '#ffffff' : '#78716c',
+              color: is58mm ? '#F5F5F5' : '#78716c',
             }}
           >
             58mm Compact (Default)
@@ -127,7 +127,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
             style={{
               fontSize: 12,
               fontWeight: '700',
-              color: !is58mm ? '#ffffff' : '#78716c',
+              color: !is58mm ? '#F5F5F5' : '#78716c',
             }}
           >
             80mm Standard

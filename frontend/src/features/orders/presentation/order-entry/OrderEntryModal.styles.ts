@@ -25,7 +25,7 @@ const baseStyles = StyleSheet.create({
     elevation: 12,
   },
   topBar: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     paddingHorizontal: 24,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -46,7 +46,7 @@ const baseStyles = StyleSheet.create({
     borderRadius: 14,
   },
   activeDestinationText: {
-    color: '#ffffff',
+    color: '#F5F5F5',
     fontSize: 16,
     fontWeight: '800',
   },
@@ -77,7 +77,7 @@ const baseStyles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#F5F5F5',
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
@@ -104,7 +104,7 @@ const baseStyles = StyleSheet.create({
     color: '#4b5563',
   },
   catPillTextActive: {
-    color: '#ffffff',
+    color: '#F5F5F5',
   },
   searchRow: {
     flexDirection: 'row',

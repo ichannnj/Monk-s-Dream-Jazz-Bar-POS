@@ -120,7 +120,7 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
             <Text className="text-base font-bold text-white">
               {isSubmitting ? 'Saving...' : 'Save Adjustment'}
             </Text>
-            <ArrowRight size={18} color="#FFFFFF" style={{ marginLeft: 8 }} />
+            <ArrowRight size={18} color="#F5F5F5" style={{ marginLeft: 8 }} />
           </Pressable>
         </View>
       }

@@ -47,7 +47,7 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
               { width: 'auto', paddingHorizontal: 12, height: 38, borderRadius: 12 },
             ]}
           >
-            <Text style={{ fontSize: 13, fontWeight: '800', color: '#ffffff' }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: '#F5F5F5' }}>
               {isTakeout
                 ? `Takeout #${takeoutOrder?.ticketNumber || 'T-001'}`
                 : table
@@ -130,7 +130,7 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
           >
             <Layers
               size={14}
-              color={settlementMode === 'entire_table' ? '#ffffff' : '#810021'}
+              color={settlementMode === 'entire_table' ? '#F5F5F5' : '#810021'}
               strokeWidth={2.4}
             />
             <Text

@@ -7,7 +7,7 @@ colors:
   admin-primary: '#6e1d2c'
   warm-sand: '#faf8f5'
   admin-canvas: '#f8f6f4'
-  pure-surface: '#ffffff'
+  pure-surface: '#f5f5f5'
   stone-border: '#e7e5e4'
   admin-border: '#e6e1da'
   deep-charcoal: '#1c1917'
@@ -120,6 +120,6 @@ Rules:
 - Do enforce `min-h-[48px] min-w-[48px]` on every interactive `Pressable`, button, chip, tab, and input.
 - Do keep every new or modified text element and all form inputs at `≥ 16px` (`text-base` / `text-pos-base`).
 - Do use React Native primitives (`View`, `Text`, `Pressable`, `TextInput`, `ScrollView`) with NativeWind v4 `className` utilities for all new components and new elements inside existing files.
-- Do keep floor and modal UI strictly within Velvet Wine (`#810021`), Warm Sand/White (`#faf8f5`/`#ffffff`), and Deep Charcoal (`#1c1917`), reserving Emerald/Amber/Rose strictly for live status or alerts.
+- Do keep floor and modal UI strictly within Velvet Wine (`#810021`), Warm Sand/Muted Stone (`#faf8f5`/`#f5f5f5`), and Deep Charcoal (`#1c1917`), reserving Emerald/Amber/Rose strictly for live status or alerts.
 - (+1 more)
   Full: .impeccable/design-full.md (read a section when you need its detail)

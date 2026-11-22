@@ -123,7 +123,7 @@ export const InventoryPhotoField: React.FC<InventoryPhotoFieldProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Upload or capture grocery reference photo"
             >
-              <Camera size={18} color="#FFFFFF" />
+              <Camera size={18} color="#F5F5F5" />
               <Text className="ml-2 text-base font-bold text-white">
                 {isProcessing ? 'Processing...' : hasPhoto ? 'Replace Photo' : 'Add Photo'}
               </Text>

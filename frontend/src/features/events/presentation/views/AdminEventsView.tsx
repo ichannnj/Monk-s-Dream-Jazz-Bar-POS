@@ -128,7 +128,7 @@ export const AdminEventsView: React.FC = () => {
               style={Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined}
               className="h-10 flex-row items-center justify-center gap-1.5 rounded-xl bg-[#800020] px-3.5 text-white active:bg-[#600018] shadow-xs"
             >
-              <Plus size={16} color="#ffffff" aria-hidden={true} />
+              <Plus size={16} color="#F5F5F5" aria-hidden={true} />
               <Text className="text-xs font-bold text-white">+ Add Event</Text>
             </Pressable>
           </View>

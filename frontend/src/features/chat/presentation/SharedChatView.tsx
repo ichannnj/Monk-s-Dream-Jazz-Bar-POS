@@ -120,7 +120,7 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Jump to new messages"
               >
-                <ChevronDown size={18} color="#FFFFFF" />
+                <ChevronDown size={18} color="#F5F5F5" />
                 <Text className="ml-1.5 text-base font-bold text-white tabular-nums">
                   {unseenMessagesCount > 1
                     ? `${unseenMessagesCount} new messages ↓`

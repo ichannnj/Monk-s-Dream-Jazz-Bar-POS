@@ -233,7 +233,7 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
               isRequired ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
             }`}
           >
-            {isRequired && <Check size={16} color="#ffffff" />}
+            {isRequired && <Check size={16} color="#F5F5F5" />}
           </View>
         </Pressable>
 

@@ -108,7 +108,7 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
               }`}
             >
               <View className="flex-row items-center space-x-3">
-                <IconComponent size={22} color={isActive ? '#ffffff' : '#f5d5dc'} />
+                <IconComponent size={22} color={isActive ? '#F5F5F5' : '#f5d5dc'} />
                 <Text
                   className={`ml-3 text-base ${
                     isActive ? 'font-bold text-white' : 'font-medium text-white/90'
@@ -144,7 +144,7 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
             <View className="mb-6 flex-row items-center justify-between pt-1">
               <View className="flex-row items-center">
                 <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/20 p-2 border border-white/25">
-                  <Music size={22} color="#ffffff" />
+                  <Music size={22} color="#F5F5F5" />
                 </View>
                 <View className="ml-3">
                   <Text className="font-serif text-lg font-bold tracking-tight text-white">
@@ -159,7 +159,7 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
                 className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-white/10 active:bg-white/20"
                 accessibilityLabel="Close Drawer"
               >
-                <X size={22} color="#ffffff" />
+                <X size={22} color="#F5F5F5" />
               </Pressable>
             </View>
 
@@ -196,9 +196,9 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
               }`}
             >
               {operatingMode === 'EVENT' ? (
-                <Flame size={20} color="#ffffff" />
+                <Flame size={20} color="#F5F5F5" />
               ) : (
-                <Sun size={20} color="#ffffff" />
+                <Sun size={20} color="#F5F5F5" />
               )}
               <Text className="ml-2 text-base font-bold text-white">
                 {operatingMode === 'EVENT' ? 'Switch to Cafe Mode' : 'Switch to Event Mode'}
@@ -214,7 +214,7 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
                 }}
                 className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 active:bg-white/20"
               >
-                <Layers size={20} color="#ffffff" />
+                <Layers size={20} color="#F5F5F5" />
                 <Text className="ml-2 text-base font-bold text-white">Switch to Floor POS</Text>
               </Pressable>
             )}

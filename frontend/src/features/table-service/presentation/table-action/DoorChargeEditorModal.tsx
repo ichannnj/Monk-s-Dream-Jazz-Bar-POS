@@ -178,7 +178,7 @@ export const DoorChargeEditorModal: React.FC<DoorChargeEditorModalProps> = ({
                 isSubmitting && { opacity: 0.5 },
               ]}
             >
-              <Check size={18} color="#FFFFFF" strokeWidth={2.5} />
+              <Check size={18} color="#F5F5F5" strokeWidth={2.5} />
               <Text style={styles.saveBtnText}>{isSubmitting ? 'Saving...' : 'Save Cover'}</Text>
             </Pressable>
           </View>
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
     borderWidth: 1,
     borderColor: '#e7e5e4',
     alignItems: 'center',
@@ -255,7 +255,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
     padding: 14,
     borderRadius: 14,
     borderWidth: 1,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
     padding: 16,
     borderRadius: 14,
     borderWidth: 1.5,
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F5F5F5',
     borderWidth: 1,
     borderColor: '#fca5a5',
   },
@@ -379,6 +379,6 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#F5F5F5',
   },
 });

@@ -117,7 +117,7 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
           accessibilityRole="button"
           accessibilityLabel={`Confirm payment of ${formatCurrency(grandTotal)}`}
         >
-          <CheckCircle2 size={18} color="#ffffff" strokeWidth={2.4} />
+          <CheckCircle2 size={18} color="#F5F5F5" strokeWidth={2.4} />
           <Text style={styles.confirmPayBtnText}>
             {isTakeout && takeoutCollectAfterPay
               ? `Confirm & Hand Off · ${formatCurrency(grandTotal)}`
