@@ -225,9 +225,9 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
       <Pressable
         onPress={onClose}
         disabled={isSubmitting}
-        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
+        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-80"
       >
-        <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
+        <Text className="text-base font-bold text-[#1A1617]">Cancel</Text>
       </Pressable>
       <Pressable
         onPress={handleSubmit}
@@ -287,7 +287,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
         {/* Category & Supplier */}
         <View className="flex-col sm:flex-row gap-3">
           <View className="flex-1">
-            <Text className="text-base font-semibold text-[#1C1917] mb-1.5">Category</Text>
+            <Text className="text-base font-semibold text-[#1A1617] mb-1.5">Category</Text>
             <PosDropdown
               mode="select"
               options={categoryOptions}
@@ -296,7 +296,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
             />
           </View>
           <View className="flex-1">
-            <Text className="text-base font-semibold text-[#1C1917] mb-1.5">Primary Supplier</Text>
+            <Text className="text-base font-semibold text-[#1A1617] mb-1.5">Primary Supplier</Text>
             <PosDropdown
               mode="select"
               options={supplierOptions}
@@ -308,7 +308,7 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
 
         {/* Unit Selector */}
         <View>
-          <Text className="text-base font-semibold text-[#1C1917] mb-2">Measurement Unit</Text>
+          <Text className="text-base font-semibold text-[#1A1617] mb-2">Measurement Unit</Text>
           <View className="flex-row flex-wrap gap-2">
             {STANDARD_UNITS.map((u) => {
               const isSel = unit === u;
@@ -317,11 +317,11 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
                   key={u}
                   onPress={() => setUnit(u)}
                   className={`min-h-[48px] min-w-[56px] px-4 items-center justify-center rounded-xl border ${
-                    isSel ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E7E5E4]'
+                    isSel ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E2DED6]'
                   }`}
                 >
                   <Text
-                    className={`text-base font-bold ${isSel ? 'text-white' : 'text-[#1C1917]'}`}
+                    className={`text-base font-bold ${isSel ? 'text-white' : 'text-[#1A1617]'}`}
                   >
                     {u}
                   </Text>
@@ -374,13 +374,13 @@ export const InventoryItemModal: React.FC<InventoryItemModalProps> = ({
               editable={!item}
               placeholder="0.00"
               suffix={unit}
-              className={item ? 'bg-[#FAF8F5] text-[#78716C]' : ''}
+              className={item ? 'bg-[#EFECE6] text-[#78716C]' : ''}
             />
           </View>
         </View>
 
         {/* Grocery Reference Photo & Note */}
-        <View className="pt-2 border-t border-[#E7E5E4] gap-4">
+        <View className="pt-2 border-t border-[#E2DED6] gap-4">
           <InventoryPhotoField
             currentImageUrl={photoCleared ? null : item?.reference_image_url}
             stagedImage={stagedImage}

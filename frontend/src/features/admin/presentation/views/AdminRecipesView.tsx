@@ -105,7 +105,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
 
   return (
     <ScrollView
-      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#EFECE6] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* Page Header & View Dropdown */}
@@ -139,7 +139,7 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
             className="h-10 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white px-3 active:bg-stone-50 shadow-xs"
             accessibilityLabel="Export Recipe Catalog & BOM to Excel"
           >
-            <FileSpreadsheet size={15} color="#800020" />
+            <FileSpreadsheet size={15} color="#810021" />
             <Text className="ml-1.5 text-xs font-bold text-stone-800">Export</Text>
           </Pressable>
 
@@ -149,9 +149,9 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingProduct(null);
                 setIsProductModalOpen(true);
               }}
-              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
+              className="h-10 flex-row items-center justify-center rounded-xl bg-[#810021] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
             >
-              <Plus size={16} color="#F5F5F5" />
+              <Plus size={16} color="#F7F5F2" />
               <Text className="ml-1.5 text-xs font-bold text-white">+ Add Item</Text>
             </Pressable>
           )}
@@ -162,9 +162,9 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingCategory(null);
                 setIsCategoryModalOpen(true);
               }}
-              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
+              className="h-10 flex-row items-center justify-center rounded-xl bg-[#810021] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
             >
-              <FolderPlus size={16} color="#F5F5F5" />
+              <FolderPlus size={16} color="#F7F5F2" />
               <Text className="ml-1.5 text-xs font-bold text-white">+ Add Category</Text>
             </Pressable>
           )}
@@ -175,9 +175,9 @@ export const AdminRecipesView: React.FC<AdminRecipesViewProps> = ({ products, on
                 setEditingModifierGroup(null);
                 setIsModifierModalOpen(true);
               }}
-              className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
+              className="h-10 flex-row items-center justify-center rounded-xl bg-[#810021] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
             >
-              <Sliders size={16} color="#F5F5F5" />
+              <Sliders size={16} color="#F7F5F2" />
               <Text className="ml-1.5 text-xs font-bold text-white">+ Add Group</Text>
             </Pressable>
           )}

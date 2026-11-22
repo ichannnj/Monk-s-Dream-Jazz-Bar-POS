@@ -14,7 +14,7 @@ export const modifierModalStyles = StyleSheet.create({
     padding: 16,
   },
   customizerCard: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     width: '100%',
     maxWidth: 500,
@@ -32,7 +32,7 @@ export const modifierModalStyles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
     zIndex: 10,
@@ -50,7 +50,7 @@ export const modifierModalStyles = StyleSheet.create({
   customizerFooterWrapper: {
     paddingHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
     zIndex: 10,
@@ -105,12 +105,12 @@ export const modifierModalStyles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     minHeight: 48,
   },
   modRowSelected: {
     borderColor: '#810021',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
   },
   modName: {
     fontSize: 15,
@@ -156,7 +156,7 @@ export const modifierModalStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   confirmCustomizeBtnText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 16,
     fontWeight: '800',
   },
@@ -181,11 +181,11 @@ export const modifierModalStyles = StyleSheet.create({
   },
   tempButtonHotSelected: {
     borderColor: '#810021',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
   },
   tempButtonColdSelected: {
     borderColor: '#810021',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
   },
   tempButtonText: {
     fontSize: 14.5,
@@ -220,7 +220,7 @@ export const modifierModalStyles = StyleSheet.create({
   },
   sizeButtonSelected: {
     borderColor: '#810021',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
   },
   sizeButtonText: {
     fontSize: 14,
@@ -247,17 +247,17 @@ export const modifierModalStyles = StyleSheet.create({
     marginTop: 4,
   },
   variantBadgeHot: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   variantBadgeCold: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -270,6 +270,6 @@ export const modifierModalStyles = StyleSheet.create({
   variantBadgeTextCold: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
 });

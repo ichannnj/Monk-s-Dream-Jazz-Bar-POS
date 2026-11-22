@@ -114,21 +114,21 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
         {/* Mobile Row 1: Search + Primary "+ New" CTA */}
         <View className="flex-row items-center gap-2">
           {onSearchChange ? (
-            <View className="flex-1 min-h-[48px] flex-row items-center bg-white border border-[#E7E5E4] rounded-xl px-3">
+            <View className="flex-1 min-h-[48px] flex-row items-center bg-white border border-[#E2DED6] rounded-xl px-3">
               <Search size={18} color="#78716C" strokeWidth={2} />
               <TextInput
                 value={searchQuery}
                 onChangeText={onSearchChange}
                 placeholder="Search table or guest..."
                 placeholderTextColor="#A8A29E"
-                className="flex-1 ml-2 text-base text-[#1C1917] font-medium min-h-[44px]"
+                className="flex-1 ml-2 text-base text-[#1A1617] font-medium min-h-[44px]"
                 accessibilityLabel="Search tables or guest names"
               />
               {searchQuery.length > 0 ? (
                 <Pressable
                   onPress={() => onSearchChange('')}
                   hitSlop={10}
-                  className="w-8 h-8 rounded-full bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center ml-1"
+                  className="w-8 h-8 rounded-full bg-[#EFECE6] border border-[#E2DED6] items-center justify-center ml-1"
                   accessibilityRole="button"
                   accessibilityLabel="Clear floor search"
                 >
@@ -174,20 +174,20 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
               className={`min-h-[48px] min-w-[48px] px-3.5 rounded-xl border flex-row items-center gap-2 active:opacity-80 ${
                 operatingMode === 'EVENT'
                   ? 'bg-[#810021] border-[#810021]'
-                  : 'bg-white border-[#E7E5E4]'
+                  : 'bg-white border-[#E2DED6]'
               }`}
               accessibilityRole="button"
               accessibilityLabel={`Operating Mode: ${operatingMode === 'EVENT' ? 'Event Mode' : 'Cafe Mode'}. Tap to switch.`}
             >
               {operatingMode === 'EVENT' ? (
                 <>
-                  <Sparkles size={16} color="#F5F5F5" />
+                  <Sparkles size={16} color="#F7F5F2" />
                   <Text className="text-base font-bold text-white">Event</Text>
                 </>
               ) : (
                 <>
-                  <Coffee size={16} color="#1C1917" />
-                  <Text className="text-base font-bold text-[#1C1917]">Cafe</Text>
+                  <Coffee size={16} color="#1A1617" />
+                  <Text className="text-base font-bold text-[#1A1617]">Cafe</Text>
                 </>
               )}
             </Pressable>
@@ -219,7 +219,7 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
 
   // Tablet & Desktop (>= 768px)
   return (
-    <View className="bg-white border border-[#E7E5E4] rounded-2xl px-4 py-3 mb-4 flex-row flex-wrap items-center justify-between gap-3">
+    <View className="bg-white border border-[#E2DED6] rounded-2xl px-4 py-3 mb-4 flex-row flex-wrap items-center justify-between gap-3">
       {/* Left: Channel, Status, Search & Tonight's Event */}
       <View className="flex-row flex-wrap items-center gap-2.5 flex-1 min-w-[280px]">
         <PosDropdown
@@ -237,21 +237,21 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
         />
 
         {onSearchChange ? (
-          <View className="min-h-[48px] flex-row items-center bg-[#FAF8F5] border border-[#E7E5E4] rounded-xl px-3 flex-1 min-w-[180px] max-w-[260px]">
+          <View className="min-h-[48px] flex-row items-center bg-[#EFECE6] border border-[#E2DED6] rounded-xl px-3 flex-1 min-w-[180px] max-w-[260px]">
             <Search size={18} color="#78716C" strokeWidth={2} />
             <TextInput
               value={searchQuery}
               onChangeText={onSearchChange}
               placeholder="Table or guest..."
               placeholderTextColor="#A8A29E"
-              className="flex-1 ml-2 text-base text-[#1C1917] font-medium min-h-[44px]"
+              className="flex-1 ml-2 text-base text-[#1A1617] font-medium min-h-[44px]"
               accessibilityLabel="Search tables or guest names"
             />
             {searchQuery.length > 0 ? (
               <Pressable
                 onPress={() => onSearchChange('')}
                 hitSlop={10}
-                className="w-8 h-8 rounded-full bg-white border border-[#E7E5E4] items-center justify-center ml-1"
+                className="w-8 h-8 rounded-full bg-white border border-[#E2DED6] items-center justify-center ml-1"
                 accessibilityRole="button"
                 accessibilityLabel="Clear floor search"
               >
@@ -296,20 +296,20 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           className={`min-h-[48px] min-w-[48px] px-3.5 rounded-xl border flex-row items-center gap-2 active:opacity-80 ${
             operatingMode === 'EVENT'
               ? 'bg-[#810021] border-[#810021]'
-              : 'bg-[#FAF8F5] border-[#E7E5E4]'
+              : 'bg-[#EFECE6] border-[#E2DED6]'
           }`}
           accessibilityRole="button"
           accessibilityLabel={`Operating Mode: ${operatingMode === 'EVENT' ? 'Event Mode' : 'Cafe Mode'}. Tap to switch.`}
         >
           {operatingMode === 'EVENT' ? (
             <>
-              <Sparkles size={16} color="#F5F5F5" />
+              <Sparkles size={16} color="#F7F5F2" />
               <Text className="text-base font-bold text-white">Event</Text>
             </>
           ) : (
             <>
-              <Coffee size={16} color="#1C1917" />
-              <Text className="text-base font-bold text-[#1C1917]">Cafe</Text>
+              <Coffee size={16} color="#1A1617" />
+              <Text className="text-base font-bold text-[#1A1617]">Cafe</Text>
             </>
           )}
         </Pressable>
@@ -319,7 +319,7 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           className={`min-h-[48px] px-3.5 rounded-xl border flex-row items-center gap-2 active:opacity-80 ${
             isHardwareStation
               ? 'bg-[#810021]/10 border-[#810021]/30'
-              : 'bg-[#FAF8F5] border-[#E7E5E4]'
+              : 'bg-[#EFECE6] border-[#E2DED6]'
           }`}
           accessibilityRole="button"
           accessibilityLabel="Hardware Printer & Cash Drawer Station Settings"
@@ -334,11 +334,11 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
           </Text>
         </Pressable>
 
-        <View className="min-h-[48px] px-3 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] flex-row items-center gap-2">
+        <View className="min-h-[48px] px-3 rounded-xl bg-[#EFECE6] border border-[#E2DED6] flex-row items-center gap-2">
           <View className="w-7 h-7 rounded-full bg-[#810021] items-center justify-center">
             <Text className="text-xs font-bold text-white">{staffInitials}</Text>
           </View>
-          <Text className="text-base font-semibold text-[#1C1917]">{staffName.split(' ')[0]}</Text>
+          <Text className="text-base font-semibold text-[#1A1617]">{staffName.split(' ')[0]}</Text>
         </View>
       </View>
 

@@ -24,7 +24,7 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
     >
       {/* Brand Header */}
       <View className="items-center pb-2.5 border-b-2 border-stone-800 mb-3 print-avoid-break">
-        <Text className="text-[11px] font-bold tracking-widest text-[#800020] uppercase">
+        <Text className="text-[11px] font-bold tracking-widest text-[#810021] uppercase">
           Monk's Dream Jazz Bar &amp; Bistro
         </Text>
         <Text className="text-xl sm:text-2xl font-black text-stone-900 mt-0.5">{title}</Text>
@@ -60,7 +60,7 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
         <View className="flex-1 space-y-3">
           {/* Section 1: Financial Summary */}
           <View className="print-avoid-break bg-stone-50/60 p-3 rounded-xl border border-stone-200">
-            <Text className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#800020] mb-1.5">
+            <Text className="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-[#810021] mb-1.5">
               1. Sales &amp; Revenue
             </Text>
             <View className="divide-y divide-stone-200">
@@ -78,7 +78,7 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
               </View>
               <View className="flex-row justify-between py-2 bg-stone-100 px-2 rounded-lg mt-1">
                 <Text className="text-sm font-black text-stone-900">Net Sales</Text>
-                <Text className="text-base font-black text-[#800020]">
+                <Text className="text-base font-black text-[#810021]">
                   {formatCurrency(reading.net_sales)}
                 </Text>
               </View>
@@ -107,7 +107,7 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
                   </View>
                   <View className="flex-row justify-between py-1">
                     <View className="flex-row items-center gap-1.5">
-                      <View className="w-2 h-2 rounded-full bg-[#800020]" />
+                      <View className="w-2 h-2 rounded-full bg-[#810021]" />
                       <Text className="text-xs text-stone-700 font-semibold">Event Mode</Text>
                       {reading.event_tx_count !== undefined && (
                         <Text className="text-[11px] text-stone-400">
@@ -126,7 +126,7 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
 
           {/* Section 2: Tax & Surcharges */}
           <View className="print-avoid-break bg-stone-50/60 p-3.5 rounded-xl border border-stone-200">
-            <Text className="text-sm font-extrabold uppercase tracking-wider text-[#800020] mb-2">
+            <Text className="text-sm font-extrabold uppercase tracking-wider text-[#810021] mb-2">
               2. Tax &amp; Service Charge (BIR)
             </Text>
             <View className="divide-y divide-stone-200">
@@ -156,7 +156,7 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
         <View className="flex-1 space-y-4">
           {/* Section 3: Tender Breakdown */}
           <View className="print-avoid-break bg-stone-50/60 p-3.5 rounded-xl border border-stone-200">
-            <Text className="text-sm font-extrabold uppercase tracking-wider text-[#800020] mb-2">
+            <Text className="text-sm font-extrabold uppercase tracking-wider text-[#810021] mb-2">
               3. Payment Tender Breakdown
             </Text>
             <View className="divide-y divide-stone-200">
@@ -195,7 +195,7 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
 
           {/* Section 4: Cash Drawer Audit */}
           <View className="print-avoid-break bg-stone-50/60 p-3.5 rounded-xl border border-stone-200">
-            <Text className="text-sm font-extrabold uppercase tracking-wider text-[#800020] mb-2">
+            <Text className="text-sm font-extrabold uppercase tracking-wider text-[#810021] mb-2">
               4. Cash Drawer Reconciliation
             </Text>
             <View className="divide-y divide-stone-200">
@@ -280,7 +280,7 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
 
       {/* Handover Signatures */}
       <View className="p-4 rounded-xl border border-stone-200 bg-stone-50/70 print-avoid-break">
-        <Text className="text-xs font-extrabold uppercase tracking-wider text-[#800020] mb-2.5">
+        <Text className="text-xs font-extrabold uppercase tracking-wider text-[#810021] mb-2.5">
           {isYReading ? 'Staff Handover Acknowledgment' : 'Fiscal Closeout Acknowledgment'}
         </Text>
         <View className="report-grid-2col flex-col sm:flex-row gap-3">

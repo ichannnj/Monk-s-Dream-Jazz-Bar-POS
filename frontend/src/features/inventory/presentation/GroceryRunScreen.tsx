@@ -163,14 +163,14 @@ export const GroceryRunScreen: React.FC = () => {
 
   if (!verifiedStaffName) {
     return (
-      <View className="flex-1 bg-[#FAF8F5] items-center justify-center p-4">
-        <View className="w-full max-w-md rounded-2xl border border-[#E7E5E4] bg-white p-6 gap-5">
+      <View className="flex-1 bg-[#EFECE6] items-center justify-center p-4">
+        <View className="w-full max-w-md rounded-2xl border border-[#E2DED6] bg-white p-6 gap-5">
           <View className="flex-row items-center gap-3">
-            <View className="h-12 w-12 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center">
+            <View className="h-12 w-12 rounded-xl bg-[#EFECE6] border border-[#E2DED6] items-center justify-center">
               <Lock size={22} color="#810021" />
             </View>
             <View className="flex-1">
-              <Text className="text-xl font-extrabold text-[#1C1917]">Grocery Run</Text>
+              <Text className="text-xl font-extrabold text-[#1A1617]">Grocery Run</Text>
               <Text className="text-base text-[#78716C]">
                 Sign in with your staff PIN to view items to buy
               </Text>
@@ -223,14 +223,14 @@ export const GroceryRunScreen: React.FC = () => {
   }
 
   return (
-    <View className="flex-1 bg-[#FAF8F5]">
+    <View className="flex-1 bg-[#EFECE6]">
       {/* Sticky Top Header */}
-      <View className="bg-white border-b border-[#E7E5E4] px-4 py-3.5 gap-3">
+      <View className="bg-white border-b border-[#E2DED6] px-4 py-3.5 gap-3">
         <View className="flex-row items-center justify-between gap-2">
           <View className="flex-row items-center gap-2.5 flex-1 min-w-0">
             <ShoppingBag size={22} color="#810021" />
             <View className="flex-1 min-w-0">
-              <Text className="text-lg font-extrabold text-[#1C1917]" numberOfLines={1}>
+              <Text className="text-lg font-extrabold text-[#1A1617]" numberOfLines={1}>
                 Grocery List
               </Text>
               <Text className="text-base text-[#78716C]" numberOfLines={1}>
@@ -242,10 +242,10 @@ export const GroceryRunScreen: React.FC = () => {
           {!currentUser && (
             <Pressable
               onPress={() => setVerifiedStaffName(null)}
-              className="min-h-[48px] min-w-[48px] px-3 rounded-xl border border-[#E7E5E4] bg-white flex-row items-center justify-center active:opacity-80"
+              className="min-h-[48px] min-w-[48px] px-3 rounded-xl border border-[#E2DED6] bg-white flex-row items-center justify-center active:opacity-80"
               accessibilityLabel="Lock grocery list"
             >
-              <LogOut size={18} color="#1C1917" />
+              <LogOut size={18} color="#1A1617" />
             </Pressable>
           )}
         </View>
@@ -272,12 +272,12 @@ export const GroceryRunScreen: React.FC = () => {
                 key={tab.key}
                 onPress={() => setShowFilter(tab.key)}
                 className={`min-h-[48px] flex-1 px-2 rounded-xl border items-center justify-center ${
-                  isActive ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E7E5E4]'
+                  isActive ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E2DED6]'
                 }`}
               >
                 <Text
                   className={`text-base font-bold tabular-nums ${
-                    isActive ? 'text-white' : 'text-[#1C1917]'
+                    isActive ? 'text-white' : 'text-[#1A1617]'
                   }`}
                 >
                   {tab.label}
@@ -298,9 +298,9 @@ export const GroceryRunScreen: React.FC = () => {
             <ActivityIndicator size="large" color="#810021" />
           </View>
         ) : filteredItems.length === 0 ? (
-          <View className="rounded-2xl border border-[#E7E5E4] bg-white p-10 items-center justify-center">
+          <View className="rounded-2xl border border-[#E2DED6] bg-white p-10 items-center justify-center">
             <CheckCircle2 size={36} color="#10b981" />
-            <Text className="mt-3 text-lg font-bold text-[#1C1917] text-center">
+            <Text className="mt-3 text-lg font-bold text-[#1A1617] text-center">
               {items.length === 0 ? 'Everything is stocked above par.' : 'No items in this view.'}
             </Text>
           </View>
@@ -319,7 +319,7 @@ export const GroceryRunScreen: React.FC = () => {
               <View
                 key={item.id}
                 className={`rounded-2xl border bg-white overflow-hidden ${
-                  inBasket ? 'border-[#E7E5E4] opacity-75' : 'border-[#E7E5E4]'
+                  inBasket ? 'border-[#E2DED6] opacity-75' : 'border-[#E2DED6]'
                 }`}
               >
                 {item.reference_image_url ? (
@@ -332,7 +332,7 @@ export const GroceryRunScreen: React.FC = () => {
                         note: item.grocery_note,
                       })
                     }
-                    className="h-48 w-full bg-[#FAF8F5] border-b border-[#E7E5E4]"
+                    className="h-48 w-full bg-[#EFECE6] border-b border-[#E2DED6]"
                   >
                     <Image
                       source={{ uri: item.reference_image_url }}
@@ -342,7 +342,7 @@ export const GroceryRunScreen: React.FC = () => {
                     />
                   </Pressable>
                 ) : (
-                  <View className="h-20 w-full bg-[#FAF8F5] border-b border-[#E7E5E4] flex-row items-center justify-center gap-2">
+                  <View className="h-20 w-full bg-[#EFECE6] border-b border-[#E2DED6] flex-row items-center justify-center gap-2">
                     <Camera size={18} color="#78716C" />
                     <Text className="text-base text-[#78716C]">No reference photo</Text>
                   </View>
@@ -351,14 +351,14 @@ export const GroceryRunScreen: React.FC = () => {
                 <View className="p-4 gap-3">
                   <View className="flex-row items-start justify-between gap-2">
                     <View className="flex-1 min-w-0">
-                      <Text className="text-lg font-bold text-[#1C1917]">{item.name}</Text>
+                      <Text className="text-lg font-bold text-[#1A1617]">{item.name}</Text>
                       <Text className="text-base text-[#78716C] tabular-nums">
                         On-hand: {Number(item.current_stock || 0).toFixed(2)} {item.unit}
                       </Text>
                     </View>
                     <View
                       className={`rounded-lg px-2.5 py-1 border ${
-                        isOut ? 'bg-rose-50 border-rose-200' : 'bg-[#FAF8F5] border-[#E7E5E4]'
+                        isOut ? 'bg-rose-50 border-rose-200' : 'bg-[#EFECE6] border-[#E2DED6]'
                       }`}
                     >
                       <Text
@@ -371,22 +371,22 @@ export const GroceryRunScreen: React.FC = () => {
                     </View>
                   </View>
 
-                  <View className="rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-3.5 py-2.5 flex-row items-center justify-between">
-                    <Text className="text-base font-semibold text-[#1C1917]">Buy Qty</Text>
+                  <View className="rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3.5 py-2.5 flex-row items-center justify-between">
+                    <Text className="text-base font-semibold text-[#1A1617]">Buy Qty</Text>
                     <Text className="text-lg font-extrabold text-[#810021] tabular-nums">
                       {buyQty} {item.unit}
                     </Text>
                   </View>
 
                   {item.grocery_note ? (
-                    <Text className="text-base text-[#1C1917]">{item.grocery_note}</Text>
+                    <Text className="text-base text-[#1A1617]">{item.grocery_note}</Text>
                   ) : null}
 
                   <View className="flex-row items-center gap-2 pt-1">
                     {supplierPhone ? (
                       <Pressable
                         onPress={() => Linking.openURL(`tel:${supplierPhone}`)}
-                        className="min-h-[48px] px-4 rounded-xl border border-[#E7E5E4] bg-white flex-row items-center justify-center active:opacity-80"
+                        className="min-h-[48px] px-4 rounded-xl border border-[#E2DED6] bg-white flex-row items-center justify-center active:opacity-80"
                       >
                         <Phone size={18} color="#810021" />
                         <Text className="ml-1.5 text-base font-bold text-[#810021]">Call</Text>
@@ -396,13 +396,13 @@ export const GroceryRunScreen: React.FC = () => {
                     <Pressable
                       onPress={() => toggleBasket(item.id)}
                       className={`min-h-[48px] flex-1 rounded-xl flex-row items-center justify-center border ${
-                        inBasket ? 'bg-[#FAF8F5] border-[#E7E5E4]' : 'bg-[#810021] border-[#810021]'
+                        inBasket ? 'bg-[#EFECE6] border-[#E2DED6]' : 'bg-[#810021] border-[#810021]'
                       }`}
                     >
-                      <Check size={18} color={inBasket ? '#10b981' : '#F5F5F5'} />
+                      <Check size={18} color={inBasket ? '#10b981' : '#F7F5F2'} />
                       <Text
                         className={`ml-2 text-base font-bold ${
-                          inBasket ? 'text-[#1C1917]' : 'text-white'
+                          inBasket ? 'text-[#1A1617]' : 'text-white'
                         }`}
                       >
                         {inBasket ? 'In Basket' : 'Mark In Basket'}

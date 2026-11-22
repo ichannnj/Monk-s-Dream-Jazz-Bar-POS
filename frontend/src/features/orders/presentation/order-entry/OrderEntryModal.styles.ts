@@ -12,7 +12,7 @@ const baseStyles = StyleSheet.create({
     padding: 16,
   },
   fullscreenModal: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 28,
     width: '100%',
     height: '95%',
@@ -25,7 +25,7 @@ const baseStyles = StyleSheet.create({
     elevation: 12,
   },
   topBar: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     paddingHorizontal: 24,
     paddingVertical: 14,
     flexDirection: 'row',
@@ -46,7 +46,7 @@ const baseStyles = StyleSheet.create({
     borderRadius: 14,
   },
   activeDestinationText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 16,
     fontWeight: '800',
   },
@@ -71,13 +71,13 @@ const baseStyles = StyleSheet.create({
     flex: 1.6,
     borderRightWidth: 1,
     borderRightColor: '#e5e7eb',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
   },
   catalogHeader: {
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
@@ -104,7 +104,7 @@ const baseStyles = StyleSheet.create({
     color: '#4b5563',
   },
   catPillTextActive: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   searchRow: {
     flexDirection: 'row',

@@ -67,7 +67,7 @@ export const ProfileManagerPinCard: React.FC<ProfileManagerPinCardProps> = ({
               placeholderTextColor="#a8a29e"
               secureTextEntry={!showPinPassword}
               autoCapitalize="none"
-              style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+              style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
             />
             <Pressable onPress={() => setShowPinPassword(!showPinPassword)} className="p-2">
               {showPinPassword ? (
@@ -95,7 +95,7 @@ export const ProfileManagerPinCard: React.FC<ProfileManagerPinCardProps> = ({
                 style={{
                   fontSize: 16,
                   flex: 1,
-                  color: '#1c1917',
+                  color: '#1A1617',
                   fontVariant: ['tabular-nums'],
                 }}
               />
@@ -115,7 +115,7 @@ export const ProfileManagerPinCard: React.FC<ProfileManagerPinCardProps> = ({
                 style={{
                   fontSize: 16,
                   flex: 1,
-                  color: '#1c1917',
+                  color: '#1A1617',
                   fontVariant: ['tabular-nums'],
                 }}
               />
@@ -127,7 +127,7 @@ export const ProfileManagerPinCard: React.FC<ProfileManagerPinCardProps> = ({
           <Pressable
             onPress={onChangeOverridePin}
             disabled={isUpdatingPin || !pinPasswordVerify || newOverridePin.length !== 4}
-            className={`min-h-[48px] items-center justify-center rounded-xl bg-[#800020] px-6 active:opacity-90 shadow-xs ${
+            className={`min-h-[48px] items-center justify-center rounded-xl bg-[#810021] px-6 active:opacity-90 shadow-xs ${
               isUpdatingPin || !pinPasswordVerify || newOverridePin.length !== 4 ? 'opacity-50' : ''
             }`}
           >

@@ -47,7 +47,7 @@ export const AttendanceDatePickerModal: React.FC<AttendanceDatePickerModalProps>
       onClose={onClose}
       title="Select Attendance Date"
       subtitle="Choose any business date to inspect shifts and payroll"
-      icon={<Calendar size={22} color="#800020" />}
+      icon={<Calendar size={22} color="#810021" />}
       size="md"
     >
       <View className="p-1">
@@ -63,7 +63,7 @@ export const AttendanceDatePickerModal: React.FC<AttendanceDatePickerModalProps>
             >
               <Text
                 className={`text-base font-bold capitalize ${
-                  datePickerMode === m ? 'text-[#800020]' : 'text-stone-600'
+                  datePickerMode === m ? 'text-[#810021]' : 'text-stone-600'
                 }`}
               >
                 {m}
@@ -201,9 +201,9 @@ export const AttendanceDatePickerModal: React.FC<AttendanceDatePickerModalProps>
                       isFuture
                         ? 'opacity-25 bg-stone-50 cursor-not-allowed'
                         : isSelected
-                          ? 'bg-[#800020]'
+                          ? 'bg-[#810021]'
                           : isToday
-                            ? 'border border-[#800020] bg-rose-50/40'
+                            ? 'border border-[#810021] bg-rose-50/40'
                             : 'active:bg-stone-100'
                     }`}
                   >
@@ -214,7 +214,7 @@ export const AttendanceDatePickerModal: React.FC<AttendanceDatePickerModalProps>
                           : isSelected
                             ? 'text-white'
                             : isToday
-                              ? 'text-[#800020]'
+                              ? 'text-[#810021]'
                               : 'text-stone-800'
                       }`}
                     >
@@ -241,7 +241,7 @@ export const AttendanceDatePickerModal: React.FC<AttendanceDatePickerModalProps>
 
           <Pressable
             onPress={onClose}
-            className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:bg-[#6b001a]"
+            className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:bg-[#6b001a]"
           >
             <Text className="text-base font-bold text-white">Done</Text>
           </Pressable>

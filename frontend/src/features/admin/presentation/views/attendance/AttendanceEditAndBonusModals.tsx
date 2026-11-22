@@ -24,7 +24,7 @@ export const AttendanceEditAndBonusModals: React.FC<AttendanceEditAndBonusModals
       onClose={() => setEditingRecord(null)}
       title={`Adjust Pay: ${editingRecord?.displayName || ''}`}
       subtitle={`Role: ${editingRecord?.roleOrTitle || ''} · Date: ${editingRecord?.date || ''}`}
-      icon={<Award size={22} color="#800020" />}
+      icon={<Award size={22} color="#810021" />}
       size="md"
       footer={
         <>
@@ -36,7 +36,7 @@ export const AttendanceEditAndBonusModals: React.FC<AttendanceEditAndBonusModals
           </Pressable>
           <Pressable
             onPress={handleSaveRecord}
-            className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+            className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90"
           >
             <Text className="text-base font-bold text-white">Save</Text>
           </Pressable>
@@ -77,7 +77,7 @@ export const AttendanceEditAndBonusModals: React.FC<AttendanceEditAndBonusModals
                   >
                     <Text
                       className={`text-base font-bold ${
-                        isSel ? 'text-[#800020]' : 'text-stone-600'
+                        isSel ? 'text-[#810021]' : 'text-stone-600'
                       }`}
                     >
                       {opt.label}

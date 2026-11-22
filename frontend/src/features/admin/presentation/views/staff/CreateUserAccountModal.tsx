@@ -159,7 +159,7 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
       onClose={onClose}
       title="Create POS Staff User Account"
       subtitle="Grant app login credentials (Username + 4-digit PIN) and assign a terminal role"
-      icon={<UserCheck size={20} color="#800020" />}
+      icon={<UserCheck size={20} color="#810021" />}
       size="lg"
       footer={
         <>
@@ -173,7 +173,7 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
           <Pressable
             onPress={handleSubmit}
             disabled={isSubmitting}
-            className={`min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90 ${
+            className={`min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90 ${
               isSubmitting ? 'opacity-50' : ''
             }`}
           >
@@ -230,7 +230,7 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
               placeholder="e.g. 4321"
               value={pin}
               onChangeText={handlePinChange}
-              leftElement={<KeyRound size={16} color="#800020" />}
+              leftElement={<KeyRound size={16} color="#810021" />}
               helperText={
                 role === 'admin'
                   ? `${pin.length}/4 digits — For Floor POS overrides & supervisor approvals`
@@ -280,7 +280,7 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
                 placeholderTextColor="#a8a29e"
                 secureTextEntry={!showAdminPassword}
                 autoCapitalize="none"
-                style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+                style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
               />
               <Pressable onPress={() => setShowAdminPassword(!showAdminPassword)} className="p-2">
                 {showAdminPassword ? (
@@ -314,21 +314,21 @@ export const CreateUserAccountModal: React.FC<CreateUserAccountModalProps> = ({
                   onPress={() => setRole(item.value)}
                   className={`min-w-[150px] flex-1 rounded-xl border p-3 ${
                     isSelected
-                      ? 'border-[#800020] bg-[#800020]/5'
+                      ? 'border-[#810021] bg-[#810021]/5'
                       : 'border-stone-200 bg-stone-50/60 active:bg-stone-100'
                   }`}
                 >
                   <View className="flex-row items-center justify-between">
                     <Text
                       className={`text-sm font-bold ${
-                        isSelected ? 'text-[#800020]' : 'text-stone-900'
+                        isSelected ? 'text-[#810021]' : 'text-stone-900'
                       }`}
                     >
                       {item.label}
                     </Text>
                     <View
                       className={`h-4 w-4 rounded-full border items-center justify-center ${
-                        isSelected ? 'border-[#800020] bg-[#800020]' : 'border-stone-300 bg-white'
+                        isSelected ? 'border-[#810021] bg-[#810021]' : 'border-stone-300 bg-white'
                       }`}
                     >
                       {isSelected && <View className="h-1.5 w-1.5 rounded-full bg-white" />}

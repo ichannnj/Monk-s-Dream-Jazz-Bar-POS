@@ -77,8 +77,8 @@ export const PublicEventCalendarScreen: React.FC = () => {
         <View className="border-b border-stone-200 bg-white px-4 py-3 sm:px-6 sm:py-3.5 shadow-xs">
           <View className="max-w-7xl mx-auto flex-row items-center justify-between gap-3">
             <View className="flex-row items-center gap-3">
-              <View className="h-10 w-10 rounded-2xl bg-[#800020] items-center justify-center text-white shadow-xs flex-shrink-0">
-                <Music size={20} color="#F5F5F5" aria-hidden={true} />
+              <View className="h-10 w-10 rounded-2xl bg-[#810021] items-center justify-center text-white shadow-xs flex-shrink-0">
+                <Music size={20} color="#F7F5F2" aria-hidden={true} />
               </View>
               <View>
                 <Text className="text-base font-extrabold text-stone-900 tracking-wide uppercase">
@@ -94,10 +94,10 @@ export const PublicEventCalendarScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Share calendar link"
               style={Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined}
-              className="flex-row items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-[#800020] active:bg-rose-100 shadow-xs"
+              className="flex-row items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-[#810021] active:bg-rose-100 shadow-xs"
             >
-              <Share2 size={13} color="#800020" aria-hidden={true} />
-              <Text className="text-xs font-bold text-[#800020]">Share</Text>
+              <Share2 size={13} color="#810021" aria-hidden={true} />
+              <Text className="text-xs font-bold text-[#810021]">Share</Text>
             </Pressable>
           </View>
         </View>

@@ -47,7 +47,7 @@ export const ChatConversationSidebar: React.FC<ChatConversationSidebarProps> = (
             accessibilityRole="button"
             accessibilityLabel={backLabel}
           >
-            <ArrowLeft size={16} color="#1c1917" />
+            <ArrowLeft size={16} color="#1A1617" />
             <Text className="ml-1.5 text-xs font-bold text-stone-900">{backLabel}</Text>
           </Pressable>
         </View>
@@ -67,7 +67,7 @@ export const ChatConversationSidebar: React.FC<ChatConversationSidebarProps> = (
               onPress={() => onSelectConversation(chan.id)}
               className={`flex-row items-center p-2.5 mb-1 rounded-xl min-h-[48px] ${
                 isActive
-                  ? 'bg-[#FAF8F5] border border-stone-200/90'
+                  ? 'bg-[#EFECE6] border border-stone-200/90'
                   : 'bg-transparent border border-transparent active:bg-stone-50'
               }`}
             >
@@ -135,7 +135,7 @@ export const ChatConversationSidebar: React.FC<ChatConversationSidebarProps> = (
               onPress={() => onSelectConversation(dm.id)}
               className={`flex-row items-center p-2.5 mb-1 rounded-xl min-h-[48px] ${
                 isActive
-                  ? 'bg-[#FAF8F5] border border-stone-200/90'
+                  ? 'bg-[#EFECE6] border border-stone-200/90'
                   : 'bg-transparent border border-transparent active:bg-stone-50'
               }`}
             >

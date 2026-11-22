@@ -123,24 +123,24 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
         const hasPrep = activeItems.some((i) => i.status === 'preparing');
 
         let statusText = 'NEW';
-        let statusBg = '#FAF8F5';
-        let statusColor = '#1C1917';
+        let statusBg = '#EFECE6';
+        let statusColor = '#1A1617';
 
         if (allCancelled) {
           statusText = 'VOIDED';
-          statusBg = '#FAF8F5';
+          statusBg = '#EFECE6';
           statusColor = '#78716C';
         } else if (allServed) {
           statusText = 'SERVED';
-          statusBg = '#FAF8F5';
+          statusBg = '#EFECE6';
           statusColor = '#78716C';
         } else if (allReady) {
           statusText = 'READY';
           statusBg = '#810021';
-          statusColor = '#F5F5F5';
+          statusColor = '#F7F5F2';
         } else if (hasPrep) {
           statusText = 'PREPARING';
-          statusBg = '#FAF8F5';
+          statusBg = '#EFECE6';
           statusColor = '#810021';
         }
 
@@ -359,7 +359,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                   accessibilityRole="button"
                   accessibilityLabel={`Order Round ${nextRound}`}
                 >
-                  <UtensilsCrossed size={18} color="#F5F5F5" strokeWidth={2.3} />
+                  <UtensilsCrossed size={18} color="#F7F5F2" strokeWidth={2.3} />
                   <Text className="text-base font-extrabold text-white">
                     + Order Round {nextRound}
                   </Text>
@@ -372,22 +372,22 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                       onClose();
                       onOpenNewTab(table);
                     }}
-                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-2xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
+                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-2xl border border-stone-200 bg-[#EFECE6] active:bg-stone-100 min-h-[48px]"
                     accessibilityRole="button"
                     accessibilityLabel="Split Tab"
                   >
-                    <PlusCircle size={16} color="#1C1917" strokeWidth={2.2} />
+                    <PlusCircle size={16} color="#1A1617" strokeWidth={2.2} />
                     <Text className="text-sm font-bold text-stone-900">Split Tab</Text>
                   </Pressable>
 
                   {(currentTab?.items.length || 0) > 0 && (
                     <Pressable
                       onPress={() => setIsItemTransferModalOpen(true)}
-                      className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-2xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
+                      className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-2xl border border-stone-200 bg-[#EFECE6] active:bg-stone-100 min-h-[48px]"
                       accessibilityRole="button"
                       accessibilityLabel="Move items"
                     >
-                      <ArrowRightLeft size={16} color="#1C1917" strokeWidth={2.2} />
+                      <ArrowRightLeft size={16} color="#1A1617" strokeWidth={2.2} />
                       <Text className="text-sm font-bold text-stone-900">Move Items</Text>
                     </Pressable>
                   )}
@@ -397,11 +397,11 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                       onClose();
                       onTransferTable(table);
                     }}
-                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-2xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
+                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3 px-2 rounded-2xl border border-stone-200 bg-[#EFECE6] active:bg-stone-100 min-h-[48px]"
                     accessibilityRole="button"
                     accessibilityLabel="Transfer Table"
                   >
-                    <Repeat size={16} color="#1C1917" strokeWidth={2.2} />
+                    <Repeat size={16} color="#1A1617" strokeWidth={2.2} />
                     <Text className="text-sm font-bold text-stone-900">Transfer</Text>
                   </Pressable>
                 </View>
@@ -410,7 +410,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                 <View className="flex-row items-center gap-2">
                   <Pressable
                     onPress={() => setIsCustomerBillOpen(true)}
-                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3.5 px-3 rounded-2xl border border-[#810021] bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
+                    className="flex-1 flex-row items-center justify-center gap-1.5 py-3.5 px-3 rounded-2xl border border-[#810021] bg-[#EFECE6] active:bg-stone-100 min-h-[48px]"
                     accessibilityRole="button"
                     accessibilityLabel="View full customer bill statement"
                   >
@@ -427,7 +427,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                     accessibilityRole="button"
                     accessibilityLabel={`Settle Tab for ${formatCurrency(billing.totalAmountDue)}`}
                   >
-                    <CreditCard size={18} color="#F5F5F5" strokeWidth={2.3} />
+                    <CreditCard size={18} color="#F7F5F2" strokeWidth={2.3} />
                     <Text className="text-base font-extrabold text-white">
                       Settle Tab · {formatCurrency(billing.totalAmountDue)}
                     </Text>
@@ -438,7 +438,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                 {hasZeroItems ? (
                   <Pressable
                     onPress={() => setIsConfirmCloseEmptyOpen(true)}
-                    className="flex-row items-center justify-center gap-2 py-3 px-4 rounded-2xl border border-stone-300 bg-[#FAF8F5] active:bg-stone-100 min-h-[48px]"
+                    className="flex-row items-center justify-center gap-2 py-3 px-4 rounded-2xl border border-stone-300 bg-[#EFECE6] active:bg-stone-100 min-h-[48px]"
                     accessibilityRole="button"
                     accessibilityLabel="Close empty tab"
                   >

@@ -24,11 +24,11 @@ export const DepartmentSalesBreakdown: React.FC<DepartmentSalesBreakdownProps> =
   const getIcon = (cat: DepartmentShare['category']) => {
     switch (cat) {
       case 'coffee':
-        return <Coffee size={16} color="#1c1917" />;
+        return <Coffee size={16} color="#1A1617" />;
       case 'cocktails':
-        return <GlassWater size={16} color="#800020" />;
+        return <GlassWater size={16} color="#810021" />;
       case 'wine_beer':
-        return <Wine size={16} color="#800020" />;
+        return <Wine size={16} color="#810021" />;
       case 'kitchen':
         return <Utensils size={16} color="#78716c" />;
       default:
@@ -40,9 +40,9 @@ export const DepartmentSalesBreakdown: React.FC<DepartmentSalesBreakdownProps> =
     switch (cat) {
       case 'cocktails':
       case 'wine_beer':
-        return { bar: 'bg-[#800020]', text: 'text-[#800020]', bg: 'bg-[#FAF8F5]' };
+        return { bar: 'bg-[#810021]', text: 'text-[#810021]', bg: 'bg-[#EFECE6]' };
       default:
-        return { bar: 'bg-stone-800', text: 'text-stone-700', bg: 'bg-[#FAF8F5]' };
+        return { bar: 'bg-stone-800', text: 'text-stone-700', bg: 'bg-[#EFECE6]' };
     }
   };
 
@@ -51,13 +51,13 @@ export const DepartmentSalesBreakdown: React.FC<DepartmentSalesBreakdownProps> =
       {/* Header (Minimal, No Subtitles) */}
       <View className="flex-row items-center justify-between mb-4 flex-wrap gap-3">
         <View className="flex-row items-center gap-2.5">
-          <View className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-stone-200 items-center justify-center shrink-0">
-            <BarChart2 size={16} color="#800020" />
+          <View className="w-8 h-8 rounded-lg bg-[#EFECE6] border border-stone-200 items-center justify-center shrink-0">
+            <BarChart2 size={16} color="#810021" />
           </View>
           <Text className="text-lg font-bold text-stone-900">Department Mix</Text>
         </View>
 
-        <View className="rounded-xl bg-[#FAF8F5] border border-stone-200 px-3 py-1 shrink-0">
+        <View className="rounded-xl bg-[#EFECE6] border border-stone-200 px-3 py-1 shrink-0">
           <Text className="text-xs text-stone-500 font-medium">Active</Text>
           <Text className="text-sm font-black text-stone-900">{departments.length}</Text>
         </View>
@@ -71,7 +71,7 @@ export const DepartmentSalesBreakdown: React.FC<DepartmentSalesBreakdownProps> =
           return (
             <View
               key={dept.name}
-              className="p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]"
+              className="p-3 rounded-xl border border-stone-200/80 bg-[#EFECE6]"
             >
               <View className="flex-row items-center justify-between mb-2 flex-wrap gap-2">
                 <View className="flex-row items-center gap-2 flex-1 min-w-[120px]">

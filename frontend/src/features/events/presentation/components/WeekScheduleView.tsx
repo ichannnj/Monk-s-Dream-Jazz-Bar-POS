@@ -74,7 +74,7 @@ export const WeekScheduleView: React.FC<WeekScheduleViewProps> = ({
             <View
               key={col.dateString}
               className={`rounded-2xl border p-4 shadow-xs space-y-3 ${
-                col.isToday ? 'border-[#800020]/40 bg-rose-50/15' : 'border-stone-200/90 bg-white'
+                col.isToday ? 'border-[#810021]/40 bg-rose-50/15' : 'border-stone-200/90 bg-white'
               }`}
             >
               {/* Day Header */}
@@ -82,7 +82,7 @@ export const WeekScheduleView: React.FC<WeekScheduleViewProps> = ({
                 <View className="flex-row items-center gap-2">
                   <Text
                     className={`text-sm font-bold uppercase tracking-wider ${
-                      col.isToday ? 'text-[#800020]' : 'text-stone-700'
+                      col.isToday ? 'text-[#810021]' : 'text-stone-700'
                     }`}
                   >
                     {col.dayOfWeekName}
@@ -91,7 +91,7 @@ export const WeekScheduleView: React.FC<WeekScheduleViewProps> = ({
                     {formatShortDate(col.dateString)}
                   </Text>
                   {col.isToday && (
-                    <View className="bg-[#800020] rounded-md px-1.5 py-0.2">
+                    <View className="bg-[#810021] rounded-md px-1.5 py-0.2">
                       <Text className="text-[10px] font-bold text-white uppercase">Today</Text>
                     </View>
                   )}
@@ -157,14 +157,14 @@ export const WeekScheduleView: React.FC<WeekScheduleViewProps> = ({
                   <View className="flex-row items-center gap-1.5 mt-0.5">
                     <Text
                       className={`text-lg font-extrabold ${
-                        col.isToday ? 'text-[#800020]' : 'text-stone-900'
+                        col.isToday ? 'text-[#810021]' : 'text-stone-900'
                       }`}
                     >
                       {col.dayOfMonth}
                     </Text>
                     {col.isToday && (
                       <View className="bg-rose-100 rounded-md px-1 py-0.2">
-                        <Text className="text-[9px] font-black text-[#800020] uppercase">
+                        <Text className="text-[9px] font-black text-[#810021] uppercase">
                           Today
                         </Text>
                       </View>
@@ -217,7 +217,7 @@ export const WeekScheduleView: React.FC<WeekScheduleViewProps> = ({
                       ) : null}
 
                       {showtime ? (
-                        <Text className="text-[10px] font-bold text-[#800020] mt-1">
+                        <Text className="text-[10px] font-bold text-[#810021] mt-1">
                           {showtime}
                         </Text>
                       ) : null}

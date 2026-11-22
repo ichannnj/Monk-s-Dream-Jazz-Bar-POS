@@ -78,7 +78,7 @@ export const ResetStationBaselineModal: React.FC<ResetStationBaselineModalProps>
     <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View className="flex-1 items-center justify-center bg-black/60 p-4">
         <Pressable className="absolute inset-0" onPress={handleClose} />
-        <View className="w-full max-w-md rounded-2xl border border-stone-800 bg-[#1c1917] p-6 shadow-2xl">
+        <View className="w-full max-w-md rounded-2xl border border-stone-800 bg-[#1A1617] p-6 shadow-2xl">
           {/* Header */}
           <View className="flex-row items-center justify-between border-b border-stone-800 pb-4">
             <View className="flex-row items-center space-x-3">
@@ -223,10 +223,10 @@ export const ResetStationBaselineModal: React.FC<ResetStationBaselineModalProps>
               }`}
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="#F5F5F5" />
+                <ActivityIndicator size="small" color="#F7F5F2" />
               ) : (
                 <>
-                  <Check size={16} color="#F5F5F5" />
+                  <Check size={16} color="#F7F5F2" />
                   <Text className="ml-1.5 text-sm font-bold text-white">Confirm Reset</Text>
                 </>
               )}

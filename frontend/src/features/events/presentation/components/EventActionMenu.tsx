@@ -39,7 +39,7 @@ export const EventActionMenu: React.FC<EventActionMenuProps> = ({
             label: 'Share link',
             icon: Share2,
             onPress: onShare,
-            color: '#800020',
+            color: '#810021',
           },
         ]
       : []),
@@ -136,8 +136,8 @@ export const EventActionMenu: React.FC<EventActionMenuProps> = ({
             accessibilityLabel="Share calendar link"
             className="flex-row items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50/80 px-3 py-1.5 hover:bg-rose-100 active:bg-rose-200 transition-colors shadow-xs"
           >
-            <Share2 size={14} color="#800020" aria-hidden={true} />
-            <Text className="text-xs font-bold text-[#800020]">Share</Text>
+            <Share2 size={14} color="#810021" aria-hidden={true} />
+            <Text className="text-xs font-bold text-[#810021]">Share</Text>
           </Pressable>
         )}
       </View>

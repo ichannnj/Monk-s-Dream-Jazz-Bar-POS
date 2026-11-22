@@ -158,9 +158,9 @@ export const StocktakeAuditModal: React.FC<StocktakeAuditModalProps> = ({
       <Pressable
         onPress={onClose}
         disabled={isSubmitting}
-        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
+        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-80"
       >
-        <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
+        <Text className="text-base font-bold text-[#1A1617]">Cancel</Text>
       </Pressable>
       <Pressable
         onPress={handleSubmit}
@@ -186,8 +186,8 @@ export const StocktakeAuditModal: React.FC<StocktakeAuditModalProps> = ({
     >
       <View className="gap-4">
         {/* Variance Summary */}
-        <View className="flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#FAF8F5] p-4 rounded-xl border border-[#E7E5E4]">
-          <Text className="text-base font-semibold text-[#1C1917] tabular-nums">
+        <View className="flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#EFECE6] p-4 rounded-xl border border-[#E2DED6]">
+          <Text className="text-base font-semibold text-[#1A1617] tabular-nums">
             Discrepancies: <Text className="font-extrabold">{varianceItemCount}</Text> /{' '}
             {rows.length}
           </Text>
@@ -197,7 +197,7 @@ export const StocktakeAuditModal: React.FC<StocktakeAuditModalProps> = ({
                 ? 'text-[#b32638]'
                 : totalVarianceCost > 0
                   ? 'text-[#10b981]'
-                  : 'text-[#1C1917]'
+                  : 'text-[#1A1617]'
             }`}
           >
             Net Variance: {totalVarianceCost < 0 ? '-' : '+'}
@@ -235,11 +235,11 @@ export const StocktakeAuditModal: React.FC<StocktakeAuditModalProps> = ({
           <Pressable
             onPress={() => setShowChangedOnly((prev) => !prev)}
             className={`min-h-[48px] px-4 rounded-xl border items-center justify-center ${
-              showChangedOnly ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E7E5E4]'
+              showChangedOnly ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E2DED6]'
             }`}
           >
             <Text
-              className={`text-base font-bold ${showChangedOnly ? 'text-white' : 'text-[#1C1917]'}`}
+              className={`text-base font-bold ${showChangedOnly ? 'text-white' : 'text-[#1A1617]'}`}
             >
               Changed Only
             </Text>
@@ -253,12 +253,12 @@ export const StocktakeAuditModal: React.FC<StocktakeAuditModalProps> = ({
         )}
 
         {/* Responsive Item List */}
-        <View className="rounded-xl border border-[#E7E5E4] bg-white overflow-hidden">
-          <View className="hidden md:flex flex-row items-center border-b border-[#E7E5E4] bg-[#FAF8F5] px-4 py-3">
-            <Text className="flex-1 text-base font-bold text-[#1C1917]">Item</Text>
-            <Text className="w-28 text-center text-base font-bold text-[#1C1917]">Expected</Text>
-            <Text className="w-40 text-center text-base font-bold text-[#1C1917]">Actual</Text>
-            <Text className="w-32 text-right text-base font-bold text-[#1C1917]">Variance</Text>
+        <View className="rounded-xl border border-[#E2DED6] bg-white overflow-hidden">
+          <View className="hidden md:flex flex-row items-center border-b border-[#E2DED6] bg-[#EFECE6] px-4 py-3">
+            <Text className="flex-1 text-base font-bold text-[#1A1617]">Item</Text>
+            <Text className="w-28 text-center text-base font-bold text-[#1A1617]">Expected</Text>
+            <Text className="w-40 text-center text-base font-bold text-[#1A1617]">Actual</Text>
+            <Text className="w-32 text-right text-base font-bold text-[#1A1617]">Variance</Text>
           </View>
 
           {filteredRows.length === 0 ? (
@@ -266,7 +266,7 @@ export const StocktakeAuditModal: React.FC<StocktakeAuditModalProps> = ({
               <Text className="text-base text-[#78716C]">No items match this filter.</Text>
             </View>
           ) : (
-            <View className="divide-y divide-[#E7E5E4]">
+            <View className="divide-y divide-[#E2DED6]">
               {filteredRows.map((row) => {
                 const act = parseFloat(row.actual_quantity);
                 const isValidNum = Number.isFinite(act) && act >= 0;
@@ -276,12 +276,12 @@ export const StocktakeAuditModal: React.FC<StocktakeAuditModalProps> = ({
                 return (
                   <View
                     key={row.inventory_item_id}
-                    className={`p-4 ${hasDiff ? 'bg-[#FAF8F5]' : 'bg-white'}`}
+                    className={`p-4 ${hasDiff ? 'bg-[#EFECE6]' : 'bg-white'}`}
                   >
                     {/* Desktop / Tablet Row */}
                     <View className="hidden md:flex flex-row items-center gap-3">
                       <View className="flex-1 min-w-0">
-                        <Text className="text-base font-bold text-[#1C1917]" numberOfLines={1}>
+                        <Text className="text-base font-bold text-[#1A1617]" numberOfLines={1}>
                           {row.name}
                         </Text>
                         <Text className="text-base text-[#78716C] tabular-nums">
@@ -290,7 +290,7 @@ export const StocktakeAuditModal: React.FC<StocktakeAuditModalProps> = ({
                       </View>
 
                       <View className="w-28 items-center">
-                        <Text className="text-base font-semibold text-[#1C1917] tabular-nums">
+                        <Text className="text-base font-semibold text-[#1A1617] tabular-nums">
                           {row.expected_quantity} {row.unit}
                         </Text>
                       </View>
@@ -328,7 +328,7 @@ export const StocktakeAuditModal: React.FC<StocktakeAuditModalProps> = ({
                     <View className="flex md:hidden gap-3">
                       <View className="flex-row items-start justify-between gap-2">
                         <View className="flex-1 min-w-0">
-                          <Text className="text-base font-bold text-[#1C1917]">{row.name}</Text>
+                          <Text className="text-base font-bold text-[#1A1617]">{row.name}</Text>
                           <Text className="text-base text-[#78716C] tabular-nums">
                             {row.sku} • Expected: {row.expected_quantity} {row.unit}
                           </Text>

@@ -163,7 +163,7 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
       <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90"
       >
         <Text className="text-base font-bold text-white">
           {isSubmitting ? 'Saving...' : 'Save Modifier Group'}
@@ -178,7 +178,7 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
       onClose={onClose}
       title={group ? 'Edit Modifier Group' : 'New Reusable Modifier Group'}
       subtitle="Configure drink/food variations, mandatory rules, and stock bindings"
-      icon={<Sliders size={22} color="#800020" />}
+      icon={<Sliders size={22} color="#810021" />}
       size="lg"
       footer={footer}
     >
@@ -217,7 +217,7 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
         <Pressable
           onPress={() => setIsRequired(!isRequired)}
           className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
-            isRequired ? 'bg-[#800020]/10 border-[#800020]' : 'bg-stone-50 border-stone-200'
+            isRequired ? 'bg-[#810021]/10 border-[#810021]' : 'bg-stone-50 border-stone-200'
           }`}
         >
           <View className="flex-1 pr-3">
@@ -230,10 +230,10 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
           </View>
           <View
             className={`h-6 w-6 rounded-md items-center justify-center border ${
-              isRequired ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
+              isRequired ? 'bg-[#810021] border-[#810021]' : 'bg-white border-stone-400'
             }`}
           >
-            {isRequired && <Check size={16} color="#F5F5F5" />}
+            {isRequired && <Check size={16} color="#F7F5F2" />}
           </View>
         </Pressable>
 
@@ -246,8 +246,8 @@ export const ModifierGroupModal: React.FC<ModifierGroupModalProps> = ({
               onPress={handleAddOption}
               className="min-h-[48px] flex-row items-center rounded-xl bg-stone-100 px-4 active:bg-stone-200"
             >
-              <Plus size={18} color="#800020" />
-              <Text className="ml-1.5 text-base font-bold text-[#800020]">Add Option</Text>
+              <Plus size={18} color="#810021" />
+              <Text className="ml-1.5 text-base font-bold text-[#810021]">Add Option</Text>
             </Pressable>
           </View>
 

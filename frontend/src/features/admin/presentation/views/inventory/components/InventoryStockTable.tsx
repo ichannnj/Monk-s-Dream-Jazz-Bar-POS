@@ -36,7 +36,7 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
               note: item.grocery_note,
             })
           }
-          className="h-12 w-12 rounded-xl border border-[#E7E5E4] overflow-hidden bg-[#FAF8F5] shrink-0 active:opacity-80"
+          className="h-12 w-12 rounded-xl border border-[#E2DED6] overflow-hidden bg-[#EFECE6] shrink-0 active:opacity-80"
           accessibilityRole="button"
           accessibilityLabel={`Preview reference photo for ${item.name}`}
         >
@@ -51,43 +51,43 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
     }
 
     return (
-      <View className="h-12 w-12 rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] items-center justify-center shrink-0">
+      <View className="h-12 w-12 rounded-xl border border-[#E2DED6] bg-[#EFECE6] items-center justify-center shrink-0">
         <Package size={18} color="#78716C" />
       </View>
     );
   };
 
   return (
-    <View className="rounded-2xl border border-[#E7E5E4] bg-white overflow-hidden">
+    <View className="rounded-2xl border border-[#E2DED6] bg-white overflow-hidden">
       {filteredInventory.length === 0 ? (
         <View className="py-14 px-4 items-center justify-center">
           <Package size={36} color="#78716C" />
-          <Text className="mt-3 text-base font-bold text-[#1C1917] text-center">
+          <Text className="mt-3 text-base font-bold text-[#1A1617] text-center">
             No inventory items match the current filters.
           </Text>
         </View>
       ) : (
         <View>
           {/* Desktop Table Header */}
-          <View className="hidden lg:flex flex-row items-center bg-[#FAF8F5] border-b border-[#E7E5E4] px-5 py-3.5">
+          <View className="hidden lg:flex flex-row items-center bg-[#EFECE6] border-b border-[#E2DED6] px-5 py-3.5">
             <View className="w-[34%]">
-              <Text className="text-base font-bold text-[#1C1917]">Item</Text>
+              <Text className="text-base font-bold text-[#1A1617]">Item</Text>
             </View>
             <View className="w-[20%]">
-              <Text className="text-base font-bold text-[#1C1917]">Par Level</Text>
+              <Text className="text-base font-bold text-[#1A1617]">Par Level</Text>
             </View>
             <View className="w-[15%]">
-              <Text className="text-base font-bold text-[#1C1917]">On-Hand</Text>
+              <Text className="text-base font-bold text-[#1A1617]">On-Hand</Text>
             </View>
             <View className="w-[14%]">
-              <Text className="text-base font-bold text-[#1C1917]">Value</Text>
+              <Text className="text-base font-bold text-[#1A1617]">Value</Text>
             </View>
             <View className="w-[17%] items-end">
-              <Text className="text-base font-bold text-[#1C1917]">Actions</Text>
+              <Text className="text-base font-bold text-[#1A1617]">Actions</Text>
             </View>
           </View>
 
-          <View className="divide-y divide-[#E7E5E4]">
+          <View className="divide-y divide-[#E2DED6]">
             {filteredInventory.map((item) => {
               const currentStock = Number(item.current_stock || 0);
               const minAlert = Number(item.min_alert_level || 0);
@@ -108,7 +108,7 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                       {renderThumb(item)}
                       <View className="flex-1 min-w-0">
                         <View className="flex-row items-center gap-2 flex-wrap">
-                          <Text className="text-base font-bold text-[#1C1917]" numberOfLines={1}>
+                          <Text className="text-base font-bold text-[#1A1617]" numberOfLines={1}>
                             {item.name}
                           </Text>
                           {isCritical ? (
@@ -116,7 +116,7 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                               <Text className="text-base font-bold text-[#b32638]">Out</Text>
                             </View>
                           ) : isBelowPar ? (
-                            <View className="rounded-lg bg-[#FAF8F5] border border-[#E7E5E4] px-2 py-0.5">
+                            <View className="rounded-lg bg-[#EFECE6] border border-[#E2DED6] px-2 py-0.5">
                               <Text className="text-base font-bold text-[#810021]">Low</Text>
                             </View>
                           ) : null}
@@ -135,20 +135,20 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                         </Text>
                         <Text
                           className={`text-base font-bold tabular-nums ${
-                            isCritical || isBelowPar ? 'text-[#810021]' : 'text-[#1C1917]'
+                            isCritical || isBelowPar ? 'text-[#810021]' : 'text-[#1A1617]'
                           }`}
                         >
                           {Math.round(parRatio * 100)}%
                         </Text>
                       </View>
-                      <View className="h-2 w-full bg-[#FAF8F5] rounded-full overflow-hidden border border-[#E7E5E4]">
+                      <View className="h-2 w-full bg-[#EFECE6] rounded-full overflow-hidden border border-[#E2DED6]">
                         <View
                           className={`h-full rounded-full ${
                             isCritical
                               ? 'bg-[#b32638]'
                               : isBelowPar
                                 ? 'bg-[#810021]'
-                                : 'bg-[#1C1917]'
+                                : 'bg-[#1A1617]'
                           }`}
                           style={{ width: `${progressPct}%` }}
                         />
@@ -162,7 +162,7 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                             ? 'text-[#b32638]'
                             : isBelowPar
                               ? 'text-[#810021]'
-                              : 'text-[#1C1917]'
+                              : 'text-[#1A1617]'
                         }`}
                       >
                         {currentStock.toFixed(2)} {item.unit}
@@ -170,7 +170,7 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                     </View>
 
                     <View className="w-[14%] pr-4">
-                      <Text className="text-base font-bold text-[#1C1917] tabular-nums">
+                      <Text className="text-base font-bold text-[#1A1617] tabular-nums">
                         {formatCurrency(itemValuation)}
                       </Text>
                       <Text className="text-base text-[#78716C] tabular-nums">
@@ -181,11 +181,11 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                     <View className="w-[17%] flex-row items-center justify-end gap-1.5">
                       <Pressable
                         onPress={() => onQuickCount(item)}
-                        className="min-h-[48px] px-3 rounded-xl bg-white border border-[#E7E5E4] flex-row items-center active:opacity-80"
+                        className="min-h-[48px] px-3 rounded-xl bg-white border border-[#E2DED6] flex-row items-center active:opacity-80"
                         accessibilityLabel={`Count ${item.name}`}
                       >
-                        <Sliders size={16} color="#1C1917" />
-                        <Text className="ml-1.5 text-base font-bold text-[#1C1917]">Count</Text>
+                        <Sliders size={16} color="#1A1617" />
+                        <Text className="ml-1.5 text-base font-bold text-[#1A1617]">Count</Text>
                       </Pressable>
 
                       <Pressable
@@ -193,21 +193,21 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                         className="min-h-[48px] px-3 rounded-xl bg-[#810021] flex-row items-center active:opacity-85"
                         accessibilityLabel={`Restock ${item.name}`}
                       >
-                        <Plus size={16} color="#F5F5F5" />
+                        <Plus size={16} color="#F7F5F2" />
                         <Text className="ml-1 text-base font-bold text-white">Restock</Text>
                       </Pressable>
 
                       <Pressable
                         onPress={() => onEditItem(item)}
-                        className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
+                        className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-80"
                         accessibilityLabel={`Edit ${item.name}`}
                       >
-                        <Edit size={18} color="#1C1917" />
+                        <Edit size={18} color="#1A1617" />
                       </Pressable>
 
                       <Pressable
                         onPress={() => onDeleteItem(item)}
-                        className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
+                        className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-80"
                         accessibilityLabel={`Delete ${item.name}`}
                       >
                         <Trash2 size={18} color="#b32638" />
@@ -221,13 +221,13 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                       {renderThumb(item)}
                       <View className="flex-1 min-w-0">
                         <View className="flex-row items-center gap-2 flex-wrap">
-                          <Text className="text-base font-bold text-[#1C1917]">{item.name}</Text>
+                          <Text className="text-base font-bold text-[#1A1617]">{item.name}</Text>
                           {isCritical ? (
                             <View className="rounded-lg bg-rose-50 border border-rose-200 px-2 py-0.5">
                               <Text className="text-base font-bold text-[#b32638]">Out</Text>
                             </View>
                           ) : isBelowPar ? (
-                            <View className="rounded-lg bg-[#FAF8F5] border border-[#E7E5E4] px-2 py-0.5">
+                            <View className="rounded-lg bg-[#EFECE6] border border-[#E2DED6] px-2 py-0.5">
                               <Text className="text-base font-bold text-[#810021]">Low</Text>
                             </View>
                           ) : null}
@@ -244,7 +244,7 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                               ? 'text-[#b32638]'
                               : isBelowPar
                                 ? 'text-[#810021]'
-                                : 'text-[#1C1917]'
+                                : 'text-[#1A1617]'
                           }`}
                         >
                           {currentStock.toFixed(2)} {item.unit}
@@ -258,52 +258,52 @@ export const InventoryStockTable: React.FC<InventoryStockTableProps> = ({
                           Par {minAlert} {item.unit}
                           {recipeCount > 0 ? ` • ${recipeCount} recipes` : ''}
                         </Text>
-                        <Text className="text-base font-bold text-[#1C1917] tabular-nums">
+                        <Text className="text-base font-bold text-[#1A1617] tabular-nums">
                           {Math.round(parRatio * 100)}%
                         </Text>
                       </View>
-                      <View className="h-2 w-full bg-[#FAF8F5] rounded-full overflow-hidden border border-[#E7E5E4]">
+                      <View className="h-2 w-full bg-[#EFECE6] rounded-full overflow-hidden border border-[#E2DED6]">
                         <View
                           className={`h-full rounded-full ${
                             isCritical
                               ? 'bg-[#b32638]'
                               : isBelowPar
                                 ? 'bg-[#810021]'
-                                : 'bg-[#1C1917]'
+                                : 'bg-[#1A1617]'
                           }`}
                           style={{ width: `${progressPct}%` }}
                         />
                       </View>
                     </View>
 
-                    <View className="flex-row items-center justify-end flex-wrap gap-2 pt-2 border-t border-[#E7E5E4]">
+                    <View className="flex-row items-center justify-end flex-wrap gap-2 pt-2 border-t border-[#E2DED6]">
                       <Pressable
                         onPress={() => onQuickCount(item)}
-                        className="min-h-[48px] px-3.5 rounded-xl bg-white border border-[#E7E5E4] flex-row items-center active:opacity-80"
+                        className="min-h-[48px] px-3.5 rounded-xl bg-white border border-[#E2DED6] flex-row items-center active:opacity-80"
                       >
-                        <Sliders size={16} color="#1C1917" />
-                        <Text className="ml-1.5 text-base font-bold text-[#1C1917]">Count</Text>
+                        <Sliders size={16} color="#1A1617" />
+                        <Text className="ml-1.5 text-base font-bold text-[#1A1617]">Count</Text>
                       </Pressable>
 
                       <Pressable
                         onPress={() => onRestock(item)}
                         className="min-h-[48px] px-3.5 rounded-xl bg-[#810021] flex-row items-center active:opacity-85"
                       >
-                        <Plus size={16} color="#F5F5F5" />
+                        <Plus size={16} color="#F7F5F2" />
                         <Text className="ml-1 text-base font-bold text-white">Restock</Text>
                       </Pressable>
 
                       <Pressable
                         onPress={() => onEditItem(item)}
-                        className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
+                        className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-80"
                         accessibilityLabel={`Edit ${item.name}`}
                       >
-                        <Edit size={18} color="#1C1917" />
+                        <Edit size={18} color="#1A1617" />
                       </Pressable>
 
                       <Pressable
                         onPress={() => onDeleteItem(item)}
-                        className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
+                        className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-80"
                         accessibilityLabel={`Delete ${item.name}`}
                       >
                         <Trash2 size={18} color="#b32638" />

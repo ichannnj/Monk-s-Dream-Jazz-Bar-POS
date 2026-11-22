@@ -119,7 +119,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close table transfer"
             >
-              <X size={20} color="#1c1917" />
+              <X size={20} color="#1A1617" />
             </Pressable>
           </View>
 
@@ -244,7 +244,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                     onPress={() => setTargetAreaFilter('cafe')}
                     style={[styles.areaPill, targetAreaFilter === 'cafe' && styles.areaPillActive]}
                   >
-                    <Coffee size={11} color={targetAreaFilter === 'cafe' ? '#F5F5F5' : '#78716C'} />
+                    <Coffee size={11} color={targetAreaFilter === 'cafe' ? '#F7F5F2' : '#78716C'} />
                     <Text
                       style={[
                         styles.areaPillText,
@@ -259,7 +259,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                     onPress={() => setTargetAreaFilter('bar')}
                     style={[styles.areaPill, targetAreaFilter === 'bar' && styles.areaPillActive]}
                   >
-                    <Wine size={11} color={targetAreaFilter === 'bar' ? '#F5F5F5' : '#78716C'} />
+                    <Wine size={11} color={targetAreaFilter === 'bar' ? '#F7F5F2' : '#78716C'} />
                     <Text
                       style={[
                         styles.areaPillText,
@@ -300,7 +300,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                         {target.code}
                       </Text>
                       <Text
-                        style={[styles.targetStatus, isSelected && { color: '#F5F5F5' }]}
+                        style={[styles.targetStatus, isSelected && { color: '#F7F5F2' }]}
                         numberOfLines={1}
                       >
                         {isTargetEmpty ? 'Available' : targetTabPreview}
@@ -338,7 +338,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
                 <Text style={styles.confirmBtnText}>
                   {selectedTargetTable ? `Transfer to ${selectedTargetTable.code}` : 'Transfer'}
                 </Text>
-                <ArrowRight size={16} color="#F5F5F5" />
+                <ArrowRight size={16} color="#F7F5F2" />
               </Pressable>
             </View>
           </View>

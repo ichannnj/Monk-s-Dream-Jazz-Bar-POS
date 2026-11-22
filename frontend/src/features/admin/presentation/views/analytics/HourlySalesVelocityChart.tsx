@@ -38,16 +38,16 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
       {/* Header (Minimal, No Subtitle) */}
       <View className="flex-row items-center justify-between mb-4 flex-wrap gap-3">
         <View className="flex-row items-center gap-2.5">
-          <View className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-stone-200 items-center justify-center">
-            <TrendingUp size={16} color="#800020" />
+          <View className="w-8 h-8 rounded-lg bg-[#EFECE6] border border-stone-200 items-center justify-center">
+            <TrendingUp size={16} color="#810021" />
           </View>
           <Text className="text-lg font-bold text-stone-900">Hourly Sales Velocity</Text>
         </View>
 
         {/* Peak Badge */}
         {peakPoint.sales > 0 && (
-          <View className="flex-row items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-stone-200 shrink-0">
-            <Sparkles size={13} color="#800020" />
+          <View className="flex-row items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFECE6] border border-stone-200 shrink-0">
+            <Sparkles size={13} color="#810021" />
             <Text className="text-xs font-bold text-stone-800">
               Peak: {peakPoint.hour} ({formatCurrency(peakPoint.sales)})
             </Text>
@@ -57,11 +57,11 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
 
       {/* Selected Hour Insight Banner */}
       {selectedHour && (
-        <View className="bg-[#FAF8F5] rounded-xl p-2.5 mb-3 flex-row flex-wrap justify-between items-center gap-2 border border-stone-200">
+        <View className="bg-[#EFECE6] rounded-xl p-2.5 mb-3 flex-row flex-wrap justify-between items-center gap-2 border border-stone-200">
           <View className="flex-row items-center gap-2">
             <Clock size={14} color="#78716c" />
             <Text className="text-xs font-bold text-stone-700">Hour {selectedHour.hour}:</Text>
-            <Text className="text-xs font-black text-[#800020]">
+            <Text className="text-xs font-black text-[#810021]">
               {formatCurrency(selectedHour.sales)}
             </Text>
           </View>
@@ -92,9 +92,9 @@ export const HourlySalesVelocityChart: React.FC<HourlySalesVelocityChartProps> =
                   isSelected
                     ? 'bg-stone-900'
                     : isPeak
-                      ? 'bg-[#800020]'
+                      ? 'bg-[#810021]'
                       : pt.sales > 0
-                        ? 'bg-[#800020]/70'
+                        ? 'bg-[#810021]/70'
                         : 'bg-stone-100'
                 }`}
               />

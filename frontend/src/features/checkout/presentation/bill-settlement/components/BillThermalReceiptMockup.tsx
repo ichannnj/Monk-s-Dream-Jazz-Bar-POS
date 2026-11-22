@@ -99,14 +99,14 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
             borderRadius: 8,
             backgroundColor: is58mm ? '#810021' : '#f5f5f4',
             borderWidth: 1,
-            borderColor: is58mm ? '#810021' : '#e7e5e4',
+            borderColor: is58mm ? '#810021' : '#E2DED6',
           }}
         >
           <Text
             style={{
               fontSize: 12,
               fontWeight: '700',
-              color: is58mm ? '#F5F5F5' : '#78716c',
+              color: is58mm ? '#F7F5F2' : '#78716c',
             }}
           >
             58mm Compact (Default)
@@ -120,14 +120,14 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
             borderRadius: 8,
             backgroundColor: !is58mm ? '#810021' : '#f5f5f4',
             borderWidth: 1,
-            borderColor: !is58mm ? '#810021' : '#e7e5e4',
+            borderColor: !is58mm ? '#810021' : '#E2DED6',
           }}
         >
           <Text
             style={{
               fontSize: 12,
               fontWeight: '700',
-              color: !is58mm ? '#F5F5F5' : '#78716c',
+              color: !is58mm ? '#F7F5F2' : '#78716c',
             }}
           >
             80mm Standard

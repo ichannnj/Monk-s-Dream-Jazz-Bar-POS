@@ -53,7 +53,7 @@ export const ProductCatalogRow: React.FC<ProductCatalogRowProps> = ({
             >
               {prod.name}
             </Text>
-            <Text className="text-base font-black text-[#800020] ml-2">₱{numPrice.toFixed(2)}</Text>
+            <Text className="text-base font-black text-[#810021] ml-2">₱{numPrice.toFixed(2)}</Text>
           </View>
 
           {/* Line 2: Unified Minimalist Subtitle */}
@@ -117,7 +117,7 @@ export const ProductCatalogRow: React.FC<ProductCatalogRowProps> = ({
           className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50"
           accessibilityLabel="Recipe BOM & Costing"
         >
-          <Layers size={18} color="#800020" />
+          <Layers size={18} color="#810021" />
         </Pressable>
 
         {/* Edit Button */}
@@ -126,7 +126,7 @@ export const ProductCatalogRow: React.FC<ProductCatalogRowProps> = ({
           className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50"
           accessibilityLabel="Edit product"
         >
-          <Edit size={18} color="#1c1917" />
+          <Edit size={18} color="#1A1617" />
         </Pressable>
       </View>
     </View>

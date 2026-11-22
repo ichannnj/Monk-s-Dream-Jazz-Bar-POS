@@ -116,7 +116,7 @@ export const ZReadingsHistoryTable: React.FC<ZReadingsHistoryTableProps> = ({
                 className="flex-row items-center px-6 py-3.5 hover:bg-stone-50/70"
               >
                 <View className="w-24 flex-row items-center gap-1.5">
-                  <View className="w-2 h-2 rounded-full bg-[#800020]" />
+                  <View className="w-2 h-2 rounded-full bg-[#810021]" />
                   <Text className="text-base font-black text-stone-900">
                     Z-{String(record.z_number).padStart(4, '0')}
                   </Text>

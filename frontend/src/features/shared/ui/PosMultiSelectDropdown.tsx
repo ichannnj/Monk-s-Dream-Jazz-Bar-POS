@@ -59,7 +59,7 @@ export const PosMultiSelectDropdown: React.FC<PosMultiSelectDropdownProps> = ({
         return {
           tagBg: 'bg-stone-100 border-stone-300',
           tagText: 'text-stone-800',
-          accent: '#800020',
+          accent: '#810021',
           iconColor: '#78716c',
         };
     }
@@ -186,11 +186,11 @@ export const PosMultiSelectDropdown: React.FC<PosMultiSelectDropdownProps> = ({
                           : 'bg-white border-stone-300'
                       }`}
                       style={{
-                        backgroundColor: isSelected ? currentStyles.accent : '#F5F5F5',
+                        backgroundColor: isSelected ? currentStyles.accent : '#F7F5F2',
                         borderColor: isSelected ? currentStyles.accent : '#d6d3d1',
                       }}
                     >
-                      {isSelected && <Check size={14} color="#F5F5F5" strokeWidth={3} />}
+                      {isSelected && <Check size={14} color="#F7F5F2" strokeWidth={3} />}
                     </View>
                   </Pressable>
                 );
@@ -204,7 +204,7 @@ export const PosMultiSelectDropdown: React.FC<PosMultiSelectDropdownProps> = ({
               </Text>
               <Pressable
                 onPress={() => setIsOpen(false)}
-                className="min-h-[42px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+                className="min-h-[42px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90"
               >
                 <Text className="text-sm font-bold text-white">Done</Text>
               </Pressable>

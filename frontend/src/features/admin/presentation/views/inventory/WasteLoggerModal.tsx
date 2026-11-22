@@ -99,9 +99,9 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
       <Pressable
         onPress={onClose}
         disabled={isSubmitting}
-        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
+        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-80"
       >
-        <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
+        <Text className="text-base font-bold text-[#1A1617]">Cancel</Text>
       </Pressable>
       <Pressable
         onPress={handleSubmit}
@@ -128,7 +128,7 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
       <View className="gap-4">
         {/* Searchable Item Picker */}
         <View className="gap-2">
-          <Text className="text-base font-semibold text-[#1C1917]">Select Item</Text>
+          <Text className="text-base font-semibold text-[#1A1617]">Select Item</Text>
           <AdminInput
             value={itemSearch}
             onChangeText={setItemSearch}
@@ -136,9 +136,9 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
             leftElement={<Search size={18} color="#78716C" />}
             clearable
           />
-          <View className="rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] max-h-48 overflow-hidden">
+          <View className="rounded-xl border border-[#E2DED6] bg-[#EFECE6] max-h-48 overflow-hidden">
             <ScrollView nestedScrollEnabled showsVerticalScrollIndicator>
-              <View className="divide-y divide-[#E7E5E4]">
+              <View className="divide-y divide-[#E2DED6]">
                 {filteredItems.map((inv) => {
                   const isSel = selectedItemId === inv.id;
                   return (
@@ -154,7 +154,7 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
                     >
                       <Text
                         className={`flex-1 text-base font-semibold ${
-                          isSel ? 'text-white' : 'text-[#1C1917]'
+                          isSel ? 'text-white' : 'text-[#1A1617]'
                         }`}
                         numberOfLines={1}
                       >
@@ -196,7 +196,7 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
 
         {/* Reason */}
         <View className="gap-2">
-          <Text className="text-base font-semibold text-[#1C1917]">Loss Reason</Text>
+          <Text className="text-base font-semibold text-[#1A1617]">Loss Reason</Text>
           <View className="gap-2">
             {WASTE_REASONS.map((r) => {
               const isSel = reason === r.key;
@@ -205,11 +205,11 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
                   key={r.key}
                   onPress={() => setReason(r.key)}
                   className={`min-h-[48px] px-4 flex-row items-center justify-between rounded-xl border ${
-                    isSel ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E7E5E4]'
+                    isSel ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E2DED6]'
                   }`}
                 >
                   <Text
-                    className={`text-base font-semibold ${isSel ? 'text-white' : 'text-[#1C1917]'}`}
+                    className={`text-base font-semibold ${isSel ? 'text-white' : 'text-[#1A1617]'}`}
                   >
                     {r.label}
                   </Text>
@@ -220,7 +220,7 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
         </View>
 
         {/* Financial Loss & Remaining Stock Preview */}
-        <View className="rounded-xl bg-[#FAF8F5] p-4 border border-[#E7E5E4] gap-2">
+        <View className="rounded-xl bg-[#EFECE6] p-4 border border-[#E2DED6] gap-2">
           <View className="flex-row items-center justify-between">
             <Text className="text-base text-[#78716C]">Estimated Loss</Text>
             <Text className="text-lg font-extrabold text-[#b32638] tabular-nums">
@@ -228,11 +228,11 @@ export const WasteLoggerModal: React.FC<WasteLoggerModalProps> = ({
             </Text>
           </View>
           {selectedItem && qtyNum > 0 && (
-            <View className="flex-row items-center justify-between pt-2 border-t border-[#E7E5E4]">
+            <View className="flex-row items-center justify-between pt-2 border-t border-[#E2DED6]">
               <Text className="text-base text-[#78716C]">Remaining After Waste</Text>
               <Text
                 className={`text-base font-bold tabular-nums ${
-                  resultingStock <= 0 ? 'text-[#b32638]' : 'text-[#1C1917]'
+                  resultingStock <= 0 ? 'text-[#b32638]' : 'text-[#1A1617]'
                 }`}
               >
                 {resultingStock.toFixed(2)} {selectedItem.unit}

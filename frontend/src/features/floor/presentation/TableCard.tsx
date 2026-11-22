@@ -52,14 +52,14 @@ const STATUS_VISUAL_MAP: Record<
   occupied: {
     label: 'Open',
     cardBorder: 'border-[#D6CFC7]',
-    badgeBg: 'bg-[#FAF8F5] border-[#E7E5E4]',
-    badgeText: 'text-[#1C1917]',
+    badgeBg: 'bg-[#EFECE6] border-[#E2DED6]',
+    badgeText: 'text-[#1A1617]',
     dotBg: 'bg-[#78716C]',
   },
   empty: {
     label: 'Available',
-    cardBorder: 'border-[#E7E5E4]',
-    badgeBg: 'bg-[#FAF8F5] border-[#E7E5E4]',
+    cardBorder: 'border-[#E2DED6]',
+    badgeBg: 'bg-[#EFECE6] border-[#E2DED6]',
     badgeText: 'text-[#57534E]',
     dotBg: 'bg-[#A8A29E]',
   },
@@ -126,7 +126,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
                 <Text
                   className={`font-extrabold tracking-tight ${
                     displayName.length > 10 ? 'text-pos-lg' : 'text-pos-xl'
-                  } ${isEmpty ? 'text-[#44403C]' : 'text-[#1C1917]'}`}
+                  } ${isEmpty ? 'text-[#44403C]' : 'text-[#1A1617]'}`}
                   numberOfLines={1}
                   ellipsizeMode="tail"
                 >
@@ -153,7 +153,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
 
             {/* Available Metadata */}
             {isEmpty ? (
-              <View className="flex-1 justify-center border-t border-[#E7E5E4]/80 py-2">
+              <View className="flex-1 justify-center border-t border-[#E2DED6]/80 py-2">
                 <Text className="text-base font-medium text-[#57534E]">
                   {seats ? `${seats} ${seats === 1 ? 'seat' : 'seats'} · ` : ''}
                   {area === 'bar' ? 'Bar Area' : 'Cafe Area'}
@@ -164,7 +164,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
 
           {/* 2. Active Middle Body: Guest/Tabs + Amount, then 1-line Items Summary */}
           {!isEmpty ? (
-            <View className="flex-1 justify-between border-t border-[#E7E5E4]/80 pt-2.5">
+            <View className="flex-1 justify-between border-t border-[#E2DED6]/80 pt-2.5">
               <View className="flex-row items-center justify-between gap-2">
                 {isMultiTab ? (
                   <View className="min-w-0 flex-1 flex-row items-center gap-1.5">
@@ -175,13 +175,13 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
                         <Pressable
                           key={tab.id || tab.tabIndex}
                           onPress={() => onPress(table, tab.tabIndex)}
-                          className="min-h-[48px] shrink flex-row items-center gap-1.5 rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] px-2.5 py-2 active:opacity-80"
+                          className="min-h-[48px] shrink flex-row items-center gap-1.5 rounded-xl border border-[#E2DED6] bg-[#EFECE6] px-2.5 py-2 active:opacity-80"
                           accessibilityRole="button"
                           accessibilityLabel={`Open tab for ${tab.guestName}`}
                         >
                           <View className={`h-2.5 w-2.5 shrink-0 rounded-full ${dotClass}`} />
                           <Text
-                            className="max-w-[90px] text-base font-semibold text-[#1C1917]"
+                            className="max-w-[90px] text-base font-semibold text-[#1A1617]"
                             numberOfLines={1}
                             ellipsizeMode="tail"
                           >
@@ -212,7 +212,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
                   >
                     <User size={18} color="#57534E" strokeWidth={2} />
                     <Text
-                      className="shrink text-base font-semibold text-[#1C1917]"
+                      className="shrink text-base font-semibold text-[#1A1617]"
                       numberOfLines={1}
                       ellipsizeMode="tail"
                     >
@@ -227,7 +227,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
                   accessibilityRole="button"
                   accessibilityLabel={`Total ${formattedAmount} for ${displayName}`}
                 >
-                  <Text className="text-pos-xl font-extrabold tabular-nums text-[#1C1917]">
+                  <Text className="text-pos-xl font-extrabold tabular-nums text-[#1A1617]">
                     {formattedAmount}
                   </Text>
                 </Pressable>
@@ -260,7 +260,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
               accessibilityRole="button"
               accessibilityLabel={`Open Tab at ${displayName}`}
             >
-              <Plus size={18} color="#F5F5F5" strokeWidth={2.2} />
+              <Plus size={18} color="#F7F5F2" strokeWidth={2.2} />
               <Text className="text-base font-semibold text-white">Open Tab</Text>
             </Pressable>
           ) : (
@@ -270,7 +270,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
                 className={`min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl px-3 py-2.5 active:opacity-80 ${
                   isReady
                     ? 'bg-emerald-50 border border-emerald-300'
-                    : 'bg-[#FAF8F5] border border-[#E7E5E4]'
+                    : 'bg-[#EFECE6] border border-[#E2DED6]'
                 }`}
                 accessibilityRole="button"
                 accessibilityLabel={
@@ -280,11 +280,11 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
                 {isReady ? (
                   <CheckCircle2 size={18} color="#065F46" strokeWidth={2.2} />
                 ) : (
-                  <UtensilsCrossed size={18} color="#1C1917" strokeWidth={2} />
+                  <UtensilsCrossed size={18} color="#1A1617" strokeWidth={2} />
                 )}
                 <Text
                   className={`text-base font-semibold ${
-                    isReady ? 'text-emerald-900' : 'text-[#1C1917]'
+                    isReady ? 'text-emerald-900' : 'text-[#1A1617]'
                   }`}
                 >
                   {isReady ? 'Deliver' : '+ Order'}
@@ -294,15 +294,15 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
               <Pressable
                 onPress={() => (onQuickSettle || onPress)(table)}
                 className={`min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl px-3 py-2.5 active:opacity-80 ${
-                  isServed ? 'bg-[#810021]' : 'bg-white border border-[#E7E5E4]'
+                  isServed ? 'bg-[#810021]' : 'bg-white border border-[#E2DED6]'
                 }`}
                 accessibilityRole="button"
                 accessibilityLabel={`Settle bill for ${displayName}`}
               >
-                <CreditCard size={18} color={isServed ? '#F5F5F5' : '#1C1917'} strokeWidth={2} />
+                <CreditCard size={18} color={isServed ? '#F7F5F2' : '#1A1617'} strokeWidth={2} />
                 <Text
                   className={`text-base font-semibold ${
-                    isServed ? 'text-white' : 'text-[#1C1917]'
+                    isServed ? 'text-white' : 'text-[#1A1617]'
                   }`}
                 >
                   Settle

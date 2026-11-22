@@ -66,7 +66,7 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                   key={item.staff.id}
                   className={`flex-col md:flex-row md:items-center justify-between rounded-xl border p-3 gap-2.5 ${
                     isClockedIn
-                      ? 'border-[#800020]/30 bg-[#FAF8F5]'
+                      ? 'border-[#810021]/30 bg-[#EFECE6]'
                       : isCompleted
                         ? 'border-stone-200 bg-white'
                         : 'border-stone-200 bg-stone-50/50'
@@ -77,7 +77,7 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                     <View
                       className={`h-9 w-9 items-center justify-center rounded-xl border ${
                         isClockedIn
-                          ? 'bg-[#800020] border-[#800020] text-white'
+                          ? 'bg-[#810021] border-[#810021] text-white'
                           : 'bg-stone-100 border-stone-200 text-stone-700'
                       }`}
                     >
@@ -104,8 +104,8 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                       <View className="mt-0.5 flex-row items-center flex-wrap gap-2">
                         {isClockedIn && (
                           <View className="flex-row items-center">
-                            <View className="h-1.5 w-1.5 rounded-full bg-[#800020] mr-1.5" />
-                            <Text className="text-xs font-bold text-[#800020]">
+                            <View className="h-1.5 w-1.5 rounded-full bg-[#810021] mr-1.5" />
+                            <Text className="text-xs font-bold text-[#810021]">
                               In since {inTimeFormatted} ({item.hoursWorked}h)
                             </Text>
                           </View>
@@ -142,7 +142,7 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                             ₱{item.totalDayPay.toFixed(2)}
                           </Text>
                           {item.addonPay > 0 && (
-                            <Text className="text-xs font-bold text-[#800020]">
+                            <Text className="text-xs font-bold text-[#810021]">
                               +₱{item.addonPay.toFixed(2)} OT
                             </Text>
                           )}
@@ -172,7 +172,7 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                           }}
                           className="h-8 px-2.5 flex-row items-center justify-center rounded-lg bg-stone-900 active:bg-stone-800"
                         >
-                          <CheckCircle2 size={13} color="#F5F5F5" />
+                          <CheckCircle2 size={13} color="#F7F5F2" />
                           <Text className="ml-1 text-xs font-bold text-white">Clock In</Text>
                         </Pressable>
                       ) : isClockedIn ? (
@@ -193,9 +193,9 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                               toast.error(err?.message || 'Clock-out failed');
                             }
                           }}
-                          className="h-8 px-2.5 flex-row items-center justify-center rounded-lg bg-[#800020] active:bg-[#600018]"
+                          className="h-8 px-2.5 flex-row items-center justify-center rounded-lg bg-[#810021] active:bg-[#600018]"
                         >
-                          <Clock size={13} color="#F5F5F5" />
+                          <Clock size={13} color="#F7F5F2" />
                           <Text className="ml-1 text-xs font-bold text-white">Clock Out</Text>
                         </Pressable>
                       ) : isCompleted ? (
@@ -218,8 +218,8 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                           }}
                           className="h-8 px-2.5 flex-row items-center justify-center rounded-lg border border-stone-200 bg-white active:bg-stone-50"
                         >
-                          <CheckCircle2 size={13} color="#800020" />
-                          <Text className="ml-1 text-xs font-bold text-[#800020]">Resume</Text>
+                          <CheckCircle2 size={13} color="#810021" />
+                          <Text className="ml-1 text-xs font-bold text-[#810021]">Resume</Text>
                         </Pressable>
                       ) : null}
 
@@ -241,7 +241,7 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                         }}
                         className="h-8 px-2.5 flex-row items-center justify-center rounded-lg border border-stone-200 bg-stone-50 active:bg-stone-100"
                       >
-                        <Edit3 size={13} color="#1c1917" />
+                        <Edit3 size={13} color="#1A1617" />
                         <Text className="ml-1 text-xs font-bold text-stone-800">Adjust</Text>
                       </Pressable>
                     </View>
@@ -317,7 +317,7 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                       </View>
 
                       <View className="items-start sm:items-end min-w-[80px]">
-                        <Text className="text-base font-black text-[#800020]">
+                        <Text className="text-base font-black text-[#810021]">
                           ₱{item.totalPaySum.toFixed(2)}
                         </Text>
                       </View>

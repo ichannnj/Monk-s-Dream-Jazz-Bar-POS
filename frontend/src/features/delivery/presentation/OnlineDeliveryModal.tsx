@@ -75,7 +75,7 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
           <View style={styles.header}>
             <View style={styles.headerTitleGroup}>
               <View style={styles.badge}>
-                <Bike size={16} color="#F5F5F5" strokeWidth={2.4} />
+                <Bike size={16} color="#F7F5F2" strokeWidth={2.4} />
               </View>
               <Text style={styles.title}>Delivery Intake</Text>
             </View>
@@ -86,7 +86,7 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close online delivery intake"
             >
-              <X size={20} color="#1c1917" />
+              <X size={20} color="#1A1617" />
             </Pressable>
           </View>
 
@@ -179,7 +179,7 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
 
             <Pressable onPress={handleProceed} style={styles.proceedBtn}>
               <Text style={styles.proceedBtnText}>Start Order</Text>
-              <ArrowRight size={16} color="#F5F5F5" strokeWidth={2.4} />
+              <ArrowRight size={16} color="#F7F5F2" strokeWidth={2.4} />
             </Pressable>
           </View>
         </View>
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     width: '100%',
     maxWidth: 540,
@@ -231,22 +231,22 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   closeBtn: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
     marginBottom: 8,
   },
   platformRow: {
@@ -259,11 +259,11 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
   },
   platformOptionActive: {
     backgroundColor: '#810021',
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     color: '#44403c',
   },
   platformOptionTextActive: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   formGroup: {
     marginBottom: 16,
@@ -285,15 +285,15 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   input: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
     minHeight: 48,
     fontSize: 16,
-    color: '#1C1917',
+    color: '#1A1617',
     fontWeight: '600',
   },
   btnRow: {
@@ -305,9 +305,9 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -330,6 +330,6 @@ const styles = StyleSheet.create({
   proceedBtnText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
 });

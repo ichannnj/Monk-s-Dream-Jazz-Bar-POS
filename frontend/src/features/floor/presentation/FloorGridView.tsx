@@ -25,8 +25,8 @@ export interface FloorGridViewProps {
 }
 
 const SectionHeader: React.FC<{ title: string; badge: string }> = ({ title, badge }) => (
-  <View className="w-full flex-row items-center justify-between pt-4 pb-2 border-b border-[#E7E5E4]/80 mb-3">
-    <Text className="text-base font-bold text-[#1C1917]">{title}</Text>
+  <View className="w-full flex-row items-center justify-between pt-4 pb-2 border-b border-[#E2DED6]/80 mb-3">
+    <Text className="text-base font-bold text-[#1A1617]">{title}</Text>
     <Text className="text-base font-medium tabular-nums text-[#57534E]">{badge}</Text>
   </View>
 );
@@ -68,11 +68,11 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
 
   if (!hasItems) {
     return (
-      <View className="w-full py-14 px-6 items-center justify-center bg-white rounded-2xl border border-[#E7E5E4] my-4">
-        <View className="w-14 h-14 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center mb-4">
+      <View className="w-full py-14 px-6 items-center justify-center bg-white rounded-2xl border border-[#E2DED6] my-4">
+        <View className="w-14 h-14 rounded-xl bg-[#EFECE6] border border-[#E2DED6] items-center justify-center mb-4">
           <LayoutGrid size={26} color="#57534E" strokeWidth={2} />
         </View>
-        <Text className="text-pos-lg font-bold text-[#1C1917] text-center mb-1">
+        <Text className="text-pos-lg font-bold text-[#1A1617] text-center mb-1">
           No Tables or Orders Found
         </Text>
         <Text className="text-base text-[#57534E] text-center max-w-md mb-6 leading-relaxed">
@@ -81,11 +81,11 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
         {onResetFilters ? (
           <Pressable
             onPress={onResetFilters}
-            className="min-h-[48px] px-6 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center active:opacity-80"
+            className="min-h-[48px] px-6 rounded-xl bg-[#EFECE6] border border-[#E2DED6] items-center justify-center active:opacity-80"
             accessibilityRole="button"
             accessibilityLabel="Clear search and reset filters"
           >
-            <Text className="text-base font-semibold text-[#1C1917]">
+            <Text className="text-base font-semibold text-[#1A1617]">
               Clear Search &amp; Filters
             </Text>
           </Pressable>

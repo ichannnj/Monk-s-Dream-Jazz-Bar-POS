@@ -47,7 +47,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
   return (
     <View
       className={`rounded-2xl bg-white border p-4 gap-3.5 ${
-        ticket.allDone ? 'border-emerald-300' : 'border-[#E7E5E4]'
+        ticket.allDone ? 'border-emerald-300' : 'border-[#E2DED6]'
       }`}
     >
       {/* Buzzout Highlight Banner */}
@@ -73,7 +73,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
       {/* Header */}
       <View className="flex-row items-start justify-between gap-2">
         <View className="min-w-0 flex-1 gap-0.5">
-          <Text className="text-pos-lg font-extrabold text-[#1C1917]" numberOfLines={1}>
+          <Text className="text-pos-lg font-extrabold text-[#1A1617]" numberOfLines={1}>
             {ticket.sourceTitle}
           </Text>
           <Text className="text-base font-medium text-[#57534E]" numberOfLines={1}>
@@ -104,7 +104,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
               ? 'bg-rose-50 border-rose-200'
               : liveTimer.urgency === 'warning'
                 ? 'bg-amber-50 border-amber-200'
-                : 'bg-[#FAF8F5] border-[#E7E5E4]'
+                : 'bg-[#EFECE6] border-[#E2DED6]'
           }`}
         >
           <Clock
@@ -123,7 +123,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
                 ? 'text-rose-800'
                 : liveTimer.urgency === 'warning'
                   ? 'text-amber-800'
-                  : 'text-[#1C1917]'
+                  : 'text-[#1A1617]'
             }`}
           >
             {liveTimer.formattedTimer}
@@ -133,7 +133,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
 
       {/* Assembly Progress Bar */}
       <View className="gap-1.5">
-        <View className="h-2 bg-[#FAF8F5] border border-[#E7E5E4] rounded-full overflow-hidden">
+        <View className="h-2 bg-[#EFECE6] border border-[#E2DED6] rounded-full overflow-hidden">
           <View
             className={`h-full rounded-full ${ticket.allDone ? 'bg-emerald-500' : 'bg-[#810021]'}`}
             style={{ width: `${progressPct}%` }}
@@ -153,24 +153,24 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
           {hasReadyBar && hasPendingKitchen ? (
             <Pressable
               onPress={() => onDeliverTarget(ticket, 'bar')}
-              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-3 active:opacity-80"
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Deliver drinks for ${ticket.sourceTitle}`}
             >
               <Coffee size={18} color="#810021" />
-              <Text className="text-base font-semibold text-[#1C1917]">Deliver Drinks</Text>
+              <Text className="text-base font-semibold text-[#1A1617]">Deliver Drinks</Text>
             </Pressable>
           ) : null}
 
           {hasReadyKitchen && hasPendingBar ? (
             <Pressable
               onPress={() => onDeliverTarget(ticket, 'kitchen')}
-              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-3 active:opacity-80"
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Deliver food for ${ticket.sourceTitle}`}
             >
               <Utensils size={18} color="#810021" />
-              <Text className="text-base font-semibold text-[#1C1917]">Deliver Food</Text>
+              <Text className="text-base font-semibold text-[#1A1617]">Deliver Food</Text>
             </Pressable>
           ) : null}
         </View>
@@ -180,7 +180,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
       <Pressable
         onPress={() => onHandoff(ticket)}
         className={`min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl px-4 active:opacity-85 ${
-          ticket.allDone ? 'bg-[#810021]' : 'bg-[#FAF8F5] border border-[#E7E5E4]'
+          ticket.allDone ? 'bg-[#810021]' : 'bg-[#EFECE6] border border-[#E2DED6]'
         }`}
         accessibilityRole="button"
         accessibilityLabel={
@@ -189,9 +189,9 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
             : `Complete hand-off for ${ticket.sourceTitle}`
         }
       >
-        <CheckCircle2 size={18} color={ticket.allDone ? '#F5F5F5' : '#1C1917'} />
+        <CheckCircle2 size={18} color={ticket.allDone ? '#F7F5F2' : '#1A1617'} />
         <Text
-          className={`text-base font-semibold ${ticket.allDone ? 'text-white' : 'text-[#1C1917]'}`}
+          className={`text-base font-semibold ${ticket.allDone ? 'text-white' : 'text-[#1A1617]'}`}
         >
           {ticket.orderType === 'dine_in'
             ? `Deliver Round ${ticket.roundNumber || 1}`

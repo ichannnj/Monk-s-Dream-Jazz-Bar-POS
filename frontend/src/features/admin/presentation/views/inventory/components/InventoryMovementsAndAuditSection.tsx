@@ -70,12 +70,12 @@ export const InventoryMovementsAndAuditSection: React.FC<
                   className={`min-h-[48px] px-4 rounded-xl border flex-row items-center justify-center ${
                     isActive
                       ? 'bg-[#810021] border-[#810021]'
-                      : 'bg-white border-[#E7E5E4] active:opacity-80'
+                      : 'bg-white border-[#E2DED6] active:opacity-80'
                   }`}
                 >
                   <Text
                     className={`text-base font-bold tabular-nums ${
-                      isActive ? 'text-white' : 'text-[#1C1917]'
+                      isActive ? 'text-white' : 'text-[#1A1617]'
                     }`}
                   >
                     {tab.label} ({tab.count})
@@ -91,7 +91,7 @@ export const InventoryMovementsAndAuditSection: React.FC<
             onPress={onOpenStocktake}
             className="min-h-[48px] px-4 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
           >
-            <ClipboardCheck size={18} color="#F5F5F5" />
+            <ClipboardCheck size={18} color="#F7F5F2" />
             <Text className="ml-2 text-base font-bold text-white">Start Stocktake</Text>
           </Pressable>
         )}
@@ -101,7 +101,7 @@ export const InventoryMovementsAndAuditSection: React.FC<
             onPress={onOpenWaste}
             className="min-h-[48px] px-4 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
           >
-            <Trash2 size={18} color="#F5F5F5" />
+            <Trash2 size={18} color="#F7F5F2" />
             <Text className="ml-2 text-base font-bold text-white">Log Waste</Text>
           </Pressable>
         )}
@@ -120,13 +120,13 @@ export const InventoryMovementsAndAuditSection: React.FC<
                     onPress={() => setLedgerTypeFilter(pill.key)}
                     className={`min-h-[48px] px-3.5 rounded-xl border items-center justify-center ${
                       isActive
-                        ? 'bg-[#1C1917] border-[#1C1917]'
-                        : 'bg-white border-[#E7E5E4] active:opacity-80'
+                        ? 'bg-[#1A1617] border-[#1A1617]'
+                        : 'bg-white border-[#E2DED6] active:opacity-80'
                     }`}
                   >
                     <Text
                       className={`text-base font-semibold ${
-                        isActive ? 'text-white' : 'text-[#1C1917]'
+                        isActive ? 'text-white' : 'text-[#1A1617]'
                       }`}
                     >
                       {pill.label}
@@ -137,16 +137,16 @@ export const InventoryMovementsAndAuditSection: React.FC<
             </View>
           </ScrollView>
 
-          <View className="rounded-2xl border border-[#E7E5E4] bg-white overflow-hidden">
+          <View className="rounded-2xl border border-[#E2DED6] bg-white overflow-hidden">
             {filteredMovements.length === 0 ? (
               <View className="py-12 items-center justify-center px-4">
                 <FileText size={36} color="#78716C" />
-                <Text className="mt-3 text-base font-bold text-[#1C1917]">
+                <Text className="mt-3 text-base font-bold text-[#1A1617]">
                   No stock movements match this filter.
                 </Text>
               </View>
             ) : (
-              <View className="divide-y divide-[#E7E5E4]">
+              <View className="divide-y divide-[#E2DED6]">
                 {filteredMovements.map((mov) => {
                   const isDeduction = Number(mov.change_amount || 0) < 0;
                   const absAmount = Math.abs(Number(mov.change_amount || 0));
@@ -171,7 +171,7 @@ export const InventoryMovementsAndAuditSection: React.FC<
                           )}
                         </View>
                         <View className="flex-1 min-w-0">
-                          <Text className="text-base font-bold text-[#1C1917]" numberOfLines={1}>
+                          <Text className="text-base font-bold text-[#1A1617]" numberOfLines={1}>
                             {mov.inventory_item?.name || 'Inventory Ingredient'}
                           </Text>
                           <Text className="text-base text-[#78716C]" numberOfLines={1}>
@@ -205,16 +205,16 @@ export const InventoryMovementsAndAuditSection: React.FC<
 
       {/* STOCKTAKE SESSIONS */}
       {subTab === 'stocktakes' && (
-        <View className="rounded-2xl border border-[#E7E5E4] bg-white overflow-hidden">
+        <View className="rounded-2xl border border-[#E2DED6] bg-white overflow-hidden">
           {stocktakeSessions.length === 0 ? (
             <View className="py-12 items-center justify-center px-4">
               <ClipboardCheck size={36} color="#78716C" />
-              <Text className="mt-3 text-base font-bold text-[#1C1917] text-center">
+              <Text className="mt-3 text-base font-bold text-[#1A1617] text-center">
                 No stocktake audits recorded yet.
               </Text>
             </View>
           ) : (
-            <View className="divide-y divide-[#E7E5E4]">
+            <View className="divide-y divide-[#E2DED6]">
               {stocktakeSessions.map((session) => {
                 const variance = Number(session.total_variance_cost || 0);
                 return (
@@ -223,7 +223,7 @@ export const InventoryMovementsAndAuditSection: React.FC<
                     className="p-4 flex-col sm:flex-row sm:items-center justify-between gap-2"
                   >
                     <View className="flex-1 min-w-0">
-                      <Text className="text-base font-bold text-[#1C1917]">
+                      <Text className="text-base font-bold text-[#1A1617]">
                         {session.notes || 'Physical Stocktake Count'}
                       </Text>
                       <Text className="text-base text-[#78716C]">
@@ -236,7 +236,7 @@ export const InventoryMovementsAndAuditSection: React.FC<
                           ? 'text-[#b32638]'
                           : variance > 0
                             ? 'text-[#10b981]'
-                            : 'text-[#1C1917]'
+                            : 'text-[#1A1617]'
                       }`}
                     >
                       {variance < 0 ? '-' : '+'}
@@ -252,23 +252,23 @@ export const InventoryMovementsAndAuditSection: React.FC<
 
       {/* WASTE LOGS */}
       {subTab === 'waste' && (
-        <View className="rounded-2xl border border-[#E7E5E4] bg-white overflow-hidden">
+        <View className="rounded-2xl border border-[#E2DED6] bg-white overflow-hidden">
           {wasteLogs.length === 0 ? (
             <View className="py-12 items-center justify-center px-4">
               <Trash2 size={36} color="#78716C" />
-              <Text className="mt-3 text-base font-bold text-[#1C1917] text-center">
+              <Text className="mt-3 text-base font-bold text-[#1A1617] text-center">
                 No spillage or waste events logged.
               </Text>
             </View>
           ) : (
-            <View className="divide-y divide-[#E7E5E4]">
+            <View className="divide-y divide-[#E2DED6]">
               {wasteLogs.map((log) => (
                 <View
                   key={log.id}
                   className="p-4 flex-col sm:flex-row sm:items-center justify-between gap-2"
                 >
                   <View className="flex-1 min-w-0">
-                    <Text className="text-base font-bold text-[#1C1917]">
+                    <Text className="text-base font-bold text-[#1A1617]">
                       {log.inventory_item?.name || 'Inventory Item'}
                     </Text>
                     <Text className="text-base text-[#78716C]">

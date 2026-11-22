@@ -167,7 +167,7 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
   ];
 
   return (
-    <View className="flex-1 bg-[#FAF8F5]">
+    <View className="flex-1 bg-[#EFECE6]">
       <FloorSectionHeader
         title="Cash Drawer & Till"
         rightSlot={

@@ -39,7 +39,7 @@ export const TableActionTabSelector: React.FC<TableActionTabSelectorProps> = ({
               className={`flex-row items-center gap-2 px-3.5 py-2.5 rounded-2xl border min-h-[48px] ${
                 isSelected
                   ? 'bg-[#810021] border-[#810021]'
-                  : 'bg-[#FAF8F5] border-stone-200 active:bg-stone-100'
+                  : 'bg-[#EFECE6] border-stone-200 active:bg-stone-100'
               }`}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
@@ -50,7 +50,7 @@ export const TableActionTabSelector: React.FC<TableActionTabSelectorProps> = ({
                   width: 8,
                   height: 8,
                   borderRadius: 4,
-                  backgroundColor: isSelected ? '#F5F5F5' : dotColor,
+                  backgroundColor: isSelected ? '#F7F5F2' : dotColor,
                 }}
               />
               <Text

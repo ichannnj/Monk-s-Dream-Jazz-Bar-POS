@@ -110,7 +110,7 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
   if (isLoading && !trends) {
     return (
       <View className="flex-1 items-center justify-center p-12">
-        <ActivityIndicator size="large" color="#800020" />
+        <ActivityIndicator size="large" color="#810021" />
         <Text className="mt-4 text-base font-bold text-stone-700">
           Analyzing sales trends &amp; product demand...
         </Text>
@@ -149,7 +149,7 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
             {/* Left: Title */}
             <View className="flex-row items-center gap-2">
               <View className="w-8 h-8 rounded-lg bg-stone-100 items-center justify-center">
-                <TrendingUp size={16} color="#800020" />
+                <TrendingUp size={16} color="#810021" />
               </View>
               <Text className="text-base sm:text-lg font-bold text-stone-900 tracking-tight">
                 Sales &amp; Product Trends
@@ -162,15 +162,15 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
                 onPress={handleExportExcel}
                 className="h-9 px-3 rounded-xl bg-white border border-stone-200 active:bg-stone-50 flex-row items-center gap-1.5 shadow-xs cursor-pointer"
               >
-                <FileSpreadsheet size={14} color="#800020" />
+                <FileSpreadsheet size={14} color="#810021" />
                 <Text className="text-xs font-bold text-stone-800">Export</Text>
               </Pressable>
 
               <Pressable
                 onPress={handlePrintReport}
-                className="h-9 px-3.5 rounded-xl bg-[#800020] active:bg-[#600018] flex-row items-center justify-center shadow-xs cursor-pointer"
+                className="h-9 px-3.5 rounded-xl bg-[#810021] active:bg-[#600018] flex-row items-center justify-center shadow-xs cursor-pointer"
               >
-                <Printer size={14} color="#F5F5F5" />
+                <Printer size={14} color="#F7F5F2" />
                 <Text className="ml-1.5 text-xs font-bold text-white">Print</Text>
               </Pressable>
             </View>
@@ -181,7 +181,7 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
         <View className="mb-4 pb-3 border-b-2 border-stone-900 print-only">
           <View className="flex-row justify-between items-end">
             <View>
-              <Text className="text-xs font-bold tracking-widest text-[#800020] uppercase">
+              <Text className="text-xs font-bold tracking-widest text-[#810021] uppercase">
                 Monk's Dream Jazz Bar &amp; Bistro
               </Text>
               <Text className="text-2xl font-black text-stone-900 mt-0.5">
@@ -222,7 +222,7 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
               <Text className="text-2xl font-black text-amber-950">
                 {effectiveTrends.bestDayOfWeek ? effectiveTrends.bestDayOfWeek.dayName : 'N/A'}
               </Text>
-              <Text className="text-lg font-black text-[#800020] mt-1">
+              <Text className="text-lg font-black text-[#810021] mt-1">
                 {effectiveTrends.bestDayOfWeek
                   ? formatCurrency(effectiveTrends.bestDayOfWeek.totalSales)
                   : '₱0.00'}
@@ -310,7 +310,7 @@ export const AdminTrendsReportView: React.FC<AdminTrendsReportViewProps> = ({
               <Text className="text-lg font-black text-stone-900" numberOfLines={1}>
                 {effectiveTrends.topSellingProduct ? effectiveTrends.topSellingProduct.name : 'N/A'}
               </Text>
-              <Text className="text-lg font-black text-[#800020] mt-1">
+              <Text className="text-lg font-black text-[#810021] mt-1">
                 {effectiveTrends.topSellingProduct
                   ? formatCurrency(effectiveTrends.topSellingProduct.salesAmount)
                   : '₱0.00'}

@@ -38,7 +38,7 @@ export const DashboardBestSellersAndStationsSection: React.FC<
       <View className="w-full lg:flex-[1.35] min-w-0 rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
         <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
           <Text className="text-lg font-bold tracking-tight text-stone-900">Best Sellers</Text>
-          <View className="rounded-full bg-[#FAF8F5] border border-stone-200 px-3 py-1 shrink-0">
+          <View className="rounded-full bg-[#EFECE6] border border-stone-200 px-3 py-1 shrink-0">
             <Text className="text-xs font-bold text-stone-700">By Quantity</Text>
           </View>
         </View>
@@ -85,7 +85,7 @@ export const DashboardBestSellersAndStationsSection: React.FC<
               <View key={item.id} className="pt-1">
                 <View className="flex-row items-center justify-between gap-3 flex-wrap">
                   <View className="flex-row items-center flex-1 min-w-[140px]">
-                    <View className="h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#FAF8F5] border border-stone-200 mr-2">
+                    <View className="h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#EFECE6] border border-stone-200 mr-2">
                       <Text className="text-xs font-bold text-stone-700">{item.rank}</Text>
                     </View>
                     <View className="flex-1 min-w-0">
@@ -113,7 +113,7 @@ export const DashboardBestSellersAndStationsSection: React.FC<
                 <View className="mt-1.5 h-1.5 w-full rounded-full bg-stone-100 overflow-hidden">
                   <View
                     style={{ width: `${Math.min(100, Math.max(5, item.progressPercent))}%` }}
-                    className="h-full rounded-full bg-[#800020]"
+                    className="h-full rounded-full bg-[#810021]"
                   />
                 </View>
               </View>
@@ -131,8 +131,8 @@ export const DashboardBestSellersAndStationsSection: React.FC<
               onPress={() => onNavigateRoute('stations')}
               className="px-2.5 py-1 flex-row items-center rounded-lg bg-stone-50 active:bg-stone-100"
             >
-              <Text className="text-xs font-bold text-[#800020]">View Stations</Text>
-              <ArrowRight size={13} color="#800020" className="ml-1" />
+              <Text className="text-xs font-bold text-[#810021]">View Stations</Text>
+              <ArrowRight size={13} color="#810021" className="ml-1" />
             </Pressable>
           </View>
 
@@ -149,7 +149,7 @@ export const DashboardBestSellersAndStationsSection: React.FC<
               return (
                 <View
                   key={station.stationKey}
-                  className="rounded-xl border border-stone-200/80 bg-[#FAF8F5] p-3"
+                  className="rounded-xl border border-stone-200/80 bg-[#EFECE6] p-3"
                 >
                   <View className="flex-row items-center justify-between mb-2 flex-wrap gap-2">
                     <View className="flex-row items-center gap-2">
@@ -157,7 +157,7 @@ export const DashboardBestSellersAndStationsSection: React.FC<
                       <View className="flex-row items-center rounded-full bg-white border border-stone-200 px-2 py-0.5">
                         <View
                           className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
-                            station.isOnline ? 'bg-[#800020]' : 'bg-stone-400'
+                            station.isOnline ? 'bg-[#810021]' : 'bg-stone-400'
                           }`}
                         />
                         <Text className="text-[10px] font-bold text-stone-700">
@@ -187,7 +187,7 @@ export const DashboardBestSellersAndStationsSection: React.FC<
 
                     <View className="flex-1 min-w-[70px] bg-white rounded-lg p-2 border border-stone-200/80 items-center">
                       <Text
-                        className={`text-base font-black ${liveStats.lateTickets > 0 ? 'text-[#800020]' : 'text-stone-900'}`}
+                        className={`text-base font-black ${liveStats.lateTickets > 0 ? 'text-[#810021]' : 'text-stone-900'}`}
                       >
                         {liveStats.lateTickets}
                       </Text>
@@ -233,7 +233,7 @@ export const DashboardBestSellersAndStationsSection: React.FC<
                   <View className="w-full h-1.5 rounded-full bg-stone-100 overflow-hidden">
                     <View
                       style={{ width: `${Math.min(100, Math.max(8, cat.percentage))}%` }}
-                      className="h-full rounded-full bg-[#800020]"
+                      className="h-full rounded-full bg-[#810021]"
                     />
                   </View>
                 </View>

@@ -64,7 +64,7 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
   const showThread = !isCompact || mobileView === 'thread';
 
   return (
-    <View className={`flex-1 bg-[#FAF8F5] ${isCompact ? 'p-1 sm:p-2' : 'p-0 sm:p-2'}`}>
+    <View className={`flex-1 bg-[#EFECE6] ${isCompact ? 'p-1 sm:p-2' : 'p-0 sm:p-2'}`}>
       {/* Main Two-Column or Single-Column Mobile Layout */}
       <View className="flex-1 flex-row gap-3 sm:gap-4">
         {/* Left Column: Messages List (Channels & Direct Messages) */}
@@ -120,7 +120,7 @@ export const SharedChatView: React.FC<SharedChatViewProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Jump to new messages"
               >
-                <ChevronDown size={18} color="#F5F5F5" />
+                <ChevronDown size={18} color="#F7F5F2" />
                 <Text className="ml-1.5 text-base font-bold text-white tabular-nums">
                   {unseenMessagesCount > 1
                     ? `${unseenMessagesCount} new messages ↓`

@@ -126,7 +126,7 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
           ? 'POS App User Account — Edit role, rate, and contact details'
           : 'Venue Personnel (Non-User) — Edit designation, rate, and contact details'
       }
-      icon={<Edit3 size={20} color="#800020" />}
+      icon={<Edit3 size={20} color="#810021" />}
       size="lg"
       footer={
         <>
@@ -140,7 +140,7 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
           <Pressable
             onPress={handleSubmit}
             disabled={isSubmitting}
-            className={`min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90 ${
+            className={`min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90 ${
               isSubmitting ? 'opacity-50' : ''
             }`}
           >
@@ -176,8 +176,8 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
         {isAdmin ? (
           <View className="rounded-xl border border-rose-200 bg-rose-50/70 p-3.5">
             <View className="flex-row items-center gap-2">
-              <Shield size={16} color="#800020" />
-              <Text className="text-sm font-bold text-[#800020]">
+              <Shield size={16} color="#810021" />
+              <Text className="text-sm font-bold text-[#810021]">
                 System Role: Administrator / Manager
               </Text>
             </View>
@@ -203,13 +203,13 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
                     onPress={() => setRole(item.value)}
                     className={`rounded-xl border px-3.5 py-2.5 ${
                       isSelected
-                        ? 'border-[#800020] bg-[#800020]/10'
+                        ? 'border-[#810021] bg-[#810021]/10'
                         : 'border-stone-200 bg-stone-50 active:bg-stone-100'
                     }`}
                   >
                     <Text
                       className={`text-sm font-bold ${
-                        isSelected ? 'text-[#800020]' : 'text-stone-700'
+                        isSelected ? 'text-[#810021]' : 'text-stone-700'
                       }`}
                     >
                       {item.label}
@@ -233,7 +233,7 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
                     onPress={() => setJobTitle(preset)}
                     className={`rounded-xl border px-3 py-1.5 ${
                       isSelected
-                        ? 'border-[#800020] bg-[#800020]'
+                        ? 'border-[#810021] bg-[#810021]'
                         : 'border-stone-200 bg-stone-100 active:bg-stone-200'
                     }`}
                   >
@@ -307,7 +307,7 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
                     onPress={() => setBaseDailyRate(tier.value)}
                     className={`rounded-xl border px-3 py-1.5 ${
                       isSelected
-                        ? 'border-[#800020] bg-[#800020]'
+                        ? 'border-[#810021] bg-[#810021]'
                         : 'border-stone-200 bg-stone-100 active:bg-stone-200'
                     }`}
                   >
@@ -340,7 +340,7 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
                 placeholderTextColor="#a8a29e"
                 secureTextEntry={!showAdminPassword}
                 autoCapitalize="none"
-                style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+                style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
               />
               <Pressable onPress={() => setShowAdminPassword(!showAdminPassword)} className="p-2">
                 {showAdminPassword ? (

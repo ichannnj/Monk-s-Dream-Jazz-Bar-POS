@@ -82,20 +82,20 @@ export const InventoryPhotoField: React.FC<InventoryPhotoFieldProps> = ({
   return (
     <View className="space-y-3">
       <View className="flex-row items-center justify-between flex-wrap gap-2">
-        <Text className="text-base font-bold text-[#1C1917]">Grocery Reference Photo</Text>
+        <Text className="text-base font-bold text-[#1A1617]">Grocery Reference Photo</Text>
         {stagedImage && (
-          <View className="flex-row items-center rounded-lg bg-[#FAF8F5] border border-[#E7E5E4] px-2.5 py-1">
+          <View className="flex-row items-center rounded-lg bg-[#EFECE6] border border-[#E2DED6] px-2.5 py-1">
             <Check size={14} color="#10b981" />
-            <Text className="ml-1.5 text-base font-semibold text-[#1C1917] tabular-nums">
+            <Text className="ml-1.5 text-base font-semibold text-[#1A1617] tabular-nums">
               {formatKb(stagedImage.sizeBytes)} WebP
             </Text>
           </View>
         )}
       </View>
 
-      <View className="flex-col sm:flex-row gap-3 items-stretch sm:items-center rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] p-3">
+      <View className="flex-col sm:flex-row gap-3 items-stretch sm:items-center rounded-xl border border-[#E2DED6] bg-[#EFECE6] p-3">
         {/* Compact Preview Thumbnail */}
-        <View className="h-28 w-full sm:w-28 rounded-xl border border-[#E7E5E4] bg-white overflow-hidden items-center justify-center shrink-0">
+        <View className="h-28 w-full sm:w-28 rounded-xl border border-[#E2DED6] bg-white overflow-hidden items-center justify-center shrink-0">
           {hasPhoto && !imageLoadError ? (
             <Image
               source={{ uri: activeDisplayUri }}
@@ -123,7 +123,7 @@ export const InventoryPhotoField: React.FC<InventoryPhotoFieldProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Upload or capture grocery reference photo"
             >
-              <Camera size={18} color="#F5F5F5" />
+              <Camera size={18} color="#F7F5F2" />
               <Text className="ml-2 text-base font-bold text-white">
                 {isProcessing ? 'Processing...' : hasPhoto ? 'Replace Photo' : 'Add Photo'}
               </Text>
@@ -131,12 +131,12 @@ export const InventoryPhotoField: React.FC<InventoryPhotoFieldProps> = ({
 
             <Pressable
               onPress={() => setShowUrlInput((prev) => !prev)}
-              className="min-h-[48px] px-4 flex-row items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-85"
+              className="min-h-[48px] px-4 flex-row items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-85"
               accessibilityRole="button"
               accessibilityLabel="Toggle image URL input"
             >
-              <LinkIcon size={16} color="#1C1917" />
-              <Text className="ml-2 text-base font-semibold text-[#1C1917]">URL</Text>
+              <LinkIcon size={16} color="#1A1617" />
+              <Text className="ml-2 text-base font-semibold text-[#1A1617]">URL</Text>
             </Pressable>
 
             {hasPhoto && (
@@ -146,7 +146,7 @@ export const InventoryPhotoField: React.FC<InventoryPhotoFieldProps> = ({
                   setImageLoadError(false);
                   onClearPhoto();
                 }}
-                className="min-h-[48px] min-w-[48px] px-3 flex-row items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-85"
+                className="min-h-[48px] min-w-[48px] px-3 flex-row items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-85"
                 accessibilityRole="button"
                 accessibilityLabel="Remove reference photo"
               >

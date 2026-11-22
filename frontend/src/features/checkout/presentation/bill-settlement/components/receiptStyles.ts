@@ -26,7 +26,7 @@ export const receiptStyles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     textAlign: 'center',
-    color: '#800020',
+    color: '#810021',
     letterSpacing: 0.5,
   },
   receiptTagline: {

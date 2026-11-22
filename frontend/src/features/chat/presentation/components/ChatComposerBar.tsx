@@ -25,18 +25,18 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
     <View className="flex-col bg-white">
       {/* Quick-tap Presets */}
       {quickPresets.length > 0 && (
-        <View className="border-t border-stone-100 px-3 sm:px-4 py-2 bg-[#FAF8F5]">
+        <View className="border-t border-stone-100 px-3 sm:px-4 py-2 bg-[#EFECE6]">
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View className="flex-row items-center gap-1.5">
               {quickPresets.map((preset, idx) => (
                 <Pressable
                   key={idx}
                   onPress={() => onSend(preset)}
-                  className="bg-white border border-[#E7E5E4] px-4 py-2 rounded-full active:bg-stone-100 min-h-[48px] justify-center"
+                  className="bg-white border border-[#E2DED6] px-4 py-2 rounded-full active:bg-stone-100 min-h-[48px] justify-center"
                   accessibilityRole="button"
                   accessibilityLabel={preset}
                 >
-                  <Text className="text-base font-medium text-[#1C1917]">{preset}</Text>
+                  <Text className="text-base font-medium text-[#1A1617]">{preset}</Text>
                 </Pressable>
               ))}
             </View>
@@ -46,7 +46,7 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
 
       {/* Message Input Bar */}
       <View className="flex-row items-center px-3 sm:px-4 py-2.5 border-t border-stone-100 gap-2 bg-white">
-        <View className="flex-1 min-h-[46px] bg-[#FAF8F5] rounded-full px-3.5 py-1.5 justify-center border border-stone-200/80 focus-within:border-stone-400">
+        <View className="flex-1 min-h-[46px] bg-[#EFECE6] rounded-full px-3.5 py-1.5 justify-center border border-stone-200/80 focus-within:border-stone-400">
           <TextInput
             ref={inputRef}
             autoFocus={!isMobile}
@@ -75,7 +75,7 @@ export const ChatComposerBar: React.FC<ChatComposerBarProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Send message"
         >
-          <SendHorizontal size={19} color="#F5F5F5" strokeWidth={2.2} />
+          <SendHorizontal size={19} color="#F7F5F2" strokeWidth={2.2} />
         </Pressable>
       </View>
     </View>

@@ -276,7 +276,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           onPress={() => setActiveSidebarTab('chat')}
           style={({ pressed }) => [styles.floatingChatBtn, pressed && styles.floatingChatPressed]}
         >
-          <MessageSquare size={24} color="#F5F5F5" strokeWidth={2.2} />
+          <MessageSquare size={24} color="#F7F5F2" strokeWidth={2.2} />
           {unreadChatCount > 0 && (
             <View style={styles.floatingChatBadge}>
               <Text style={styles.floatingChatBadgeText}>{unreadChatCount}</Text>
@@ -407,10 +407,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 6,
     borderWidth: 2,
-    borderColor: '#F5F5F5',
+    borderColor: '#F7F5F2',
   },
   floatingChatBadgeText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 16,
     fontWeight: '800',
   },

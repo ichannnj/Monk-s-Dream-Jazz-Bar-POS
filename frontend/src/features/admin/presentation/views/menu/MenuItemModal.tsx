@@ -55,8 +55,8 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
           className="min-h-[48px] px-4 flex-row items-center justify-center rounded-xl bg-stone-100 border border-stone-200 active:bg-stone-200"
           accessibilityLabel={`Delete ${product.name}`}
         >
-          <Trash2 size={16} color="#800020" />
-          <Text className="ml-2 text-sm font-bold text-[#800020]">Delete Item</Text>
+          <Trash2 size={16} color="#810021" />
+          <Text className="ml-2 text-sm font-bold text-[#810021]">Delete Item</Text>
         </Pressable>
       ) : (
         <View />
@@ -73,7 +73,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
         <Pressable
           onPress={ctrl.handleSubmit}
           disabled={ctrl.isSubmitting}
-          className="min-h-[48px] px-5 sm:px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+          className="min-h-[48px] px-5 sm:px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90"
         >
           <Text className="text-base font-bold text-white">
             {ctrl.isSubmitting ? 'Saving...' : product ? 'Save Changes' : 'Create Product'}
@@ -90,7 +90,7 @@ export const MenuItemModal: React.FC<MenuItemModalProps> = ({
       closeOnBackdropPress={false}
       title={product ? 'Edit Menu Product' : 'Add New Menu Product'}
       subtitle="Configure pricing, preparation routing station, dietary tags, and BOM links"
-      icon={<Utensils size={22} color="#800020" />}
+      icon={<Utensils size={22} color="#810021" />}
       size="lg"
       footer={footer}
     >

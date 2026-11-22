@@ -144,7 +144,7 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
           {/* 6:00 AM Automatic Revert Schedule Notice */}
           <View className="flex-row items-start gap-3 p-3.5 rounded-2xl mb-5 bg-stone-100/90 border border-stone-200">
             <View className="mt-0.5">
-              <Clock size={18} color="#800020" />
+              <Clock size={18} color="#810021" />
             </View>
             <Text className="flex-1 text-base font-medium text-stone-700 leading-snug">
               <Text className="font-bold text-stone-900">6:00 AM Auto-Reset: </Text>
@@ -156,7 +156,7 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
           {!isAdminUser && (
             <View className="mb-5">
               <View className="flex-row items-center gap-2 mb-2">
-                <ShieldCheck size={18} color="#800020" />
+                <ShieldCheck size={18} color="#810021" />
                 <Text className="text-base font-bold text-stone-800">Enter Manager PIN</Text>
               </View>
               <TextInput
@@ -199,7 +199,7 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
               accessibilityRole="button"
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="#F5F5F5" />
+                <ActivityIndicator size="small" color="#F7F5F2" />
               ) : (
                 <Text className="text-base font-bold text-white">
                   Confirm {nextMode === 'EVENT' ? 'Event' : 'Cafe'} Mode

@@ -288,13 +288,13 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
               accessibilityLabel="General details tab"
               className={`pb-2.5 px-3 border-b-2 mr-2 ${
                 activeTab === 'info'
-                  ? 'border-[#800020] text-[#800020]'
+                  ? 'border-[#810021] text-[#810021]'
                   : 'border-transparent text-stone-500'
               }`}
             >
               <Text
                 className={`text-xs font-bold ${
-                  activeTab === 'info' ? 'text-[#800020]' : 'text-stone-600'
+                  activeTab === 'info' ? 'text-[#810021]' : 'text-stone-600'
                 }`}
               >
                 General details
@@ -307,13 +307,13 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
               accessibilityLabel="Poster artwork tab"
               className={`pb-2.5 px-3 border-b-2 mr-2 ${
                 activeTab === 'poster'
-                  ? 'border-[#800020] text-[#800020]'
+                  ? 'border-[#810021] text-[#810021]'
                   : 'border-transparent text-stone-500'
               }`}
             >
               <Text
                 className={`text-xs font-bold ${
-                  activeTab === 'poster' ? 'text-[#800020]' : 'text-stone-600'
+                  activeTab === 'poster' ? 'text-[#810021]' : 'text-stone-600'
                 }`}
               >
                 Poster artwork
@@ -326,13 +326,13 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
               accessibilityLabel="Production and logistics tab"
               className={`pb-2.5 px-3 border-b-2 mr-2 ${
                 activeTab === 'logistics'
-                  ? 'border-[#800020] text-[#800020]'
+                  ? 'border-[#810021] text-[#810021]'
                   : 'border-transparent text-stone-500'
               }`}
             >
               <Text
                 className={`text-xs font-bold ${
-                  activeTab === 'logistics' ? 'text-[#800020]' : 'text-stone-600'
+                  activeTab === 'logistics' ? 'text-[#810021]' : 'text-stone-600'
                 }`}
               >
                 Production notes
@@ -345,14 +345,14 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
               accessibilityLabel="Door charge and split tab"
               className={`pb-2.5 px-3 border-b-2 ${
                 activeTab === 'door_charge'
-                  ? 'border-[#800020] text-[#800020]'
+                  ? 'border-[#810021] text-[#810021]'
                   : 'border-transparent text-stone-500'
               }`}
             >
               <View className="flex-row items-center gap-1.5">
                 <Text
                   className={`text-xs font-bold ${
-                    activeTab === 'door_charge' ? 'text-[#800020]' : 'text-stone-600'
+                    activeTab === 'door_charge' ? 'text-[#810021]' : 'text-stone-600'
                   }`}
                 >
                   Door charge & split
@@ -376,7 +376,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                     onChangeText={setTitle}
                     placeholder="e.g., Thelonious Monk Birthday Set"
                     placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                     accessibilityLabel="Event title"
                   />
                   {errors.title ? (
@@ -392,7 +392,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                     onChangeText={setPerformerName}
                     placeholder="e.g., Manila Bebop Collective"
                     placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                     accessibilityLabel="Performer or band name"
                   />
                 </View>
@@ -408,7 +408,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                       onChangeText={setEventDate}
                       placeholder="YYYY-MM-DD"
                       placeholderTextColor="#a8a29e"
-                      className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                      className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                       accessibilityLabel="Event date in YYYY-MM-DD format"
                     />
                     {errors.eventDate ? (
@@ -425,7 +425,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                       onChangeText={setStartTime}
                       placeholder="HH:MM (e.g. 20:00)"
                       placeholderTextColor="#a8a29e"
-                      className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                      className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                       accessibilityLabel="Start time in 24-hour format"
                     />
                     {errors.startTime ? (
@@ -440,7 +440,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                       onChangeText={setEndTime}
                       placeholder="HH:MM (e.g. 23:30)"
                       placeholderTextColor="#a8a29e"
-                      className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                      className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                       accessibilityLabel="End time in 24-hour format"
                     />
                   </View>
@@ -458,7 +458,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                           onPress={() => setGenre(p)}
                           className={`rounded-lg px-2.5 py-1 border text-xs font-medium ${
                             isSel
-                              ? 'bg-[#800020] border-[#800020] text-white'
+                              ? 'bg-[#810021] border-[#810021] text-white'
                               : 'bg-stone-50 border-stone-200 text-stone-700 hover:bg-stone-100'
                           }`}
                         >
@@ -487,13 +487,13 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                           onPress={() => setStatus(opt.id)}
                           className={`flex-1 items-center justify-center py-2 rounded-xl border ${
                             isSel
-                              ? 'bg-rose-50 border-[#800020] text-[#800020]'
+                              ? 'bg-rose-50 border-[#810021] text-[#810021]'
                               : 'bg-white border-stone-200 text-stone-700'
                           }`}
                         >
                           <Text
                             className={`text-xs font-bold ${
-                              isSel ? 'text-[#800020]' : 'text-stone-700'
+                              isSel ? 'text-[#810021]' : 'text-stone-700'
                             }`}
                           >
                             {opt.label}
@@ -514,7 +514,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                     placeholderTextColor="#a8a29e"
                     multiline
                     numberOfLines={3}
-                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                     accessibilityLabel="Event description"
                   />
                 </View>
@@ -564,7 +564,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                   >
                     {isUploading ? (
                       <View className="items-center gap-2">
-                        <ActivityIndicator color="#800020" />
+                        <ActivityIndicator color="#810021" />
                         <Text className="text-xs font-semibold text-stone-600">
                           Uploading poster…
                         </Text>
@@ -603,7 +603,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                     onChangeText={setSoundCheckTime}
                     placeholder="HH:MM (e.g. 18:00)"
                     placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                     accessibilityLabel="Sound check time"
                   />
                 </View>
@@ -620,7 +620,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                     placeholderTextColor="#a8a29e"
                     multiline
                     numberOfLines={2}
-                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                     accessibilityLabel="Backline and gear requirements"
                   />
                 </View>
@@ -635,7 +635,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                     onChangeText={setReservedTables}
                     placeholder="e.g. T1 and T2 reserved for artist guests…"
                     placeholderTextColor="#a8a29e"
-                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                     accessibilityLabel="Reserved tables note"
                   />
                 </View>
@@ -652,7 +652,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                     placeholderTextColor="#a8a29e"
                     multiline
                     numberOfLines={2}
-                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#800020]"
+                    className="w-full rounded-xl border border-stone-300 bg-white px-3.5 py-2.5 text-sm text-stone-900 focus:border-[#810021]"
                     accessibilityLabel="Hospitality rider or special requests"
                   />
                 </View>
@@ -667,17 +667,17 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                   onPress={() => setHasDoorCharge(!hasDoorCharge)}
                   className={`p-4 rounded-2xl border flex-row items-center justify-between ${
                     hasDoorCharge
-                      ? 'border-[#800020] bg-rose-50/60'
+                      ? 'border-[#810021] bg-rose-50/60'
                       : 'border-stone-200 bg-stone-50/60'
                   }`}
                 >
                   <View className="flex-row items-center gap-3 flex-1 pr-3">
                     <View
                       className={`h-10 w-10 rounded-xl items-center justify-center ${
-                        hasDoorCharge ? 'bg-[#800020]' : 'bg-stone-200'
+                        hasDoorCharge ? 'bg-[#810021]' : 'bg-stone-200'
                       }`}
                     >
-                      <Ticket size={20} color={hasDoorCharge ? '#F5F5F5' : '#57534e'} />
+                      <Ticket size={20} color={hasDoorCharge ? '#F7F5F2' : '#57534e'} />
                     </View>
                     <View className="flex-1">
                       <Text className="text-sm font-extrabold text-stone-900">
@@ -690,7 +690,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                   </View>
                   <View
                     className={`h-6 w-11 rounded-full p-0.5 transition-colors ${
-                      hasDoorCharge ? 'bg-[#800020]' : 'bg-stone-300'
+                      hasDoorCharge ? 'bg-[#810021]' : 'bg-stone-300'
                     }`}
                   >
                     <View
@@ -724,7 +724,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                           }}
                           keyboardType="numeric"
                           placeholder="300"
-                          className="w-full rounded-xl border border-stone-300 bg-white pl-8 pr-3.5 py-2.5 text-base font-bold text-stone-900 focus:border-[#800020]"
+                          className="w-full rounded-xl border border-stone-300 bg-white pl-8 pr-3.5 py-2.5 text-base font-bold text-stone-900 focus:border-[#810021]"
                           accessibilityLabel="Door charge price per guest"
                         />
                       </View>
@@ -744,13 +744,13 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                             }}
                             className={`px-2.5 py-1 rounded-lg border text-xs font-semibold ${
                               doorChargeAmount === preset
-                                ? 'border-[#800020] bg-rose-50 text-[#800020]'
+                                ? 'border-[#810021] bg-rose-50 text-[#810021]'
                                 : 'border-stone-200 bg-white text-stone-600'
                             }`}
                           >
                             <Text
                               className={`text-xs font-bold ${
-                                doorChargeAmount === preset ? 'text-[#800020]' : 'text-stone-600'
+                                doorChargeAmount === preset ? 'text-[#810021]' : 'text-stone-600'
                               }`}
                             >
                               ₱{preset}
@@ -778,7 +778,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                         >
                           <Text
                             className={`text-xs font-bold ${
-                              splitType === 'percentage' ? 'text-[#800020]' : 'text-stone-600'
+                              splitType === 'percentage' ? 'text-[#810021]' : 'text-stone-600'
                             }`}
                           >
                             Percentage Split (%)
@@ -800,7 +800,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                         >
                           <Text
                             className={`text-xs font-bold ${
-                              splitType === 'flat_per_ticket' ? 'text-[#800020]' : 'text-stone-600'
+                              splitType === 'flat_per_ticket' ? 'text-[#810021]' : 'text-stone-600'
                             }`}
                           >
                             Flat ₱ per Ticket
@@ -826,7 +826,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                                 setVenueSplitValue(String(100 - num));
                               }}
                               keyboardType="numeric"
-                              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-bold text-stone-900 focus:border-[#800020]"
+                              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-bold text-stone-900 focus:border-[#810021]"
                             />
                             <Text className="ml-2 font-bold text-stone-600">%</Text>
                           </View>
@@ -863,7 +863,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                                 setVenueSplitValue(String(Math.max(0, total - artistAmt)));
                               }}
                               keyboardType="numeric"
-                              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-bold text-stone-900 focus:border-[#800020]"
+                              className="w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-bold text-stone-900 focus:border-[#810021]"
                             />
                           </View>
                         </View>
@@ -900,7 +900,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
                             <Text className="text-xs font-bold text-stone-800">
                               Pro-Forma Settlement (Example: 50 Guests)
                             </Text>
-                            <Text className="text-xs font-extrabold text-[#800020]">
+                            <Text className="text-xs font-extrabold text-[#810021]">
                               Gross: ₱{simGross.toLocaleString()}
                             </Text>
                           </View>
@@ -953,12 +953,12 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
               disabled={isSubmitting}
               accessibilityRole="button"
               accessibilityLabel={event ? 'Save changes' : 'Schedule event'}
-              className="flex-row items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#800020] text-white active:bg-[#66001a] shadow-xs"
+              className="flex-row items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#810021] text-white active:bg-[#66001a] shadow-xs"
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="#F5F5F5" />
+                <ActivityIndicator size="small" color="#F7F5F2" />
               ) : (
-                <Check size={16} color="#F5F5F5" aria-hidden={true} />
+                <Check size={16} color="#F7F5F2" aria-hidden={true} />
               )}
               <Text className="text-xs font-bold text-white">
                 {isSubmitting ? 'Saving…' : event ? 'Save changes' : 'Schedule event'}

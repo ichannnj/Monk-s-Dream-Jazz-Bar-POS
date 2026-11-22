@@ -27,7 +27,7 @@ export const FloorSectionHeader: React.FC<FloorSectionHeaderProps> = ({
       ? 'bg-[#810021]/10 border-[#810021]/20'
       : badge?.tone === 'ready'
         ? 'bg-emerald-50 border-emerald-200'
-        : 'bg-[#FAF8F5] border-[#E7E5E4]';
+        : 'bg-[#EFECE6] border-[#E2DED6]';
 
   const badgeTextClasses =
     badge?.tone === 'wine'
@@ -44,23 +44,23 @@ export const FloorSectionHeader: React.FC<FloorSectionHeaderProps> = ({
         : 'bg-[#78716C]';
 
   return (
-    <View className="bg-white border border-[#E7E5E4] rounded-2xl px-4 py-3.5 mb-3.5 flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <View className="bg-white border border-[#E2DED6] rounded-2xl px-4 py-3.5 mb-3.5 flex-col md:flex-row md:items-center md:justify-between gap-3">
       <View className="flex-row items-center gap-3 min-w-0 flex-1">
         {onBack ? (
           <Pressable
             onPress={onBack}
-            className="min-h-[48px] min-w-[48px] px-3.5 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] flex-row items-center justify-center gap-1.5 active:opacity-85 shrink-0"
+            className="min-h-[48px] min-w-[48px] px-3.5 rounded-xl bg-[#EFECE6] border border-[#E2DED6] flex-row items-center justify-center gap-1.5 active:opacity-85 shrink-0"
             accessibilityRole="button"
             accessibilityLabel={backLabel}
           >
-            <ArrowLeft size={18} color="#1C1917" strokeWidth={2.2} />
-            <Text className="text-base font-semibold text-[#1C1917]">{backLabel}</Text>
+            <ArrowLeft size={18} color="#1A1617" strokeWidth={2.2} />
+            <Text className="text-base font-semibold text-[#1A1617]">{backLabel}</Text>
           </Pressable>
         ) : null}
 
         <View className="min-w-0 flex-1">
           <View className="flex-row items-center flex-wrap gap-2.5">
-            <Text className="text-pos-xl font-extrabold text-[#1C1917] tracking-tight">
+            <Text className="text-pos-xl font-extrabold text-[#1A1617] tracking-tight">
               {title}
             </Text>
 

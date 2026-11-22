@@ -160,7 +160,7 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
 
   return (
     <ScrollView
-      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#EFECE6] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* Header Bar */}
@@ -182,8 +182,8 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
               className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
               accessibilityLabel="Launch Timeclock Kiosk in new tab"
             >
-              <ExternalLink size={15} color="#800020" />
-              <Text className="ml-1.5 text-xs font-bold text-[#800020]">Timeclock ↗</Text>
+              <ExternalLink size={15} color="#810021" />
+              <Text className="ml-1.5 text-xs font-bold text-[#810021]">Timeclock ↗</Text>
             </Pressable>
           )}
 
@@ -193,7 +193,7 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
               className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
               accessibilityLabel="Go to Attendance & Payroll Ledger"
             >
-              <Clock size={15} color="#1c1917" />
+              <Clock size={15} color="#1A1617" />
               <Text className="ml-1.5 text-xs font-bold text-stone-800">Attendance →</Text>
             </Pressable>
           )}
@@ -278,7 +278,7 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                     <View
                       className={`h-11 w-11 items-center justify-center rounded-xl border ${
                         isAdmin
-                          ? 'bg-[#800020] border-[#800020]'
+                          ? 'bg-[#810021] border-[#810021]'
                           : isPosUser
                             ? 'bg-stone-900 border-stone-900'
                             : 'bg-stone-100 border-stone-200'
@@ -303,13 +303,13 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                         <View
                           className={`rounded-full px-2 py-0.5 border ${
                             isAdmin
-                              ? 'bg-stone-100 border-[#800020]/30'
+                              ? 'bg-stone-100 border-[#810021]/30'
                               : 'bg-stone-50 border-stone-200'
                           }`}
                         >
                           <Text
                             className={`text-xs font-semibold ${
-                              isAdmin ? 'text-[#800020]' : 'text-stone-700'
+                              isAdmin ? 'text-[#810021]' : 'text-stone-700'
                             }`}
                           >
                             {roleDisplay}
@@ -340,7 +340,7 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                       onPress={() => setEditingStaff(member)}
                       className="h-9 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-stone-50 active:bg-stone-100"
                     >
-                      <Edit3 size={14} color="#1c1917" />
+                      <Edit3 size={14} color="#1A1617" />
                       <Text className="ml-1 text-xs font-semibold text-stone-800">Edit</Text>
                     </Pressable>
 
@@ -353,8 +353,8 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                           : `Reset PIN for ${member.display_name}`
                       }
                     >
-                      <KeyRound size={14} color="#800020" />
-                      <Text className="ml-1 text-xs font-semibold text-[#800020]">PIN</Text>
+                      <KeyRound size={14} color="#810021" />
+                      <Text className="ml-1 text-xs font-semibold text-[#810021]">PIN</Text>
                     </Pressable>
 
                     <Pressable
@@ -366,7 +366,7 @@ export const AdminStaffView: React.FC<AdminStaffViewProps> = ({
                       }`}
                       accessibilityLabel={member.is_active ? 'Deactivate staff' : 'Activate staff'}
                     >
-                      <Power size={14} color={member.is_active ? '#78716c' : '#800020'} />
+                      <Power size={14} color={member.is_active ? '#78716c' : '#810021'} />
                     </Pressable>
                   </View>
                 </View>

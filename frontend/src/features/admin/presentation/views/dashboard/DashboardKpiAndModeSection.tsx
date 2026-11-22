@@ -33,10 +33,10 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
 
   return (
     <>
-      {/* 4 Operational KPI Cards (3-Color System: Sand, Charcoal, Burgundy #800020) */}
+      {/* 4 Operational KPI Cards (3-Color System: Sand, Charcoal, Burgundy #810021) */}
       <View className="flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-5">
         {/* Card 1: Net Sales Revenue (Focal Burgundy Card) */}
-        <View className="w-full sm:w-[48%] xl:flex-1 min-w-0 rounded-2xl bg-[#800020] p-5 sm:p-6 shadow-xs justify-between min-h-[180px]">
+        <View className="w-full sm:w-[48%] xl:flex-1 min-w-0 rounded-2xl bg-[#810021] p-5 sm:p-6 shadow-xs justify-between min-h-[180px]">
           <View className="min-w-0">
             <View className="flex-row items-center justify-between flex-wrap gap-2">
               <Text className="text-sm font-semibold tracking-wide text-white/90">Net Sales</Text>
@@ -57,7 +57,7 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
 
             <View className="mt-2 flex-row items-center flex-wrap gap-2">
               <View className="flex-row items-center rounded-md bg-white/20 px-2 py-0.5 shrink-0">
-                <TrendingUp size={14} color="#F5F5F5" />
+                <TrendingUp size={14} color="#F7F5F2" />
                 <Text className="ml-1 text-xs font-bold text-white">
                   {telemetry.salesGrowthPercent >= 0 ? '+' : ''}
                   {telemetry.salesGrowthPercent}%
@@ -104,7 +104,7 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
             </Text>
             <View className="mt-2 flex-row items-center flex-wrap gap-2">
               <View className="flex-row items-center rounded-md bg-stone-100 border border-stone-200 px-2 py-0.5 shrink-0">
-                <TrendingUp size={14} color="#800020" />
+                <TrendingUp size={14} color="#810021" />
                 <Text className="ml-1 text-xs font-bold text-stone-800">
                   {telemetry.averageCheckGrowthPercent >= 0 ? '+' : ''}
                   {telemetry.averageCheckGrowthPercent}%
@@ -188,13 +188,13 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
             <View className="mt-3 h-1.5 w-full rounded-full bg-stone-100 overflow-hidden">
               <View
                 style={{ width: `${Math.min(100, Math.max(5, telemetry.occupancyPercent))}%` }}
-                className="h-full rounded-full bg-[#800020]"
+                className="h-full rounded-full bg-[#810021]"
               />
             </View>
           </View>
           <View className="mt-4 pt-3 border-t border-stone-100 flex-row items-center justify-between flex-wrap gap-2">
             <View className="flex-row items-center">
-              <LayoutGrid size={14} color="#800020" />
+              <LayoutGrid size={14} color="#810021" />
               <Text className="ml-1.5 text-xs font-medium text-stone-700">
                 {telemetry.activeOpenTabs} open tab{telemetry.activeOpenTabs === 1 ? '' : 's'}
               </Text>
@@ -203,8 +203,8 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
               onPress={() => onNavigateRoute('tables')}
               className="px-2.5 py-1 flex-row items-center rounded-lg bg-stone-50 active:bg-stone-100"
             >
-              <Text className="text-xs font-bold text-[#800020]">Floor</Text>
-              <ArrowRight size={13} color="#800020" className="ml-1" />
+              <Text className="text-xs font-bold text-[#810021]">Floor</Text>
+              <ArrowRight size={13} color="#810021" className="ml-1" />
             </Pressable>
           </View>
         </View>
@@ -225,32 +225,32 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
           </View>
           <Pressable
             onPress={() => onSelectTimeframe('all')}
-            className="px-4 py-2 items-center justify-center rounded-xl bg-[#800020] active:bg-[#600018]"
+            className="px-4 py-2 items-center justify-center rounded-xl bg-[#810021] active:bg-[#600018]"
           >
             <Text className="text-xs font-bold text-white">View All-Time</Text>
           </Pressable>
         </View>
       )}
 
-      {/* Revenue Split Section (Minimal, 3-Color: Stone, Charcoal, Burgundy #800020) */}
+      {/* Revenue Split Section (Minimal, 3-Color: Stone, Charcoal, Burgundy #810021) */}
       <View className="w-full min-w-0 rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-6 shadow-xs overflow-hidden">
         <View className="flex-row items-center justify-between flex-wrap gap-3 mb-4">
           <View className="flex-row items-center gap-2.5">
-            <View className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-stone-200 items-center justify-center">
-              <Sparkles size={16} color="#800020" />
+            <View className="w-8 h-8 rounded-lg bg-[#EFECE6] border border-stone-200 items-center justify-center">
+              <Sparkles size={16} color="#810021" />
             </View>
             <Text className="text-lg font-bold text-stone-900">Revenue Split</Text>
           </View>
 
-          <View className="flex-row items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-stone-200">
+          <View className="flex-row items-center gap-1.5 px-3 py-1 rounded-full bg-[#EFECE6] border border-stone-200">
             {telemetry.activeOperatingMode === 'EVENT' ? (
               <>
-                <Sparkles size={13} color="#800020" />
-                <Text className="text-xs font-bold text-[#800020]">Event Mode</Text>
+                <Sparkles size={13} color="#810021" />
+                <Text className="text-xs font-bold text-[#810021]">Event Mode</Text>
               </>
             ) : (
               <>
-                <Coffee size={13} color="#1c1917" />
+                <Coffee size={13} color="#1A1617" />
                 <Text className="text-xs font-bold text-stone-900">Cafe Mode</Text>
               </>
             )}
@@ -260,7 +260,7 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
         {/* Minimal Progress Bar (Burgundy for Cafe, Charcoal for Event) */}
         <View className="mb-5">
           <View className="flex-row items-center justify-between text-xs mb-1.5">
-            <Text className="text-xs font-bold text-[#800020]">
+            <Text className="text-xs font-bold text-[#810021]">
               Cafe ({telemetry.cafePercentage || 0}%)
             </Text>
             <Text className="text-xs font-bold text-stone-900">
@@ -270,7 +270,7 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
           <View className="h-2.5 w-full bg-stone-100 rounded-full overflow-hidden flex-row">
             <View
               style={{ width: `${telemetry.cafePercentage || 0}%` }}
-              className="h-full bg-[#800020]"
+              className="h-full bg-[#810021]"
             />
             <View
               style={{ width: `${telemetry.eventPercentage || 0}%` }}
@@ -281,13 +281,13 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
 
         {/* 3 Unified Clean Cards */}
         <View className="flex-col md:flex-row gap-4">
-          <View className="flex-1 min-w-0 rounded-xl border border-stone-200/80 bg-[#FAF8F5] p-4 justify-between">
+          <View className="flex-1 min-w-0 rounded-xl border border-stone-200/80 bg-[#EFECE6] p-4 justify-between">
             <View className="min-w-0">
               <View className="flex-row items-center justify-between flex-wrap gap-2">
                 <Text className="text-xs font-bold text-stone-600 uppercase tracking-wider">
                   Cafe Sales
                 </Text>
-                <Text className="text-xs font-bold text-[#800020]">
+                <Text className="text-xs font-bold text-[#810021]">
                   {telemetry.cafePercentage || 0}%
                 </Text>
               </View>
@@ -309,7 +309,7 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
             </View>
           </View>
 
-          <View className="flex-1 min-w-0 rounded-xl border border-stone-200/80 bg-[#FAF8F5] p-4 justify-between">
+          <View className="flex-1 min-w-0 rounded-xl border border-stone-200/80 bg-[#EFECE6] p-4 justify-between">
             <View className="min-w-0">
               <View className="flex-row items-center justify-between flex-wrap gap-2">
                 <Text className="text-xs font-bold text-stone-600 uppercase tracking-wider">
@@ -337,7 +337,7 @@ export const DashboardKpiAndModeSection: React.FC<DashboardKpiAndModeSectionProp
             </View>
           </View>
 
-          <View className="flex-1 min-w-0 rounded-xl border border-stone-200/80 bg-[#FAF8F5] p-4 justify-between">
+          <View className="flex-1 min-w-0 rounded-xl border border-stone-200/80 bg-[#EFECE6] p-4 justify-between">
             <View className="min-w-0">
               <View className="flex-row items-center justify-between flex-wrap gap-2">
                 <Text className="text-xs font-bold text-stone-600 uppercase tracking-wider">

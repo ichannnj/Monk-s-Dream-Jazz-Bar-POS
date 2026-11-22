@@ -53,17 +53,17 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
     <View className="mb-5 gap-4">
       {/* Header Row */}
       <View className="flex-row items-center justify-between flex-wrap gap-3">
-        <Text className="text-2xl font-extrabold tracking-tight text-[#1C1917]">Inventory</Text>
+        <Text className="text-2xl font-extrabold tracking-tight text-[#1A1617]">Inventory</Text>
 
         <View className="flex-row items-center gap-2 flex-wrap">
           <Pressable
             onPress={handleExport}
-            className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-[#E7E5E4] bg-white px-4 active:opacity-80"
+            className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-[#E2DED6] bg-white px-4 active:opacity-80"
             accessibilityRole="button"
             accessibilityLabel="Export inventory valuation to Excel"
           >
             <FileSpreadsheet size={18} color="#810021" />
-            <Text className="ml-2 text-base font-bold text-[#1C1917]">Export</Text>
+            <Text className="ml-2 text-base font-bold text-[#1A1617]">Export</Text>
           </Pressable>
 
           {(activeTab === 'stock' || activeTab === 'grocery') && (
@@ -73,7 +73,7 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Add inventory item"
             >
-              <Plus size={18} color="#F5F5F5" />
+              <Plus size={18} color="#F7F5F2" />
               <Text className="ml-1.5 text-base font-bold text-white">Add Item</Text>
             </Pressable>
           )}
@@ -85,7 +85,7 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Add supplier"
             >
-              <Building2 size={18} color="#F5F5F5" />
+              <Building2 size={18} color="#F7F5F2" />
               <Text className="ml-1.5 text-base font-bold text-white">Add Supplier</Text>
             </Pressable>
           )}
@@ -94,12 +94,12 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
             <>
               <Pressable
                 onPress={onLogSpillage}
-                className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-[#E7E5E4] bg-white px-4 active:opacity-80"
+                className="min-h-[48px] flex-row items-center justify-center rounded-xl border border-[#E2DED6] bg-white px-4 active:opacity-80"
                 accessibilityRole="button"
                 accessibilityLabel="Log spillage or waste"
               >
                 <Trash2 size={18} color="#810021" />
-                <Text className="ml-1.5 text-base font-bold text-[#1C1917]">Log Waste</Text>
+                <Text className="ml-1.5 text-base font-bold text-[#1A1617]">Log Waste</Text>
               </Pressable>
 
               <Pressable
@@ -108,7 +108,7 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Start physical stocktake audit"
               >
-                <ClipboardCheck size={18} color="#F5F5F5" />
+                <ClipboardCheck size={18} color="#F7F5F2" />
                 <Text className="ml-1.5 text-base font-bold text-white">Stocktake</Text>
               </Pressable>
             </>
@@ -117,7 +117,7 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
       </View>
 
       {/* Scrollable Segmented Tab Bar */}
-      <View className="rounded-2xl bg-white p-1.5 border border-[#E7E5E4]">
+      <View className="rounded-2xl bg-white p-1.5 border border-[#E2DED6]">
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View className="flex-row items-center gap-1.5">
             {tabs.map((tab) => {
@@ -127,20 +127,20 @@ export const InventoryHeaderAndTabs: React.FC<InventoryHeaderAndTabsProps> = ({
                   key={tab.id}
                   onPress={() => setActiveTab(tab.id)}
                   className={`min-h-[48px] flex-row items-center justify-center px-4 rounded-xl ${
-                    isActive ? 'bg-[#810021]' : 'bg-transparent active:bg-[#FAF8F5]'
+                    isActive ? 'bg-[#810021]' : 'bg-transparent active:bg-[#EFECE6]'
                   }`}
                   accessibilityRole="tab"
                   accessibilityState={{ selected: isActive }}
                 >
                   <Text
-                    className={`text-base font-bold ${isActive ? 'text-white' : 'text-[#1C1917]'}`}
+                    className={`text-base font-bold ${isActive ? 'text-white' : 'text-[#1A1617]'}`}
                   >
                     {tab.label}
                   </Text>
                   {tab.count !== undefined && (
                     <View
                       className={`ml-2 rounded-full px-2 py-0.5 ${
-                        isActive ? 'bg-white/20' : 'bg-[#FAF8F5] border border-[#E7E5E4]'
+                        isActive ? 'bg-white/20' : 'bg-[#EFECE6] border border-[#E2DED6]'
                       }`}
                     >
                       <Text

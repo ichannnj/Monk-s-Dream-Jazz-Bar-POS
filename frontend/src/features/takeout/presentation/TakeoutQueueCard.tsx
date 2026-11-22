@@ -44,7 +44,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
                 Takeout #{order.ticketNumber}
               </Text>
             </View>
-            <Text className="text-pos-lg font-extrabold text-[#1C1917]" numberOfLines={1}>
+            <Text className="text-pos-lg font-extrabold text-[#1A1617]" numberOfLines={1}>
               {order.customerName}
             </Text>
           </View>
@@ -75,12 +75,12 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
         </View>
 
         {/* 2. Middle Row: Items Line + Amount & Payment Flag */}
-        <View className="flex-row items-center justify-between border-t border-[#E7E5E4]/80 pt-2.5 gap-3">
+        <View className="flex-row items-center justify-between border-t border-[#E2DED6]/80 pt-2.5 gap-3">
           <Text className="flex-1 text-base text-[#57534E]" numberOfLines={1}>
             {order.items.map((i) => `${i.quantity}x ${i.productName}`).join(', ')}
           </Text>
           <View className="items-end shrink-0">
-            <Text className="text-pos-lg font-extrabold text-[#1C1917] tabular-nums">
+            <Text className="text-pos-lg font-extrabold text-[#1A1617] tabular-nums">
               {formatCurrency(order.total)}
             </Text>
             <Text
@@ -116,7 +116,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
               accessibilityRole="button"
               accessibilityLabel={`Pay and collect order ${order.ticketNumber}`}
             >
-              <CreditCard size={18} color="#F5F5F5" strokeWidth={2.2} />
+              <CreditCard size={18} color="#F7F5F2" strokeWidth={2.2} />
               <Text className="text-base font-semibold text-white">Pay &amp; Collect</Text>
             </Pressable>
           )
@@ -124,7 +124,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
           <View className="flex-row gap-2.5">
             <Pressable
               onPress={() => onPayTakeout(order, false)}
-              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-white border border-[#E7E5E4] px-3 active:opacity-80"
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-white border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Collect payment now for order ${order.ticketNumber}`}
             >
@@ -133,23 +133,23 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
             </Pressable>
             <Pressable
               onPress={() => onMarkReady?.(order.id)}
-              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-3 active:opacity-80"
+              className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Mark order ${order.ticketNumber} as ready`}
             >
-              <CheckCircle2 size={18} color="#1C1917" strokeWidth={2.1} />
-              <Text className="text-base font-semibold text-[#1C1917]">Mark Ready</Text>
+              <CheckCircle2 size={18} color="#1A1617" strokeWidth={2.1} />
+              <Text className="text-base font-semibold text-[#1A1617]">Mark Ready</Text>
             </Pressable>
           </View>
         ) : (
           <Pressable
             onPress={() => onMarkReady?.(order.id)}
-            className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-4 active:opacity-80"
+            className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-4 active:opacity-80"
             accessibilityRole="button"
             accessibilityLabel={`Mark order ${order.ticketNumber} as ready`}
           >
-            <CheckCircle2 size={18} color="#1C1917" strokeWidth={2.1} />
-            <Text className="text-base font-semibold text-[#1C1917]">Mark Ready</Text>
+            <CheckCircle2 size={18} color="#1A1617" strokeWidth={2.1} />
+            <Text className="text-base font-semibold text-[#1A1617]">Mark Ready</Text>
           </Pressable>
         )}
       </View>

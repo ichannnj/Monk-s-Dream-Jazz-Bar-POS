@@ -101,7 +101,7 @@ export const DoorChargeEditorModal: React.FC<DoorChargeEditorModalProps> = ({
               </View>
             </View>
             <Pressable onPress={onClose} style={styles.closeBtn}>
-              <X size={18} color="#1C1917" />
+              <X size={18} color="#1A1617" />
             </Pressable>
           </View>
 
@@ -178,7 +178,7 @@ export const DoorChargeEditorModal: React.FC<DoorChargeEditorModalProps> = ({
                 isSubmitting && { opacity: 0.5 },
               ]}
             >
-              <Check size={18} color="#F5F5F5" strokeWidth={2.5} />
+              <Check size={18} color="#F7F5F2" strokeWidth={2.5} />
               <Text style={styles.saveBtnText}>{isSubmitting ? 'Saving...' : 'Save Cover'}</Text>
             </Pressable>
           </View>
@@ -200,11 +200,11 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 440,
     maxHeight: '96%',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1.5,
     borderColor: '#810021',
     alignItems: 'center',
@@ -230,7 +230,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   subtitle: {
     fontSize: 13,
@@ -241,9 +241,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -255,16 +255,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     padding: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
   },
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   hint: {
     fontSize: 12,
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 8,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
     borderColor: '#d6d3d1',
     alignItems: 'center',
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
   stepperBtnText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
     lineHeight: 20,
   },
   paxText: {
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   priceContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
     borderColor: '#d6d3d1',
     borderRadius: 8,
@@ -312,13 +312,13 @@ const styles = StyleSheet.create({
   currencyPrefix: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
     marginRight: 4,
   },
   priceInput: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
     width: 80,
     textAlign: 'right',
     padding: 0,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     padding: 16,
     borderRadius: 14,
     borderWidth: 1.5,
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   summaryValue: {
     fontSize: 18,
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderWidth: 1,
     borderColor: '#fca5a5',
   },
@@ -379,6 +379,6 @@ const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
 });

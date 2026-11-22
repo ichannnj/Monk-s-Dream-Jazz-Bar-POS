@@ -105,7 +105,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
     return (
       <>
-        <View className="w-full bg-white border-t border-[#E7E5E4] px-2 pt-1.5 pb-2 flex-row items-center justify-around">
+        <View className="w-full bg-white border-t border-[#E2DED6] px-2 pt-1.5 pb-2 flex-row items-center justify-around">
           {primaryTabs.map((item) => {
             const isActive = activeTab === item.id;
             const { Icon } = item;
@@ -194,26 +194,26 @@ export const Sidebar: React.FC<SidebarProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close menu"
             />
-            <View className="bg-white rounded-t-3xl border-t border-[#E7E5E4] px-4 pt-4 pb-6 max-h-[82%]">
-              <View className="flex-row items-center justify-between pb-3 mb-2 border-b border-[#E7E5E4]">
+            <View className="bg-white rounded-t-3xl border-t border-[#E2DED6] px-4 pt-4 pb-6 max-h-[82%]">
+              <View className="flex-row items-center justify-between pb-3 mb-2 border-b border-[#E2DED6]">
                 <View className="flex-row items-center gap-2.5">
-                  <View className="w-10 h-10 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center p-1">
+                  <View className="w-10 h-10 rounded-xl bg-[#EFECE6] border border-[#E2DED6] items-center justify-center p-1">
                     <ExpoImage
                       source={MONKS_DREAM_LOGO}
                       className="w-8 h-8 rounded-lg"
                       contentFit="contain"
                     />
                   </View>
-                  <Text className="text-pos-lg font-extrabold text-[#1C1917]">Workspace</Text>
+                  <Text className="text-pos-lg font-extrabold text-[#1A1617]">Workspace</Text>
                 </View>
 
                 <Pressable
                   onPress={() => setMoreSheetOpen(false)}
-                  className="min-h-[48px] min-w-[48px] rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center active:opacity-80"
+                  className="min-h-[48px] min-w-[48px] rounded-xl bg-[#EFECE6] border border-[#E2DED6] items-center justify-center active:opacity-80"
                   accessibilityRole="button"
                   accessibilityLabel="Close workspace menu"
                 >
-                  <X size={20} color="#1C1917" />
+                  <X size={20} color="#1A1617" />
                 </Pressable>
               </View>
 
@@ -235,7 +235,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         className={`min-h-[52px] rounded-xl px-4 py-3 flex-row items-center justify-between border active:opacity-85 ${
                           isActive
                             ? 'bg-[#810021]/10 border-[#810021]/25'
-                            : 'bg-[#FAF8F5] border-[#E7E5E4]'
+                            : 'bg-[#EFECE6] border-[#E2DED6]'
                         }`}
                         accessibilityRole="button"
                         accessibilityLabel={item.label}
@@ -243,12 +243,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <View className="flex-row items-center gap-3">
                           <Icon
                             size={20}
-                            color={isActive ? '#810021' : '#1C1917'}
+                            color={isActive ? '#810021' : '#1A1617'}
                             strokeWidth={2}
                           />
                           <Text
                             className={`text-base ${
-                              isActive ? 'font-bold text-[#810021]' : 'font-semibold text-[#1C1917]'
+                              isActive ? 'font-bold text-[#810021]' : 'font-semibold text-[#1A1617]'
                             }`}
                           >
                             {item.label}
@@ -272,7 +272,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   })}
 
                   {(onSwitchToAdmin || onLogout) && (
-                    <View className="border-t border-[#E7E5E4] mt-2 pt-3 gap-2">
+                    <View className="border-t border-[#E2DED6] mt-2 pt-3 gap-2">
                       {onSwitchToAdmin ? (
                         <Pressable
                           onPress={() => {
@@ -284,12 +284,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           accessibilityLabel="Back to Admin Dashboard"
                         >
                           <View className="flex-row items-center gap-3">
-                            <LayoutDashboard size={20} color="#F5F5F5" strokeWidth={2} />
+                            <LayoutDashboard size={20} color="#F7F5F2" strokeWidth={2} />
                             <Text className="text-base font-bold text-white">
                               Admin Back-Office
                             </Text>
                           </View>
-                          <ChevronRight size={18} color="#F5F5F5" />
+                          <ChevronRight size={18} color="#F7F5F2" />
                         </Pressable>
                       ) : null}
 
@@ -299,7 +299,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             setMoreSheetOpen(false);
                             onLogout();
                           }}
-                          className="min-h-[52px] rounded-xl px-4 py-3 flex-row items-center justify-between bg-white border border-[#E7E5E4] active:bg-[#FAF8F5]"
+                          className="min-h-[52px] rounded-xl px-4 py-3 flex-row items-center justify-between bg-white border border-[#E2DED6] active:bg-[#EFECE6]"
                           accessibilityRole="button"
                           accessibilityLabel="Switch Staff or Lock Terminal"
                         >
@@ -359,7 +359,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <View className="relative items-center justify-center">
                 <Icon
                   size={22}
-                  color={isActive ? '#F5F5F5' : '#d8b4bc'}
+                  color={isActive ? '#F7F5F2' : '#d8b4bc'}
                   strokeWidth={isActive ? 2.3 : 1.8}
                 />
                 {badgeCount > 0 ? (
@@ -390,11 +390,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {onSwitchToAdmin ? (
           <Pressable
             onPress={onSwitchToAdmin}
-            className="min-h-[48px] min-w-[48px] w-12 h-12 rounded-2xl bg-[#800020] border border-white/25 items-center justify-center active:opacity-85"
+            className="min-h-[48px] min-w-[48px] w-12 h-12 rounded-2xl bg-[#810021] border border-white/25 items-center justify-center active:opacity-85"
             accessibilityRole="button"
             accessibilityLabel="Back to Admin Dashboard"
           >
-            <LayoutDashboard size={20} color="#F5F5F5" />
+            <LayoutDashboard size={20} color="#F7F5F2" />
           </Pressable>
         ) : null}
 
@@ -406,7 +406,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Station Settings"
         >
-          <Settings size={20} color={activeTab === 'settings' ? '#F5F5F5' : '#d8b4bc'} />
+          <Settings size={20} color={activeTab === 'settings' ? '#F7F5F2' : '#d8b4bc'} />
         </Pressable>
 
         {onLogout ? (

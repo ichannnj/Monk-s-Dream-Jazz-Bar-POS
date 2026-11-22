@@ -22,7 +22,7 @@ export const AdminPageHeader: React.FC<AdminPageHeaderProps> = ({
       <View className="flex-row items-center gap-3">
         {Icon && (
           <View className="h-11 w-11 items-center justify-center rounded-xl bg-stone-100 border border-stone-200/80">
-            <Icon size={22} color="#6e1d2c" />
+            <Icon size={22} color="#810021" />
           </View>
         )}
         <View className="justify-center">

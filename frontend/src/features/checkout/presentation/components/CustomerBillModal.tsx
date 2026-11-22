@@ -116,7 +116,7 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close customer bill view"
             >
-              <X size={20} color="#1C1917" />
+              <X size={20} color="#1A1617" />
             </Pressable>
           </View>
 
@@ -297,7 +297,7 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel={`Proceed to settle payment for ${formatCurrency(grandTotal)}`}
               >
-                <CreditCard size={18} color="#F5F5F5" strokeWidth={2.4} />
+                <CreditCard size={18} color="#F7F5F2" strokeWidth={2.4} />
                 <Text style={styles.payBtnText}>Settle Tab · {formatCurrency(grandTotal)}</Text>
               </Pressable>
             )}

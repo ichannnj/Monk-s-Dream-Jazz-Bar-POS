@@ -30,8 +30,8 @@ export const CashDrawerWaterfallCard: React.FC<CashDrawerWaterfallCardProps> = (
     <View className="rounded-2xl border border-stone-200/80 bg-white p-6 shadow-xs">
       <View className="flex-row items-center justify-between mb-5 flex-wrap gap-2">
         <View className="flex-row items-center gap-3">
-          <View className="w-10 h-10 rounded-xl bg-[#800020]/10 items-center justify-center">
-            <Vault size={20} color="#800020" />
+          <View className="w-10 h-10 rounded-xl bg-[#810021]/10 items-center justify-center">
+            <Vault size={20} color="#810021" />
           </View>
           <View>
             <Text className="text-lg font-extrabold text-stone-900">

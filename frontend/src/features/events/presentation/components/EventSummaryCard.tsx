@@ -34,7 +34,7 @@ export const EventSummaryCard: React.FC<EventSummaryCardProps> = ({
             } as any)
           : undefined
       }
-      className={`group w-full flex-row items-center gap-3 rounded-xl border border-stone-200/80 bg-white p-3 shadow-xs hover:border-[#800020]/60 active:bg-stone-50 transition-colors ${
+      className={`group w-full flex-row items-center gap-3 rounded-xl border border-stone-200/80 bg-white p-3 shadow-xs hover:border-[#810021]/60 active:bg-stone-50 transition-colors ${
         compact ? 'min-h-[52px]' : 'min-h-[64px]'
       }`}
     >
@@ -52,7 +52,7 @@ export const EventSummaryCard: React.FC<EventSummaryCardProps> = ({
             accessibilityLabel={`${event.title} poster`}
           />
         ) : (
-          <Music size={compact ? 18 : 22} color="#800020" aria-hidden={true} />
+          <Music size={compact ? 18 : 22} color="#810021" aria-hidden={true} />
         )}
       </View>
 
@@ -78,7 +78,7 @@ export const EventSummaryCard: React.FC<EventSummaryCardProps> = ({
 
           {event.has_door_charge && (
             <View className="rounded bg-rose-50 px-1.5 py-0.5 border border-rose-200">
-              <Text className="text-[10px] font-extrabold text-[#800020]" numberOfLines={1}>
+              <Text className="text-[10px] font-extrabold text-[#810021]" numberOfLines={1}>
                 ₱{Number(event.door_charge_amount || 0).toFixed(0)} Door
               </Text>
             </View>
@@ -111,7 +111,7 @@ export const EventSummaryCard: React.FC<EventSummaryCardProps> = ({
 
         <Text
           numberOfLines={1}
-          className="text-base font-bold text-stone-900 leading-tight group-hover:text-[#800020] transition-colors"
+          className="text-base font-bold text-stone-900 leading-tight group-hover:text-[#810021] transition-colors"
         >
           {event.title}
         </Text>
@@ -127,7 +127,7 @@ export const EventSummaryCard: React.FC<EventSummaryCardProps> = ({
       {showtime ? (
         <View className="items-end justify-center flex-shrink-0 pl-1">
           <View className="flex-row items-center gap-1 bg-stone-50 border border-stone-200/80 px-2 py-1 rounded-md">
-            <Clock size={11} color="#800020" aria-hidden={true} />
+            <Clock size={11} color="#810021" aria-hidden={true} />
             <Text className="text-xs font-bold text-stone-800" numberOfLines={1}>
               {showtime}
             </Text>

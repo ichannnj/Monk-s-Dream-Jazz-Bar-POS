@@ -71,15 +71,15 @@ export const FohCommandBar: React.FC<FohCommandBarProps> = ({
                     ? 'bg-[#810021] border-[#810021]'
                     : hasUrgent
                       ? 'bg-emerald-50 border-emerald-300'
-                      : 'bg-white border-[#E7E5E4]'
+                      : 'bg-white border-[#E2DED6]'
                 }`}
                 accessibilityRole="tab"
                 accessibilityState={{ selected: isActive }}
               >
-                <Icon size={18} color={isActive ? '#F5F5F5' : hasUrgent ? '#065F46' : '#57534E'} />
+                <Icon size={18} color={isActive ? '#F7F5F2' : hasUrgent ? '#065F46' : '#57534E'} />
                 <Text
                   className={`text-base font-semibold ${
-                    isActive ? 'text-white' : hasUrgent ? 'text-emerald-900' : 'text-[#1C1917]'
+                    isActive ? 'text-white' : hasUrgent ? 'text-emerald-900' : 'text-[#1A1617]'
                   }`}
                 >
                   {pill.label}
@@ -90,7 +90,7 @@ export const FohCommandBar: React.FC<FohCommandBarProps> = ({
                       ? 'bg-white/20'
                       : hasUrgent
                         ? 'bg-emerald-200/80'
-                        : 'bg-[#FAF8F5] border border-[#E7E5E4]'
+                        : 'bg-[#EFECE6] border border-[#E2DED6]'
                   }`}
                 >
                   <Text

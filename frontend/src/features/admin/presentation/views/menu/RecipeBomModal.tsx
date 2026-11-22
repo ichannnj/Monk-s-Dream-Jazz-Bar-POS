@@ -173,7 +173,7 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
       <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90"
       >
         <Text className="text-base font-bold text-white">
           {isSubmitting ? 'Saving...' : 'Save Recipe'}
@@ -189,7 +189,7 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
         onClose={onClose}
         title="Recipe & Costing Breakdown"
         subtitle={`${product.name} • Price: ₱${basePrice.toFixed(2)}`}
-        icon={<Layers size={22} color="#800020" />}
+        icon={<Layers size={22} color="#810021" />}
         size="xl"
         footer={footer}
       >
@@ -197,11 +197,11 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
           {/* Live COGS Metric Bar */}
           <View className="flex-row items-center justify-between bg-stone-100 p-4 rounded-xl border border-stone-200">
             <View className="flex-row items-center space-x-2">
-              <DollarSign size={20} color="#800020" />
+              <DollarSign size={20} color="#810021" />
               <Text className="text-base font-medium text-stone-700 ml-1.5">
                 Calculated Cost (COGS):
               </Text>
-              <Text className="text-lg font-bold text-[#800020] ml-1">₱{totalCogs.toFixed(2)}</Text>
+              <Text className="text-lg font-bold text-[#810021] ml-1">₱{totalCogs.toFixed(2)}</Text>
             </View>
             <View className="flex-row items-center space-x-2">
               <Text className="text-base font-medium text-stone-700">Gross Margin:</Text>
@@ -232,7 +232,7 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
                   onPress={() => handleSelectScope(null)}
                   className={`mr-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${
                     selectedVariantId === null
-                      ? 'bg-[#800020] border-[#800020]'
+                      ? 'bg-[#810021] border-[#810021]'
                       : 'bg-white border-stone-200'
                   }`}
                 >
@@ -255,7 +255,7 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
                       key={v.id || `${v.temperature}-${v.size_label}`}
                       onPress={() => handleSelectScope(v.id || null)}
                       className={`mr-2 px-3 py-1.5 rounded-lg border text-xs font-bold ${
-                        isSelected ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-200'
+                        isSelected ? 'bg-[#810021] border-[#810021]' : 'bg-white border-stone-200'
                       }`}
                     >
                       <Text
@@ -279,10 +279,10 @@ export const RecipeBomModal: React.FC<RecipeBomModalProps> = ({
             </Text>
             <Pressable
               onPress={handleAddLine}
-              className="min-h-[48px] flex-row items-center rounded-xl bg-[#800020]/10 px-4 active:bg-[#800020]/20"
+              className="min-h-[48px] flex-row items-center rounded-xl bg-[#810021]/10 px-4 active:bg-[#810021]/20"
             >
-              <Plus size={18} color="#800020" />
-              <Text className="ml-1.5 text-base font-bold text-[#800020]">Add Ingredient</Text>
+              <Plus size={18} color="#810021" />
+              <Text className="ml-1.5 text-base font-bold text-[#810021]">Add Ingredient</Text>
             </Pressable>
           </View>
 

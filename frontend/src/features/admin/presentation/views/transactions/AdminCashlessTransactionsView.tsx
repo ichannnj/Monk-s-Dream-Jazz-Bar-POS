@@ -126,7 +126,7 @@ export const AdminCashlessTransactionsView: React.FC<AdminCashlessTransactionsVi
   const metrics = useMemo(() => computeCashlessMetrics(transactions), [transactions]);
 
   return (
-    <View className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8">
+    <View className="flex-1 bg-[#EFECE6] p-4 sm:p-6 lg:p-8">
       {/* 1. Header & Actions */}
       <View className="mb-5 flex-row items-center justify-between gap-3 flex-wrap">
         <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
@@ -137,7 +137,7 @@ export const AdminCashlessTransactionsView: React.FC<AdminCashlessTransactionsVi
           onPress={() => exportCashlessRegisterToExcel(filteredTransactions, timeframeLabel)}
           className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
         >
-          <FileSpreadsheet size={15} color="#800020" />
+          <FileSpreadsheet size={15} color="#810021" />
           <Text className="ml-1.5 text-xs font-bold text-stone-800">Export</Text>
         </Pressable>
       </View>
@@ -182,7 +182,7 @@ export const AdminCashlessTransactionsView: React.FC<AdminCashlessTransactionsVi
       <View className="flex-1">
         {isLoading ? (
           <View className="flex-1 items-center justify-center p-12">
-            <ActivityIndicator size="large" color="#800020" />
+            <ActivityIndicator size="large" color="#810021" />
             <Text className="mt-3 text-sm font-bold text-stone-600">
               Loading cashless transactions...
             </Text>

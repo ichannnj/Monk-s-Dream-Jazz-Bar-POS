@@ -19,8 +19,8 @@ export const DashboardAlertsSection: React.FC<DashboardAlertsSectionProps> = ({
         <View className="flex-row items-center gap-2">
           <Text className="text-lg font-bold text-stone-900">Attention</Text>
           {alerts.length > 0 && (
-            <View className="h-5 w-5 items-center justify-center rounded-full bg-[#FAF8F5] border border-stone-200">
-              <Text className="text-xs font-bold text-[#800020]">{alerts.length}</Text>
+            <View className="h-5 w-5 items-center justify-center rounded-full bg-[#EFECE6] border border-stone-200">
+              <Text className="text-xs font-bold text-[#810021]">{alerts.length}</Text>
             </View>
           )}
         </View>
@@ -47,7 +47,7 @@ export const DashboardAlertsSection: React.FC<DashboardAlertsSectionProps> = ({
             return (
               <View
                 key={alert.id}
-                className="flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-stone-200/80 bg-[#FAF8F5] p-3 gap-2"
+                className="flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-stone-200/80 bg-[#EFECE6] p-3 gap-2"
               >
                 <View className="flex-row items-center flex-1 min-w-0 gap-2.5">
                   <View className="rounded-md px-2 py-0.5 border border-stone-200 bg-white shrink-0">
@@ -68,7 +68,7 @@ export const DashboardAlertsSection: React.FC<DashboardAlertsSectionProps> = ({
                   onPress={() => onNavigateRoute(alert.targetRoute)}
                   className="px-2.5 py-1 items-center justify-center rounded-lg bg-white border border-stone-200 active:bg-stone-50 shrink-0 self-end sm:self-center"
                 >
-                  <Text className="text-xs font-bold text-[#800020]">View</Text>
+                  <Text className="text-xs font-bold text-[#810021]">View</Text>
                 </Pressable>
               </View>
             );

@@ -37,7 +37,7 @@ export const ScreenLoadingFallback: React.FC<ScreenLoadingFallbackProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
@@ -48,10 +48,10 @@ const styles = StyleSheet.create({
     paddingVertical: 32,
     paddingHorizontal: 24,
     borderRadius: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderWidth: 1,
-    borderColor: '#E7E5E4',
-    shadowColor: '#1C1917',
+    borderColor: '#E2DED6',
+    shadowColor: '#1A1617',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
     shadowRadius: 12,
@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
     textAlign: 'center',
     letterSpacing: 0.3,
   },

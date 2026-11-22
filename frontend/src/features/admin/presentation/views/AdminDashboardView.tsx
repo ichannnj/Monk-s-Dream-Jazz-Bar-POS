@@ -39,7 +39,7 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
   if (!telemetry && isLoading) {
     return (
-      <ScrollView className="flex-1 min-w-0 bg-[#FAF8F5]" showsVerticalScrollIndicator={false}>
+      <ScrollView className="flex-1 min-w-0 bg-[#EFECE6]" showsVerticalScrollIndicator={false}>
         <DashboardSkeleton />
       </ScrollView>
     );
@@ -47,14 +47,14 @@ export const AdminDashboardView: React.FC<AdminDashboardViewProps> = ({
 
   if (!telemetry) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#FAF8F5] p-6">
+      <View className="flex-1 items-center justify-center bg-[#EFECE6] p-6">
         <Text className="text-base font-semibold text-stone-600">No telemetry data available.</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView className="flex-1 min-w-0 bg-[#FAF8F5]" showsVerticalScrollIndicator={false}>
+    <ScrollView className="flex-1 min-w-0 bg-[#EFECE6]" showsVerticalScrollIndicator={false}>
       <View className="w-full min-w-0 max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6 overflow-hidden">
         {/* Minimal Header: Title & Timeframe Selector (Refresh button removed as this is a live dashboard) */}
         <View className="flex-row items-center justify-between pb-1 gap-3">

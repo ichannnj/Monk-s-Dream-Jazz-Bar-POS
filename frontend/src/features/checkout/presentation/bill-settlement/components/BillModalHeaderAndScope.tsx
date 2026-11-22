@@ -47,7 +47,7 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
               { width: 'auto', paddingHorizontal: 12, height: 38, borderRadius: 12 },
             ]}
           >
-            <Text style={{ fontSize: 13, fontWeight: '800', color: '#F5F5F5' }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: '#F7F5F2' }}>
               {isTakeout
                 ? `Takeout #${takeoutOrder?.ticketNumber || 'T-001'}`
                 : table
@@ -72,7 +72,7 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
           accessibilityRole="button"
           accessibilityLabel="Close billing modal"
         >
-          <X size={20} color="#1c1917" />
+          <X size={20} color="#1A1617" />
         </Pressable>
       </View>
 
@@ -94,7 +94,7 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
                 className={`flex-row items-center gap-1.5 px-3.5 py-2.5 rounded-xl border min-h-[44px] ${
                   isSelected
                     ? 'bg-[#810021] border-[#810021]'
-                    : 'bg-[#FAF8F5] border-stone-200 active:bg-stone-100'
+                    : 'bg-[#EFECE6] border-stone-200 active:bg-stone-100'
                 }`}
                 accessibilityRole="button"
                 accessibilityState={{ selected: isSelected }}
@@ -122,7 +122,7 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
             className={`flex-row items-center gap-1.5 px-3.5 py-2.5 rounded-xl border min-h-[44px] ${
               settlementMode === 'entire_table'
                 ? 'bg-[#810021] border-[#810021]'
-                : 'bg-[#FAF8F5] border-stone-200 active:bg-stone-100'
+                : 'bg-[#EFECE6] border-stone-200 active:bg-stone-100'
             }`}
             accessibilityRole="button"
             accessibilityState={{ selected: settlementMode === 'entire_table' }}
@@ -130,7 +130,7 @@ export const BillModalHeaderAndScope: React.FC<BillModalHeaderAndScopeProps> = (
           >
             <Layers
               size={14}
-              color={settlementMode === 'entire_table' ? '#F5F5F5' : '#810021'}
+              color={settlementMode === 'entire_table' ? '#F7F5F2' : '#810021'}
               strokeWidth={2.4}
             />
             <Text

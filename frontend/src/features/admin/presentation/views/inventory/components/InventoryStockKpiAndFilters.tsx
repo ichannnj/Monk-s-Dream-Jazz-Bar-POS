@@ -51,23 +51,23 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
   return (
     <View className="gap-4">
       {/* Quiet Ledger Summary Strip (2x2 mobile, 4-col desktop, single 1px border) */}
-      <View className="rounded-2xl border border-[#E7E5E4] bg-white overflow-hidden">
+      <View className="rounded-2xl border border-[#E2DED6] bg-white overflow-hidden">
         <View className="flex-row flex-wrap">
-          <View className="w-1/2 lg:w-1/4 p-4 border-b lg:border-b-0 border-r border-[#E7E5E4]">
+          <View className="w-1/2 lg:w-1/4 p-4 border-b lg:border-b-0 border-r border-[#E2DED6]">
             <Text className="text-base font-semibold text-[#78716C]">Stock Value</Text>
-            <Text className="text-xl font-extrabold text-[#1C1917] tabular-nums mt-1">
+            <Text className="text-xl font-extrabold text-[#1A1617] tabular-nums mt-1">
               {formatCurrency(totalValuation)}
             </Text>
           </View>
 
           <Pressable
             onPress={() => setStockStatusFilter(stockStatusFilter === 'IN_PAR' ? 'ALL' : 'IN_PAR')}
-            className={`w-1/2 lg:w-1/4 p-4 border-b lg:border-b-0 lg:border-r border-[#E7E5E4] ${
-              stockStatusFilter === 'IN_PAR' ? 'bg-[#FAF8F5]' : 'bg-white'
+            className={`w-1/2 lg:w-1/4 p-4 border-b lg:border-b-0 lg:border-r border-[#E2DED6] ${
+              stockStatusFilter === 'IN_PAR' ? 'bg-[#EFECE6]' : 'bg-white'
             }`}
           >
             <Text className="text-base font-semibold text-[#78716C]">In Par</Text>
-            <Text className="text-xl font-extrabold text-[#1C1917] tabular-nums mt-1">
+            <Text className="text-xl font-extrabold text-[#1A1617] tabular-nums mt-1">
               {inParItemsCount}
             </Text>
           </Pressable>
@@ -76,8 +76,8 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
             onPress={() =>
               setStockStatusFilter(stockStatusFilter === 'BELOW_PAR' ? 'ALL' : 'BELOW_PAR')
             }
-            className={`w-1/2 lg:w-1/4 p-4 border-r border-[#E7E5E4] ${
-              stockStatusFilter === 'BELOW_PAR' ? 'bg-[#FAF8F5]' : 'bg-white'
+            className={`w-1/2 lg:w-1/4 p-4 border-r border-[#E2DED6] ${
+              stockStatusFilter === 'BELOW_PAR' ? 'bg-[#EFECE6]' : 'bg-white'
             }`}
           >
             <Text className="text-base font-semibold text-[#78716C]">Below Par</Text>
@@ -91,7 +91,7 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
               setStockStatusFilter(stockStatusFilter === 'DEPLETED' ? 'ALL' : 'DEPLETED')
             }
             className={`w-1/2 lg:w-1/4 p-4 ${
-              stockStatusFilter === 'DEPLETED' ? 'bg-[#FAF8F5]' : 'bg-white'
+              stockStatusFilter === 'DEPLETED' ? 'bg-[#EFECE6]' : 'bg-white'
             }`}
           >
             <Text className="text-base font-semibold text-[#78716C]">Depleted</Text>
@@ -137,12 +137,12 @@ export const InventoryStockKpiAndFilters: React.FC<InventoryStockKpiAndFiltersPr
                     className={`min-h-[48px] px-4 rounded-xl border flex-row items-center justify-center ${
                       isActive
                         ? 'bg-[#810021] border-[#810021]'
-                        : 'bg-white border-[#E7E5E4] active:bg-[#FAF8F5]'
+                        : 'bg-white border-[#E2DED6] active:bg-[#EFECE6]'
                     }`}
                   >
                     <Text
                       className={`text-base font-bold tabular-nums ${
-                        isActive ? 'text-white' : 'text-[#1C1917]'
+                        isActive ? 'text-white' : 'text-[#1A1617]'
                       }`}
                     >
                       {pill.label} ({pill.count})

@@ -66,13 +66,13 @@ export const AdminBottomNav: React.FC<AdminBottomNavProps> = ({
             key={tab.label}
             onPress={tab.onPress}
             className={`flex-1 min-h-[48px] items-center justify-center py-1.5 rounded-xl transition-all ${
-              active ? 'bg-[#6e1d2c]/10' : 'active:bg-stone-100'
+              active ? 'bg-[#810021]/10' : 'active:bg-stone-100'
             }`}
             accessibilityRole="tab"
             accessibilityLabel={tab.label}
           >
             <View className="relative items-center justify-center">
-              <IconComp size={22} color={active ? '#6e1d2c' : '#78716c'} />
+              <IconComp size={22} color={active ? '#810021' : '#78716c'} />
               {tab.badgeCount && tab.badgeCount > 0 ? (
                 <View className="absolute -top-1.5 -right-3 h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-600 px-1 border border-white">
                   <Text className="text-base font-extrabold text-white leading-none">
@@ -83,7 +83,7 @@ export const AdminBottomNav: React.FC<AdminBottomNavProps> = ({
             </View>
             <Text
               className={`mt-1 text-base leading-none ${
-                active ? 'font-bold text-[#6e1d2c]' : 'font-medium text-stone-600'
+                active ? 'font-bold text-[#810021]' : 'font-medium text-stone-600'
               }`}
             >
               {tab.label}

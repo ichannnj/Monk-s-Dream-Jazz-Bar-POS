@@ -172,7 +172,7 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Clear photo"
           >
-            <X size={16} color="#F5F5F5" />
+            <X size={16} color="#F7F5F2" />
           </Pressable>
         )}
       </View>
@@ -193,10 +193,10 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
             activeTab === 'upload' ? 'bg-white shadow-xs' : ''
           }`}
         >
-          <UploadCloud size={16} color={activeTab === 'upload' ? '#800020' : '#78716c'} />
+          <UploadCloud size={16} color={activeTab === 'upload' ? '#810021' : '#78716c'} />
           <Text
             className={`ml-1.5 text-sm font-bold ${
-              activeTab === 'upload' ? 'text-[#800020]' : 'text-stone-600'
+              activeTab === 'upload' ? 'text-[#810021]' : 'text-stone-600'
             }`}
           >
             Upload File
@@ -209,10 +209,10 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
             activeTab === 'url' ? 'bg-white shadow-xs' : ''
           }`}
         >
-          <Link size={16} color={activeTab === 'url' ? '#800020' : '#78716c'} />
+          <Link size={16} color={activeTab === 'url' ? '#810021' : '#78716c'} />
           <Text
             className={`ml-1.5 text-sm font-bold ${
-              activeTab === 'url' ? 'text-[#800020]' : 'text-stone-600'
+              activeTab === 'url' ? 'text-[#810021]' : 'text-stone-600'
             }`}
           >
             URL &amp; Presets
@@ -244,11 +244,11 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
             disabled={isProcessing}
             className={`min-h-[110px] w-full items-center justify-center rounded-xl border-2 border-dashed p-4 transition-all ${
               isDragOver
-                ? 'border-[#800020] bg-rose-50/50'
+                ? 'border-[#810021] bg-rose-50/50'
                 : 'border-stone-300 bg-stone-50 active:bg-stone-100 hover:border-stone-400'
             }`}
           >
-            <UploadCloud size={28} color={isDragOver ? '#800020' : '#78716c'} />
+            <UploadCloud size={28} color={isDragOver ? '#810021' : '#78716c'} />
             <Text className="mt-2 text-sm font-bold text-stone-800">
               {isProcessing ? 'Optimizing image...' : 'Click to Browse or Drag & Drop'}
             </Text>
@@ -290,7 +290,7 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
 
           <View>
             <View className="flex-row items-center mb-1.5">
-              <Sparkles size={14} color="#800020" />
+              <Sparkles size={14} color="#810021" />
               <Text className="ml-1 text-xs font-bold text-stone-600 uppercase tracking-wide">
                 Curated Jazz Bar Presets
               </Text>
@@ -313,7 +313,7 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
                       }}
                       className={`h-16 w-28 overflow-hidden rounded-xl border relative ${
                         isSelected
-                          ? 'border-[#800020] ring-2 ring-[#800020]/20'
+                          ? 'border-[#810021] ring-2 ring-[#810021]/20'
                           : 'border-stone-200'
                       }`}
                     >
@@ -329,8 +329,8 @@ export const MenuImageUploadField: React.FC<MenuImageUploadFieldProps> = ({
                         </Text>
                       </View>
                       {isSelected && (
-                        <View className="absolute top-1 right-1 h-4 w-4 items-center justify-center rounded-full bg-[#800020]">
-                          <Check size={10} color="#F5F5F5" strokeWidth={3} />
+                        <View className="absolute top-1 right-1 h-4 w-4 items-center justify-center rounded-full bg-[#810021]">
+                          <Check size={10} color="#F7F5F2" strokeWidth={3} />
                         </View>
                       )}
                     </Pressable>

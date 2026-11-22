@@ -43,7 +43,7 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
     const label = channel || method || 'ONLINE';
     const upper = label.toUpperCase();
 
-    let icon = <QrCode size={12} color="#1c1917" />;
+    let icon = <QrCode size={12} color="#1A1617" />;
     let text = label;
 
     if (upper.includes('GCASH')) {
@@ -54,10 +54,10 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
       text = 'QRPH';
     } else if (upper.includes('BANK')) {
       text = 'Bank Transfer';
-      icon = <Building2 size={12} color="#1c1917" />;
+      icon = <Building2 size={12} color="#1A1617" />;
     } else if (upper.includes('CARD')) {
       text = 'Card';
-      icon = <CreditCard size={12} color="#1c1917" />;
+      icon = <CreditCard size={12} color="#1A1617" />;
     }
 
     return (
@@ -76,14 +76,14 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
           {hasRef ? (
             <Pressable
               onPress={() => onCopyRef(item.referenceNumber!)}
-              className="flex-row items-center rounded-lg bg-[#FAF8F5] border border-stone-300 px-2.5 py-1 active:bg-stone-100"
+              className="flex-row items-center rounded-lg bg-[#EFECE6] border border-stone-300 px-2.5 py-1 active:bg-stone-100"
               accessibilityLabel={`Reference Number ${item.referenceNumber}. Tap to copy.`}
             >
               <Text className="text-xs font-bold text-stone-900 tracking-wider font-mono">
                 REF #{item.referenceNumber}
               </Text>
               {copiedRef === item.referenceNumber ? (
-                <Check size={12} color="#800020" className="ml-1.5" />
+                <Check size={12} color="#810021" className="ml-1.5" />
               ) : (
                 <Copy size={12} color="#78716c" className="ml-1.5" />
               )}
@@ -96,11 +96,11 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
 
           {getChannelBadge(item.paymentChannel, item.paymentMethod)}
 
-          <View className="rounded-lg px-2 py-0.5 flex-row items-center border border-stone-200 bg-[#FAF8F5]">
+          <View className="rounded-lg px-2 py-0.5 flex-row items-center border border-stone-200 bg-[#EFECE6]">
             {isEvent ? (
-              <Sparkles size={11} color="#800020" />
+              <Sparkles size={11} color="#810021" />
             ) : (
-              <Coffee size={11} color="#1c1917" />
+              <Coffee size={11} color="#1A1617" />
             )}
             <Text className="ml-1 text-xs font-bold text-stone-700">
               {isEvent ? 'Event' : 'Cafe'}
@@ -140,7 +140,7 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
 
       {/* Expandable Line Items Preview */}
       {isExpanded && item.items && item.items.length > 0 && (
-        <View className="mt-2.5 rounded-lg bg-[#FAF8F5] p-2.5 border border-stone-200/80">
+        <View className="mt-2.5 rounded-lg bg-[#EFECE6] p-2.5 border border-stone-200/80">
           <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mb-1.5">
             Ordered Line Items ({item.items.length}):
           </Text>
@@ -181,9 +181,9 @@ export const CashlessTransactionCard: React.FC<CashlessTransactionCardProps> = (
           className="min-h-[44px] flex-row items-center rounded-xl bg-white border border-stone-200 px-3 active:bg-stone-50"
         >
           {reprintingId === item.id ? (
-            <ActivityIndicator size="small" color="#800020" />
+            <ActivityIndicator size="small" color="#810021" />
           ) : (
-            <RotateCw size={13} color="#800020" />
+            <RotateCw size={13} color="#810021" />
           )}
           <Text className="ml-1.5 text-xs font-bold text-stone-800">Reprint Receipt</Text>
         </Pressable>

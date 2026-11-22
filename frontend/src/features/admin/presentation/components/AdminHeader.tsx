@@ -67,7 +67,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
         {/* Non-blocking Slow Connection / Offline Indicator */}
         {isSlow && (
           <View className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 border border-stone-300">
-            <View className="h-2 w-2 rounded-full bg-[#800020] animate-pulse" />
+            <View className="h-2 w-2 rounded-full bg-[#810021] animate-pulse" />
             <Text className="text-xs font-semibold text-stone-700">
               {isOffline ? 'Offline' : 'Slow connection'}
             </Text>
@@ -87,15 +87,15 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           onPress={onToggleOperatingMode}
           className={`h-11 px-3.5 flex-row items-center justify-center rounded-xl border transition-all active:scale-[0.98] ${
             operatingMode === 'EVENT'
-              ? 'bg-[#800020] border-[#800020]'
+              ? 'bg-[#810021] border-[#810021]'
               : 'bg-stone-50 border-stone-200'
           }`}
           accessibilityLabel={`Switch operating mode. Current: ${operatingMode}`}
         >
           {operatingMode === 'EVENT' ? (
-            <Flame size={17} color="#F5F5F5" />
+            <Flame size={17} color="#F7F5F2" />
           ) : (
-            <Sun size={17} color="#1c1917" />
+            <Sun size={17} color="#1A1617" />
           )}
           <Text
             className={`ml-2 text-sm font-bold whitespace-nowrap ${
@@ -113,7 +113,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
             className="h-11 px-3.5 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 transition-all active:scale-[0.98]"
             accessibilityLabel="Switch to Floor POS"
           >
-            <Layers size={17} color="#1c1917" />
+            <Layers size={17} color="#1A1617" />
             <Text className="hidden sm:inline ml-2 text-sm font-bold text-stone-900 whitespace-nowrap">
               Floor POS
             </Text>
@@ -126,14 +126,14 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           className="h-11 flex-row items-center rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 px-2.5 active:bg-stone-100 transition-all active:scale-[0.98]"
           accessibilityLabel="Open Admin Profile"
         >
-          <View className="h-7 w-7 items-center justify-center rounded-full bg-[#800020] flex-shrink-0">
+          <View className="h-7 w-7 items-center justify-center rounded-full bg-[#810021] flex-shrink-0">
             <Text className="text-[11px] font-bold text-white tracking-wider">{staffInitials}</Text>
           </View>
           <View className="hidden md:flex ml-2 justify-center max-w-[120px]">
             <Text className="text-xs font-bold text-stone-900 leading-tight" numberOfLines={1}>
               {staffFirstName}
             </Text>
-            <Text className="text-[10px] font-semibold text-[#800020] uppercase" numberOfLines={1}>
+            <Text className="text-[10px] font-semibold text-[#810021] uppercase" numberOfLines={1}>
               {staffRole}
             </Text>
           </View>
@@ -146,7 +146,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Log out of admin console"
         >
-          <LogOut size={17} color="#800020" />
+          <LogOut size={17} color="#810021" />
         </Pressable>
       </View>
     </View>

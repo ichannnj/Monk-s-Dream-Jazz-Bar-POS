@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 440,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     padding: 24,
     shadowColor: '#000000',
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   noticeBox: {
     flexDirection: 'row',
     gap: 10,
-    backgroundColor: '#fdf5f6',
+    backgroundColor: '#F5EBEF',
     borderWidth: 1,
     borderColor: '#f7e8eb',
     borderRadius: 12,
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   dismissBtnText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 14,
     fontWeight: '700',
   },

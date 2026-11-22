@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 580,
     maxHeight: '96%',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 28,
     padding: 18,
     shadowColor: '#000000',
@@ -36,16 +36,16 @@ export const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   headerSubtitle: {
     fontSize: 14,
@@ -56,9 +56,9 @@ export const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -71,7 +71,7 @@ export const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
     marginBottom: 8,
   },
   modeRow: {
@@ -84,11 +84,11 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
   },
   modeBtnActive: {
     backgroundColor: '#810021',
@@ -100,7 +100,7 @@ export const styles = StyleSheet.create({
     color: '#44403c',
   },
   modeBtnTextActive: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   tabListGroup: {
     gap: 8,
@@ -111,14 +111,14 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     minHeight: 48,
   },
   tabPickerCardSelected: {
     borderColor: '#810021',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
   },
   tabPickerLeft: {
     flexDirection: 'row',
@@ -148,7 +148,7 @@ export const styles = StyleSheet.create({
   tabGuestName: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   tabItemsPreview: {
     fontSize: 12,
@@ -162,7 +162,7 @@ export const styles = StyleSheet.create({
   },
   emptyTabsNote: {
     padding: 12,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 14,
   },
   emptyTabsText: {
@@ -174,13 +174,13 @@ export const styles = StyleSheet.create({
     gap: 8,
   },
   reasonChip: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     paddingHorizontal: 14,
     paddingVertical: 10,
     minHeight: 44,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -194,7 +194,7 @@ export const styles = StyleSheet.create({
     color: '#44403c',
   },
   reasonChipTextSelected: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontWeight: '700',
   },
   destinationHeaderRow: {
@@ -215,9 +215,9 @@ export const styles = StyleSheet.create({
     paddingVertical: 6,
     minHeight: 36,
     borderRadius: 10,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
   },
   areaPillActive: {
     backgroundColor: '#810021',
@@ -229,7 +229,7 @@ export const styles = StyleSheet.create({
     color: '#78716C',
   },
   areaPillTextActive: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   tableGrid: {
     flexDirection: 'row',
@@ -244,16 +244,16 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    backgroundColor: '#FAF8F5',
-    borderColor: '#e7e5e4',
+    backgroundColor: '#EFECE6',
+    borderColor: '#E2DED6',
   },
   targetCardEmpty: {
-    backgroundColor: '#F5F5F5',
-    borderColor: '#e7e5e4',
+    backgroundColor: '#F7F5F2',
+    borderColor: '#E2DED6',
   },
   targetCardOccupied: {
-    backgroundColor: '#FAF8F5',
-    borderColor: '#e7e5e4',
+    backgroundColor: '#EFECE6',
+    borderColor: '#E2DED6',
   },
   targetCardSelected: {
     borderColor: '#810021',
@@ -262,10 +262,10 @@ export const styles = StyleSheet.create({
   targetCode: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   targetCodeSelected: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   targetStatus: {
     fontSize: 12,
@@ -278,7 +278,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: '#e7e5e4',
+    borderTopColor: '#E2DED6',
     paddingTop: 14,
     marginTop: 8,
   },
@@ -307,9 +307,9 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 18,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -335,6 +335,6 @@ export const styles = StyleSheet.create({
   confirmBtnText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
 });

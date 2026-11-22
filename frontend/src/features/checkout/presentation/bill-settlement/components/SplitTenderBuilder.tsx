@@ -85,7 +85,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
       {/* Allocation Progress Card */}
       <View
         style={{
-          backgroundColor: '#FAF8F5',
+          backgroundColor: '#EFECE6',
           borderRadius: 14,
           padding: 14,
           marginBottom: 14,
@@ -94,7 +94,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
             ? '#86efac'
             : balance.isOverAllocated
               ? '#fca5a5'
-              : '#e7e5e4',
+              : '#E2DED6',
         }}
       >
         <View
@@ -152,7 +152,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
           style={{
             height: 6,
             borderRadius: 3,
-            backgroundColor: '#e7e5e4',
+            backgroundColor: '#E2DED6',
             overflow: 'hidden',
           }}
         >
@@ -192,7 +192,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
           <View
             key={tender.id}
             style={{
-              backgroundColor: '#F5F5F5',
+              backgroundColor: '#F7F5F2',
               borderRadius: 14,
               padding: 12,
               marginBottom: 10,
@@ -283,7 +283,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 4,
-                  backgroundColor: '#FAF8F5',
+                  backgroundColor: '#EFECE6',
                   paddingHorizontal: 10,
                   paddingVertical: 10,
                   borderRadius: 10,
@@ -361,7 +361,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                             style={{
                               fontSize: 11,
                               fontWeight: '700',
-                              color: isSel ? '#F5F5F5' : '#374151',
+                              color: isSel ? '#F7F5F2' : '#374151',
                             }}
                           >
                             {ch.name}
@@ -384,11 +384,11 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                         flexDirection: 'row',
                         alignItems: 'center',
                         justifyContent: 'space-between',
-                        backgroundColor: '#FAF8F5',
+                        backgroundColor: '#EFECE6',
                         borderRadius: 10,
                         padding: 8,
                         borderWidth: 1,
-                        borderColor: '#e7e5e4',
+                        borderColor: '#E2DED6',
                         gap: 8,
                       }}
                     >
@@ -400,7 +400,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                               width: 36,
                               height: 36,
                               borderRadius: 6,
-                              backgroundColor: '#F5F5F5',
+                              backgroundColor: '#F7F5F2',
                             }}
                             resizeMode="contain"
                           />
@@ -409,7 +409,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                         )}
                         <View style={{ flex: 1 }}>
                           <Text
-                            style={{ fontSize: 12, fontWeight: '800', color: '#1C1917' }}
+                            style={{ fontSize: 12, fontWeight: '800', color: '#1A1617' }}
                             numberOfLines={1}
                           >
                             {currentChannel.name} • {currentChannel.account_name}
@@ -430,7 +430,7 @@ export const SplitTenderBuilder: React.FC<SplitTenderBuilderProps> = ({
                             flexDirection: 'row',
                             alignItems: 'center',
                             gap: 4,
-                            backgroundColor: '#F5F5F5',
+                            backgroundColor: '#F7F5F2',
                             paddingHorizontal: 8,
                             paddingVertical: 6,
                             borderRadius: 8,

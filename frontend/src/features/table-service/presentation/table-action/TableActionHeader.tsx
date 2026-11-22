@@ -26,7 +26,7 @@ export const TableActionHeader: React.FC<TableActionHeaderProps> = ({ table, onC
         <View className="flex-1 min-w-0">
           <View className="flex-row items-center gap-2 flex-wrap">
             {tabCount > 1 ? (
-              <View className="px-2.5 py-1 rounded-lg bg-[#fdf2f4] border border-[#810021]/20">
+              <View className="px-2.5 py-1 rounded-lg bg-[#F5EBEF] border border-[#810021]/20">
                 <Text className="text-sm font-extrabold text-[#810021]">
                   {tabCount} Tabs · {formatCurrency(tableTotal)}
                 </Text>
@@ -45,11 +45,11 @@ export const TableActionHeader: React.FC<TableActionHeaderProps> = ({ table, onC
 
       <Pressable
         onPress={onClose}
-        className="min-w-[48px] min-h-[48px] rounded-xl bg-[#FAF8F5] border border-stone-200 items-center justify-center active:bg-stone-100"
+        className="min-w-[48px] min-h-[48px] rounded-xl bg-[#EFECE6] border border-stone-200 items-center justify-center active:bg-stone-100"
         accessibilityRole="button"
         accessibilityLabel="Close modal"
       >
-        <X size={20} color="#1c1917" />
+        <X size={20} color="#1A1617" />
       </Pressable>
     </View>
   );

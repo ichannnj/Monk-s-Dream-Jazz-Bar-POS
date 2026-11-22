@@ -28,7 +28,7 @@ export const OrderEntryTopBar: React.FC<OrderEntryTopBarProps> = ({
             accessibilityRole="button"
             accessibilityLabel="Back to menu catalog"
           >
-            <ChevronLeft size={18} color="#1c1917" />
+            <ChevronLeft size={18} color="#1A1617" />
             <Text style={localStyles.backButtonText}>Menu</Text>
           </Pressable>
         ) : null}
@@ -58,7 +58,7 @@ const localStyles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#f5f5f4',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
@@ -66,6 +66,6 @@ const localStyles = StyleSheet.create({
   backButtonText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1c1917',
+    color: '#1A1617',
   },
 });

@@ -129,7 +129,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               accessibilityLabel="Close event details"
               className="h-9 w-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 active:bg-black/70 backdrop-blur-sm"
             >
-              <X size={18} color="#F5F5F5" aria-hidden={true} />
+              <X size={18} color="#F7F5F2" aria-hidden={true} />
             </Pressable>
           </View>
 
@@ -144,7 +144,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               />
               <View className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               <View className="absolute bottom-3 left-4 right-4 flex-row items-center justify-between">
-                <View className="bg-[#800020] px-2.5 py-0.5 rounded-md">
+                <View className="bg-[#810021] px-2.5 py-0.5 rounded-md">
                   <Text className="text-[10px] font-bold text-white uppercase tracking-wider">
                     {event.status.replace('_', ' ')}
                   </Text>
@@ -161,10 +161,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
             <View className="p-5 pb-3 border-b border-stone-100 flex-row items-center justify-between">
               <View className="flex-row items-center gap-2">
                 <View className="h-10 w-10 rounded-xl bg-rose-50 border border-rose-200 items-center justify-center">
-                  <Music size={20} color="#800020" aria-hidden={true} />
+                  <Music size={20} color="#810021" aria-hidden={true} />
                 </View>
                 <View>
-                  <Text className="text-xs font-bold text-[#800020] uppercase tracking-wider">
+                  <Text className="text-xs font-bold text-[#810021] uppercase tracking-wider">
                     {event.status.replace('_', ' ')}
                   </Text>
                   {event.genre ? (
@@ -183,7 +183,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                 {event.title}
               </Text>
               {event.performer_name ? (
-                <Text className="text-sm sm:text-base font-semibold text-[#800020] mt-0.5">
+                <Text className="text-sm sm:text-base font-semibold text-[#810021] mt-0.5">
                   {event.performer_name}
                 </Text>
               ) : null}
@@ -200,8 +200,8 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
               {showtime ? (
                 <View className="flex-row items-center gap-1.5 bg-rose-50/70 border border-rose-200 px-3 py-1.5 rounded-xl">
-                  <Clock size={13} color="#800020" aria-hidden={true} />
-                  <Text className="text-xs font-bold text-[#800020]">{showtime}</Text>
+                  <Clock size={13} color="#810021" aria-hidden={true} />
+                  <Text className="text-xs font-bold text-[#810021]">{showtime}</Text>
                 </View>
               ) : null}
             </View>
@@ -285,7 +285,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
               <View className="pt-2 border-t border-stone-100 space-y-2.5">
                 <View className="flex-row items-center justify-between">
                   <View className="flex-row items-center gap-1.5">
-                    <Ticket size={15} color="#800020" />
+                    <Ticket size={15} color="#810021" />
                     <Text className="text-xs font-extrabold text-stone-900 uppercase tracking-wider">
                       Door Charge & Artist Settlement
                     </Text>
@@ -343,10 +343,10 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                       </Text>
                     </View>
                     <View className="bg-rose-50/70 p-2 rounded-xl border border-rose-200/60 items-center">
-                      <Text className="text-[10px] uppercase font-bold text-[#800020]">
+                      <Text className="text-[10px] uppercase font-bold text-[#810021]">
                         Artist Share
                       </Text>
-                      <Text className="text-sm font-extrabold text-[#800020] mt-0.5">
+                      <Text className="text-sm font-extrabold text-[#810021] mt-0.5">
                         {isLoadingSummary
                           ? '…'
                           : `₱${Number(summary?.artist_share || 0).toLocaleString()}`}
@@ -374,9 +374,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                       ) : (
                         <Pressable
                           onPress={() => setIsPayoutModalOpen(true)}
-                          className="w-full py-2 px-3 rounded-xl bg-[#800020] active:bg-[#66001a] items-center justify-center flex-row gap-1.5 shadow-xs"
+                          className="w-full py-2 px-3 rounded-xl bg-[#810021] active:bg-[#66001a] items-center justify-center flex-row gap-1.5 shadow-xs"
                         >
-                          <Ticket size={14} color="#F5F5F5" />
+                          <Ticket size={14} color="#F7F5F2" />
                           <Text className="text-xs font-bold text-white">
                             Mark Artist Paid & Settle Door Charge
                           </Text>
@@ -458,9 +458,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                       }}
                       accessibilityRole="button"
                       accessibilityLabel="Edit event"
-                      className="flex-row items-center gap-1.5 rounded-xl bg-[#800020] px-4 py-2 text-white active:bg-[#66001a]"
+                      className="flex-row items-center gap-1.5 rounded-xl bg-[#810021] px-4 py-2 text-white active:bg-[#66001a]"
                     >
-                      <Edit2 size={14} color="#F5F5F5" aria-hidden={true} />
+                      <Edit2 size={14} color="#F7F5F2" aria-hidden={true} />
                       <Text className="text-xs font-bold text-white">Edit event</Text>
                     </Pressable>
                   ) : null}
@@ -508,7 +508,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   Total Tickets Sold:{' '}
                   <Text className="font-bold text-stone-900">{summary?.tickets_sold ?? 0}</Text>
                 </Text>
-                <Text className="text-sm font-extrabold text-[#800020] pt-1 border-t border-rose-200/60">
+                <Text className="text-sm font-extrabold text-[#810021] pt-1 border-t border-rose-200/60">
                   Payout Due: ₱{Number(summary?.artist_share || 0).toLocaleString()}
                 </Text>
               </View>
@@ -524,7 +524,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   placeholderTextColor="#a8a29e"
                   multiline
                   numberOfLines={2}
-                  className="w-full rounded-xl border border-stone-300 bg-white p-2.5 text-xs text-stone-900 focus:border-[#800020]"
+                  className="w-full rounded-xl border border-stone-300 bg-white p-2.5 text-xs text-stone-900 focus:border-[#810021]"
                 />
               </View>
 
@@ -552,12 +552,12 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                     }
                   }}
                   disabled={isSubmittingPayout}
-                  className="px-4 py-2 rounded-xl bg-[#800020] active:bg-[#66001a] flex-row items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-[#810021] active:bg-[#66001a] flex-row items-center gap-1.5"
                 >
                   {isSubmittingPayout ? (
-                    <ActivityIndicator size="small" color="#F5F5F5" />
+                    <ActivityIndicator size="small" color="#F7F5F2" />
                   ) : (
-                    <CheckCircle2 size={14} color="#F5F5F5" />
+                    <CheckCircle2 size={14} color="#F7F5F2" />
                   )}
                   <Text className="text-xs font-bold text-white">
                     {isSubmittingPayout ? 'Recording...' : 'Confirm Paid'}

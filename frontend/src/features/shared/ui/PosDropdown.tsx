@@ -64,7 +64,7 @@ export function PosDropdown<T extends string = string>({
   const getButtonContainerClass = () => {
     switch (variant) {
       case 'wine':
-        return 'bg-[#800020] border-[#800020] active:opacity-90';
+        return 'bg-[#810021] border-[#810021] active:opacity-90';
       case 'dark':
         return 'bg-stone-900 border-stone-900 active:opacity-90';
       case 'burgundy-nav':
@@ -79,7 +79,7 @@ export function PosDropdown<T extends string = string>({
     }
   };
 
-  const iconColor = isSolidVariant ? '#F5F5F5' : '#800020';
+  const iconColor = isSolidVariant ? '#F7F5F2' : '#810021';
   const chevronColor = isSolidVariant ? '#f5d0fe' : '#57534e';
 
   return (
@@ -181,7 +181,7 @@ export function PosDropdown<T extends string = string>({
                   const OptionIcon = option.icon;
 
                   const optionIconColor = isSelected
-                    ? '#800020'
+                    ? '#810021'
                     : option.variant === 'danger'
                       ? '#be123c'
                       : option.variant === 'success'
@@ -199,7 +199,7 @@ export function PosDropdown<T extends string = string>({
                       }}
                       className={`min-h-[52px] flex-row items-center justify-between rounded-2xl px-4 py-3 border ${
                         isSelected
-                          ? 'bg-[#800020]/10 border-[#800020]/30'
+                          ? 'bg-[#810021]/10 border-[#810021]/30'
                           : 'bg-white border-transparent active:bg-stone-100'
                       }`}
                       accessibilityRole="menuitem"
@@ -209,7 +209,7 @@ export function PosDropdown<T extends string = string>({
                         {OptionIcon ? (
                           <View
                             className={`w-10 h-10 rounded-xl items-center justify-center mr-3 ${
-                              isSelected ? 'bg-[#800020]/15' : 'bg-stone-100'
+                              isSelected ? 'bg-[#810021]/15' : 'bg-stone-100'
                             }`}
                           >
                             <OptionIcon size={20} color={optionIconColor} strokeWidth={2.2} />
@@ -226,7 +226,7 @@ export function PosDropdown<T extends string = string>({
                             <Text
                               className={`text-base ${
                                 isSelected
-                                  ? 'font-extrabold text-[#800020]'
+                                  ? 'font-extrabold text-[#810021]'
                                   : option.variant === 'danger'
                                     ? 'font-bold text-rose-700'
                                     : 'font-bold text-stone-900'
@@ -238,7 +238,7 @@ export function PosDropdown<T extends string = string>({
                               <View
                                 className={`rounded-lg px-2 py-0.5 ${
                                   isSelected
-                                    ? 'bg-[#800020]'
+                                    ? 'bg-[#810021]'
                                     : 'bg-stone-100 border border-stone-200'
                                 }`}
                               >
@@ -263,7 +263,7 @@ export function PosDropdown<T extends string = string>({
                         </View>
                       </View>
 
-                      {isSelected ? <Check size={20} color="#800020" strokeWidth={2.6} /> : null}
+                      {isSelected ? <Check size={20} color="#810021" strokeWidth={2.6} /> : null}
                     </Pressable>
                   );
                 })}

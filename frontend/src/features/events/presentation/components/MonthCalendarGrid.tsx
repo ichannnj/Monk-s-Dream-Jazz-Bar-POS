@@ -145,9 +145,9 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
                     }
                     className={`relative w-full aspect-square rounded-xl overflow-hidden flex-col justify-between p-1 border transition-colors ${
                       isSelected
-                        ? 'border-[#800020] ring-2 ring-[#800020] ring-inset shadow-xs'
+                        ? 'border-[#810021] ring-2 ring-[#810021] ring-inset shadow-xs'
                         : cell.isToday
-                          ? 'border-[#800020]/40 bg-rose-50/20'
+                          ? 'border-[#810021]/40 bg-rose-50/20'
                           : cell.isCurrentMonth
                             ? 'border-stone-200/80 bg-stone-50/40 active:bg-stone-100'
                             : 'border-stone-100 bg-stone-50/10 opacity-30'
@@ -173,9 +173,9 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
                           posterUrl
                             ? 'text-white drop-shadow-sm'
                             : isSelected
-                              ? 'text-[#800020]'
+                              ? 'text-[#810021]'
                               : cell.isToday
-                                ? 'text-[#800020]'
+                                ? 'text-[#810021]'
                                 : cell.isCurrentMonth
                                   ? 'text-stone-800'
                                   : 'text-stone-400'
@@ -185,7 +185,7 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
                       </Text>
 
                       {hasEvents && !posterUrl ? (
-                        <View className="h-1.5 w-1.5 rounded-full bg-[#800020]" />
+                        <View className="h-1.5 w-1.5 rounded-full bg-[#810021]" />
                       ) : null}
                     </View>
 
@@ -194,12 +194,12 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
                       {hasEvents ? (
                         <View
                           className={`rounded px-1 py-0.2 ${
-                            posterUrl ? 'bg-black/70' : 'bg-[#800020]/10'
+                            posterUrl ? 'bg-black/70' : 'bg-[#810021]/10'
                           }`}
                         >
                           <Text
                             className={`text-[8px] font-black ${
-                              posterUrl ? 'text-amber-200' : 'text-[#800020]'
+                              posterUrl ? 'text-amber-200' : 'text-[#810021]'
                             }`}
                             numberOfLines={1}
                           >
@@ -221,7 +221,7 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
         <View className="rounded-2xl border border-stone-200/90 bg-white p-3.5 sm:p-4 shadow-xs space-y-3">
           <View className="flex-row items-center justify-between pb-2 border-b border-stone-100">
             <View>
-              <Text className="text-[11px] font-bold text-[#800020] uppercase tracking-wider">
+              <Text className="text-[11px] font-bold text-[#810021] uppercase tracking-wider">
                 {selectedDateStr === todayStr ? 'Today' : 'Selected Date'}
               </Text>
               <Text className="text-base font-bold text-stone-900">
@@ -234,9 +234,9 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
                 onPress={() => onAddEvent(selectedDateStr)}
                 accessibilityRole="button"
                 accessibilityLabel={`Schedule event on ${formatShortDate(selectedDateStr)}`}
-                className="flex-row items-center gap-1.5 rounded-xl bg-[#800020] px-3 py-1.5 text-white active:bg-[#66001a]"
+                className="flex-row items-center gap-1.5 rounded-xl bg-[#810021] px-3 py-1.5 text-white active:bg-[#66001a]"
               >
-                <Plus size={14} color="#F5F5F5" aria-hidden={true} />
+                <Plus size={14} color="#F7F5F2" aria-hidden={true} />
                 <Text className="text-xs font-bold text-white">Add</Text>
               </Pressable>
             ) : null}
@@ -307,7 +307,7 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
                 <Text
                   className={`text-xs font-semibold ${
                     cell.isToday
-                      ? 'h-6 w-6 rounded-full bg-[#800020] text-center font-bold text-white leading-6 text-[11px]'
+                      ? 'h-6 w-6 rounded-full bg-[#810021] text-center font-bold text-white leading-6 text-[11px]'
                       : cell.isCurrentMonth
                         ? 'text-stone-800'
                         : 'text-stone-400'
@@ -339,7 +339,7 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
                       onPress={() => onSelectEvent(ev)}
                       accessibilityRole="button"
                       accessibilityLabel={`View ${ev.title}`}
-                      className="group/card relative overflow-hidden rounded-lg border border-stone-200/90 bg-white hover:border-[#800020] active:bg-rose-50 transition-colors shadow-2xs"
+                      className="group/card relative overflow-hidden rounded-lg border border-stone-200/90 bg-white hover:border-[#810021] active:bg-rose-50 transition-colors shadow-2xs"
                       style={
                         Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined
                       }
@@ -365,7 +365,7 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
                         </View>
                       ) : (
                         <View className="flex-row items-center gap-1 bg-rose-50/90 p-1 sm:p-1.5 border-b border-rose-100">
-                          <Music size={11} color="#800020" aria-hidden={true} />
+                          <Music size={11} color="#810021" aria-hidden={true} />
                           <Text
                             numberOfLines={1}
                             className="flex-1 text-[10px] sm:text-[11px] font-bold text-stone-900"
@@ -379,8 +379,8 @@ export const MonthCalendarGrid: React.FC<MonthCalendarGridProps> = ({
                       <View className="flex-row items-center justify-between bg-white px-1.5 py-0.5 border-t border-stone-100">
                         {showtime ? (
                           <View className="flex-row items-center gap-0.5">
-                            <Clock size={9} color="#800020" aria-hidden={true} />
-                            <Text className="text-[9px] sm:text-[10px] font-bold text-[#800020]">
+                            <Clock size={9} color="#810021" aria-hidden={true} />
+                            <Text className="text-[9px] sm:text-[10px] font-bold text-[#810021]">
                               {showtime.split('–')[0]?.trim()}
                             </Text>
                           </View>

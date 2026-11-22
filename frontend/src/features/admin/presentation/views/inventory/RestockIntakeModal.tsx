@@ -114,9 +114,9 @@ export const RestockIntakeModal: React.FC<RestockIntakeModalProps> = ({
       <Pressable
         onPress={onClose}
         disabled={isSubmitting}
-        className="min-h-[48px] px-5 rounded-xl border border-[#E7E5E4] bg-white items-center justify-center active:opacity-80"
+        className="min-h-[48px] px-5 rounded-xl border border-[#E2DED6] bg-white items-center justify-center active:opacity-80"
       >
-        <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
+        <Text className="text-base font-bold text-[#1A1617]">Cancel</Text>
       </Pressable>
 
       <Pressable
@@ -127,7 +127,7 @@ export const RestockIntakeModal: React.FC<RestockIntakeModalProps> = ({
         <Text className="text-base font-bold text-white">
           {isSubmitting ? 'Saving...' : 'Confirm Delivery'}
         </Text>
-        <ArrowRight size={18} color="#F5F5F5" style={{ marginLeft: 8 }} />
+        <ArrowRight size={18} color="#F7F5F2" style={{ marginLeft: 8 }} />
       </Pressable>
     </View>
   );
@@ -144,7 +144,7 @@ export const RestockIntakeModal: React.FC<RestockIntakeModalProps> = ({
     >
       <View className="gap-4">
         {/* Item Snapshot */}
-        <View className="flex-row items-center gap-3 rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] p-3.5">
+        <View className="flex-row items-center gap-3 rounded-xl border border-[#E2DED6] bg-[#EFECE6] p-3.5">
           {item.reference_image_url ? (
             <Image
               source={{ uri: item.reference_image_url }}
@@ -153,12 +153,12 @@ export const RestockIntakeModal: React.FC<RestockIntakeModalProps> = ({
               cachePolicy="memory-disk"
             />
           ) : (
-            <View className="h-[52px] w-[52px] rounded-xl border border-[#E7E5E4] bg-white items-center justify-center">
+            <View className="h-[52px] w-[52px] rounded-xl border border-[#E2DED6] bg-white items-center justify-center">
               <Package size={22} color="#78716C" />
             </View>
           )}
           <View className="flex-1 min-w-0">
-            <Text className="text-base font-bold text-[#1C1917]" numberOfLines={1}>
+            <Text className="text-base font-bold text-[#1A1617]" numberOfLines={1}>
               {item.name}
             </Text>
             <Text className="text-base text-[#78716C] tabular-nums">
@@ -171,9 +171,9 @@ export const RestockIntakeModal: React.FC<RestockIntakeModalProps> = ({
         {suggestedQty > 0 && (
           <Pressable
             onPress={() => setQty(String(suggestedQty))}
-            className="min-h-[48px] flex-row items-center justify-between rounded-xl border border-[#E7E5E4] bg-white px-4 active:opacity-80"
+            className="min-h-[48px] flex-row items-center justify-between rounded-xl border border-[#E2DED6] bg-white px-4 active:opacity-80"
           >
-            <Text className="text-base font-medium text-[#1C1917]">
+            <Text className="text-base font-medium text-[#1A1617]">
               Suggested buy to reach target
             </Text>
             <Text className="text-base font-bold text-[#810021] tabular-nums">
@@ -216,7 +216,7 @@ export const RestockIntakeModal: React.FC<RestockIntakeModalProps> = ({
         {/* Supplier & Invoice Ref */}
         <View className="flex-col sm:flex-row gap-3">
           <View className="flex-1">
-            <Text className="text-base font-semibold text-[#1C1917] mb-1.5">Supplier</Text>
+            <Text className="text-base font-semibold text-[#1A1617] mb-1.5">Supplier</Text>
             <PosDropdown
               mode="select"
               options={supplierOptions}
@@ -237,10 +237,10 @@ export const RestockIntakeModal: React.FC<RestockIntakeModalProps> = ({
 
         {/* Live Weighted MAC Preview */}
         {hasValidPreview && (
-          <View className="rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] p-4 gap-2">
+          <View className="rounded-xl border border-[#E2DED6] bg-[#EFECE6] p-4 gap-2">
             <View className="flex-row items-center justify-between">
               <Text className="text-base text-[#78716C]">New Stock Balance</Text>
-              <Text className="text-base font-bold text-[#1C1917] tabular-nums">
+              <Text className="text-base font-bold text-[#1A1617] tabular-nums">
                 {projectedStock.toFixed(2)} {item.unit}
               </Text>
             </View>
@@ -250,9 +250,9 @@ export const RestockIntakeModal: React.FC<RestockIntakeModalProps> = ({
                 {formatCurrency(projectedMac)}/{item.unit}
               </Text>
             </View>
-            <View className="flex-row items-center justify-between pt-2 border-t border-[#E7E5E4]">
-              <Text className="text-base font-semibold text-[#1C1917]">Delivery Total</Text>
-              <Text className="text-lg font-extrabold text-[#1C1917] tabular-nums">
+            <View className="flex-row items-center justify-between pt-2 border-t border-[#E2DED6]">
+              <Text className="text-base font-semibold text-[#1A1617]">Delivery Total</Text>
+              <Text className="text-lg font-extrabold text-[#1A1617] tabular-nums">
                 {formatCurrency(lineTotal)}
               </Text>
             </View>

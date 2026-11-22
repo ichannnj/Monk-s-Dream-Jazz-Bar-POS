@@ -146,7 +146,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
                       padding: 6,
                     }}
                   >
-                    <X size={14} color="#F5F5F5" />
+                    <X size={14} color="#F7F5F2" />
                   </Pressable>
                 ) : null}
               </View>
@@ -197,7 +197,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
                   flex: 1,
                   paddingVertical: 8,
                   alignItems: 'center',
-                  backgroundColor: activeTab === 'upload' ? '#F5F5F5' : 'transparent',
+                  backgroundColor: activeTab === 'upload' ? '#F7F5F2' : 'transparent',
                   borderRadius: 8,
                   shadowColor: '#000',
                   shadowOpacity: activeTab === 'upload' ? 0.05 : 0,
@@ -220,7 +220,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
                   flex: 1,
                   paddingVertical: 8,
                   alignItems: 'center',
-                  backgroundColor: activeTab === 'url' ? '#F5F5F5' : 'transparent',
+                  backgroundColor: activeTab === 'url' ? '#F7F5F2' : 'transparent',
                   borderRadius: 8,
                   shadowColor: '#000',
                   shadowOpacity: activeTab === 'url' ? 0.05 : 0,
@@ -256,7 +256,7 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
                   }}
                 >
                   <UploadCloud size={28} color="#832238" />
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#1c1917', marginTop: 8 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1617', marginTop: 8 }}>
                     Choose image from device
                   </Text>
                   <Text style={{ fontSize: 11, color: '#78716c', marginTop: 2 }}>
@@ -324,10 +324,10 @@ export const AdminItemImageModal: React.FC<AdminItemImageModalProps> = ({
               accessibilityLabel="Save photo to database"
             >
               {isSaving ? (
-                <ActivityIndicator size="small" color="#F5F5F5" />
+                <ActivityIndicator size="small" color="#F7F5F2" />
               ) : (
                 <>
-                  <Check size={16} color="#F5F5F5" strokeWidth={2.4} />
+                  <Check size={16} color="#F7F5F2" strokeWidth={2.4} />
                   <Text style={styles.saveBtnText}>Save to Menu &amp; Database</Text>
                 </>
               )}

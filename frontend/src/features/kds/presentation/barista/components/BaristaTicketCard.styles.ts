@@ -3,7 +3,7 @@ import { styles as badgeStyles } from './BaristaTicketBadges.styles';
 
 const baseStyles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 16,
     padding: 14,
     marginBottom: 14,
@@ -159,7 +159,7 @@ const baseStyles = StyleSheet.create({
   specialNoteBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fdf2f4',
+    backgroundColor: '#F5EBEF',
     borderRadius: 8,
     paddingVertical: 7,
     paddingHorizontal: 10,
@@ -215,7 +215,7 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryWineButtonText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 14,
     fontWeight: '800',
     letterSpacing: 0.3,
@@ -226,7 +226,7 @@ const baseStyles = StyleSheet.create({
     gap: 6,
   },
   fohStatusButton: {
-    backgroundColor: '#fdf2f4',
+    backgroundColor: '#F5EBEF',
     borderWidth: 1.5,
     borderColor: '#fbcfe8',
     paddingVertical: 10,
@@ -269,7 +269,7 @@ const baseStyles = StyleSheet.create({
     borderRadius: 8,
   },
   recallButtonText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -283,7 +283,7 @@ const baseStyles = StyleSheet.create({
     gap: 4,
   },
   dismissButtonText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -335,7 +335,7 @@ const baseStyles = StyleSheet.create({
     color: '#6b7280',
   },
   cancelTicketButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderWidth: 1.5,
     borderColor: '#fca5a5',
     paddingVertical: 10,
@@ -357,7 +357,7 @@ const baseStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   dismissCancelledButtonText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 13,
     fontWeight: '800',
     letterSpacing: 0.2,

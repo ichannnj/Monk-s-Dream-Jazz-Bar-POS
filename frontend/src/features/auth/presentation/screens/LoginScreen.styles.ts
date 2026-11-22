@@ -32,7 +32,7 @@ export const styles = StyleSheet.create({
   },
   // Floating Card inspired by modern minimal card UI
   cardContainer: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 28,
     overflow: 'hidden',
     shadowColor: '#2b0f16',
@@ -58,7 +58,7 @@ export const styles = StyleSheet.create({
 
   // ---------------- LEFT PANE: Clean Form ----------------
   formPane: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     justifyContent: 'center',
   },
   formPaneTablet: {
@@ -154,7 +154,7 @@ export const styles = StyleSheet.create({
     minHeight: 44, // Touch target invariant
   },
   modeToggleTabActive: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
@@ -204,9 +204,9 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     borderRadius: 28,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     paddingHorizontal: 18,
     height: 54,
   },
@@ -222,7 +222,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16, // Invariant: >= 16px to prevent iOS Safari auto-zoom
     fontWeight: '500',
-    color: '#1c1917',
+    color: '#1A1617',
     paddingVertical: 0,
   },
   roundedTextInputMobile: {
@@ -267,7 +267,7 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.08,
   },
   submitButtonText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 16,
     fontWeight: '700',
     letterSpacing: 1.2,
@@ -419,7 +419,7 @@ export const styles = StyleSheet.create({
     }),
   },
   heroTagline: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 16,
     lineHeight: 22,
     textAlign: 'center',

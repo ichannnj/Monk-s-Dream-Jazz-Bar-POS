@@ -88,7 +88,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           <View className="flex-row items-center justify-between border-b border-stone-200 bg-stone-50 px-4 sm:px-6 py-3.5 sm:py-4">
             <View className="flex-row items-center space-x-3 sm:space-x-3.5 flex-1 pr-3">
               {icon && (
-                <View className="h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-[#800020]/10 border border-[#800020]/20">
+                <View className="h-10 w-10 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-[#810021]/10 border border-[#810021]/20">
                   {icon}
                 </View>
               )}

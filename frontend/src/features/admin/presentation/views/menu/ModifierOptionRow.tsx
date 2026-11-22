@@ -87,7 +87,7 @@ export const ModifierOptionRow: React.FC<ModifierOptionRowProps> = ({
                 onPress={() => onChange(index, 'inventory_item_id', inv.id)}
                 className={`min-h-[48px] px-3.5 items-center justify-center rounded-xl border transition-all ${
                   isSel
-                    ? 'bg-[#800020] border-[#800020]'
+                    ? 'bg-[#810021] border-[#810021]'
                     : 'bg-white border-stone-300 active:bg-stone-100'
                 }`}
               >

@@ -144,7 +144,7 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close open table tab"
             >
-              <X size={20} color="#1c1917" />
+              <X size={20} color="#1A1617" />
             </Pressable>
           </View>
 
@@ -217,7 +217,7 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                       borderRadius: 14,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: '#e7e5e4',
+                      backgroundColor: '#E2DED6',
                     }}
                     accessibilityRole="button"
                     accessibilityLabel="Clear name"
@@ -270,7 +270,7 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                       includeDoorCharge && styles.doorChargeCheckActive,
                     ]}
                   >
-                    {includeDoorCharge && <Check size={14} color="#F5F5F5" strokeWidth={3} />}
+                    {includeDoorCharge && <Check size={14} color="#F7F5F2" strokeWidth={3} />}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.doorChargeTitle}>
@@ -291,14 +291,14 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                       marginTop: 8,
                       paddingHorizontal: 12,
                       paddingVertical: 8,
-                      backgroundColor: '#FAF8F5',
+                      backgroundColor: '#EFECE6',
                       borderRadius: 12,
                       borderWidth: 1,
-                      borderColor: '#e7e5e4',
+                      borderColor: '#E2DED6',
                     }}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#1C1917' }}>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1617' }}>
                         Pax:
                       </Text>
                       <Pressable
@@ -307,14 +307,14 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                           width: 32,
                           height: 32,
                           borderRadius: 8,
-                          backgroundColor: '#F5F5F5',
+                          backgroundColor: '#F7F5F2',
                           borderWidth: 1,
                           borderColor: '#d6d3d1',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
-                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1C1917' }}>
+                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1617' }}>
                           -
                         </Text>
                       </Pressable>
@@ -335,35 +335,35 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
                           width: 32,
                           height: 32,
                           borderRadius: 8,
-                          backgroundColor: '#F5F5F5',
+                          backgroundColor: '#F7F5F2',
                           borderWidth: 1,
                           borderColor: '#d6d3d1',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
-                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1C1917' }}>
+                        <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#1A1617' }}>
                           +
                         </Text>
                       </Pressable>
                     </View>
 
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#1C1917' }}>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1617' }}>
                         ₱ / head:
                       </Text>
                       <TextInput
                         style={{
                           width: 72,
                           height: 32,
-                          backgroundColor: '#F5F5F5',
+                          backgroundColor: '#F7F5F2',
                           borderRadius: 8,
                           borderWidth: 1,
                           borderColor: '#d6d3d1',
                           textAlign: 'center',
                           fontSize: 14,
                           fontWeight: '700',
-                          color: '#1C1917',
+                          color: '#1A1617',
                           padding: 0,
                         }}
                         value={doorChargePrice}
@@ -388,7 +388,7 @@ export const OpenTableTabModal: React.FC<OpenTableTabModalProps> = ({
               style={[styles.confirmBtn, !selectedTableId && styles.confirmBtnDisabled]}
               disabled={!selectedTableId}
             >
-              <Plus size={18} color="#F5F5F5" strokeWidth={2.4} />
+              <Plus size={18} color="#F7F5F2" strokeWidth={2.4} />
               <Text style={styles.confirmBtnText}>{isSplitTab ? 'Split Tab' : 'Open Tab'}</Text>
             </Pressable>
           </View>
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     width: '100%',
     maxWidth: 560,
@@ -439,9 +439,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -487,7 +487,7 @@ const styles = StyleSheet.create({
     color: '#1f2937',
   },
   tableChipTextSelected: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   tableChipSub: {
     fontSize: 16,
@@ -522,9 +522,9 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   guestCountTextActive: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   actionRow: {
     flexDirection: 'row',
@@ -550,9 +550,9 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 14,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -578,21 +578,21 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   doorChargeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
     borderRadius: 12,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     marginBottom: 16,
     gap: 12,
   },
   doorChargeRowActive: {
-    backgroundColor: '#fdf2f4',
+    backgroundColor: '#F5EBEF',
     borderColor: '#810021',
   },
   doorChargeCheck: {
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     borderColor: '#9ca3af',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
   },
   doorChargeCheckActive: {
     backgroundColor: '#810021',

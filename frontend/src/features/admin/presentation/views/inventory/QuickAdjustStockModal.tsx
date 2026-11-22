@@ -107,9 +107,9 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
           <Pressable
             onPress={onClose}
             disabled={isSubmitting}
-            className="min-h-[48px] px-5 rounded-xl border border-[#E7E5E4] bg-white items-center justify-center active:opacity-80"
+            className="min-h-[48px] px-5 rounded-xl border border-[#E2DED6] bg-white items-center justify-center active:opacity-80"
           >
-            <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
+            <Text className="text-base font-bold text-[#1A1617]">Cancel</Text>
           </Pressable>
 
           <Pressable
@@ -120,23 +120,23 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
             <Text className="text-base font-bold text-white">
               {isSubmitting ? 'Saving...' : 'Save Adjustment'}
             </Text>
-            <ArrowRight size={18} color="#F5F5F5" style={{ marginLeft: 8 }} />
+            <ArrowRight size={18} color="#F7F5F2" style={{ marginLeft: 8 }} />
           </Pressable>
         </View>
       }
     >
       <View className="gap-4">
         {/* Item Snapshot */}
-        <View className="rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] p-4 flex-row items-center justify-between gap-3">
+        <View className="rounded-xl border border-[#E2DED6] bg-[#EFECE6] p-4 flex-row items-center justify-between gap-3">
           <View className="flex-1 min-w-0">
-            <Text className="text-base font-bold text-[#1C1917]" numberOfLines={1}>
+            <Text className="text-base font-bold text-[#1A1617]" numberOfLines={1}>
               {item.name}
             </Text>
             <Text className="text-base text-[#78716C]">{item.sku}</Text>
           </View>
           <View className="items-end">
             <Text className="text-base text-[#78716C]">Recorded</Text>
-            <Text className="text-lg font-extrabold text-[#1C1917] tabular-nums">
+            <Text className="text-lg font-extrabold text-[#1A1617] tabular-nums">
               {currentStockNum.toFixed(2)} {item.unit}
             </Text>
           </View>
@@ -160,7 +160,7 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
         <View
           className={`flex-row items-center justify-between flex-wrap gap-2 rounded-xl px-4 py-3 border ${
             variance === 0
-              ? 'bg-[#FAF8F5] border-[#E7E5E4]'
+              ? 'bg-[#EFECE6] border-[#E2DED6]'
               : variance > 0
                 ? 'bg-emerald-50 border-emerald-200'
                 : 'bg-rose-50 border-rose-200'
@@ -172,7 +172,7 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
             ) : (
               <AlertTriangle size={18} color={variance > 0 ? '#10b981' : '#b32638'} />
             )}
-            <Text className="text-base font-bold text-[#1C1917] tabular-nums">
+            <Text className="text-base font-bold text-[#1A1617] tabular-nums">
               {variance === 0
                 ? 'Matches recorded stock'
                 : `Variance: ${variance > 0 ? '+' : ''}${variance.toFixed(2)} ${item.unit}`}
@@ -180,7 +180,7 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
           </View>
 
           {variance !== 0 && (
-            <Text className="text-base font-bold text-[#1C1917] tabular-nums">
+            <Text className="text-base font-bold text-[#1A1617] tabular-nums">
               {varianceCost > 0 ? '+' : ''}
               {formatCurrency(varianceCost)}
             </Text>
@@ -210,7 +210,7 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
         />
 
         <View className="gap-2">
-          <Text className="text-base font-semibold text-[#1C1917]">Adjustment Reason</Text>
+          <Text className="text-base font-semibold text-[#1A1617]">Adjustment Reason</Text>
           <View className="flex-row flex-wrap gap-2">
             {PRESET_REASONS.map((p) => {
               const isSelected = reason === p;
@@ -219,12 +219,12 @@ export const QuickAdjustStockModal: React.FC<QuickAdjustStockModalProps> = ({
                   key={p}
                   onPress={() => setReason(p)}
                   className={`min-h-[48px] px-3.5 rounded-xl border justify-center ${
-                    isSelected ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E7E5E4]'
+                    isSelected ? 'bg-[#810021] border-[#810021]' : 'bg-white border-[#E2DED6]'
                   }`}
                 >
                   <Text
                     className={`text-base font-semibold ${
-                      isSelected ? 'text-white' : 'text-[#1C1917]'
+                      isSelected ? 'text-white' : 'text-[#1A1617]'
                     }`}
                   >
                     {p}

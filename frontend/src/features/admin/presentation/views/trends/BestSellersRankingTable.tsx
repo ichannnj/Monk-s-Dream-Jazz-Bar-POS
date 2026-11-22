@@ -71,7 +71,7 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
     if (rank === 1) {
       return (
         <View className="w-7 h-7 rounded-full bg-stone-100 border border-stone-200 items-center justify-center">
-          <Crown size={14} color="#800020" />
+          <Crown size={14} color="#810021" />
         </View>
       );
     }
@@ -88,7 +88,7 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
       <View className="flex-row items-center justify-between mb-3.5 flex-wrap gap-2.5">
         <View className="flex-row items-center gap-2.5 flex-1 min-w-[180px]">
           <View className="w-8 h-8 shrink-0 rounded-lg bg-stone-100 border border-stone-200 items-center justify-center">
-            <Flame size={16} color="#800020" />
+            <Flame size={16} color="#810021" />
           </View>
           <View className="flex-1 min-w-0">
             <Text className="text-base sm:text-lg font-bold text-stone-900 leading-snug">
@@ -101,7 +101,7 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
         </View>
 
         {/* Dual Metric Toggle Buttons */}
-        <View className="flex-row items-center bg-[#FAF8F5] p-1 rounded-xl border border-stone-200 shrink-0">
+        <View className="flex-row items-center bg-[#EFECE6] p-1 rounded-xl border border-stone-200 shrink-0">
           <Pressable
             onPress={() => setMetric('revenue')}
             className={`min-h-[36px] px-3 rounded-lg flex-row items-center gap-1.5 ${
@@ -110,7 +110,7 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
                 : 'active:bg-stone-200/50'
             }`}
           >
-            <DollarSign size={13} color={metric === 'revenue' ? '#800020' : '#78716c'} />
+            <DollarSign size={13} color={metric === 'revenue' ? '#810021' : '#78716c'} />
             <Text
               className={`text-xs font-bold ${
                 metric === 'revenue' ? 'text-stone-900' : 'text-stone-600'
@@ -128,7 +128,7 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
                 : 'active:bg-stone-200/50'
             }`}
           >
-            <ShoppingBag size={13} color={metric === 'quantity' ? '#800020' : '#78716c'} />
+            <ShoppingBag size={13} color={metric === 'quantity' ? '#810021' : '#78716c'} />
             <Text
               className={`text-xs font-bold ${
                 metric === 'quantity' ? 'text-stone-900' : 'text-stone-600'
@@ -179,7 +179,7 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
                 : 8;
 
             return (
-              <View key={item.id} className="p-3 rounded-xl border border-stone-100 bg-[#FAF8F5]">
+              <View key={item.id} className="p-3 rounded-xl border border-stone-100 bg-[#EFECE6]">
                 <View className="flex-row items-center justify-between gap-2.5 flex-wrap">
                   {/* Left: Rank, Item Name, Category, Price */}
                   <View className="flex-row items-center gap-2.5 flex-1 min-w-[180px]">
@@ -214,7 +214,7 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
                       <Text className="text-sm sm:text-base font-black text-stone-900">
                         {formatCurrency(item.salesAmount)}
                       </Text>
-                      <Text className="text-xs font-bold text-[#800020]">
+                      <Text className="text-xs font-bold text-[#810021]">
                         {item.revenueSharePercent}% share
                       </Text>
                     </View>
@@ -225,7 +225,7 @@ export const BestSellersRankingTable: React.FC<BestSellersRankingTableProps> = (
                 <View className="mt-2 h-1.5 w-full rounded-full bg-stone-200/80 overflow-hidden">
                   <View
                     style={{ width: `${progress}%` }}
-                    className="h-full rounded-full bg-[#800020]"
+                    className="h-full rounded-full bg-[#810021]"
                   />
                 </View>
               </View>

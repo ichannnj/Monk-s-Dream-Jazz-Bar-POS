@@ -72,7 +72,7 @@ export const AdminItemPresetsTab: React.FC<AdminItemPresetsTabProps> = ({
                 </View>
                 {isSelected && (
                   <View style={styles.selectedBadge}>
-                    <Check size={12} color="#F5F5F5" strokeWidth={3} />
+                    <Check size={12} color="#F7F5F2" strokeWidth={3} />
                   </View>
                 )}
               </Pressable>

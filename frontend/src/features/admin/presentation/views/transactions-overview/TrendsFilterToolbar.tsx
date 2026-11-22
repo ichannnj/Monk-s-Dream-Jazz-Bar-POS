@@ -40,10 +40,10 @@ export const TrendsFilterToolbar: React.FC<TrendsFilterToolbarProps> = ({
         {/* Period Dropdown Button */}
         <Pressable
           onPress={() => setIsTimeframeModalOpen(true)}
-          className="min-h-[44px] px-3.5 py-1.5 rounded-xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 flex-row items-center justify-between"
+          className="min-h-[44px] px-3.5 py-1.5 rounded-xl border border-stone-200 bg-[#EFECE6] active:bg-stone-100 flex-row items-center justify-between"
         >
           <View className="flex-row items-center gap-2">
-            <Calendar size={16} color="#800020" />
+            <Calendar size={16} color="#810021" />
             <View>
               <Text className="text-[10px] text-stone-500 font-semibold leading-tight uppercase">
                 Timeframe
@@ -63,8 +63,8 @@ export const TrendsFilterToolbar: React.FC<TrendsFilterToolbarProps> = ({
             selectedPeriod === 'custom' ||
             selectedPeriod === 'select_week' ||
             selectedPeriod === 'select_month'
-              ? 'border-[#800020] bg-white'
-              : 'border-stone-200 bg-[#FAF8F5] active:bg-stone-100'
+              ? 'border-[#810021] bg-white'
+              : 'border-stone-200 bg-[#EFECE6] active:bg-stone-100'
           }`}
         >
           <View className="flex-row items-center gap-2">
@@ -74,7 +74,7 @@ export const TrendsFilterToolbar: React.FC<TrendsFilterToolbarProps> = ({
                 selectedPeriod === 'custom' ||
                 selectedPeriod === 'select_week' ||
                 selectedPeriod === 'select_month'
-                  ? '#800020'
+                  ? '#810021'
                   : '#78716c'
               }
             />
@@ -87,7 +87,7 @@ export const TrendsFilterToolbar: React.FC<TrendsFilterToolbarProps> = ({
                   selectedPeriod === 'custom' ||
                   selectedPeriod === 'select_week' ||
                   selectedPeriod === 'select_month'
-                    ? 'text-[#800020]'
+                    ? 'text-[#810021]'
                     : 'text-stone-800'
                 }`}
               >
@@ -100,10 +100,10 @@ export const TrendsFilterToolbar: React.FC<TrendsFilterToolbarProps> = ({
         {/* Station Dropdown Trigger */}
         <Pressable
           onPress={() => setIsStationModalOpen(true)}
-          className="min-h-[44px] px-3.5 py-1.5 rounded-xl border border-stone-200 bg-[#FAF8F5] active:bg-stone-100 flex-row items-center justify-between"
+          className="min-h-[44px] px-3.5 py-1.5 rounded-xl border border-stone-200 bg-[#EFECE6] active:bg-stone-100 flex-row items-center justify-between"
         >
           <View className="flex-row items-center gap-2">
-            <Filter size={16} color="#800020" />
+            <Filter size={16} color="#810021" />
             <View>
               <Text className="text-[10px] text-stone-500 font-semibold leading-tight uppercase">
                 Station

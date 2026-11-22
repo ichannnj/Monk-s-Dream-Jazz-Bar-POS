@@ -113,10 +113,10 @@ export const MenuItemBasicInfoSection: React.FC<MenuItemBasicInfoSectionProps> =
         </View>
         <View
           className={`h-6 w-6 rounded-md items-center justify-center border ${
-            isResoldOutsideFood ? 'bg-[#800020] border-[#800020]' : 'bg-white border-stone-400'
+            isResoldOutsideFood ? 'bg-[#810021] border-[#810021]' : 'bg-white border-stone-400'
           }`}
         >
-          {isResoldOutsideFood && <Check size={16} color="#F5F5F5" />}
+          {isResoldOutsideFood && <Check size={16} color="#F7F5F2" />}
         </View>
       </Pressable>
 

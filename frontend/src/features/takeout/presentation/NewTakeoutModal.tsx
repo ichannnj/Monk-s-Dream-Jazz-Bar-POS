@@ -74,7 +74,7 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
           <View style={styles.header}>
             <View style={styles.headerTitleGroup}>
               <View style={styles.badge}>
-                <ShoppingBag size={16} color="#F5F5F5" strokeWidth={2.4} />
+                <ShoppingBag size={16} color="#F7F5F2" strokeWidth={2.4} />
               </View>
               <Text style={styles.title}>Takeout · #{nextTicketNumber}</Text>
             </View>
@@ -85,7 +85,7 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close takeout modal"
             >
-              <X size={20} color="#1c1917" />
+              <X size={20} color="#1A1617" />
             </Pressable>
           </View>
 
@@ -117,7 +117,7 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
                       borderRadius: 14,
                       alignItems: 'center',
                       justifyContent: 'center',
-                      backgroundColor: '#e7e5e4',
+                      backgroundColor: '#E2DED6',
                     }}
                     accessibilityRole="button"
                     accessibilityLabel="Clear name"
@@ -145,9 +145,9 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
-                      backgroundColor: '#FAF8F5',
+                      backgroundColor: '#EFECE6',
                       borderWidth: 1,
-                      borderColor: '#e7e5e4',
+                      borderColor: '#E2DED6',
                       paddingHorizontal: 8,
                       paddingVertical: 3,
                       borderRadius: 6,
@@ -181,8 +181,8 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
               <Switch
                 value={isPrepaid}
                 onValueChange={setIsPrepaid}
-                trackColor={{ false: '#e7e5e4', true: '#810021' }}
-                thumbColor={isPrepaid ? '#F5F5F5' : '#F5F5F5'}
+                trackColor={{ false: '#E2DED6', true: '#810021' }}
+                thumbColor={isPrepaid ? '#F7F5F2' : '#F7F5F2'}
               />
             </View>
           </ScrollView>
@@ -195,7 +195,7 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
 
             <Pressable onPress={handleProceed} style={styles.proceedBtn}>
               <Text style={styles.proceedBtnText}>Start Order</Text>
-              <ArrowRight size={16} color="#F5F5F5" strokeWidth={2.4} />
+              <ArrowRight size={16} color="#F7F5F2" strokeWidth={2.4} />
             </Pressable>
           </View>
         </View>
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalCard: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     width: '100%',
     maxWidth: 500,
@@ -247,15 +247,15 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   closeBtn: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -265,19 +265,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
     marginBottom: 8,
   },
   input: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     borderRadius: 14,
     paddingHorizontal: 16,
     paddingVertical: 12,
     minHeight: 48,
     fontSize: 16,
-    color: '#1C1917',
+    color: '#1A1617',
     fontWeight: '600',
   },
   textArea: {
@@ -289,9 +289,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     padding: 14,
     borderRadius: 14,
     marginBottom: 22,
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   toggleTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   btnRow: {
     flexDirection: 'row',
@@ -311,9 +311,9 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -336,6 +336,6 @@ const styles = StyleSheet.create({
   proceedBtnText: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
 });

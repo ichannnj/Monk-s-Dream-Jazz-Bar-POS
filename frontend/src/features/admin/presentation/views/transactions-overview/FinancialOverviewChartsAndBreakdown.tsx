@@ -34,7 +34,7 @@ export const FinancialOverviewChartsAndBreakdown: React.FC<
       return {
         label: 'Cafe Area',
         subtext: 'Espresso & Handcrafted Beverages',
-        icon: <Coffee size={18} color="#1c1917" />,
+        icon: <Coffee size={18} color="#1A1617" />,
         progressBg: 'bg-stone-800',
       };
     }
@@ -42,22 +42,22 @@ export const FinancialOverviewChartsAndBreakdown: React.FC<
       return {
         label: 'Bar Area',
         subtext: 'Cocktails, Wine & Spirits',
-        icon: <Wine size={18} color="#800020" />,
-        progressBg: 'bg-[#800020]',
+        icon: <Wine size={18} color="#810021" />,
+        progressBg: 'bg-[#810021]',
       };
     }
     if (normalized.includes('grab')) {
       return {
         label: 'GrabFood Delivery',
         subtext: 'Online Delivery Dispatch',
-        icon: <Bike size={18} color="#1c1917" />,
+        icon: <Bike size={18} color="#1A1617" />,
         progressBg: 'bg-stone-600',
       };
     }
     return {
       label: channelKey.replace(/_/g, ' '),
       subtext: 'Direct Counter Pickups',
-      icon: <ShoppingBag size={18} color="#1c1917" />,
+      icon: <ShoppingBag size={18} color="#1A1617" />,
       progressBg: 'bg-stone-700',
     };
   };
@@ -90,7 +90,7 @@ export const FinancialOverviewChartsAndBreakdown: React.FC<
         <View className="flex-row items-center justify-between pb-3.5 mb-3.5 border-b border-stone-100 flex-wrap gap-2">
           <View>
             <View className="flex-row items-center gap-2">
-              <Layers size={18} color="#800020" />
+              <Layers size={18} color="#810021" />
               <Text className="text-base sm:text-lg font-bold text-stone-900">
                 Sales by Channel &amp; Route
               </Text>
@@ -117,7 +117,7 @@ export const FinancialOverviewChartsAndBreakdown: React.FC<
             return (
               <View
                 key={channel}
-                className="p-3 sm:p-3.5 rounded-xl border border-stone-200/80 bg-[#FAF8F5] justify-between"
+                className="p-3 sm:p-3.5 rounded-xl border border-stone-200/80 bg-[#EFECE6] justify-between"
               >
                 <View className="flex-col sm:flex-row sm:items-center justify-between gap-2">
                   {/* Left: Icon, Name, and Meta */}
@@ -202,7 +202,7 @@ export const FinancialOverviewChartsAndBreakdown: React.FC<
 
         <View className="rounded-xl border border-stone-200/90 bg-white p-4 shadow-xs">
           <Text className="text-xs font-bold text-stone-500">Net Estimated Profit</Text>
-          <Text className="text-xl sm:text-2xl font-black text-[#800020] mt-1">
+          <Text className="text-xl sm:text-2xl font-black text-[#810021] mt-1">
             ₱
             {estimatedNetProfit.toLocaleString('en-US', {
               minimumFractionDigits: 2,
@@ -211,7 +211,7 @@ export const FinancialOverviewChartsAndBreakdown: React.FC<
           </Text>
           <View className="mt-2.5 pt-2 border-t border-stone-100 flex-row items-center justify-between">
             <Text className="text-xs text-stone-500">Estimated Net Margin</Text>
-            <Text className="text-xs font-bold text-[#800020]">{profitMargin}% net</Text>
+            <Text className="text-xs font-bold text-[#810021]">{profitMargin}% net</Text>
           </View>
         </View>
       </View>

@@ -43,7 +43,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
   );
 
   return (
-    <View className="bg-[#FAF8F5] border border-stone-200 rounded-2xl p-4 mb-4">
+    <View className="bg-[#EFECE6] border border-stone-200 rounded-2xl p-4 mb-4">
       {/* Header Row */}
       <View className="flex-row justify-between items-center pb-3 border-b border-stone-200 mb-3">
         <Text className="text-base font-extrabold text-stone-900">
@@ -58,7 +58,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
         {doorChargeItem ? (
           <View className="flex-row justify-between items-center">
             <View className="flex-row items-center gap-2.5">
-              <View className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-stone-200 items-center justify-center">
+              <View className="w-8 h-8 rounded-lg bg-[#EFECE6] border border-stone-200 items-center justify-center">
                 <Ticket size={16} color="#810021" />
               </View>
               <View>
@@ -76,7 +76,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
               {onEditDoorCharge && (
                 <Pressable
                   onPress={onEditDoorCharge}
-                  className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-stone-200 active:bg-stone-100 min-h-[36px]"
+                  className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#EFECE6] border border-stone-200 active:bg-stone-100 min-h-[36px]"
                 >
                   <Edit3 size={13} color="#810021" />
                   <Text className="text-xs font-bold text-[#810021]">Edit</Text>
@@ -100,7 +100,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
             {onAddDoorCharge && (
               <Pressable
                 onPress={onAddDoorCharge}
-                className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#FAF8F5] border border-stone-200 active:bg-stone-100 min-h-[36px]"
+                className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#EFECE6] border border-stone-200 active:bg-stone-100 min-h-[36px]"
               >
                 <Plus size={13} color="#810021" />
                 <Text className="text-xs font-bold text-[#810021]">+ Cover</Text>
@@ -121,7 +121,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
               {/* Round Header */}
               <View className="flex-row justify-between items-center mb-3 pb-2.5 border-b border-stone-100">
                 <View className="flex-row items-center gap-2.5">
-                  <View className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-stone-200 items-center justify-center">
+                  <View className="w-8 h-8 rounded-lg bg-[#EFECE6] border border-stone-200 items-center justify-center">
                     <Text className="text-base font-black text-[#810021]">R{round.roundNum}</Text>
                   </View>
                   <View>
@@ -161,7 +161,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                         {item.stationTarget === 'bar' ? (
                           <Wine size={16} color={isVoided ? '#9ca3af' : '#810021'} />
                         ) : (
-                          <ChefHat size={16} color={isVoided ? '#9ca3af' : '#1C1917'} />
+                          <ChefHat size={16} color={isVoided ? '#9ca3af' : '#1A1617'} />
                         )}
                         <View className="flex-1">
                           <Text
@@ -204,7 +204,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                               ? 'bg-[#810021]'
                               : isVoided
                                 ? 'bg-stone-100'
-                                : 'bg-[#FAF8F5] border border-stone-200'
+                                : 'bg-[#EFECE6] border border-stone-200'
                           }`}
                         >
                           <Text

@@ -188,8 +188,8 @@ export const AdminQrPaymentManager: React.FC = () => {
       {/* Section Header */}
       <View className="flex-col sm:flex-row sm:items-center justify-between border-b border-stone-100 pb-3 gap-3">
         <View className="flex-row items-center space-x-3">
-          <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#800020]/10">
-            <QrCode size={22} color="#800020" />
+          <View className="h-10 w-10 items-center justify-center rounded-xl bg-[#810021]/10">
+            <QrCode size={22} color="#810021" />
           </View>
           <View className="ml-2">
             <Text className="text-xl font-bold text-stone-900">
@@ -203,9 +203,9 @@ export const AdminQrPaymentManager: React.FC = () => {
 
         <Pressable
           onPress={openAddModal}
-          className="min-h-[44px] flex-row items-center justify-center rounded-xl bg-[#800020] px-4 active:opacity-90 shadow-sm"
+          className="min-h-[44px] flex-row items-center justify-center rounded-xl bg-[#810021] px-4 active:opacity-90 shadow-sm"
         >
-          <Plus size={18} color="#F5F5F5" />
+          <Plus size={18} color="#F7F5F2" />
           <Text className="ml-1.5 text-sm font-bold text-white">Add QR Channel</Text>
         </Pressable>
       </View>
@@ -213,7 +213,7 @@ export const AdminQrPaymentManager: React.FC = () => {
       {/* Channels List */}
       {isLoading ? (
         <View className="py-8 items-center justify-center">
-          <ActivityIndicator size="small" color="#800020" />
+          <ActivityIndicator size="small" color="#810021" />
           <Text className="mt-2 text-sm text-stone-400">Loading payment channels...</Text>
         </View>
       ) : channels.length === 0 ? (
@@ -228,9 +228,9 @@ export const AdminQrPaymentManager: React.FC = () => {
           </Text>
           <Pressable
             onPress={openAddModal}
-            className="mt-4 min-h-[40px] flex-row items-center rounded-xl bg-[#800020] px-4 active:opacity-90"
+            className="mt-4 min-h-[40px] flex-row items-center rounded-xl bg-[#810021] px-4 active:opacity-90"
           >
-            <Plus size={16} color="#F5F5F5" />
+            <Plus size={16} color="#F7F5F2" />
             <Text className="ml-1 text-sm font-bold text-white">Add First QR Channel</Text>
           </Pressable>
         </View>
@@ -258,7 +258,7 @@ export const AdminQrPaymentManager: React.FC = () => {
                     resizeMode="contain"
                   />
                   <View className="absolute inset-0 bg-black/20 rounded-lg items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <Eye size={16} color="#F5F5F5" />
+                    <Eye size={16} color="#F7F5F2" />
                   </View>
                 </Pressable>
 
@@ -291,7 +291,7 @@ export const AdminQrPaymentManager: React.FC = () => {
                   <Text className="text-xs text-stone-500 mt-1 truncate" numberOfLines={1}>
                     {channel.account_name}
                   </Text>
-                  <Text className="text-sm font-extrabold text-[#800020] font-mono mt-0.5">
+                  <Text className="text-sm font-extrabold text-[#810021] font-mono mt-0.5">
                     {channel.account_number}
                   </Text>
                 </View>
@@ -336,7 +336,7 @@ export const AdminQrPaymentManager: React.FC = () => {
         onClose={() => setIsAddModalOpen(false)}
         title={editingChannel ? `Edit ${editingChannel.name}` : 'Add Payment QR Channel'}
         subtitle="Upload high-resolution QR photo and enter merchant account details"
-        icon={<QrCode size={20} color="#800020" />}
+        icon={<QrCode size={20} color="#810021" />}
         size="md"
         footer={
           <View className="flex-row justify-end gap-3 w-full">
@@ -349,10 +349,10 @@ export const AdminQrPaymentManager: React.FC = () => {
             <Pressable
               onPress={handleSaveChannel}
               disabled={isSaving}
-              className="min-h-[44px] px-6 rounded-xl bg-[#800020] items-center justify-center active:opacity-90 shadow-sm"
+              className="min-h-[44px] px-6 rounded-xl bg-[#810021] items-center justify-center active:opacity-90 shadow-sm"
             >
               {isSaving ? (
-                <ActivityIndicator size="small" color="#F5F5F5" />
+                <ActivityIndicator size="small" color="#F7F5F2" />
               ) : (
                 <Text className="text-sm font-bold text-white">
                   {editingChannel ? 'Save Changes' : 'Create Channel'}

@@ -53,14 +53,14 @@ export const ModifierGroupListTab: React.FC<ModifierGroupListTabProps> = ({
                     className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl bg-white border border-stone-200 active:bg-stone-50"
                     accessibilityLabel={`Edit ${group.name}`}
                   >
-                    <Edit size={17} color="#1c1917" />
+                    <Edit size={17} color="#1A1617" />
                   </Pressable>
                   <Pressable
                     onPress={() => onDeleteGroup(group)}
                     className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl bg-white border border-stone-200 active:bg-stone-50"
                     accessibilityLabel={`Delete ${group.name}`}
                   >
-                    <Trash2 size={17} color="#800020" />
+                    <Trash2 size={17} color="#810021" />
                   </Pressable>
                 </View>
               </View>
@@ -76,7 +76,7 @@ export const ModifierGroupListTab: React.FC<ModifierGroupListTabProps> = ({
                       >
                         <Text className="text-xs text-stone-800 font-medium">
                           {opt.name}{' '}
-                          <Text className="font-bold text-[#800020]">
+                          <Text className="font-bold text-[#810021]">
                             {Number(opt.price_delta || 0) > 0
                               ? `(+₱${Number(opt.price_delta || 0).toFixed(2)})`
                               : '(+₱0.00)'}

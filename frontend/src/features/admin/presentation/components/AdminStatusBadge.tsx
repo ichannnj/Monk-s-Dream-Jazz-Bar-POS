@@ -47,10 +47,10 @@ const BADGE_TONES: Record<
     iconColor: '#57534e',
   },
   primary: {
-    bg: 'bg-[#6e1d2c]/10',
-    text: 'text-[#6e1d2c]',
-    border: 'border-[#6e1d2c]/20',
-    iconColor: '#6e1d2c',
+    bg: 'bg-[#810021]/10',
+    text: 'text-[#810021]',
+    border: 'border-[#810021]/20',
+    iconColor: '#810021',
   },
 };
 

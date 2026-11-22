@@ -74,7 +74,7 @@ export const BaristaKdsHeader: React.FC<BaristaKdsHeaderProps> = ({
 const styles = StyleSheet.create({
   headerContainer: {
     height: 64,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#eee8e3',

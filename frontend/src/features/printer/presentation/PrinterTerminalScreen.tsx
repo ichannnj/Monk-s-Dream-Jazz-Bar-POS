@@ -89,9 +89,9 @@ export const PrinterTerminalScreen: React.FC = () => {
     switch (status) {
       case 'COMPLETED':
         return (
-          <View className="flex-row items-center rounded-full bg-[#FAF8F5] border border-[#E7E5E4] px-3 py-1">
-            <CheckCircle2 size={16} color="#1C1917" />
-            <Text className="ml-1.5 text-base font-semibold text-[#1C1917]">Printed</Text>
+          <View className="flex-row items-center rounded-full bg-[#EFECE6] border border-[#E2DED6] px-3 py-1">
+            <CheckCircle2 size={16} color="#1A1617" />
+            <Text className="ml-1.5 text-base font-semibold text-[#1A1617]">Printed</Text>
           </View>
         );
       case 'PRINTING':
@@ -111,7 +111,7 @@ export const PrinterTerminalScreen: React.FC = () => {
       case 'PENDING':
       default:
         return (
-          <View className="flex-row items-center rounded-full bg-[#FAF8F5] border border-[#E7E5E4] px-3 py-1">
+          <View className="flex-row items-center rounded-full bg-[#EFECE6] border border-[#E2DED6] px-3 py-1">
             <Clock size={16} color="#78716C" />
             <Text className="ml-1.5 text-base font-semibold text-[#57534E]">Queued</Text>
           </View>
@@ -137,12 +137,12 @@ export const PrinterTerminalScreen: React.FC = () => {
     });
 
     return (
-      <View className="mb-2.5 rounded-2xl border border-[#E7E5E4] bg-white p-4">
+      <View className="mb-2.5 rounded-2xl border border-[#E2DED6] bg-white p-4">
         {/* Row 1: Title + Status Badge */}
         <View className="flex-row items-center justify-between gap-2">
           <View className="flex-row items-center gap-2 flex-1 min-w-0">
-            <FileText size={18} color="#1C1917" />
-            <Text className="text-base font-bold text-[#1C1917] truncate" numberOfLines={1}>
+            <FileText size={18} color="#1A1617" />
+            <Text className="text-base font-bold text-[#1A1617] truncate" numberOfLines={1}>
               {title}
             </Text>
           </View>
@@ -150,9 +150,9 @@ export const PrinterTerminalScreen: React.FC = () => {
         </View>
 
         {/* Row 2: Metadata & 1-Tap Reprint */}
-        <View className="mt-3 pt-2.5 border-t border-[#E7E5E4]/80 flex-row flex-wrap items-center justify-between gap-2">
+        <View className="mt-3 pt-2.5 border-t border-[#E2DED6]/80 flex-row flex-wrap items-center justify-between gap-2">
           <View className="flex-row flex-wrap items-center gap-2">
-            <Text className="text-base font-semibold text-[#1C1917] uppercase">
+            <Text className="text-base font-semibold text-[#1A1617] uppercase">
               {item.job_type}
             </Text>
             <Text className="text-base text-[#78716C]">·</Text>
@@ -170,16 +170,16 @@ export const PrinterTerminalScreen: React.FC = () => {
           <Pressable
             onPress={() => handleReprint(item)}
             disabled={reprintingId === item.id}
-            className="min-h-[48px] px-4 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] active:opacity-80 flex-row items-center gap-2"
+            className="min-h-[48px] px-4 rounded-xl bg-[#EFECE6] border border-[#E2DED6] active:opacity-80 flex-row items-center gap-2"
             accessibilityRole="button"
             accessibilityLabel={`Reprint ticket for ${title}`}
           >
             {reprintingId === item.id ? (
               <ActivityIndicator size="small" color="#810021" />
             ) : (
-              <RotateCw size={16} color="#1C1917" />
+              <RotateCw size={16} color="#1A1617" />
             )}
-            <Text className="text-base font-semibold text-[#1C1917]">Reprint</Text>
+            <Text className="text-base font-semibold text-[#1A1617]">Reprint</Text>
           </Pressable>
         </View>
       </View>
@@ -204,7 +204,7 @@ export const PrinterTerminalScreen: React.FC = () => {
   ];
 
   return (
-    <View className="flex-1 bg-[#FAF8F5]">
+    <View className="flex-1 bg-[#EFECE6]">
       <FloorSectionHeader
         title="Print Queue"
         badge={{ label: 'Live Queue', tone: 'neutral' }}
@@ -221,16 +221,16 @@ export const PrinterTerminalScreen: React.FC = () => {
             <Pressable
               onPress={handleKickDrawer}
               disabled={isKickingDrawer}
-              className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-[#E7E5E4] bg-[#FAF8F5] active:opacity-80"
+              className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl border border-[#E2DED6] bg-[#EFECE6] active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel="Kick cash drawer"
             >
               {isKickingDrawer ? (
                 <ActivityIndicator size="small" color="#810021" />
               ) : (
-                <Coins size={18} color="#1C1917" />
+                <Coins size={18} color="#1A1617" />
               )}
-              <Text className="ml-2 text-base font-semibold text-[#1C1917]">Kick Drawer</Text>
+              <Text className="ml-2 text-base font-semibold text-[#1A1617]">Kick Drawer</Text>
             </Pressable>
 
             <Pressable
@@ -239,9 +239,9 @@ export const PrinterTerminalScreen: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Launch dedicated print station tab"
             >
-              <Printer size={18} color="#F5F5F5" />
+              <Printer size={18} color="#F7F5F2" />
               <Text className="ml-2 text-base font-semibold text-white">Station Tab</Text>
-              <ExternalLink size={15} color="#F5F5F5" className="ml-1.5" />
+              <ExternalLink size={15} color="#F7F5F2" className="ml-1.5" />
             </Pressable>
           </>
         }

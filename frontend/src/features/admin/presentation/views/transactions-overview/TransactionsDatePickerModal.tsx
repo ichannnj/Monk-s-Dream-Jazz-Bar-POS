@@ -65,7 +65,7 @@ export const TransactionsDatePickerModal: React.FC<TransactionsDatePickerModalPr
             ? 'Select any day within a week to load its full Monday–Sunday bounds'
             : 'Choose any historical month and year across venue operations'
       }
-      icon={<Calendar size={22} color="#800020" />}
+      icon={<Calendar size={22} color="#810021" />}
       size="md"
     >
       <View className="p-1">
@@ -79,7 +79,7 @@ export const TransactionsDatePickerModal: React.FC<TransactionsDatePickerModalPr
           >
             <Text
               className={`text-base font-bold ${
-                datePickerMode === 'day' ? 'text-[#800020]' : 'text-stone-600'
+                datePickerMode === 'day' ? 'text-[#810021]' : 'text-stone-600'
               }`}
             >
               Day
@@ -94,7 +94,7 @@ export const TransactionsDatePickerModal: React.FC<TransactionsDatePickerModalPr
           >
             <Text
               className={`text-base font-bold ${
-                datePickerMode === 'week' ? 'text-[#800020]' : 'text-stone-600'
+                datePickerMode === 'week' ? 'text-[#810021]' : 'text-stone-600'
               }`}
             >
               Week
@@ -109,7 +109,7 @@ export const TransactionsDatePickerModal: React.FC<TransactionsDatePickerModalPr
           >
             <Text
               className={`text-base font-bold ${
-                datePickerMode === 'month' ? 'text-[#800020]' : 'text-stone-600'
+                datePickerMode === 'month' ? 'text-[#810021]' : 'text-stone-600'
               }`}
             >
               Month
@@ -176,9 +176,9 @@ export const TransactionsDatePickerModal: React.FC<TransactionsDatePickerModalPr
                       isFutureMonth
                         ? 'opacity-25 bg-stone-50 cursor-not-allowed'
                         : isSelectedMonth
-                          ? 'bg-[#800020]'
+                          ? 'bg-[#810021]'
                           : isCurrentMonth
-                            ? 'border border-[#800020] bg-rose-50/40'
+                            ? 'border border-[#810021] bg-rose-50/40'
                             : 'bg-stone-100 active:bg-stone-200'
                     }`}
                   >
@@ -189,7 +189,7 @@ export const TransactionsDatePickerModal: React.FC<TransactionsDatePickerModalPr
                           : isSelectedMonth
                             ? 'text-white'
                             : isCurrentMonth
-                              ? 'text-[#800020]'
+                              ? 'text-[#810021]'
                               : 'text-stone-800'
                       }`}
                     >
@@ -265,9 +265,9 @@ export const TransactionsDatePickerModal: React.FC<TransactionsDatePickerModalPr
                       isFuture
                         ? 'opacity-25 bg-stone-50 cursor-not-allowed'
                         : isSelected
-                          ? 'bg-[#800020]'
+                          ? 'bg-[#810021]'
                           : isToday
-                            ? 'border border-[#800020] bg-rose-50/40'
+                            ? 'border border-[#810021] bg-rose-50/40'
                             : 'active:bg-stone-100 hover:bg-stone-100'
                     }`}
                   >
@@ -278,7 +278,7 @@ export const TransactionsDatePickerModal: React.FC<TransactionsDatePickerModalPr
                           : isSelected
                             ? 'text-white'
                             : isToday
-                              ? 'text-[#800020]'
+                              ? 'text-[#810021]'
                               : 'text-stone-800'
                       }`}
                     >
@@ -317,7 +317,7 @@ export const TransactionsDatePickerModal: React.FC<TransactionsDatePickerModalPr
 
           <Pressable
             onPress={() => setIsDatePickerModalOpen(false)}
-            className="min-h-[44px] px-4 rounded-xl bg-[#800020] active:bg-[#6b001a] flex-row items-center"
+            className="min-h-[44px] px-4 rounded-xl bg-[#810021] active:bg-[#6b001a] flex-row items-center"
           >
             <Text className="text-base font-bold text-white">Done</Text>
           </Pressable>

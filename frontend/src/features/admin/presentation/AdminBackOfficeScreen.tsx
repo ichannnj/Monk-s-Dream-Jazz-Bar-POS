@@ -185,8 +185,8 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
   const renderActiveView = () => {
     if (isLoading && !telemetry && currentRoute === 'dashboard') {
       return (
-        <View className="flex-1 items-center justify-center bg-[#fcf9f9]">
-          <ActivityIndicator size="large" color="#800020" />
+        <View className="flex-1 items-center justify-center bg-[#EFECE6]">
+          <ActivityIndicator size="large" color="#810021" />
           <Text className="mt-4 text-base font-medium text-stone-600">
             Loading Monk's Dream Admin Suite...
           </Text>
@@ -279,7 +279,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
       />
 
       {/* Main Content Workspace */}
-      <View className="flex-1 min-w-0 flex-col bg-[#fcf9f9] overflow-hidden">
+      <View className="flex-1 min-w-0 flex-col bg-[#EFECE6] overflow-hidden">
         {/* Top Header Bar */}
         <AdminHeader
           currentRoute={currentRoute}

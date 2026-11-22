@@ -77,18 +77,18 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
             className={`flex-row items-center justify-between ${isCompactHeight ? 'mb-2' : 'mb-4'}`}
           >
             <View className="flex-row items-center gap-3">
-              <View className="w-10 h-10 rounded-2xl bg-[#FAF8F5] border border-stone-200 items-center justify-center">
+              <View className="w-10 h-10 rounded-2xl bg-[#EFECE6] border border-stone-200 items-center justify-center">
                 <Trash2 size={18} color="#810021" />
               </View>
               <Text className="text-xl font-extrabold text-stone-900">Void Item</Text>
             </View>
             <Pressable
               onPress={onClose}
-              className="min-w-[44px] min-h-[44px] rounded-xl bg-[#FAF8F5] border border-stone-200 items-center justify-center active:bg-stone-100"
+              className="min-w-[44px] min-h-[44px] rounded-xl bg-[#EFECE6] border border-stone-200 items-center justify-center active:bg-stone-100"
               accessibilityRole="button"
               accessibilityLabel="Close void dialog"
             >
-              <X size={18} color="#1c1917" />
+              <X size={18} color="#1A1617" />
             </Pressable>
           </View>
 
@@ -97,7 +97,7 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
             contentContainerStyle={{ paddingBottom: 8 }}
           >
             {/* Item details */}
-            <View className="bg-[#FAF8F5] rounded-2xl p-3.5 border border-stone-200 mb-3.5">
+            <View className="bg-[#EFECE6] rounded-2xl p-3.5 border border-stone-200 mb-3.5">
               <Text className="text-base font-bold text-stone-900">
                 {item.quantity}x {item.productName}
               </Text>
@@ -108,13 +108,13 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
 
             {/* Notice */}
             {isDoorCharge ? (
-              <View className="bg-[#FAF8F5] border border-stone-200 rounded-xl p-3 mb-3.5">
+              <View className="bg-[#EFECE6] border border-stone-200 rounded-xl p-3 mb-3.5">
                 <Text className="text-xs text-stone-600 font-medium">
                   Door cover will be removed from tab without waste logging.
                 </Text>
               </View>
             ) : isPostPrep ? (
-              <View className="bg-[#FAF8F5] border border-stone-200 rounded-xl p-3 mb-3.5 flex-row items-center gap-2">
+              <View className="bg-[#EFECE6] border border-stone-200 rounded-xl p-3 mb-3.5 flex-row items-center gap-2">
                 <AlertTriangle size={15} color="#810021" />
                 <Text className="text-xs text-[#810021] font-semibold flex-1">
                   Item in prep ({item.status}). Waste recorded; Manager PIN required.
@@ -137,7 +137,7 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
                   className={`min-h-[44px] py-2 px-3.5 rounded-xl border justify-center active:opacity-90 ${
                     voidReason === r
                       ? 'border-[#810021] bg-[#810021]/5'
-                      : 'border-stone-200 bg-[#FAF8F5]'
+                      : 'border-stone-200 bg-[#EFECE6]'
                   }`}
                 >
                   <Text
@@ -179,7 +179,7 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
           <View className="flex-row gap-2.5 pt-2">
             <Pressable
               onPress={onClose}
-              className="flex-1 min-h-[48px] py-3 rounded-2xl bg-[#FAF8F5] border border-stone-200 items-center justify-center active:bg-stone-100"
+              className="flex-1 min-h-[48px] py-3 rounded-2xl bg-[#EFECE6] border border-stone-200 items-center justify-center active:bg-stone-100"
             >
               <Text className="text-sm font-bold text-stone-700">Cancel</Text>
             </Pressable>

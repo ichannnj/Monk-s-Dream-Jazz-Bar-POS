@@ -57,7 +57,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
     bar: {
       role: 'Bartender & Barista',
       icon: Wine,
-      color: 'bg-[#800020]',
+      color: 'bg-[#810021]',
       defaultTarget: '08:00',
     },
     kitchen: {
@@ -114,7 +114,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
             name: 'Bar & Cafe Station',
             role: 'Bartender & Barista',
             icon: Wine,
-            color: 'bg-[#800020]',
+            color: 'bg-[#810021]',
             activeTickets: 0,
             avgTime: 'Idle',
             liveActiveTime: 'Idle',
@@ -189,7 +189,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
 
   return (
     <ScrollView
-      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#EFECE6] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* 1. Header & Title (Single-line, Minimal) */}
@@ -202,7 +202,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
           onPress={() => setShowResetModal(true)}
           className="flex-row items-center rounded-xl border border-stone-200 bg-white px-3 py-2 shadow-xs active:bg-stone-50"
         >
-          <RotateCcw size={14} color="#800020" />
+          <RotateCcw size={14} color="#810021" />
           <Text className="ml-1.5 text-xs font-bold text-stone-800">Reset Shift</Text>
         </Pressable>
       </View>
@@ -223,7 +223,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
                 key={tf.key}
                 onPress={() => onChangeTimeframe?.(tf.key)}
                 className={`rounded-xl px-3 py-1.5 ${
-                  isActive ? 'bg-[#800020]' : 'bg-[#FAF8F5] active:bg-stone-100'
+                  isActive ? 'bg-[#810021]' : 'bg-[#EFECE6] active:bg-stone-100'
                 }`}
               >
                 <Text className={`text-xs font-bold ${isActive ? 'text-white' : 'text-stone-700'}`}>
@@ -235,7 +235,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
         </View>
 
         <View className="flex-row items-center space-x-2 pr-1">
-          <View className="h-1.5 w-1.5 rounded-full bg-[#800020]" />
+          <View className="h-1.5 w-1.5 rounded-full bg-[#810021]" />
           <Text className="text-xs font-semibold text-stone-500">
             {timeframe === 'today' ? 'Live Sync' : telemetry?.timeframeLabel || 'Selected Period'}
           </Text>
@@ -246,7 +246,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
       {timeframe === 'today' && telemetry?.stationMetricsResetAt && (
         <View className="mb-5 flex-col sm:flex-row sm:items-center justify-between rounded-xl border border-stone-200/80 bg-white p-3.5 gap-2">
           <View className="flex-row items-center space-x-2">
-            <Sparkles size={16} color="#800020" />
+            <Sparkles size={16} color="#810021" />
             <View className="ml-2">
               <Text className="text-xs font-bold text-stone-900">
                 Shift Baseline Active ({formattedResetTime})
@@ -256,7 +256,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
           <View className="flex-row items-center space-x-2">
             <Pressable
               onPress={onToggleIgnoreReset}
-              className="rounded-lg bg-[#FAF8F5] border border-stone-200 px-3 py-1 active:bg-stone-100"
+              className="rounded-lg bg-[#EFECE6] border border-stone-200 px-3 py-1 active:bg-stone-100"
             >
               <Text className="text-xs font-bold text-stone-800">
                 {isShowingFullDay ? 'Active Shift' : 'Full Day'}
@@ -297,7 +297,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
             <Text className="text-xs font-bold uppercase tracking-wider text-stone-500">
               On-Time SLA
             </Text>
-            <CheckCircle2 size={15} color="#800020" />
+            <CheckCircle2 size={15} color="#810021" />
           </View>
           <Text className="mt-2 text-xl font-black text-stone-900">
             {telemetry?.stationsOverview?.overallSlaPercent ?? 100}%
@@ -327,9 +327,9 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
             <Text className="text-xs font-bold uppercase tracking-wider text-stone-500">
               Active Queue
             </Text>
-            <Activity size={15} color="#800020" />
+            <Activity size={15} color="#810021" />
           </View>
-          <Text className="mt-2 text-xl font-black text-[#800020]">{totalActiveTickets}</Text>
+          <Text className="mt-2 text-xl font-black text-[#810021]">{totalActiveTickets}</Text>
           <Text className="mt-1 text-xs text-stone-500">In-flight tickets</Text>
         </View>
       </View>
@@ -347,7 +347,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
               <View className="flex-row items-center justify-between mb-3 flex-wrap gap-2">
                 <View className="flex-row items-center space-x-2.5">
                   <View className={`h-9 w-9 items-center justify-center rounded-xl ${st.color}`}>
-                    <IconComp size={18} color="#F5F5F5" />
+                    <IconComp size={18} color="#F7F5F2" />
                   </View>
                   <View className="ml-2.5">
                     <Text className="text-base font-bold text-stone-900">{st.name}</Text>
@@ -356,10 +356,10 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
                 </View>
 
                 {/* Online Heartbeat Indicator */}
-                <View className="flex-row items-center rounded-full bg-[#FAF8F5] border border-stone-200 px-2.5 py-1">
+                <View className="flex-row items-center rounded-full bg-[#EFECE6] border border-stone-200 px-2.5 py-1">
                   <View
                     className={`h-2 w-2 rounded-full mr-1.5 ${
-                      st.isOnline ? 'bg-[#800020]' : 'bg-stone-400'
+                      st.isOnline ? 'bg-[#810021]' : 'bg-stone-400'
                     }`}
                   />
                   <Text className="text-xs font-semibold text-stone-700">
@@ -369,14 +369,14 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
               </View>
 
               {/* Station Metrics Grid */}
-              <View className="grid grid-cols-2 sm:grid-cols-4 rounded-xl bg-[#FAF8F5] p-3 mb-3 gap-2.5">
+              <View className="grid grid-cols-2 sm:grid-cols-4 rounded-xl bg-[#EFECE6] p-3 mb-3 gap-2.5">
                 <View>
                   <Text className="text-[11px] font-medium text-stone-500">Active Queue</Text>
                   <Text className="text-xl font-black text-stone-900">{st.activeTickets}</Text>
                   {st.activeTickets > 0 && (
                     <Text
                       className={`text-[10px] font-semibold ${
-                        st.isOnline ? 'text-[#800020]' : 'text-stone-400'
+                        st.isOnline ? 'text-[#810021]' : 'text-stone-400'
                       }`}
                     >
                       {st.isOnline ? `Live: ${st.liveActiveTime}` : 'Queued'}
@@ -402,7 +402,7 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
                   <Text className="text-[11px] font-medium text-stone-500">Overdue</Text>
                   <Text
                     className={`text-xl font-black ${
-                      st.lateCount > 0 ? 'text-[#800020]' : 'text-stone-900'
+                      st.lateCount > 0 ? 'text-[#810021]' : 'text-stone-900'
                     }`}
                   >
                     {st.lateCount}
@@ -413,14 +413,14 @@ export const AdminStationsView: React.FC<AdminStationsViewProps> = ({
 
               {/* Stock Notice */}
               {st.stockoutCount > 0 ? (
-                <View className="flex-row items-center rounded-xl bg-[#FAF8F5] border border-stone-200 px-3 py-2">
-                  <AlertTriangle size={14} color="#800020" />
-                  <Text className="ml-2 text-xs font-semibold text-[#800020]">
+                <View className="flex-row items-center rounded-xl bg-[#EFECE6] border border-stone-200 px-3 py-2">
+                  <AlertTriangle size={14} color="#810021" />
+                  <Text className="ml-2 text-xs font-semibold text-[#810021]">
                     Out of stock: {st.stockoutCount} items
                   </Text>
                 </View>
               ) : (
-                <View className="flex-row items-center rounded-xl bg-[#FAF8F5] border border-stone-200 px-3 py-2">
+                <View className="flex-row items-center rounded-xl bg-[#EFECE6] border border-stone-200 px-3 py-2">
                   <CheckCircle2 size={14} color="#78716c" />
                   <Text className="ml-2 text-xs font-medium text-stone-600">All items healthy</Text>
                 </View>

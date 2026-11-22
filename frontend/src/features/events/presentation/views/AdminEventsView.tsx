@@ -110,7 +110,7 @@ export const AdminEventsView: React.FC = () => {
           <View className="max-w-7xl mx-auto flex-row items-center justify-between gap-3">
             <View className="flex-row items-center gap-2.5 min-w-0">
               <View className="h-9 w-9 items-center justify-center rounded-xl bg-stone-100 flex-shrink-0">
-                <CalendarDays size={18} color="#800020" aria-hidden={true} />
+                <CalendarDays size={18} color="#810021" aria-hidden={true} />
               </View>
               <Text
                 className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 leading-tight"
@@ -126,9 +126,9 @@ export const AdminEventsView: React.FC = () => {
               accessibilityRole="button"
               accessibilityLabel="Schedule new event"
               style={Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined}
-              className="h-10 flex-row items-center justify-center gap-1.5 rounded-xl bg-[#800020] px-3.5 text-white active:bg-[#600018] shadow-xs"
+              className="h-10 flex-row items-center justify-center gap-1.5 rounded-xl bg-[#810021] px-3.5 text-white active:bg-[#600018] shadow-xs"
             >
-              <Plus size={16} color="#F5F5F5" aria-hidden={true} />
+              <Plus size={16} color="#F7F5F2" aria-hidden={true} />
               <Text className="text-xs font-bold text-white">+ Add Event</Text>
             </Pressable>
           </View>

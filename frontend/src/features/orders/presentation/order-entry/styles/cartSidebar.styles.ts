@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 export const cartSidebarStyles = StyleSheet.create({
   cartPanel: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     padding: 20,
     justifyContent: 'space-between',
   },
@@ -21,9 +21,9 @@ export const cartSidebarStyles = StyleSheet.create({
     color: '#1a1a1e',
   },
   itemCountBadge: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     paddingHorizontal: 9,
     paddingVertical: 4,
     borderRadius: 8,
@@ -137,9 +137,9 @@ export const cartSidebarStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     padding: 14,
     borderRadius: 14,
     marginVertical: 8,
@@ -218,7 +218,7 @@ export const cartSidebarStyles = StyleSheet.create({
     elevation: 0,
   },
   sendOrderBtnText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 16,
     fontWeight: '800',
   },

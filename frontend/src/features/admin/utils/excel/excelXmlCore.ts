@@ -57,7 +57,7 @@ export const EXCEL_STYLES = `
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="2" ss:Color="#4A1020"/>
       </Borders>
       <Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1" ss:Color="#FFFFFF"/>
-      <Interior ss:Color="#800020" ss:Pattern="Solid"/>
+      <Interior ss:Color="#810021" ss:Pattern="Solid"/>
     </Style>
     <Style ss:ID="SubtitleBanner">
       <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
@@ -66,7 +66,7 @@ export const EXCEL_STYLES = `
     </Style>
     <Style ss:ID="SectionHeader">
       <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
-      <Font ss:FontName="Calibri" ss:Size="12" ss:Bold="1" ss:Color="#800020"/>
+      <Font ss:FontName="Calibri" ss:Size="12" ss:Bold="1" ss:Color="#810021"/>
       <Interior ss:Color="#F5F5F4" ss:Pattern="Solid"/>
       <Borders>
         <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#D6D3D1"/>
@@ -159,7 +159,7 @@ export const EXCEL_STYLES = `
     </Style>
     <Style ss:ID="TotalCurrency">
       <Alignment ss:Horizontal="Right" ss:Vertical="Center"/>
-      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#800020"/>
+      <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#810021"/>
       <Interior ss:Color="#FAFAF9" ss:Pattern="Solid"/>
       <NumberFormat ss:Format="₱#,##0.00;(₱#,##0.00);&quot;₱0.00&quot;"/>
       <Borders>

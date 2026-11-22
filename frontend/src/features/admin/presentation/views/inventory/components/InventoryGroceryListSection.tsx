@@ -69,9 +69,9 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
   return (
     <View className="gap-4">
       {/* Toolbar */}
-      <View className="rounded-2xl border border-[#E7E5E4] bg-white p-4 flex-col md:flex-row md:items-center justify-between gap-3">
+      <View className="rounded-2xl border border-[#E2DED6] bg-white p-4 flex-col md:flex-row md:items-center justify-between gap-3">
         <View className="flex-1">
-          <Text className="text-lg font-bold text-[#1C1917]">
+          <Text className="text-lg font-bold text-[#1A1617]">
             Grocery &amp; Restock List ({filteredItems.length})
           </Text>
           <Text className="text-base text-[#78716C]">
@@ -91,17 +91,17 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
 
           <Pressable
             onPress={handleCopyMobileLink}
-            className="min-h-[48px] px-4 rounded-xl border border-[#E7E5E4] bg-white flex-row items-center justify-center active:opacity-80"
+            className="min-h-[48px] px-4 rounded-xl border border-[#E2DED6] bg-white flex-row items-center justify-center active:opacity-80"
           >
-            <Copy size={18} color="#1C1917" />
-            <Text className="ml-2 text-base font-bold text-[#1C1917]">Copy Link</Text>
+            <Copy size={18} color="#1A1617" />
+            <Text className="ml-2 text-base font-bold text-[#1A1617]">Copy Link</Text>
           </Pressable>
 
           <Pressable
             onPress={handleOpenMobileView}
             className="min-h-[48px] px-4 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
           >
-            <ExternalLink size={18} color="#F5F5F5" />
+            <ExternalLink size={18} color="#F7F5F2" />
             <Text className="ml-2 text-base font-bold text-white">Mobile View</Text>
           </Pressable>
         </View>
@@ -109,9 +109,9 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
 
       {/* List */}
       {filteredItems.length === 0 ? (
-        <View className="rounded-2xl border border-[#E7E5E4] bg-white p-12 items-center justify-center">
+        <View className="rounded-2xl border border-[#E2DED6] bg-white p-12 items-center justify-center">
           <CheckCircle2 size={40} color="#10b981" />
-          <Text className="mt-3 text-lg font-bold text-[#1C1917] text-center">
+          <Text className="mt-3 text-lg font-bold text-[#1A1617] text-center">
             All inventory items are above par.
           </Text>
           <Text className="mt-1 text-base text-[#78716C] text-center">
@@ -133,7 +133,7 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
             return (
               <View
                 key={item.id}
-                className="rounded-2xl border border-[#E7E5E4] bg-white overflow-hidden flex-col justify-between"
+                className="rounded-2xl border border-[#E2DED6] bg-white overflow-hidden flex-col justify-between"
               >
                 <View>
                   {/* Reference Photo Banner */}
@@ -147,7 +147,7 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
                           note: item.grocery_note,
                         })
                       }
-                      className="h-44 w-full bg-[#FAF8F5] border-b border-[#E7E5E4] active:opacity-90"
+                      className="h-44 w-full bg-[#EFECE6] border-b border-[#E2DED6] active:opacity-90"
                     >
                       <Image
                         source={{ uri: item.reference_image_url }}
@@ -159,7 +159,7 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
                   ) : (
                     <Pressable
                       onPress={() => onEditItem(item)}
-                      className="h-28 w-full bg-[#FAF8F5] border-b border-[#E7E5E4] items-center justify-center gap-1 active:opacity-80"
+                      className="h-28 w-full bg-[#EFECE6] border-b border-[#E2DED6] items-center justify-center gap-1 active:opacity-80"
                     >
                       <Camera size={22} color="#78716C" />
                       <Text className="text-base font-semibold text-[#78716C]">
@@ -171,7 +171,7 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
                   <View className="p-4 gap-2.5">
                     <View className="flex-row items-start justify-between gap-2">
                       <View className="flex-1 min-w-0">
-                        <Text className="text-lg font-bold text-[#1C1917]">{item.name}</Text>
+                        <Text className="text-lg font-bold text-[#1A1617]">{item.name}</Text>
                         <Text className="text-base text-[#78716C] tabular-nums">
                           On-hand: {Number(item.current_stock || 0).toFixed(2)} {item.unit} (Par{' '}
                           {item.min_alert_level})
@@ -179,7 +179,7 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
                       </View>
                       <View
                         className={`rounded-lg px-2.5 py-1 border ${
-                          isOut ? 'bg-rose-50 border-rose-200' : 'bg-[#FAF8F5] border-[#E7E5E4]'
+                          isOut ? 'bg-rose-50 border-rose-200' : 'bg-[#EFECE6] border-[#E2DED6]'
                         }`}
                       >
                         <Text
@@ -193,10 +193,10 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
                     </View>
 
                     {/* Buy Qty Highlight */}
-                    <View className="rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] px-3.5 py-2.5 flex-row items-center justify-between">
+                    <View className="rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3.5 py-2.5 flex-row items-center justify-between">
                       <View className="flex-row items-center gap-2">
                         <ShoppingBag size={18} color="#810021" />
-                        <Text className="text-base font-semibold text-[#1C1917]">Buy Qty</Text>
+                        <Text className="text-base font-semibold text-[#1A1617]">Buy Qty</Text>
                       </View>
                       <Text className="text-lg font-extrabold text-[#810021] tabular-nums">
                         {buyQty} {item.unit}
@@ -204,7 +204,7 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
                     </View>
 
                     {item.grocery_note ? (
-                      <Text className="text-base text-[#1C1917]">{item.grocery_note}</Text>
+                      <Text className="text-base text-[#1A1617]">{item.grocery_note}</Text>
                     ) : null}
 
                     {(item.supplier?.name || item.supplier_name) && (
@@ -215,7 +215,7 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
                         {supplierPhone ? (
                           <Pressable
                             onPress={() => Linking.openURL(`tel:${supplierPhone}`)}
-                            className="min-h-[48px] px-3 rounded-xl border border-[#E7E5E4] bg-white flex-row items-center active:opacity-80"
+                            className="min-h-[48px] px-3 rounded-xl border border-[#E2DED6] bg-white flex-row items-center active:opacity-80"
                           >
                             <Phone size={16} color="#810021" />
                             <Text className="ml-1.5 text-base font-bold text-[#810021]">Call</Text>
@@ -226,18 +226,18 @@ export const InventoryGroceryListSection: React.FC<InventoryGroceryListSectionPr
                   </View>
                 </View>
 
-                <View className="px-4 pb-4 pt-2 border-t border-[#E7E5E4] flex-row items-center gap-2">
+                <View className="px-4 pb-4 pt-2 border-t border-[#E2DED6] flex-row items-center gap-2">
                   <Pressable
                     onPress={() => onEditItem(item)}
-                    className="min-h-[48px] px-4 rounded-xl border border-[#E7E5E4] bg-white items-center justify-center active:opacity-80"
+                    className="min-h-[48px] px-4 rounded-xl border border-[#E2DED6] bg-white items-center justify-center active:opacity-80"
                   >
-                    <Text className="text-base font-bold text-[#1C1917]">Edit</Text>
+                    <Text className="text-base font-bold text-[#1A1617]">Edit</Text>
                   </Pressable>
                   <Pressable
                     onPress={() => onRestock(item)}
                     className="min-h-[48px] flex-1 rounded-xl bg-[#810021] flex-row items-center justify-center active:opacity-85"
                   >
-                    <Plus size={18} color="#F5F5F5" />
+                    <Plus size={18} color="#F7F5F2" />
                     <Text className="ml-1.5 text-base font-bold text-white">Restock</Text>
                   </Pressable>
                 </View>

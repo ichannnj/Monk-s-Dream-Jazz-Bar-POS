@@ -70,14 +70,14 @@ export const EventCalendarControls: React.FC<EventCalendarControlsProps> = ({
             accessibilityLabel="Month view"
             className={`flex-row items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors ${
               viewMode === 'month'
-                ? 'bg-[#800020] text-white shadow-xs'
+                ? 'bg-[#810021] text-white shadow-xs'
                 : 'text-stone-600 hover:bg-stone-50'
             }`}
             style={Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined}
           >
             <CalendarDays
               size={14}
-              color={viewMode === 'month' ? '#F5F5F5' : '#57534e'}
+              color={viewMode === 'month' ? '#F7F5F2' : '#57534e'}
               aria-hidden={true}
             />
             <Text
@@ -93,14 +93,14 @@ export const EventCalendarControls: React.FC<EventCalendarControlsProps> = ({
             accessibilityLabel="Week view"
             className={`flex-row items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors ${
               viewMode === 'week'
-                ? 'bg-[#800020] text-white shadow-xs'
+                ? 'bg-[#810021] text-white shadow-xs'
                 : 'text-stone-600 hover:bg-stone-50'
             }`}
             style={Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined}
           >
             <Columns
               size={14}
-              color={viewMode === 'week' ? '#F5F5F5' : '#57534e'}
+              color={viewMode === 'week' ? '#F7F5F2' : '#57534e'}
               aria-hidden={true}
             />
             <Text
@@ -116,14 +116,14 @@ export const EventCalendarControls: React.FC<EventCalendarControlsProps> = ({
             accessibilityLabel="Agenda list view"
             className={`flex-row items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg transition-colors ${
               viewMode === 'agenda'
-                ? 'bg-[#800020] text-white shadow-xs'
+                ? 'bg-[#810021] text-white shadow-xs'
                 : 'text-stone-600 hover:bg-stone-50'
             }`}
             style={Platform.OS === 'web' ? ({ touchAction: 'manipulation' } as any) : undefined}
           >
             <List
               size={14}
-              color={viewMode === 'agenda' ? '#F5F5F5' : '#57534e'}
+              color={viewMode === 'agenda' ? '#F7F5F2' : '#57534e'}
               aria-hidden={true}
             />
             <Text

@@ -68,7 +68,7 @@ export const AdminInventoryView: React.FC<AdminInventoryViewProps> = ({ inventor
 
   return (
     <ScrollView
-      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#EFECE6] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       <InventoryHeaderAndTabs

@@ -37,14 +37,14 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
     <View className="rounded-2xl border border-stone-200/80 bg-white p-5 sm:p-6 shadow-xs">
       <View className="flex-row items-center justify-between border-b border-stone-100 pb-4 mb-5">
         <View className="flex-row items-center gap-3">
-          <View className="h-14 w-14 items-center justify-center rounded-full bg-[#800020]/10 border border-[#800020]/25">
-            <Text className="text-xl font-black text-[#800020]">{staffInitials}</Text>
+          <View className="h-14 w-14 items-center justify-center rounded-full bg-[#810021]/10 border border-[#810021]/25">
+            <Text className="text-xl font-black text-[#810021]">{staffInitials}</Text>
           </View>
           <View>
             <Text className="text-lg font-bold text-stone-900">
               {displayName || 'Administrator'}
             </Text>
-            <Text className="text-base font-semibold text-[#800020]">
+            <Text className="text-base font-semibold text-[#810021]">
               @{username || 'admin'} · {jobTitle}
             </Text>
           </View>
@@ -64,7 +64,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
               onChangeText={setDisplayName}
               placeholder="Enter full name"
               placeholderTextColor="#a8a29e"
-              style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+              style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
             />
           </View>
         </View>
@@ -84,7 +84,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
               placeholderTextColor="#a8a29e"
               autoCapitalize="none"
               autoCorrect={false}
-              style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+              style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
             />
           </View>
           <Text className="mt-1 text-xs text-stone-500">
@@ -101,7 +101,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
               onChangeText={setJobTitle}
               placeholder="General Manager, Owner, etc."
               placeholderTextColor="#a8a29e"
-              style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+              style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
             />
           </View>
         </View>
@@ -118,7 +118,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
                 placeholderTextColor="#a8a29e"
                 autoCapitalize="none"
                 keyboardType="email-address"
-                style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+                style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
               />
             </View>
           </View>
@@ -133,7 +133,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
                 placeholder="+63 917 123 4567"
                 placeholderTextColor="#a8a29e"
                 keyboardType="phone-pad"
-                style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+                style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
               />
             </View>
           </View>
@@ -143,7 +143,7 @@ export const ProfileIdentityCard: React.FC<ProfileIdentityCardProps> = ({
           <Pressable
             onPress={onSaveProfile}
             disabled={isUpdatingProfile}
-            className="min-h-[48px] items-center justify-center rounded-xl bg-[#800020] px-6 active:opacity-90 shadow-xs"
+            className="min-h-[48px] items-center justify-center rounded-xl bg-[#810021] px-6 active:opacity-90 shadow-xs"
           >
             <Text className="text-base font-bold text-white">
               {isUpdatingProfile ? 'Saving Changes...' : 'Save Profile Changes'}

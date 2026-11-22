@@ -26,7 +26,7 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
   };
 
   return (
-    <View className="flex-1 bg-[#FAF8F5]">
+    <View className="flex-1 bg-[#EFECE6]">
       <FloorSectionHeader
         title={title}
         badge={
@@ -40,7 +40,7 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
           unreadAlerts.length > 0 ? (
             <Pressable
               onPress={handleDismissAll}
-              className="min-h-[48px] px-4 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center active:opacity-80"
+              className="min-h-[48px] px-4 rounded-xl bg-[#EFECE6] border border-[#E2DED6] items-center justify-center active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel="Dismiss all alerts"
             >
@@ -56,9 +56,9 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
         showsVerticalScrollIndicator={false}
       >
         {alerts.length === 0 ? (
-          <View className="bg-white rounded-2xl border border-[#E7E5E4] p-8 items-center justify-center gap-2 mt-2">
+          <View className="bg-white rounded-2xl border border-[#E2DED6] p-8 items-center justify-center gap-2 mt-2">
             <Sparkles size={28} color="#78716C" />
-            <Text className="text-pos-lg font-bold text-[#1C1917]">All caught up</Text>
+            <Text className="text-pos-lg font-bold text-[#1A1617]">All caught up</Text>
             <Text className="text-base text-[#57534E] text-center max-w-md">
               Station chimes and inventory notifications will appear here.
             </Text>
@@ -72,22 +72,22 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
               <View
                 key={alert.id}
                 className={`bg-white rounded-2xl p-4 flex-row flex-wrap sm:flex-nowrap justify-between items-center border gap-3 ${
-                  !alert.isRead ? 'border-[#810021]/30' : 'border-[#E7E5E4]'
+                  !alert.isRead ? 'border-[#810021]/30' : 'border-[#E2DED6]'
                 }`}
               >
                 <View className="flex-row items-start gap-3 flex-1 min-w-[220px]">
-                  <View className="w-10 h-10 rounded-full bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center shrink-0 mt-0.5">
+                  <View className="w-10 h-10 rounded-full bg-[#EFECE6] border border-[#E2DED6] items-center justify-center shrink-0 mt-0.5">
                     {isReady ? (
                       <CheckCircle2 size={18} color="#810021" />
                     ) : is86 ? (
                       <AlertTriangle size={18} color="#810021" />
                     ) : (
-                      <Repeat size={18} color="#1C1917" />
+                      <Repeat size={18} color="#1A1617" />
                     )}
                   </View>
 
                   <View className="flex-1 gap-1">
-                    <Text className="text-base font-bold text-[#1C1917]">{alert.title}</Text>
+                    <Text className="text-base font-bold text-[#1A1617]">{alert.title}</Text>
                     {alert.description ? (
                       <Text className="text-base text-[#57534E]" numberOfLines={2}>
                         {alert.description}
@@ -97,7 +97,7 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
                       <Clock size={14} color="#78716C" />
                       <Text className="text-base text-[#78716C] tabular-nums">{alert.time}</Text>
                       {alert.targetRef ? (
-                        <View className="bg-[#FAF8F5] border border-[#E7E5E4] px-2.5 py-0.5 rounded-lg">
+                        <View className="bg-[#EFECE6] border border-[#E2DED6] px-2.5 py-0.5 rounded-lg">
                           <Text className="text-base font-semibold text-[#57534E]">
                             {alert.targetRef}
                           </Text>
@@ -116,11 +116,11 @@ export const SharedAlertsView: React.FC<SharedAlertsViewProps> = ({
                         duration: 1500,
                       });
                     }}
-                    className="min-h-[48px] px-4 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center active:opacity-80 shrink-0"
+                    className="min-h-[48px] px-4 rounded-xl bg-[#EFECE6] border border-[#E2DED6] items-center justify-center active:opacity-80 shrink-0"
                     accessibilityRole="button"
                     accessibilityLabel={`Dismiss ${alert.title}`}
                   >
-                    <Text className="text-base font-semibold text-[#1C1917]">Dismiss</Text>
+                    <Text className="text-base font-semibold text-[#1A1617]">Dismiss</Text>
                   </Pressable>
                 ) : null}
               </View>

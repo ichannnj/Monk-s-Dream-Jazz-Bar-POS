@@ -57,14 +57,14 @@ export const CategoryListTab: React.FC<CategoryListTabProps> = ({
                     className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50"
                     accessibilityLabel={`Edit ${cat.name}`}
                   >
-                    <Edit size={17} color="#1c1917" />
+                    <Edit size={17} color="#1A1617" />
                   </Pressable>
                   <Pressable
                     onPress={() => onDeleteCategory(cat)}
                     className="min-h-[44px] min-w-[44px] sm:min-h-[48px] sm:min-w-[48px] items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50"
                     accessibilityLabel={`Delete ${cat.name}`}
                   >
-                    <Trash2 size={17} color="#800020" />
+                    <Trash2 size={17} color="#810021" />
                   </Pressable>
                 </View>
               </View>

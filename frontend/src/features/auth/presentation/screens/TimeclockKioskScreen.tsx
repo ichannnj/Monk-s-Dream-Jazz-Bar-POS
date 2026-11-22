@@ -172,7 +172,7 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
               <View className="relative z-10">
                 <View className="flex-row items-center space-x-3 mb-3">
                   <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/20 border border-white/30">
-                    <Clock size={20} color="#F5F5F5" />
+                    <Clock size={20} color="#F7F5F2" />
                   </View>
                   <View>
                     <Text className="text-xl font-black tracking-tight text-white">
@@ -273,7 +273,7 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
                     placeholderTextColor="#a8a29e"
                     autoCapitalize="none"
                     autoCorrect={false}
-                    className="w-full min-h-[50px] rounded-2xl border border-stone-200 bg-stone-50/80 px-4 text-base font-semibold text-stone-900 focus:border-[#800020] focus:bg-white"
+                    className="w-full min-h-[50px] rounded-2xl border border-stone-200 bg-stone-50/80 px-4 text-base font-semibold text-stone-900 focus:border-[#810021] focus:bg-white"
                   />
                   <Text className="mt-1 text-xs text-stone-400">
                     Works for all POS and Non-POS team members
@@ -299,7 +299,7 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
                 <Pressable
                   onPress={() => handlePunch()}
                   disabled={isSubmitting || !username.trim() || pin.length !== 4}
-                  className={`w-full min-h-[52px] items-center justify-center rounded-2xl bg-[#800020] shadow-md transition-all ${
+                  className={`w-full min-h-[52px] items-center justify-center rounded-2xl bg-[#810021] shadow-md transition-all ${
                     isSubmitting || !username.trim() || pin.length !== 4
                       ? 'opacity-40 cursor-not-allowed'
                       : 'active:bg-[#6b001a]'

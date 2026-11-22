@@ -179,13 +179,13 @@ export const AdminProfileView: React.FC = () => {
 
   return (
     <ScrollView
-      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#EFECE6] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* View Header */}
       <View className="mb-5 flex-row items-center gap-2.5">
         <View className="h-9 w-9 items-center justify-center rounded-xl bg-stone-100">
-          <Shield size={18} color="#800020" />
+          <Shield size={18} color="#810021" />
         </View>
         <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900">
           Admin Profile &amp; Security

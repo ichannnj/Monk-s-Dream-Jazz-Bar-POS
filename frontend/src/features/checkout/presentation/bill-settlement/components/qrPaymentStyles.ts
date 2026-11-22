@@ -5,7 +5,7 @@ export const qrPaymentStyles = StyleSheet.create({
     backgroundColor: '#fafaf9',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     padding: 14,
     marginBottom: 16,
     gap: 12,
@@ -36,14 +36,14 @@ export const qrPaymentStyles = StyleSheet.create({
     color: '#44403c',
   },
   channelPillTextActive: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   qrDisplayCard: {
     flexDirection: 'row',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     padding: 12,
     gap: 12,
     alignItems: 'center',
@@ -55,7 +55,7 @@ export const qrPaymentStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     padding: 4,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -70,7 +70,7 @@ export const qrPaymentStyles = StyleSheet.create({
   qrChannelName: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#1c1917',
+    color: '#1A1617',
   },
   qrAccountName: {
     fontSize: 12,
@@ -102,10 +102,10 @@ export const qrPaymentStyles = StyleSheet.create({
     color: '#810021',
   },
   refInputCard: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     padding: 12,
     gap: 6,
   },
@@ -117,7 +117,7 @@ export const qrPaymentStyles = StyleSheet.create({
   refLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1c1917',
+    color: '#1A1617',
   },
   refRequiredBadge: {
     fontSize: 11,

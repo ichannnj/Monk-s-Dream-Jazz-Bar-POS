@@ -87,7 +87,7 @@ export const MultiGranularitySalesChart: React.FC<MultiGranularitySalesChartProp
                 : 'active:bg-stone-200'
             }`}
           >
-            <Calendar size={14} color={mode === 'day' ? '#800020' : '#78716c'} />
+            <Calendar size={14} color={mode === 'day' ? '#810021' : '#78716c'} />
             <Text
               className={`text-xs sm:text-base font-bold ${
                 mode === 'day' ? 'text-stone-900' : 'text-stone-600'
@@ -108,7 +108,7 @@ export const MultiGranularitySalesChart: React.FC<MultiGranularitySalesChartProp
                 : 'active:bg-stone-200'
             }`}
           >
-            <BarChart2 size={14} color={mode === 'week' ? '#800020' : '#78716c'} />
+            <BarChart2 size={14} color={mode === 'week' ? '#810021' : '#78716c'} />
             <Text
               className={`text-xs sm:text-base font-bold ${
                 mode === 'week' ? 'text-stone-900' : 'text-stone-600'
@@ -129,7 +129,7 @@ export const MultiGranularitySalesChart: React.FC<MultiGranularitySalesChartProp
                 : 'active:bg-stone-200'
             }`}
           >
-            <Layers size={14} color={mode === 'month' ? '#800020' : '#78716c'} />
+            <Layers size={14} color={mode === 'month' ? '#810021' : '#78716c'} />
             <Text
               className={`text-xs sm:text-base font-bold ${
                 mode === 'month' ? 'text-stone-900' : 'text-stone-600'
@@ -176,7 +176,7 @@ export const MultiGranularitySalesChart: React.FC<MultiGranularitySalesChartProp
               )}
             </View>
             <Text className="text-base font-bold text-stone-900">{selectedPoint.label}:</Text>
-            <Text className="text-base font-black text-[#800020]">
+            <Text className="text-base font-black text-[#810021]">
               {formatCurrency(selectedPoint.sales)}
             </Text>
           </View>
@@ -245,9 +245,9 @@ export const MultiGranularitySalesChart: React.FC<MultiGranularitySalesChartProp
                       isSelected
                         ? 'bg-stone-900 shadow-md ring-2 ring-stone-900'
                         : isPeak
-                          ? 'bg-[#800020] shadow-sm'
+                          ? 'bg-[#810021] shadow-sm'
                           : pt.sales > 0
-                            ? 'bg-[#800020]/75 hover:bg-[#800020]'
+                            ? 'bg-[#810021]/75 hover:bg-[#810021]'
                             : 'bg-stone-200/60'
                     }`}
                   />

@@ -77,7 +77,7 @@ export const TouchTextInput: React.FC<TouchTextInputProps> = ({
       return 'border-rose-500 bg-white ring-2 ring-rose-500/20';
     }
     if (isFocused) {
-      return 'border-[#800020] bg-white ring-2 ring-[#800020]/20';
+      return 'border-[#810021] bg-white ring-2 ring-[#810021]/20';
     }
     return 'border-stone-300 bg-white';
   };
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
   baseInput: {
     fontSize: 16, // Invariant: Must be >= 16px to prevent mobile browser auto-zoom
     minHeight: 46,
-    color: '#1c1917',
+    color: '#1A1617',
     paddingVertical: Platform.OS === 'ios' ? 8 : 4,
   },
   multilineInput: {

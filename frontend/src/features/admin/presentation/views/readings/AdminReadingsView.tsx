@@ -59,8 +59,8 @@ export const AdminReadingsView: React.FC = () => {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#FAF8F5] p-8">
-        <ActivityIndicator size="large" color="#800020" />
+      <View className="flex-1 items-center justify-center bg-[#EFECE6] p-8">
+        <ActivityIndicator size="large" color="#810021" />
         <Text className="text-sm font-bold text-stone-600 mt-3">Loading POS Shift Data...</Text>
       </View>
     );
@@ -118,7 +118,7 @@ export const AdminReadingsView: React.FC = () => {
 
   return (
     <ScrollView
-      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#EFECE6] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* Top Controls: Till Scope Dropdown & Reading Actions Dropdown */}

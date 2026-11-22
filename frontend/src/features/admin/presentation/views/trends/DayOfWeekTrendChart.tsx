@@ -36,8 +36,8 @@ export const DayOfWeekTrendChart: React.FC<DayOfWeekTrendChartProps> = ({
       {/* Header */}
       <View className="flex-row items-center justify-between mb-4 flex-wrap gap-3">
         <View className="flex-row items-center gap-3 flex-1 min-w-[200px]">
-          <View className="w-10 h-10 shrink-0 rounded-xl bg-[#800020]/10 border border-[#800020]/20 items-center justify-center">
-            <Calendar size={20} color="#800020" />
+          <View className="w-10 h-10 shrink-0 rounded-xl bg-[#810021]/10 border border-[#810021]/20 items-center justify-center">
+            <Calendar size={20} color="#810021" />
           </View>
           <View className="flex-1 min-w-0">
             <Text className="text-lg font-extrabold text-stone-900 leading-snug">
@@ -80,7 +80,7 @@ export const DayOfWeekTrendChart: React.FC<DayOfWeekTrendChartProps> = ({
             <Text className="text-base font-bold text-stone-900">
               {selectedDay.dayName} Breakdown:
             </Text>
-            <Text className="text-base font-black text-[#800020]">
+            <Text className="text-base font-black text-[#810021]">
               {formatCurrency(selectedDay.totalSales)}
             </Text>
             <View className="bg-stone-200/80 px-2 py-0.5 rounded-md">
@@ -147,9 +147,9 @@ export const DayOfWeekTrendChart: React.FC<DayOfWeekTrendChartProps> = ({
                   isSelected
                     ? 'bg-stone-900 shadow-md ring-2 ring-stone-900'
                     : isBest
-                      ? 'bg-[#800020] shadow-sm'
+                      ? 'bg-[#810021] shadow-sm'
                       : day.totalSales > 0
-                        ? 'bg-[#800020]/75 hover:bg-[#800020]'
+                        ? 'bg-[#810021]/75 hover:bg-[#810021]'
                         : 'bg-stone-200/70'
                 }`}
               />
@@ -196,10 +196,10 @@ export const DayOfWeekTrendChart: React.FC<DayOfWeekTrendChartProps> = ({
             </Text>
           </View>
           <View className="flex-row items-center gap-1.5">
-            <View className="w-2.5 h-2.5 rounded-full bg-[#800020]" />
+            <View className="w-2.5 h-2.5 rounded-full bg-[#810021]" />
             <Text className="text-base text-stone-600">
               Weekend Sets (Fri–Sun):{' '}
-              <Text className="font-bold text-[#800020]">{formatCurrency(weekendSales)}</Text> (
+              <Text className="font-bold text-[#810021]">{formatCurrency(weekendSales)}</Text> (
               {weekendPct}%)
             </Text>
           </View>

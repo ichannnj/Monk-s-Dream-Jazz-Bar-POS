@@ -43,7 +43,7 @@ export const TransactionsTimeframeStationModals: React.FC<
         onClose={() => setIsTimeframeModalOpen(false)}
         title="Select Reporting Timeframe"
         subtitle="Filter sales metrics, channel volume, and estimated net yield"
-        icon={<Calendar size={22} color="#800020" />}
+        icon={<Calendar size={22} color="#810021" />}
         size="md"
       >
         <View className="space-y-3">
@@ -68,7 +68,7 @@ export const TransactionsTimeframeStationModals: React.FC<
                 }}
                 className={`min-h-[52px] p-4 rounded-xl border flex-row items-center justify-between transition-all ${
                   isSelected
-                    ? 'bg-[#800020]/10 border-[#800020]'
+                    ? 'bg-[#810021]/10 border-[#810021]'
                     : 'bg-white border-stone-200 active:bg-stone-50 hover:bg-stone-50'
                 }`}
               >
@@ -76,14 +76,14 @@ export const TransactionsTimeframeStationModals: React.FC<
                   <View className="flex-row items-center gap-2">
                     <Text
                       className={`text-base font-bold ${
-                        isSelected ? 'text-[#800020]' : 'text-stone-900'
+                        isSelected ? 'text-[#810021]' : 'text-stone-900'
                       }`}
                     >
                       {opt.label}
                     </Text>
                     {isSelected && (
-                      <View className="bg-[#800020] rounded-full p-0.5">
-                        <Check size={14} color="#F5F5F5" />
+                      <View className="bg-[#810021] rounded-full p-0.5">
+                        <Check size={14} color="#F7F5F2" />
                       </View>
                     )}
                   </View>
@@ -101,7 +101,7 @@ export const TransactionsTimeframeStationModals: React.FC<
         onClose={() => setIsStationModalOpen(false)}
         title="Select Operational Station"
         subtitle="Filter sales yield and check volume by specific fulfillment destination"
-        icon={<Filter size={22} color="#800020" />}
+        icon={<Filter size={22} color="#810021" />}
         size="md"
       >
         <View className="space-y-3">
@@ -116,7 +116,7 @@ export const TransactionsTimeframeStationModals: React.FC<
                 }}
                 className={`min-h-[52px] p-4 rounded-xl border flex-row items-center justify-between transition-all ${
                   isSelected
-                    ? 'bg-[#800020]/10 border-[#800020]'
+                    ? 'bg-[#810021]/10 border-[#810021]'
                     : 'bg-white border-stone-200 active:bg-stone-50 hover:bg-stone-50'
                 }`}
               >
@@ -124,14 +124,14 @@ export const TransactionsTimeframeStationModals: React.FC<
                   <View className="flex-row items-center gap-2">
                     <Text
                       className={`text-base font-bold ${
-                        isSelected ? 'text-[#800020]' : 'text-stone-900'
+                        isSelected ? 'text-[#810021]' : 'text-stone-900'
                       }`}
                     >
                       {opt.label}
                     </Text>
                     {isSelected && (
-                      <View className="bg-[#800020] rounded-full p-0.5">
-                        <Check size={14} color="#F5F5F5" />
+                      <View className="bg-[#810021] rounded-full p-0.5">
+                        <Check size={14} color="#F7F5F2" />
                       </View>
                     )}
                   </View>

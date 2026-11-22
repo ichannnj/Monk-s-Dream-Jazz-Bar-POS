@@ -308,7 +308,7 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
         disabled={cartItems.length === 0}
         style={[styles.sendOrderBtn, cartItems.length === 0 && styles.sendOrderBtnDisabled]}
       >
-        <Send size={18} color="#F5F5F5" strokeWidth={2.4} />
+        <Send size={18} color="#F7F5F2" strokeWidth={2.4} />
         <Text style={styles.sendOrderBtnText}>
           {roundNumber ? `Send Round ${roundNumber} to Stations` : 'Send Order to Stations'}
         </Text>

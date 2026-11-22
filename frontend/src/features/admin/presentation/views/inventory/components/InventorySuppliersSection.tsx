@@ -16,14 +16,14 @@ export const InventorySuppliersSection: React.FC<InventorySuppliersSectionProps>
 }) => {
   return (
     <View className="gap-4">
-      <Text className="text-lg font-bold text-[#1C1917]">
+      <Text className="text-lg font-bold text-[#1A1617]">
         Active Suppliers ({suppliers.length})
       </Text>
 
       {suppliers.length === 0 ? (
-        <View className="rounded-2xl border border-[#E7E5E4] bg-white p-12 items-center justify-center">
+        <View className="rounded-2xl border border-[#E2DED6] bg-white p-12 items-center justify-center">
           <Building2 size={40} color="#78716C" />
-          <Text className="mt-3 text-lg font-bold text-[#1C1917] text-center">
+          <Text className="mt-3 text-lg font-bold text-[#1A1617] text-center">
             No suppliers registered yet.
           </Text>
           <Text className="text-base text-[#78716C] mt-1 text-center">
@@ -35,15 +35,15 @@ export const InventorySuppliersSection: React.FC<InventorySuppliersSectionProps>
           {suppliers.map((sup) => (
             <View
               key={sup.id}
-              className="rounded-2xl border border-[#E7E5E4] bg-white p-5 flex-col justify-between gap-4"
+              className="rounded-2xl border border-[#E2DED6] bg-white p-5 flex-col justify-between gap-4"
             >
               <View className="gap-2.5">
                 <View className="flex-row items-center gap-3">
-                  <View className="h-11 w-11 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] items-center justify-center shrink-0">
+                  <View className="h-11 w-11 rounded-xl bg-[#EFECE6] border border-[#E2DED6] items-center justify-center shrink-0">
                     <Building2 size={20} color="#810021" />
                   </View>
                   <View className="flex-1 min-w-0">
-                    <Text className="text-lg font-bold text-[#1C1917]" numberOfLines={1}>
+                    <Text className="text-lg font-bold text-[#1A1617]" numberOfLines={1}>
                       {sup.name}
                     </Text>
                     {sup.contact_person ? (
@@ -70,7 +70,7 @@ export const InventorySuppliersSection: React.FC<InventorySuppliersSectionProps>
                   {sup.email ? (
                     <View className="flex-row items-center gap-2">
                       <Mail size={16} color="#78716C" />
-                      <Text className="text-base text-[#1C1917] flex-1" numberOfLines={1}>
+                      <Text className="text-base text-[#1A1617] flex-1" numberOfLines={1}>
                         {sup.email}
                       </Text>
                     </View>
@@ -80,7 +80,7 @@ export const InventorySuppliersSection: React.FC<InventorySuppliersSectionProps>
                     <Clock size={16} color="#78716C" />
                     <Text className="text-base text-[#78716C] tabular-nums">
                       Lead time:{' '}
-                      <Text className="font-bold text-[#1C1917]">{sup.lead_time_days}d</Text>
+                      <Text className="font-bold text-[#1A1617]">{sup.lead_time_days}d</Text>
                     </Text>
                   </View>
 
@@ -95,24 +95,24 @@ export const InventorySuppliersSection: React.FC<InventorySuppliersSectionProps>
                 </View>
 
                 {sup.notes ? (
-                  <View className="rounded-xl bg-[#FAF8F5] p-3 border border-[#E7E5E4]">
-                    <Text className="text-base text-[#1C1917]">{sup.notes}</Text>
+                  <View className="rounded-xl bg-[#EFECE6] p-3 border border-[#E2DED6]">
+                    <Text className="text-base text-[#1A1617]">{sup.notes}</Text>
                   </View>
                 ) : null}
               </View>
 
-              <View className="flex-row items-center justify-end gap-2 pt-3 border-t border-[#E7E5E4]">
+              <View className="flex-row items-center justify-end gap-2 pt-3 border-t border-[#E2DED6]">
                 <Pressable
                   onPress={() => onEditSupplier(sup)}
-                  className="min-h-[48px] px-4 rounded-xl bg-white border border-[#E7E5E4] flex-row items-center active:opacity-80"
+                  className="min-h-[48px] px-4 rounded-xl bg-white border border-[#E2DED6] flex-row items-center active:opacity-80"
                 >
-                  <Edit size={16} color="#1C1917" />
-                  <Text className="ml-1.5 text-base font-bold text-[#1C1917]">Edit</Text>
+                  <Edit size={16} color="#1A1617" />
+                  <Text className="ml-1.5 text-base font-bold text-[#1A1617]">Edit</Text>
                 </Pressable>
 
                 <Pressable
                   onPress={() => onDeleteSupplier(sup)}
-                  className="min-h-[48px] px-4 rounded-xl bg-white border border-[#E7E5E4] flex-row items-center active:opacity-80"
+                  className="min-h-[48px] px-4 rounded-xl bg-white border border-[#E2DED6] flex-row items-center active:opacity-80"
                 >
                   <Trash2 size={16} color="#b32638" />
                   <Text className="ml-1.5 text-base font-bold text-[#b32638]">Delete</Text>

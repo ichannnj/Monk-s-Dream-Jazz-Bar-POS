@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 620,
     maxHeight: '90%',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
@@ -126,7 +126,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
     borderRadius: 14,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     paddingHorizontal: 14,
   },
   urlInput: {
@@ -158,12 +158,12 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#e5e7eb',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     position: 'relative',
   },
   presetCardSelected: {
     borderColor: '#832238',
-    backgroundColor: '#fdf2f4',
+    backgroundColor: '#F5EBEF',
   },
   presetThumb: {
     width: 44,
@@ -237,6 +237,6 @@ export const styles = StyleSheet.create({
   saveBtnText: {
     fontSize: 13.5,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
 });

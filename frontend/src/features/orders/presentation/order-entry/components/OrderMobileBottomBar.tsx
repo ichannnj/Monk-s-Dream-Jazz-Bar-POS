@@ -25,7 +25,7 @@ export const OrderMobileBottomBar: React.FC<OrderMobileBottomBarProps> = ({
         accessibilityLabel="Open order basket"
       >
         <View style={localStyles.basketLeft}>
-          <ShoppingBag size={18} color="#F5F5F5" />
+          <ShoppingBag size={18} color="#F7F5F2" />
           <Text style={localStyles.basketText}>Basket ({totalCartQty})</Text>
         </View>
         <Text style={localStyles.basketPrice}>{formatCurrency(grandTotal)}</Text>
@@ -47,9 +47,9 @@ export const OrderMobileBottomBar: React.FC<OrderMobileBottomBarProps> = ({
 
 const localStyles = StyleSheet.create({
   container: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderTopWidth: 1,
-    borderTopColor: '#e7e5e4',
+    borderTopColor: '#E2DED6',
     paddingHorizontal: 16,
     paddingVertical: 12,
     flexDirection: 'row',
@@ -61,7 +61,7 @@ const localStyles = StyleSheet.create({
     flex: 1,
     minHeight: 48,
     borderRadius: 12,
-    backgroundColor: '#1c1917',
+    backgroundColor: '#1A1617',
     paddingHorizontal: 16,
     paddingVertical: 10,
     flexDirection: 'row',
@@ -76,7 +76,7 @@ const localStyles = StyleSheet.create({
   basketText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   basketPrice: {
     fontSize: 16,
@@ -94,6 +94,6 @@ const localStyles = StyleSheet.create({
   sendButtonText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
 });

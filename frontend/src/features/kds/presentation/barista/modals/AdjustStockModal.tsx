@@ -114,7 +114,7 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 560,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     padding: 24,
     shadowColor: '#000000',
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 6,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   doneBtnText: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
     fontSize: 14,
     fontWeight: '800',
   },

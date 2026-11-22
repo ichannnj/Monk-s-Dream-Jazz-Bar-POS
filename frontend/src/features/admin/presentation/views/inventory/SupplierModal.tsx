@@ -103,9 +103,9 @@ export const SupplierModal: React.FC<SupplierModalProps> = ({
       <Pressable
         onPress={onClose}
         disabled={isSubmitting}
-        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E7E5E4] bg-white active:opacity-80"
+        className="min-h-[48px] px-5 items-center justify-center rounded-xl border border-[#E2DED6] bg-white active:opacity-80"
       >
-        <Text className="text-base font-bold text-[#1C1917]">Cancel</Text>
+        <Text className="text-base font-bold text-[#1A1617]">Cancel</Text>
       </Pressable>
       <Pressable
         onPress={handleSubmit}

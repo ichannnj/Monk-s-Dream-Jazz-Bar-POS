@@ -25,7 +25,7 @@ export const CashDrawerLedger: React.FC<CashDrawerLedgerProps> = ({ entries }) =
           return (
             <View
               key={entry.id}
-              className="flex-row items-center justify-between p-3 rounded-xl bg-[#FAF8F5] border border-stone-200/80"
+              className="flex-row items-center justify-between p-3 rounded-xl bg-[#EFECE6] border border-stone-200/80"
             >
               <View className="flex-row items-center gap-3 flex-1 mr-3">
                 <View
@@ -37,7 +37,7 @@ export const CashDrawerLedger: React.FC<CashDrawerLedgerProps> = ({ entries }) =
                 >
                   <Text
                     className={`text-base font-bold uppercase ${
-                      entry.type === 'sale' ? 'text-[#810021]' : 'text-[#1C1917]'
+                      entry.type === 'sale' ? 'text-[#810021]' : 'text-[#1A1617]'
                     }`}
                   >
                     {entry.type.replace('_', ' ')}
@@ -45,7 +45,7 @@ export const CashDrawerLedger: React.FC<CashDrawerLedgerProps> = ({ entries }) =
                 </View>
 
                 <View className="flex-1 min-w-0">
-                  <Text className="text-base font-bold text-[#1C1917]" numberOfLines={1}>
+                  <Text className="text-base font-bold text-[#1A1617]" numberOfLines={1}>
                     {entry.reason}
                   </Text>
                   <Text className="text-base text-[#57534E] mt-0.5" numberOfLines={1}>

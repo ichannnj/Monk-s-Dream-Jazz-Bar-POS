@@ -98,7 +98,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
-        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+        className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90"
       >
         <Text className="text-base font-bold text-white">
           {isSubmitting ? 'Saving...' : category ? 'Save Changes' : 'Create Category'}
@@ -113,7 +113,7 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       onClose={onClose}
       title={category ? 'Edit Menu Category' : 'Create Menu Category'}
       subtitle="Groups products on Floor POS tables and customer receipts"
-      icon={<FolderPlus size={22} color="#800020" />}
+      icon={<FolderPlus size={22} color="#810021" />}
       size="md"
       footer={footer}
     >

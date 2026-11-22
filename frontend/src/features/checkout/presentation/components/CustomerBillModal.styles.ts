@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
     padding: 16,
   },
   card: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     width: '100%',
     maxWidth: 720,
@@ -44,12 +44,12 @@ export const styles = StyleSheet.create({
   badgeText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   subtitle: {
     fontSize: 13,
@@ -60,9 +60,9 @@ export const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -75,12 +75,12 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
   brandCard: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 16,
     padding: 14,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
   },
   logoImage: {
     width: 48,
@@ -101,7 +101,7 @@ export const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#e7e5e4',
+    backgroundColor: '#E2DED6',
     width: '100%',
     marginVertical: 8,
   },
@@ -113,12 +113,12 @@ export const styles = StyleSheet.create({
     marginTop: 2,
   },
   instantQrCard: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 14,
     padding: 10,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
   },
   instantQrHeader: {
     flexDirection: 'row',
@@ -135,12 +135,12 @@ export const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 8,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
   },
   instantQrChannel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
     marginTop: 4,
   },
   instantQrAccount: {
@@ -149,18 +149,18 @@ export const styles = StyleSheet.create({
     color: '#78716C',
   },
   itemsSection: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 16,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     marginBottom: 12,
   },
   itemsHeaderRow: {
     flexDirection: 'row',
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e7e5e4',
+    borderBottomColor: '#E2DED6',
     marginBottom: 8,
   },
   colHeader: {
@@ -180,7 +180,7 @@ export const styles = StyleSheet.create({
   itemName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   itemNotes: {
     fontSize: 12,
@@ -191,7 +191,7 @@ export const styles = StyleSheet.create({
   itemQty: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   itemPrice: {
     fontSize: 13,
@@ -201,14 +201,14 @@ export const styles = StyleSheet.create({
   itemLineTotal: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   breakdownCard: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     gap: 6,
   },
   summaryRow: {
@@ -224,10 +224,10 @@ export const styles = StyleSheet.create({
   summaryValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   taxSubCard: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 10,
     padding: 8,
     marginVertical: 4,
@@ -256,13 +256,13 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 8,
     borderTopWidth: 1.5,
-    borderTopColor: '#e7e5e4',
+    borderTopColor: '#E2DED6',
     marginTop: 4,
   },
   totalDueLabel: {
     fontSize: 16,
     fontWeight: '900',
-    color: '#1C1917',
+    color: '#1A1617',
     letterSpacing: 0.5,
   },
   totalDueAmount: {
@@ -283,9 +283,9 @@ export const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -299,7 +299,7 @@ export const styles = StyleSheet.create({
     minHeight: 48,
     paddingVertical: 12,
     borderRadius: 14,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
     borderColor: '#810021',
     flexDirection: 'row',
@@ -326,6 +326,6 @@ export const styles = StyleSheet.create({
   payBtnText: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
 });

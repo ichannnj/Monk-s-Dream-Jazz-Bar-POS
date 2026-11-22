@@ -72,7 +72,7 @@ export const ResetPinModal: React.FC<ResetPinModalProps> = ({
           ? `4-Digit Floor Manager Override PIN (@${staff.username})`
           : `Login ID: @${staff.username}`
       }
-      icon={<KeyRound size={20} color="#800020" />}
+      icon={<KeyRound size={20} color="#810021" />}
       size="sm"
       footer={
         <>
@@ -86,7 +86,7 @@ export const ResetPinModal: React.FC<ResetPinModalProps> = ({
           <Pressable
             onPress={handleSave}
             disabled={isSubmitting || newPin.length !== 4}
-            className={`min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90 ${
+            className={`min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90 ${
               isSubmitting || newPin.length !== 4 ? 'opacity-50' : ''
             }`}
           >
@@ -106,7 +106,7 @@ export const ResetPinModal: React.FC<ResetPinModalProps> = ({
           placeholder="Enter 4 digits (e.g. 5678)"
           value={newPin}
           onChangeText={handlePinChange}
-          leftElement={<KeyRound size={16} color="#800020" />}
+          leftElement={<KeyRound size={16} color="#810021" />}
           helperText={
             isAdmin
               ? `${newPin.length}/4 digits — For floor manager void & approval overrides`

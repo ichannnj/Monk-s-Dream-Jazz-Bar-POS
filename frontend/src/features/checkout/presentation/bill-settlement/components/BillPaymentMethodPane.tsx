@@ -114,12 +114,12 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
       <View
         style={{
           flexDirection: 'row',
-          backgroundColor: '#FAF8F5',
+          backgroundColor: '#EFECE6',
           borderRadius: 12,
           padding: 4,
           marginBottom: 12,
           borderWidth: 1.5,
-          borderColor: '#e7e5e4',
+          borderColor: '#E2DED6',
         }}
       >
         <Pressable
@@ -137,7 +137,7 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
             style={{
               fontSize: 13,
               fontWeight: '800',
-              color: tenderTabMode === 'single' ? '#F5F5F5' : '#57534e',
+              color: tenderTabMode === 'single' ? '#F7F5F2' : '#57534e',
             }}
           >
             Single Payment
@@ -195,7 +195,7 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
             style={{
               fontSize: 13,
               fontWeight: '800',
-              color: tenderTabMode === 'split' ? '#F5F5F5' : '#57534e',
+              color: tenderTabMode === 'split' ? '#F7F5F2' : '#57534e',
             }}
           >
             Split Payment (Multi-Tender)
@@ -432,7 +432,7 @@ export const BillPaymentMethodPane: React.FC<BillPaymentMethodPaneProps> = ({
         style={styles.printCheckboxRow}
       >
         <View style={[styles.checkboxBox, shouldPrintReceipt && styles.checkboxBoxActive]}>
-          {shouldPrintReceipt ? <CheckCircle2 size={14} color="#F5F5F5" /> : null}
+          {shouldPrintReceipt ? <CheckCircle2 size={14} color="#F7F5F2" /> : null}
         </View>
         <Printer size={16} color="#4b5563" />
         <Text style={styles.printCheckboxText}>Print Receipt (ESC/POS)</Text>

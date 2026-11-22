@@ -200,7 +200,7 @@ export const AdminTableLayoutView: React.FC = () => {
       value: 'OCCUPIED',
       label: 'Occupied',
       badge: tables.filter((t) => t.is_occupied).length,
-      dotColor: '#800020',
+      dotColor: '#810021',
     },
   ];
 
@@ -214,12 +214,12 @@ export const AdminTableLayoutView: React.FC = () => {
           <Text className="text-lg font-bold text-stone-900">{t.table_number}</Text>
           <View
             className={`px-2 py-0.5 rounded-full border ${
-              t.is_occupied ? 'bg-stone-100 border-[#800020]/40' : 'bg-stone-50 border-stone-200'
+              t.is_occupied ? 'bg-stone-100 border-[#810021]/40' : 'bg-stone-50 border-stone-200'
             }`}
           >
             <Text
               className={`text-xs font-semibold ${
-                t.is_occupied ? 'text-[#800020]' : 'text-stone-600'
+                t.is_occupied ? 'text-[#810021]' : 'text-stone-600'
               }`}
             >
               {t.is_occupied ? 'Occupied' : 'Free'}
@@ -239,7 +239,7 @@ export const AdminTableLayoutView: React.FC = () => {
             className="h-9 w-9 items-center justify-center rounded-xl bg-stone-100 border border-stone-200 active:bg-stone-200"
             accessibilityLabel={`Release table ${t.table_number}`}
           >
-            <Unlock size={14} color="#800020" />
+            <Unlock size={14} color="#810021" />
           </Pressable>
         )}
         <Pressable
@@ -247,7 +247,7 @@ export const AdminTableLayoutView: React.FC = () => {
           className="h-9 w-9 items-center justify-center rounded-xl bg-white border border-stone-200 active:bg-stone-50"
           accessibilityLabel={`Edit table ${t.table_number}`}
         >
-          <Edit size={14} color="#1c1917" />
+          <Edit size={14} color="#1A1617" />
         </Pressable>
         <Pressable
           onPress={() => handleDelete(t)}
@@ -262,7 +262,7 @@ export const AdminTableLayoutView: React.FC = () => {
 
   return (
     <ScrollView
-      className="flex-1 bg-[#FAF8F5] p-4 sm:p-6 lg:p-8"
+      className="flex-1 bg-[#EFECE6] p-4 sm:p-6 lg:p-8"
       showsVerticalScrollIndicator={false}
     >
       {/* Header & Dropdown Controls */}
@@ -290,9 +290,9 @@ export const AdminTableLayoutView: React.FC = () => {
 
           <Pressable
             onPress={handleOpenAdd}
-            className="h-10 flex-row items-center justify-center rounded-xl bg-[#800020] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
+            className="h-10 flex-row items-center justify-center rounded-xl bg-[#810021] px-3.5 active:bg-[#600018] shadow-xs w-full sm:w-auto"
           >
-            <Plus size={16} color="#F5F5F5" />
+            <Plus size={16} color="#F7F5F2" />
             <Text className="ml-1.5 text-xs font-bold text-white">+ Add Table</Text>
           </Pressable>
         </View>
@@ -305,7 +305,7 @@ export const AdminTableLayoutView: React.FC = () => {
           <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs">
             <View className="flex-row items-center justify-between border-b border-stone-100 pb-3 mb-4">
               <View className="flex-row items-center gap-2">
-                <Coffee size={20} color="#800020" />
+                <Coffee size={20} color="#810021" />
                 <Text className="text-lg font-bold text-stone-900">
                   Daytime Cafe Area ({cafeTables.length})
                 </Text>
@@ -321,7 +321,7 @@ export const AdminTableLayoutView: React.FC = () => {
           <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs">
             <View className="flex-row items-center justify-between border-b border-stone-100 pb-3 mb-4">
               <View className="flex-row items-center gap-2">
-                <Wine size={20} color="#800020" />
+                <Wine size={20} color="#810021" />
                 <Text className="text-lg font-bold text-stone-900">
                   Bar & Live Stage Area ({barTables.length})
                 </Text>
@@ -340,7 +340,7 @@ export const AdminTableLayoutView: React.FC = () => {
         onClose={() => setIsModalOpen(false)}
         title={editingTable ? 'Edit Table' : 'Add Physical Table'}
         subtitle="Manage table numbers, room zones, and seating capacity"
-        icon={<LayoutGrid size={22} color="#800020" />}
+        icon={<LayoutGrid size={22} color="#810021" />}
         size="md"
         footer={
           <>
@@ -354,7 +354,7 @@ export const AdminTableLayoutView: React.FC = () => {
             <Pressable
               onPress={handleSubmit}
               disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#800020] active:opacity-90"
+              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90"
             >
               <Text className="text-base font-bold text-white">
                 {isSubmitting ? 'Saving...' : editingTable ? 'Save Changes' : 'Create Table'}
@@ -380,7 +380,7 @@ export const AdminTableLayoutView: React.FC = () => {
                 onPress={() => setZone('CAFE_AREA')}
                 className={`min-h-[48px] flex-1 items-center justify-center rounded-xl border transition-all ${
                   zone === 'CAFE_AREA'
-                    ? 'bg-[#800020] border-[#800020]'
+                    ? 'bg-[#810021] border-[#810021]'
                     : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
                 }`}
               >
@@ -396,7 +396,7 @@ export const AdminTableLayoutView: React.FC = () => {
                 onPress={() => setZone('BAR_AREA')}
                 className={`min-h-[48px] flex-1 items-center justify-center rounded-xl border transition-all ${
                   zone === 'BAR_AREA'
-                    ? 'bg-[#800020] border-[#800020]'
+                    ? 'bg-[#810021] border-[#810021]'
                     : 'bg-white border-stone-300 active:bg-stone-100 hover:bg-stone-50'
                 }`}
               >

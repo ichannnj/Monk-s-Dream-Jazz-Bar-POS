@@ -71,7 +71,7 @@ export const CheckMobileDetailSheet: React.FC<CheckMobileDetailSheetProps> = ({
                       {it.quantity}x {it.name}
                     </Text>
                     {it.modifiers && it.modifiers.length > 0 && (
-                      <Text className="text-xs text-[#800020] font-semibold mt-0.5">
+                      <Text className="text-xs text-[#810021] font-semibold mt-0.5">
                         + {it.modifiers.join(', ')}
                       </Text>
                     )}
@@ -121,7 +121,7 @@ export const CheckMobileDetailSheet: React.FC<CheckMobileDetailSheetProps> = ({
               </View>
               <View className="flex-row justify-between pt-2 border-t border-stone-200">
                 <Text className="text-lg font-black text-stone-900">Total Settled</Text>
-                <Text className="text-xl font-black text-[#800020]">
+                <Text className="text-xl font-black text-[#810021]">
                   {formatCurrency(selectedCheck.total)}
                 </Text>
               </View>
@@ -166,7 +166,7 @@ export const CheckMobileDetailSheet: React.FC<CheckMobileDetailSheetProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Reprint receipt"
             >
-              <Printer size={18} color="#F5F5F5" />
+              <Printer size={18} color="#F7F5F2" />
               <Text className="text-base font-bold text-white">
                 {isReprinting ? 'Printing...' : 'Reprint Receipt'}
               </Text>

@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 520,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     padding: 24,
     shadowColor: '#000000',
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#f3f4f6',
   },
   addOutOfStockButton: {
-    backgroundColor: '#fdf2f4',
+    backgroundColor: '#F5EBEF',
     borderWidth: 1.5,
     borderColor: '#fbcfe8',
     paddingVertical: 10,

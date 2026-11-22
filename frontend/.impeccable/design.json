@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-22T20:56:00+08:00",
+  "generatedAt": "2026-11-22T21:12:00+08:00",
   "title": "Design System: Monk's Dream Jazz Bar POS",
   "extensions": {
     "colorMeta": {
@@ -52,7 +52,7 @@
       "warm-sand": {
         "role": "neutral",
         "displayName": "Warm Sand",
-        "canonical": "#faf8f5",
+        "canonical": "#efece6",
         "tonalRamp": [
           "#292524",
           "#44403c",
@@ -67,7 +67,7 @@
       "admin-canvas": {
         "role": "neutral",
         "displayName": "Linen Canvas",
-        "canonical": "#f8f6f4",
+        "canonical": "#efece6",
         "tonalRamp": [
           "#242021",
           "#44403c",
@@ -82,7 +82,7 @@
       "pure-surface": {
         "role": "neutral",
         "displayName": "Pure Surface",
-        "canonical": "#f5f5f5",
+        "canonical": "#f7f5f2",
         "tonalRamp": [
           "#1c1917",
           "#44403c",
@@ -97,7 +97,7 @@
       "stone-border": {
         "role": "neutral",
         "displayName": "Stone Hairline",
-        "canonical": "#e7e5e4",
+        "canonical": "#e2ded6",
         "tonalRamp": [
           "#1c1917",
           "#44403c",

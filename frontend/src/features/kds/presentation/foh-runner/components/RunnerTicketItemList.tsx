@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
   },
   itemModText: {
     fontSize: 14,
-    color: '#800020',
+    color: '#810021',
     fontWeight: '600',
     marginTop: 2,
   },

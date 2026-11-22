@@ -43,7 +43,7 @@ export const RecipeBomCostingTab: React.FC<RecipeBomCostingTabProps> = ({
                     </Text>
                     <Text className="text-stone-300 text-xs">•</Text>
                     <Text className="text-xs text-stone-500 font-medium">
-                      COGS: <Text className="font-bold text-[#800020]">₱{cogs.toFixed(2)}</Text>
+                      COGS: <Text className="font-bold text-[#810021]">₱{cogs.toFixed(2)}</Text>
                     </Text>
                     <Text className="text-stone-300 text-xs">•</Text>
                     <View className="rounded-md bg-stone-100 border border-stone-200 px-2 py-0.5">
@@ -56,10 +56,10 @@ export const RecipeBomCostingTab: React.FC<RecipeBomCostingTabProps> = ({
 
                 <Pressable
                   onPress={() => onConfigureRecipe(prod)}
-                  className="min-h-[44px] sm:min-h-[48px] px-3.5 sm:px-4 flex-row items-center justify-center rounded-xl bg-[#800020] active:bg-[#600018] flex-shrink-0"
+                  className="min-h-[44px] sm:min-h-[48px] px-3.5 sm:px-4 flex-row items-center justify-center rounded-xl bg-[#810021] active:bg-[#600018] flex-shrink-0"
                   accessibilityLabel={`Configure recipe for ${prod.name}`}
                 >
-                  <Layers size={17} color="#F5F5F5" />
+                  <Layers size={17} color="#F7F5F2" />
                   <Text className="ml-1.5 text-xs sm:text-sm font-bold text-white">
                     Configure Recipe
                   </Text>

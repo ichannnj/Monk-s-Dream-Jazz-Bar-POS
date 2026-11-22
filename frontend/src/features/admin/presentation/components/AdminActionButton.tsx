@@ -21,10 +21,10 @@ const BUTTON_VARIANTS: Record<
   { container: string; pressed: string; text: string; iconColor: string }
 > = {
   primary: {
-    container: 'bg-[#6e1d2c] border border-[#541521]',
+    container: 'bg-[#810021] border border-[#541521]',
     pressed: 'active:bg-[#541521]',
     text: 'text-white font-bold',
-    iconColor: '#F5F5F5',
+    iconColor: '#F7F5F2',
   },
   secondary: {
     container: 'bg-white border border-stone-300 shadow-xs',
@@ -48,7 +48,7 @@ const BUTTON_VARIANTS: Record<
     container: 'bg-amber-600 border border-amber-700',
     pressed: 'active:bg-amber-700',
     text: 'text-white font-bold',
-    iconColor: '#F5F5F5',
+    iconColor: '#F7F5F2',
   },
 };
 

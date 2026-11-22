@@ -84,7 +84,7 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
   );
 
   return (
-    <View className="flex-1 bg-[#FAF8F5] flex-col md:flex-row md:p-3.5 md:gap-4">
+    <View className="flex-1 bg-[#EFECE6] flex-col md:flex-row md:p-3.5 md:gap-4">
       {/* 1. Navigation Rail (Left Rail on Tablet/Desktop >=768px) */}
       {!isMobile ? (
         <Sidebar

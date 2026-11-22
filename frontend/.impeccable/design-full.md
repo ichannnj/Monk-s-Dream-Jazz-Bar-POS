@@ -7,7 +7,7 @@ colors:
   admin-primary: '#6e1d2c'
   warm-sand: '#faf8f5'
   admin-canvas: '#f8f6f4'
-  pure-surface: '#f5f5f5'
+  pure-surface: '#f7f5f2'
   stone-border: '#e7e5e4'
   admin-border: '#e6e1da'
   deep-charcoal: '#1c1917'

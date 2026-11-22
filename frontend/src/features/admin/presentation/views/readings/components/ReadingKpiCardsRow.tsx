@@ -28,7 +28,7 @@ export const ReadingKpiCardsRow: React.FC<ReadingKpiCardsRowProps> = ({ activeRe
       {/* Net Sales */}
       <View className="rounded-2xl border border-stone-200/80 bg-white p-5 shadow-xs">
         <Text className="text-base font-bold text-stone-500 mb-1">Net Sales</Text>
-        <Text className="text-3xl font-black text-[#800020]">
+        <Text className="text-3xl font-black text-[#810021]">
           {formatCurrency(activeReading?.net_sales || 0)}
         </Text>
         <Text className="text-base text-stone-500 mt-1">

@@ -147,9 +147,9 @@ export const KdsVoidModal: React.FC<KdsVoidModalProps> = ({
               style={[styles.confirmBtn, isSubmitting && { opacity: 0.7 }]}
             >
               {isSubmitting ? (
-                <ActivityIndicator size="small" color="#F5F5F5" />
+                <ActivityIndicator size="small" color="#F7F5F2" />
               ) : (
-                <Check size={16} color="#F5F5F5" />
+                <Check size={16} color="#F7F5F2" />
               )}
               <Text style={styles.confirmBtnText}>
                 {isSubmitting ? 'Cancelling...' : 'Confirm Void'}
@@ -173,11 +173,11 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 480,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 20,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.18,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
   titleText: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#1c1917',
+    color: '#1A1617',
   },
   subtitleText: {
     fontSize: 12,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     backgroundColor: '#fafaf9',
   },
   presetChipActive: {
@@ -285,8 +285,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 16,
-    color: '#1c1917',
-    backgroundColor: '#F5F5F5',
+    color: '#1A1617',
+    backgroundColor: '#F7F5F2',
   },
   footer: {
     flexDirection: 'row',
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     borderColor: '#d6d3d1',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
   },
   cancelBtnText: {
     fontSize: 13,
@@ -322,6 +322,6 @@ const styles = StyleSheet.create({
   confirmBtnText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
 });

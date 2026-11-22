@@ -65,7 +65,7 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
           >
             <Sparkles
               size={14}
-              color={selectedChannel === 'all' ? '#F5F5F5' : '#4b5563'}
+              color={selectedChannel === 'all' ? '#F7F5F2' : '#4b5563'}
               strokeWidth={2.2}
             />
             <Text
@@ -88,7 +88,7 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
           >
             <Coffee
               size={14}
-              color={selectedChannel === 'cafe' ? '#F5F5F5' : '#4b5563'}
+              color={selectedChannel === 'cafe' ? '#F7F5F2' : '#4b5563'}
               strokeWidth={2.2}
             />
             <Text
@@ -111,7 +111,7 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
           >
             <Wine
               size={14}
-              color={selectedChannel === 'bar' ? '#F5F5F5' : '#4b5563'}
+              color={selectedChannel === 'bar' ? '#F7F5F2' : '#4b5563'}
               strokeWidth={2.2}
             />
             <Text
@@ -136,7 +136,7 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
           >
             <ShoppingBag
               size={14}
-              color={selectedChannel === 'takeout' ? '#F5F5F5' : '#15803d'}
+              color={selectedChannel === 'takeout' ? '#F7F5F2' : '#15803d'}
               strokeWidth={2.2}
             />
             <Text
@@ -159,7 +159,7 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
           >
             <Bike
               size={14}
-              color={selectedChannel === 'online' ? '#F5F5F5' : '#b45309'}
+              color={selectedChannel === 'online' ? '#F7F5F2' : '#b45309'}
               strokeWidth={2.2}
             />
             <Text
@@ -306,7 +306,7 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 22,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   pillTextActive: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   pillTextInactive: {
     color: '#4b5563',
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   statusPillTextWhite: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   pillEmpty: {
     backgroundColor: '#f9fafb',
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
   statusBadgeTextWhite: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   statusBadgeTextDark: {
     fontSize: 11,

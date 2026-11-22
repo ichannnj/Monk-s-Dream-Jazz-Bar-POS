@@ -81,7 +81,7 @@ export const ShareCalendarModal: React.FC<ShareCalendarModalProps> = ({
           <View className="flex-row items-center justify-between pb-3 border-b border-stone-100">
             <View className="flex-row items-center gap-2.5">
               <View className="h-9 w-9 rounded-xl bg-rose-50 border border-rose-200 items-center justify-center">
-                <Share2 size={16} color="#800020" aria-hidden={true} />
+                <Share2 size={16} color="#810021" aria-hidden={true} />
               </View>
               <View>
                 <Text className="text-base font-bold text-stone-900">Share calendar</Text>
@@ -114,12 +114,12 @@ export const ShareCalendarModal: React.FC<ShareCalendarModalProps> = ({
                 onPress={handleCopy}
                 accessibilityRole="button"
                 accessibilityLabel="Copy calendar link"
-                className="flex-row items-center gap-1.5 rounded-xl bg-[#800020] px-3.5 py-2 text-white active:bg-[#66001a]"
+                className="flex-row items-center gap-1.5 rounded-xl bg-[#810021] px-3.5 py-2 text-white active:bg-[#66001a]"
               >
                 {copied ? (
-                  <Check size={14} color="#F5F5F5" aria-hidden={true} />
+                  <Check size={14} color="#F7F5F2" aria-hidden={true} />
                 ) : (
-                  <Copy size={14} color="#F5F5F5" aria-hidden={true} />
+                  <Copy size={14} color="#F7F5F2" aria-hidden={true} />
                 )}
                 <Text className="text-xs font-bold text-white">{copied ? 'Copied' : 'Copy'}</Text>
               </Pressable>

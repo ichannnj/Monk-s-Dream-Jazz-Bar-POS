@@ -117,7 +117,7 @@ export const AdminTransactionsView: React.FC<AdminTransactionsViewProps> = ({
   ];
 
   return (
-    <View className="flex-1 bg-[#FAF8F5]">
+    <View className="flex-1 bg-[#EFECE6]">
       <View className="border-b border-stone-200/80 bg-white px-4 sm:px-8 py-2.5 flex-row items-center justify-between gap-3">
         <Text className="text-xl sm:text-2xl font-bold tracking-tight text-stone-900 hidden sm:flex">
           Reports &amp; Fiscal Hub

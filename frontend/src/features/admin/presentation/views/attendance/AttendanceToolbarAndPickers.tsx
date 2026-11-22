@@ -84,7 +84,7 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
             Attendance &amp; Payroll
           </Text>
           <View className="rounded-full bg-white border border-stone-200 px-2.5 py-0.5">
-            <Text className="text-xs font-bold text-[#800020]">{dateRange.label}</Text>
+            <Text className="text-xs font-bold text-[#810021]">{dateRange.label}</Text>
           </View>
         </View>
 
@@ -98,7 +98,7 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
                 className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
                 accessibilityLabel="Print Attendance & Payroll Report"
               >
-                <Printer size={15} color="#1c1917" />
+                <Printer size={15} color="#1A1617" />
                 <Text className="ml-1.5 text-xs font-bold text-stone-800">Print</Text>
               </Pressable>
 
@@ -108,7 +108,7 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
                 className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
                 accessibilityLabel="Export Attendance to Excel Spreadsheet"
               >
-                <FileSpreadsheet size={15} color="#800020" />
+                <FileSpreadsheet size={15} color="#810021" />
                 <Text className="ml-1.5 text-xs font-bold text-stone-800">Excel</Text>
               </Pressable>
 
@@ -117,8 +117,8 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
                 className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
                 accessibilityLabel="Launch Timeclock Kiosk in new tab"
               >
-                <ExternalLink size={15} color="#800020" />
-                <Text className="ml-1.5 text-xs font-bold text-[#800020]">Timeclock ↗</Text>
+                <ExternalLink size={15} color="#810021" />
+                <Text className="ml-1.5 text-xs font-bold text-[#810021]">Timeclock ↗</Text>
               </Pressable>
             </>
           )}
@@ -128,7 +128,7 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
               onPress={onNavigateToRoster}
               className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
             >
-              <Users size={15} color="#1c1917" />
+              <Users size={15} color="#1A1617" />
               <Text className="ml-1.5 text-xs font-bold text-stone-800">Roster →</Text>
             </Pressable>
           )}
@@ -177,7 +177,7 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
                 }}
                 className="min-h-[48px] px-3.5 flex-row items-center justify-center rounded-xl bg-stone-50 border border-stone-200 active:bg-stone-100"
               >
-                <Calendar size={16} color="#800020" />
+                <Calendar size={16} color="#810021" />
                 <Text className="ml-1.5 text-base font-bold text-stone-800">{dateRange.start}</Text>
               </Pressable>
 

@@ -40,8 +40,8 @@ export const AgendaListView: React.FC<AgendaListViewProps> = ({ events, onSelect
         <View key={dateStr} className="space-y-2">
           {/* Date Section Header */}
           <View className="flex-row items-center gap-2 px-1">
-            <Calendar size={14} color="#800020" aria-hidden={true} />
-            <Text className="text-xs font-bold text-[#800020] uppercase tracking-wide">
+            <Calendar size={14} color="#810021" aria-hidden={true} />
+            <Text className="text-xs font-bold text-[#810021] uppercase tracking-wide">
               {formatFullDate(dateStr)}
             </Text>
             <View className="h-px flex-1 bg-stone-200/80" />
@@ -66,7 +66,7 @@ export const AgendaListView: React.FC<AgendaListViewProps> = ({ events, onSelect
                         } as any)
                       : undefined
                   }
-                  className="group overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-xs hover:border-[#800020]/60 active:bg-stone-50 transition-colors flex-col sm:flex-row"
+                  className="group overflow-hidden rounded-2xl border border-stone-200/90 bg-white shadow-xs hover:border-[#810021]/60 active:bg-stone-50 transition-colors flex-col sm:flex-row"
                 >
                   {/* Poster Thumbnail */}
                   <View className="w-full sm:w-40 sm:min-w-[160px] h-36 sm:h-auto relative overflow-hidden bg-stone-100 flex-shrink-0">
@@ -79,7 +79,7 @@ export const AgendaListView: React.FC<AgendaListViewProps> = ({ events, onSelect
                       />
                     ) : (
                       <View className="w-full h-full min-h-[110px] items-center justify-center bg-rose-50/50">
-                        <Music size={28} color="#800020" aria-hidden={true} />
+                        <Music size={28} color="#810021" aria-hidden={true} />
                       </View>
                     )}
 
@@ -111,7 +111,7 @@ export const AgendaListView: React.FC<AgendaListViewProps> = ({ events, onSelect
 
                         {showtime ? (
                           <View className="flex-row items-center gap-1 bg-stone-50 border border-stone-200 px-2 py-0.5 rounded-md">
-                            <Clock size={11} color="#800020" aria-hidden={true} />
+                            <Clock size={11} color="#810021" aria-hidden={true} />
                             <Text className="text-xs font-bold text-stone-800">{showtime}</Text>
                           </View>
                         ) : null}
@@ -119,7 +119,7 @@ export const AgendaListView: React.FC<AgendaListViewProps> = ({ events, onSelect
 
                       <Text
                         numberOfLines={1}
-                        className="text-base sm:text-lg font-bold text-stone-900 group-hover:text-[#800020] transition-colors"
+                        className="text-base sm:text-lg font-bold text-stone-900 group-hover:text-[#810021] transition-colors"
                       >
                         {ev.title}
                       </Text>
@@ -127,7 +127,7 @@ export const AgendaListView: React.FC<AgendaListViewProps> = ({ events, onSelect
                       {ev.performer_name ? (
                         <Text
                           numberOfLines={1}
-                          className="text-xs font-semibold text-[#800020] mt-0.5"
+                          className="text-xs font-semibold text-[#810021] mt-0.5"
                         >
                           {ev.performer_name}
                         </Text>
@@ -144,7 +144,7 @@ export const AgendaListView: React.FC<AgendaListViewProps> = ({ events, onSelect
                     </View>
 
                     <View className="pt-2 sm:pt-3 border-t border-stone-100 flex-row items-center justify-between mt-2">
-                      <Text className="text-xs font-semibold text-[#800020]">View details</Text>
+                      <Text className="text-xs font-semibold text-[#810021]">View details</Text>
                       {ev.sound_check_time ? (
                         <Text className="text-[11px] text-stone-400">
                           Sound check: {ev.sound_check_time.slice(0, 5)}

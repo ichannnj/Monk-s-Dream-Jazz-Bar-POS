@@ -151,7 +151,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                     accessibilityRole="button"
                     accessibilityLabel="Clear ID"
                   >
-                    <X size={14} color="#1C1917" />
+                    <X size={14} color="#1A1617" />
                   </Pressable>
                 )}
               </View>
@@ -177,7 +177,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                     accessibilityRole="button"
                     accessibilityLabel="Clear Cardholder Name"
                   >
-                    <X size={14} color="#1C1917" />
+                    <X size={14} color="#1A1617" />
                   </Pressable>
                 )}
               </View>
@@ -264,7 +264,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
                                 : 'border-stone-400 bg-white'
                             }`}
                           >
-                            {isSelected && <CheckCircle2 size={12} color="#F5F5F5" />}
+                            {isSelected && <CheckCircle2 size={12} color="#F7F5F2" />}
                           </View>
                           <View style={{ flex: 1 }}>
                             <Text className="text-xs font-bold text-gray-800" numberOfLines={1}>

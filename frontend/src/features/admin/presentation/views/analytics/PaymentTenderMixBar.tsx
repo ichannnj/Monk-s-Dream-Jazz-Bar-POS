@@ -28,19 +28,19 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
       {/* Header (Minimal, No Subtitles) */}
       <View className="flex-row items-center justify-between mb-4 flex-wrap gap-3">
         <View className="flex-row items-center gap-2.5">
-          <View className="w-8 h-8 rounded-lg bg-[#FAF8F5] border border-stone-200 items-center justify-center">
-            <PieChart size={16} color="#800020" />
+          <View className="w-8 h-8 rounded-lg bg-[#EFECE6] border border-stone-200 items-center justify-center">
+            <PieChart size={16} color="#810021" />
           </View>
           <Text className="text-lg font-bold text-stone-900">Payment Tender Mix</Text>
         </View>
 
-        <View className="rounded-xl bg-[#FAF8F5] border border-stone-200 px-3 py-1 shrink-0">
+        <View className="rounded-xl bg-[#EFECE6] border border-stone-200 px-3 py-1 shrink-0">
           <Text className="text-xs text-stone-500 font-medium">Total</Text>
           <Text className="text-sm font-black text-stone-900">{formatCurrency(total)}</Text>
         </View>
       </View>
 
-      {/* Segmented Progress Bar (3-Color Scheme: Burgundy #800020, Charcoal, Muted Stone) */}
+      {/* Segmented Progress Bar (3-Color Scheme: Burgundy #810021, Charcoal, Muted Stone) */}
       <View className="h-2.5 w-full bg-stone-100 rounded-full overflow-hidden flex-row mb-4">
         {cashPct > 0 && (
           <View
@@ -52,7 +52,7 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
         {digitalPct > 0 && (
           <View
             style={{ width: `${digitalPct}%` }}
-            className="h-full bg-[#800020]"
+            className="h-full bg-[#810021]"
             accessibilityLabel={`Digital: ${digitalPct.toFixed(1)}%`}
           />
         )}
@@ -76,7 +76,7 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
       {/* Metric Cards Grid: 2 columns on mobile/tablet/desktop */}
       <View className="grid grid-cols-2 gap-2.5">
         {/* Cash */}
-        <View className="p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
+        <View className="p-3 rounded-xl border border-stone-200/80 bg-[#EFECE6]">
           <View className="flex-row items-center justify-between mb-0.5">
             <View className="flex-row items-center gap-1.5">
               <View className="w-2 h-2 rounded-full bg-stone-800" />
@@ -88,13 +88,13 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
         </View>
 
         {/* Digital */}
-        <View className="p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
+        <View className="p-3 rounded-xl border border-stone-200/80 bg-[#EFECE6]">
           <View className="flex-row items-center justify-between mb-0.5">
             <View className="flex-row items-center gap-1.5">
-              <View className="w-2 h-2 rounded-full bg-[#800020]" />
+              <View className="w-2 h-2 rounded-full bg-[#810021]" />
               <Text className="text-xs font-bold text-stone-700">Digital / QR</Text>
             </View>
-            <Text className="text-xs font-bold text-[#800020]">{digitalPct.toFixed(1)}%</Text>
+            <Text className="text-xs font-bold text-[#810021]">{digitalPct.toFixed(1)}%</Text>
           </View>
           <Text className="text-base font-black text-stone-900">
             {formatCurrency(data.digital)}
@@ -102,7 +102,7 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
         </View>
 
         {/* Card */}
-        <View className="p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
+        <View className="p-3 rounded-xl border border-stone-200/80 bg-[#EFECE6]">
           <View className="flex-row items-center justify-between mb-0.5">
             <View className="flex-row items-center gap-1.5">
               <View className="w-2 h-2 rounded-full bg-stone-500" />
@@ -115,7 +115,7 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
 
         {/* Delivery */}
         {deliveryPct > 0 ? (
-          <View className="p-3 rounded-xl border border-stone-200/80 bg-[#FAF8F5]">
+          <View className="p-3 rounded-xl border border-stone-200/80 bg-[#EFECE6]">
             <View className="flex-row items-center justify-between mb-0.5">
               <View className="flex-row items-center gap-1.5">
                 <View className="w-2 h-2 rounded-full bg-stone-400" />
@@ -128,7 +128,7 @@ export const PaymentTenderMixBar: React.FC<PaymentTenderMixBarProps> = ({ data }
             </Text>
           </View>
         ) : (
-          <View className="p-3 rounded-xl border border-stone-200/60 bg-[#FAF8F5]/60 opacity-60">
+          <View className="p-3 rounded-xl border border-stone-200/60 bg-[#EFECE6]/60 opacity-60">
             <View className="flex-row items-center justify-between mb-0.5">
               <View className="flex-row items-center gap-1.5">
                 <View className="w-2 h-2 rounded-full bg-stone-400" />

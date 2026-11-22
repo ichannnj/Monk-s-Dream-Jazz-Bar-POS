@@ -182,7 +182,7 @@ export const YCloseShiftModal: React.FC<YCloseShiftModalProps> = ({
       onClose={handleClose}
       title="Cashier Shift Handover (Y-Reading)"
       subtitle={`${drawerLabel} • Staff Till Rotation`}
-      icon={<ArrowRightLeft size={22} color="#800020" />}
+      icon={<ArrowRightLeft size={22} color="#810021" />}
       size="md"
       footer={
         <View className="flex-row gap-3 w-full">
@@ -227,8 +227,8 @@ export const YCloseShiftModal: React.FC<YCloseShiftModalProps> = ({
               onPress={() => setShowDenominationCounter(!showDenominationCounter)}
               className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 active:bg-stone-200 min-h-[48px] self-start sm:self-auto"
             >
-              <Calculator size={18} color="#800020" />
-              <Text className="text-base font-bold text-[#800020]">
+              <Calculator size={18} color="#810021" />
+              <Text className="text-base font-bold text-[#810021]">
                 {showDenominationCounter ? 'Hide Counter' : 'Bill & Coin Breakdown'}
               </Text>
             </Pressable>

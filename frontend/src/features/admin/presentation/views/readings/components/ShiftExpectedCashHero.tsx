@@ -48,7 +48,7 @@ export const ShiftExpectedCashHero: React.FC<ShiftExpectedCashHeroProps> = ({
           onPress={onQuickMatch}
           className="mt-3 flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 active:bg-emerald-700 shadow-xs min-h-[48px]"
         >
-          <Zap size={18} color="#F5F5F5" />
+          <Zap size={18} color="#F7F5F2" />
           <Text className="text-base font-extrabold text-white">
             1-Click Match Expected (₱0.00 Variance)
           </Text>

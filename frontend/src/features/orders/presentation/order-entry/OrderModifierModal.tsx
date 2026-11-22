@@ -248,8 +248,8 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                           paddingHorizontal: 14,
                           borderRadius: 10,
                           borderWidth: 1.5,
-                          borderColor: isSelected ? '#810021' : '#e7e5e4',
-                          backgroundColor: isSelected ? '#FAF8F5' : '#F5F5F5',
+                          borderColor: isSelected ? '#810021' : '#E2DED6',
+                          backgroundColor: isSelected ? '#EFECE6' : '#F7F5F2',
                           gap: 8,
                         }}
                         accessibilityRole="radio"
@@ -264,7 +264,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                             borderColor: isSelected ? '#810021' : '#9ca3af',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            backgroundColor: isSelected ? '#810021' : '#F5F5F5',
+                            backgroundColor: isSelected ? '#810021' : '#F7F5F2',
                           }}
                         >
                           {isSelected && (
@@ -273,7 +273,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                                 width: 6,
                                 height: 6,
                                 borderRadius: 3,
-                                backgroundColor: '#F5F5F5',
+                                backgroundColor: '#F7F5F2',
                               }}
                             />
                           )}
@@ -282,7 +282,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                           style={{
                             fontSize: 13,
                             fontWeight: isSelected ? '700' : '600',
-                            color: isSelected ? '#810021' : '#1C1917',
+                            color: isSelected ? '#810021' : '#1A1617',
                           }}
                         >
                           {opt.name}
@@ -426,12 +426,12 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
                             borderRadius: 6,
                             borderWidth: 1.5,
                             borderColor: isSelected ? '#810021' : '#9ca3af',
-                            backgroundColor: isSelected ? '#810021' : '#F5F5F5',
+                            backgroundColor: isSelected ? '#810021' : '#F7F5F2',
                             alignItems: 'center',
                             justifyContent: 'center',
                           }}
                         >
-                          {isSelected && <CheckCircle2 size={14} color="#F5F5F5" strokeWidth={3} />}
+                          {isSelected && <CheckCircle2 size={14} color="#F7F5F2" strokeWidth={3} />}
                         </View>
                         <Text style={[styles.modName, isSelected && styles.modNameSelected]}>
                           {mod.name}
@@ -493,7 +493,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
           {missingRequiredGroup ? (
             <View
               style={{
-                backgroundColor: '#FAF8F5',
+                backgroundColor: '#EFECE6',
                 borderWidth: 1,
                 borderColor: '#810021',
                 padding: 8,
@@ -514,7 +514,7 @@ export const OrderModifierModal: React.FC<OrderModifierModalProps> = ({
             style={[styles.confirmCustomizeBtn, missingRequiredGroup && { opacity: 0.5 }]}
             disabled={Boolean(missingRequiredGroup)}
           >
-            <CheckCircle2 size={18} color="#F5F5F5" strokeWidth={2.4} />
+            <CheckCircle2 size={18} color="#F7F5F2" strokeWidth={2.4} />
             <Text style={styles.confirmCustomizeBtnText}>
               Add to Order · {formatCurrency(totalEffectivePrice)}
             </Text>

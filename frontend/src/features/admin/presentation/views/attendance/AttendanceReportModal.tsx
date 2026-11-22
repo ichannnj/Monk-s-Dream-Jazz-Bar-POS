@@ -57,7 +57,7 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
           <View className="flex-row items-center justify-between px-5 py-3.5 border-b border-stone-200 bg-stone-50">
             <View className="flex-row items-center gap-3">
               <View className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200/80 items-center justify-center">
-                <Printer size={20} color="#800020" />
+                <Printer size={20} color="#810021" />
               </View>
               <View>
                 <Text className="text-xl font-extrabold text-stone-900">
@@ -79,7 +79,7 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
           </View>
 
           {/* Modal Scrollable Body */}
-          <ScrollView className="flex-1 p-4 sm:p-6 bg-[#fcf9f9]" showsVerticalScrollIndicator>
+          <ScrollView className="flex-1 p-4 sm:p-6 bg-[#EFECE6]" showsVerticalScrollIndicator>
             {/* PRINTABLE DOCUMENT AREA */}
             <View
               nativeID="monks-attendance-printable-doc"
@@ -88,7 +88,7 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
             >
               {/* Document Letterhead */}
               <View className="items-center pb-3 border-b-2 border-stone-800 mb-4 print-avoid-break">
-                <Text className="text-xs font-bold tracking-widest text-[#800020] uppercase">
+                <Text className="text-xs font-bold tracking-widest text-[#810021] uppercase">
                   MONK'S DREAM JAZZ BAR &amp; BISTRO
                 </Text>
                 <Text className="text-2xl font-black text-stone-900 mt-0.5">
@@ -140,11 +140,11 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
                   </Text>
                 </View>
 
-                <View className="flex-1 min-w-[150px] p-3 rounded-xl border border-[#800020]/20 bg-rose-50/50">
-                  <Text className="text-xs font-semibold uppercase tracking-wider text-[#800020]">
+                <View className="flex-1 min-w-[150px] p-3 rounded-xl border border-[#810021]/20 bg-rose-50/50">
+                  <Text className="text-xs font-semibold uppercase tracking-wider text-[#810021]">
                     Total Shift Payroll
                   </Text>
-                  <Text className="text-xl font-black text-[#800020] mt-1">
+                  <Text className="text-xl font-black text-[#810021] mt-1">
                     ₱{totals.grandTotal.toFixed(2)}
                   </Text>
                 </View>
@@ -182,7 +182,7 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
                   <Text className="w-24 text-xs font-extrabold uppercase tracking-wider text-stone-700 text-right">
                     OT / Bonus
                   </Text>
-                  <Text className="w-24 text-xs font-extrabold uppercase tracking-wider text-[#800020] text-right">
+                  <Text className="w-24 text-xs font-extrabold uppercase tracking-wider text-[#810021] text-right">
                     Total
                   </Text>
                 </View>
@@ -265,7 +265,7 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
                             : '₱0.00'}
                       </Text>
 
-                      <Text className="w-24 text-xs font-bold text-[#800020] text-right">
+                      <Text className="w-24 text-xs font-bold text-[#810021] text-right">
                         {item.status.includes('Exempt') || item.role.toLowerCase().includes('admin')
                           ? 'Exempt'
                           : `₱${item.totalPay.toFixed(2)}`}
@@ -288,7 +288,7 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
                   <Text className="w-24 text-sm font-bold text-emerald-800 text-right">
                     +₱{totals.bonusTotal.toFixed(2)}
                   </Text>
-                  <Text className="w-24 text-sm font-black text-[#800020] text-right">
+                  <Text className="w-24 text-sm font-black text-[#810021] text-right">
                     ₱{totals.grandTotal.toFixed(2)}
                   </Text>
                 </View>
@@ -320,7 +320,7 @@ export const AttendanceReportModal: React.FC<AttendanceReportModalProps> = ({
                 className="flex-row items-center gap-2 px-4 py-2.5 rounded-xl bg-stone-900 active:bg-black min-h-[48px]"
                 accessibilityLabel="Print Attendance Report to A4"
               >
-                <Printer size={18} color="#F5F5F5" />
+                <Printer size={18} color="#F7F5F2" />
                 <Text className="text-base font-bold text-white">Print Document (A4)</Text>
               </Pressable>
 

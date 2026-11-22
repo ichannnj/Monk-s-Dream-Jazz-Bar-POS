@@ -74,7 +74,7 @@ export const ProfilePasswordCard: React.FC<ProfilePasswordCardProps> = ({
               placeholderTextColor="#a8a29e"
               secureTextEntry={!showCurrentPassword}
               autoCapitalize="none"
-              style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+              style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
             />
             <Pressable onPress={() => setShowCurrentPassword(!showCurrentPassword)} className="p-2">
               {showCurrentPassword ? (
@@ -96,7 +96,7 @@ export const ProfilePasswordCard: React.FC<ProfilePasswordCardProps> = ({
               placeholderTextColor="#a8a29e"
               secureTextEntry={!showNewPassword}
               autoCapitalize="none"
-              style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+              style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
             />
             <Pressable onPress={() => setShowNewPassword(!showNewPassword)} className="p-2">
               {showNewPassword ? (
@@ -189,7 +189,7 @@ export const ProfilePasswordCard: React.FC<ProfilePasswordCardProps> = ({
               placeholderTextColor="#a8a29e"
               secureTextEntry={!showNewPassword}
               autoCapitalize="none"
-              style={{ fontSize: 16, flex: 1, color: '#1c1917' }}
+              style={{ fontSize: 16, flex: 1, color: '#1A1617' }}
             />
           </View>
           {passwordMismatch && (

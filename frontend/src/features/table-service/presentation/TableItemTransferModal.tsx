@@ -182,7 +182,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
           <View className="flex-row justify-between items-center mb-4 pb-3 border-b border-stone-100">
             <View className="flex-row items-center gap-3">
               <View className="w-10 h-10 rounded-2xl bg-[#810021] items-center justify-center">
-                <ArrowRightLeft size={18} color="#F5F5F5" strokeWidth={2.5} />
+                <ArrowRightLeft size={18} color="#F7F5F2" strokeWidth={2.5} />
               </View>
               <View>
                 <Text className="text-xl font-extrabold text-stone-900">Move Items</Text>
@@ -194,11 +194,11 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
 
             <Pressable
               onPress={onClose}
-              className="min-w-[48px] min-h-[48px] rounded-xl bg-[#FAF8F5] border border-stone-200 items-center justify-center active:bg-stone-100"
+              className="min-w-[48px] min-h-[48px] rounded-xl bg-[#EFECE6] border border-stone-200 items-center justify-center active:bg-stone-100"
               accessibilityRole="button"
               accessibilityLabel="Close move items modal"
             >
-              <X size={20} color="#1c1917" />
+              <X size={20} color="#1A1617" />
             </Pressable>
           </View>
 
@@ -208,7 +208,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
             contentContainerStyle={isKeyboardOpen ? { paddingBottom: 48 } : undefined}
           >
             {/* 1. Destination Tab Section */}
-            <View className="mb-4 bg-[#FAF8F5] border border-stone-200 rounded-2xl p-3.5">
+            <View className="mb-4 bg-[#EFECE6] border border-stone-200 rounded-2xl p-3.5">
               <Text className="text-xs font-bold uppercase tracking-wider text-stone-600 mb-2">
                 Move to Tab:
               </Text>
@@ -233,7 +233,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                       >
                         Tab #{tb.tabIndex}: {tb.guestName}
                       </Text>
-                      {isSelected && <Check size={16} color="#F5F5F5" strokeWidth={3} />}
+                      {isSelected && <Check size={16} color="#F7F5F2" strokeWidth={3} />}
                     </Pressable>
                   );
                 })}
@@ -248,7 +248,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                 >
                   <Plus
                     size={16}
-                    color={targetDestination === 'new' ? '#F5F5F5' : '#810021'}
+                    color={targetDestination === 'new' ? '#F7F5F2' : '#810021'}
                     strokeWidth={2.5}
                   />
                   <Text
@@ -259,7 +259,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                     + New Tab
                   </Text>
                   {targetDestination === 'new' && (
-                    <Check size={16} color="#F5F5F5" strokeWidth={3} />
+                    <Check size={16} color="#F7F5F2" strokeWidth={3} />
                   )}
                 </Pressable>
               </View>
@@ -274,7 +274,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                     placeholder="e.g. Senior Citizen Tab"
                     placeholderTextColor="#a8a29e"
                     containerClassName="mb-2"
-                    className="font-semibold bg-[#FAF8F5] text-base"
+                    className="font-semibold bg-[#EFECE6] text-base"
                   />
 
                   {/* Quick Preset Chips */}
@@ -283,7 +283,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                       <Pressable
                         key={preset}
                         onPress={() => setNewTabCustomName(preset)}
-                        className="py-1 px-2.5 rounded-lg bg-[#FAF8F5] active:bg-stone-100 border border-stone-200"
+                        className="py-1 px-2.5 rounded-lg bg-[#EFECE6] active:bg-stone-100 border border-stone-200"
                       >
                         <Text className="text-xs font-bold text-stone-800">{preset}</Text>
                       </Pressable>
@@ -318,7 +318,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                         key={item.id}
                         className={`p-3 rounded-2xl border transition-all ${
                           isSelected
-                            ? 'bg-[#FAF8F5] border-[#810021] shadow-xs'
+                            ? 'bg-[#EFECE6] border-[#810021] shadow-xs'
                             : 'bg-white border-stone-200'
                         }`}
                       >
@@ -335,7 +335,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                                   : 'border-stone-300 bg-white'
                               }`}
                             >
-                              {isSelected && <Check size={14} color="#F5F5F5" strokeWidth={3} />}
+                              {isSelected && <Check size={14} color="#F7F5F2" strokeWidth={3} />}
                             </View>
 
                             <View className="flex-1">
@@ -343,7 +343,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                                 {item.stationTarget === 'bar' ? (
                                   <Wine size={14} color="#810021" />
                                 ) : (
-                                  <ChefHat size={14} color="#1C1917" />
+                                  <ChefHat size={14} color="#1A1617" />
                                 )}
                                 <Text className="text-sm font-bold text-gray-900" numberOfLines={1}>
                                   {item.productName}
@@ -400,7 +400,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
             <Pressable
               onPress={onClose}
               disabled={isSubmitting}
-              className="py-3 px-5 rounded-2xl bg-[#FAF8F5] border border-stone-200 active:bg-stone-100 min-h-[48px] items-center justify-center"
+              className="py-3 px-5 rounded-2xl bg-[#EFECE6] border border-stone-200 active:bg-stone-100 min-h-[48px] items-center justify-center"
             >
               <Text className="text-sm font-bold text-stone-700">Cancel</Text>
             </Pressable>
@@ -414,7 +414,7 @@ export const TableItemTransferModal: React.FC<TableItemTransferModalProps> = ({
                   : 'bg-[#810021] active:opacity-90 shadow-xs'
               }`}
             >
-              <ArrowRightLeft size={18} color="#F5F5F5" strokeWidth={2.3} />
+              <ArrowRightLeft size={18} color="#F7F5F2" strokeWidth={2.3} />
               <Text className="text-base font-extrabold text-white">
                 {isSubmitting
                   ? 'Moving...'

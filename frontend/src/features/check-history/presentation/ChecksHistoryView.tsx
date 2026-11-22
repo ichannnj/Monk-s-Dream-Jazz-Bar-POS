@@ -140,7 +140,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
   };
 
   return (
-    <View className="flex-1 bg-[#FAF8F5]">
+    <View className="flex-1 bg-[#EFECE6]">
       {/* Top Header & Compact Filter Bar */}
       <ChecksFilterToolbar
         selectedMode={selectedMode}
@@ -158,7 +158,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
       {/* Main Content Area */}
       {isLoading ? (
         <View className="flex-1 items-center justify-center p-12">
-          <ActivityIndicator size="large" color="#800020" />
+          <ActivityIndicator size="large" color="#810021" />
           <Text className="text-base font-bold text-stone-600 mt-3">
             Loading Checks from PostgreSQL...
           </Text>
@@ -167,16 +167,16 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
         <View className="flex-1 flex-col md:flex-row">
           {/* If on narrow screen (<900px) and detail is open, show inline receipt inspector without popup modals */}
           {!isWideScreen && isDetailOpen && selectedCheck ? (
-            <View className="flex-1 bg-[#FAF8F5]">
-              <View className="bg-white border-b border-[#E7E5E4] px-3 py-2.5 flex-row items-center justify-between gap-2">
+            <View className="flex-1 bg-[#EFECE6]">
+              <View className="bg-white border-b border-[#E2DED6] px-3 py-2.5 flex-row items-center justify-between gap-2">
                 <Pressable
                   onPress={() => setIsDetailOpen(false)}
-                  className="flex-row items-center gap-1.5 min-h-[48px] px-3.5 py-1.5 rounded-xl bg-[#FAF8F5] border border-[#E7E5E4] active:opacity-80 shrink-0"
+                  className="flex-row items-center gap-1.5 min-h-[48px] px-3.5 py-1.5 rounded-xl bg-[#EFECE6] border border-[#E2DED6] active:opacity-80 shrink-0"
                   accessibilityRole="button"
                   accessibilityLabel="Back to checks list"
                 >
-                  <ArrowLeft size={18} color="#1C1917" />
-                  <Text className="text-base font-semibold text-[#1C1917]">Back to Checks</Text>
+                  <ArrowLeft size={18} color="#1A1617" />
+                  <Text className="text-base font-semibold text-[#1A1617]">Back to Checks</Text>
                 </Pressable>
                 <Text
                   className="text-base font-semibold text-[#57534E] min-w-0 flex-1 text-right"
@@ -229,13 +229,13 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                             }`}
                           >
                             <View className="flex-row items-center gap-3 flex-1 pr-3">
-                              <View className="w-10 h-10 rounded-xl items-center justify-center bg-[#FAF8F5] border border-stone-200">
+                              <View className="w-10 h-10 rounded-xl items-center justify-center bg-[#EFECE6] border border-stone-200">
                                 {chk.orderType === 'dine_in' ? (
-                                  <Coffee size={18} color="#1c1917" />
+                                  <Coffee size={18} color="#1A1617" />
                                 ) : chk.orderType === 'takeout' ? (
-                                  <ShoppingBag size={18} color="#1c1917" />
+                                  <ShoppingBag size={18} color="#1A1617" />
                                 ) : (
-                                  <Bike size={18} color="#1c1917" />
+                                  <Bike size={18} color="#1A1617" />
                                 )}
                               </View>
                               <View className="flex-1">
@@ -247,7 +247,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                                   <Text className="text-base font-semibold text-stone-600 truncate">
                                     {chk.guestName}
                                   </Text>
-                                  <View className="px-2 py-0.5 rounded-md border bg-[#FAF8F5] border-[#E7E5E4]">
+                                  <View className="px-2 py-0.5 rounded-md border bg-[#EFECE6] border-[#E2DED6]">
                                     <Text
                                       className={`text-base font-semibold ${
                                         chk.operatingMode === 'EVENT'
@@ -273,7 +273,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                                     chk.total === 0 &&
                                     chk.subtotal > 0 &&
                                     chk.paymentMethod !== 'COMP' ? (
-                                    <View className="px-2 py-0.5 rounded-md border bg-[#FAF8F5] border-[#E7E5E4]">
+                                    <View className="px-2 py-0.5 rounded-md border bg-[#EFECE6] border-[#E2DED6]">
                                       <Text className="text-base font-semibold text-[#57534E]">
                                         W/ TABLE
                                       </Text>
@@ -292,13 +292,13 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
                               </Text>
                               {chk.paymentMethod === 'SPLIT' ||
                               (chk.tenders && chk.tenders.length > 0) ? (
-                                <View className="mt-1 bg-[#FAF8F5] border border-[#E7E5E4] px-2 py-0.5 rounded-md flex-row items-center gap-1">
+                                <View className="mt-1 bg-[#EFECE6] border border-[#E2DED6] px-2 py-0.5 rounded-md flex-row items-center gap-1">
                                   <Text className="text-base font-semibold text-[#810021] uppercase">
                                     SPLIT ({chk.tenders?.length || 'MULTI'})
                                   </Text>
                                 </View>
                               ) : (
-                                <View className="mt-1 bg-[#FAF8F5] px-2 py-0.5 rounded-md flex-row items-center gap-1">
+                                <View className="mt-1 bg-[#EFECE6] px-2 py-0.5 rounded-md flex-row items-center gap-1">
                                   <Text className="text-base font-semibold text-[#57534E] uppercase">
                                     {chk.paymentChannel || chk.paymentMethod.replace('_', ' ')}
                                   </Text>
@@ -319,7 +319,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
               </View>
 
               {/* Right Column: Check Detail Inspector (Desktop >= 900px) */}
-              <View className="hidden md:flex flex-1 p-6 bg-[#FAF8F5]">
+              <View className="hidden md:flex flex-1 p-6 bg-[#EFECE6]">
                 {selectedCheck ? (
                   <CheckReceiptInspector
                     selectedCheck={selectedCheck}

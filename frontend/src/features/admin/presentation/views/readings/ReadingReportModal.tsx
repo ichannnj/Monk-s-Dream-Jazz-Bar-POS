@@ -132,11 +132,11 @@ ${reading.counted_cash !== undefined ? `COUNTED CASH:     ${reading.counted_cash
           {/* Header */}
           <View className="flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-6 py-4 border-b border-stone-200 bg-stone-50">
             <View className="flex-row items-center gap-3">
-              <View className="w-11 h-11 rounded-xl bg-[#800020] items-center justify-center">
+              <View className="w-11 h-11 rounded-xl bg-[#810021] items-center justify-center">
                 {isZReading ? (
-                  <Receipt size={22} color="#F5F5F5" />
+                  <Receipt size={22} color="#F7F5F2" />
                 ) : (
-                  <FileText size={22} color="#F5F5F5" />
+                  <FileText size={22} color="#F7F5F2" />
                 )}
               </View>
               <View>
@@ -192,7 +192,7 @@ ${reading.counted_cash !== undefined ? `COUNTED CASH:     ${reading.counted_cash
 
           {/* Report Body */}
           <ScrollView
-            className="flex-1 p-3 sm:p-6 bg-[#fcf9f9]"
+            className="flex-1 p-3 sm:p-6 bg-[#EFECE6]"
             showsVerticalScrollIndicator={false}
           >
             {viewMode === 'document' ? (
@@ -226,9 +226,9 @@ ${reading.counted_cash !== undefined ? `COUNTED CASH:     ${reading.counted_cash
               <Pressable
                 onPress={handleSendToThermal}
                 disabled={isSendingToThermal}
-                className="flex-1 sm:flex-initial flex-row items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#800020] active:bg-[#600018] min-h-[48px]"
+                className="flex-1 sm:flex-initial flex-row items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#810021] active:bg-[#600018] min-h-[48px]"
               >
-                <Receipt size={18} color="#F5F5F5" />
+                <Receipt size={18} color="#F7F5F2" />
                 <Text className="text-base font-bold text-white">
                   {isSendingToThermal ? 'Sending...' : 'Thermal 80mm'}
                 </Text>

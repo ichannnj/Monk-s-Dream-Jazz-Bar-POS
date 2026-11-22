@@ -52,7 +52,7 @@ export const CashDenominationCounter: React.FC<CashDenominationCounterProps> = (
     <View className="bg-stone-50 border border-stone-200 rounded-2xl p-4 my-2">
       <View className="flex-row items-center justify-between pb-3 border-b border-stone-200">
         <View className="flex-row items-center gap-2">
-          <Calculator size={18} color="#800020" />
+          <Calculator size={18} color="#810021" />
           <Text className="text-base font-extrabold text-stone-900">
             Bill & Coin Breakdown Counter
           </Text>
@@ -97,7 +97,7 @@ export const CashDenominationCounter: React.FC<CashDenominationCounterProps> = (
                 onPress={() => handleIncrement(idx, 1)}
                 className="w-10 h-10 rounded-lg bg-stone-900 items-center justify-center active:bg-black"
               >
-                <Plus size={16} color="#F5F5F5" />
+                <Plus size={16} color="#F7F5F2" />
               </Pressable>
             </View>
           </View>
@@ -115,9 +115,9 @@ export const CashDenominationCounter: React.FC<CashDenominationCounterProps> = (
 
         <Pressable
           onPress={handleApply}
-          className="flex-row items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#800020] active:bg-[#600018] shadow-xs min-h-[48px]"
+          className="flex-row items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#810021] active:bg-[#600018] shadow-xs min-h-[48px]"
         >
-          <Check size={18} color="#F5F5F5" />
+          <Check size={18} color="#F7F5F2" />
           <Text className="text-base font-extrabold text-white">Apply Count</Text>
         </Pressable>
       </View>

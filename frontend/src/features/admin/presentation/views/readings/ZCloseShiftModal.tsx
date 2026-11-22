@@ -168,7 +168,7 @@ export const ZCloseShiftModal: React.FC<ZCloseShiftModalProps> = ({
       onClose={handleClose}
       title="Perform Z-Reading & Shift Close"
       subtitle={`${drawerLabel} • Permanent Fiscal Audit`}
-      icon={<Lock size={22} color="#800020" />}
+      icon={<Lock size={22} color="#810021" />}
       size="md"
       footer={
         <View className="flex-row gap-3 w-full">
@@ -186,7 +186,7 @@ export const ZCloseShiftModal: React.FC<ZCloseShiftModalProps> = ({
             className={`flex-1 py-3 rounded-xl items-center justify-center min-h-[48px] ${
               isSubmitting || !hasEnteredCash
                 ? 'bg-stone-300 opacity-60'
-                : 'bg-[#800020] active:bg-[#600018]'
+                : 'bg-[#810021] active:bg-[#600018]'
             }`}
           >
             <Text className="text-base font-extrabold text-white">
@@ -213,8 +213,8 @@ export const ZCloseShiftModal: React.FC<ZCloseShiftModalProps> = ({
               onPress={() => setShowDenominationCounter(!showDenominationCounter)}
               className="flex-row items-center gap-1.5 px-3 py-1.5 rounded-lg bg-stone-100 active:bg-stone-200 min-h-[48px] self-start sm:self-auto"
             >
-              <Calculator size={18} color="#800020" />
-              <Text className="text-base font-bold text-[#800020]">
+              <Calculator size={18} color="#810021" />
+              <Text className="text-base font-bold text-[#810021]">
                 {showDenominationCounter ? 'Hide Counter' : 'Bill & Coin Breakdown'}
               </Text>
             </Pressable>

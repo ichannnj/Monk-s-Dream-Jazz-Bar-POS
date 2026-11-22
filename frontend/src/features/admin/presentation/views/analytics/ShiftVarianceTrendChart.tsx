@@ -29,7 +29,7 @@ export const ShiftVarianceTrendChart: React.FC<ShiftVarianceTrendChartProps> = (
       <View className="flex-row items-center justify-between mb-4 flex-wrap gap-2">
         <View className="flex-row items-center gap-3">
           <View className="w-10 h-10 rounded-xl bg-stone-100 items-center justify-center">
-            <Activity size={20} color="#1c1917" />
+            <Activity size={20} color="#1A1617" />
           </View>
           <View>
             <Text className="text-lg font-extrabold text-stone-900">

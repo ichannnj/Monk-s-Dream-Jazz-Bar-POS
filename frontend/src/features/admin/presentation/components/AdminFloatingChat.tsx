@@ -25,11 +25,11 @@ export const AdminFloatingChat: React.FC<AdminFloatingChatProps> = ({ unreadCoun
         <View className="absolute bottom-6 right-6 z-40">
           <Pressable
             onPress={() => setIsOpen(true)}
-            className="group relative h-14 w-14 items-center justify-center rounded-full bg-[#800020] shadow-2xl active:opacity-90 transition-all hover:scale-105 active:scale-95 border-2 border-white/20"
+            className="group relative h-14 w-14 items-center justify-center rounded-full bg-[#810021] shadow-2xl active:opacity-90 transition-all hover:scale-105 active:scale-95 border-2 border-white/20"
             accessibilityRole="button"
             accessibilityLabel="Open live team chat"
           >
-            <MessageSquare size={24} color="#F5F5F5" strokeWidth={2.2} />
+            <MessageSquare size={24} color="#F7F5F2" strokeWidth={2.2} />
             {unreadCount > 0 && (
               <View className="absolute -top-1 -right-1 h-5 w-5 items-center justify-center rounded-full bg-rose-600 border-2 border-white shadow-sm">
                 <Text className="text-[11px] font-bold text-white leading-none">{unreadCount}</Text>
@@ -59,8 +59,8 @@ export const AdminFloatingChat: React.FC<AdminFloatingChatProps> = ({ unreadCoun
             {/* Drawer Header */}
             <View className="flex-row items-center justify-between border-b border-stone-200 bg-white px-5 py-4">
               <View className="flex-row items-center flex-1 mr-2 min-w-0">
-                <View className="rounded-xl bg-[#800020] p-2 mr-3 shadow-xs shrink-0">
-                  <MessageSquare size={18} color="#F5F5F5" strokeWidth={2.2} />
+                <View className="rounded-xl bg-[#810021] p-2 mr-3 shadow-xs shrink-0">
+                  <MessageSquare size={18} color="#F7F5F2" strokeWidth={2.2} />
                 </View>
                 <View className="flex-1 min-w-0">
                   <View className="flex-row items-center">

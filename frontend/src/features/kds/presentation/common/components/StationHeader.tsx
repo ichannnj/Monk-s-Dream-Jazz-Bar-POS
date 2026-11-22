@@ -113,7 +113,7 @@ export const StationHeader: React.FC<StationHeaderProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 12,

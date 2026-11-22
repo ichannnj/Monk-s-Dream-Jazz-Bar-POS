@@ -66,7 +66,7 @@ export const FullscreenQrModal: React.FC<FullscreenQrModalProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Close QR scanner"
             >
-              <X size={18} color="#1C1917" />
+              <X size={18} color="#1A1617" />
             </Pressable>
           </View>
 
@@ -136,7 +136,7 @@ export const FullscreenQrModal: React.FC<FullscreenQrModalProps> = ({
                 accessibilityRole="button"
                 accessibilityLabel="Done scanning, return to checkout"
               >
-                <Check size={18} color="#F5F5F5" strokeWidth={2.5} />
+                <Check size={18} color="#F7F5F2" strokeWidth={2.5} />
                 <Text style={styles.doneBtnText}>Done Scanning · Input Reference #</Text>
               </Pressable>
             </View>
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 24,
     padding: 20,
     shadowColor: '#000',
@@ -183,16 +183,16 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   channelTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   scanNotice: {
     fontSize: 11,
@@ -203,18 +203,18 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   amountBanner: {
     width: '100%',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     paddingVertical: 8,
     paddingHorizontal: 14,
     alignItems: 'center',
@@ -235,10 +235,10 @@ const styles = StyleSheet.create({
   qrContainer: {
     width: 220,
     height: 220,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 16,
     borderWidth: 1.5,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
@@ -255,10 +255,10 @@ const styles = StyleSheet.create({
   },
   accountBox: {
     width: '100%',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     padding: 10,
     gap: 4,
     marginBottom: 14,
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   accountValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
     maxWidth: '65%',
   },
   accountNumber: {
@@ -297,6 +297,6 @@ const styles = StyleSheet.create({
   doneBtnText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
 });

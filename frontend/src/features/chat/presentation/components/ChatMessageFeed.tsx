@@ -38,7 +38,7 @@ export const ChatMessageFeed: React.FC<ChatMessageFeedProps> = ({
     <View className="flex-1 flex-col">
       {/* Pinned Announcement Banner (3-Color Styled) */}
       {activeConversation.pinnedMessage && (
-        <View className="mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-[#FAF8F5] border border-stone-200/90 flex-row items-start justify-between">
+        <View className="mx-4 sm:mx-6 mt-3 p-3 rounded-xl bg-[#EFECE6] border border-stone-200/90 flex-row items-start justify-between">
           <View className="flex-1 mr-2">
             <View className="flex-row items-center mb-0.5">
               <Pin size={12} color="#810021" />
@@ -72,7 +72,7 @@ export const ChatMessageFeed: React.FC<ChatMessageFeedProps> = ({
       >
         {currentMessages.length === 0 ? (
           <View className="items-center justify-center py-16 px-4">
-            <View className="w-12 h-12 rounded-full bg-[#FAF8F5] border border-stone-200 items-center justify-center mb-2.5">
+            <View className="w-12 h-12 rounded-full bg-[#EFECE6] border border-stone-200 items-center justify-center mb-2.5">
               <Text className="text-sm font-bold text-stone-600">
                 {activeConversation.avatarText || 'MD'}
               </Text>
@@ -81,7 +81,7 @@ export const ChatMessageFeed: React.FC<ChatMessageFeedProps> = ({
             {activeConversation.type === 'dm' && (
               <Pressable
                 onPress={() => onSend('👋')}
-                className="mt-3 flex-row items-center bg-[#FAF8F5] border border-stone-200 px-4 py-2 rounded-full active:bg-stone-100 min-h-[40px]"
+                className="mt-3 flex-row items-center bg-[#EFECE6] border border-stone-200 px-4 py-2 rounded-full active:bg-stone-100 min-h-[40px]"
                 accessibilityRole="button"
                 accessibilityLabel="Wave to colleague"
               >
@@ -95,7 +95,7 @@ export const ChatMessageFeed: React.FC<ChatMessageFeedProps> = ({
             if (msg.isSystem) {
               return (
                 <View key={msg.id} className="self-center max-w-[85%] my-2">
-                  <View className="bg-[#FAF8F5] border border-stone-200/90 rounded-xl px-3 py-1.5">
+                  <View className="bg-[#EFECE6] border border-stone-200/90 rounded-xl px-3 py-1.5">
                     <Text className="text-[11px] font-bold text-[#810021] text-center mb-0.5">
                       Notice · {msg.timestamp}
                     </Text>
@@ -149,7 +149,7 @@ export const ChatMessageFeed: React.FC<ChatMessageFeedProps> = ({
                 <Text className="text-[11px] font-semibold text-stone-500 mb-0.5 ml-1">
                   {msg.senderName}
                 </Text>
-                <View className="bg-[#FAF8F5] rounded-2xl rounded-bl-xs px-3.5 py-2.5 border border-stone-200/80">
+                <View className="bg-[#EFECE6] rounded-2xl rounded-bl-xs px-3.5 py-2.5 border border-stone-200/80">
                   <Text className="text-sm font-normal text-stone-900 leading-relaxed">
                     {msg.message}
                   </Text>

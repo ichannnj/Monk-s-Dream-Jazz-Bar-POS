@@ -32,7 +32,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
               <Text className="text-2xl font-black text-stone-900 tracking-tight">
                 Check {selectedCheck.checkNumber}
               </Text>
-              <View className="bg-[#FAF8F5] border border-stone-300 px-2.5 py-0.5 rounded-full">
+              <View className="bg-[#EFECE6] border border-stone-300 px-2.5 py-0.5 rounded-full">
                 <Text className="text-xs font-bold text-stone-800 uppercase">SETTLED</Text>
               </View>
               {selectedCheck.orderType === 'dine_in' &&
@@ -41,7 +41,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
                   (selectedCheck.serviceCharge || 0) +
                   (selectedCheck.corkageFee || 0) +
                   1 ? (
-                <View className="bg-[#fdf2f4] border border-[#810021]/25 px-2.5 py-0.5 rounded-full">
+                <View className="bg-[#F5EBEF] border border-[#810021]/25 px-2.5 py-0.5 rounded-full">
                   <Text className="text-xs font-extrabold text-[#810021] uppercase">
                     TABLE GROUP PAY
                   </Text>
@@ -68,7 +68,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
               accessibilityRole="button"
               accessibilityLabel="Reprint receipt"
             >
-              <Printer size={18} color="#F5F5F5" />
+              <Printer size={18} color="#F7F5F2" />
               <Text className="text-base font-bold text-white">
                 {isReprinting ? 'Printing...' : 'Reprint Receipt'}
               </Text>
@@ -124,7 +124,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
             <Text className="text-base font-semibold text-stone-500">Tender Captured</Text>
             {selectedCheck.tenders && selectedCheck.tenders.length > 0 ? (
               <View className="mt-1 flex-col gap-1">
-                <Text className="text-base font-black text-[#800020]">SPLIT PAYMENT</Text>
+                <Text className="text-base font-black text-[#810021]">SPLIT PAYMENT</Text>
                 {selectedCheck.tenders.map((t, idx) => {
                   const m = (t.method || '').toLowerCase();
                   let label = m.toUpperCase();
@@ -144,7 +144,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
                 })}
               </View>
             ) : (
-              <Text className="text-base font-bold text-[#800020] mt-0.5">
+              <Text className="text-base font-bold text-[#810021] mt-0.5">
                 {(
                   selectedCheck.paymentChannel || selectedCheck.paymentMethod.replace('_', ' ')
                 ).toUpperCase()}
@@ -177,7 +177,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
                     <View>
                       <Text className="text-base font-bold text-stone-900">{it.name}</Text>
                       {it.modifiers && it.modifiers.length > 0 && (
-                        <Text className="text-xs text-[#800020] font-semibold">
+                        <Text className="text-xs text-[#810021] font-semibold">
                           + {it.modifiers.join(', ')}
                         </Text>
                       )}
@@ -255,7 +255,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
 
           <View className="flex-row justify-between items-center pt-3 border-t border-stone-200">
             <Text className="text-xl font-black text-stone-900">Grand Total Settled</Text>
-            <Text className="text-2xl font-black text-[#800020]">
+            <Text className="text-2xl font-black text-[#810021]">
               {formatCurrency(selectedCheck.total)}
             </Text>
           </View>

@@ -24,7 +24,7 @@ html {
 body {
   font-size: 1rem; /* 16px */
   line-height: 1.5;
-  color: #111827;
+  color: #1A1617;
 }
 
 /* Tablet Touch and Text Readability Optimizations */
@@ -72,8 +72,8 @@ input:-webkit-autofill:focus,
 textarea:-webkit-autofill,
 textarea:-webkit-autofill:hover,
 textarea:-webkit-autofill:focus {
-  -webkit-text-fill-color: #111827;
-  -webkit-box-shadow: 0 0 0px 1000px #F5F5F5 inset !important;
+  -webkit-text-fill-color: #1A1617;
+  -webkit-box-shadow: 0 0 0px 1000px #F7F5F2 inset !important;
   transition: background-color 5000s ease-in-out 0s;
 }
 

@@ -68,7 +68,7 @@ export const IngredientPickerDialog: React.FC<IngredientPickerDialogProps> = ({
                   onPress={() => onSelect(inv)}
                   className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-3.5 border transition-all ${
                     isSelected
-                      ? 'bg-[#800020]/10 border-[#800020]'
+                      ? 'bg-[#810021]/10 border-[#810021]'
                       : 'bg-white border-stone-200 active:bg-stone-50'
                   }`}
                 >
@@ -79,10 +79,10 @@ export const IngredientPickerDialog: React.FC<IngredientPickerDialogProps> = ({
                     </Text>
                   </View>
                   <View className="flex-row items-center space-x-2">
-                    <Text className="text-base font-extrabold text-[#800020]">
+                    <Text className="text-base font-extrabold text-[#810021]">
                       ₱{Number(inv.unit_cost || 0).toFixed(2)}/{inv.unit}
                     </Text>
-                    {isSelected && <Check size={18} color="#800020" />}
+                    {isSelected && <Check size={18} color="#810021" />}
                   </View>
                 </Pressable>
               );

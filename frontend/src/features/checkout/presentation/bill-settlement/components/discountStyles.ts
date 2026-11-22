@@ -2,10 +2,10 @@ import { StyleSheet } from 'react-native';
 
 export const discountStyles = StyleSheet.create({
   discountContainer: {
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     padding: 12,
     marginBottom: 16,
     gap: 10,
@@ -18,7 +18,7 @@ export const discountStyles = StyleSheet.create({
   discountTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#1C1917',
+    color: '#1A1617',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -32,8 +32,8 @@ export const discountStyles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
-    backgroundColor: '#F5F5F5',
+    borderColor: '#E2DED6',
+    backgroundColor: '#F7F5F2',
     minHeight: 40,
     justifyContent: 'center',
   },
@@ -47,32 +47,32 @@ export const discountStyles = StyleSheet.create({
     color: '#475569',
   },
   discountPillTextActive: {
-    color: '#F5F5F5',
+    color: '#F7F5F2',
   },
   seniorFieldsBox: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F7F5F2',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     padding: 12,
     gap: 8,
   },
   seniorInputLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#1C1917',
+    color: '#1A1617',
     textTransform: 'uppercase',
   },
   seniorInput: {
     minHeight: 48,
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
     borderWidth: 1,
-    borderColor: '#e7e5e4',
+    borderColor: '#E2DED6',
     borderRadius: 8,
     paddingHorizontal: 12,
     fontSize: 16, // Invariant: Must be >= 16px to prevent iOS Safari auto-zoom
     fontWeight: '600',
-    color: '#1C1917',
+    color: '#1A1617',
   },
   seniorItemRow: {
     flexDirection: 'row',
@@ -82,11 +82,11 @@ export const discountStyles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#e7e5e4',
-    backgroundColor: '#FAF8F5',
+    borderColor: '#E2DED6',
+    backgroundColor: '#EFECE6',
   },
   seniorItemRowActive: {
     borderColor: '#810021',
-    backgroundColor: '#FAF8F5',
+    backgroundColor: '#EFECE6',
   },
 });

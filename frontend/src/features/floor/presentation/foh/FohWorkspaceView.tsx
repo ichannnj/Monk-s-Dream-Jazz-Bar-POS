@@ -49,7 +49,7 @@ export const FohWorkspaceView: React.FC = () => {
   }, [runnerTickets, queueFilter]);
 
   return (
-    <View className="flex-1 bg-[#FAF8F5]">
+    <View className="flex-1 bg-[#EFECE6]">
       <FohCommandBar
         currentFilter={queueFilter}
         onFilterChange={setQueueFilter}
@@ -62,8 +62,8 @@ export const FohWorkspaceView: React.FC = () => {
         contentContainerStyle={{ paddingBottom: 28 }}
       >
         {filteredTickets.length === 0 ? (
-          <View className="bg-white border border-[#E7E5E4] rounded-2xl py-14 px-6 items-center justify-center my-2">
-            <Text className="text-pos-lg font-bold text-[#1C1917] text-center mb-1">
+          <View className="bg-white border border-[#E2DED6] rounded-2xl py-14 px-6 items-center justify-center my-2">
+            <Text className="text-pos-lg font-bold text-[#1A1617] text-center mb-1">
               Pass Staging Clear
             </Text>
             <Text className="text-base text-[#57534E] text-center max-w-md">

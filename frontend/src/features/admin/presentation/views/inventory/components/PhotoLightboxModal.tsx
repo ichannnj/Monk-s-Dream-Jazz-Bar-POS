@@ -28,10 +28,10 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({ photo, o
           accessibilityLabel="Close photo preview"
         />
 
-        <View className="w-full max-w-lg rounded-2xl bg-white border border-[#E7E5E4] overflow-hidden z-10">
-          <View className="flex-row items-center justify-between px-4 py-3 border-b border-[#E7E5E4] bg-[#FAF8F5]">
+        <View className="w-full max-w-lg rounded-2xl bg-white border border-[#E2DED6] overflow-hidden z-10">
+          <View className="flex-row items-center justify-between px-4 py-3 border-b border-[#E2DED6] bg-[#EFECE6]">
             <View className="flex-1 pr-3">
-              <Text className="text-lg font-bold text-[#1C1917]" numberOfLines={1}>
+              <Text className="text-lg font-bold text-[#1A1617]" numberOfLines={1}>
                 {photo.title}
               </Text>
               {photo.subtitle ? (
@@ -43,15 +43,15 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({ photo, o
 
             <Pressable
               onPress={onClose}
-              className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-white border border-[#E7E5E4] active:opacity-80"
+              className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl bg-white border border-[#E2DED6] active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel="Close lightbox"
             >
-              <X size={20} color="#1C1917" />
+              <X size={20} color="#1A1617" />
             </Pressable>
           </View>
 
-          <View className="w-full h-80 sm:h-96 bg-[#FAF8F5] items-center justify-center p-3">
+          <View className="w-full h-80 sm:h-96 bg-[#EFECE6] items-center justify-center p-3">
             <Image
               source={{ uri: photo.url }}
               style={{ width: '100%', height: '100%', borderRadius: 12 }}
@@ -61,8 +61,8 @@ export const PhotoLightboxModal: React.FC<PhotoLightboxModalProps> = ({ photo, o
           </View>
 
           {photo.note ? (
-            <View className="px-4 py-3.5 border-t border-[#E7E5E4] bg-white">
-              <Text className="text-base font-semibold text-[#1C1917]">{photo.note}</Text>
+            <View className="px-4 py-3.5 border-t border-[#E2DED6] bg-white">
+              <Text className="text-base font-semibold text-[#1A1617]">{photo.note}</Text>
             </View>
           ) : null}
         </View>

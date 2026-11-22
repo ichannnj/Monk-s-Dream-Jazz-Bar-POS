@@ -20,11 +20,11 @@ export const EventCalendarShell: React.FC<EventCalendarShellProps> = ({
     <SafeAreaView
       style={{
         flex: 1,
-        backgroundColor: '#FAF8F5',
+        backgroundColor: '#EFECE6',
       }}
     >
       <ScrollView
-        className="flex-1 min-w-0 bg-[#FAF8F5]"
+        className="flex-1 min-w-0 bg-[#EFECE6]"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ flexGrow: 1 }}
       >

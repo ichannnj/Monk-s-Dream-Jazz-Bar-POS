@@ -3,20 +3,20 @@ name: Monk's Dream Jazz Bar POS
 description: Warm minimalist hospitality POS pairing Velvet Wine authority, Warm Sand surfaces, and tablet-first 48px/16px ergonomics.
 colors:
   velvet-wine: '#810021'
-  wine-action: '#641b2a'
-  admin-primary: '#6e1d2c'
-  warm-sand: '#faf8f5'
-  admin-canvas: '#f8f6f4'
-  pure-surface: '#f5f5f5'
-  stone-border: '#e7e5e4'
-  admin-border: '#e6e1da'
-  deep-charcoal: '#1c1917'
-  muted-stone: '#78716c'
-  admin-muted: '#6a6562'
-  brass-accent: '#b48a3c'
-  ready-emerald: '#10b981'
-  prep-amber: '#f59e0b'
-  danger-rose: '#b32638'
+  wine-action: '#630019'
+  admin-primary: '#810021'
+  warm-sand: '#efece6'
+  admin-canvas: '#efece6'
+  pure-surface: '#f7f5f2'
+  stone-border: '#e2ded6'
+  admin-border: '#e2ded6'
+  deep-charcoal: '#1a1617'
+  muted-stone: '#706864'
+  admin-muted: '#706864'
+  brass-accent: '#b88a44'
+  ready-emerald: '#1f7a4c'
+  prep-amber: '#b86b12'
+  danger-rose: '#9f1239'
   jazz-obsidian: '#0d1117'
 typography:
   display:
@@ -107,7 +107,7 @@ Radius: md 12px, lg 14px, xl 20px, full 9999px
 North Star: "The Velvet Ledger"
 Rules:
 
-- The Three-Color Floor Rule. Floor and modal surfaces rely solely on Warm Sand/White surfaces, Deep Charcoal typography, and Velvet Wine emphasis; semantic Emerald/Amber/Rose appear strictly for live prep status, errors, or offline warnings.
+- The Three-Color Floor Rule. Floor and modal surfaces rely solely on Cashmere Stone/Warm Alabaster surfaces (#efece6/#f7f5f2), Deep Espresso typography (#1a1617), and Velvet Wine emphasis (#810021); semantic Forest Jade/Warm Amber/Velvet Crimson appear strictly for live prep status, errors, or offline warnings.
 - The 16px Anti-Zoom Floor Rule. Every text element and form input in new or modified views must be at least `16px` (`text-base` / `text-pos-base`).
 - The Tabular Numerals Rule. All timers, currency amounts (`₱`), table counts, and receipt lines inherit `font-variant-numeric: tabular-nums` so numbers never jitter during live updates.
 - The Tactile Press Rule. Interactive cards and buttons confirm touch through subtle scale (`scale(0.98–0.985)`) and opacity (`0.85–0.92`) rather than heavy hover elevation.
@@ -120,6 +120,6 @@ Rules:
 - Do enforce `min-h-[48px] min-w-[48px]` on every interactive `Pressable`, button, chip, tab, and input.
 - Do keep every new or modified text element and all form inputs at `≥ 16px` (`text-base` / `text-pos-base`).
 - Do use React Native primitives (`View`, `Text`, `Pressable`, `TextInput`, `ScrollView`) with NativeWind v4 `className` utilities for all new components and new elements inside existing files.
-- Do keep floor and modal UI strictly within Velvet Wine (`#810021`), Warm Sand/Muted Stone (`#faf8f5`/`#f5f5f5`), and Deep Charcoal (`#1c1917`), reserving Emerald/Amber/Rose strictly for live status or alerts.
+- Do keep floor and modal UI strictly within Velvet Wine (`#810021`), Cashmere Stone/Warm Alabaster (`#efece6`/`#f7f5f2`), and Deep Espresso (`#1a1617`), reserving Jade/Amber/Crimson strictly for live status or alerts.
 - (+1 more)
   Full: .impeccable/design-full.md (read a section when you need its detail)

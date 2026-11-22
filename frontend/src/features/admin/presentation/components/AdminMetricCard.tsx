@@ -28,9 +28,9 @@ const TONE_STYLES: Record<
     accentBorder: 'border-stone-200/90',
   },
   primary: {
-    iconBg: 'bg-[#6e1d2c]/10',
-    iconColor: '#6e1d2c',
-    accentBorder: 'border-[#6e1d2c]/20',
+    iconBg: 'bg-[#810021]/10',
+    iconColor: '#810021',
+    accentBorder: 'border-[#810021]/20',
   },
   brass: {
     iconBg: 'bg-amber-100/70',
