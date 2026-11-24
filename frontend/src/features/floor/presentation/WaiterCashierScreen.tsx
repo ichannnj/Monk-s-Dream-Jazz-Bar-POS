@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { supabase } from '@/features/shared/infrastructure/supabase';
 import { playKdsChime } from '@/features/shared/infrastructure/audio';
 import { useAuthStore } from '@/features/auth';
+import { AttendanceClockInReminderBanner } from '@/features/auth/presentation/components/AttendanceClockInReminderBanner';
 import { useOrderStore } from '@/features/orders';
 import { useRunnerTickets } from '@/features/kds/presentation/foh-runner/hooks/useRunnerTickets';
 import { toast } from '@/features/shared/toast/useToastStore';
@@ -101,6 +102,7 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
 
       {/* 2. Main Viewport */}
       <View className="flex-1 min-w-0 px-3 pt-2.5 md:px-0 md:pt-0">
+        <AttendanceClockInReminderBanner />
         {activeNavTab === 'tables' ? (
           <FloorWorkspaceView />
         ) : activeNavTab === 'foh' ? (

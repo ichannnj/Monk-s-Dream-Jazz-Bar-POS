@@ -55,7 +55,8 @@ export const DashboardLaborAndPayrollSection: React.FC<DashboardLaborAndPayrollS
               Base ₱{Number(telemetry.basePayrollTotal || 0).toLocaleString()}
             </Text>
             <Text className="text-xs font-bold text-[#810021]">
-              OT ₱{Number(telemetry.bonusPayrollTotal || 0).toLocaleString()}
+              OT ₱{Number(telemetry.overtimePayrollTotal || 0).toLocaleString()} (
+              {Number(telemetry.overtimeHoursTotal || 0).toFixed(1)}h)
             </Text>
           </View>
         </View>
@@ -133,6 +134,46 @@ export const DashboardLaborAndPayrollSection: React.FC<DashboardLaborAndPayrollS
           </View>
         </View>
       </View>
+
+      {/* Live On-Shift Roster & Missed Clock-Out Review Strip */}
+      {((telemetry.activeOnShiftStaff && telemetry.activeOnShiftStaff.length > 0) ||
+        (telemetry.needsReviewCount || 0) > 0) && (
+        <View className="mt-4 pt-3.5 border-t border-stone-200/80 flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <View className="flex-row flex-wrap items-center gap-2 flex-1">
+            <Text className="text-xs font-bold text-stone-500 uppercase tracking-wider mr-1">
+              On-Shift Now:
+            </Text>
+            {telemetry.activeOnShiftStaff && telemetry.activeOnShiftStaff.length > 0 ? (
+              telemetry.activeOnShiftStaff.slice(0, 6).map((s) => (
+                <View
+                  key={s.userId}
+                  className="flex-row items-center gap-1.5 rounded-full bg-[#EFECE6] border border-stone-200 px-2.5 py-1"
+                >
+                  <View className="h-1.5 w-1.5 rounded-full bg-[#810021]" />
+                  <Text className="text-xs font-bold text-stone-900">{s.displayName}</Text>
+                  <Text className="text-[11px] text-stone-500 capitalize">
+                    {s.roleOrTitle} · {s.elapsedHours}h
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text className="text-xs text-stone-400">No staff currently clocked in</Text>
+            )}
+          </View>
+
+          {(telemetry.needsReviewCount || 0) > 0 && (
+            <Pressable
+              onPress={() => onNavigateRoute('attendance')}
+              className="rounded-full bg-amber-100 border border-amber-300 px-3 py-1.5 active:bg-amber-200 self-start sm:self-auto"
+            >
+              <Text className="text-xs font-bold text-amber-900">
+                {telemetry.needsReviewCount} Missed Clock-Out
+                {(telemetry.needsReviewCount || 0) > 1 ? 's' : ''} Need Review →
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      )}
     </View>
   );
 };

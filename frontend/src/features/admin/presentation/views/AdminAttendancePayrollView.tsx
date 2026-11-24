@@ -7,6 +7,7 @@ import { AttendanceRosterTable } from './attendance/AttendanceRosterTable';
 import { AttendanceDatePickerModal } from './attendance/AttendanceDatePickerModal';
 import { AttendanceEditAndBonusModals } from './attendance/AttendanceEditAndBonusModals';
 import { AttendanceReportModal } from './attendance/AttendanceReportModal';
+import { OvertimePolicyQuickModal } from './attendance/OvertimePolicyQuickModal';
 
 export interface AdminAttendancePayrollViewProps {
   onRefresh?: () => void;
@@ -40,6 +41,9 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
     setEditingRecord,
     isReportModalOpen,
     setIsReportModalOpen,
+    isOtPolicyModalOpen,
+    setIsOtPolicyModalOpen,
+    overtimePolicy,
     todayStr,
     dateRange,
     loadData,
@@ -76,6 +80,7 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
         handleStepDay={handleStepDay}
         setDatePickerMode={setDatePickerMode}
         setIsDatePickerModalOpen={setIsDatePickerModalOpen}
+        onOpenOtPolicy={() => setIsOtPolicyModalOpen(true)}
         onNavigateToRoster={onNavigateToRoster}
       />
 
@@ -120,6 +125,14 @@ export const AdminAttendancePayrollView: React.FC<AdminAttendancePayrollViewProp
         setEditingRecord={setEditingRecord}
         handleSaveRecord={handleSaveRecord}
         staffRoster={staffRoster}
+        overtimePolicy={overtimePolicy}
+      />
+
+      <OvertimePolicyQuickModal
+        visible={isOtPolicyModalOpen}
+        onClose={() => setIsOtPolicyModalOpen(false)}
+        policy={overtimePolicy}
+        onSaved={loadData}
       />
 
       <AttendanceReportModal

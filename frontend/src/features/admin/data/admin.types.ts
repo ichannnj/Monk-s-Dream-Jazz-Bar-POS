@@ -27,6 +27,11 @@ export interface VenueSettings {
   };
   mode_switched_at?: string;
   updated_at?: string;
+  standard_shift_hours?: number;
+  overtime_grace_minutes?: number;
+  overtime_rate_mode?: 'MULTIPLIER' | 'FLAT_HOURLY';
+  overtime_multiplier?: number;
+  overtime_flat_hourly_rate?: number;
 }
 
 export interface SupplierAdmin {
@@ -243,6 +248,7 @@ export interface StaffMemberAdmin {
   job_title?: string | null;
   is_workflow_staff: boolean;
   base_daily_rate: number | string;
+  overtime_hourly_rate_override?: number | null;
   email?: string | null;
   phone?: string | null;
   avatar_url?: string | null;
@@ -280,6 +286,7 @@ export interface UpdateStaffMemberPayload {
   role?: StaffRoleType;
   job_title?: string | null;
   base_daily_rate?: number;
+  overtime_hourly_rate_override?: number | null;
   email?: string | null;
   phone?: string | null;
   avatar_url?: string | null;
@@ -294,7 +301,18 @@ export interface AttendanceRecordAdmin {
   shift_status?: 'CLOCKED_IN' | 'COMPLETED' | 'ABSENT';
   clock_in_at?: string | null;
   clock_out_at?: string | null;
+  first_clock_in_at?: string | null;
   hours_worked?: number;
+  regular_hours?: number;
+  overtime_hours?: number;
+  overtime_rate_applied?: number;
+  overtime_pay?: number;
+  overtime_override?: boolean;
+  needs_review?: boolean;
+  review_reason?: string | null;
+  edited_by_user_id?: string | null;
+  edited_at?: string | null;
+  edit_reason?: string | null;
   base_daily_pay: number;
   addon_pay: number;
   total_day_pay: number;
@@ -304,7 +322,20 @@ export interface AttendanceRecordAdmin {
     role: string;
     job_title?: string | null;
     is_workflow_staff: boolean;
+    overtime_hourly_rate_override?: number | null;
   };
+}
+
+export interface AttendancePunchLog {
+  id: string;
+  attendance_record_id: string;
+  user_id: string;
+  business_date: string;
+  punch_type: 'CLOCK_IN' | 'CLOCK_OUT' | 'ADMIN_EDIT';
+  punched_at: string;
+  source: 'TIMECLOCK_KIOSK' | 'ADMIN_OVERRIDE';
+  actor_user_id?: string | null;
+  notes?: string | null;
 }
 
 export interface SalesAnalyticsOverview {

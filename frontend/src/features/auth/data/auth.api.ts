@@ -245,6 +245,71 @@ export class AuthApi {
     return { success: true, pinUpdatedAt: (data as any).pinUpdatedAt };
   }
 
+  async verifyTimeclockStaffStatus(
+    username: string,
+    pin: string
+  ): Promise<{
+    success: boolean;
+    businessDate: string;
+    recommendedAction: 'CLOCK_IN' | 'CLOCK_OUT';
+    user: AuthStaffUser & { isWorkflowStaff?: boolean };
+    currentShift: {
+      id: string;
+      shiftStatus: string;
+      firstClockInAt: string | null;
+      clockInAt: string | null;
+      clockOutAt: string | null;
+      hoursWorked: number;
+    } | null;
+    unclosedPriorShift: {
+      date: string;
+      clockInAt: string | null;
+    } | null;
+  }> {
+    const cleanUsername = username.trim().toLowerCase();
+    const cleanPin = pin.trim();
+    if (!cleanUsername) throw new Error('Staff ID / Username is required.');
+    if (!cleanPin || cleanPin.length !== 4) throw new Error('4-digit PIN is required.');
+
+    const { data, error } = await (supabase.rpc as any)('verify_timeclock_staff_status', {
+      p_username: cleanUsername,
+      p_pin: cleanPin,
+    });
+
+    if (error) throw new Error(error.message || 'Verification failed.');
+    if (!data || !(data as any).success) {
+      throw new Error((data as any)?.error || 'Invalid Staff ID or PIN.');
+    }
+    return data as any;
+  }
+
+  async getStaffTodayClockStatus(userId: string): Promise<{
+    isPresentToday: boolean;
+    isClockedInToday: boolean;
+    shiftStatus: string | null;
+    clockInAt: string | null;
+  }> {
+    if (!userId) {
+      return { isPresentToday: false, isClockedInToday: false, shiftStatus: null, clockInAt: null };
+    }
+    try {
+      const { data, error } = await (supabase.rpc as any)('get_staff_today_clock_status', {
+        p_user_id: userId,
+      });
+      if (error || !data) {
+        return {
+          isPresentToday: false,
+          isClockedInToday: false,
+          shiftStatus: null,
+          clockInAt: null,
+        };
+      }
+      return data as any;
+    } catch {
+      return { isPresentToday: false, isClockedInToday: false, shiftStatus: null, clockInAt: null };
+    }
+  }
+
   /**
    * Universal Timeclock Punch for ALL venue staff (POS users + non-POS support personnel).
    * Calls PostgreSQL stored procedure `punch_staff_timeclock`.
@@ -258,12 +323,18 @@ export class AuthApi {
     actionTaken: 'CLOCKED_IN' | 'CLOCKED_OUT';
     user: AuthStaffUser;
     date: string;
+    firstClockInAt?: string | null;
     clockInAt: string;
     clockOutAt: string | null;
     hoursWorked: number;
+    regularHours?: number;
+    overtimeHours?: number;
+    overtimeRateApplied?: number;
+    overtimePay?: number;
     baseDailyPay: number;
     addonPay: number;
     totalDayPay: number;
+    isAdmin?: boolean;
   }> {
     const cleanUsername = username.trim().toLowerCase();
     const cleanPin = pin.trim();

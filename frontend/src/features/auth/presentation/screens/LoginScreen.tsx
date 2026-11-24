@@ -61,7 +61,7 @@ export const LoginScreen: React.FC = () => {
     if (isError) setIsError(false);
   };
 
-  const handleClockIn = useCallback(
+  const handleSignIn = useCallback(
     async (pinOverride?: string) => {
       if (isSubmitting) return;
 
@@ -199,10 +199,10 @@ export const LoginScreen: React.FC = () => {
         return;
       }
       setTimeout(() => {
-        handleClockIn(completedPin);
+        handleSignIn(completedPin);
       }, 100);
     },
-    [username, authMode, handleClockIn]
+    [username, authMode, handleSignIn]
   );
 
   if (authMode === 'timeclock') {
@@ -290,7 +290,7 @@ export const LoginScreen: React.FC = () => {
                     showPassword={showPassword}
                     setShowPassword={setShowPassword}
                     onClearErrors={clearErrors}
-                    onSubmit={() => handleClockIn()}
+                    onSubmit={() => handleSignIn()}
                     isTablet={isTablet}
                   />
                 ) : (
@@ -313,7 +313,7 @@ export const LoginScreen: React.FC = () => {
                   ]}
                 >
                   <Pressable
-                    onPress={() => handleClockIn()}
+                    onPress={() => handleSignIn()}
                     onPressIn={handlePressIn}
                     onPressOut={handlePressOut}
                     disabled={isCtaDisabled}

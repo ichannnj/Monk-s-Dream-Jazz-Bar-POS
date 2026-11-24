@@ -37,6 +37,7 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
   const [role, setRole] = useState<StaffRoleType>('waiter');
   const [jobTitle, setJobTitle] = useState('');
   const [baseDailyRate, setBaseDailyRate] = useState('645.00');
+  const [overtimeRateOverride, setOvertimeRateOverride] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [isActive, setIsActive] = useState(true);
@@ -54,6 +55,11 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
       setJobTitle(staff.job_title || '');
       setBaseDailyRate(
         staff.role === 'admin' ? '0.00' : Number(staff.base_daily_rate ?? 645).toFixed(2)
+      );
+      setOvertimeRateOverride(
+        staff.role !== 'admin' && staff.overtime_hourly_rate_override != null
+          ? Number(staff.overtime_hourly_rate_override).toFixed(2)
+          : ''
       );
       setPhone(staff.phone || '');
       setEmail(staff.email || '');
@@ -91,6 +97,10 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
         role: staff.is_workflow_staff ? (isAdmin ? 'admin' : role) : (staff.role as StaffRoleType),
         job_title: jobTitle.trim() || null,
         base_daily_rate: isAdmin ? 0 : parsedRate,
+        overtime_hourly_rate_override:
+          isAdmin || !overtimeRateOverride.trim()
+            ? null
+            : Math.max(0, parseFloat(overtimeRateOverride) || 0),
         phone: phone.trim() || null,
         email: email.trim() || null,
         is_active: isActive,
@@ -275,13 +285,23 @@ export const EditStaffModal: React.FC<EditStaffModalProps> = ({
                 </Text>
               </View>
             ) : (
-              <AdminNumberInput
-                label="Base Daily Shift Rate"
-                mode="currency"
-                value={baseDailyRate}
-                onChangeText={setBaseDailyRate}
-                helperText="Adjustable per role (PH Min Wage baseline: ₱645.00)"
-              />
+              <View className="space-y-3">
+                <AdminNumberInput
+                  label="Base Daily Shift Rate"
+                  mode="currency"
+                  value={baseDailyRate}
+                  onChangeText={setBaseDailyRate}
+                  helperText="Adjustable per role (PH Min Wage baseline: ₱645.00)"
+                />
+                <AdminNumberInput
+                  label="Custom OT Hourly Rate (Optional)"
+                  mode="currency"
+                  value={overtimeRateOverride}
+                  onChangeText={setOvertimeRateOverride}
+                  placeholder="Use venue policy"
+                  helperText="Leave blank to use venue Overtime Policy"
+                />
+              </View>
             )}
           </View>
         </View>

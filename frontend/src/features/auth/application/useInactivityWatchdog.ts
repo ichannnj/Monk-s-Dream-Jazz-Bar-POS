@@ -69,29 +69,20 @@ export function useInactivityWatchdog(enabled: boolean = true) {
     setStatus(checkInactivityStatus(Date.now(), Date.now()));
   }, [recordActivity, currentUser?.id]);
 
-  // Execute clean auto-logout and fair attendance clock-out
+  // Execute clean POS terminal auto-logout (strictly decoupled from Timeclock attendance)
   const handleAutoLogout = useCallback(async () => {
     if (isExecutingLogoutRef.current) return;
     isExecutingLogoutRef.current = true;
 
-    const user = currentUser;
-    const lastActiveIso = new Date(lastActivityMsRef.current).toISOString();
-
     try {
-      if (user?.id) {
-        // Auto clock out attendance record with clock_out_at anchored to last activity
-        await authApi.autoClockOutInactiveUser(user.id, lastActiveIso);
-      }
-    } catch (err) {
-      console.warn('[InactivityWatchdog] Error closing attendance:', err);
-    } finally {
       logout();
-      toast.info('Session signed out due to inactivity. Attendance record updated.', {
+      toast.info('POS terminal signed out due to inactivity.', {
         title: 'Auto Sign Out',
       });
+    } finally {
       isExecutingLogoutRef.current = false;
     }
-  }, [currentUser, logout]);
+  }, [logout]);
 
   // Manual sign out now from warning modal
   const signOutNow = useCallback(() => {

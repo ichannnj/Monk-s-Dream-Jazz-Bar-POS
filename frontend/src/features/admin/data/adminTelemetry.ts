@@ -47,12 +47,19 @@ export const adminTelemetryService = {
         | 'date'
         | 'is_present'
         | 'shift_status'
+        | 'clock_in_at'
+        | 'overtime_hours'
+        | 'overtime_pay'
+        | 'needs_review'
         | 'base_daily_pay'
         | 'addon_pay'
         | 'total_day_pay'
       >;
 
-      type StaffRow = Pick<Tables<'users'>, 'id' | 'is_active' | 'is_workflow_staff'>;
+      type StaffRow = Pick<
+        Tables<'users'>,
+        'id' | 'display_name' | 'role' | 'job_title' | 'is_active' | 'is_workflow_staff'
+      >;
 
       let paymentsQuery = supabase
         .from('payments')
@@ -67,7 +74,7 @@ export const adminTelemetryService = {
       let attendanceQuery = supabase
         .from('attendance_records')
         .select(
-          'id, user_id, date, is_present, shift_status, base_daily_pay, addon_pay, total_day_pay'
+          'id, user_id, date, is_present, shift_status, clock_in_at, overtime_hours, overtime_pay, needs_review, base_daily_pay, addon_pay, total_day_pay'
         );
       if (bounds.businessStartDate) {
         attendanceQuery = attendanceQuery.gte('date', bounds.businessStartDate);
@@ -99,7 +106,10 @@ export const adminTelemetryService = {
           .limit(1)
           .maybeSingle(),
         attendanceQuery,
-        supabase.from('users').select('id, is_active, is_workflow_staff').eq('is_active', true),
+        supabase
+          .from('users')
+          .select('id, display_name, role, job_title, is_active, is_workflow_staff')
+          .eq('is_active', true),
         financialSummaryApi.getFinancialSummary(bounds, 'ALL', 'ALL'),
         bounds.benchmarkStart
           ? financialSummaryApi.getFinancialSummary(benchmarkBounds, 'ALL', 'ALL')
@@ -115,23 +125,52 @@ export const adminTelemetryService = {
       const activeStaffRows = (staffRes.data || []) as unknown as StaffRow[];
 
       const totalActiveStaffCount = activeStaffRows.length;
+      const staffById = new Map(activeStaffRows.map((s) => [s.id, s]));
       const presentRows = attendanceRows.filter((r) => r.is_present);
+      const eligiblePresentRows = presentRows.filter(
+        (r) => staffById.get(r.user_id)?.role !== 'admin'
+      );
       const presentStaffCount = presentRows.length;
       const clockedInStaffCount = attendanceRows.filter(
-        (r) => r.shift_status === 'CLOCKED_IN'
+        (r) => r.shift_status === 'CLOCKED_IN' && !r.needs_review
       ).length;
       const completedShiftsCount = attendanceRows.filter(
         (r) => r.shift_status === 'COMPLETED'
       ).length;
+      const needsReviewCount = attendanceRows.filter((r) => Boolean(r.needs_review)).length;
 
-      const basePayrollTotal = presentRows.reduce(
+      const activeOnShiftStaff = attendanceRows
+        .filter((r) => r.shift_status === 'CLOCKED_IN' && !r.needs_review && r.clock_in_at)
+        .map((r) => {
+          const staff = staffById.get(r.user_id);
+          const inMs = new Date(r.clock_in_at as string).getTime();
+          const elapsedHours = Math.max(0, Math.round(((Date.now() - inMs) / 3600000) * 10) / 10);
+          return {
+            userId: r.user_id,
+            displayName: staff?.display_name || 'Staff',
+            roleOrTitle: staff?.job_title || staff?.role || 'Staff',
+            clockInAt: r.clock_in_at as string,
+            elapsedHours,
+          };
+        });
+
+      const basePayrollTotal = eligiblePresentRows.reduce(
         (sum, r) => sum + (Number(r.base_daily_pay) || 0),
         0
       );
-      const bonusPayrollTotal = presentRows.reduce((sum, r) => sum + (Number(r.addon_pay) || 0), 0);
-      // Admin accounts are payroll-exempt in the database (base/addon are 0),
-      // so summing total_day_pay never charges management wages.
-      const totalPayrollExpense = presentRows.reduce(
+      const overtimePayrollTotal = eligiblePresentRows.reduce(
+        (sum, r) => sum + (Number(r.overtime_pay) || 0),
+        0
+      );
+      const overtimeHoursTotal = eligiblePresentRows.reduce(
+        (sum, r) => sum + (Number(r.overtime_hours) || 0),
+        0
+      );
+      const bonusPayrollTotal = eligiblePresentRows.reduce(
+        (sum, r) => sum + (Number(r.addon_pay) || 0),
+        0
+      );
+      const totalPayrollExpense = eligiblePresentRows.reduce(
         (sum, r) => sum + (Number(r.total_day_pay) || 0),
         0
       );
@@ -185,6 +224,8 @@ export const adminTelemetryService = {
 
         totalPayrollExpense,
         basePayrollTotal,
+        overtimePayrollTotal,
+        overtimeHoursTotal,
         bonusPayrollTotal,
         laborCostPercent:
           salesMetrics.liveSalesTotal > 0
@@ -207,6 +248,8 @@ export const adminTelemetryService = {
         completedShiftsCount,
         presentStaffCount,
         totalActiveStaffCount,
+        needsReviewCount,
+        activeOnShiftStaff,
 
         cafeSales: salesMetrics.cafeSales,
         eventSales: salesMetrics.eventSales,

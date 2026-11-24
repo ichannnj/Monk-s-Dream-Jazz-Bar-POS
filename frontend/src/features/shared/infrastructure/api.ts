@@ -67,6 +67,12 @@ export class PosApiClient {
     return this.auth.changeAdminOverridePin(userId, currentPassword, newPin);
   }
 
+  verifyTimeclockStaffStatus(username: string, pin: string) {
+    return this.auth.verifyTimeclockStaffStatus(username, pin);
+  }
+  getStaffTodayClockStatus(userId: string) {
+    return this.auth.getStaffTodayClockStatus(userId);
+  }
   punchStaffTimeclock(username: string, pin: string, action?: 'AUTO' | 'CLOCK_IN' | 'CLOCK_OUT') {
     return this.auth.punchStaffTimeclock(username, pin, action);
   }

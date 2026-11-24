@@ -1,6 +1,10 @@
 import { supabase } from '@/features/shared/infrastructure/supabase';
 import type { Tables, Json } from '@monks/shared';
-import { PH_MINIMUM_WAGE_DAILY, type AttendanceRecordAdmin } from '../admin.types';
+import {
+  PH_MINIMUM_WAGE_DAILY,
+  type AttendanceRecordAdmin,
+  type AttendancePunchLog,
+} from '../admin.types';
 
 type AttendanceDbRow = Tables<'attendance_records'> & {
   users?: Pick<
@@ -44,14 +48,26 @@ export const attendancePayrollApi = {
             : PH_MINIMUM_WAGE_DAILY;
 
       const addon = isAdmin ? 0 : Number(row.addon_pay || 0);
+      const overtimePay = isAdmin ? 0 : Number((row as any).overtime_pay || 0);
       return {
         ...row,
         base_daily_pay: resolvedBase,
+        overtime_pay: overtimePay,
         addon_pay: addon,
-        total_day_pay: row.is_present && !isAdmin ? resolvedBase + addon : 0,
+        total_day_pay: row.is_present && !isAdmin ? resolvedBase + overtimePay + addon : 0,
         user: row.users,
       };
     }) as unknown as AttendanceRecordAdmin[];
+  },
+
+  async getAttendancePunches(userId: string, date: string): Promise<AttendancePunchLog[]> {
+    const { data, error } = await (supabase.from as any)('attendance_punches')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('business_date', date)
+      .order('punched_at', { ascending: true });
+    if (error) return [];
+    return (data || []) as AttendancePunchLog[];
   },
 
   async adminUpsertAttendance(params: {
@@ -62,8 +78,16 @@ export const attendancePayrollApi = {
     baseDailyPay: number;
     addonPay: number;
     notes?: string;
+    clockInAt?: string | null;
+    clockOutAt?: string | null;
+    hoursWorked?: number | null;
+    overtimePay?: number | null;
+    overtimeOverride?: boolean;
+    clearReview?: boolean;
+    editedBy?: string | null;
+    editReason?: string | null;
   }): Promise<Json> {
-    const { data, error } = await supabase.rpc('admin_upsert_attendance_record', {
+    const { data, error } = await (supabase.rpc as any)('admin_upsert_attendance_record', {
       p_user_id: params.userId,
       p_date: params.date,
       p_is_present: params.isPresent,
@@ -71,6 +95,14 @@ export const attendancePayrollApi = {
       p_base_daily_pay: params.baseDailyPay,
       p_addon_pay: params.addonPay,
       p_notes: params.notes || undefined,
+      p_clock_in_at: params.clockInAt || undefined,
+      p_clock_out_at: params.clockOutAt || undefined,
+      p_hours_worked: params.hoursWorked ?? undefined,
+      p_overtime_pay: params.overtimePay ?? undefined,
+      p_overtime_override: params.overtimeOverride ?? false,
+      p_clear_review: params.clearReview ?? true,
+      p_edited_by: params.editedBy || undefined,
+      p_edit_reason: params.editReason || undefined,
     });
 
     if (error) throw error;

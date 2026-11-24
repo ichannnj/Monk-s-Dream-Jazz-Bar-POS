@@ -30,7 +30,8 @@ export function computeSingleDayStaffList(
           ? rec.base_daily_pay
           : parseFloat(String(staff.base_daily_rate)) || PH_MINIMUM_WAGE_DAILY;
       const addonPay = isAdmin ? 0.0 : rec ? rec.addon_pay : 0.0;
-      const totalDayPay = isPresent && !isAdmin ? baseDailyPay + addonPay : 0.0;
+      const overtimePay = isAdmin ? 0.0 : rec ? Number(rec.overtime_pay || 0) : 0.0;
+      const totalDayPay = isPresent && !isAdmin ? baseDailyPay + overtimePay + addonPay : 0.0;
 
       let computedHours = Number(rec?.hours_worked || 0);
       if (shiftStatus === 'CLOCKED_IN' && rec?.clock_in_at) {
@@ -46,9 +47,18 @@ export function computeSingleDayStaffList(
         rec,
         isPresent,
         shiftStatus,
+        firstClockInAt: rec?.first_clock_in_at || rec?.clock_in_at || null,
         clockInAt: rec?.clock_in_at || null,
         clockOutAt: rec?.clock_out_at || null,
         hoursWorked: computedHours,
+        regularHours: Number(rec?.regular_hours || 0),
+        overtimeHours: Number(rec?.overtime_hours || 0),
+        overtimePay,
+        overtimeOverride: Boolean(rec?.overtime_override),
+        needsReview: Boolean(rec?.needs_review),
+        reviewReason: rec?.review_reason || null,
+        editedAt: rec?.edited_at || null,
+        editReason: rec?.edit_reason || null,
         baseDailyPay,
         addonPay,
         totalDayPay,
@@ -66,6 +76,7 @@ export function filterSingleDayStaffList(
     if (statusFilter === 'clocked_in' && item.shiftStatus !== 'CLOCKED_IN') return false;
     if (statusFilter === 'completed' && item.shiftStatus !== 'COMPLETED') return false;
     if (statusFilter === 'absent' && item.isPresent) return false;
+    if (statusFilter === 'needs_review' && !item.needsReview) return false;
     if (statusFilter === 'pos_only' && !item.staff.is_workflow_staff) return false;
     if (statusFilter === 'support_only' && item.staff.is_workflow_staff) return false;
 
@@ -93,6 +104,8 @@ export function computeMultiDayAggregates(
       staff: s,
       shiftsWorked: 0,
       hoursLogged: 0,
+      overtimeHoursSum: 0,
+      overtimePaySum: 0,
       basePaySum: 0,
       bonusSum: 0,
       totalPaySum: 0,
@@ -107,6 +120,8 @@ export function computeMultiDayAggregates(
       existing.shiftsWorked += 1;
       existing.hoursLogged += Number(rec.hours_worked || 8.0);
       if (!isAdmin) {
+        existing.overtimeHoursSum += Number(rec.overtime_hours || 0);
+        existing.overtimePaySum += Number(rec.overtime_pay || 0);
         existing.basePaySum += Number(rec.base_daily_pay || 0);
         existing.bonusSum += Number(rec.addon_pay || 0);
         existing.totalPaySum += Number(rec.total_day_pay || 0);

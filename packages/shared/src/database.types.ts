@@ -25,7 +25,7 @@ export type Database = {
           Tables: {
             "attendance_records": {
                   Row: {
-                    "addon_pay": number,"base_daily_pay": number,"clock_in_at": string | null,"clock_out_at": string | null,"created_at": string,"date": string,"hours_worked": number,"id": string,"is_present": boolean,"notes": string | null,"shift_status": string,"total_day_pay": number,"updated_at": string,"user_id": string
+                    "addon_pay": number,"base_daily_pay": number,"clock_in_at": string | null,"clock_out_at": string | null,"created_at": string,"date": string,"edit_reason": string | null,"edited_at": string | null,"edited_by_user_id": string | null,"first_clock_in_at": string | null,"hours_worked": number,"id": string,"is_present": boolean,"needs_review": boolean,"notes": string | null,"overtime_hours": number,"overtime_override": boolean,"overtime_pay": number,"overtime_rate_applied": number,"regular_hours": number,"review_reason": string | null,"shift_status": string,"total_day_pay": number,"updated_at": string,"user_id": string
                   }
                   ComputedFields: never
                   Insert: {
@@ -884,7 +884,7 @@ isOneToOne: false
                   ]
                 },"venue_settings": {
                   Row: {
-                    "cafe_food_service_charge_rate": number,"daily_overhead_cost": number,"discounts_config": NonNullable<Json>,"event_service_charge_rate": number,"id": string,"mode_switched_at": string,"operating_mode": Database["public"]['Enums']["operating_mode"],"printer_routing_config": NonNullable<Json>,"service_charge_enabled": boolean,"service_charge_rate": number,"station_metrics_reset_at": string | null,"updated_at": string,"vat_inclusive": boolean,"vat_rate": number,"venue_name": string
+                    "cafe_food_service_charge_rate": number,"daily_overhead_cost": number,"discounts_config": NonNullable<Json>,"event_service_charge_rate": number,"id": string,"mode_switched_at": string,"operating_mode": Database["public"]['Enums']["operating_mode"],"overtime_flat_hourly_rate": number,"overtime_grace_minutes": number,"overtime_multiplier": number,"overtime_rate_mode": string,"printer_routing_config": NonNullable<Json>,"service_charge_enabled": boolean,"service_charge_rate": number,"standard_shift_hours": number,"station_metrics_reset_at": string | null,"updated_at": string,"vat_inclusive": boolean,"vat_rate": number,"venue_name": string
                   }
                   ComputedFields: never
                   Insert: {

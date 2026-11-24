@@ -11,7 +11,7 @@ export type PeriodFilter =
   | 'all';
 
 export type ShiftStatusFilter =
-  'all' | 'clocked_in' | 'completed' | 'absent' | 'pos_only' | 'support_only';
+  'all' | 'clocked_in' | 'completed' | 'absent' | 'needs_review' | 'pos_only' | 'support_only';
 
 export const MONTH_NAMES = [
   'January',
@@ -33,9 +33,18 @@ export interface SingleDayStaffItem {
   rec?: AttendanceRecordAdmin;
   isPresent: boolean;
   shiftStatus: 'CLOCKED_IN' | 'COMPLETED' | 'ABSENT';
+  firstClockInAt: string | null;
   clockInAt: string | null;
   clockOutAt: string | null;
   hoursWorked: number;
+  regularHours: number;
+  overtimeHours: number;
+  overtimePay: number;
+  overtimeOverride: boolean;
+  needsReview: boolean;
+  reviewReason: string | null;
+  editedAt: string | null;
+  editReason: string | null;
   baseDailyPay: number;
   addonPay: number;
   totalDayPay: number;
@@ -46,6 +55,8 @@ export interface MultiDayAggregateItem {
   staff: StaffMemberAdmin;
   shiftsWorked: number;
   hoursLogged: number;
+  overtimeHoursSum: number;
+  overtimePaySum: number;
   basePaySum: number;
   bonusSum: number;
   totalPaySum: number;
@@ -59,15 +70,25 @@ export interface EditingRecordState {
   date: string;
   isPresent: boolean;
   shiftStatus: 'CLOCKED_IN' | 'COMPLETED' | 'ABSENT';
+  clockInLocal: string;
+  clockOutLocal: string;
   baseDailyPay: string;
+  overtimePay: string;
+  overtimeOverride: boolean;
   addonPay: string;
   notes: string;
+  editReason: string;
+  needsReview?: boolean;
+  userOtOverride?: number | null;
 }
 
 export interface AttendancePeriodTotals {
   presentCount: number;
   clockedInCount: number;
   completedCount: number;
+  needsReviewCount: number;
+  overtimeHoursTotal: number;
+  overtimePayTotal: number;
   baseTotal: number;
   bonusTotal: number;
   grandTotal: number;

@@ -5,6 +5,7 @@ import { adminApi } from '../../../data/admin.api';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { SingleDayStaffItem, MultiDayAggregateItem, EditingRecordState } from './attendance.types';
 import { DateRangeResult } from './attendanceDateUtils';
+import { toManilaDateTimeLocal } from './attendanceOvertimeUtils';
 
 interface AttendanceRosterTableProps {
   dateRange: DateRangeResult;
@@ -98,6 +99,20 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                             {roleDisplay}
                           </Text>
                         </View>
+                        {item.needsReview && (
+                          <View className="rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5">
+                            <Text className="text-[10px] font-bold text-amber-900">
+                              Needs Review · Missed Out
+                            </Text>
+                          </View>
+                        )}
+                        {item.editedAt && (
+                          <View className="rounded-full bg-stone-100 border border-stone-200 px-2 py-0.5">
+                            <Text className="text-[10px] font-semibold text-stone-600">
+                              Admin Edited
+                            </Text>
+                          </View>
+                        )}
                       </View>
 
                       {/* Punch & Shift Status Line */}
@@ -141,9 +156,14 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                           <Text className="text-sm font-black text-stone-900">
                             ₱{item.totalDayPay.toFixed(2)}
                           </Text>
-                          {item.addonPay > 0 && (
+                          {item.overtimePay > 0 && (
                             <Text className="text-xs font-bold text-[#810021]">
-                              +₱{item.addonPay.toFixed(2)} OT
+                              +₱{item.overtimePay.toFixed(2)} OT ({item.overtimeHours.toFixed(1)}h)
+                            </Text>
+                          )}
+                          {item.addonPay > 0 && (
+                            <Text className="text-xs font-semibold text-stone-600">
+                              +₱{item.addonPay.toFixed(2)} Bonus
                             </Text>
                           )}
                         </>
@@ -234,15 +254,28 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                             date: dateRange.start,
                             isPresent: item.isPresent,
                             shiftStatus: item.shiftStatus,
+                            clockInLocal: toManilaDateTimeLocal(item.clockInAt),
+                            clockOutLocal: toManilaDateTimeLocal(item.clockOutAt),
                             baseDailyPay: String(item.baseDailyPay.toFixed(2)),
+                            overtimePay: String(item.overtimePay.toFixed(2)),
+                            overtimeOverride: item.overtimeOverride,
                             addonPay: String(item.addonPay.toFixed(2)),
                             notes: item.notes,
+                            editReason: item.editReason || '',
+                            needsReview: item.needsReview,
+                            userOtOverride: item.staff.overtime_hourly_rate_override ?? null,
                           });
                         }}
-                        className="h-8 px-2.5 flex-row items-center justify-center rounded-lg border border-stone-200 bg-stone-50 active:bg-stone-100"
+                        className={`h-8 px-2.5 flex-row items-center justify-center rounded-lg border ${
+                          item.needsReview
+                            ? 'border-amber-300 bg-amber-50 active:bg-amber-100'
+                            : 'border-stone-200 bg-stone-50 active:bg-stone-100'
+                        }`}
                       >
                         <Edit3 size={13} color="#1A1617" />
-                        <Text className="ml-1 text-xs font-bold text-stone-800">Adjust</Text>
+                        <Text className="ml-1 text-xs font-bold text-stone-800">
+                          {item.needsReview ? 'Fix Times' : 'Adjust'}
+                        </Text>
                       </Pressable>
                     </View>
                   </View>

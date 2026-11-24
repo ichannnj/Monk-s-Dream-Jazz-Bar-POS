@@ -96,6 +96,8 @@ export interface DashboardTelemetry {
   // Staff Attendance & Payroll Expense Telemetry (Direct from attendance_records DB)
   totalPayrollExpense: number;
   basePayrollTotal: number;
+  overtimePayrollTotal?: number;
+  overtimeHoursTotal?: number;
   bonusPayrollTotal: number;
   laborCostPercent: number;
   estimatedCogs: number;
@@ -104,6 +106,14 @@ export interface DashboardTelemetry {
   completedShiftsCount: number;
   presentStaffCount: number;
   totalActiveStaffCount: number;
+  needsReviewCount?: number;
+  activeOnShiftStaff?: Array<{
+    userId: string;
+    displayName: string;
+    roleOrTitle: string;
+    clockInAt: string;
+    elapsedHours: number;
+  }>;
 
   // Operating Mode Revenue Split (Cafe vs Event vs Total)
   cafeSales: number;

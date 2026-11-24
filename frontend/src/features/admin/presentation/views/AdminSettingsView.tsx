@@ -9,6 +9,7 @@ import {
   Save,
   Building,
   ExternalLink,
+  Clock,
 } from 'lucide-react-native';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { realtimeGateway, useWindowVisibilitySync } from '@/features/shared';
@@ -47,6 +48,15 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
   const [kitchenPrinterIp, setKitchenPrinterIp] = useState('192.168.1.102');
   const [runnerPrinterIp, setRunnerPrinterIp] = useState('192.168.1.103');
 
+  // Attendance & Overtime Policy
+  const [standardShiftHours, setStandardShiftHours] = useState('8.00');
+  const [overtimeGraceMinutes, setOvertimeGraceMinutes] = useState('15');
+  const [overtimeRateMode, setOvertimeRateMode] = useState<'MULTIPLIER' | 'FLAT_HOURLY'>(
+    'MULTIPLIER'
+  );
+  const [overtimeMultiplier, setOvertimeMultiplier] = useState('1.25');
+  const [overtimeFlatHourlyRate, setOvertimeFlatHourlyRate] = useState('100.00');
+
   const fetchSettings = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -72,6 +82,12 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
         setKitchenPrinterIp(s.printer_routing_config.kitchen_printer_ip || '192.168.1.102');
         setRunnerPrinterIp(s.printer_routing_config.runner_printer_ip || '192.168.1.103');
       }
+
+      setStandardShiftHours((s.standard_shift_hours ?? 8).toString());
+      setOvertimeGraceMinutes((s.overtime_grace_minutes ?? 15).toString());
+      setOvertimeRateMode(s.overtime_rate_mode === 'FLAT_HOURLY' ? 'FLAT_HOURLY' : 'MULTIPLIER');
+      setOvertimeMultiplier((s.overtime_multiplier ?? 1.25).toString());
+      setOvertimeFlatHourlyRate((s.overtime_flat_hourly_rate ?? 100).toString());
     } catch {
       toast.error('Failed to load venue configurations', { title: 'Load Error' });
     } finally {
@@ -120,6 +136,11 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
           kitchen_printer_ip: kitchenPrinterIp.trim(),
           runner_printer_ip: runnerPrinterIp.trim(),
         },
+        standard_shift_hours: parseFloat(standardShiftHours) || 8,
+        overtime_grace_minutes: parseInt(overtimeGraceMinutes, 10) || 15,
+        overtime_rate_mode: overtimeRateMode,
+        overtime_multiplier: parseFloat(overtimeMultiplier) || 1.25,
+        overtime_flat_hourly_rate: parseFloat(overtimeFlatHourlyRate) || 100,
       });
 
       toast.success('Venue taxes, discounts, and printer settings updated', {
@@ -284,6 +305,97 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
                 {serviceChargeEnabled && <Check size={16} color="#F7F5F2" />}
               </View>
             </Pressable>
+          </View>
+        </View>
+
+        {/* SECTION 2: ATTENDANCE & OVERTIME POLICY */}
+        <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-3">
+          <View className="flex-row items-center gap-2 border-b border-stone-100 pb-2.5">
+            <Clock size={18} color="#810021" />
+            <Text className="text-base font-bold text-stone-900">
+              Attendance &amp; Overtime Policy
+            </Text>
+          </View>
+
+          <View className="flex-col md:flex-row gap-4">
+            <View className="flex-1">
+              <AdminNumberInput
+                label="Standard Shift Hours"
+                mode="decimal"
+                value={standardShiftHours}
+                onChangeText={setStandardShiftHours}
+                placeholder="8.00"
+                suffix="hrs"
+                helperText="Hours before overtime applies"
+              />
+            </View>
+            <View className="flex-1">
+              <AdminNumberInput
+                label="Overtime Grace Period"
+                mode="decimal"
+                value={overtimeGraceMinutes}
+                onChangeText={setOvertimeGraceMinutes}
+                placeholder="15"
+                suffix="min"
+                helperText="Buffer minutes before OT triggers"
+              />
+            </View>
+          </View>
+
+          <View className="pt-1">
+            <Text className="mb-2 text-sm font-bold text-stone-700">Overtime Fee Calculation</Text>
+            <View className="flex-row rounded-xl bg-stone-100 p-1">
+              {(
+                [
+                  { key: 'MULTIPLIER', label: 'Hourly Multiplier (e.g. 1.25x)' },
+                  { key: 'FLAT_HOURLY', label: 'Flat Hourly Fee (₱/hr)' },
+                ] as const
+              ).map((opt) => {
+                const isSel = overtimeRateMode === opt.key;
+                return (
+                  <Pressable
+                    key={opt.key}
+                    onPress={() => setOvertimeRateMode(opt.key)}
+                    className={`flex-1 min-h-[44px] items-center justify-center rounded-lg px-2 ${
+                      isSel ? 'bg-white shadow-xs' : 'active:bg-stone-200'
+                    }`}
+                  >
+                    <Text
+                      className={`text-sm font-bold ${isSel ? 'text-[#810021]' : 'text-stone-600'}`}
+                    >
+                      {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          <View className="flex-col md:flex-row gap-4 pt-1">
+            {overtimeRateMode === 'MULTIPLIER' ? (
+              <View className="flex-1">
+                <AdminNumberInput
+                  label="Overtime Multiplier"
+                  mode="decimal"
+                  value={overtimeMultiplier}
+                  onChangeText={setOvertimeMultiplier}
+                  placeholder="1.25"
+                  suffix="x"
+                  helperText={`On ₱645/day ÷ ${parseFloat(standardShiftHours) || 8}h = ₱${((645 / Math.max(parseFloat(standardShiftHours) || 8, 1)) * (parseFloat(overtimeMultiplier) || 1.25)).toFixed(2)}/hr OT`}
+                />
+              </View>
+            ) : (
+              <View className="flex-1">
+                <AdminNumberInput
+                  label="Flat Overtime Hourly Fee"
+                  mode="currency"
+                  value={overtimeFlatHourlyRate}
+                  onChangeText={setOvertimeFlatHourlyRate}
+                  placeholder="100.00"
+                  helperText="Fixed ₱/hour paid for all overtime hours"
+                />
+              </View>
+            )}
           </View>
         </View>
 

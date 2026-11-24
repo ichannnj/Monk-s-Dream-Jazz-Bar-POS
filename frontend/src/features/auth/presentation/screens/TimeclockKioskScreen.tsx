@@ -40,6 +40,18 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [punchResult, setPunchResult] = useState<any | null>(null);
+  const [verifiedStatus, setVerifiedStatus] = useState<{
+    user: { displayName: string; role: string; jobTitle?: string };
+    businessDate: string;
+    recommendedAction: 'CLOCK_IN' | 'CLOCK_OUT';
+    currentShift: {
+      shiftStatus: string;
+      firstClockInAt: string | null;
+      clockInAt: string | null;
+      hoursWorked: number;
+    } | null;
+    unclosedPriorShift: { date: string; clockInAt: string | null } | null;
+  } | null>(null);
 
   useEffect(() => {
     const updateTime = () => {
@@ -67,10 +79,9 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
     return () => clearInterval(interval);
   }, []);
 
-  const handlePunch = useCallback(
+  const handleVerifyStatus = useCallback(
     async (pinOverride?: string) => {
       if (isSubmitting) return;
-
       const cleanUser = username.trim().toLowerCase();
       const cleanPin = (pinOverride || pin).trim();
 
@@ -79,7 +90,6 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
         toast.warning('Staff ID is required.', { title: 'Missing Staff ID' });
         return;
       }
-
       if (!cleanPin || cleanPin.length !== 4) {
         setErrorMessage('Please enter your 4-digit staff PIN.');
         toast.warning('4-digit PIN is required.', { title: 'Missing PIN' });
@@ -88,10 +98,38 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
 
       setIsSubmitting(true);
       setErrorMessage(null);
+      setPunchResult(null);
 
       try {
-        const res = await posApi.punchStaffTimeclock(cleanUser, cleanPin, 'AUTO');
+        const status = await posApi.verifyTimeclockStaffStatus(cleanUser, cleanPin);
+        setVerifiedStatus(status);
+        if (pinOverride) setPin(pinOverride);
+      } catch (err: any) {
+        const msg = err.message || 'Verification failed. Please check credentials.';
+        setErrorMessage(msg);
+        setPin('');
+        setVerifiedStatus(null);
+        toast.error(msg, { title: 'Verification Error' });
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [username, pin, isSubmitting]
+  );
+
+  const handleConfirmPunch = useCallback(
+    async (action: 'CLOCK_IN' | 'CLOCK_OUT') => {
+      if (isSubmitting) return;
+      const cleanUser = username.trim().toLowerCase();
+      const cleanPin = pin.trim();
+
+      setIsSubmitting(true);
+      setErrorMessage(null);
+
+      try {
+        const res = await posApi.punchStaffTimeclock(cleanUser, cleanPin, action);
         setPunchResult(res);
+        setVerifiedStatus(null);
 
         try {
           realtimeGateway.broadcastPosSync('timeclock_punch');
@@ -112,11 +150,10 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
 
         setTimeout(() => {
           setPunchResult(null);
-        }, 5000);
+        }, 6000);
       } catch (err: any) {
         const msg = err.message || 'Timeclock punch failed. Please check credentials.';
         setErrorMessage(msg);
-        setPin('');
         toast.error(msg, { title: 'Timeclock Error' });
       } finally {
         setIsSubmitting(false);
@@ -132,10 +169,10 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
         return;
       }
       setTimeout(() => {
-        handlePunch(completedPin);
+        handleVerifyStatus(completedPin);
       }, 100);
     },
-    [username, handlePunch]
+    [username, handleVerifyStatus]
   );
 
   return (
@@ -258,57 +295,153 @@ export const TimeclockKioskScreen: React.FC<TimeclockKioskScreenProps> = ({
                   </View>
                 )}
 
-                {/* Staff ID Input */}
-                <View className="mb-5">
-                  <Text className="text-sm font-bold text-stone-700 mb-1.5">
-                    Staff ID / Username
-                  </Text>
-                  <TextInput
-                    value={username}
-                    onChangeText={(val) => {
-                      setUsername(val);
-                      if (errorMessage) setErrorMessage(null);
-                    }}
-                    placeholder="Enter Staff ID (e.g. coltrane_cashier, rosa_dish)"
-                    placeholderTextColor="#a8a29e"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    className="w-full min-h-[50px] rounded-2xl border border-stone-200 bg-stone-50/80 px-4 text-base font-semibold text-stone-900 focus:border-[#810021] focus:bg-white"
-                  />
-                  <Text className="mt-1 text-xs text-stone-400">
-                    Works for all POS and Non-POS team members
-                  </Text>
-                </View>
+                {/* Verified Status Card (2-Step Explicit Punch) OR Credential Form */}
+                {verifiedStatus ? (
+                  <View className="mb-4 rounded-2xl border border-stone-200 bg-[#EFECE6] p-5 space-y-4">
+                    <View className="flex-row items-center justify-between">
+                      <View>
+                        <Text className="text-xl font-black text-stone-900">
+                          {verifiedStatus.user.displayName}
+                        </Text>
+                        <Text className="text-sm font-semibold text-stone-600 capitalize">
+                          {verifiedStatus.user.jobTitle || verifiedStatus.user.role} · Shift{' '}
+                          {verifiedStatus.businessDate}
+                        </Text>
+                      </View>
+                      <View
+                        className={`rounded-full px-3 py-1 border ${
+                          verifiedStatus.recommendedAction === 'CLOCK_OUT'
+                            ? 'bg-[#810021]/10 border-[#810021]/30'
+                            : 'bg-white border-stone-200'
+                        }`}
+                      >
+                        <Text
+                          className={`text-xs font-bold ${
+                            verifiedStatus.recommendedAction === 'CLOCK_OUT'
+                              ? 'text-[#810021]'
+                              : 'text-stone-700'
+                          }`}
+                        >
+                          {verifiedStatus.recommendedAction === 'CLOCK_OUT'
+                            ? 'Currently On Shift'
+                            : verifiedStatus.currentShift?.shiftStatus === 'COMPLETED'
+                              ? 'Shift Completed'
+                              : 'Not Clocked In'}
+                        </Text>
+                      </View>
+                    </View>
 
-                {/* 4-Digit PIN Code Input */}
-                <View className="mb-6">
-                  <Text className="text-sm font-bold text-stone-700 mb-2">4-Digit Staff PIN</Text>
-                  <PinCodeInput
-                    value={pin}
-                    length={4}
-                    onChange={(val) => {
-                      setPin(val);
-                      if (errorMessage) setErrorMessage(null);
-                    }}
-                    onComplete={handlePinComplete}
-                    isError={!!errorMessage}
-                  />
-                </View>
+                    {verifiedStatus.currentShift && (
+                      <View className="rounded-xl bg-white border border-stone-200 p-3">
+                        <Text className="text-xs font-semibold text-stone-500">
+                          {verifiedStatus.currentShift.firstClockInAt
+                            ? `First Clock-In: ${new Date(verifiedStatus.currentShift.firstClockInAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+                            : 'No punch yet'}
+                          {verifiedStatus.currentShift.hoursWorked > 0
+                            ? ` · ${verifiedStatus.currentShift.hoursWorked.toFixed(2)} hrs logged`
+                            : ''}
+                        </Text>
+                      </View>
+                    )}
 
-                {/* Primary CTA Button */}
-                <Pressable
-                  onPress={() => handlePunch()}
-                  disabled={isSubmitting || !username.trim() || pin.length !== 4}
-                  className={`w-full min-h-[52px] items-center justify-center rounded-2xl bg-[#810021] shadow-md transition-all ${
-                    isSubmitting || !username.trim() || pin.length !== 4
-                      ? 'opacity-40 cursor-not-allowed'
-                      : 'active:bg-[#6b001a]'
-                  }`}
-                >
-                  <Text className="text-lg font-black text-white tracking-wide">
-                    {isSubmitting ? 'Verifying Punch...' : 'Punch In / Out'}
-                  </Text>
-                </Pressable>
+                    {verifiedStatus.unclosedPriorShift && (
+                      <View className="rounded-xl bg-amber-50 border border-amber-200 p-3">
+                        <Text className="text-xs font-bold text-amber-900">
+                          Notice: You have an unclosed shift from{' '}
+                          {verifiedStatus.unclosedPriorShift.date}. Please ask an Admin to add your
+                          missed clock-out time.
+                        </Text>
+                      </View>
+                    )}
+
+                    <View className="flex-row gap-3 pt-1">
+                      <Pressable
+                        onPress={() => {
+                          setVerifiedStatus(null);
+                          setPin('');
+                        }}
+                        disabled={isSubmitting}
+                        className="min-h-[50px] px-5 items-center justify-center rounded-2xl border border-stone-300 bg-white active:bg-stone-100"
+                      >
+                        <Text className="text-base font-bold text-stone-700">Cancel</Text>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => handleConfirmPunch(verifiedStatus.recommendedAction)}
+                        disabled={isSubmitting}
+                        className={`flex-1 min-h-[50px] items-center justify-center rounded-2xl bg-[#810021] shadow-md ${
+                          isSubmitting ? 'opacity-50' : 'active:bg-[#6b001a]'
+                        }`}
+                      >
+                        <Text className="text-lg font-black text-white tracking-wide">
+                          {isSubmitting
+                            ? 'Recording...'
+                            : verifiedStatus.recommendedAction === 'CLOCK_OUT'
+                              ? 'Clock Out Now'
+                              : verifiedStatus.currentShift?.shiftStatus === 'COMPLETED'
+                                ? 'Resume Split Shift'
+                                : 'Clock In Now'}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <>
+                    {/* Staff ID Input */}
+                    <View className="mb-5">
+                      <Text className="text-sm font-bold text-stone-700 mb-1.5">
+                        Staff ID / Username
+                      </Text>
+                      <TextInput
+                        value={username}
+                        onChangeText={(val) => {
+                          setUsername(val);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        placeholder="Enter Staff ID (e.g. coltrane_cashier, rosa_dish)"
+                        placeholderTextColor="#a8a29e"
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        className="w-full min-h-[50px] rounded-2xl border border-stone-200 bg-stone-50/80 px-4 text-base font-semibold text-stone-900 focus:border-[#810021] focus:bg-white"
+                      />
+                      <Text className="mt-1 text-xs text-stone-400">
+                        Works for all POS and Non-POS team members
+                      </Text>
+                    </View>
+
+                    {/* 4-Digit PIN Code Input */}
+                    <View className="mb-6">
+                      <Text className="text-sm font-bold text-stone-700 mb-2">
+                        4-Digit Staff PIN
+                      </Text>
+                      <PinCodeInput
+                        value={pin}
+                        length={4}
+                        onChange={(val) => {
+                          setPin(val);
+                          if (errorMessage) setErrorMessage(null);
+                        }}
+                        onComplete={handlePinComplete}
+                        isError={!!errorMessage}
+                      />
+                    </View>
+
+                    {/* Primary CTA Button */}
+                    <Pressable
+                      onPress={() => handleVerifyStatus()}
+                      disabled={isSubmitting || !username.trim() || pin.length !== 4}
+                      className={`w-full min-h-[52px] items-center justify-center rounded-2xl bg-[#810021] shadow-md transition-all ${
+                        isSubmitting || !username.trim() || pin.length !== 4
+                          ? 'opacity-40 cursor-not-allowed'
+                          : 'active:bg-[#6b001a]'
+                      }`}
+                    >
+                      <Text className="text-lg font-black text-white tracking-wide">
+                        {isSubmitting ? 'Checking Status...' : 'Check Status & Continue'}
+                      </Text>
+                    </Pressable>
+                  </>
+                )}
               </View>
 
               <View className="pt-6 border-t border-stone-100 flex-row items-center justify-center space-x-2">

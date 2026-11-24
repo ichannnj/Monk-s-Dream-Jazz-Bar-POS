@@ -19,6 +19,7 @@ import { useKdsStock } from './hooks/useKdsStock';
 import { useKdsTickets } from './hooks/useKdsTickets';
 import { useKdsArrivals } from './hooks/useKdsArrivals';
 import { useKdsWorkstationController } from './useKdsWorkstationController';
+import { AttendanceClockInReminderBanner } from '../../../auth/presentation/components/AttendanceClockInReminderBanner';
 
 export interface UnifiedKdsScreenProps {
   stationTarget: 'bar' | 'kitchen';
@@ -153,6 +154,7 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
           (activeSidebarTab === 'chat' || activeSidebarTab === 'tables') && styles.mainContentFlush,
         ]}
       >
+        <AttendanceClockInReminderBanner />
         {activeSidebarTab === 'tables' && stationTarget !== 'kitchen' ? (
           <FloorWorkspaceView
             autoStartStation={stationTarget}

@@ -48,9 +48,15 @@ export const AttendanceSummaryKpiRow: React.FC<AttendanceSummaryKpiRowProps> = (
         </View>
 
         <View className="flex-1 min-w-[150px] rounded-xl border border-stone-200/80 bg-white p-3.5 shadow-xs justify-between">
-          <Text className="text-xs font-semibold text-[#810021]">OT / Bonuses</Text>
+          <Text className="text-xs font-semibold text-[#810021]">
+            OT ({periodTotals.overtimeHoursTotal.toFixed(1)}h) &amp; Bonuses
+          </Text>
           <Text className="mt-1 text-xl font-black text-[#810021]">
-            +₱{periodTotals.bonusTotal.toFixed(2)}
+            +₱{(periodTotals.overtimePayTotal + periodTotals.bonusTotal).toFixed(2)}
+          </Text>
+          <Text className="text-[11px] text-stone-500 mt-0.5">
+            OT ₱{periodTotals.overtimePayTotal.toFixed(2)} · Bonus ₱
+            {periodTotals.bonusTotal.toFixed(2)}
           </Text>
         </View>
 

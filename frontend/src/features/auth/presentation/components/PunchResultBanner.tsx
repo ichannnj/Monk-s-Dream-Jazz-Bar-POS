@@ -33,12 +33,14 @@ export const PunchResultBanner: React.FC<PunchResultBannerProps> = ({ punchResul
         <Text className="text-sm text-stone-500">
           {isClockIn
             ? `Started: ${new Date(punchResult.clockInAt).toLocaleTimeString()}${punchResult.hoursWorked > 0 ? ` (Resumed · ${punchResult.hoursWorked}h prior)` : ''}`
-            : `Finished: ${new Date(punchResult.clockOutAt).toLocaleTimeString()} (${punchResult.hoursWorked} hrs)`}
+            : `Finished: ${new Date(punchResult.clockOutAt).toLocaleTimeString()} (${punchResult.hoursWorked} hrs${Number(punchResult.overtimeHours || 0) > 0 ? ` · ${punchResult.overtimeHours}h OT` : ''})`}
         </Text>
         <Text className="text-sm font-bold text-stone-800">
           {punchResult.isAdmin || punchResult.user?.role === 'admin'
             ? 'Payroll Exempt'
-            : `Shift Base: ₱${Number(punchResult.baseDailyPay).toFixed(2)}`}
+            : Number(punchResult.overtimePay || 0) > 0
+              ? `Base: ₱${Number(punchResult.baseDailyPay).toFixed(2)} + OT: ₱${Number(punchResult.overtimePay).toFixed(2)}`
+              : `Shift Base: ₱${Number(punchResult.baseDailyPay).toFixed(2)}`}
         </Text>
       </View>
     </View>

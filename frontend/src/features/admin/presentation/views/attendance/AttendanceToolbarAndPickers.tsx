@@ -34,6 +34,7 @@ interface AttendanceToolbarProps {
   handleStepDay: (step: -1 | 1) => void;
   setDatePickerMode: (mode: 'day' | 'week' | 'month') => void;
   setIsDatePickerModalOpen: (open: boolean) => void;
+  onOpenOtPolicy?: () => void;
   onNavigateToRoster?: () => void;
 }
 
@@ -53,6 +54,7 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
   handleStepDay,
   setDatePickerMode,
   setIsDatePickerModalOpen,
+  onOpenOtPolicy,
   onNavigateToRoster,
 }) => {
   const periodOptions: PosDropdownOption<PeriodFilter>[] = [
@@ -70,6 +72,7 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
     { value: 'all', label: 'All Staff', icon: Users },
     { value: 'clocked_in', label: 'Clocked In', icon: CheckCircle2 },
     { value: 'completed', label: 'Completed Shift', icon: Clock },
+    { value: 'needs_review', label: 'Needs Review', icon: Clock },
     { value: 'absent', label: 'Absent / Unclocked', icon: Users },
     { value: 'pos_only', label: 'POS Users', icon: Users },
     { value: 'support_only', label: 'Support Staff', icon: Users },
@@ -121,6 +124,16 @@ export const AttendanceToolbarAndPickers: React.FC<AttendanceToolbarProps> = ({
                 <Text className="ml-1.5 text-xs font-bold text-[#810021]">Timeclock ↗</Text>
               </Pressable>
             </>
+          )}
+
+          {onOpenOtPolicy && (
+            <Pressable
+              onPress={onOpenOtPolicy}
+              className="h-10 px-3 flex-row items-center justify-center rounded-xl border border-stone-200 bg-white active:bg-stone-50 shadow-xs"
+            >
+              <Clock size={15} color="#810021" />
+              <Text className="ml-1.5 text-xs font-bold text-[#810021]">OT Fee Policy</Text>
+            </Pressable>
           )}
 
           {onNavigateToRoster && (

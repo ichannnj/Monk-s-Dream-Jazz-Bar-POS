@@ -1,12 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { toast } from '@/features/shared/toast/useToastStore';
 import { realtimeGateway, useWindowVisibilitySync } from '@/features/shared';
+import { useAuthStore } from '@/features/auth';
 import {
   adminApi,
   getManilaBusinessDateString,
   type AttendanceRecordAdmin,
   type StaffMemberAdmin,
 } from '../../../data/admin.api';
+import {
+  extractOvertimePolicy,
+  manilaDateTimeLocalToIso,
+  DEFAULT_OVERTIME_POLICY,
+  type OvertimePolicy,
+} from './attendanceOvertimeUtils';
 import {
   exportAttendancePayrollToExcel,
   type AttendanceExportItem,
@@ -54,8 +61,11 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecordAdmin[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  const currentUser = useAuthStore((s) => s.currentUser);
   const [editingRecord, setEditingRecord] = useState<EditingRecordState | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isOtPolicyModalOpen, setIsOtPolicyModalOpen] = useState(false);
+  const [overtimePolicy, setOvertimePolicy] = useState<OvertimePolicy>(DEFAULT_OVERTIME_POLICY);
 
   const todayStr = useMemo(() => getManilaBusinessDateString(), []);
 
@@ -72,12 +82,14 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [roster, records] = await Promise.all([
+      const [roster, records, settings] = await Promise.all([
         adminApi.getStaffRoster(),
         adminApi.getAttendanceRecords(dateRange.start, dateRange.end),
+        adminApi.getVenueSettings().catch(() => null),
       ]);
       setStaffRoster(roster);
       setAttendanceRecords(records);
+      if (settings) setOvertimePolicy(extractOvertimePolicy(settings));
     } catch (e) {
       console.warn('Failed to load attendance records:', e);
       toast.error('Failed to load attendance records', { title: 'Network Notice' });
@@ -129,8 +141,17 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
     const presentCount = attendanceRecords.filter((r) => r.is_present).length;
     const clockedInCount = attendanceRecords.filter((r) => r.shift_status === 'CLOCKED_IN').length;
     const completedCount = attendanceRecords.filter((r) => r.shift_status === 'COMPLETED').length;
+    const needsReviewCount = attendanceRecords.filter((r) => Boolean(r.needs_review)).length;
     const eligibleRecords = attendanceRecords.filter(
       (r) => r.is_present && !adminUserIds.has(r.user_id)
+    );
+    const overtimeHoursTotal = eligibleRecords.reduce(
+      (sum, r) => sum + Number(r.overtime_hours || 0),
+      0
+    );
+    const overtimePayTotal = eligibleRecords.reduce(
+      (sum, r) => sum + Number(r.overtime_pay || 0),
+      0
     );
     const baseTotal = eligibleRecords.reduce((sum, r) => sum + Number(r.base_daily_pay || 0), 0);
     const bonusTotal = eligibleRecords.reduce((sum, r) => sum + Number(r.addon_pay || 0), 0);
@@ -140,6 +161,9 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
       presentCount,
       clockedInCount,
       completedCount,
+      needsReviewCount,
+      overtimeHoursTotal,
+      overtimePayTotal,
       baseTotal,
       bonusTotal,
       grandTotal,
@@ -218,6 +242,26 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
       return;
     }
 
+    const parsedOtPay = isTargetAdmin ? 0 : parseFloat(editingRecord.overtimePay || '0');
+    const clockInIso = editingRecord.isPresent
+      ? manilaDateTimeLocalToIso(editingRecord.clockInLocal)
+      : null;
+    const clockOutIso =
+      editingRecord.isPresent && editingRecord.shiftStatus === 'COMPLETED'
+        ? manilaDateTimeLocalToIso(editingRecord.clockOutLocal)
+        : null;
+
+    if (
+      clockInIso &&
+      clockOutIso &&
+      new Date(clockOutIso).getTime() < new Date(clockInIso).getTime()
+    ) {
+      toast.error('Clock-out time cannot be earlier than clock-in time.', {
+        title: 'Invalid Shift Times',
+      });
+      return;
+    }
+
     try {
       await adminApi.adminUpsertAttendance({
         userId: editingRecord.userId,
@@ -227,6 +271,13 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
         baseDailyPay: isTargetAdmin ? 0 : parsedBase,
         addonPay: isTargetAdmin ? 0 : parsedAddon,
         notes: editingRecord.notes.trim() || undefined,
+        clockInAt: clockInIso,
+        clockOutAt: clockOutIso,
+        overtimePay: editingRecord.overtimeOverride ? parsedOtPay : null,
+        overtimeOverride: editingRecord.overtimeOverride,
+        clearReview: true,
+        editedBy: currentUser?.id || null,
+        editReason: editingRecord.editReason.trim() || 'Admin shift adjustment',
       });
 
       toast.success(`Updated attendance for ${editingRecord.displayName}`, {
@@ -329,6 +380,9 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
     setEditingRecord,
     isReportModalOpen,
     setIsReportModalOpen,
+    isOtPolicyModalOpen,
+    setIsOtPolicyModalOpen,
+    overtimePolicy,
     todayStr,
     dateRange,
     loadData,
