@@ -23,9 +23,11 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
   const [platformRef, setPlatformRef] = useState('');
   const [riderName, setRiderName] = useState('');
   const [customerName, setCustomerName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
 
-  const handleBackdropPress = () => {
+  const handleClose = () => {
+    if (isSubmitting) return;
     if (isKeyboardOpen) {
       dismissKeyboard();
     }
@@ -33,21 +35,27 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
   };
 
   const handleProceed = () => {
-    const finalRef =
-      platformRef.trim() ||
-      `${platform === 'grabfood' ? 'GF' : 'FP'}-${Math.floor(1000 + Math.random() * 9000)}`;
-    const finalRider = riderName.trim() || 'Rider Assigned';
-    const finalCust = customerName.trim() || 'Online Customer';
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const finalRef =
+        platformRef.trim() ||
+        `${platform === 'grabfood' ? 'GF' : 'FP'}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const finalRider = riderName.trim() || 'Rider Assigned';
+      const finalCust = customerName.trim() || 'Online Customer';
 
-    onProceedToOrder(platform, finalRef, finalRider, finalCust);
-    setPlatformRef('');
-    setRiderName('');
-    setCustomerName('');
-    onClose();
+      onProceedToOrder(platform, finalRef, finalRider, finalCust);
+      setPlatformRef('');
+      setRiderName('');
+      setCustomerName('');
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View
         style={[
           styles.backdrop,
@@ -60,7 +68,8 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
       >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={handleBackdropPress}
+          onPress={handleClose}
+          disabled={isSubmitting}
           accessibilityLabel="Close modal"
         />
         <View
@@ -173,12 +182,22 @@ export const OnlineDeliveryModal: React.FC<OnlineDeliveryModalProps> = ({
 
           {/* Action Buttons */}
           <View style={styles.btnRow}>
-            <Pressable onPress={onClose} style={styles.cancelBtn}>
+            <Pressable
+              onPress={handleClose}
+              disabled={isSubmitting}
+              style={[styles.cancelBtn, isSubmitting && { opacity: 0.4 }]}
+            >
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </Pressable>
 
-            <Pressable onPress={handleProceed} style={styles.proceedBtn}>
-              <Text style={styles.proceedBtnText}>Start Order</Text>
+            <Pressable
+              onPress={handleProceed}
+              disabled={isSubmitting}
+              style={[styles.proceedBtn, isSubmitting && { opacity: 0.7 }]}
+            >
+              <Text style={styles.proceedBtnText}>
+                {isSubmitting ? 'Starting…' : 'Start Order'}
+              </Text>
               <ArrowRight size={16} color="#F7F5F2" strokeWidth={2.4} />
             </Pressable>
           </View>

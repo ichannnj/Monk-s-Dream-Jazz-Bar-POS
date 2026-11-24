@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react-native';
 import { PosDropdown, PosDropdownOption } from '@/features/shared';
+import { PosActionButton } from '@/features/shared/ui/PosActionButton';
 import type { CheckOrderType } from '../../domain/check.types';
 
 export interface ChecksFilterToolbarProps {
@@ -20,18 +21,20 @@ export interface ChecksFilterToolbarProps {
   selectedChannel: 'all' | CheckOrderType;
   searchQuery: string;
   isRefreshing?: boolean;
+  isExporting?: boolean;
   checksCount: number;
   onModeChange: (mode: 'all' | 'CAFE' | 'EVENT') => void;
   onChannelChange: (channel: 'all' | CheckOrderType) => void;
   onSearchChange: (query: string) => void;
   onRefresh?: () => void;
-  onExportExcel: () => void;
+  onExportExcel: () => void | Promise<void>;
 }
 
 export const ChecksFilterToolbar: React.FC<ChecksFilterToolbarProps> = ({
   selectedMode,
   selectedChannel,
   searchQuery,
+  isExporting = false,
   checksCount,
   onModeChange,
   onChannelChange,
@@ -93,15 +96,15 @@ export const ChecksFilterToolbar: React.FC<ChecksFilterToolbarProps> = ({
             className="flex-1 sm:flex-initial min-w-[140px]"
           />
 
-          <Pressable
+          <PosActionButton
             onPress={onExportExcel}
-            className="min-h-[48px] px-4 py-2.5 rounded-xl bg-white border border-stone-300 active:bg-stone-50 flex-row items-center gap-2 shadow-xs"
-            accessibilityRole="button"
+            loading={isExporting}
+            label="Export"
+            loadingLabel="Exporting…"
+            icon={FileSpreadsheet}
+            variant="secondary"
             accessibilityLabel="Export checks register to Excel"
-          >
-            <FileSpreadsheet size={18} color="#1A1617" />
-            <Text className="text-base font-bold text-stone-900">Export</Text>
-          </Pressable>
+          />
         </View>
       </View>
     </View>

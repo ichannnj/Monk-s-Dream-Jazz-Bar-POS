@@ -197,6 +197,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
     if (!validate()) {
       setActiveTab('info');
       toast.error('Please complete required fields');
@@ -244,12 +245,18 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
     }
   };
 
+  const handleClose = () => {
+    if (isSubmitting || isUploading) return;
+    onClose();
+  };
+
   return (
-    <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={isOpen} transparent animationType="fade" onRequestClose={handleClose}>
       <View className="flex-1 items-center justify-end sm:justify-center bg-black/60 p-0 sm:p-4">
         <Pressable
           className="absolute inset-0"
-          onPress={onClose}
+          onPress={handleClose}
+          disabled={isSubmitting || isUploading}
           accessibilityLabel="Dismiss event form"
         />
 
@@ -263,7 +270,7 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
               <Text className="text-lg font-bold text-stone-900">
                 {event ? 'Edit event' : 'Schedule event'}
               </Text>
-              <Text className="text-xs text-stone-500">
+              <Text className="text-base text-stone-500">
                 {event
                   ? 'Update event details and run-of-show'
                   : 'Add new jazz gig or venue performance'}
@@ -271,10 +278,13 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
             </View>
 
             <Pressable
-              onPress={onClose}
+              onPress={handleClose}
+              disabled={isSubmitting || isUploading}
               accessibilityRole="button"
               accessibilityLabel="Close dialog"
-              className="h-8 w-8 items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200 active:bg-stone-300"
+              className={`h-8 w-8 items-center justify-center rounded-full bg-stone-100 hover:bg-stone-200 active:bg-stone-300 ${
+                isSubmitting || isUploading ? 'opacity-40' : ''
+              }`}
             >
               <X size={16} color="#44403c" aria-hidden={true} />
             </Pressable>
@@ -939,28 +949,32 @@ export const CreateEditEventModal: React.FC<CreateEditEventModalProps> = ({
           {/* Footer Action Buttons */}
           <View className="p-4 border-t border-stone-200 bg-stone-50/80 flex-row items-center justify-end gap-2.5">
             <Pressable
-              onPress={onClose}
-              disabled={isSubmitting}
+              onPress={handleClose}
+              disabled={isSubmitting || isUploading}
               accessibilityRole="button"
               accessibilityLabel="Cancel editing"
-              className="px-4 py-2.5 rounded-xl border border-stone-300 bg-white active:bg-stone-100"
+              className={`min-h-[48px] px-4 py-2.5 rounded-xl border border-stone-300 bg-white items-center justify-center ${
+                isSubmitting || isUploading ? 'opacity-40' : 'active:bg-stone-100'
+              }`}
             >
-              <Text className="text-xs font-semibold text-stone-700">Cancel</Text>
+              <Text className="text-base font-semibold text-stone-700">Cancel</Text>
             </Pressable>
 
             <Pressable
               onPress={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isUploading}
               accessibilityRole="button"
               accessibilityLabel={event ? 'Save changes' : 'Schedule event'}
-              className="flex-row items-center gap-1.5 px-5 py-2.5 rounded-xl bg-[#810021] text-white active:bg-[#66001a] shadow-xs"
+              className={`min-h-[48px] flex-row items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#810021] ${
+                isSubmitting || isUploading ? 'opacity-70' : 'active:bg-[#66001a]'
+              } shadow-xs`}
             >
               {isSubmitting ? (
                 <ActivityIndicator size="small" color="#F7F5F2" />
               ) : (
-                <Check size={16} color="#F7F5F2" aria-hidden={true} />
+                <Check size={18} color="#F7F5F2" aria-hidden={true} />
               )}
-              <Text className="text-xs font-bold text-white">
+              <Text className="text-base font-bold text-white">
                 {isSubmitting ? 'Saving…' : event ? 'Save changes' : 'Schedule event'}
               </Text>
             </Pressable>

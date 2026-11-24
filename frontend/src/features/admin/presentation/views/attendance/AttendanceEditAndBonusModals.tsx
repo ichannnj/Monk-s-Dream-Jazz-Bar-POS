@@ -8,8 +8,9 @@ import { EditingRecordState } from './attendance.types';
 interface AttendanceEditAndBonusModalsProps {
   editingRecord: EditingRecordState | null;
   setEditingRecord: React.Dispatch<React.SetStateAction<EditingRecordState | null>>;
-  handleSaveRecord: () => void;
+  handleSaveRecord: () => void | Promise<void>;
   staffRoster: StaffMemberAdmin[];
+  isSaving?: boolean;
 }
 
 export const AttendanceEditAndBonusModals: React.FC<AttendanceEditAndBonusModalsProps> = ({
@@ -17,11 +18,13 @@ export const AttendanceEditAndBonusModals: React.FC<AttendanceEditAndBonusModals
   setEditingRecord,
   handleSaveRecord,
   staffRoster,
+  isSaving = false,
 }) => {
   return (
     <AdminModal
       visible={!!editingRecord}
       onClose={() => setEditingRecord(null)}
+      isBusy={isSaving}
       title={`Adjust Pay: ${editingRecord?.displayName || ''}`}
       subtitle={`Role: ${editingRecord?.roleOrTitle || ''} · Date: ${editingRecord?.date || ''}`}
       icon={<Award size={22} color="#810021" />}
@@ -30,15 +33,21 @@ export const AttendanceEditAndBonusModals: React.FC<AttendanceEditAndBonusModals
         <>
           <Pressable
             onPress={() => setEditingRecord(null)}
-            className="min-h-[48px] px-5 items-center justify-center rounded-xl bg-stone-100 active:bg-stone-200"
+            disabled={isSaving}
+            className={`min-h-[48px] px-5 items-center justify-center rounded-xl bg-stone-100 ${
+              isSaving ? 'opacity-40' : 'active:bg-stone-200'
+            }`}
           >
             <Text className="text-base font-semibold text-stone-700">Cancel</Text>
           </Pressable>
           <Pressable
             onPress={handleSaveRecord}
-            className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90"
+            disabled={isSaving}
+            className={`min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] flex-row gap-2 ${
+              isSaving ? 'opacity-70' : 'active:opacity-90'
+            }`}
           >
-            <Text className="text-base font-bold text-white">Save</Text>
+            <Text className="text-base font-bold text-white">{isSaving ? 'Saving…' : 'Save'}</Text>
           </Pressable>
         </>
       }

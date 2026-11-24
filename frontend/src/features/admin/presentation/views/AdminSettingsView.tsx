@@ -16,6 +16,7 @@ import { adminApi, type VenueSettings } from '../../data/admin.api';
 import { AdminInput } from '../components/AdminInput';
 import { AdminNumberInput } from '../components/AdminNumberInput';
 import { AdminQrPaymentManager } from '../components/AdminQrPaymentManager';
+import { PosActionButton } from '@/features/shared/ui/PosActionButton';
 
 interface AdminSettingsViewProps {
   onRefresh?: () => void;
@@ -143,16 +144,15 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
           Venue Settings
         </Text>
 
-        <Pressable
+        <PosActionButton
+          label="Save Settings"
+          loadingLabel="Saving…"
+          variant="primary"
+          icon={Save}
+          loading={isSaving}
           onPress={handleSaveAll}
-          disabled={isSaving}
-          className="h-10 flex-row items-center justify-center rounded-xl bg-[#810021] px-4 active:bg-[#600018] shadow-xs"
-        >
-          <Save size={16} color="#F7F5F2" />
-          <Text className="ml-1.5 text-xs font-bold text-white">
-            {isSaving ? 'Saving...' : 'Save Settings'}
-          </Text>
-        </Pressable>
+          accessibilityLabel="Save venue settings"
+        />
       </View>
 
       <View className="space-y-5">

@@ -17,6 +17,7 @@ export interface AdminModalProps {
   scrollable?: boolean;
   contentClassName?: string;
   closeOnBackdropPress?: boolean;
+  isBusy?: boolean;
 }
 
 const SIZE_CLASSES: Record<AdminModalSize, string> = {
@@ -39,11 +40,18 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   scrollable = true,
   contentClassName = '',
   closeOnBackdropPress = true,
+  isBusy = false,
 }) => {
   const maxWClass = SIZE_CLASSES[size] || 'max-w-2xl';
   const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
 
+  const handleClose = () => {
+    if (isBusy) return;
+    onClose();
+  };
+
   const handleBackdropPress = () => {
+    if (isBusy) return;
     if (isKeyboardOpen) {
       dismissKeyboard();
     }
@@ -53,7 +61,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   return (
-    <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={handleClose}>
       <View
         className="flex-1 items-center bg-black/60 p-4 sm:p-6"
         style={{
@@ -67,6 +75,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           <Pressable
             className="absolute inset-0"
             onPress={handleBackdropPress}
+            disabled={isBusy}
             accessibilityRole="button"
             accessibilityLabel="Close modal backdrop"
           />
@@ -103,8 +112,11 @@ export const AdminModal: React.FC<AdminModalProps> = ({
             </View>
 
             <Pressable
-              onPress={onClose}
-              className="min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200 hover:bg-stone-200 transition-colors"
+              onPress={handleClose}
+              disabled={isBusy}
+              className={`min-h-[48px] min-w-[48px] items-center justify-center rounded-xl active:bg-stone-200 hover:bg-stone-200 transition-colors ${
+                isBusy ? 'opacity-40' : ''
+              }`}
               accessibilityRole="button"
               accessibilityLabel="Close modal"
             >

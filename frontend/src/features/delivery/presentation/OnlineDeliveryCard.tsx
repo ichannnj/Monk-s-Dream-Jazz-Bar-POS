@@ -4,6 +4,7 @@ import { Bike, CheckCircle2, UserCheck } from 'lucide-react-native';
 import { OnlineDeliveryOrder } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
 import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
+import { useKeyedCooldown } from '@/features/shared/hooks/useAsyncAction';
 
 interface OnlineDeliveryCardProps {
   order: OnlineDeliveryOrder;
@@ -21,6 +22,17 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
   const isGrab = order.platform === 'grabfood';
   const isReady = order.status === 'ready';
   const liveTimer = useLiveElapsedTimer(order.createdAt, order.elapsedTime, 'kitchen');
+  const { lock } = useKeyedCooldown(500);
+
+  const handleHandToRider = () => {
+    if (!lock(`online:rider:${order.id}`)) return;
+    onHandToRider?.(order.id);
+  };
+
+  const handleMarkReady = () => {
+    if (!lock(`online:ready:${order.id}`)) return;
+    onMarkReady?.(order.id);
+  };
 
   return (
     <View
@@ -91,7 +103,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
       <View className="pt-2.5">
         {isReady ? (
           <Pressable
-            onPress={() => onHandToRider?.(order.id)}
+            onPress={handleHandToRider}
             className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-[#810021] px-4 active:opacity-85"
             accessibilityRole="button"
             accessibilityLabel={`Hand over order ${order.platformOrderRef} to rider`}
@@ -101,7 +113,7 @@ export const OnlineDeliveryCard: React.FC<OnlineDeliveryCardProps> = ({
           </Pressable>
         ) : (
           <Pressable
-            onPress={() => onMarkReady?.(order.id)}
+            onPress={handleMarkReady}
             className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-4 active:opacity-80"
             accessibilityRole="button"
             accessibilityLabel={`Mark online order ${order.platformOrderRef} as ready`}

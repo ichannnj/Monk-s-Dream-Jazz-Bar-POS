@@ -4,6 +4,7 @@ import { BellRing, Repeat, Clock, Coffee, Utensils, CheckCircle2 } from 'lucide-
 import { RunnerTicket } from '../types';
 import { RunnerTicketItemList } from './RunnerTicketItemList';
 import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
+import { useKeyedCooldown } from '@/features/shared/hooks/useAsyncAction';
 
 interface RunnerTicketCardProps {
   ticket: RunnerTicket;
@@ -16,6 +17,17 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
   onDeliverTarget,
   onHandoff,
 }) => {
+  const { lock } = useKeyedCooldown(500);
+
+  const handleDeliverTarget = (target: 'bar' | 'kitchen') => {
+    if (!lock(`runner:target:${ticket.id}:${target}`)) return;
+    onDeliverTarget(ticket, target);
+  };
+
+  const handleHandoff = () => {
+    if (!lock(`runner:handoff:${ticket.id}`)) return;
+    onHandoff(ticket);
+  };
   const liveTimer = useLiveElapsedTimer(
     ticket.passReadyAt || ticket.createdAt,
     ticket.elapsedTime,
@@ -152,7 +164,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
         <View className="flex-row flex-wrap gap-2">
           {hasReadyBar && hasPendingKitchen ? (
             <Pressable
-              onPress={() => onDeliverTarget(ticket, 'bar')}
+              onPress={() => handleDeliverTarget('bar')}
               className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Deliver drinks for ${ticket.sourceTitle}`}
@@ -164,7 +176,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
 
           {hasReadyKitchen && hasPendingBar ? (
             <Pressable
-              onPress={() => onDeliverTarget(ticket, 'kitchen')}
+              onPress={() => handleDeliverTarget('kitchen')}
               className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Deliver food for ${ticket.sourceTitle}`}
@@ -178,7 +190,7 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
 
       {/* Full Handoff Action */}
       <Pressable
-        onPress={() => onHandoff(ticket)}
+        onPress={handleHandoff}
         className={`min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl px-4 active:opacity-85 ${
           ticket.allDone ? 'bg-[#810021]' : 'bg-[#EFECE6] border border-[#E2DED6]'
         }`}

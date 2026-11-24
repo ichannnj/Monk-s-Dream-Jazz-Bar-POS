@@ -14,6 +14,7 @@ import { toast } from '@/features/shared/toast/useToastStore';
 import { checksApi } from '../data/checks.api';
 import type { SettledCheckItem, CheckOrderType } from '../domain/check.types';
 import { printHtmlElement } from '@/features/shared';
+import { dedupeInFlight } from '@/features/shared/utils/inFlightDedupe';
 import { ChecksFilterToolbar } from './components/ChecksFilterToolbar';
 import { CheckReceiptInspector } from './components/CheckReceiptInspector';
 
@@ -48,6 +49,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
   const [selectedCheck, setSelectedCheck] = useState<SettledCheckItem | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [isReprinting, setIsReprinting] = useState(false);
   const [reprintSuccess, setReprintSuccess] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -92,10 +94,12 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
   };
 
   const handleReprintThermal = async () => {
-    if (!selectedCheck) return;
+    if (!selectedCheck || isReprinting) return;
     setIsReprinting(true);
     try {
-      await checksApi.reprintReceipt(selectedCheck);
+      await dedupeInFlight(`checks:reprint:${selectedCheck.id}`, async () => {
+        await checksApi.reprintReceipt(selectedCheck);
+      });
       setReprintSuccess(true);
       toast.success(
         `Check ${selectedCheck.checkNumber} (${selectedCheck.guestName}) sent to thermal printer!`,
@@ -125,17 +129,23 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
   };
 
   const handleExportChecksExcel = async () => {
+    if (isExporting) return;
+    setIsExporting(true);
     try {
-      const { lazyExportChecksRegister } =
-        await import('@/features/admin/utils/readingExcelExport');
-      const label = timeframeLabel ? `${timeframeLabel} · ${station}` : station;
-      await lazyExportChecksRegister(checks, label);
+      await dedupeInFlight('checks:export-excel', async () => {
+        const { lazyExportChecksRegister } =
+          await import('@/features/admin/utils/readingExcelExport');
+        const label = timeframeLabel ? `${timeframeLabel} · ${station}` : station;
+        await lazyExportChecksRegister(checks, label);
+      });
       toast.success(`Exported ${checks.length} checks to Excel (.xls)`, {
         title: 'Export Ready',
       });
     } catch (err: any) {
       console.error('[ChecksHistoryView] Excel export error:', err);
       toast.error('Failed to export checks register', { title: 'Export Error' });
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -147,6 +157,7 @@ export const ChecksHistoryView: React.FC<ChecksHistoryViewProps> = ({
         selectedChannel={selectedChannel}
         searchQuery={searchQuery}
         isRefreshing={isRefreshing}
+        isExporting={isExporting}
         checksCount={checks.length}
         onModeChange={setSelectedMode}
         onChannelChange={setSelectedChannel}

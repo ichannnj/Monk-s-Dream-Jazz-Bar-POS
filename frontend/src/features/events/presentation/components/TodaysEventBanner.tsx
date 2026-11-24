@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, Image, Platform } from 'react-native';
+import { View, Text, Pressable, Image, Platform, ActivityIndicator } from 'react-native';
 import { Clock, Music, Calendar, ChevronRight } from 'lucide-react-native';
 import { useEventStore } from '../../application/useEventStore';
 import type { VenueEvent } from '../../domain/event.types';
@@ -15,7 +15,7 @@ export const TodaysEventBanner: React.FC<TodaysEventBannerProps> = ({
   onPressEvent,
   compact = false,
 }) => {
-  const { events, openEventDetail, setViewMode } = useEventStore();
+  const { events, openEventDetail, setViewMode, isLoading, hasLoadedOnce } = useEventStore();
 
   const businessDateStr = toBusinessDate();
   const calendarDateStr = getManilaTodayDateString();
@@ -26,6 +26,30 @@ export const TodaysEventBanner: React.FC<TodaysEventBannerProps> = ({
     if (matched.length > 0) return matched;
     return active.filter((ev) => ev.event_date === calendarDateStr);
   }, [events, businessDateStr, calendarDateStr]);
+
+  if (!hasLoadedOnce && isLoading) {
+    if (compact) {
+      return (
+        <View className="min-h-[48px] flex-row items-center gap-2 rounded-xl border border-[#E2DED6] bg-[#EFECE6] px-3 py-2">
+          <ActivityIndicator size="small" color="#810021" />
+          <Text className="text-base font-semibold text-[#1A1617]">
+            Checking tonight's performance lineup…
+          </Text>
+        </View>
+      );
+    }
+    return (
+      <View className="rounded-2xl border border-[#E2DED6] bg-[#F7F5F2] p-4 sm:p-5 flex-row items-center gap-3">
+        <ActivityIndicator size="small" color="#810021" />
+        <View>
+          <Text className="text-base font-bold text-[#1A1617]">
+            Loading tonight's show schedule…
+          </Text>
+          <Text className="text-base text-[#706864]">Syncing stage lineup & sound checks</Text>
+        </View>
+      </View>
+    );
+  }
 
   if (todayEvents.length === 0) return null;
 

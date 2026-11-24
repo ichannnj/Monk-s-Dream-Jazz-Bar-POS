@@ -4,6 +4,7 @@ import { ShoppingBag, CheckCircle2, PackageCheck, CreditCard } from 'lucide-reac
 import { TakeoutOrder } from '../../../types/floor';
 import { formatCurrency } from '@monks/shared';
 import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
+import { useKeyedCooldown } from '@/features/shared/hooks/useAsyncAction';
 
 interface TakeoutQueueCardProps {
   order: TakeoutOrder;
@@ -22,6 +23,26 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
 }) => {
   const isReady = order.status === 'ready';
   const liveTimer = useLiveElapsedTimer(order.createdAt, order.elapsedTime, 'bar');
+  const { lock } = useKeyedCooldown(500);
+
+  const handleMarkCollected = () => {
+    if (!lock(`takeout:collected:${order.id}`)) return;
+    onMarkCollected?.(order.id);
+  };
+
+  const handleMarkReady = () => {
+    if (!lock(`takeout:ready:${order.id}`)) return;
+    onMarkReady?.(order.id);
+  };
+
+  const handlePayTakeout = (collectAfterPay = false) => {
+    if (!lock(`takeout:pay:${order.id}`)) return;
+    if (onPayTakeout) {
+      onPayTakeout(order, collectAfterPay);
+    } else if (collectAfterPay) {
+      onMarkCollected?.(order.id);
+    }
+  };
 
   return (
     <View
@@ -99,7 +120,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
         {isReady ? (
           order.isPrepaid ? (
             <Pressable
-              onPress={() => onMarkCollected?.(order.id)}
+              onPress={handleMarkCollected}
               className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-300 px-4 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Mark order ${order.ticketNumber} as collected`}
@@ -109,9 +130,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
             </Pressable>
           ) : (
             <Pressable
-              onPress={() =>
-                onPayTakeout ? onPayTakeout(order, true) : onMarkCollected?.(order.id)
-              }
+              onPress={() => handlePayTakeout(true)}
               className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-[#810021] px-4 active:opacity-85"
               accessibilityRole="button"
               accessibilityLabel={`Pay and collect order ${order.ticketNumber}`}
@@ -123,7 +142,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
         ) : !order.isPrepaid && onPayTakeout ? (
           <View className="flex-row gap-2.5">
             <Pressable
-              onPress={() => onPayTakeout(order, false)}
+              onPress={() => handlePayTakeout(false)}
               className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-white border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Collect payment now for order ${order.ticketNumber}`}
@@ -132,7 +151,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
               <Text className="text-base font-semibold text-[#810021]">Pay Now</Text>
             </Pressable>
             <Pressable
-              onPress={() => onMarkReady?.(order.id)}
+              onPress={handleMarkReady}
               className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
               accessibilityLabel={`Mark order ${order.ticketNumber} as ready`}
@@ -143,7 +162,7 @@ export const TakeoutQueueCard: React.FC<TakeoutQueueCardProps> = ({
           </View>
         ) : (
           <Pressable
-            onPress={() => onMarkReady?.(order.id)}
+            onPress={handleMarkReady}
             className="min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-4 active:opacity-80"
             accessibilityRole="button"
             accessibilityLabel={`Mark order ${order.ticketNumber} as ready`}

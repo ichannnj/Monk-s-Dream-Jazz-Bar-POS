@@ -8,18 +8,20 @@ import {
   StyleSheet,
   ScrollView,
   useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { AlertTriangle, Trash2, X } from 'lucide-react-native';
 import { OrderLineItem } from '../../../../types/floor';
 import { formatCurrency } from '@monks/shared';
 import { toast } from '../../../shared/toast/useToastStore';
 import { posApi } from '../../../shared/infrastructure/api';
+import { useAsyncAction } from '../../../shared';
 
 interface TableActionVoidModalProps {
   visible: boolean;
   item: OrderLineItem;
   onClose: () => void;
-  onConfirmVoid: (reason: string, pin?: string) => void;
+  onConfirmVoid: (reason: string, pin?: string) => void | Promise<void>;
 }
 
 export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
@@ -42,7 +44,7 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
     !isDoorCharge &&
     (item.status === 'preparing' || item.status === 'ready' || item.status === 'served');
 
-  const handleConfirm = async () => {
+  const { execute: executeVoid, isLoading: isSubmitting } = useAsyncAction(async () => {
     if (isPostPrep) {
       const pinResult = await posApi.verifyManagerPin(managerPin);
       if (!pinResult.success) {
@@ -53,20 +55,30 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
         return;
       }
     }
-    onConfirmVoid(voidReason, managerPin);
+    await onConfirmVoid(voidReason, managerPin);
+  });
+
+  const handleClose = () => {
+    if (isSubmitting) return;
+    onClose();
+  };
+
+  const handleConfirm = () => {
+    executeVoid();
   };
 
   const { height } = useWindowDimensions();
   const isCompactHeight = height < 520;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View
         className={`flex-1 bg-wine-950/75 justify-center items-center ${isCompactHeight ? 'p-2' : 'p-5'}`}
       >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={onClose}
+          onPress={handleClose}
+          disabled={isSubmitting}
           accessibilityLabel="Close void modal"
         />
         <View
@@ -178,16 +190,25 @@ export const TableActionVoidModal: React.FC<TableActionVoidModalProps> = ({
           {/* Action buttons */}
           <View className="flex-row gap-2.5 pt-2">
             <Pressable
-              onPress={onClose}
-              className="flex-1 min-h-[48px] py-3 rounded-2xl bg-[#EFECE6] border border-stone-200 items-center justify-center active:bg-stone-100"
+              onPress={handleClose}
+              disabled={isSubmitting}
+              className={`flex-1 min-h-[48px] py-3 rounded-2xl bg-[#EFECE6] border border-stone-200 items-center justify-center ${
+                isSubmitting ? 'opacity-40' : 'active:bg-stone-100'
+              }`}
             >
-              <Text className="text-sm font-bold text-stone-700">Cancel</Text>
+              <Text className="text-base font-bold text-stone-700">Cancel</Text>
             </Pressable>
             <Pressable
               onPress={handleConfirm}
-              className="flex-1 min-h-[48px] py-3 rounded-2xl bg-[#810021] items-center justify-center active:opacity-90 shadow-xs"
+              disabled={isSubmitting}
+              className={`flex-1 min-h-[48px] py-3 rounded-2xl bg-[#810021] flex-row items-center justify-center gap-2 ${
+                isSubmitting ? 'opacity-70' : 'active:opacity-90'
+              } shadow-xs`}
             >
-              <Text className="text-sm font-extrabold text-white">Void Item</Text>
+              {isSubmitting ? <ActivityIndicator size="small" color="#F7F5F2" /> : null}
+              <Text className="text-base font-extrabold text-white">
+                {isSubmitting ? 'Voiding…' : 'Void Item'}
+              </Text>
             </Pressable>
           </View>
         </View>

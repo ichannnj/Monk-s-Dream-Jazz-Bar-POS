@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import {
   LayoutGrid,
   Plus,
@@ -334,10 +334,10 @@ export const AdminTableLayoutView: React.FC = () => {
       </View>
 
       {/* ADD / EDIT MODAL */}
-      {/* ADD / EDIT MODAL */}
       <AdminModal
         visible={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        isBusy={isSubmitting}
         title={editingTable ? 'Edit Table' : 'Add Physical Table'}
         subtitle="Manage table numbers, room zones, and seating capacity"
         icon={<LayoutGrid size={22} color="#810021" />}
@@ -347,17 +347,22 @@ export const AdminTableLayoutView: React.FC = () => {
             <Pressable
               onPress={() => setIsModalOpen(false)}
               disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 active:bg-stone-300"
+              className={`min-h-[48px] px-6 items-center justify-center rounded-xl bg-stone-200 ${
+                isSubmitting ? 'opacity-40' : 'active:bg-stone-300'
+              }`}
             >
               <Text className="text-base font-bold text-stone-700">Cancel</Text>
             </Pressable>
             <Pressable
               onPress={handleSubmit}
               disabled={isSubmitting}
-              className="min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] active:opacity-90"
+              className={`min-h-[48px] px-6 items-center justify-center rounded-xl bg-[#810021] flex-row gap-2 ${
+                isSubmitting ? 'opacity-70' : 'active:opacity-90'
+              }`}
             >
+              {isSubmitting ? <ActivityIndicator size="small" color="#F7F5F2" /> : null}
               <Text className="text-base font-bold text-white">
-                {isSubmitting ? 'Saving...' : editingTable ? 'Save Changes' : 'Create Table'}
+                {isSubmitting ? 'Saving…' : editingTable ? 'Save Changes' : 'Create Table'}
               </Text>
             </Pressable>
           </>

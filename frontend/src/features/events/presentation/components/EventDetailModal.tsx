@@ -51,6 +51,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 }) => {
   const [showLogistics, setShowLogistics] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Door Charge & Settlement
   const [summary, setSummary] = useState<EventDoorChargeSummary | null>(null);
@@ -94,9 +95,22 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     }
   };
 
-  const handleDelete = () => {
-    onDelete?.(event.id, event.poster_storage_path);
-    setIsConfirmingDelete(false);
+  const handleDelete = async () => {
+    if (isDeleting) return;
+    setIsDeleting(true);
+    try {
+      await onDelete?.(event.id, event.poster_storage_path);
+      setIsConfirmingDelete(false);
+    } catch (err) {
+      // Error handled by store
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    if (isDeleting || isSubmittingPayout) return;
+    onClose();
   };
 
   const hasLogistics = Boolean(
@@ -107,12 +121,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   );
 
   return (
-    <Modal visible={isOpen} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={isOpen} transparent animationType="fade" onRequestClose={handleCloseModal}>
       <View className="flex-1 items-center justify-end sm:justify-center bg-black/60 p-0 sm:p-4">
         {/* Backdrop dismiss */}
         <Pressable
           className="absolute inset-0"
-          onPress={onClose}
+          onPress={handleCloseModal}
+          disabled={isDeleting || isSubmittingPayout}
           accessibilityLabel="Dismiss event details"
         />
 
@@ -124,10 +139,13 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
           {/* Header Close button */}
           <View className="absolute top-3 right-3 z-20">
             <Pressable
-              onPress={onClose}
+              onPress={handleCloseModal}
+              disabled={isDeleting || isSubmittingPayout}
               accessibilityRole="button"
               accessibilityLabel="Close event details"
-              className="h-9 w-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 active:bg-black/70 backdrop-blur-sm"
+              className={`h-9 w-9 items-center justify-center rounded-full bg-black/40 hover:bg-black/60 active:bg-black/70 backdrop-blur-sm ${
+                isDeleting || isSubmittingPayout ? 'opacity-40' : ''
+              }`}
             >
               <X size={18} color="#F7F5F2" aria-hidden={true} />
             </Pressable>
@@ -392,25 +410,38 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
           {/* Destructive Confirmation Bar (if confirming delete) */}
           {isConfirmingDelete ? (
             <View className="p-4 border-t border-rose-200 bg-rose-50/90 space-y-2">
-              <Text className="text-xs font-bold text-rose-900">
+              <Text className="text-base font-bold text-rose-900">
                 Cancel and remove “{event.title}” from calendar?
               </Text>
               <View className="flex-row items-center gap-2 justify-end">
                 <Pressable
                   onPress={() => setIsConfirmingDelete(false)}
+                  disabled={isDeleting}
                   accessibilityRole="button"
                   accessibilityLabel="Keep event"
-                  className="px-3 py-1.5 rounded-lg border border-stone-300 bg-white"
+                  className={`min-h-[44px] px-3.5 py-2 rounded-xl border border-stone-300 bg-white items-center justify-center ${
+                    isDeleting ? 'opacity-40' : 'active:bg-stone-100'
+                  }`}
                 >
-                  <Text className="text-xs font-semibold text-stone-700">Keep event</Text>
+                  <Text className="text-base font-semibold text-stone-700">Keep event</Text>
                 </Pressable>
                 <Pressable
                   onPress={handleDelete}
+                  disabled={isDeleting}
                   accessibilityRole="button"
                   accessibilityLabel="Confirm cancel event"
-                  className="px-3 py-1.5 rounded-lg bg-rose-700 active:bg-rose-800"
+                  className={`min-h-[44px] px-4 py-2 rounded-xl bg-rose-700 items-center justify-center flex-row gap-2 ${
+                    isDeleting ? 'opacity-70' : 'active:bg-rose-800'
+                  }`}
                 >
-                  <Text className="text-xs font-bold text-white">Yes, cancel event</Text>
+                  {isDeleting ? (
+                    <ActivityIndicator size="small" color="#F7F5F2" />
+                  ) : (
+                    <Trash2 size={16} color="#F7F5F2" />
+                  )}
+                  <Text className="text-base font-bold text-white">
+                    {isDeleting ? 'Cancelling…' : 'Yes, cancel event'}
+                  </Text>
                 </Pressable>
               </View>
             </View>
@@ -482,39 +513,56 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
 
       {/* Settle Artist Payout Modal */}
       {isPayoutModalOpen && (
-        <Modal visible={isPayoutModalOpen} transparent animationType="fade">
+        <Modal
+          visible={isPayoutModalOpen}
+          transparent
+          animationType="fade"
+          onRequestClose={() => {
+            if (!isSubmittingPayout) setIsPayoutModalOpen(false);
+          }}
+        >
           <View className="flex-1 items-center justify-center bg-black/60 p-4">
-            <View className="w-full max-w-sm rounded-2xl bg-white p-5 border border-stone-200 shadow-2xl space-y-3.5">
+            <Pressable
+              className="absolute inset-0"
+              onPress={() => {
+                if (!isSubmittingPayout) setIsPayoutModalOpen(false);
+              }}
+              disabled={isSubmittingPayout}
+            />
+            <View className="w-full max-w-sm rounded-2xl bg-white p-5 border border-stone-200 shadow-2xl space-y-3.5 z-10">
               <View className="flex-row items-center justify-between">
                 <Text className="text-base font-extrabold text-stone-900">
                   Settle Artist Door Charge
                 </Text>
                 <Pressable
-                  onPress={() => setIsPayoutModalOpen(false)}
-                  className="p-1 rounded-full hover:bg-stone-100"
+                  onPress={() => {
+                    if (!isSubmittingPayout) setIsPayoutModalOpen(false);
+                  }}
+                  disabled={isSubmittingPayout}
+                  className={`p-1.5 rounded-full ${isSubmittingPayout ? 'opacity-40' : 'hover:bg-stone-100'}`}
                 >
-                  <X size={16} color="#78716c" />
+                  <X size={18} color="#78716c" />
                 </Pressable>
               </View>
 
               <View className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/80 space-y-1">
-                <Text className="text-xs text-stone-600">
+                <Text className="text-base text-stone-600">
                   Artist:{' '}
                   <Text className="font-bold text-stone-900">
                     {event.performer_name || event.title}
                   </Text>
                 </Text>
-                <Text className="text-xs text-stone-600">
+                <Text className="text-base text-stone-600">
                   Total Tickets Sold:{' '}
                   <Text className="font-bold text-stone-900">{summary?.tickets_sold ?? 0}</Text>
                 </Text>
-                <Text className="text-sm font-extrabold text-[#810021] pt-1 border-t border-rose-200/60">
+                <Text className="text-base font-extrabold text-[#810021] pt-1 border-t border-rose-200/60">
                   Payout Due: ₱{Number(summary?.artist_share || 0).toLocaleString()}
                 </Text>
               </View>
 
               <View className="space-y-1">
-                <Text className="text-xs font-bold text-stone-700">
+                <Text className="text-base font-bold text-stone-700">
                   Settlement Notes / Reference
                 </Text>
                 <TextInput
@@ -524,19 +572,25 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                   placeholderTextColor="#a8a29e"
                   multiline
                   numberOfLines={2}
-                  className="w-full rounded-xl border border-stone-300 bg-white p-2.5 text-xs text-stone-900 focus:border-[#810021]"
+                  className="w-full rounded-xl border border-stone-300 bg-white p-3 text-base text-stone-900 focus:border-[#810021]"
                 />
               </View>
 
               <View className="flex-row items-center justify-end gap-2 pt-2 border-t border-stone-100">
                 <Pressable
-                  onPress={() => setIsPayoutModalOpen(false)}
-                  className="px-3.5 py-2 rounded-xl border border-stone-300 bg-white active:bg-stone-100"
+                  onPress={() => {
+                    if (!isSubmittingPayout) setIsPayoutModalOpen(false);
+                  }}
+                  disabled={isSubmittingPayout}
+                  className={`min-h-[44px] px-4 py-2 rounded-xl border border-stone-300 bg-white items-center justify-center ${
+                    isSubmittingPayout ? 'opacity-40' : 'active:bg-stone-100'
+                  }`}
                 >
-                  <Text className="text-xs font-semibold text-stone-700">Cancel</Text>
+                  <Text className="text-base font-semibold text-stone-700">Cancel</Text>
                 </Pressable>
                 <Pressable
                   onPress={async () => {
+                    if (isSubmittingPayout) return;
                     setIsSubmittingPayout(true);
                     try {
                       const staffId = currentUser?.id || '11111111-1111-1111-1111-111111111111';
@@ -552,14 +606,16 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
                     }
                   }}
                   disabled={isSubmittingPayout}
-                  className="px-4 py-2 rounded-xl bg-[#810021] active:bg-[#66001a] flex-row items-center gap-1.5"
+                  className={`min-h-[44px] px-4 py-2 rounded-xl bg-[#810021] flex-row items-center justify-center gap-2 ${
+                    isSubmittingPayout ? 'opacity-70' : 'active:bg-[#66001a]'
+                  }`}
                 >
                   {isSubmittingPayout ? (
                     <ActivityIndicator size="small" color="#F7F5F2" />
                   ) : (
-                    <CheckCircle2 size={14} color="#F7F5F2" />
+                    <CheckCircle2 size={16} color="#F7F5F2" />
                   )}
-                  <Text className="text-xs font-bold text-white">
+                  <Text className="text-base font-bold text-white">
                     {isSubmittingPayout ? 'Recording...' : 'Confirm Paid'}
                   </Text>
                 </Pressable>

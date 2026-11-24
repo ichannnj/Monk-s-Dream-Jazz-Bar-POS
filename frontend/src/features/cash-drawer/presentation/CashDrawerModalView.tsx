@@ -75,7 +75,7 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
 
   const drawerLabel = activeDrawer === 'bar' ? 'Bar Station Till' : 'Main Floor Till';
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     const amt = parseFloat(modalAmount) || 0;
     if (amt <= 0) {
       toast.warning(`Please enter a valid cash amount greater than ${formatCurrency(0)}`, {
@@ -107,9 +107,11 @@ export const CashDrawerModalView: React.FC<CashDrawerModalViewProps> = ({
     }
 
     // Auto-kick physical cash drawer on cash operations
-    printerApi.kickCashDrawer(activeDrawer).catch((err) => {
+    try {
+      await printerApi.kickCashDrawer(activeDrawer);
+    } catch (err) {
       console.warn('[CashDrawer] Auto-kick drawer signal error:', err);
-    });
+    }
 
     setModalAmount('');
     setModalReason('');

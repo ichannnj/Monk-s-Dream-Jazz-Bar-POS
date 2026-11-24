@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { BarTicket } from '../types';
 import { styles } from './BaristaTicketCard.styles';
+import { useKeyedCooldown } from '@/features/shared/hooks/useAsyncAction';
 
 export interface BaristaTicketActionsProps {
   ticket: BarTicket;
@@ -26,6 +27,27 @@ export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
   onVoidTicket,
 }) => {
   const { stage, isReadyBlocked, hasFohStatusAlert } = ticket;
+  const { lock } = useKeyedCooldown(500);
+
+  const handleStart = () => {
+    if (!lock(`barista:start:${ticket.id}`)) return;
+    onStart?.(ticket);
+  };
+
+  const handleReady = () => {
+    if (!lock(`barista:ready:${ticket.id}`)) return;
+    onReady?.(ticket);
+  };
+
+  const handleRecall = () => {
+    if (!lock(`barista:recall:${ticket.id}`)) return;
+    onRecall?.(ticket);
+  };
+
+  const handleDismiss = () => {
+    if (!lock(`barista:dismiss:${ticket.id}`)) return;
+    onDismiss?.(ticket);
+  };
 
   if (stage === 'cancelled') {
     return (
@@ -64,7 +86,7 @@ export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
               </Pressable>
             ) : null}
             <Pressable
-              onPress={() => onStart?.(ticket)}
+              onPress={handleStart}
               style={({ pressed }) => [
                 styles.primaryWineButton,
                 { flex: 1 },
@@ -99,7 +121,7 @@ export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
               </Pressable>
             ) : null}
             <Pressable
-              onPress={() => onReady?.(ticket)}
+              onPress={handleReady}
               style={({ pressed }) => [
                 styles.primaryWineButton,
                 { flex: 1 },
@@ -118,13 +140,13 @@ export const BaristaTicketActions: React.FC<BaristaTicketActionsProps> = ({
       {stage === 'ready' ? (
         <View style={styles.readyFooterRow}>
           <Pressable
-            onPress={() => onRecall?.(ticket)}
+            onPress={handleRecall}
             style={({ pressed }) => [styles.recallButton, pressed && styles.buttonPressed]}
           >
             <Text style={styles.recallButtonText}>Recall</Text>
           </Pressable>
           <Pressable
-            onPress={() => onDismiss?.(ticket)}
+            onPress={handleDismiss}
             style={({ pressed }) => [styles.dismissButton, pressed && styles.buttonPressed]}
           >
             <Check size={14} color="#F7F5F2" strokeWidth={3} />

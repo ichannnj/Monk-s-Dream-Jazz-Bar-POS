@@ -28,9 +28,11 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
   const [customerName, setCustomerName] = useState('');
   const [isPrepaid, setIsPrepaid] = useState(true);
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
 
-  const handleBackdropPress = () => {
+  const handleClose = () => {
+    if (isSubmitting) return;
     if (isKeyboardOpen) {
       dismissKeyboard();
     }
@@ -38,15 +40,21 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
   };
 
   const handleProceed = () => {
-    const finalName = customerName.trim() || 'Walk-In Guest';
-    onProceedToOrder(finalName, isPrepaid, notes);
-    setCustomerName('');
-    setNotes('');
-    onClose();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      const finalName = customerName.trim() || 'Walk-In Guest';
+      onProceedToOrder(finalName, isPrepaid, notes);
+      setCustomerName('');
+      setNotes('');
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View
         style={[
           styles.backdrop,
@@ -59,7 +67,8 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
       >
         <Pressable
           style={StyleSheet.absoluteFill}
-          onPress={handleBackdropPress}
+          onPress={handleClose}
+          disabled={isSubmitting}
           accessibilityLabel="Close modal"
         />
         <View
@@ -189,12 +198,22 @@ export const NewTakeoutModal: React.FC<NewTakeoutModalProps> = ({
 
           {/* Buttons */}
           <View style={styles.btnRow}>
-            <Pressable onPress={onClose} style={styles.cancelBtn}>
+            <Pressable
+              onPress={handleClose}
+              disabled={isSubmitting}
+              style={[styles.cancelBtn, isSubmitting && { opacity: 0.4 }]}
+            >
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </Pressable>
 
-            <Pressable onPress={handleProceed} style={styles.proceedBtn}>
-              <Text style={styles.proceedBtnText}>Start Order</Text>
+            <Pressable
+              onPress={handleProceed}
+              disabled={isSubmitting}
+              style={[styles.proceedBtn, isSubmitting && { opacity: 0.7 }]}
+            >
+              <Text style={styles.proceedBtnText}>
+                {isSubmitting ? 'Starting…' : 'Start Order'}
+              </Text>
               <ArrowRight size={16} color="#F7F5F2" strokeWidth={2.4} />
             </Pressable>
           </View>

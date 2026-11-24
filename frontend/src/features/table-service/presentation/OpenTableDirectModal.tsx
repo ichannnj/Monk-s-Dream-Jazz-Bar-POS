@@ -1,9 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, Modal, Pressable, TextInput, StyleSheet, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  Modal,
+  Pressable,
+  TextInput,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { X, Plus, Utensils, Check } from 'lucide-react-native';
 import { TableItem } from '../../../types/floor';
 import { toast } from '../../shared/toast/useToastStore';
-import { useVirtualKeyboard } from '../../shared';
+import { useVirtualKeyboard, useAsyncAction } from '../../shared';
 import { useEventStore } from '@/features/events';
 
 interface OpenTableDirectModalProps {
@@ -32,9 +41,43 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
   const [guestCount, setGuestCount] = useState(2);
   const { isKeyboardOpen, keyboardHeight, viewportHeight, dismissKeyboard } = useVirtualKeyboard();
   const todayEvent = useEventStore((s) => s.getTodayActiveEvent());
+  const isLoadingEvents = useEventStore((s) => s.isLoading);
+  const hasLoadedEvents = useEventStore((s) => s.hasLoadedOnce);
   const [includeDoorCharge, setIncludeDoorCharge] = useState(false);
   const [doorChargePax, setDoorChargePax] = useState<number>(2);
   const [doorChargePrice, setDoorChargePrice] = useState<string>('300');
+
+  const isTableEmpty = !table || table.status === 'empty';
+  const activeTabsCount = isTableEmpty
+    ? 0
+    : table?.tabs && table.tabs.length > 0
+      ? table.tabs.filter((tab) => tab.status !== 'closed').length
+      : table?.activeTabs?.length || 0;
+
+  const effectiveIsSplit = !isTableEmpty && (isSplitTab || activeTabsCount > 0);
+
+  const { execute: executeOpenTab, isLoading: isSubmitting } = useAsyncAction(async () => {
+    if (!table) return;
+    try {
+      const finalName = guestName.trim() || `Guest ${activeTabsCount + 1}`;
+      const numericPrice = parseFloat(doorChargePrice) || 0;
+      onConfirmOpenTab(
+        table.id,
+        finalName,
+        guestCount,
+        includeDoorCharge,
+        doorChargePax,
+        numericPrice
+      );
+      setGuestName('');
+      setGuestCount(2);
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to open table tab.', {
+        title: 'Table Error',
+      });
+    }
+  });
 
   React.useEffect(() => {
     if (visible) {
@@ -57,45 +100,24 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
   if (!table) return null;
 
   const handleBackdropPress = () => {
+    if (isSubmitting) return;
     if (isKeyboardOpen) {
       dismissKeyboard();
     }
     onClose();
   };
 
-  const isTableEmpty = table.status === 'empty';
-  const activeTabsCount = isTableEmpty
-    ? 0
-    : table.tabs && table.tabs.length > 0
-      ? table.tabs.filter((tab) => tab.status !== 'closed').length
-      : table.activeTabs?.length || 0;
-
-  const effectiveIsSplit = !isTableEmpty && (isSplitTab || activeTabsCount > 0);
-
   const handleConfirm = () => {
-    try {
-      const finalName = guestName.trim() || `Guest ${activeTabsCount + 1}`;
-      const numericPrice = parseFloat(doorChargePrice) || 0;
-      onConfirmOpenTab(
-        table.id,
-        finalName,
-        guestCount,
-        includeDoorCharge,
-        doorChargePax,
-        numericPrice
-      );
-      setGuestName('');
-      setGuestCount(2);
-      onClose();
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to open table tab.', {
-        title: 'Table Error',
-      });
-    }
+    executeOpenTab();
+  };
+
+  const handleClose = () => {
+    if (isSubmitting) return;
+    onClose();
   };
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={handleClose}>
       <View
         style={[
           styles.backdrop,
@@ -109,6 +131,7 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={handleBackdropPress}
+          disabled={isSubmitting}
           accessibilityLabel="Close modal"
         />
         <View
@@ -127,8 +150,9 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
                 : `Open Tab · Table ${table.code}`}
             </Text>
             <Pressable
-              onPress={onClose}
-              style={styles.closeBtn}
+              onPress={handleClose}
+              disabled={isSubmitting}
+              style={[styles.closeBtn, isSubmitting && { opacity: 0.4 }]}
               accessibilityRole="button"
               accessibilityLabel="Close open table modal"
             >
@@ -241,7 +265,26 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
             </View>
 
             {/* Door Charge Quick Toggle & Adjustment */}
-            {todayEvent?.has_door_charge && (todayEvent?.door_charge_amount || 0) > 0 && (
+            {isLoadingEvents && !hasLoadedEvents ? (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: 12,
+                  borderRadius: 12,
+                  backgroundColor: '#EFECE6',
+                  borderWidth: 1,
+                  borderColor: '#E2DED6',
+                  marginBottom: 16,
+                }}
+              >
+                <ActivityIndicator size="small" color="#810021" />
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#706864' }}>
+                  Loading tonight's event cover charge…
+                </Text>
+              </View>
+            ) : todayEvent?.has_door_charge && (todayEvent?.door_charge_amount || 0) > 0 ? (
               <View style={{ marginBottom: 16 }}>
                 <Pressable
                   onPress={() => setIncludeDoorCharge(!includeDoorCharge)}
@@ -363,24 +406,33 @@ export const OpenTableDirectModal: React.FC<OpenTableDirectModalProps> = ({
                   </View>
                 )}
               </View>
-            )}
+            ) : null}
           </ScrollView>
 
           {/* Action Buttons */}
           <View style={styles.actionRow}>
-            <Pressable onPress={onClose} style={styles.cancelBtn}>
+            <Pressable
+              onPress={handleClose}
+              disabled={isSubmitting}
+              style={[styles.cancelBtn, isSubmitting && { opacity: 0.4 }]}
+            >
               <Text style={styles.cancelBtnText}>Cancel</Text>
             </Pressable>
 
             <Pressable
               onPress={handleConfirm}
-              style={styles.confirmBtn}
+              disabled={isSubmitting}
+              style={[styles.confirmBtn, isSubmitting && { opacity: 0.7 }]}
               accessibilityRole="button"
               accessibilityLabel={effectiveIsSplit ? 'Split Tab' : 'Open Tab'}
             >
-              <Plus size={18} color="#F7F5F2" strokeWidth={2.4} />
+              {isSubmitting ? (
+                <ActivityIndicator size="small" color="#F7F5F2" />
+              ) : (
+                <Plus size={18} color="#F7F5F2" strokeWidth={2.4} />
+              )}
               <Text style={styles.confirmBtnText}>
-                {effectiveIsSplit ? 'Split Tab' : 'Open Tab'}
+                {isSubmitting ? 'Opening Tab…' : effectiveIsSplit ? 'Split Tab' : 'Open Tab'}
               </Text>
             </Pressable>
           </View>

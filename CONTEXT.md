@@ -280,6 +280,16 @@ To guarantee that Floor POS, Station KDS, Cashier Settlement, and Admin Dashboar
 
 ---
 
+### 15. Async Action Protection, Debounce Cooldown & Loading UX Invariant (`PosActionButton.tsx`, `useAsyncAction.ts`, `useKeyedCooldown.ts`, `inFlightDedupe.ts`, `AdminModal.tsx`)
+
+- **Ref-Lock & In-Flight Deduplication:** Heavy async operations (network mutations, database saves, thermal print jobs, Excel exports, voids, attendance adjustments) use `useAsyncAction` and `dedupeInFlight(key, fn)`. Synchronous `useRef(false)` locks prevent double-invocation before React re-renders, and concurrent triggers share the existing in-flight promise.
+- **Standard Button Loading UX (`PosActionButton`):** Enforces 48px minimum touch targets, 16px minimum font size (anti-zoom), Velvet Ledger palette (`primary`, `secondary`, `danger`, `ghost`), inline `ActivityIndicator` (wine or cream), tactile press feedback, and optional contextual `loadingLabel` (e.g. `'Saving…'`, `'Recording…'`, `'Voiding…'`).
+- **Modal Busy Lockdown (`isBusy` / `isSubmitting`):** Modals (`AdminModal`, `ConfirmationModal`, `CashDrawerActionModal`, `NewTakeoutModal`, `OnlineDeliveryModal`, `OpenTableTabModal`, `OpenTableDirectModal`, `TableActionVoidModal`, `CreateEditEventModal`, `EventDetailModal`) lock out backdrop pressable dismiss, top-right `✕` buttons, and Android `onRequestClose` while operations are in flight.
+- **Optimistic Action Cooldown (`useKeyedCooldown`):** Fast ticket/board interactions (KDS start/ready/recall/dismiss, runner handoffs, takeout/delivery queue actions) enforce a 500ms synchronous cooldown per item/ticket ID to eliminate double-tap race conditions without blocking snappy optimistic UI.
+- **Event Hydration & Race Elimination (`useEventStore`, `EventCalendarShell.tsx`, `TodaysEventBanner.tsx`):** Initial event queries display Velvet Ledger skeleton pulses and indicators. Table opening modals verify `hasLoadedOnce` before reading active events, eliminating zero cover-charge race conditions.
+
+---
+
 ## 📚 Related Documentation
 
 - Architecture & File Tree Map: [AGENTS.md](file:///home/ichannnj/orca/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)

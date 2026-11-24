@@ -10,6 +10,7 @@ import type {
 import { eventsApi } from '../data/events.api';
 import { getManilaTodayDateString } from '../presentation/utils/eventFormatters';
 import { toBusinessDate } from '@/features/shared/utils/businessDay';
+import { dedupeInFlight } from '@/features/shared/utils/inFlightDedupe';
 
 let eventSubscriptionCount = 0;
 let eventChannel: ReturnType<typeof supabase.channel> | null = null;
@@ -24,6 +25,7 @@ interface EventState {
   isDetailModalOpen: boolean;
   isShareModalOpen: boolean;
   isLoading: boolean;
+  hasLoadedOnce: boolean;
   initialCreateDate: string | null;
 
   // Actions
@@ -57,18 +59,21 @@ export const useEventStore = create<EventState>((set, get) => ({
   isDetailModalOpen: false,
   isShareModalOpen: false,
   isLoading: false,
+  hasLoadedOnce: false,
   initialCreateDate: null,
 
   loadEvents: async () => {
-    set({ isLoading: true });
-    try {
-      const data = await eventsApi.getEvents();
-      set({ events: data, isLoading: false });
-    } catch (err: any) {
-      console.error('[useEventStore.loadEvents] Error:', err);
-      toast.error('Failed to load events calendar');
-      set({ isLoading: false });
-    }
+    return dedupeInFlight('events:load', async () => {
+      set({ isLoading: true });
+      try {
+        const data = await eventsApi.getEvents();
+        set({ events: data, isLoading: false, hasLoadedOnce: true });
+      } catch (err: any) {
+        console.error('[useEventStore.loadEvents] Error:', err);
+        toast.error('Failed to load events calendar');
+        set({ isLoading: false, hasLoadedOnce: true });
+      }
+    });
   },
 
   setCurrentDate: (date: Date) => set({ currentDate: date }),
@@ -137,83 +142,92 @@ export const useEventStore = create<EventState>((set, get) => ({
   closeShareModal: () => set({ isShareModalOpen: false }),
 
   saveEvent: async (input, id) => {
-    try {
-      let saved: VenueEvent;
-      if (id) {
-        saved = await eventsApi.updateEvent(id, input as UpdateEventInput);
-        set((state) => ({
-          events: state.events.map((e) => (e.id === id ? saved : e)),
-          selectedEvent: state.selectedEvent?.id === id ? saved : state.selectedEvent,
-          isCreateModalOpen: false,
-          editingEvent: null,
-        }));
-        toast.success(`Updated "${saved.title}"`);
-      } else {
-        saved = await eventsApi.createEvent(input as CreateEventInput);
-        set((state) => ({
-          events: [...state.events, saved].sort(
-            (a, b) =>
-              a.event_date.localeCompare(b.event_date) || a.start_time.localeCompare(b.start_time)
-          ),
-          isCreateModalOpen: false,
-          editingEvent: null,
-        }));
-        toast.success(`Scheduled "${saved.title}"`);
+    const key = `events:save:${id || 'new'}`;
+    return dedupeInFlight(key, async () => {
+      try {
+        let saved: VenueEvent;
+        if (id) {
+          saved = await eventsApi.updateEvent(id, input as UpdateEventInput);
+          set((state) => ({
+            events: state.events.map((e) => (e.id === id ? saved : e)),
+            selectedEvent: state.selectedEvent?.id === id ? saved : state.selectedEvent,
+            isCreateModalOpen: false,
+            editingEvent: null,
+          }));
+          toast.success(`Updated "${saved.title}"`);
+        } else {
+          saved = await eventsApi.createEvent(input as CreateEventInput);
+          set((state) => ({
+            events: [...state.events, saved].sort(
+              (a, b) =>
+                a.event_date.localeCompare(b.event_date) || a.start_time.localeCompare(b.start_time)
+            ),
+            isCreateModalOpen: false,
+            editingEvent: null,
+          }));
+          toast.success(`Scheduled "${saved.title}"`);
+        }
+        return saved;
+      } catch (err: any) {
+        console.error('[useEventStore.saveEvent] Error:', err);
+        toast.error('Failed to save event');
+        throw err;
       }
-      return saved;
-    } catch (err: any) {
-      console.error('[useEventStore.saveEvent] Error:', err);
-      toast.error('Failed to save event');
-      throw err;
-    }
+    });
   },
 
   deleteEvent: async (id, storagePath) => {
-    try {
-      await eventsApi.deleteEvent(id, storagePath);
-      set((state) => ({
-        events: state.events.filter((e) => e.id !== id),
-        selectedEvent: null,
-        isDetailModalOpen: false,
-      }));
-      toast.success('Event cancelled & removed from calendar');
-    } catch (err: any) {
-      console.error('[useEventStore.deleteEvent] Error:', err);
-      toast.error('Failed to remove event');
-      throw err;
-    }
+    const key = `events:delete:${id}`;
+    return dedupeInFlight(key, async () => {
+      try {
+        await eventsApi.deleteEvent(id, storagePath);
+        set((state) => ({
+          events: state.events.filter((e) => e.id !== id),
+          selectedEvent: null,
+          isDetailModalOpen: false,
+        }));
+        toast.success('Event cancelled & removed from calendar');
+      } catch (err: any) {
+        console.error('[useEventStore.deleteEvent] Error:', err);
+        toast.error('Failed to remove event');
+        throw err;
+      }
+    });
   },
 
   settleArtistPayout: async (eventId: string, staffId: string, notes?: string) => {
-    try {
-      await eventsApi.settleArtistDoorChargePayout(eventId, staffId, notes);
-      set((state) => ({
-        events: state.events.map((e) =>
-          e.id === eventId
-            ? {
-                ...e,
-                artist_payout_status: 'paid' as const,
-                artist_payout_notes: notes || null,
-                artist_payout_at: new Date().toISOString(),
-              }
-            : e
-        ),
-        selectedEvent:
-          state.selectedEvent?.id === eventId
-            ? {
-                ...state.selectedEvent,
-                artist_payout_status: 'paid' as const,
-                artist_payout_notes: notes || null,
-                artist_payout_at: new Date().toISOString(),
-              }
-            : state.selectedEvent,
-      }));
-      toast.success('Artist Door Charge payout settled & marked paid!');
-    } catch (err: any) {
-      console.error('[useEventStore.settleArtistPayout] Error:', err);
-      toast.error('Failed to settle artist payout');
-      throw err;
-    }
+    const key = `events:payout:${eventId}`;
+    return dedupeInFlight(key, async () => {
+      try {
+        await eventsApi.settleArtistDoorChargePayout(eventId, staffId, notes);
+        set((state) => ({
+          events: state.events.map((e) =>
+            e.id === eventId
+              ? {
+                  ...e,
+                  artist_payout_status: 'paid' as const,
+                  artist_payout_notes: notes || null,
+                  artist_payout_at: new Date().toISOString(),
+                }
+              : e
+          ),
+          selectedEvent:
+            state.selectedEvent?.id === eventId
+              ? {
+                  ...state.selectedEvent,
+                  artist_payout_status: 'paid' as const,
+                  artist_payout_notes: notes || null,
+                  artist_payout_at: new Date().toISOString(),
+                }
+              : state.selectedEvent,
+        }));
+        toast.success('Artist Door Charge payout settled & marked paid!');
+      } catch (err: any) {
+        console.error('[useEventStore.settleArtistPayout] Error:', err);
+        toast.error('Failed to settle artist payout');
+        throw err;
+      }
+    });
   },
 
   getTodayActiveEvent: () => {
