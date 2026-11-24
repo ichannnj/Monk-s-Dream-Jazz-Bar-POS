@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { LayoutGrid } from 'lucide-react-native';
 import { TableItem, TakeoutOrder, OnlineDeliveryOrder } from '@/types/floor';
+import { FLOOR_AREA_LABELS } from '../domain/tableTabHelpers';
 import { TableCard } from './TableCard';
 import { TakeoutQueueCard } from '@/features/takeout';
 import { OnlineDeliveryCard } from '@/features/delivery';
@@ -101,7 +102,7 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
         <View className="w-full">
           {renderHeaders ? (
             <SectionHeader
-              title="Cafe Area"
+              title={FLOOR_AREA_LABELS.cafe}
               badge={`${cafeTables.filter((t) => t.status !== 'empty').length}/${cafeTables.length} occupied`}
             />
           ) : null}
@@ -119,12 +120,12 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
         </View>
       ) : null}
 
-      {/* Bar Area Tables */}
+      {/* Music Lounge Tables */}
       {barTables.length > 0 ? (
         <View className="w-full">
           {renderHeaders ? (
             <SectionHeader
-              title="Bar Area"
+              title={FLOOR_AREA_LABELS.bar}
               badge={`${barTables.filter((t) => t.status !== 'empty').length}/${barTables.length} occupied`}
             />
           ) : null}
@@ -146,7 +147,7 @@ export const FloorGridView: React.FC<FloorGridViewProps> = ({
       {offPremiseCount > 0 ? (
         <View className="w-full">
           {renderHeaders ? (
-            <SectionHeader title="Takeout & Delivery" badge={`${offPremiseCount} active`} />
+            <SectionHeader title="TAKEOUT & DELIVERY" badge={`${offPremiseCount} active`} />
           ) : null}
           <View className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 md:gap-4">
             {filteredTakeoutOrders.map((toOrder) => (

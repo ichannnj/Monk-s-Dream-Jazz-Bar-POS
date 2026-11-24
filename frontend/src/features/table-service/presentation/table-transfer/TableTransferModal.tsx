@@ -108,7 +108,7 @@ export const TableTransferModal: React.FC<TableTransferModalProps> = ({
               <View>
                 <Text style={styles.headerTitle}>Transfer · Table {originTable.code}</Text>
                 <Text style={styles.headerSubtitle}>
-                  {originTable.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
+                  {originTable.area === 'bar' ? 'MUSIC LOUNGE' : 'CAFE AREA'}
                 </Text>
               </View>
             </View>

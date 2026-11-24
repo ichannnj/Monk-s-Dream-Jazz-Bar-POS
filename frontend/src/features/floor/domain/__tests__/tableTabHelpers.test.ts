@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getOpenTabs,
   deriveTabStatus,
+  formatFloorAreaLabel,
   formatTableDisplayName,
   summarizeTabItems,
 } from '../tableTabHelpers';
@@ -167,6 +168,18 @@ describe('tableTabHelpers', () => {
 
     it('returns clean prompt when no active items exist', () => {
       expect(summarizeTabItems(makeTab({ items: [] }))).toBe('Tab open — tap + Order');
+    });
+  });
+
+  describe('formatFloorAreaLabel', () => {
+    it('maps cafe and CAFE_AREA to CAFE AREA', () => {
+      expect(formatFloorAreaLabel('cafe')).toBe('CAFE AREA');
+      expect(formatFloorAreaLabel('CAFE_AREA')).toBe('CAFE AREA');
+    });
+
+    it('maps bar and BAR_AREA to MUSIC LOUNGE', () => {
+      expect(formatFloorAreaLabel('bar')).toBe('MUSIC LOUNGE');
+      expect(formatFloorAreaLabel('BAR_AREA')).toBe('MUSIC LOUNGE');
     });
   });
 });

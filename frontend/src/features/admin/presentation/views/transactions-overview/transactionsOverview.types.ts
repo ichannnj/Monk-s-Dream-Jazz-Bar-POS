@@ -65,13 +65,13 @@ export const STATION_OPTIONS: StationOption[] = [
   },
   {
     key: 'CAFE_AREA',
-    label: 'Cafe Area',
+    label: 'CAFE AREA',
     description: 'Artisan espresso bar & handcrafted beverages',
   },
   {
     key: 'BAR_AREA',
-    label: 'Bar Area',
-    description: 'Cocktails, draft beer, fine wines & spirits',
+    label: 'MUSIC LOUNGE',
+    description: 'Cocktails, live stage ambiance, draft beer, fine wines & spirits',
   },
   {
     key: 'TAKEOUT_COUNTER',

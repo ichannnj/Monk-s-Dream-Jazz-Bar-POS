@@ -3,7 +3,11 @@ import { View, Text, Pressable } from 'react-native';
 import { X } from 'lucide-react-native';
 import { TableItem } from '../../../../types/floor';
 import { formatCurrency } from '@monks/shared';
-import { formatTableDisplayName, getOpenTabs } from '@/features/floor/domain/tableTabHelpers';
+import {
+  formatFloorAreaLabel,
+  formatTableDisplayName,
+  getOpenTabs,
+} from '@/features/floor/domain/tableTabHelpers';
 
 interface TableActionHeaderProps {
   table: TableItem;
@@ -38,7 +42,7 @@ export const TableActionHeader: React.FC<TableActionHeaderProps> = ({ table, onC
             )}
           </View>
           <Text className="text-xs text-stone-500 font-semibold mt-0.5">
-            {table.area === 'bar' ? 'Bar Area' : 'Cafe Area'}
+            {formatFloorAreaLabel(table.area)}
           </Text>
         </View>
       </View>

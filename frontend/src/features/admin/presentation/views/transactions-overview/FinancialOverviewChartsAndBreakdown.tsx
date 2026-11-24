@@ -32,7 +32,7 @@ export const FinancialOverviewChartsAndBreakdown: React.FC<
     const normalized = channelKey.toLowerCase();
     if (normalized.includes('cafe')) {
       return {
-        label: 'Cafe Area',
+        label: 'CAFE AREA',
         subtext: 'Espresso & Handcrafted Beverages',
         icon: <Coffee size={18} color="#1A1617" />,
         progressBg: 'bg-stone-800',
@@ -40,7 +40,7 @@ export const FinancialOverviewChartsAndBreakdown: React.FC<
     }
     if (normalized.includes('bar')) {
       return {
-        label: 'Bar Area',
+        label: 'MUSIC LOUNGE',
         subtext: 'Cocktails, Wine & Spirits',
         icon: <Wine size={18} color="#810021" />,
         progressBg: 'bg-[#810021]',

@@ -176,13 +176,13 @@ export const AdminTableLayoutView: React.FC = () => {
     },
     {
       value: 'CAFE_AREA',
-      label: 'Daytime Cafe Area',
+      label: 'CAFE AREA',
       badge: tables.filter((t) => t.zone === 'CAFE_AREA').length,
       icon: Coffee,
     },
     {
       value: 'BAR_AREA',
-      label: 'Bar & Stage Area',
+      label: 'MUSIC LOUNGE',
       badge: tables.filter((t) => t.zone === 'BAR_AREA').length,
       icon: Wine,
     },
@@ -211,7 +211,7 @@ export const AdminTableLayoutView: React.FC = () => {
     >
       <View>
         <View className="flex-row items-center justify-between mb-1.5">
-          <Text className="text-lg font-bold text-stone-900">{t.table_number}</Text>
+          <Text className="text-lg font-bold uppercase text-stone-900">{t.table_number}</Text>
           <View
             className={`px-2 py-0.5 rounded-full border ${
               t.is_occupied ? 'bg-stone-100 border-[#810021]/40' : 'bg-stone-50 border-stone-200'
@@ -307,7 +307,7 @@ export const AdminTableLayoutView: React.FC = () => {
               <View className="flex-row items-center gap-2">
                 <Coffee size={20} color="#810021" />
                 <Text className="text-lg font-bold text-stone-900">
-                  Daytime Cafe Area ({cafeTables.length})
+                  CAFE AREA ({cafeTables.length})
                 </Text>
               </View>
             </View>
@@ -316,14 +316,14 @@ export const AdminTableLayoutView: React.FC = () => {
           </View>
         )}
 
-        {/* BAR & LIVE STAGE ZONE */}
+        {/* MUSIC LOUNGE ZONE */}
         {(zoneFilter === 'ALL' || zoneFilter === 'BAR_AREA') && (
           <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs">
             <View className="flex-row items-center justify-between border-b border-stone-100 pb-3 mb-4">
               <View className="flex-row items-center gap-2">
                 <Wine size={20} color="#810021" />
                 <Text className="text-lg font-bold text-stone-900">
-                  Bar & Live Stage Area ({barTables.length})
+                  MUSIC LOUNGE ({barTables.length})
                 </Text>
               </View>
             </View>
@@ -394,7 +394,7 @@ export const AdminTableLayoutView: React.FC = () => {
                     zone === 'CAFE_AREA' ? 'text-white' : 'text-stone-700'
                   }`}
                 >
-                  ☕ Cafe Area
+                  CAFE AREA
                 </Text>
               </Pressable>
               <Pressable
@@ -410,7 +410,7 @@ export const AdminTableLayoutView: React.FC = () => {
                     zone === 'BAR_AREA' ? 'text-white' : 'text-stone-700'
                   }`}
                 >
-                  Bar / Stage
+                  MUSIC LOUNGE
                 </Text>
               </Pressable>
             </View>

@@ -75,8 +75,8 @@ export const UnifiedCommandBar: React.FC<UnifiedCommandBarProps> = ({
 
   const channelOptions: PosDropdownOption<ChannelCategory>[] = [
     { value: 'all', label: 'All Channels', badge: channelCounts.all, icon: Sparkles },
-    { value: 'cafe', label: 'Cafe Area', badge: channelCounts.cafe, icon: Coffee },
-    { value: 'bar', label: 'Bar Area', badge: channelCounts.bar, icon: Wine },
+    { value: 'cafe', label: 'CAFE AREA', badge: channelCounts.cafe, icon: Coffee },
+    { value: 'bar', label: 'MUSIC LOUNGE', badge: channelCounts.bar, icon: Wine },
     { value: 'takeout', label: 'Takeout', badge: channelCounts.takeout, icon: ShoppingBag },
     { value: 'online', label: 'Delivery', badge: channelCounts.online, icon: Bike },
   ];

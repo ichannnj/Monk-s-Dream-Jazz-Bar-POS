@@ -44,6 +44,18 @@ export function deriveTabStatus(tab: CustomerTab): Exclude<TableStatus, 'empty'>
   return 'occupied';
 }
 
+export const FLOOR_AREA_LABELS = {
+  cafe: 'CAFE AREA',
+  bar: 'MUSIC LOUNGE',
+} as const;
+
+/**
+ * Formats a floor area or DB zone into the standardized uppercase display label.
+ */
+export function formatFloorAreaLabel(area: TableArea | 'CAFE_AREA' | 'BAR_AREA'): string {
+  return area === 'bar' || area === 'BAR_AREA' ? FLOOR_AREA_LABELS.bar : FLOOR_AREA_LABELS.cafe;
+}
+
 /**
  * Formats a table code and area into the standard display label (e.g., "Cafe 1", "Bar 2").
  */
@@ -85,7 +97,7 @@ export const TAB_STATUS_DOT_COLORS: Record<Exclude<TableStatus, 'empty'>, string
 };
 
 /**
- * Sorts tables consistently: Cafe Area first, then Bar Area, ordered numerically by table number.
+ * Sorts tables consistently: CAFE AREA first, then MUSIC LOUNGE, ordered numerically by table number.
  */
 export function sortTablesInOrder(tables: TableItem[]): TableItem[] {
   const parseTableNum = (code: string): number => {

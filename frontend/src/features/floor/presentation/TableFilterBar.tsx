@@ -97,11 +97,11 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
                 selectedChannel === 'cafe' ? styles.pillTextActive : styles.pillTextInactive,
               ]}
             >
-              Cafe Area ({channelCounts.cafe})
+              CAFE AREA ({channelCounts.cafe})
             </Text>
           </Pressable>
 
-          {/* Bar Area */}
+          {/* Music Lounge */}
           <Pressable
             onPress={() => onChannelChange('bar')}
             style={[
@@ -120,7 +120,7 @@ export const TableFilterBar: React.FC<TableFilterBarProps> = ({
                 selectedChannel === 'bar' ? styles.pillTextActive : styles.pillTextInactive,
               ]}
             >
-              Bar Area ({channelCounts.bar})
+              MUSIC LOUNGE ({channelCounts.bar})
             </Text>
           </Pressable>
 

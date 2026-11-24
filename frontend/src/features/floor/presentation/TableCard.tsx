@@ -124,7 +124,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
             <View className="mb-2.5 flex-row items-center justify-between gap-2">
               <View className="min-w-0 flex-1 justify-center">
                 <Text
-                  className={`font-extrabold tracking-tight ${
+                  className={`font-extrabold uppercase tracking-tight ${
                     displayName.length > 10 ? 'text-pos-lg' : 'text-pos-xl'
                   } ${isEmpty ? 'text-[#44403C]' : 'text-[#1A1617]'}`}
                   numberOfLines={1}
@@ -156,7 +156,7 @@ export const TableCard: React.FC<TableCardProps> = React.memo(
               <View className="flex-1 justify-center border-t border-[#E2DED6]/80 py-2">
                 <Text className="text-base font-medium text-[#57534E]">
                   {seats ? `${seats} ${seats === 1 ? 'seat' : 'seats'} · ` : ''}
-                  {area === 'bar' ? 'Bar Area' : 'Cafe Area'}
+                  {area === 'bar' ? 'MUSIC LOUNGE' : 'CAFE AREA'}
                 </Text>
               </View>
             ) : null}
