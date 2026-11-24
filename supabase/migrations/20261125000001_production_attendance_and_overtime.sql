@@ -64,6 +64,8 @@ CREATE INDEX IF NOT EXISTS idx_attendance_punches_record_time
 CREATE INDEX IF NOT EXISTS idx_attendance_punches_user_date
   ON public.attendance_punches(user_id, business_date DESC);
 
+ALTER TABLE public.attendance_punches ENABLE ROW LEVEL SECURITY;
+
 -- 5. Deterministic Overtime Calculator Helper
 CREATE OR REPLACE FUNCTION public.compute_shift_overtime(
   p_hours_worked NUMERIC,
