@@ -21,7 +21,7 @@ export const attendancePayrollApi = {
     let query = supabase
       .from('attendance_records')
       .select(
-        '*, users(username, display_name, role, job_title, is_workflow_staff, base_daily_rate)'
+        '*, users!attendance_records_user_id_fkey(username, display_name, role, job_title, is_workflow_staff, base_daily_rate)'
       );
 
     if (endDate && endDate !== startDate) {
