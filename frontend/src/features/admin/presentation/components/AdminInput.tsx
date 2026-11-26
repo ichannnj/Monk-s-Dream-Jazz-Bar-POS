@@ -80,7 +80,9 @@ export const AdminInput: React.FC<AdminInputProps> = ({
         className={`min-h-[48px] flex-row items-center rounded-xl border px-3.5 transition-all ${getBorderAndRingClass()}`}
         style={Platform.OS === 'web' ? ({ outline: 'none' } as any) : undefined}
       >
-        {leftElement && <View className="mr-2.5 items-center justify-center">{leftElement}</View>}
+        {leftElement && (
+          <View className="mr-2.5 shrink-0 items-center justify-center">{leftElement}</View>
+        )}
 
         <TextInput
           ref={inputRef}
@@ -94,7 +96,7 @@ export const AdminInput: React.FC<AdminInputProps> = ({
             Platform.OS === 'web' ? ({ outline: 'none', boxShadow: 'none' } as any) : undefined,
             style,
           ]}
-          className={`min-h-[46px] flex-1 text-base text-stone-900 ${className}`}
+          className={`min-h-[46px] min-w-0 flex-1 text-base text-stone-900 ${className}`}
           {...props}
         />
 
@@ -102,7 +104,7 @@ export const AdminInput: React.FC<AdminInputProps> = ({
           <Pressable
             onPress={handleClear}
             hitSlop={8}
-            className="h-8 w-8 items-center justify-center rounded-full active:bg-stone-100"
+            className="h-8 w-8 shrink-0 items-center justify-center rounded-full active:bg-stone-100"
             accessibilityRole="button"
             accessibilityLabel="Clear text"
           >
@@ -110,7 +112,9 @@ export const AdminInput: React.FC<AdminInputProps> = ({
           </Pressable>
         )}
 
-        {rightElement && <View className="ml-2.5 items-center justify-center">{rightElement}</View>}
+        {rightElement && (
+          <View className="ml-2.5 shrink-0 items-center justify-center">{rightElement}</View>
+        )}
       </View>
 
       {error ? (

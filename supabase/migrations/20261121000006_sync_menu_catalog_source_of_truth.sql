@@ -124,13 +124,15 @@ BEGIN
   DELETE FROM public.product_modifiers
   WHERE product_id = v_banana_bread_id AND name <> 'A La Mode';
 
-  IF NOT EXISTS (SELECT 1 FROM public.product_modifiers WHERE product_id = v_banana_bread_id AND name = 'A La Mode') THEN
-    INSERT INTO public.product_modifiers (product_id, group_id, name, price_delta, applicable_category, amount_delta)
-    VALUES (v_banana_bread_id, NULL, 'A La Mode', 50.00, 'all', 0);
-  ELSE
-    UPDATE public.product_modifiers
-    SET price_delta = 50.00, applicable_category = 'all'
-    WHERE product_id = v_banana_bread_id AND name = 'A La Mode';
+  IF EXISTS (SELECT 1 FROM public.products WHERE id = v_banana_bread_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM public.product_modifiers WHERE product_id = v_banana_bread_id AND name = 'A La Mode') THEN
+      INSERT INTO public.product_modifiers (product_id, group_id, name, price_delta, applicable_category, amount_delta)
+      VALUES (v_banana_bread_id, NULL, 'A La Mode', 50.00, 'all', 0);
+    ELSE
+      UPDATE public.product_modifiers
+      SET price_delta = 50.00, applicable_category = 'all'
+      WHERE product_id = v_banana_bread_id AND name = 'A La Mode';
+    END IF;
   END IF;
 
   -- Pizza: Monk's Classic (700), MONK'S I ❤ NYC (800), Pizza Blanca (800)
@@ -186,13 +188,15 @@ BEGIN
       updated_at = now()
   WHERE id = v_bolognese_id;
 
-  IF NOT EXISTS (SELECT 1 FROM public.product_modifiers WHERE product_id = v_bolognese_id AND name = 'Linguine') THEN
-    INSERT INTO public.product_modifiers (product_id, group_id, name, price_delta, applicable_category, amount_delta)
-    VALUES (v_bolognese_id, NULL, 'Linguine', 0.00, 'all', 0);
-  END IF;
-  IF NOT EXISTS (SELECT 1 FROM public.product_modifiers WHERE product_id = v_bolognese_id AND name = 'Tagliatelle') THEN
-    INSERT INTO public.product_modifiers (product_id, group_id, name, price_delta, applicable_category, amount_delta)
-    VALUES (v_bolognese_id, NULL, 'Tagliatelle', 0.00, 'all', 0);
+  IF EXISTS (SELECT 1 FROM public.products WHERE id = v_bolognese_id) THEN
+    IF NOT EXISTS (SELECT 1 FROM public.product_modifiers WHERE product_id = v_bolognese_id AND name = 'Linguine') THEN
+      INSERT INTO public.product_modifiers (product_id, group_id, name, price_delta, applicable_category, amount_delta)
+      VALUES (v_bolognese_id, NULL, 'Linguine', 0.00, 'all', 0);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.product_modifiers WHERE product_id = v_bolognese_id AND name = 'Tagliatelle') THEN
+      INSERT INTO public.product_modifiers (product_id, group_id, name, price_delta, applicable_category, amount_delta)
+      VALUES (v_bolognese_id, NULL, 'Tagliatelle', 0.00, 'all', 0);
+    END IF;
   END IF;
 
   UPDATE public.products
@@ -254,13 +258,17 @@ BEGIN
   -- ----------------------------------------------------------------------------
   -- Hot-only Coffee items: ensure HOT/Standard variant exists
   INSERT INTO public.product_variants (product_id, temperature, size_label, price, is_available, sort_order)
-  VALUES
-    ('aec9eba9-d345-4387-aede-e2c4470cbc0c', 'HOT', 'Standard', 125.00, true, 1), -- Ristretto
-    ('da4ff972-8edf-4342-aedc-e521e7e42cae', 'HOT', 'Standard', 125.00, true, 1), -- Espresso
-    ('37768d94-f02c-43c2-86e3-b6013cc3b27b', 'HOT', 'Standard', 125.00, true, 1), -- Lungo
-    ('4396b35c-cbdb-4e2f-8a44-94d07c52339e', 'HOT', 'Standard', 170.00, true, 1), -- Macchiato
-    ('6623c544-fe7f-434a-9705-cb51963e01f0', 'HOT', 'Standard', 180.00, true, 1), -- Cortado
-    ('0a991d81-fc91-45ea-bf26-005393d6ec13', 'HOT', 'Standard', 180.00, true, 1)  -- Cappuccino
+  SELECT v.product_id::UUID, v.temperature, v.size_label, v.price, v.is_available, v.sort_order
+  FROM (
+    VALUES
+      ('aec9eba9-d345-4387-aede-e2c4470cbc0c', 'HOT', 'Standard', 125.00, true, 1), -- Ristretto
+      ('da4ff972-8edf-4342-aedc-e521e7e42cae', 'HOT', 'Standard', 125.00, true, 1), -- Espresso
+      ('37768d94-f02c-43c2-86e3-b6013cc3b27b', 'HOT', 'Standard', 125.00, true, 1), -- Lungo
+      ('4396b35c-cbdb-4e2f-8a44-94d07c52339e', 'HOT', 'Standard', 170.00, true, 1), -- Macchiato
+      ('6623c544-fe7f-434a-9705-cb51963e01f0', 'HOT', 'Standard', 180.00, true, 1), -- Cortado
+      ('0a991d81-fc91-45ea-bf26-005393d6ec13', 'HOT', 'Standard', 180.00, true, 1)  -- Cappuccino
+  ) AS v(product_id, temperature, size_label, price, is_available, sort_order)
+  WHERE EXISTS (SELECT 1 FROM public.products p WHERE p.id = v.product_id::UUID)
   ON CONFLICT (product_id, temperature, size_label) DO UPDATE SET
     price = EXCLUDED.price,
     is_available = true,
@@ -269,11 +277,15 @@ BEGIN
 
   -- Iced-only Coffee items: ensure COLD/Standard variant exists
   INSERT INTO public.product_variants (product_id, temperature, size_label, price, is_available, sort_order)
-  VALUES
-    ('87f97570-5d4a-4ada-969c-9cc05f528ce1', 'COLD', 'Standard', 150.00, true, 1), -- Espresso Foam
-    ('0f36dad5-8555-4f79-abcf-d15d8893ed1d', 'COLD', 'Standard', 200.00, true, 1), -- Affogato
-    ('64ce5418-92e0-4f72-8735-21080310ac5b', 'COLD', 'Standard', 250.00, true, 1), -- Caramel Latte with Strawberry Cold Foam
-    ('9487921e-5027-4ff1-a6cf-d973518b06c1', 'COLD', 'Standard', 250.00, true, 1)  -- Mocha with Dark Chocolate Cold Foam
+  SELECT v.product_id::UUID, v.temperature, v.size_label, v.price, v.is_available, v.sort_order
+  FROM (
+    VALUES
+      ('87f97570-5d4a-4ada-969c-9cc05f528ce1', 'COLD', 'Standard', 150.00, true, 1), -- Espresso Foam
+      ('0f36dad5-8555-4f79-abcf-d15d8893ed1d', 'COLD', 'Standard', 200.00, true, 1), -- Affogato
+      ('64ce5418-92e0-4f72-8735-21080310ac5b', 'COLD', 'Standard', 250.00, true, 1), -- Caramel Latte with Strawberry Cold Foam
+      ('9487921e-5027-4ff1-a6cf-d973518b06c1', 'COLD', 'Standard', 250.00, true, 1)  -- Mocha with Dark Chocolate Cold Foam
+  ) AS v(product_id, temperature, size_label, price, is_available, sort_order)
+  WHERE EXISTS (SELECT 1 FROM public.products p WHERE p.id = v.product_id::UUID)
   ON CONFLICT (product_id, temperature, size_label) DO UPDATE SET
     price = EXCLUDED.price,
     is_available = true,
@@ -282,13 +294,17 @@ BEGIN
 
   -- Hot + Iced Coffee items
   INSERT INTO public.product_variants (product_id, temperature, size_label, price, is_available, sort_order)
-  VALUES
-    ('3f620998-6ef2-4a0e-a48c-6e6acab407fa', 'HOT',  'Standard', 150.00, true, 1), -- Americano / Aerocano Hot
-    ('3f620998-6ef2-4a0e-a48c-6e6acab407fa', 'COLD', 'Standard', 170.00, true, 2), -- Americano / Aerocano Iced
-    ('15452f3b-3368-4763-9155-3ad79cf67937', 'HOT',  'Standard', 180.00, true, 1), -- White Mocha Hot
-    ('15452f3b-3368-4763-9155-3ad79cf67937', 'COLD', 'Standard', 200.00, true, 2), -- White Mocha Iced
-    ('5f167b7d-59ab-47f3-b46b-ede5e25bd945', 'HOT',  'Standard', 180.00, true, 1), -- Latte Hot
-    ('5f167b7d-59ab-47f3-b46b-ede5e25bd945', 'COLD', 'Standard', 195.00, true, 2)  -- Latte Iced
+  SELECT v.product_id::UUID, v.temperature, v.size_label, v.price, v.is_available, v.sort_order
+  FROM (
+    VALUES
+      ('3f620998-6ef2-4a0e-a48c-6e6acab407fa', 'HOT',  'Standard', 150.00, true, 1), -- Americano / Aerocano Hot
+      ('3f620998-6ef2-4a0e-a48c-6e6acab407fa', 'COLD', 'Standard', 170.00, true, 2), -- Americano / Aerocano Iced
+      ('15452f3b-3368-4763-9155-3ad79cf67937', 'HOT',  'Standard', 180.00, true, 1), -- White Mocha Hot
+      ('15452f3b-3368-4763-9155-3ad79cf67937', 'COLD', 'Standard', 200.00, true, 2), -- White Mocha Iced
+      ('5f167b7d-59ab-47f3-b46b-ede5e25bd945', 'HOT',  'Standard', 180.00, true, 1), -- Latte Hot
+      ('5f167b7d-59ab-47f3-b46b-ede5e25bd945', 'COLD', 'Standard', 195.00, true, 2)  -- Latte Iced
+  ) AS v(product_id, temperature, size_label, price, is_available, sort_order)
+  WHERE EXISTS (SELECT 1 FROM public.products p WHERE p.id = v.product_id::UUID)
   ON CONFLICT (product_id, temperature, size_label) DO UPDATE SET
     price = EXCLUDED.price,
     is_available = true,
@@ -335,7 +351,8 @@ BEGIN
   AND size_label = 'Regular';
 
   INSERT INTO public.product_variants (product_id, temperature, size_label, price, is_available, sort_order)
-  VALUES ('268e9019-2271-4e2f-af0c-a82bc8cd8540', 'HOT', 'Standard', 180.00, true, 1) -- Pumpkin Spice
+  SELECT '268e9019-2271-4e2f-af0c-a82bc8cd8540'::UUID, 'HOT', 'Standard', 180.00, true, 1 -- Pumpkin Spice
+  WHERE EXISTS (SELECT 1 FROM public.products p WHERE p.id = '268e9019-2271-4e2f-af0c-a82bc8cd8540'::UUID)
   ON CONFLICT (product_id, temperature, size_label) DO UPDATE SET
     price = EXCLUDED.price,
     is_available = true,

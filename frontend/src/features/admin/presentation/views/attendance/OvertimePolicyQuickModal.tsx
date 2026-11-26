@@ -37,14 +37,27 @@ export const OvertimePolicyQuickModal: React.FC<OvertimePolicyQuickModalProps> =
   }, [visible, policy]);
 
   const handleSave = async () => {
+    const parsedStdHours = parseFloat(stdHours);
+    const parsedGraceMins = parseInt(graceMins, 10);
+    const parsedMultiplier = parseFloat(multiplier);
+    const parsedFlatRate = parseFloat(flatRate);
+
+    if (!Number.isFinite(parsedStdHours) || parsedStdHours <= 0) {
+      toast.error('Standard shift hours must be greater than 0');
+      return;
+    }
+
     setIsSaving(true);
     try {
       await adminApi.updateVenueSettings({
-        standard_shift_hours: parseFloat(stdHours) || 8,
-        overtime_grace_minutes: parseInt(graceMins, 10) || 15,
+        standard_shift_hours: parsedStdHours,
+        overtime_grace_minutes:
+          Number.isFinite(parsedGraceMins) && parsedGraceMins >= 0 ? parsedGraceMins : 0,
         overtime_rate_mode: rateMode,
-        overtime_multiplier: parseFloat(multiplier) || 1.25,
-        overtime_flat_hourly_rate: parseFloat(flatRate) || 100,
+        overtime_multiplier:
+          Number.isFinite(parsedMultiplier) && parsedMultiplier > 0 ? parsedMultiplier : 1.25,
+        overtime_flat_hourly_rate:
+          Number.isFinite(parsedFlatRate) && parsedFlatRate >= 0 ? parsedFlatRate : 0,
       });
       toast.success('Overtime fee policy updated', { title: 'Policy Saved' });
       onSaved();
@@ -86,7 +99,7 @@ export const OvertimePolicyQuickModal: React.FC<OvertimePolicyQuickModalProps> =
         </>
       }
     >
-      <View className="space-y-4">
+      <View className="gap-4">
         <View className="flex-row gap-3">
           <View className="flex-1">
             <AdminNumberInput
@@ -120,8 +133,8 @@ export const OvertimePolicyQuickModal: React.FC<OvertimePolicyQuickModalProps> =
               <Pressable
                 key={opt.key}
                 onPress={() => setRateMode(opt.key)}
-                className={`flex-1 min-h-[44px] items-center justify-center rounded-lg ${
-                  isSel ? 'bg-white shadow-xs' : 'active:bg-stone-200'
+                className={`flex-1 min-h-[48px] items-center justify-center rounded-lg ${
+                  isSel ? 'bg-white shadow-sm' : 'active:bg-stone-200'
                 }`}
               >
                 <Text
