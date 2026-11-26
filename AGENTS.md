@@ -2,6 +2,7 @@
 
 > **Core System Context:** [CONTEXT.md](file:///home/ichannnj/orca/Monk-s-Dream-Jazz-Bar-POS/CONTEXT.md) · [PHASES.md](file:///home/ichannnj/orca/Monk-s-Dream-Jazz-Bar-POS/PHASES.md) · [CONTRIBUTING.md](file:///home/ichannnj/orca/Monk-s-Dream-Jazz-Bar-POS/CONTRIBUTING.md)  
 > **Golden Rule:** **NEVER read large files (`REQUIREMENTS.md` [83KB], `mockData.ts` [34KB], `database.types.ts` [30KB]) in full.** Use targeted slicing (`StartLine`/`EndLine`). Target **250–350 LOC max** per file to optimize token budget.
+> **PR Size Invariant:** Keep every Pull Request focused at **400–500 LOC max** (excluding generated lockfiles/migrations where unavoidable); split larger features into stacked vertical-slice PRs.
 
 ---
 
