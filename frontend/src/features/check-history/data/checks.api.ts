@@ -15,6 +15,7 @@ export const checksApi = {
         .select(
           `
           id,
+          receipt_number,
           tab_id,
           staff_id,
           payment_method,
@@ -37,6 +38,7 @@ export const checksApi = {
           created_at,
           tabs:tab_id (
             id,
+            bill_number,
             customer_name,
             table_id,
             order_channel,
@@ -250,6 +252,7 @@ export const checksApi = {
         receipt_data: {
           receiptNumber: check.checkNumber,
           checkNumber: check.checkNumber,
+          billNumber: check.billNumber,
           guestName: check.guestName,
           customerName: check.guestName,
           tabName: check.guestName,

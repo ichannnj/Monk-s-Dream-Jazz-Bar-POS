@@ -84,13 +84,14 @@ export function mapRawPaymentToCheck(
   const dateObj = new Date(p.created_at);
   const timestamp = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const shortId = p.id.substring(0, 8).toUpperCase();
-  const checkNumber = `#${shortId}`;
+  const checkNumber = p.receipt_number || `#${shortId}`;
 
   return {
     id: p.id,
     paymentId: p.id,
     tabId: p.tab_id,
     checkNumber,
+    billNumber: tab.bill_number || undefined,
     orderType,
     tableOrRef,
     guestName,
@@ -151,6 +152,7 @@ export function filterSettledChecks(
     if (filter.searchQuery && filter.searchQuery.trim().length > 0) {
       const q = filter.searchQuery.toLowerCase().trim();
       const matchCheck = chk.checkNumber.toLowerCase().includes(q);
+      const matchBill = chk.billNumber ? chk.billNumber.toLowerCase().includes(q) : false;
       const matchGuest = chk.guestName.toLowerCase().includes(q);
       const matchRef = chk.tableOrRef.toLowerCase().includes(q);
       const matchCashier = chk.cashierName.toLowerCase().includes(q);
@@ -163,6 +165,7 @@ export function filterSettledChecks(
         : false;
       return (
         matchCheck ||
+        matchBill ||
         matchGuest ||
         matchRef ||
         matchCashier ||

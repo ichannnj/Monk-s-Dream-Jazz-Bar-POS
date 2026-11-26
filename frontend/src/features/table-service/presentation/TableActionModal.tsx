@@ -282,9 +282,14 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
         serviceChargeRate,
         corkageAmount: currentTab.hasCorkageFee ? currentTab.corkageAmount || 0 : 0,
       });
+      const resolvedBillNumber =
+        currentTab.billNumber ||
+        (await (await import('../data/tabs.api')).getOrAssignTabBillNumber(currentTab.id)) ||
+        `BILL-${currentTab.id.slice(0, 8).toUpperCase()}`;
       const billData = {
         isBillStatement: true,
-        receiptNumber: `BILL-${currentTab.id.slice(0, 8).toUpperCase()}`,
+        receiptNumber: resolvedBillNumber,
+        billNumber: resolvedBillNumber,
         tabId: currentTab.id,
         operatingMode: currentTab.operatingMode || operatingMode || 'CAFE',
         timestamp: new Date().toISOString(),

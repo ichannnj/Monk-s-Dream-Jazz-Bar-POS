@@ -121,6 +121,7 @@ export const mapHydratedTables = (
       return {
         id: tb.id,
         tabIndex: idx + 1,
+        billNumber: tb.bill_number || localTabMatch?.billNumber || undefined,
         guestName: tb.customer_name || `Guest ${idx + 1}`,
         status: 'open',
         hasCorkageFee: tb.has_corkage_fee,
@@ -320,6 +321,7 @@ export const mapHydratedOffPremiseTabs = (
       dbTakeout.push({
         id: t.id,
         tabId: t.id,
+        billNumber: t.bill_number || localMatch?.billNumber || undefined,
         ticketNumber: ticketNum,
         customerName: t.customer_name || 'Takeout Customer',
         items: lineItems,

@@ -66,10 +66,15 @@ export function buildReceiptBytes(
   builder.left();
   const receiptNo =
     data.receiptNumber ||
+    data.receipt_number ||
     data.checkNumber ||
     `MD-${(data.paymentId || data.id || '001').slice(0, 8).toUpperCase()}`;
 
-  builder.bold(true).line(`CHECK #: ${receiptNo}`).bold(false);
+  builder.bold(true).line(`RECEIPT #: ${receiptNo}`).bold(false);
+  const billNo = data.billNumber || data.bill_number;
+  if (billNo) {
+    builder.line(`BILL #:    ${billNo}`);
+  }
   builder.line(`DATE:    ${formatDateTime(data.settledAt || data.timestamp)}`);
 
   if (data.tableNumber || data.tableLabel) {
