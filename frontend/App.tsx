@@ -10,6 +10,7 @@ import {
   ScreenLoadingFallback,
   getRealtimeSubscriptionPlan,
   useVenueStore,
+  AnimatedFadeTransition,
 } from './src/features/shared';
 import {
   LoginScreen,
@@ -204,10 +205,15 @@ export default function App() {
 
     // Admin & Manager roles: always land on Admin Console Dashboard upon login
     if (role === 'admin' || role === 'manager' || role === 'administrator') {
-      if (adminView === 'admin') {
-        return <AdminBackOfficeScreen onSwitchToFloor={() => setAdminView('floor')} />;
-      }
-      return <WaiterCashierScreen onSwitchToAdmin={() => setAdminView('admin')} />;
+      return (
+        <AnimatedFadeTransition transitionKey={adminView}>
+          {adminView === 'admin' ? (
+            <AdminBackOfficeScreen onSwitchToFloor={() => setAdminView('floor')} />
+          ) : (
+            <WaiterCashierScreen onSwitchToAdmin={() => setAdminView('admin')} />
+          )}
+        </AnimatedFadeTransition>
+      );
     }
 
     switch (role) {

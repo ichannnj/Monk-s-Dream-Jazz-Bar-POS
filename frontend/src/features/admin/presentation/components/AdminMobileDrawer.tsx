@@ -142,7 +142,21 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
           <View className="flex-1">
             {/* Top Bar inside Drawer: Brand + Close button */}
             <View className="mb-6 flex-row items-center justify-between pt-1">
-              <View className="flex-row items-center">
+              <Pressable
+                onPress={() => {
+                  onClose();
+                  if (onSwitchToFloor) {
+                    onSwitchToFloor();
+                  } else {
+                    onRouteChange('dashboard');
+                  }
+                }}
+                className="flex-row items-center active:opacity-80 active:scale-95"
+                accessibilityRole="button"
+                accessibilityLabel={
+                  onSwitchToFloor ? 'Switch to Floor POS View' : 'Back to Dashboard'
+                }
+              >
                 <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/20 p-2 border border-white/25">
                   <Music size={22} color="#F7F5F2" />
                 </View>
@@ -152,7 +166,7 @@ export const AdminMobileDrawer: React.FC<AdminMobileDrawerProps> = ({
                   </Text>
                   <Text className="text-base font-medium text-white/70">Admin Console</Text>
                 </View>
-              </View>
+              </Pressable>
 
               <Pressable
                 onPress={onClose}

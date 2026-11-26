@@ -5,7 +5,7 @@ import { SharedChatView } from '@/features/chat/presentation/SharedChatView';
 import { useChatStore } from '@/features/chat';
 import { useResponsive } from '@/features/shared/hooks/useResponsive';
 import { realtimeGateway } from '@/features/shared/infrastructure/realtime';
-import { useVenueStore, useWindowVisibilitySync } from '@/features/shared';
+import { useVenueStore, useWindowVisibilitySync, AnimatedFadeTransition } from '@/features/shared';
 import type { AdminRoute, DashboardTelemetry, TimeframeFilter } from '../domain/admin.types';
 import {
   adminApi,
@@ -276,6 +276,7 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         currentRoute={currentRoute}
         onRouteChange={setCurrentRoute}
         unreadChatCount={unreadChatCount}
+        onSwitchToFloor={onSwitchToFloor}
       />
 
       {/* Main Content Workspace */}
@@ -291,7 +292,11 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
         />
 
         {/* Dynamic Route Body */}
-        <View className="flex-1 min-w-0">{renderActiveView()}</View>
+        <View className="flex-1 min-w-0">
+          <AnimatedFadeTransition transitionKey={currentRoute}>
+            {renderActiveView()}
+          </AnimatedFadeTransition>
+        </View>
 
         {/* Mobile / Tablet Bottom Navigation Bar (< 1024px) */}
         {(isMobile || isTablet) && (

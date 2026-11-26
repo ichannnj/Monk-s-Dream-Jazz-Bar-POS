@@ -7,7 +7,7 @@ import { AttendanceClockInReminderBanner } from '@/features/auth/presentation/co
 import { useOrderStore } from '@/features/orders';
 import { useRunnerTickets } from '@/features/kds/presentation/foh-runner/hooks/useRunnerTickets';
 import { toast } from '@/features/shared/toast/useToastStore';
-import { Sidebar, NavTabId, useResponsive } from '@/features/shared';
+import { Sidebar, NavTabId, useResponsive, AnimatedFadeTransition } from '@/features/shared';
 import { FloorWorkspaceView } from './FloorWorkspaceView';
 import { FohWorkspaceView } from './foh/FohWorkspaceView';
 import { ChecksHistoryView } from '@/features/check-history';
@@ -103,23 +103,25 @@ export const WaiterCashierScreen: React.FC<WaiterCashierScreenProps> = ({ onSwit
       {/* 2. Main Viewport */}
       <View className="flex-1 min-w-0 px-3 pt-2.5 md:px-0 md:pt-0">
         <AttendanceClockInReminderBanner />
-        {activeNavTab === 'tables' ? (
-          <FloorWorkspaceView />
-        ) : activeNavTab === 'foh' ? (
-          <FohWorkspaceView />
-        ) : activeNavTab === 'checks' ? (
-          <ChecksHistoryView />
-        ) : activeNavTab === 'drawer' ? (
-          <CashDrawerModalView initialDrawer="main" />
-        ) : activeNavTab === 'printer' ? (
-          <PrinterTerminalScreen />
-        ) : activeNavTab === 'alerts' ? (
-          <FloorAlertsView />
-        ) : activeNavTab === 'chat' ? (
-          <FloorChatView />
-        ) : (
-          <ShiftSettingsModal onLock={handleLockTerminal} onLogout={logout} />
-        )}
+        <AnimatedFadeTransition transitionKey={activeNavTab}>
+          {activeNavTab === 'tables' ? (
+            <FloorWorkspaceView />
+          ) : activeNavTab === 'foh' ? (
+            <FohWorkspaceView />
+          ) : activeNavTab === 'checks' ? (
+            <ChecksHistoryView />
+          ) : activeNavTab === 'drawer' ? (
+            <CashDrawerModalView initialDrawer="main" />
+          ) : activeNavTab === 'printer' ? (
+            <PrinterTerminalScreen />
+          ) : activeNavTab === 'alerts' ? (
+            <FloorAlertsView />
+          ) : activeNavTab === 'chat' ? (
+            <FloorChatView />
+          ) : (
+            <ShiftSettingsModal onLock={handleLockTerminal} onLogout={logout} />
+          )}
+        </AnimatedFadeTransition>
       </View>
 
       {/* 3. Mobile Bottom Tab Bar (<768px) */}

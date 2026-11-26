@@ -21,6 +21,7 @@ export * from './components/TouchTextInput';
 export * from './stores/useVenueStore';
 export * from './components/JazzLogo';
 export * from './components/ScreenLoadingFallback';
+export * from './components/AnimatedFadeTransition';
 export * from './utils/realtimeSubscriptionScope';
 export * from './utils/printHelpers';
 export * from './utils/businessDay';

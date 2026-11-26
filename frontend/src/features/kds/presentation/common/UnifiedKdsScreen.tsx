@@ -3,6 +3,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MessageSquare } from 'lucide-react-native';
 import { toast } from '../../../shared/toast/useToastStore';
 import { Sidebar } from '../../../shared/navigation/Sidebar';
+import { AnimatedFadeTransition } from '../../../shared/components/AnimatedFadeTransition';
 import { useResponsive } from '../../../shared/hooks/useResponsive';
 import { BaristaKanbanColumn } from '../barista/components/BaristaKanbanColumn';
 import { BarTicket, BarItemLine } from '../barista/types';
@@ -155,121 +156,123 @@ export const UnifiedKdsScreen: React.FC<UnifiedKdsScreenProps> = ({
         ]}
       >
         <AttendanceClockInReminderBanner />
-        {activeSidebarTab === 'tables' && stationTarget !== 'kitchen' ? (
-          <FloorWorkspaceView
-            autoStartStation={stationTarget}
-            staffName={staffDisplayName}
-            staffInitials={staffInitials}
-          />
-        ) : activeSidebarTab === 'checks' ? (
-          <ChecksHistoryView />
-        ) : activeSidebarTab === 'drawer' && stationTarget !== 'kitchen' ? (
-          <CashDrawerModalView initialDrawer="bar" />
-        ) : activeSidebarTab === 'chat' ? (
-          <SharedChatView
-            senderName={staffDisplayName}
-            senderRole={chatSenderRole}
-            defaultChannel={chatDefaultChannel}
-            onBack={() => setActiveSidebarTab('board')}
-          />
-        ) : activeSidebarTab === 'alerts' ? (
-          <SharedAlertsView onBack={() => setActiveSidebarTab('board')} />
-        ) : (
-          <>
-            <KdsToolbar
-              stationName={stationName}
-              isOnline={isOnline}
+        <AnimatedFadeTransition transitionKey={activeSidebarTab}>
+          {activeSidebarTab === 'tables' && stationTarget !== 'kitchen' ? (
+            <FloorWorkspaceView
+              autoStartStation={stationTarget}
               staffName={staffDisplayName}
               staffInitials={staffInitials}
-              onStaffPress={() => setIsSettingsModalOpen(true)}
-              stationSubtitle={stationSubtitle}
-              activeTicketsCount={activeTicketsCount}
-              outOfStockCount={outOfStockItems.length}
-              newCount={newTickets.length}
-              preparingCount={preparingTickets.length}
-              readyCount={readyTickets.length}
-              mobileStage={mobileStage}
-              onMobileStageChange={setMobileStage}
-              onOpenAvailability={() => setIsAvailabilityModalOpen(true)}
-              onOpenOutOfStockList={() => setIsOutOfStockListModalOpen(true)}
-              onOpenStockAdjust={() => setIsStockModalOpen(true)}
             />
+          ) : activeSidebarTab === 'checks' ? (
+            <ChecksHistoryView />
+          ) : activeSidebarTab === 'drawer' && stationTarget !== 'kitchen' ? (
+            <CashDrawerModalView initialDrawer="bar" />
+          ) : activeSidebarTab === 'chat' ? (
+            <SharedChatView
+              senderName={staffDisplayName}
+              senderRole={chatSenderRole}
+              defaultChannel={chatDefaultChannel}
+              onBack={() => setActiveSidebarTab('board')}
+            />
+          ) : activeSidebarTab === 'alerts' ? (
+            <SharedAlertsView onBack={() => setActiveSidebarTab('board')} />
+          ) : (
+            <>
+              <KdsToolbar
+                stationName={stationName}
+                isOnline={isOnline}
+                staffName={staffDisplayName}
+                staffInitials={staffInitials}
+                onStaffPress={() => setIsSettingsModalOpen(true)}
+                stationSubtitle={stationSubtitle}
+                activeTicketsCount={activeTicketsCount}
+                outOfStockCount={outOfStockItems.length}
+                newCount={newTickets.length}
+                preparingCount={preparingTickets.length}
+                readyCount={readyTickets.length}
+                mobileStage={mobileStage}
+                onMobileStageChange={setMobileStage}
+                onOpenAvailability={() => setIsAvailabilityModalOpen(true)}
+                onOpenOutOfStockList={() => setIsOutOfStockListModalOpen(true)}
+                onOpenStockAdjust={() => setIsStockModalOpen(true)}
+              />
 
-            {/* 3. Kanban Board */}
-            <View style={styles.kanbanBoard}>
-              {(!isMobile || mobileStage === 'new') && (
-                <BaristaKanbanColumn
-                  stage="new"
-                  title="New"
-                  count={newTickets.length}
-                  tickets={newTickets}
-                  overflowCount={newTickets.length > 2 ? newTickets.length - 1 : 0}
-                  onStartTicket={handleStartTicket}
-                  onDismissTicket={handleDismissTicket}
-                  onViewFohStatus={(ticket) => setFohModalTicket(ticket)}
-                  onToggleItem={handleToggleItem}
-                  onVoidTicket={(ticket) => {
-                    setVoidModalTicket(ticket);
-                    setVoidModalItem(null);
-                    setIsVoidModalOpen(true);
-                  }}
-                  onVoidItem={(ticket, item) => {
-                    setVoidModalTicket(ticket);
-                    setVoidModalItem(item);
-                    setIsVoidModalOpen(true);
-                  }}
-                />
-              )}
+              {/* 3. Kanban Board */}
+              <View style={styles.kanbanBoard}>
+                {(!isMobile || mobileStage === 'new') && (
+                  <BaristaKanbanColumn
+                    stage="new"
+                    title="New"
+                    count={newTickets.length}
+                    tickets={newTickets}
+                    overflowCount={newTickets.length > 2 ? newTickets.length - 1 : 0}
+                    onStartTicket={handleStartTicket}
+                    onDismissTicket={handleDismissTicket}
+                    onViewFohStatus={(ticket) => setFohModalTicket(ticket)}
+                    onToggleItem={handleToggleItem}
+                    onVoidTicket={(ticket) => {
+                      setVoidModalTicket(ticket);
+                      setVoidModalItem(null);
+                      setIsVoidModalOpen(true);
+                    }}
+                    onVoidItem={(ticket, item) => {
+                      setVoidModalTicket(ticket);
+                      setVoidModalItem(item);
+                      setIsVoidModalOpen(true);
+                    }}
+                  />
+                )}
 
-              {(!isMobile || mobileStage === 'preparing') && (
-                <BaristaKanbanColumn
-                  stage="preparing"
-                  title="Preparing"
-                  count={preparingTickets.length}
-                  tickets={preparingTickets}
-                  overflowCount={preparingTickets.length > 2 ? preparingTickets.length - 1 : 1}
-                  onReadyTicket={handleReadyTicket}
-                  onDismissTicket={handleDismissTicket}
-                  onReadyBlockedPress={(ticket) => setFohModalTicket(ticket)}
-                  onToggleItem={handleToggleItem}
-                  onVoidTicket={(ticket) => {
-                    setVoidModalTicket(ticket);
-                    setVoidModalItem(null);
-                    setIsVoidModalOpen(true);
-                  }}
-                  onVoidItem={(ticket, item) => {
-                    setVoidModalTicket(ticket);
-                    setVoidModalItem(item);
-                    setIsVoidModalOpen(true);
-                  }}
-                />
-              )}
+                {(!isMobile || mobileStage === 'preparing') && (
+                  <BaristaKanbanColumn
+                    stage="preparing"
+                    title="Preparing"
+                    count={preparingTickets.length}
+                    tickets={preparingTickets}
+                    overflowCount={preparingTickets.length > 2 ? preparingTickets.length - 1 : 1}
+                    onReadyTicket={handleReadyTicket}
+                    onDismissTicket={handleDismissTicket}
+                    onReadyBlockedPress={(ticket) => setFohModalTicket(ticket)}
+                    onToggleItem={handleToggleItem}
+                    onVoidTicket={(ticket) => {
+                      setVoidModalTicket(ticket);
+                      setVoidModalItem(null);
+                      setIsVoidModalOpen(true);
+                    }}
+                    onVoidItem={(ticket, item) => {
+                      setVoidModalTicket(ticket);
+                      setVoidModalItem(item);
+                      setIsVoidModalOpen(true);
+                    }}
+                  />
+                )}
 
-              {(!isMobile || mobileStage === 'ready') && (
-                <BaristaKanbanColumn
-                  stage="ready"
-                  title="Ready"
-                  count={readyTickets.length}
-                  tickets={readyTickets}
-                  overflowCount={readyTickets.length > 2 ? 1 : 0}
-                  onRecallTicket={handleRecallTicket}
-                  onDismissTicket={handleDismissReadyTicket}
-                  onToggleItem={handleToggleItem}
-                  onVoidTicket={(ticket) => {
-                    setVoidModalTicket(ticket);
-                    setVoidModalItem(null);
-                    setIsVoidModalOpen(true);
-                  }}
-                  onVoidItem={(ticket, item) => {
-                    setVoidModalTicket(ticket);
-                    setVoidModalItem(item);
-                    setIsVoidModalOpen(true);
-                  }}
-                />
-              )}
-            </View>
-          </>
-        )}
+                {(!isMobile || mobileStage === 'ready') && (
+                  <BaristaKanbanColumn
+                    stage="ready"
+                    title="Ready"
+                    count={readyTickets.length}
+                    tickets={readyTickets}
+                    overflowCount={readyTickets.length > 2 ? 1 : 0}
+                    onRecallTicket={handleRecallTicket}
+                    onDismissTicket={handleDismissReadyTicket}
+                    onToggleItem={handleToggleItem}
+                    onVoidTicket={(ticket) => {
+                      setVoidModalTicket(ticket);
+                      setVoidModalItem(null);
+                      setIsVoidModalOpen(true);
+                    }}
+                    onVoidItem={(ticket, item) => {
+                      setVoidModalTicket(ticket);
+                      setVoidModalItem(item);
+                      setIsVoidModalOpen(true);
+                    }}
+                  />
+                )}
+              </View>
+            </>
+          )}
+        </AnimatedFadeTransition>
       </View>
 
       {/* Floating Chat Bubble at bottom-right */}

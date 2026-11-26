@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
+import React, { useState, useMemo, useRef } from 'react';
+import { View, Text, Pressable, Modal, ScrollView, Animated } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import {
   LayoutGrid,
@@ -17,6 +17,7 @@ import {
   X,
   ChevronRight,
 } from 'lucide-react-native';
+import { useAuthStore } from '@/features/auth';
 import { useResponsive } from '../hooks/useResponsive';
 
 const MONKS_DREAM_LOGO = require('../../../../assets/images/logo-white-bg.jpeg');
@@ -58,7 +59,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
   hiddenTabs = [],
 }) => {
   const { isMobile } = useResponsive();
+  const { currentUser } = useAuthStore();
   const [moreSheetOpen, setMoreSheetOpen] = useState(false);
+
+  const role = (currentUser?.role || '').toLowerCase();
+  const isAdminOrManager = role === 'admin' || role === 'manager' || role === 'administrator';
+
+  const logoScaleAnim = useRef(new Animated.Value(1)).current;
+
+  const triggerLogoPressAnim = () => {
+    Animated.sequence([
+      Animated.timing(logoScaleAnim, {
+        toValue: 0.85,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+      Animated.spring(logoScaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 160,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handleBrandLogoPress = () => {
+    triggerLogoPressAnim();
+    if (isAdminOrManager && onSwitchToAdmin) {
+      onSwitchToAdmin();
+    } else {
+      const defaultTab: NavTabId = mode === 'kds' ? 'board' : 'tables';
+      onTabChange(defaultTab);
+    }
+  };
 
   const navItems: NavItemConfig[] = useMemo(() => {
     const posNavItems: NavItemConfig[] = [
@@ -196,7 +229,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
             <View className="bg-white rounded-t-3xl border-t border-[#E2DED6] px-4 pt-4 pb-6 max-h-[82%]">
               <View className="flex-row items-center justify-between pb-3 mb-2 border-b border-[#E2DED6]">
-                <View className="flex-row items-center gap-2.5">
+                <Pressable
+                  onPress={() => {
+                    setMoreSheetOpen(false);
+                    handleBrandLogoPress();
+                  }}
+                  className="flex-row items-center gap-2.5 active:opacity-80"
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    isAdminOrManager ? 'Back to Admin Dashboard' : 'Reset to default workspace'
+                  }
+                >
                   <View className="w-10 h-10 rounded-xl bg-[#EFECE6] border border-[#E2DED6] items-center justify-center p-1">
                     <ExpoImage
                       source={MONKS_DREAM_LOGO}
@@ -205,7 +248,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     />
                   </View>
                   <Text className="text-pos-lg font-extrabold text-[#1A1617]">Workspace</Text>
-                </View>
+                </Pressable>
 
                 <Pressable
                   onPress={() => setMoreSheetOpen(false)}
@@ -328,14 +371,23 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <View className="w-[78px] bg-[#431621] rounded-3xl py-4 px-2 items-center justify-between">
       {/* Top: Brand Emblem */}
       <View className="items-center mb-3">
-        <View className="w-[50px] h-[50px] rounded-2xl bg-white/15 border border-white/20 items-center justify-center p-1">
-          <ExpoImage
-            source={MONKS_DREAM_LOGO}
-            className="w-[38px] h-[38px] rounded-lg"
-            contentFit="contain"
-            priority="high"
-          />
-        </View>
+        <Animated.View style={{ transform: [{ scale: logoScaleAnim }] }}>
+          <Pressable
+            onPress={handleBrandLogoPress}
+            className="w-[50px] h-[50px] rounded-2xl bg-white/15 border border-white/20 items-center justify-center p-1 active:opacity-75"
+            accessibilityRole="button"
+            accessibilityLabel={
+              isAdminOrManager ? 'Back to Admin Dashboard' : 'Reset to default workspace'
+            }
+          >
+            <ExpoImage
+              source={MONKS_DREAM_LOGO}
+              className="w-[38px] h-[38px] rounded-lg"
+              contentFit="contain"
+              priority="high"
+            />
+          </Pressable>
+        </Animated.View>
       </View>
 
       {/* Middle: Navigation Rail Items */}

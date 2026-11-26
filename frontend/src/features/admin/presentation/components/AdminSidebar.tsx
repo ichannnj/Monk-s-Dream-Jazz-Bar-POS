@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, Pressable, ScrollView } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Text, Pressable, ScrollView, Animated } from 'react-native';
 import {
   LayoutGrid,
   Activity,
@@ -21,6 +21,7 @@ interface AdminSidebarProps {
   currentRoute: AdminRoute;
   onRouteChange: (route: AdminRoute) => void;
   unreadChatCount?: number;
+  onSwitchToFloor?: () => void;
 }
 
 interface NavItem {
@@ -34,6 +35,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   currentRoute,
   onRouteChange,
   unreadChatCount = 3,
+  onSwitchToFloor,
 }) => {
   const { currentUser } = useAuthStore();
   const staffName = currentUser?.displayName || 'Dana Cruz';
@@ -48,6 +50,30 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const staffRole = currentUser?.role
     ? currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)
     : 'Admin / Manager';
+
+  const logoScaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handleHeaderPress = () => {
+    Animated.sequence([
+      Animated.timing(logoScaleAnim, {
+        toValue: 0.9,
+        duration: 90,
+        useNativeDriver: true,
+      }),
+      Animated.spring(logoScaleAnim, {
+        toValue: 1,
+        friction: 4,
+        tension: 160,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    if (onSwitchToFloor) {
+      onSwitchToFloor();
+    } else {
+      onRouteChange('dashboard');
+    }
+  };
 
   const operationsItems: NavItem[] = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutGrid },
@@ -117,22 +143,29 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       style={{ backgroundColor: '#4A1020E0' }}
     >
       {/* Brand Header */}
-      <View className="mb-5 flex-row items-center px-1 pt-1 flex-shrink-0">
-        <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/20 p-2 border border-white/25">
-          <Music size={22} color="#F7F5F2" />
-        </View>
-        <View className="ml-3 flex-1 min-w-0">
-          <Text
-            className="font-serif text-lg font-bold tracking-tight text-white"
-            numberOfLines={1}
-          >
-            Monk's Dream
-          </Text>
-          <Text className="text-xs font-medium tracking-wide text-white/70" numberOfLines={1}>
-            Admin Console
-          </Text>
-        </View>
-      </View>
+      <Animated.View style={{ transform: [{ scale: logoScaleAnim }] }}>
+        <Pressable
+          onPress={handleHeaderPress}
+          className="mb-5 flex-row items-center px-1 pt-1 flex-shrink-0 active:opacity-80"
+          accessibilityRole="button"
+          accessibilityLabel={onSwitchToFloor ? 'Switch to Floor POS View' : 'Back to Dashboard'}
+        >
+          <View className="h-10 w-10 items-center justify-center rounded-xl bg-white/20 p-2 border border-white/25">
+            <Music size={22} color="#F7F5F2" />
+          </View>
+          <View className="ml-3 flex-1 min-w-0">
+            <Text
+              className="font-serif text-lg font-bold tracking-tight text-white"
+              numberOfLines={1}
+            >
+              Monk's Dream
+            </Text>
+            <Text className="text-xs font-medium tracking-wide text-white/70" numberOfLines={1}>
+              Admin Console
+            </Text>
+          </View>
+        </Pressable>
+      </Animated.View>
 
       {/* Navigation Sections with ScrollView to prevent overlap on smaller heights */}
       <ScrollView
