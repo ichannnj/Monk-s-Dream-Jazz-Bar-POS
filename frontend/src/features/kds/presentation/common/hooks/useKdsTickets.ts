@@ -205,7 +205,7 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
   const handleRecallTicket = (ticket: BarTicket) => {
     try {
       ticket.items
-        .filter((i) => i.status !== 'cancelled')
+        .filter((i) => i.status !== 'cancelled' && i.status !== 'served')
         .forEach((item) => updateOrderItemStatus(item.id, 'preparing'));
       if (ticket.takeoutId) {
         updateTakeoutStatus(ticket.takeoutId, 'preparing');
@@ -223,7 +223,11 @@ export function useKdsTickets({ stationTarget, inventory }: UseKdsTicketsProps) 
   const handleToggleItem = (_ticketId: string, itemId: string) => {
     try {
       const item = allTickets.flatMap((t) => t.items).find((i) => i.id === itemId);
-      if (!item) return;
+      if (!item || item.status === 'cancelled') return;
+      if (item.status === 'served') {
+        toast.info(`${item.productName} is already delivered to the guest.`);
+        return;
+      }
       const nextStatus = item.status === 'ready' ? 'preparing' : 'ready';
       updateOrderItemStatus(itemId, nextStatus);
     } catch (err: any) {

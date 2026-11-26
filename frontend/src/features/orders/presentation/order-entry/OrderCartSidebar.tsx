@@ -3,6 +3,7 @@ import { View, Text, Pressable, ScrollView, Switch } from 'react-native';
 import { Send, Trash2, Minus, Plus, History, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { OrderLineItem } from '../../../../types/floor';
+import { useLiveNow, getItemElapsedMetrics } from '@/features/shared/utils/elapsedTime';
 import { styles } from './OrderEntryModal.styles';
 
 export interface OrderCartSidebarProps {
@@ -39,6 +40,7 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
   onSend,
 }) => {
   const [showHistory, setShowHistory] = useState(false);
+  const nowMs = useLiveNow(showHistory && previousTabItems.length > 0);
 
   return (
     <View style={styles.cartPanel}>
@@ -106,48 +108,68 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
 
           {showHistory ? (
             <View style={{ marginTop: 8, gap: 6 }}>
-              {previousTabItems.map((prevItem, pIdx) => (
-                <View
-                  key={prevItem.id || pIdx}
-                  style={{
-                    flexDirection: 'row',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    paddingVertical: 8,
-                    paddingHorizontal: 10,
-                    borderRadius: 8,
-                    backgroundColor: prevItem.status === 'cancelled' ? '#fef2f2' : '#f1f5f9',
-                    minHeight: 48,
-                  }}
-                >
-                  <Text
+              {previousTabItems.map((prevItem, pIdx) => {
+                const metrics = getItemElapsedMetrics(prevItem, nowMs);
+                return (
+                  <View
+                    key={prevItem.id || pIdx}
                     style={{
-                      fontSize: 16,
-                      color: prevItem.status === 'cancelled' ? '#991b1b' : '#334155',
-                      textDecorationLine: prevItem.status === 'cancelled' ? 'line-through' : 'none',
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      paddingVertical: 8,
+                      paddingHorizontal: 10,
+                      borderRadius: 8,
+                      backgroundColor: prevItem.status === 'cancelled' ? '#fef2f2' : '#f1f5f9',
+                      minHeight: 48,
+                      gap: 8,
                     }}
                   >
-                    {prevItem.quantity}x {prevItem.productName}
-                  </Text>
-                  <Text
-                    style={{
-                      fontSize: 16,
-                      fontWeight: '700',
-                      textTransform: 'uppercase',
-                      color:
-                        prevItem.status === 'ready'
-                          ? '#15803d'
-                          : prevItem.status === 'preparing'
-                            ? '#b45309'
-                            : prevItem.status === 'cancelled'
-                              ? '#b91c1c'
-                              : '#64748b',
-                    }}
-                  >
-                    {prevItem.status}
-                  </Text>
-                </View>
-              ))}
+                    <Text
+                      style={{
+                        flex: 1,
+                        fontSize: 16,
+                        color: prevItem.status === 'cancelled' ? '#991b1b' : '#334155',
+                        textDecorationLine:
+                          prevItem.status === 'cancelled' ? 'line-through' : 'none',
+                      }}
+                    >
+                      {prevItem.quantity}x {prevItem.productName}
+                    </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      {prevItem.status !== 'cancelled' ? (
+                        <Text
+                          style={{
+                            fontSize: 13,
+                            fontWeight: '700',
+                            color: '#475569',
+                            fontVariant: ['tabular-nums'],
+                          }}
+                        >
+                          {metrics.displayTimer}
+                        </Text>
+                      ) : null}
+                      <Text
+                        style={{
+                          fontSize: 14,
+                          fontWeight: '700',
+                          textTransform: 'uppercase',
+                          color:
+                            prevItem.status === 'ready'
+                              ? '#15803d'
+                              : prevItem.status === 'preparing'
+                                ? '#b45309'
+                                : prevItem.status === 'cancelled'
+                                  ? '#b91c1c'
+                                  : '#64748b',
+                        }}
+                      >
+                        {metrics.stageLabel}
+                      </Text>
+                    </View>
+                  </View>
+                );
+              })}
             </View>
           ) : null}
         </View>

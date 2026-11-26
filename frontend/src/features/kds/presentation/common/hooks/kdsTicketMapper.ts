@@ -48,7 +48,9 @@ export function mapDineInTableTickets(
         const allReady =
           activeRoundItems.length > 0 &&
           activeRoundItems.every((i) => i.status === 'ready' || i.status === 'served');
-        const hasPrep = activeRoundItems.some((i) => i.status === 'preparing');
+        const hasPrep = activeRoundItems.some(
+          (i) => i.status === 'preparing' || i.status === 'ready' || i.status === 'served'
+        );
         const hasCancelled = roundItems.some((i) => i.status === 'cancelled');
 
         let stage: BarTicket['stage'] = 'new';
@@ -174,7 +176,9 @@ export function mapTakeoutTickets(
     const allReady =
       activeItems.length > 0 &&
       activeItems.every((i) => i.status === 'ready' || i.status === 'served');
-    const hasPrep = activeItems.some((i) => i.status === 'preparing');
+    const hasPrep = activeItems.some(
+      (i) => i.status === 'preparing' || i.status === 'ready' || i.status === 'served'
+    );
     let stage: BarTicket['stage'] = 'new';
     if (allCancelled) stage = 'cancelled';
     else if (allReady) stage = 'ready';
@@ -263,7 +267,9 @@ export function mapOnlineDeliveryTickets(
     const allReady =
       activeItems.length > 0 &&
       activeItems.every((i) => i.status === 'ready' || i.status === 'served');
-    const hasPrep = activeItems.some((i) => i.status === 'preparing');
+    const hasPrep = activeItems.some(
+      (i) => i.status === 'preparing' || i.status === 'ready' || i.status === 'served'
+    );
     let stage: BarTicket['stage'] = 'new';
     if (allCancelled) stage = 'cancelled';
     else if (allReady) stage = 'ready';

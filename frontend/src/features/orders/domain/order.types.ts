@@ -182,7 +182,8 @@ export interface OrderState {
     tableId: string,
     tabIndex: number,
     roundNumber: number,
-    stationTarget?: 'bar' | 'kitchen'
+    stationTarget?: 'bar' | 'kitchen',
+    onlyReady?: boolean
   ) => void;
   markTakeoutServed: (orderId: string) => void;
   markOnlineServed: (orderId: string) => void;

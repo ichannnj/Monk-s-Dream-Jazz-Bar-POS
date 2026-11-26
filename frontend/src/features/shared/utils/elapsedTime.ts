@@ -298,6 +298,8 @@ export function formatStageBreakdown(
   let queueDuration: string | undefined;
   if (prepMs && prepMs > createdMs) {
     queueDuration = formatElapsedTimer(Math.max(0, Math.floor((prepMs - createdMs) / 1000)));
+  } else if (!prepMs && readyMs && readyMs > createdMs) {
+    queueDuration = formatElapsedTimer(Math.max(0, Math.floor((readyMs - createdMs) / 1000)));
   }
 
   // Prep duration (prep -> ready or served or now)
@@ -346,5 +348,78 @@ export function formatStageBreakdown(
     prepDuration,
     passDuration,
     summaryText: parts.join(' · '),
+  };
+}
+
+export interface ItemElapsedMetrics {
+  status: 'pending' | 'preparing' | 'ready' | 'served' | 'cancelled';
+  stageLabel: 'NEW' | 'PREP' | 'READY' | 'SERVED' | 'VOID';
+  displayTimer: string;
+  totalWaitTimer: string;
+  urgency: TimerUrgency;
+  isFrozen: boolean;
+  breakdown: ReturnType<typeof formatStageBreakdown>;
+}
+
+/**
+ * Computes per-item live elapsed metrics:
+ * - Active items (pending/preparing/ready): live MM:SS in current stage with station/pass SLA urgency.
+ * - Served items: frozen at Total Wait (createdAt -> servedAt) with normal urgency.
+ */
+export function getItemElapsedMetrics(
+  item: {
+    status: string;
+    stationTarget?: 'bar' | 'kitchen';
+    createdAt?: string;
+    preparingAt?: string;
+    readyAt?: string;
+    servedAt?: string;
+    stateChangedAt?: string;
+  },
+  nowMs: number = Date.now()
+): ItemElapsedMetrics {
+  const normalized = (item.status?.toLowerCase() || 'pending') as ItemElapsedMetrics['status'];
+  const breakdown = formatStageBreakdown([item], nowMs);
+
+  if (normalized === 'cancelled') {
+    return {
+      status: 'cancelled',
+      stageLabel: 'VOID',
+      displayTimer: '00:00',
+      totalWaitTimer: breakdown.totalWaitTimer,
+      urgency: 'normal',
+      isFrozen: true,
+      breakdown,
+    };
+  }
+
+  if (normalized === 'served') {
+    return {
+      status: 'served',
+      stageLabel: 'SERVED',
+      displayTimer: breakdown.totalWaitTimer,
+      totalWaitTimer: breakdown.totalWaitTimer,
+      urgency: 'normal',
+      isFrozen: true,
+      breakdown,
+    };
+  }
+
+  const stageIso = getItemStateTimestamp(item);
+  const stageSec = stageIso ? getElapsedSeconds(stageIso, undefined, nowMs) : 0;
+  const urgencyTarget: 'bar' | 'kitchen' | 'runner' =
+    normalized === 'ready' ? 'runner' : item.stationTarget === 'kitchen' ? 'kitchen' : 'bar';
+
+  const stageLabel: ItemElapsedMetrics['stageLabel'] =
+    normalized === 'ready' ? 'READY' : normalized === 'preparing' ? 'PREP' : 'NEW';
+
+  return {
+    status: normalized,
+    stageLabel,
+    displayTimer: formatElapsedTimer(stageSec),
+    totalWaitTimer: breakdown.totalWaitTimer,
+    urgency: getTimerUrgency(stageSec, urgencyTarget),
+    isFrozen: false,
+    breakdown,
   };
 }

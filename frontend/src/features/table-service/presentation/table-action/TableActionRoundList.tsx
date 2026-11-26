@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Wine, ChefHat, Trash2, Ticket, Edit3, Plus } from 'lucide-react-native';
+import { Wine, ChefHat, Trash2, Ticket, Edit3, Plus, Check } from 'lucide-react-native';
 import { OrderLineItem, CustomerTab } from '../../../../types/floor';
 import { formatCurrency } from '@monks/shared';
-import { formatStageBreakdown } from '../../../shared/utils/elapsedTime';
+import { useLiveNow, getItemElapsedMetrics } from '../../../shared/utils/elapsedTime';
+import { useKeyedCooldown } from '../../../shared/hooks/useAsyncAction';
 
 export interface RoundGroup {
   roundNum: number;
@@ -20,6 +21,8 @@ interface TableActionRoundListProps {
   selectedTabIndex: number;
   rounds: RoundGroup[];
   onOpenVoidModal: (item: OrderLineItem) => void;
+  onServeItem?: (item: OrderLineItem) => void;
+  onServeRoundReady?: (roundNum: number) => void;
   onEditDoorCharge?: () => void;
   onAddDoorCharge?: () => void;
 }
@@ -30,9 +33,13 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
   selectedTabIndex,
   rounds,
   onOpenVoidModal,
+  onServeItem,
+  onServeRoundReady,
   onEditDoorCharge,
   onAddDoorCharge,
 }) => {
+  const nowMs = useLiveNow(true);
+  const { lock } = useKeyedCooldown(500);
   // Check if currentTab has door charge
   const doorChargeItem = currentTab?.items.find(
     (i) =>
@@ -135,16 +142,36 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                   </View>
                 </View>
 
-                <View
-                  className="px-3 py-1 rounded-full"
-                  style={{ backgroundColor: round.statusBg }}
-                >
-                  <Text
-                    className="text-xs font-bold uppercase tracking-wider"
-                    style={{ color: round.statusColor }}
+                <View className="flex-row items-center gap-2">
+                  {onServeRoundReady &&
+                  round.items.filter((i) => i.status === 'ready').length > 0 ? (
+                    <Pressable
+                      onPress={() => {
+                        if (!lock(`table:round-serve:${round.roundNum}`)) return;
+                        onServeRoundReady(round.roundNum);
+                      }}
+                      className="flex-row items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#810021] active:opacity-85 min-h-[36px]"
+                      accessibilityRole="button"
+                      accessibilityLabel={`Serve ready items in Round ${round.roundNum}`}
+                    >
+                      <Check size={13} color="#F7F5F2" strokeWidth={2.5} />
+                      <Text className="text-xs font-bold text-white">
+                        Serve Ready ({round.items.filter((i) => i.status === 'ready').length})
+                      </Text>
+                    </Pressable>
+                  ) : null}
+
+                  <View
+                    className="px-3 py-1 rounded-full"
+                    style={{ backgroundColor: round.statusBg }}
                   >
-                    {round.statusText}
-                  </Text>
+                    <Text
+                      className="text-xs font-bold uppercase tracking-wider"
+                      style={{ color: round.statusColor }}
+                    >
+                      {round.statusText}
+                    </Text>
+                  </View>
                 </View>
               </View>
 
@@ -152,6 +179,8 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
               <View className="gap-2.5">
                 {round.items.map((item, idx) => {
                   const isVoided = item.status === 'cancelled';
+                  const isReady = item.status === 'ready';
+                  const metrics = getItemElapsedMetrics(item, nowMs);
                   return (
                     <View
                       key={item.id || idx}
@@ -190,17 +219,46 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                               "{item.notes}"
                             </Text>
                           ) : null}
-                          {formatStageBreakdown([item]).summaryText ? (
-                            <Text className="text-[11px] text-stone-400 font-medium mt-0.5">
-                              {formatStageBreakdown([item]).summaryText}
+                          {metrics.breakdown.summaryText ? (
+                            <Text className="text-[11px] text-stone-400 font-medium mt-0.5 tabular-nums">
+                              {metrics.breakdown.summaryText}
                             </Text>
                           ) : null}
                         </View>
 
+                        {/* Per-Item Live Elapsed Timer Pill */}
+                        {!isVoided ? (
+                          <View
+                            className={`px-2 py-0.5 rounded ${
+                              metrics.isFrozen
+                                ? 'bg-stone-100'
+                                : metrics.urgency === 'late'
+                                  ? 'bg-rose-100'
+                                  : metrics.urgency === 'warning'
+                                    ? 'bg-amber-100'
+                                    : 'bg-[#EFECE6]'
+                            }`}
+                          >
+                            <Text
+                              className={`text-xs font-bold tabular-nums ${
+                                metrics.isFrozen
+                                  ? 'text-stone-500'
+                                  : metrics.urgency === 'late'
+                                    ? 'text-rose-800'
+                                    : metrics.urgency === 'warning'
+                                      ? 'text-amber-800'
+                                      : 'text-stone-700'
+                              }`}
+                            >
+                              {metrics.displayTimer}
+                            </Text>
+                          </View>
+                        ) : null}
+
                         {/* Item Status Badge */}
                         <View
                           className={`px-2 py-0.5 rounded ${
-                            item.status === 'ready'
+                            isReady
                               ? 'bg-[#810021]'
                               : isVoided
                                 ? 'bg-stone-100'
@@ -209,7 +267,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                         >
                           <Text
                             className={`text-xs font-bold uppercase ${
-                              item.status === 'ready'
+                              isReady
                                 ? 'text-white'
                                 : isVoided
                                   ? 'text-stone-400'
@@ -221,7 +279,7 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                         </View>
                       </View>
 
-                      <View className="flex-row items-center gap-2.5">
+                      <View className="flex-row items-center gap-2">
                         <Text
                           className={`text-base font-bold ${
                             isVoided ? 'line-through text-stone-400' : 'text-stone-900'
@@ -229,6 +287,21 @@ export const TableActionRoundList: React.FC<TableActionRoundListProps> = ({
                         >
                           {formatCurrency(item.unitPrice * item.quantity)}
                         </Text>
+
+                        {isReady && onServeItem ? (
+                          <Pressable
+                            onPress={() => {
+                              if (!lock(`table:item-serve:${item.id}`)) return;
+                              onServeItem(item);
+                            }}
+                            className="min-h-[44px] px-2.5 rounded-xl bg-[#810021] flex-row items-center justify-center gap-1 active:opacity-85"
+                            accessibilityRole="button"
+                            accessibilityLabel={`Serve ${item.productName}`}
+                          >
+                            <Check size={14} color="#F7F5F2" strokeWidth={2.5} />
+                            <Text className="text-xs font-bold text-white">Serve</Text>
+                          </Pressable>
+                        ) : null}
 
                         {!isVoided ? (
                           <Pressable

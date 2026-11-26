@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { BellRing, Repeat, Clock, Coffee, Utensils, CheckCircle2 } from 'lucide-react-native';
+import { OrderLineItem } from '../../../../../types/floor';
 import { RunnerTicket } from '../types';
 import { RunnerTicketItemList } from './RunnerTicketItemList';
 import { useLiveElapsedTimer } from '@/features/shared/utils/elapsedTime';
@@ -9,12 +10,14 @@ import { useKeyedCooldown } from '@/features/shared/hooks/useAsyncAction';
 interface RunnerTicketCardProps {
   ticket: RunnerTicket;
   onDeliverTarget: (ticket: RunnerTicket, target: 'bar' | 'kitchen') => void;
+  onDeliverItem?: (ticket: RunnerTicket, item: OrderLineItem) => void;
   onHandoff: (ticket: RunnerTicket) => void;
 }
 
 export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
   ticket,
   onDeliverTarget,
+  onDeliverItem,
   onHandoff,
 }) => {
   const { lock } = useKeyedCooldown(500);
@@ -36,25 +39,12 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
   const progressPct =
     ticket.totalItemsCount > 0 ? (ticket.readyItemsCount / ticket.totalItemsCount) * 100 : 0;
 
-  const hasReadyBar = ticket.items.some((i) => i.stationTarget === 'bar' && i.status === 'ready');
-  const hasPendingKitchen = ticket.items.some(
-    (i) =>
-      i.stationTarget === 'kitchen' &&
-      i.status !== 'ready' &&
-      i.status !== 'served' &&
-      i.status !== 'cancelled'
-  );
-
-  const hasReadyKitchen = ticket.items.some(
+  const readyBarCount = ticket.items.filter(
+    (i) => i.stationTarget === 'bar' && i.status === 'ready'
+  ).length;
+  const readyKitchenCount = ticket.items.filter(
     (i) => i.stationTarget === 'kitchen' && i.status === 'ready'
-  );
-  const hasPendingBar = ticket.items.some(
-    (i) =>
-      i.stationTarget === 'bar' &&
-      i.status !== 'ready' &&
-      i.status !== 'served' &&
-      i.status !== 'cancelled'
-  );
+  ).length;
 
   return (
     <View
@@ -157,59 +147,76 @@ export const RunnerTicketCard: React.FC<RunnerTicketCardProps> = ({
       </View>
 
       {/* Item Breakdown */}
-      <RunnerTicketItemList items={ticket.items} />
+      <RunnerTicketItemList
+        items={ticket.items}
+        onDeliverItem={onDeliverItem ? (item) => onDeliverItem(ticket, item) : undefined}
+      />
 
-      {/* Partial Delivery Actions */}
-      {!ticket.allDone && (hasReadyBar || hasReadyKitchen) ? (
+      {/* Partial Station Delivery Actions */}
+      {!ticket.allDone && (readyBarCount > 0 || readyKitchenCount > 0) ? (
         <View className="flex-row flex-wrap gap-2">
-          {hasReadyBar && hasPendingKitchen ? (
+          {readyBarCount > 0 ? (
             <Pressable
               onPress={() => handleDeliverTarget('bar')}
               className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
-              accessibilityLabel={`Deliver drinks for ${ticket.sourceTitle}`}
+              accessibilityLabel={`Deliver ready drinks for ${ticket.sourceTitle}`}
             >
               <Coffee size={18} color="#810021" />
-              <Text className="text-base font-semibold text-[#1A1617]">Deliver Drinks</Text>
+              <Text className="text-base font-semibold text-[#1A1617]">
+                Deliver Drinks ({readyBarCount})
+              </Text>
             </Pressable>
           ) : null}
 
-          {hasReadyKitchen && hasPendingBar ? (
+          {readyKitchenCount > 0 ? (
             <Pressable
               onPress={() => handleDeliverTarget('kitchen')}
               className="min-h-[48px] flex-1 flex-row items-center justify-center gap-2 rounded-xl bg-[#EFECE6] border border-[#E2DED6] px-3 active:opacity-80"
               accessibilityRole="button"
-              accessibilityLabel={`Deliver food for ${ticket.sourceTitle}`}
+              accessibilityLabel={`Deliver ready food for ${ticket.sourceTitle}`}
             >
               <Utensils size={18} color="#810021" />
-              <Text className="text-base font-semibold text-[#1A1617]">Deliver Food</Text>
+              <Text className="text-base font-semibold text-[#1A1617]">
+                Deliver Food ({readyKitchenCount})
+              </Text>
             </Pressable>
           ) : null}
         </View>
       ) : null}
 
-      {/* Full Handoff Action */}
-      <Pressable
-        onPress={handleHandoff}
-        className={`min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl px-4 active:opacity-85 ${
-          ticket.allDone ? 'bg-[#810021]' : 'bg-[#EFECE6] border border-[#E2DED6]'
-        }`}
-        accessibilityRole="button"
-        accessibilityLabel={
-          ticket.orderType === 'dine_in'
-            ? `Deliver round ${ticket.roundNumber || 1} to ${ticket.sourceTitle}`
-            : `Complete hand-off for ${ticket.sourceTitle}`
-        }
-      >
-        <CheckCircle2 size={18} color={ticket.allDone ? '#F7F5F2' : '#1A1617'} />
-        <Text
-          className={`text-base font-semibold ${ticket.allDone ? 'text-white' : 'text-[#1A1617]'}`}
+      {/* Full / Ready Handoff Action */}
+      {ticket.readyOnlyCount > 0 ? (
+        <Pressable
+          onPress={handleHandoff}
+          className={`min-h-[48px] w-full flex-row items-center justify-center gap-2 rounded-xl px-4 active:opacity-85 ${
+            ticket.allDone ? 'bg-[#810021]' : 'bg-[#EFECE6] border border-[#E2DED6]'
+          }`}
+          accessibilityRole="button"
+          accessibilityLabel={
+            ticket.allDone
+              ? ticket.orderType === 'dine_in'
+                ? `Deliver round ${ticket.roundNumber || 1} to ${ticket.sourceTitle}`
+                : `Complete hand-off for ${ticket.sourceTitle}`
+              : `Deliver ${ticket.readyOnlyCount} ready items for ${ticket.sourceTitle}`
+          }
         >
-          {ticket.orderType === 'dine_in'
-            ? `Deliver Round ${ticket.roundNumber || 1}`
-            : 'Complete Hand-off'}
-        </Text>
-      </Pressable>
+          <CheckCircle2 size={18} color={ticket.allDone ? '#F7F5F2' : '#1A1617'} />
+          <Text
+            className={`text-base font-semibold ${ticket.allDone ? 'text-white' : 'text-[#1A1617]'}`}
+          >
+            {ticket.allDone
+              ? ticket.orderType === 'dine_in'
+                ? `Deliver Round ${ticket.roundNumber || 1}`
+                : 'Complete Hand-off'
+              : `Deliver All Ready (${ticket.readyOnlyCount})`}
+          </Text>
+        </Pressable>
+      ) : (
+        <View className="min-h-[44px] w-full flex-row items-center justify-center rounded-xl bg-[#F7F5F2] border border-[#E2DED6] px-4">
+          <Text className="text-base font-medium text-[#57534E]">Waiting on Station Prep...</Text>
+        </View>
+      )}
     </View>
   );
 };

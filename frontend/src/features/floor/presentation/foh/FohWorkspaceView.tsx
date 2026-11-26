@@ -12,7 +12,7 @@ export const FohWorkspaceView: React.FC = () => {
   const [queueFilter, setQueueFilter] = useState<FohQueueFilter>('all');
   const [confirmHandoff, setConfirmHandoff] = useState<ConfirmHandoffState | null>(null);
 
-  const { runnerTickets, fullyReadyCount, executeHandoff } = useRunnerTickets();
+  const { runnerTickets, fullyReadyCount, deliverSingleItem, executeHandoff } = useRunnerTickets();
 
   const handleConfirmHandoff = () => {
     if (!confirmHandoff) return;
@@ -79,6 +79,7 @@ export const FohWorkspaceView: React.FC = () => {
                 key={ticket.id}
                 ticket={ticket}
                 onDeliverTarget={(t, target) => setConfirmHandoff({ ticket: t, target })}
+                onDeliverItem={deliverSingleItem}
                 onHandoff={(t) => setConfirmHandoff({ ticket: t })}
               />
             ))}

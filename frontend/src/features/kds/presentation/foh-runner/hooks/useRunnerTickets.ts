@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useOrderStore } from '../../../../orders/application/useOrderStore';
 import { toast } from '../../../../shared/toast/useToastStore';
 import { RunnerTicket, ConfirmHandoffState } from '../types';
+import type { OrderLineItem } from '@/types/floor';
 import { getElapsedSeconds, formatElapsedTimer } from '@/features/shared/utils/elapsedTime';
 
 export function useRunnerTickets() {
@@ -45,9 +46,9 @@ export function useRunnerTickets() {
           const allServed = roundItems.every((i) => i.status === 'served');
           if (allServed) return;
 
-          const readyCount = roundItems.filter(
-            (i) => i.status === 'ready' || i.status === 'served'
-          ).length;
+          const readyOnlyCount = roundItems.filter((i) => i.status === 'ready').length;
+          const servedItemsCount = roundItems.filter((i) => i.status === 'served').length;
+          const readyCount = readyOnlyCount + servedItemsCount;
           const totalCount = roundItems.length;
           const allDone = readyCount === totalCount && totalCount > 0;
           const roundCreatedAt =
@@ -82,6 +83,8 @@ export function useRunnerTickets() {
             items: roundItems,
             allDone,
             readyItemsCount: readyCount,
+            readyOnlyCount,
+            servedItemsCount,
             totalItemsCount: totalCount,
             transferredFrom: tab.transferredFrom,
           });
@@ -101,9 +104,9 @@ export function useRunnerTickets() {
         if (activeItems.length === 0) return;
         if (activeItems.every((i) => i.status === 'served')) return;
 
-        const readyCount = activeItems.filter(
-          (i) => i.status === 'ready' || i.status === 'served'
-        ).length;
+        const readyOnlyCount = activeItems.filter((i) => i.status === 'ready').length;
+        const servedItemsCount = activeItems.filter((i) => i.status === 'served').length;
+        const readyCount = readyOnlyCount + servedItemsCount;
         const totalCount = activeItems.length;
         const allDone = readyCount === totalCount && totalCount > 0;
         const orderCreatedAt = order.createdAt || activeItems.find((i) => i.createdAt)?.createdAt;
@@ -133,6 +136,8 @@ export function useRunnerTickets() {
           items: activeItems,
           allDone,
           readyItemsCount: readyCount,
+          readyOnlyCount,
+          servedItemsCount,
           totalItemsCount: totalCount,
         });
       }
@@ -150,9 +155,9 @@ export function useRunnerTickets() {
         if (activeItems.length === 0) return;
         if (activeItems.every((i) => i.status === 'served')) return;
 
-        const readyCount = activeItems.filter(
-          (i) => i.status === 'ready' || i.status === 'served'
-        ).length;
+        const readyOnlyCount = activeItems.filter((i) => i.status === 'ready').length;
+        const servedItemsCount = activeItems.filter((i) => i.status === 'served').length;
+        const readyCount = readyOnlyCount + servedItemsCount;
         const totalCount = activeItems.length;
         const allDone = readyCount === totalCount && totalCount > 0;
         const platformLabel = order.platform === 'grabfood' ? 'GrabFood' : 'Foodpanda';
@@ -183,6 +188,8 @@ export function useRunnerTickets() {
           items: activeItems,
           allDone,
           readyItemsCount: readyCount,
+          readyOnlyCount,
+          servedItemsCount,
           totalItemsCount: totalCount,
         });
       }
@@ -208,6 +215,39 @@ export function useRunnerTickets() {
 
   const fullyReadyCount = runnerTickets.filter((t) => t.allDone).length;
 
+  const deliverSingleItem = (ticket: RunnerTicket, item: OrderLineItem) => {
+    if (item.status !== 'ready') return;
+    try {
+      const remainingUnserved = ticket.items.filter(
+        (i) => i.id !== item.id && i.status !== 'cancelled' && i.status !== 'served'
+      );
+
+      if (ticket.orderType === 'takeout' && remainingUnserved.length === 0) {
+        const orderId = ticket.takeoutId || ticket.id.replace('takeout-', '');
+        const toOrder = takeoutOrders.find((o) => o.id === orderId);
+        markTakeoutServed(orderId);
+        if (toOrder && !toOrder.isPrepaid) {
+          toast.info(
+            `Bagged ${ticket.sourceTitle}. Payment is DUE AT COUNTER — settle at Floor POS before handoff!`,
+            { title: 'Payment Required at Counter' }
+          );
+          return;
+        }
+      } else if (ticket.orderType === 'online_delivery' && remainingUnserved.length === 0) {
+        const orderId = ticket.onlineId || ticket.id.replace('online-', '');
+        markOnlineServed(orderId);
+      } else {
+        updateOrderItemStatus(item.id, 'served');
+      }
+
+      toast.success(`Delivered ${item.quantity}× ${item.productName} (${ticket.sourceTitle})`);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to mark item as delivered.', {
+        title: 'Delivery Error',
+      });
+    }
+  };
+
   const executeHandoff = (confirmHandoff: ConfirmHandoffState) => {
     const { ticket, target } = confirmHandoff;
 
@@ -219,7 +259,7 @@ export function useRunnerTickets() {
           ticket.tabIndex &&
           ticket.roundNumber
         ) {
-          markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber, target);
+          markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber, target, true);
         } else {
           ticket.items
             .filter((i) => i.stationTarget === target && i.status === 'ready')
@@ -228,7 +268,7 @@ export function useRunnerTickets() {
             });
         }
         toast.success(
-          `Dispatched ${target === 'bar' ? 'Drinks' : 'Food'} for ${ticket.sourceTitle}`
+          `Dispatched ready ${target === 'bar' ? 'Drinks' : 'Food'} for ${ticket.sourceTitle}`
         );
       } else {
         if (
@@ -237,29 +277,45 @@ export function useRunnerTickets() {
           ticket.tabIndex &&
           ticket.roundNumber
         ) {
-          markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber);
+          markRoundServed(ticket.tableId, ticket.tabIndex, ticket.roundNumber, undefined, true);
         } else if (ticket.orderType === 'takeout') {
           const orderId = ticket.takeoutId || ticket.id.replace('takeout-', '');
           const toOrder = takeoutOrders.find((o) => o.id === orderId);
-          markTakeoutServed(orderId);
-          if (toOrder && !toOrder.isPrepaid) {
-            toast.info(
-              `Bagged ${ticket.sourceTitle}. Payment is DUE AT COUNTER — settle at Floor POS before handoff!`,
-              { title: 'Payment Required at Counter' }
-            );
-            return;
+          if (ticket.allDone) {
+            markTakeoutServed(orderId);
+            if (toOrder && !toOrder.isPrepaid) {
+              toast.info(
+                `Bagged ${ticket.sourceTitle}. Payment is DUE AT COUNTER — settle at Floor POS before handoff!`,
+                { title: 'Payment Required at Counter' }
+              );
+              return;
+            }
+          } else {
+            ticket.items
+              .filter((i) => i.status === 'ready')
+              .forEach((item) => updateOrderItemStatus(item.id, 'served'));
           }
         } else if (ticket.orderType === 'online_delivery') {
           const orderId = ticket.onlineId || ticket.id.replace('online-', '');
-          markOnlineServed(orderId);
+          if (ticket.allDone) {
+            markOnlineServed(orderId);
+          } else {
+            ticket.items
+              .filter((i) => i.status === 'ready')
+              .forEach((item) => updateOrderItemStatus(item.id, 'served'));
+          }
         } else {
           ticket.items.forEach((item) => {
-            if (item.status !== 'cancelled') {
+            if (item.status === 'ready') {
               updateOrderItemStatus(item.id, 'served');
             }
           });
         }
-        toast.success(`Handoff complete for ${ticket.sourceTitle}`);
+        toast.success(
+          ticket.allDone
+            ? `Handoff complete for ${ticket.sourceTitle}`
+            : `Delivered ready items for ${ticket.sourceTitle}`
+        );
       }
     } catch (err: any) {
       toast.error(
@@ -277,6 +333,7 @@ export function useRunnerTickets() {
     runnerTickets,
     fullyReadyCount,
     unreadAlertCount,
+    deliverSingleItem,
     executeHandoff,
   };
 }

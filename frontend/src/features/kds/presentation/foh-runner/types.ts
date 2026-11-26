@@ -16,6 +16,8 @@ export interface RunnerTicket {
   items: OrderLineItem[];
   allDone: boolean;
   readyItemsCount: number;
+  readyOnlyCount: number;
+  servedItemsCount: number;
   totalItemsCount: number;
   roundNumber?: number;
   tableId?: string;
