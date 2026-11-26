@@ -5,10 +5,15 @@ echo "=========================================="
 echo "🎷 Monk's Dream Jazz Bar POS — Render Build"
 echo "=========================================="
 
-# 1. Ensure pnpm is available
-if ! command -v pnpm &> /dev/null; then
-  echo "📦 pnpm not detected in PATH. Enabling via corepack / npm..."
-  corepack enable 2>/dev/null || npm install -g pnpm@latest
+# 1. Ensure exact pinned pnpm version matching package.json#packageManager
+EXPECTED_PNPM="12.11.2"
+CURRENT_PNPM="$(pnpm -v 2>/dev/null || echo "")"
+if [ "$CURRENT_PNPM" != "$EXPECTED_PNPM" ]; then
+  echo "📦 Ensuring pnpm@${EXPECTED_PNPM} (found: ${CURRENT_PNPM:-none})..."
+  COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack enable 2>/dev/null || true
+  if [ "$(pnpm -v 2>/dev/null || echo "")" != "$EXPECTED_PNPM" ]; then
+    npm install -g "pnpm@${EXPECTED_PNPM}"
+  fi
 fi
 
 echo "📍 Using Node: $(node -v)"
