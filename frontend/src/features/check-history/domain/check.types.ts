@@ -15,6 +15,7 @@ export interface SettledCheckItem {
   paymentId: string;
   tabId: string;
   checkNumber: string;
+  billNumber?: string;
   orderType: CheckOrderType;
   tableOrRef: string;
   guestName: string;

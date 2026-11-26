@@ -38,6 +38,7 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
           is_occupied,
           tabs (
             id,
+            bill_number,
             customer_name,
             status,
             order_type,
@@ -107,6 +108,7 @@ export const createHydrationSlice = (set: OrderStoreSet, get: OrderStoreGet) => 
             is_occupied,
             tabs (
               id,
+              bill_number,
               customer_name,
               status,
               order_type,

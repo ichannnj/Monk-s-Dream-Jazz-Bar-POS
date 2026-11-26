@@ -95,6 +95,7 @@ export interface OrderLineItem {
 export interface CustomerTab {
   id: string;
   tabIndex: number;
+  billNumber?: string;
   guestName: string;
   status: 'open' | 'billed' | 'closed';
   hasCorkageFee?: boolean;
@@ -188,6 +189,7 @@ export interface MenuItem {
 export interface TakeoutOrder {
   id: string;
   tabId?: string;
+  billNumber?: string;
   ticketNumber: string; // e.g. "T-105"
   customerName: string;
   items: OrderLineItem[];
@@ -222,6 +224,7 @@ export interface OnlineDeliveryOrder {
 export interface CheckItem {
   id: string;
   checkNumber: string;
+  billNumber?: string;
   orderType: 'dine_in' | 'takeout' | 'online_delivery';
   tableOrRef: string;
   guestName: string;

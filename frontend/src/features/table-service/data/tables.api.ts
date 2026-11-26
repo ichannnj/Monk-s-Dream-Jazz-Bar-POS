@@ -10,6 +10,7 @@ import {
   settleTabAndRecordPayment,
   completeOffPremiseTab,
   transferOrderItemsToTab,
+  getOrAssignTabBillNumber,
 } from './tabs.api';
 import { getTables, transferTableTab } from './transfer.api';
 import type { TransferTabParams, TransferTabResult } from './transfer.api';
@@ -22,6 +23,7 @@ export class TablesApi {
   transferOrderItemsToTab = transferOrderItemsToTab;
   settleTabAndRecordPayment = settleTabAndRecordPayment;
   completeOffPremiseTab = completeOffPremiseTab;
+  getOrAssignTabBillNumber = getOrAssignTabBillNumber;
 }
 
 export const tablesApi = new TablesApi();
@@ -34,6 +36,7 @@ export {
   createTab,
   settleTabAndRecordPayment,
   completeOffPremiseTab,
+  getOrAssignTabBillNumber,
   getTables,
   transferTableTab,
   transferOrderItemsToTab,

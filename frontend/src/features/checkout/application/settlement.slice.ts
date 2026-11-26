@@ -108,7 +108,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
           : undefined;
 
       const newCheck = createCheckItemRecord({
-        checkNumber: `#${1042 + state.checks.length}`,
+        checkNumber: 'Pending Sync...',
         orderType: 'dine_in',
         tableOrRef: `Table ${table.code} (${targetTab?.guestName || `Tab ${tabIndex}`})`,
         guestName: targetTab?.guestName || 'Guest',
@@ -233,7 +233,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
           : undefined;
 
       const newCheck = createCheckItemRecord({
-        checkNumber: `#${1042 + state.checks.length}`,
+        checkNumber: 'Pending Sync...',
         orderType: 'dine_in',
         tableOrRef: `Table ${table.code} (Group Settle)`,
         guestName: table.tabs?.map((t) => t.guestName).join(' & ') || `Table ${table.code}`,
@@ -353,7 +353,7 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
           : undefined;
 
       const newCheck = createCheckItemRecord({
-        checkNumber: `#${1042 + state.checks.length}`,
+        checkNumber: 'Pending Sync...',
         orderType: 'takeout',
         tableOrRef: `Takeout #${targetOrder.ticketNumber}`,
         guestName: targetOrder.customerName || 'Walk-in Guest',

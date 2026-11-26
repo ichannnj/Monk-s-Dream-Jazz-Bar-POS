@@ -133,7 +133,7 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
 
     expect(text57).toContain('Jazz Cafe and Bar');
     expect(text57).toContain('+63 917 833 3445');
-    expect(text57).toContain('CHECK #: MD-57MM-001');
+    expect(text57).toContain('RECEIPT #: MD-57MM-001');
     expect(text57).not.toContain('MODE:');
     expect(text57).not.toContain('TAX & STATUTORY');
     expect(text57).toContain('THIS IS NOT AN OFFICIAL RECEIPT');

@@ -164,8 +164,8 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         <View style={styles.receiptRow}>
           <Text style={[styles.receiptMeta, { fontWeight: '800' }]}>
             {isTakeout
-              ? `CHECK: #${takeoutOrder?.ticketNumber || 'T-001'}`
-              : `CHECK: #${(activeTab?.id || 'REC-001').slice(0, 8).toUpperCase()}`}
+              ? `BILL #: ${takeoutOrder?.billNumber || takeoutOrder?.ticketNumber || 'PENDING'}`
+              : `BILL #: ${activeTab?.billNumber || 'PENDING'}`}
           </Text>
         </View>
 

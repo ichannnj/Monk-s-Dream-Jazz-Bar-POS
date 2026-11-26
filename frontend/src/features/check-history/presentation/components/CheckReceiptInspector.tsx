@@ -28,10 +28,17 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
         {/* Top Bar with Single Primary Reprint Action */}
         <View className="flex-col sm:flex-row items-start sm:items-center justify-between pb-5 border-b border-stone-200 gap-3 print:hidden">
           <View>
-            <View className="flex-row items-center gap-2">
+            <View className="flex-row items-center gap-2 flex-wrap">
               <Text className="text-2xl font-black text-stone-900 tracking-tight">
-                Check {selectedCheck.checkNumber}
+                Receipt {selectedCheck.checkNumber}
               </Text>
+              {selectedCheck.billNumber ? (
+                <View className="bg-stone-100 border border-stone-200 px-2.5 py-0.5 rounded-full">
+                  <Text className="text-xs font-bold text-stone-600 uppercase">
+                    {selectedCheck.billNumber}
+                  </Text>
+                </View>
+              ) : null}
               <View className="bg-[#EFECE6] border border-stone-300 px-2.5 py-0.5 rounded-full">
                 <Text className="text-xs font-bold text-stone-800 uppercase">SETTLED</Text>
               </View>
@@ -83,7 +90,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
             Mobile: +63 917 833 3445 | @monksdreamjazz
           </Text>
           <Text className="text-xs text-center mt-1">
-            Check: {selectedCheck.checkNumber} · Date:{' '}
+            Receipt: {selectedCheck.checkNumber} · Date:{' '}
             {new Date(selectedCheck.settledAt).toLocaleString()}
           </Text>
         </View>

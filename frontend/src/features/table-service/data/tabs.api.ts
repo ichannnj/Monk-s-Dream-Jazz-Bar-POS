@@ -234,10 +234,38 @@ export async function settleTabAndRecordPayment(params: {
 
     realtimeGateway.broadcastPosSync('payment_settled');
 
-    return (data as unknown as { success: boolean }) || { success: true };
+    return (
+      (data as unknown as {
+        success: boolean;
+        receipt_number?: string;
+        bill_number?: string;
+        receipt_data?: any;
+      }) || { success: true }
+    );
   } catch (err: unknown) {
     console.error('settleTabAndRecordPayment error:', err);
     throw err;
+  }
+}
+
+export async function getOrAssignTabBillNumber(tabId: string): Promise<string | null> {
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tabId);
+  if (!isUuid) return null;
+
+  try {
+    const { data, error } = await supabase.rpc(
+      'get_or_assign_tab_bill_number' as never,
+      { p_tab_id: tabId } as never
+    );
+    if (error) {
+      console.warn('[tabs.api] getOrAssignTabBillNumber error:', error.message);
+      return null;
+    }
+    const raw = data as unknown;
+    return typeof raw === 'string' && raw.trim().length > 0 ? raw : null;
+  } catch (err) {
+    console.warn('[tabs.api] getOrAssignTabBillNumber fallback:', err);
+    return null;
   }
 }
 

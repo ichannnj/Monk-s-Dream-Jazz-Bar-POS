@@ -387,6 +387,8 @@ export function buildBillStatementBytes(
   // 4. Metadata Section
   builder.left();
   const billNo =
+    data.billNumber ||
+    data.bill_number ||
     data.receiptNumber ||
     data.checkNumber ||
     `MD-BILL-${(data.tabId || data.id || '001').slice(0, 8).toUpperCase()}`;

@@ -476,10 +476,21 @@ export function useBillSettlementController({
     }
     try {
       setIsPrintingBill(true);
+      const targetTabId = resolvedActiveTab?.id || takeoutOrder?.tabId || takeoutOrder?.id;
+      const resolvedBillNumber =
+        resolvedActiveTab?.billNumber ||
+        takeoutOrder?.billNumber ||
+        (targetTabId
+          ? await (
+              await import('@/features/table-service/data/tabs.api')
+            ).getOrAssignTabBillNumber(targetTabId)
+          : null) ||
+        `BILL-${(targetTabId || '001').slice(0, 8).toUpperCase()}`;
       const billData = {
         isBillStatement: true,
-        receiptNumber: `BILL-${(resolvedActiveTab?.id || takeoutOrder?.id || '001').slice(0, 8).toUpperCase()}`,
-        tabId: resolvedActiveTab?.id || takeoutOrder?.id,
+        receiptNumber: resolvedBillNumber,
+        billNumber: resolvedBillNumber,
+        tabId: targetTabId,
         operatingMode: effectiveOperatingMode,
         timestamp: new Date().toISOString(),
         tableNumber: table?.code,

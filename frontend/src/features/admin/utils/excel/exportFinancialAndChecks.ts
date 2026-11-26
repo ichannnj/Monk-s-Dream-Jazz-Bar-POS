@@ -143,11 +143,18 @@ export function exportChecksRegisterToExcel(
   checks: SettledCheckItem[],
   filterLabel: string = 'All Checks'
 ): void {
-  const rows = checks
+  const sortedChecks = [...checks].sort(
+    (a, b) =>
+      new Date(a.settledAt).getTime() - new Date(b.settledAt).getTime() ||
+      a.checkNumber.localeCompare(b.checkNumber)
+  );
+
+  const rows = sortedChecks
     .map(
       (chk) => `
       <Row ss:Height="20">
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(chk.checkNumber)}</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(chk.billNumber || '-')}</Data></Cell>
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(chk.operatingMode || 'CAFE')}</Data></Cell>
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${new Date(chk.settledAt).toLocaleDateString()}</Data></Cell>
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${chk.timestamp}</Data></Cell>
@@ -176,7 +183,8 @@ export function exportChecksRegisterToExcel(
   ${EXCEL_STYLES}
   <Worksheet ss:Name="Checks Register">
     <Table ss:DefaultColumnWidth="90" ss:DefaultRowHeight="20">
-      <Column ss:Width="80"/>
+      <Column ss:Width="95"/>
+      <Column ss:Width="85"/>
       <Column ss:Width="70"/>
       <Column ss:Width="85"/>
       <Column ss:Width="70"/>
@@ -193,19 +201,20 @@ export function exportChecksRegisterToExcel(
       <Column ss:Width="65"/>
 
       <Row ss:Height="30">
-        <Cell ss:MergeAcross="13" ss:StyleID="TitleBanner">
+        <Cell ss:MergeAcross="14" ss:StyleID="TitleBanner">
           <Data ss:Type="String">MONK'S DREAM JAZZ BAR &amp; BISTRO — SETTLED CHECKS REGISTER</Data>
         </Cell>
       </Row>
       <Row ss:Height="22">
-        <Cell ss:MergeAcross="13" ss:StyleID="SubtitleBanner">
-          <Data ss:Type="String">Scope: ${escapeXml(filterLabel)} • Exported on ${new Date().toLocaleString()} • ${checks.length} Records</Data>
+        <Cell ss:MergeAcross="14" ss:StyleID="SubtitleBanner">
+          <Data ss:Type="String">Scope: ${escapeXml(filterLabel)} • Exported on ${new Date().toLocaleString()} • ${sortedChecks.length} Records</Data>
         </Cell>
       </Row>
       <Row ss:Height="10"/>
 
       <Row ss:Height="24">
-        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Check #</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Receipt #</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Bill #</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Mode</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Date</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Time</Data></Cell>
@@ -237,9 +246,14 @@ export function exportCashlessRegisterToExcel(
   transactions: SettledCheckItem[],
   filterLabel: string = 'All Cashless Transactions'
 ): void {
-  const totalAmount = transactions.reduce((acc, t) => acc + (t.total || 0), 0);
+  const sortedTransactions = [...transactions].sort(
+    (a, b) =>
+      new Date(a.settledAt).getTime() - new Date(b.settledAt).getTime() ||
+      a.checkNumber.localeCompare(b.checkNumber)
+  );
+  const totalAmount = sortedTransactions.reduce((acc, t) => acc + (t.total || 0), 0);
 
-  const rows = transactions
+  const rows = sortedTransactions
     .map(
       (tx) => `
       <Row ss:Height="20">
@@ -295,7 +309,7 @@ export function exportCashlessRegisterToExcel(
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Reference #</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Channel / Method</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Amount (PHP)</Data></Cell>
-        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Check #</Data></Cell>
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Receipt #</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Mode</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Date</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Time</Data></Cell>
