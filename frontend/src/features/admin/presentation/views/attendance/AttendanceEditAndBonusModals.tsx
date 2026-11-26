@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { Award, Clock, History } from 'lucide-react-native';
+import { Award, Clock, History, Lock } from 'lucide-react-native';
 import { AdminModal, AdminNumberInput, AdminInput } from '../../components';
 import { adminApi, type StaffMemberAdmin, type AttendancePunchLog } from '../../../data/admin.api';
+import type { PayrollDateLockInfo } from '../payroll/payroll.types';
 import { EditingRecordState } from './attendance.types';
 import {
   computeHoursBetweenIso,
@@ -31,6 +32,7 @@ export const AttendanceEditAndBonusModals: React.FC<AttendanceEditAndBonusModals
 }) => {
   const [punches, setPunches] = useState<AttendancePunchLog[]>([]);
   const [showPunches, setShowPunches] = useState(false);
+  const [payrollLock, setPayrollLock] = useState<PayrollDateLockInfo>({ locked: false });
 
   const isTargetAdmin = useMemo(() => {
     if (!editingRecord) return false;
@@ -41,12 +43,17 @@ export const AttendanceEditAndBonusModals: React.FC<AttendanceEditAndBonusModals
     if (!editingRecord) {
       setPunches([]);
       setShowPunches(false);
+      setPayrollLock({ locked: false });
       return;
     }
     adminApi
       .getAttendancePunches(editingRecord.userId, editingRecord.date)
       .then(setPunches)
       .catch(() => setPunches([]));
+    adminApi
+      .getPayrollLockForDate(editingRecord.date)
+      .then(setPayrollLock)
+      .catch(() => setPayrollLock({ locked: false }));
   }, [editingRecord?.userId, editingRecord?.date]);
 
   const liveComputation = useMemo(() => {
@@ -119,6 +126,16 @@ export const AttendanceEditAndBonusModals: React.FC<AttendanceEditAndBonusModals
     >
       {editingRecord && (
         <View className="space-y-4">
+          {payrollLock.locked && (
+            <View className="rounded-xl border border-[#810021]/30 bg-[#810021]/10 p-3 flex-row items-start gap-2">
+              <Lock size={15} color="#810021" />
+              <Text className="flex-1 text-xs font-bold text-[#810021]">
+                Locked by {payrollLock.title || payrollLock.runCode} ({payrollLock.status}). Edits
+                here will not alter finalized payroll snapshots; add any correction in the next
+                cutoff.
+              </Text>
+            </View>
+          )}
           {editingRecord.needsReview && (
             <View className="rounded-xl border border-amber-200 bg-amber-50 p-3">
               <Text className="text-xs font-bold text-amber-900">

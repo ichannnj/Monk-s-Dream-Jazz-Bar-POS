@@ -551,3 +551,67 @@ export function buildBillStatementBytes(
 
   return builder.toBytes();
 }
+
+/**
+ * Generates an ESC/POS 57mm/80mm Payslip Voucher (never kicks cash drawer)
+ */
+export function buildPayslipVoucherBytes(
+  data: any,
+  paperWidth: '80mm' | '58mm' | '57mm' = '57mm'
+): Uint8Array {
+  const cols = paperWidth === '57mm' || paperWidth === '58mm' ? 32 : 48;
+  const builder = new EscPosBuilder();
+
+  builder.center();
+  builder.bold(true).line("MONK'S DREAM JAZZ BAR & CAFE").bold(false);
+  builder.line('EMPLOYEE PAYSLIP VOUCHER');
+  builder.line(divider('=', cols));
+
+  builder.left();
+  builder
+    .bold(true)
+    .line(`CUTOFF: ${String(data.runCode || '').slice(0, cols - 8)}`)
+    .bold(false);
+  builder.line(`PERIOD: ${data.periodStart || ''} to ${data.periodEnd || ''}`);
+  builder.line(`PAYDAY: ${data.paydayDate || ''}`);
+  builder.line(divider('-', cols));
+  builder
+    .bold(true)
+    .line(`STAFF:  ${String(data.employeeName || '').slice(0, cols - 8)}`)
+    .bold(false);
+  builder.line(`ROLE:   ${String(data.employeeRole || '').slice(0, cols - 8)}`);
+  builder.line(
+    `SHIFTS: ${Number(data.shiftsWorked || 0)} (${Number(data.hoursWorked || 0).toFixed(1)}h)`
+  );
+  builder.line(divider('-', cols));
+
+  builder.text(padLine('Base Pay:', `PHP ${formatPhp(toPesos(data.basePay))}`, cols));
+  if (toPesos(data.overtimePay) > 0) {
+    builder.text(padLine('Overtime Pay:', `PHP ${formatPhp(toPesos(data.overtimePay))}`, cols));
+  }
+  if (toPesos(data.shiftBonus) > 0) {
+    builder.text(padLine('Shift Bonuses:', `PHP ${formatPhp(toPesos(data.shiftBonus))}`, cols));
+  }
+  if (toPesos(data.additions) > 0) {
+    builder.text(padLine('Cutoff Additions:', `PHP ${formatPhp(toPesos(data.additions))}`, cols));
+  }
+  if (toPesos(data.deductions) > 0) {
+    builder.text(padLine('Deductions:', `-PHP ${formatPhp(toPesos(data.deductions))}`, cols));
+  }
+  builder.line(divider('=', cols));
+
+  builder.bold(true).doubleHeight(true);
+  builder.text(padLine('NET PAY:', `PHP ${formatPhp(toPesos(data.netPay))}`, cols));
+  builder.doubleHeight(false).bold(false);
+  builder.line(divider('-', cols));
+
+  const statusLine = data.paymentMethod
+    ? `${data.payoutStatus || 'PAID'} (${data.paymentMethod}${data.paymentReference ? ` #${data.paymentReference}` : ''})`
+    : String(data.payoutStatus || 'PENDING');
+  builder.line(`STATUS: ${statusLine}`);
+  builder.line('');
+  builder.line('Received by: ___________________');
+  builder.cut(true);
+
+  return builder.toBytes();
+}

@@ -198,4 +198,26 @@ export const printerApi = {
   async releaseJobToPending(jobId: string): Promise<void> {
     await supabase.from('print_jobs').update({ status: 'PENDING' }).eq('id', jobId);
   },
+
+  async enqueuePayslipVoucher(payload: Record<string, any>): Promise<PrintJobItem> {
+    const { data, error } = await supabase
+      .from('print_jobs')
+      .insert({
+        job_type: 'PAYSLIP_VOUCHER',
+        receipt_data: {
+          ...payload,
+          timestamp: new Date().toISOString(),
+        },
+        status: 'PENDING',
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('[printerApi.enqueuePayslipVoucher] Failed to enqueue payslip:', error);
+      throw error;
+    }
+
+    return data as PrintJobItem;
+  },
 };
