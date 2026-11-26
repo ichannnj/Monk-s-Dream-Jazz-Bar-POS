@@ -48,7 +48,8 @@ export const FohRunnerScreen: React.FC = () => {
     };
   }, [currentUser?.id]);
 
-  const { runnerTickets, fullyReadyCount, unreadAlertCount, executeHandoff } = useRunnerTickets();
+  const { runnerTickets, fullyReadyCount, unreadAlertCount, deliverSingleItem, executeHandoff } =
+    useRunnerTickets();
   const unreadChatCount = useChatStore((state) =>
     state.conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0)
   );
@@ -160,6 +161,7 @@ export const FohRunnerScreen: React.FC = () => {
                       <RunnerTicketCard
                         ticket={ticket}
                         onDeliverTarget={(t, target) => setConfirmHandoff({ ticket: t, target })}
+                        onDeliverItem={deliverSingleItem}
                         onHandoff={(t) => setConfirmHandoff({ ticket: t })}
                       />
                     </View>

@@ -95,4 +95,54 @@ describe('KDS Ticket Mapper Stage & Partial Delivery Regressions', () => {
     // Door charge must never leak onto Bar KDS ticket items
     expect(tickets[0].items.some((i) => i.categorySlug === 'door_charge')).toBe(false);
   });
+
+  it('moves partial-ready ticket (1 ready + 1 pending) out of NEW into PREPARING', () => {
+    const tables: TableItem[] = [
+      {
+        id: 'tbl-2',
+        code: 'T-02',
+        area: 'cafe',
+        capacity: 2,
+        status: 'preparing',
+        activeTabs: [1],
+        totalAmount: 500,
+        tabs: [
+          {
+            id: 'tab-uuid-2',
+            tabIndex: 1,
+            guestName: 'Coltrane',
+            status: 'open',
+            totalAmount: 500,
+            openedAt: '10:00 PM',
+            items: [
+              {
+                id: 'k-1',
+                productId: 'p-10',
+                productName: 'Truffle Fries',
+                stationTarget: 'kitchen',
+                unitPrice: 250,
+                quantity: 1,
+                status: 'ready',
+                roundNumber: 1,
+              },
+              {
+                id: 'k-2',
+                productId: 'p-11',
+                productName: 'Ribeye Steak',
+                stationTarget: 'kitchen',
+                unitPrice: 250,
+                quantity: 1,
+                status: 'pending',
+                roundNumber: 1,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const tickets = mapDineInTableTickets(tables, 'kitchen', []);
+    expect(tickets).toHaveLength(1);
+    expect(tickets[0].stage).toBe('preparing');
+  });
 });

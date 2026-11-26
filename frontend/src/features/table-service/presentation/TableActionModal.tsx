@@ -59,7 +59,13 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
   onCheckout,
 }) => {
   const { currentUser } = useAuthStore();
-  const { voidOrderItem, closeEmptyTab, upsertTabDoorCharge } = useOrderStore();
+  const {
+    voidOrderItem,
+    closeEmptyTab,
+    upsertTabDoorCharge,
+    updateOrderItemStatus,
+    markRoundServed,
+  } = useOrderStore();
   const todayEvent = useEventStore((s) => s.getTodayActiveEvent());
 
   const { height } = useWindowDimensions();
@@ -120,6 +126,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
         const allCancelled = items.length > 0 && activeItems.length === 0;
         const allReady = activeItems.length > 0 && activeItems.every((i) => i.status === 'ready');
         const allServed = activeItems.length > 0 && activeItems.every((i) => i.status === 'served');
+        const hasReady = activeItems.some((i) => i.status === 'ready');
         const hasPrep = activeItems.some((i) => i.status === 'preparing');
 
         let statusText = 'NEW';
@@ -138,6 +145,10 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
           statusText = 'READY';
           statusBg = '#810021';
           statusColor = '#F7F5F2';
+        } else if (hasReady) {
+          statusText = 'PARTIAL READY';
+          statusBg = '#dcfce7';
+          statusColor = '#15803d';
         } else if (hasPrep) {
           statusText = 'PREPARING';
           statusBg = '#EFECE6';
@@ -343,6 +354,15 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
                 selectedTabIndex={selectedTabIndex}
                 rounds={rounds}
                 onOpenVoidModal={handleOpenVoidModal}
+                onServeItem={(item) => {
+                  if (item.status !== 'ready') return;
+                  updateOrderItemStatus(item.id, 'served');
+                  toast.success(`Served ${item.quantity}× ${item.productName}`);
+                }}
+                onServeRoundReady={(roundNum) => {
+                  markRoundServed(table.id, selectedTabIndex, roundNum, undefined, true);
+                  toast.success(`Served ready items in Round ${roundNum}`);
+                }}
                 onEditDoorCharge={() => setIsDoorChargeEditorOpen(true)}
                 onAddDoorCharge={() => setIsDoorChargeEditorOpen(true)}
               />

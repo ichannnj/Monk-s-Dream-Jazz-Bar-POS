@@ -146,7 +146,15 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
                 if (itemIdx >= 0) {
                   tableModified = true;
                   const itemsCopy = [...tab.items];
-                  itemsCopy[itemIdx] = { ...itemsCopy[itemIdx], status: newStatus };
+                  const existing = itemsCopy[itemIdx];
+                  itemsCopy[itemIdx] = {
+                    ...existing,
+                    status: newStatus,
+                    preparingAt: item.preparing_at || existing.preparingAt,
+                    readyAt: item.ready_at || existing.readyAt,
+                    servedAt: item.delivered_at || existing.servedAt,
+                    stateChangedAt: item.state_changed_at || existing.stateChangedAt,
+                  };
                   const nextTab = { ...tab, items: itemsCopy };
                   nextTab.totalAmount = deriveTabTotal(nextTab);
                   return nextTab;
@@ -180,7 +188,15 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
               const itemIdx = order.items.findIndex((i) => i.id === itemId);
               if (itemIdx >= 0) {
                 const itemsCopy = [...order.items];
-                itemsCopy[itemIdx] = { ...itemsCopy[itemIdx], status: newStatus };
+                const existing = itemsCopy[itemIdx];
+                itemsCopy[itemIdx] = {
+                  ...existing,
+                  status: newStatus,
+                  preparingAt: item.preparing_at || existing.preparingAt,
+                  readyAt: item.ready_at || existing.readyAt,
+                  servedAt: item.delivered_at || existing.servedAt,
+                  stateChangedAt: item.state_changed_at || existing.stateChangedAt,
+                };
                 const activeItems = itemsCopy.filter((i) => i.status !== 'cancelled');
                 const allReady =
                   activeItems.length > 0 &&
@@ -202,7 +218,15 @@ export const createRealtimeSlice = (set: OrderStoreSet, get: OrderStoreGet) => {
               const itemIdx = order.items.findIndex((i) => i.id === itemId);
               if (itemIdx >= 0) {
                 const itemsCopy = [...order.items];
-                itemsCopy[itemIdx] = { ...itemsCopy[itemIdx], status: newStatus };
+                const existing = itemsCopy[itemIdx];
+                itemsCopy[itemIdx] = {
+                  ...existing,
+                  status: newStatus,
+                  preparingAt: item.preparing_at || existing.preparingAt,
+                  readyAt: item.ready_at || existing.readyAt,
+                  servedAt: item.delivered_at || existing.servedAt,
+                  stateChangedAt: item.state_changed_at || existing.stateChangedAt,
+                };
                 const activeItems = itemsCopy.filter((i) => i.status !== 'cancelled');
                 const allReady =
                   activeItems.length > 0 &&

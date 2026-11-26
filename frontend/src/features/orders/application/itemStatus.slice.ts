@@ -138,7 +138,8 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
     tableId: string,
     tabIndex: number,
     roundNumber: number,
-    stationTarget?: 'bar' | 'kitchen'
+    stationTarget?: 'bar' | 'kitchen',
+    onlyReady: boolean = true
   ) => {
     const itemIdsToUpdate: string[] = [];
     const nowIso = new Date().toISOString();
@@ -153,12 +154,10 @@ export const createItemStatusSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
           const updatedItems = tab.items.map((item) => {
             const matchesRound = (item.roundNumber || 1) === roundNumber;
             const matchesStation = !stationTarget || item.stationTarget === stationTarget;
-            if (
-              matchesRound &&
-              matchesStation &&
-              item.status !== 'cancelled' &&
-              item.status !== 'served'
-            ) {
+            const matchesStatus = onlyReady
+              ? item.status === 'ready'
+              : item.status !== 'cancelled' && item.status !== 'served';
+            if (matchesRound && matchesStation && matchesStatus) {
               itemIdsToUpdate.push(item.id);
               return {
                 ...item,
