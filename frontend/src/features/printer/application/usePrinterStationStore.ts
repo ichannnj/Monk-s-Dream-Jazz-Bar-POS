@@ -17,6 +17,7 @@ import {
   buildReadingSlipBytes,
   buildCashDrawerKickBytes,
 } from '../services/escposBuilder';
+import { buildPayslipVoucherBytes } from '../services/escposSpecialSlips';
 
 export type StationConnectionStatus = 'DISCONNECTED' | 'CONNECTING' | 'CONNECTED' | 'ERROR';
 export type DrawerStatus = 'IDLE' | 'KICKING';
@@ -394,6 +395,12 @@ export const usePrinterStationStore = create<PrinterStationState>((set, get) => 
         case 'Y_READING':
         case 'Z_READING':
           bytes = buildReadingSlipBytes(rawData, paperWidth);
+          break;
+
+        case 'PAYSLIP_VOUCHER':
+          // Payslip voucher: paper slip only, NEVER kicks cash drawer
+          isCashSettlement = false;
+          bytes = buildPayslipVoucherBytes(rawData, paperWidth);
           break;
 
         default:

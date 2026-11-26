@@ -24,6 +24,7 @@ import { AdminInventoryView } from './views/AdminInventoryView';
 import { AdminRecipesView } from './views/AdminRecipesView';
 import { AdminStaffView } from './views/AdminStaffView';
 import { AdminAttendancePayrollView } from './views/AdminAttendancePayrollView';
+import { AdminPayrollView } from './views/AdminPayrollView';
 import { AdminStationsView } from './views/AdminStationsView';
 import { AdminTransactionsView } from './views/AdminTransactionsView';
 import { AdminSettingsView } from './views/AdminSettingsView';
@@ -229,6 +230,8 @@ export const AdminBackOfficeScreen: React.FC<{ onSwitchToFloor?: () => void }> =
             onNavigateToRoster={() => setCurrentRoute('staff')}
           />
         );
+      case 'payroll':
+        return <AdminPayrollView onRefresh={loadData} />;
       case 'stations':
         return (
           <AdminStationsView
