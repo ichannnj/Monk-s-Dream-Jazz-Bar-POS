@@ -8,6 +8,7 @@ export type AdminRoute =
   | 'staff'
   | 'sales'
   | 'attendance'
+  | 'payroll'
   | 'tables'
   | 'settings'
   | 'profile';
