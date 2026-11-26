@@ -1,6 +1,6 @@
 # 🎷 Monk's Dream Jazz Bar — Cloud POS, KDS & Inventory Platform
 
-> A full-stack, cloud-native Point of Sale (POS), Kitchen Display System (KDS), and Recipe Inventory Platform engineered for **Monk's Dream Jazz Bar**. Built with **React Native (Expo SDK 52+)**, **Supabase BaaS (PostgreSQL, Realtime WebSockets, Storage & PL/pgSQL Stored Procedures)**, **Turborepo**, and **NativeWind v4**.
+> A full-stack, cloud-native Point of Sale (POS), Kitchen Display System (KDS), and Recipe Inventory Platform engineered for **Monk's Dream Jazz Bar**. Built with **React Native (Expo SDK 57+)**, **Supabase BaaS (PostgreSQL, Realtime WebSockets, Storage & PL/pgSQL Stored Procedures)**, **Turborepo**, and **NativeWind v4**.
 
 ---
 
@@ -8,11 +8,11 @@
 
 Detailed architectural specifications, multi-channel intake rules, recipe BOM depletion mechanics, data models, and business logic are fully documented in:
 
-- 👉 **[CONTEXT.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/CONTEXT.md)** — _Authoritative venue operating modes, domain invariants, 4-digit PIN matrix, and system topology._
-- 👉 **[PHASES.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/PHASES.md)** — _Step-by-step master progress board and phase execution runbooks._
-- 👉 **[AGENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/AGENTS.md)** — _Task-to-File Fast Router, token-efficient slicing rules, and agent operating guidelines._
-- 👉 **[CONTRIBUTING.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/CONTRIBUTING.md)** — _Developer setup, Supabase CLI workflows, and testing commands._
-- 👉 **[REQUIREMENTS.md](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/REQUIREMENTS.md)** — _Original comprehensive venue requirements and thermal printing specifications._
+- 👉 **[CONTEXT.md](./CONTEXT.md)** — _Authoritative venue operating modes, domain invariants, 4-digit PIN matrix, and system topology._
+- 👉 **[PHASES.md](./PHASES.md)** — _Step-by-step master progress board and phase execution runbooks._
+- 👉 **[AGENTS.md](./AGENTS.md)** — _Task-to-File Fast Router, token-efficient slicing rules, and agent operating guidelines._
+- 👉 **[CONTRIBUTING.md](./CONTRIBUTING.md)** — _Developer setup, Supabase CLI workflows, and testing commands._
+- 👉 **[REQUIREMENTS.md](./REQUIREMENTS.md)** — _Original comprehensive venue requirements and thermal printing specifications._
 
 ---
 
@@ -122,21 +122,20 @@ Bar Cocktails) │                                             │ Kitchen Bites
 
 ---
 
-## 👥 Staff Profiles & Default 4-Digit PINs
+## 👥 Staff Profiles & Default Credentials
 
-Access control is strictly PIN-based across all shared floor and counter tablets. All PINs are **4 digits**:
+Operational floor/station terminals use **4-digit PINs**, while Admin Back-Office access requires **Username/Password** authentication (with a separate 4-digit Floor Manager Override PIN):
 
-| Role             | Username           | Display Name           | Station / Screen                       | 4-Digit PIN | Permissions                                                                |
-| ---------------- | ------------------ | ---------------------- | -------------------------------------- | ----------- | -------------------------------------------------------------------------- |
-| **Admin**        | `miles_manager`    | Miles (Manager)        | Admin Hub & Back-Office                | `9999`      | Full system control, mode toggle, recipe builder, inventory, salaries      |
-| **Cashier**      | `coltrane_cashier` | Coltrane (Cashier)     | Handheld POS Tablet                    | `1111`      | Table grid, takeout queue, Grab/Foodpanda intake, table transfers, billing |
-| **Floor Waiter** | `ella_waiter`      | Ella (Floor Waiter)    | Handheld POS Tablet                    | `2222`      | Table ordering, customer named tabs, table moves & transfers, checkout     |
-| **Bartender**    | `monk_bar`         | Thelonious (Bartender) | Bar Tablet KDS (`station:bar`)         | `3333`      | Cocktails, liquor, beer, wine prep queue                                   |
-| **Barista**      | `bill_cafe`        | Bill (Barista)         | Cafe Tablet KDS (`station:bar`)        | `4444`      | Artisan espresso, pour-overs, teas, and cold drinks prep queue             |
-| **Kitchen Chef** | `chet_kitchen`     | Chet (Head Chef)       | Kitchen Tablet KDS (`station:kitchen`) | `5555`      | Food, pasta, pizza, appetizers, and dessert prep queue                     |
-| **FOH Runner**   | `max_runner`       | Max (FOH Runner)       | Runner Tablet (`station:foh_runner`)   | `6666`      | Ready-to-serve dispatch & pickup packaging (Buzzout tablet)                |
-| **Dishwasher**   | `rosa_dish`        | Rosa (Dishwasher)      | Attendance Only                        | `7777`      | Shift check-in & attendance recording                                      |
-| **Sound Tech**   | `marcus_sound`     | Marcus (Sound Tech)    | Back-Office / Sound Booth              | `8888`      | Audio/visual and acoustic shift check-in                                   |
+| Role             | Username           | Display Name           | Station / Screen                       | Credential / PIN                    | Permissions                                                                |
+| ---------------- | ------------------ | ---------------------- | -------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------- |
+| **Admin**        | `miles_manager`    | Miles (Manager)        | Admin Hub & Back-Office                | `MonksDream9999!` (`9999` override) | Full system control, mode toggle, recipe builder, inventory, payroll       |
+| **Cashier**      | `coltrane_cashier` | Coltrane (Cashier)     | Handheld POS Tablet & FOH              | `1111`                              | Table grid, takeout queue, Grab/Foodpanda intake, table transfers, billing |
+| **Floor Waiter** | `ella_waiter`      | Ella (Floor Waiter)    | Handheld POS Tablet & FOH              | `2222`                              | Table ordering, customer named tabs, FOH pass delivery, transfers, billing |
+| **Bartender**    | `monk_bar`         | Thelonious (Bartender) | Bar Tablet KDS (`station:bar`)         | `3333`                              | Cocktails, liquor, beer, wine prep queue                                   |
+| **Barista**      | `bill_cafe`        | Bill (Barista)         | Cafe Tablet KDS (`station:bar`)        | `4444`                              | Artisan espresso, pour-overs, teas, and cold drinks prep queue             |
+| **Kitchen Chef** | `chet_kitchen`     | Chet (Head Chef)       | Kitchen Tablet KDS (`station:kitchen`) | `5555`                              | Food, pasta, pizza, appetizers, and dessert prep queue                     |
+| **Dishwasher**   | `rosa_dish`        | Rosa (Dishwasher)      | Attendance Kiosk Only                  | `7777`                              | Shift check-in & attendance recording                                      |
+| **Sound Tech**   | `marcus_sound`     | Marcus (Sound Tech)    | Attendance Kiosk / Sound Booth         | `8888`                              | Audio/visual and acoustic shift check-in                                   |
 
 ---
 
@@ -180,39 +179,44 @@ pnpm supabase:reset
 pnpm supabase:types
 ```
 
-### 4. Run Development Server
+### 4. Run Development Server & Quality Checks
 
 ```bash
 # Start Frontend (Expo Web & Tablet POS)
 pnpm --filter @monks/frontend run web
+
+# Run unit tests, typechecks, and linters
+pnpm test
+pnpm typecheck
+pnpm lint
 ```
 
 ---
 
 ## 🗺️ Project Implementation Roadmap
 
-- [x] **Monorepo Foundation:** Turborepo, Expo SDK 52+, NativeWind v4, Zustand store, and `@monks/shared` packages.
-- [x] **Phase 01: [Database Models, BOM & Seeding](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-1-data-models-and-seeding.md)**
-  - [x] 18 models and enums in Supabase SQL migrations (`supabase/migrations/`).
+- [x] **Monorepo Foundation:** Turborepo, Expo SDK 57+, NativeWind v4, Zustand store, and `@monks/shared` packages.
+- [x] **Phase 01: [Database Models, BOM & Seeding](./phases/phase-1-data-models-and-seeding.md)**
+  - [x] Models and enums in Supabase SQL migrations (`supabase/migrations/`).
   - [x] Curated artisan food & cocktail photography seed data (`supabase/seed.sql`).
-  - [x] Secure staff credential authentication stored procedure (`authenticate_staff_credentials`).
+  - [x] Secure staff credential authentication stored procedure (`authenticate_staff_credentials` & `authenticate_admin_credentials`).
   - [x] Menu item image updating stored procedure & `menu-images` storage bucket policies.
-- [x] **Phase 02: [Real-Time Gateway, Transfers, Depletion & Billing](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-2-realtime-gateway-depletion.md)**
+- [x] **Phase 02: [Real-Time Gateway, Transfers, Depletion & Billing](./phases/phase-2-realtime-gateway-depletion.md)**
   - [x] Atomic PL/pgSQL order depletion (`dispatch_order_with_depletion`) and Auto-86 safeguard.
   - [x] Void restoral (`cancel_order_item_with_restoral`).
-  - [x] Tab settlement (`settle_tab_and_record_payment`).
+  - [x] Tab settlement (`settle_tab_and_record_payment`) with split-tender & explicit service charge support.
   - [x] Live table/tab transfer event broadcast via Supabase Realtime Channels.
-- [x] **Phase 03: [Station KDS UIs & FOH Buzzout Device (Tablets Only)](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-3-station-kds-tablets.md)**
+- [x] **Phase 03: [Station KDS UIs & Unified FOH Workflow](./phases/phase-3-station-kds-tablets.md)**
   - [x] Barista/Bartender KDS screen with channel tags (`DINE-IN`, `TAKEOUT`, `GRAB/FOODPANDA`).
   - [x] Kitchen Chef KDS screen with food tickets, allergen alerts, and live table tags.
-  - [x] FOH Expediter screen with multi-station consolidation and ready chime.
-- [x] **Phase 04: [Full-Stack Integration of Floor POS](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-4-pos-integration.md)**
+  - [x] Unified Floor POS & FOH pass staging with multi-station ready chimes.
+- [x] **Phase 04: [Full-Stack Integration of Floor POS](./phases/phase-4-pos-integration.md)**
   - [x] Modularized feature architecture under `frontend/src/features/` (`floor`, `orders`, `table-service`, `checkout`, `kds`).
   - [x] Direct Supabase table & tab hydration with live database synchronization.
-- [ ] **Phase 05: [Dedicated Thermal Printing Terminal](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-5-thermal-printing.md)**
-  - [ ] Local Linux USB PC daemon listening to `print_jobs` table via Supabase Realtime CDC.
-  - [ ] Runner slips, takeout cup labels, and customer payment receipts.
-- [ ] **Phase 06: [Admin Back-Office, Inventory Hub & Venue Expense Suite](file:///home/ichannnj/Documents/Commisions/Monk-s-Dream-Jazz-Bar-POS/phases/phase-6-admin-and-analytics.md)**
-  - [ ] Operating mode switcher (`Cafe` vs `Event`).
-  - [ ] Recipe BOM builder with Supabase Storage image upload (`menu-images`).
-  - [ ] Inventory hub with restock MAC calculation, staff daily salary suite, and multi-channel revenue analytics.
+- [x] **Phase 05: [Dedicated Thermal Printing Terminal](./phases/phase-5-thermal-printing.md)**
+  - [x] Dedicated WebUSB / WebSerial Print Station (`?mode=printer`) listening to `print_jobs` via Supabase Realtime CDC & Web Locks leader election.
+  - [x] 57mm/80mm ESC/POS bitonal logo lockup, runner slips, bill statements, payment receipts, X/Y/Z readings, and RJ11 cash drawer kicks.
+- [x] **Phase 06: [Admin Back-Office, Inventory Hub & Venue Expense Suite](./phases/phase-6-admin-and-analytics.md)**
+  - [x] Operating mode switcher (`Cafe` vs `Event`) with 6:00 AM Manila auto-reset.
+  - [x] Recipe BOM builder with Supabase Storage image upload (`menu-images`).
+  - [x] Inventory hub, universal Timeclock Kiosk (`?mode=timeclock`), attendance/payroll ledger, X/Y/Z readings, and Excel exports.
