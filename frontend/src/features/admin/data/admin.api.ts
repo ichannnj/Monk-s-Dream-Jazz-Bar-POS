@@ -14,6 +14,7 @@ import { catalogProductsApi } from './api/catalogProducts.api';
 import { catalogModifiersApi } from './api/catalogModifiers.api';
 import { inventoryStockApi } from './api/inventoryStock.api';
 import { attendancePayrollApi } from './api/attendancePayroll.api';
+import { payrollRunsApi } from './api/payrollRuns.api';
 import { staffRosterApi } from './api/staffRoster.api';
 import { salesAndTablesApi } from './api/salesAndTables.api';
 
@@ -30,6 +31,7 @@ export const adminApi = {
   ...catalogModifiersApi,
   ...inventoryStockApi,
   ...attendancePayrollApi,
+  ...payrollRunsApi,
   ...staffRosterApi,
   ...salesAndTablesApi,
 };

@@ -9,6 +9,7 @@ import {
   Users,
   Receipt,
   Clock,
+  Wallet,
   Settings,
   Shield,
   type LucideIcon,
@@ -102,10 +103,17 @@ export const ADMIN_NAVIGATION_ITEMS: AdminNavigationItemConfig[] = [
   },
   {
     id: 'attendance',
-    label: 'Attendance & Payroll',
-    description: 'Punches, hours and statutory payroll',
+    label: 'Attendance',
+    description: 'Daily punches, hours and overtime',
     group: 'reports',
     icon: Clock,
+  },
+  {
+    id: 'payroll',
+    label: 'Payroll',
+    description: 'Cutoff runs, payouts and payslips',
+    group: 'reports',
+    icon: Wallet,
   },
   {
     id: 'settings',

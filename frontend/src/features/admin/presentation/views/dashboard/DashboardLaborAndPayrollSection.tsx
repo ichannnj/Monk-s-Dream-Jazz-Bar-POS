@@ -25,13 +25,22 @@ export const DashboardLaborAndPayrollSection: React.FC<DashboardLaborAndPayrollS
           <Text className="text-lg font-bold text-stone-900">Labor & Payroll</Text>
         </View>
 
-        <Pressable
-          onPress={() => onNavigateRoute('attendance')}
-          className="px-3 py-1.5 flex-row items-center gap-1 rounded-xl bg-stone-50 border border-stone-200 active:bg-stone-100"
-        >
-          <Text className="text-xs font-bold text-[#810021]">Attendance Ledger</Text>
-          <ArrowRight size={13} color="#810021" />
-        </Pressable>
+        <View className="flex-row items-center gap-2">
+          <Pressable
+            onPress={() => onNavigateRoute('attendance')}
+            className="px-3 py-1.5 flex-row items-center gap-1 rounded-xl bg-stone-50 border border-stone-200 active:bg-stone-100"
+          >
+            <Text className="text-xs font-bold text-stone-800">Attendance</Text>
+            <ArrowRight size={13} color="#1A1617" />
+          </Pressable>
+          <Pressable
+            onPress={() => onNavigateRoute('payroll')}
+            className="px-3 py-1.5 flex-row items-center gap-1 rounded-xl bg-[#810021]/10 border border-[#810021]/30 active:bg-[#810021]/20"
+          >
+            <Text className="text-xs font-bold text-[#810021]">Payroll Runs</Text>
+            <ArrowRight size={13} color="#810021" />
+          </Pressable>
+        </View>
       </View>
 
       <View className="flex-col sm:flex-row flex-wrap gap-4">
