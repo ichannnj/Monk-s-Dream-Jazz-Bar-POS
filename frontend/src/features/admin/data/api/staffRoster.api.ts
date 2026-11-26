@@ -30,7 +30,7 @@ export const staffRosterApi = {
 
     const { data, error } = await (supabase.from('users') as any)
       .select(
-        'id, username, display_name, role, job_title, is_workflow_staff, base_daily_rate, email, phone, avatar_url, is_active, created_at'
+        'id, username, display_name, role, job_title, is_workflow_staff, base_daily_rate, overtime_hourly_rate_override, email, phone, avatar_url, is_active, created_at'
       )
       .order('is_workflow_staff', { ascending: false })
       .order('display_name', { ascending: true });
@@ -201,8 +201,14 @@ export const staffRosterApi = {
     if (payload.job_title !== undefined) updateData.job_title = payload.job_title?.trim() || null;
     if (payload.role === 'admin') {
       updateData.base_daily_rate = 0;
-    } else if (payload.base_daily_rate !== undefined) {
-      updateData.base_daily_rate = payload.base_daily_rate;
+      updateData.overtime_hourly_rate_override = null;
+    } else {
+      if (payload.base_daily_rate !== undefined) {
+        updateData.base_daily_rate = payload.base_daily_rate;
+      }
+      if (payload.overtime_hourly_rate_override !== undefined) {
+        updateData.overtime_hourly_rate_override = payload.overtime_hourly_rate_override;
+      }
     }
     if (payload.email !== undefined) updateData.email = payload.email?.trim() || null;
     if (payload.phone !== undefined) updateData.phone = payload.phone?.trim() || null;

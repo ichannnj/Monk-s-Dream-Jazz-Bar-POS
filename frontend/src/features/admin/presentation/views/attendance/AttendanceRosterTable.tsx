@@ -345,7 +345,10 @@ export const AttendanceRosterTable: React.FC<AttendanceRosterTableProps> = ({
                       <View className="items-start sm:items-end">
                         <Text className="text-xs text-stone-500">
                           Base: ₱{item.basePaySum.toFixed(2)}
-                          {item.bonusSum > 0 ? ` · +₱${item.bonusSum.toFixed(2)} OT` : ''}
+                          {item.overtimePaySum > 0
+                            ? ` · +₱${item.overtimePaySum.toFixed(2)} OT (${item.overtimeHoursSum.toFixed(1)}h)`
+                            : ''}
+                          {item.bonusSum > 0 ? ` · +₱${item.bonusSum.toFixed(2)} Bonus` : ''}
                         </Text>
                       </View>
 

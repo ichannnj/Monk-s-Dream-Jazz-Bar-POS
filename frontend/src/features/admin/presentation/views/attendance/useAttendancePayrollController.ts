@@ -314,7 +314,7 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
             clockOut: item.clockOutAt ? new Date(item.clockOutAt).toLocaleTimeString() : null,
             hoursWorked: item.hoursWorked,
             basePay: isAdmin ? 0 : item.baseDailyPay,
-            addonPay: isAdmin ? 0 : item.addonPay,
+            addonPay: isAdmin ? 0 : item.overtimePay + item.addonPay,
             totalPay: isAdmin ? 0 : item.totalDayPay,
             notes: item.notes,
           };
@@ -331,7 +331,7 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
               : `${item.shiftsWorked} shifts`,
             hoursWorked: item.hoursLogged,
             basePay: isAdmin ? 0 : item.basePaySum,
-            addonPay: isAdmin ? 0 : item.bonusSum,
+            addonPay: isAdmin ? 0 : item.overtimePaySum + item.bonusSum,
             totalPay: isAdmin ? 0 : item.totalPaySum,
           };
         });
@@ -343,7 +343,10 @@ export function useAttendancePayrollController(onRefresh?: () => void) {
         dateRangeLabel: dateRange.label,
         isSingleDay: dateRange.isSingleDay,
         items: exportItems,
-        totals: periodTotals,
+        totals: {
+          ...periodTotals,
+          bonusTotal: periodTotals.overtimePayTotal + periodTotals.bonusTotal,
+        },
       });
 
       toast.success('Attendance report exported to Excel (.xls)', {
