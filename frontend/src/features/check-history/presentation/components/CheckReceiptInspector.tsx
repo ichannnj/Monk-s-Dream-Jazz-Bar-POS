@@ -36,11 +36,8 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
                 <Text className="text-xs font-bold text-stone-800 uppercase">SETTLED</Text>
               </View>
               {selectedCheck.orderType === 'dine_in' &&
-              selectedCheck.total >
-                selectedCheck.subtotal +
-                  (selectedCheck.serviceCharge || 0) +
-                  (selectedCheck.corkageFee || 0) +
-                  1 ? (
+              selectedCheck.groupTabIds &&
+              selectedCheck.groupTabIds.length > 0 ? (
                 <View className="bg-[#F5EBEF] border border-[#810021]/25 px-2.5 py-0.5 rounded-full">
                   <Text className="text-xs font-extrabold text-[#810021] uppercase">
                     TABLE GROUP PAY
@@ -170,12 +167,15 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
             <View className="divide-y divide-stone-100 border-y border-stone-200">
               {selectedCheck.items.map((it, idx) => (
                 <View key={it.id || idx} className="py-3 flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-3">
+                  <View className="flex-row items-center gap-3 flex-1 pr-2">
                     <View className="w-7 h-7 rounded-lg bg-stone-100 items-center justify-center">
                       <Text className="text-base font-bold text-stone-800">{it.quantity}x</Text>
                     </View>
-                    <View>
+                    <View className="flex-1">
                       <Text className="text-base font-bold text-stone-900">{it.name}</Text>
+                      <Text className="text-xs font-semibold text-stone-500">
+                        {it.quantity} × @{formatCurrency(it.unitPrice)}
+                      </Text>
                       {it.modifiers && it.modifiers.length > 0 && (
                         <Text className="text-xs text-[#810021] font-semibold">
                           + {it.modifiers.join(', ')}
@@ -205,12 +205,30 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
           </View>
 
           {selectedCheck.discountAmount > 0 && (
-            <View className="flex-row justify-between items-center">
-              <Text className="text-base font-semibold text-rose-600">Discounts &amp; Promos</Text>
-              <Text className="text-base font-bold text-rose-600">
-                -{formatCurrency(selectedCheck.discountAmount)}
-              </Text>
-            </View>
+            <>
+              <View className="flex-row justify-between items-center">
+                <Text className="text-base font-semibold text-rose-600">
+                  {selectedCheck.discountType === 'SENIOR_CITIZEN'
+                    ? 'Senior Citizen Discount'
+                    : selectedCheck.discountType === 'PWD'
+                      ? 'PWD Discount'
+                      : selectedCheck.discountType === 'COMP'
+                        ? 'House Comp (100%)'
+                        : 'Discounts & Promos'}
+                </Text>
+                <Text className="text-base font-bold text-rose-600">
+                  -{formatCurrency(selectedCheck.discountAmount)}
+                </Text>
+              </View>
+              <View className="flex-row justify-between items-center">
+                <Text className="text-base font-semibold text-stone-600">Net After Discount</Text>
+                <Text className="text-base font-bold text-stone-900">
+                  {formatCurrency(
+                    Math.max(0, selectedCheck.subtotal - selectedCheck.discountAmount)
+                  )}
+                </Text>
+              </View>
+            </>
           )}
 
           {selectedCheck.corkageFee > 0 && (
@@ -222,15 +240,16 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
             </View>
           )}
 
-          {selectedCheck.serviceCharge > 0 && (
-            <View className="flex-row justify-between items-center">
-              <Text className="text-base font-semibold text-stone-600">Service Charge</Text>
-              <Text className="text-base font-bold text-stone-900">
-                {formatCurrency(selectedCheck.serviceCharge)}
-              </Text>
-            </View>
-          )}
+          <View className="flex-row justify-between items-center">
+            <Text className="text-base font-semibold text-stone-600">
+              Service Charge {selectedCheck.serviceCharge > 0 ? '' : '(None)'}
+            </Text>
+            <Text className="text-base font-bold text-stone-900">
+              {formatCurrency(selectedCheck.serviceCharge)}
+            </Text>
+          </View>
 
+          {/* TODO(BIR): Uncomment VAT-Exempt Sales row once BIR VAT-registered
           {Boolean(selectedCheck.vatExemptSales && selectedCheck.vatExemptSales > 0) && (
             <View className="flex-row justify-between items-center">
               <Text className="text-base font-semibold text-amber-700">
@@ -241,6 +260,7 @@ export const CheckReceiptInspector: React.FC<CheckReceiptInspectorProps> = ({
               </Text>
             </View>
           )}
+          */}
 
           {Boolean(selectedCheck.seniorPwdId) && (
             <View className="flex-row justify-between items-center py-1 px-2.5 bg-amber-50 rounded-lg border border-amber-200">

@@ -158,8 +158,8 @@ export function exportChecksRegisterToExcel(
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">${escapeXml(chk.paymentMethod)}</Data></Cell>
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${chk.subtotal}</Data></Cell>
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${chk.discountAmount}</Data></Cell>
-        <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${chk.vatableSales}</Data></Cell>
-        <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${chk.vatAmount}</Data></Cell>
+        <!-- TODO(BIR): <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${chk.vatableSales}</Data></Cell> -->
+        <!-- TODO(BIR): <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${chk.vatAmount}</Data></Cell> -->
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${chk.serviceCharge}</Data></Cell>
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${chk.total}</Data></Cell>
         <Cell ss:StyleID="DataNumber"><Data ss:Type="Number">${chk.itemsCount}</Data></Cell>
@@ -187,19 +187,18 @@ export function exportChecksRegisterToExcel(
       <Column ss:Width="90"/>
       <Column ss:Width="95"/>
       <Column ss:Width="85"/>
-      <Column ss:Width="90"/>
-      <Column ss:Width="85"/>
+      <!-- TODO(BIR): VATable & 12% VAT columns -->
       <Column ss:Width="85"/>
       <Column ss:Width="105"/>
       <Column ss:Width="65"/>
 
       <Row ss:Height="30">
-        <Cell ss:MergeAcross="15" ss:StyleID="TitleBanner">
+        <Cell ss:MergeAcross="13" ss:StyleID="TitleBanner">
           <Data ss:Type="String">MONK'S DREAM JAZZ BAR &amp; BISTRO — SETTLED CHECKS REGISTER</Data>
         </Cell>
       </Row>
       <Row ss:Height="22">
-        <Cell ss:MergeAcross="15" ss:StyleID="SubtitleBanner">
+        <Cell ss:MergeAcross="13" ss:StyleID="SubtitleBanner">
           <Data ss:Type="String">Scope: ${escapeXml(filterLabel)} • Exported on ${new Date().toLocaleString()} • ${checks.length} Records</Data>
         </Cell>
       </Row>
@@ -217,9 +216,8 @@ export function exportChecksRegisterToExcel(
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Tender</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Subtotal</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Discount</Data></Cell>
-        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">VATable</Data></Cell>
-        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">12% VAT</Data></Cell>
-        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">10% SC</Data></Cell>
+        <!-- TODO(BIR): VATable & 12% VAT headers -->
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Service Charge</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Grand Total</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Items</Data></Cell>
       </Row>

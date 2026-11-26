@@ -133,8 +133,8 @@ export const ManagerModeSwitchModal: React.FC<ManagerModeSwitchModalProps> = ({
               }`}
             >
               {nextMode === 'EVENT'
-                ? '🎷 Live Jazz Night: All new dine-in tabs, takeout, and delivery orders will be tagged as Event Mode.'
-                : '☀️ Daytime Operations: All new dine-in tabs, takeout, and delivery orders will be tagged as Cafe Mode.'}
+                ? '🎷 Live Jazz Night (Monitoring Only): All new tabs and orders will be tagged as Event Mode for sales reporting. Service charge is still chosen per bill at settlement.'
+                : '☀️ Daytime Operations (Monitoring Only): All new tabs and orders will be tagged as Cafe Mode for sales reporting. Service charge is still chosen per bill at settlement.'}
             </Text>
             <Text className="text-base text-stone-600 mt-1.5">
               Existing open tabs retain their original mode upon settlement.

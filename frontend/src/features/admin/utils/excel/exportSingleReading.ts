@@ -119,12 +119,13 @@ export function exportSingleReadingToExcel(reading: ReadingData): void {
       </Row>
       <Row ss:Height="12"/>
 
-      <!-- Section 2: Tax & Service Charges -->
+      <!-- Section 2: Service Charges (VAT commented out pre-BIR) -->
       <Row ss:Height="24">
         <Cell ss:MergeAcross="2" ss:StyleID="SectionHeader">
-          <Data ss:Type="String">2. TAX &amp; SERVICE CHARGE (BIR COMPLIANCE)</Data>
+          <Data ss:Type="String">2. SERVICE CHARGE &amp; COLLECTIONS</Data>
         </Cell>
       </Row>
+      <!-- TODO(BIR): Uncomment VAT rows once BIR-registered
       <Row>
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">VATable Sales (Net of VAT &amp; SC)</Data></Cell>
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${reading.vatable_sales}</Data></Cell>
@@ -133,8 +134,9 @@ export function exportSingleReadingToExcel(reading: ReadingData): void {
         <Cell ss:StyleID="DataLabel"><Data ss:Type="String">12% Value-Added Tax (VAT)</Data></Cell>
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${reading.vat_amount}</Data></Cell>
       </Row>
+      -->
       <Row>
-        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">10% House Service Charge</Data></Cell>
+        <Cell ss:StyleID="DataLabel"><Data ss:Type="String">House Service Charge</Data></Cell>
         <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${reading.service_charge}</Data></Cell>
       </Row>
       <Row ss:Height="12"/>

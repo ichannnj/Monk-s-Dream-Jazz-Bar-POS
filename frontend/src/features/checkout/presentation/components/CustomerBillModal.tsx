@@ -12,6 +12,7 @@ import {
 import { X, Printer, CreditCard, QrCode, Receipt, CheckCircle2 } from 'lucide-react-native';
 import { formatCurrency } from '@monks/shared';
 import { aggregateReceiptItems } from '@/features/printer';
+import { isDoorChargeItem, roundPhp } from '../../utils/taxAndDiscountCalculator';
 import type { QrPaymentChannel } from '../../data/qrPaymentChannels.api';
 import { styles } from './CustomerBillModal.styles';
 
@@ -30,10 +31,11 @@ export interface CustomerBillModalProps {
   vatExemptSales?: number;
   corkageAmount?: number;
   serviceCharge?: number;
+  serviceChargeRate?: number;
   discountAmount?: number;
   discountLabel?: string;
   grandTotal: number;
-  onPrintBill?: () => void;
+  onPrintBill?: (previewWithServiceCharge?: boolean) => void;
   isPrintingBill?: boolean;
   onProceedToPay?: () => void;
   qrChannels?: QrPaymentChannel[];
@@ -47,11 +49,9 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
   serverName,
   rawItems,
   subtotal,
-  vatableSales,
-  vatAmount,
-  vatExemptSales,
   corkageAmount = 0,
   serviceCharge = 0,
+  serviceChargeRate = 10,
   discountAmount = 0,
   discountLabel,
   grandTotal,
@@ -63,10 +63,29 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height && width >= 700;
   const isCompactHeight = height < 520;
-  const [showQrPay, setShowQrPay] = useState(false);
   const [selectedChannelId, setSelectedChannelId] = useState<string>('');
+  const [previewWithSc, setPreviewWithSc] = useState<boolean>(false);
 
   const displayItems = useMemo(() => aggregateReceiptItems(rawItems), [rawItems]);
+
+  const eligibleFnbGross = useMemo(() => {
+    return roundPhp(
+      (rawItems || [])
+        .filter((it) => !isDoorChargeItem(it))
+        .reduce(
+          (sum, it) => sum + Number(it.unitPrice ?? it.price ?? 0) * Number(it.quantity ?? 1),
+          0
+        )
+    );
+  }, [rawItems]);
+
+  const effectiveServiceCharge = previewWithSc
+    ? roundPhp(eligibleFnbGross * (Math.max(0, serviceChargeRate) / 100))
+    : serviceCharge;
+
+  const effectiveGrandTotal = previewWithSc
+    ? Math.max(0, roundPhp(subtotal - discountAmount + corkageAmount + effectiveServiceCharge))
+    : grandTotal;
 
   const activeChannel = useMemo(() => {
     if (!qrChannels || qrChannels.length === 0) return null;
@@ -172,7 +191,27 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
                 </View>
 
                 {displayItems.map((item, idx) => {
-                  const lineTotal = item.quantity * item.unitPrice;
+                  const parsedMods: Array<{ label: string; unitDelta: number }> = (
+                    item.modifiers ?? []
+                  ).map((mod: string) => {
+                    const match = String(mod).match(
+                      /^(.*?)\s*\(\+?(?:₱|P|PHP\s*)?([\d,]+(?:\.\d+)?)\)\s*$/i
+                    );
+                    if (!match) return { label: String(mod), unitDelta: 0 };
+                    return {
+                      label: match[1].trim(),
+                      unitDelta: parseFloat(match[2].replace(/,/g, '')) || 0,
+                    };
+                  });
+                  const qty = Number(item.quantity || 1);
+                  const lineTotal = qty * Number(item.unitPrice || 0);
+                  const modUnitSum = parsedMods.reduce((s, m) => s + m.unitDelta, 0);
+                  const baseUnitPrice =
+                    modUnitSum > 0 && Number(item.unitPrice || 0) >= modUnitSum
+                      ? Number(item.unitPrice || 0) - modUnitSum
+                      : Number(item.unitPrice || 0);
+                  const baseLineTotal = roundPhp(baseUnitPrice * qty);
+
                   return (
                     <View key={`${item.id}-${idx}`} style={styles.itemRow}>
                       <View style={{ flex: 2, paddingRight: 8 }}>
@@ -180,15 +219,21 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
                         {item.variantDescription ? (
                           <Text style={styles.itemNotes}>{item.variantDescription}</Text>
                         ) : null}
+                        {parsedMods.map((m, mIdx) => (
+                          <Text key={mIdx} style={[styles.itemNotes, { color: '#810021' }]}>
+                            + {m.label}
+                            {m.unitDelta > 0 ? ` (@${formatCurrency(m.unitDelta)})` : ''}
+                          </Text>
+                        ))}
                         {item.notes ? (
                           <Text style={styles.itemNotes}>Note: {item.notes}</Text>
                         ) : null}
                       </View>
                       <Text style={[styles.itemQty, { width: 44, textAlign: 'center' }]}>
-                        {item.quantity}×
+                        {qty}×
                       </Text>
                       <Text style={[styles.itemPrice, { width: 70, textAlign: 'right' }]}>
-                        {formatCurrency(item.unitPrice)}
+                        {formatCurrency(baseUnitPrice)}
                       </Text>
                       <Text style={[styles.itemLineTotal, { width: 80, textAlign: 'right' }]}>
                         {formatCurrency(lineTotal)}
@@ -200,10 +245,83 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
 
               {/* Financial Calculation Breakdown */}
               <View style={styles.breakdownCard}>
+                {/* Service Charge Preview Toggle for Guest Check */}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 10,
+                    paddingBottom: 10,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#E2DED6',
+                    gap: 8,
+                  }}
+                >
+                  <Text style={[styles.summaryLabel, { fontWeight: '700' }]}>
+                    Service Charge Preview
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 6 }}>
+                    <Pressable
+                      onPress={() => setPreviewWithSc(false)}
+                      style={{
+                        paddingVertical: 6,
+                        paddingHorizontal: 10,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: !previewWithSc ? '#810021' : '#D6CFC7',
+                        backgroundColor: !previewWithSc ? '#810021' : '#FFFFFF',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '700',
+                          color: !previewWithSc ? '#F7F5F2' : '#1A1617',
+                        }}
+                      >
+                        No SC (0%)
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => setPreviewWithSc(true)}
+                      style={{
+                        paddingVertical: 6,
+                        paddingHorizontal: 10,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: previewWithSc ? '#810021' : '#D6CFC7',
+                        backgroundColor: previewWithSc ? '#810021' : '#FFFFFF',
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          fontWeight: '700',
+                          color: previewWithSc ? '#F7F5F2' : '#1A1617',
+                        }}
+                      >
+                        With SC ({serviceChargeRate}%)
+                      </Text>
+                    </Pressable>
+                  </View>
+                </View>
+
                 <View style={styles.summaryRow}>
-                  <Text style={styles.summaryLabel}>Subtotal (Gross Sales)</Text>
+                  <Text style={styles.summaryLabel}>Items Subtotal</Text>
                   <Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text>
                 </View>
+
+                {discountAmount > 0 && (
+                  <View style={styles.summaryRow}>
+                    <Text style={[styles.summaryLabel, { color: '#810021' }]}>
+                      {discountLabel || 'Applied Discount'}
+                    </Text>
+                    <Text style={[styles.summaryValue, { color: '#810021' }]}>
+                      -{formatCurrency(discountAmount)}
+                    </Text>
+                  </View>
+                )}
 
                 {corkageAmount > 0 && (
                   <View style={styles.summaryRow}>
@@ -212,50 +330,34 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
                   </View>
                 )}
 
-                {serviceCharge > 0 && (
-                  <View style={styles.summaryRow}>
-                    <Text style={styles.summaryLabel}>Service Charge (10%)</Text>
-                    <Text style={styles.summaryValue}>+{formatCurrency(serviceCharge)}</Text>
-                  </View>
-                )}
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>
+                    Service Charge ({previewWithSc ? `${serviceChargeRate}%` : 'None'})
+                  </Text>
+                  <Text style={styles.summaryValue}>
+                    {effectiveServiceCharge > 0
+                      ? `+${formatCurrency(effectiveServiceCharge)}`
+                      : formatCurrency(0)}
+                  </Text>
+                </View>
 
-                {discountAmount > 0 && (
-                  <View style={styles.summaryRow}>
-                    <Text style={[styles.summaryLabel, { color: '#810021' }]}>
-                      {discountLabel || 'Statutory / Applied Discount'}
-                    </Text>
-                    <Text style={[styles.summaryValue, { color: '#810021' }]}>
-                      -{formatCurrency(discountAmount)}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Statutory Tax Breakdown */}
+                {/* TODO(BIR): Uncomment Statutory Tax Breakdown once BIR VAT-registered
                 <View style={styles.taxSubCard}>
                   <View style={styles.taxRow}>
                     <Text style={styles.taxLabel}>VATable Sales (12%)</Text>
-                    <Text style={styles.taxValue}>
-                      {formatCurrency(vatableSales ?? Number((subtotal / 1.12).toFixed(2)))}
-                    </Text>
+                    <Text style={styles.taxValue}>{formatCurrency(vatableSales ?? 0)}</Text>
                   </View>
                   <View style={styles.taxRow}>
                     <Text style={styles.taxLabel}>VAT Amount (12%)</Text>
-                    <Text style={styles.taxValue}>
-                      {formatCurrency(vatAmount ?? Number((subtotal - subtotal / 1.12).toFixed(2)))}
-                    </Text>
+                    <Text style={styles.taxValue}>{formatCurrency(vatAmount ?? 0)}</Text>
                   </View>
-                  {(vatExemptSales || 0) > 0 && (
-                    <View style={styles.taxRow}>
-                      <Text style={styles.taxLabel}>VAT-Exempt Sales</Text>
-                      <Text style={styles.taxValue}>{formatCurrency(vatExemptSales || 0)}</Text>
-                    </View>
-                  )}
                 </View>
+                */}
 
                 {/* Grand Total Due */}
                 <View style={styles.totalDueRow}>
                   <Text style={styles.totalDueLabel}>TOTAL DUE</Text>
-                  <Text style={styles.totalDueAmount}>{formatCurrency(grandTotal)}</Text>
+                  <Text style={styles.totalDueAmount}>{formatCurrency(effectiveGrandTotal)}</Text>
                 </View>
               </View>
             </ScrollView>
@@ -274,7 +376,7 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
 
             {onPrintBill && (
               <Pressable
-                onPress={onPrintBill}
+                onPress={() => onPrintBill(previewWithSc)}
                 disabled={isPrintingBill}
                 style={[styles.printBtn, isPrintingBill && { opacity: 0.6 }]}
                 accessibilityRole="button"
@@ -295,10 +397,12 @@ export const CustomerBillModal: React.FC<CustomerBillModalProps> = ({
                 }}
                 style={styles.payBtn}
                 accessibilityRole="button"
-                accessibilityLabel={`Proceed to settle payment for ${formatCurrency(grandTotal)}`}
+                accessibilityLabel={`Proceed to settle payment for ${formatCurrency(effectiveGrandTotal)}`}
               >
                 <CreditCard size={18} color="#F7F5F2" strokeWidth={2.4} />
-                <Text style={styles.payBtnText}>Settle Tab · {formatCurrency(grandTotal)}</Text>
+                <Text style={styles.payBtnText}>
+                  Settle Tab · {formatCurrency(effectiveGrandTotal)}
+                </Text>
               </Pressable>
             )}
           </View>

@@ -628,29 +628,35 @@ export class UsbEscPosPrinter implements IPrinterService {
 
     // 6. Financial Summary & Totals
     const subtotal = toPesos(payload.subtotal || payload.total || 0);
-    const subtotalLabel = is57mm ? 'SUBTOTAL (Gross):' : 'SUBTOTAL (Gross Sales):';
+    const subtotalLabel = is57mm ? 'ITEMS SUBTOTAL:' : 'ITEMS SUBTOTAL (Gross):';
     push(padLine(subtotalLabel, formatPhp(subtotal), cols));
 
     const corkage = toPesos(payload.corkageFee || 0);
+    const discount = toPesos(payload.discount || 0);
+    const netAfterDiscount = Math.max(0, toPesos(subtotal - discount));
+    if (discount > 0) {
+      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, cols));
+      push(padLine('NET AFTER DISCOUNT:', formatPhp(netAfterDiscount), cols));
+    }
+
     if (corkage > 0) {
       push(padLine('CORKAGE FEE:', formatPhp(corkage), cols));
     }
 
-    const discount = toPesos(payload.discount || 0);
-    if (discount > 0) {
-      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, cols));
-    }
-
     const serviceCharge = toPesos(payload.serviceCharge || 0);
-    if (serviceCharge > 0) {
-      push(padLine('SERVICE CHARGE:', formatPhp(serviceCharge), cols));
-    }
+    push(
+      padLine(
+        serviceCharge > 0 ? 'SERVICE CHARGE:' : 'SERVICE CHARGE (NONE):',
+        formatPhp(serviceCharge),
+        cols
+      )
+    );
 
     // Bold Grand Total
     push(divider('=', cols));
     cmd([0x1b, 0x45, 0x01]); // Bold
     cmd([0x1d, 0x21, 0x01]); // Double height
-    const total = toPesos(payload.total || subtotal + corkage - discount + serviceCharge);
+    const total = toPesos(payload.total ?? netAfterDiscount + corkage + serviceCharge);
     const totalLabel = is57mm ? 'TOTAL DUE:' : 'TOTAL AMOUNT DUE:';
     push(padLine(totalLabel, `PHP ${formatPhp(total)}`, cols));
     cmd([0x1d, 0x21, 0x00]); // Normal size
@@ -879,29 +885,35 @@ export class UsbEscPosPrinter implements IPrinterService {
 
     // 7. Financial Summary & Totals
     const subtotal = toPesos(payload.subtotal || payload.total || 0);
-    const subtotalLabel = is57mm ? 'SUBTOTAL (Gross):' : 'SUBTOTAL (Gross Sales):';
+    const subtotalLabel = is57mm ? 'ITEMS SUBTOTAL:' : 'ITEMS SUBTOTAL (Gross):';
     push(padLine(subtotalLabel, formatPhp(subtotal), cols));
 
     const corkage = toPesos(payload.corkageFee || 0);
+    const discount = toPesos(payload.discount || 0);
+    const netAfterDiscount = Math.max(0, toPesos(subtotal - discount));
+    if (discount > 0) {
+      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, cols));
+      push(padLine('NET AFTER DISCOUNT:', formatPhp(netAfterDiscount), cols));
+    }
+
     if (corkage > 0) {
       push(padLine('CORKAGE FEE:', formatPhp(corkage), cols));
     }
 
-    const discount = toPesos(payload.discount || 0);
-    if (discount > 0) {
-      push(padLine('LESS: DISCOUNT:', `-${formatPhp(discount)}`, cols));
-    }
-
     const serviceCharge = toPesos(payload.serviceCharge || 0);
-    if (serviceCharge > 0) {
-      push(padLine('SERVICE CHARGE:', formatPhp(serviceCharge), cols));
-    }
+    push(
+      padLine(
+        serviceCharge > 0 ? 'SERVICE CHARGE:' : 'SERVICE CHARGE (NONE):',
+        formatPhp(serviceCharge),
+        cols
+      )
+    );
 
     // Bold Total Amount Due
     push(divider('=', cols));
     cmd([0x1b, 0x45, 0x01]); // Bold
     cmd([0x1d, 0x21, 0x01]); // Double height
-    const total = toPesos(payload.total || subtotal + corkage - discount + serviceCharge);
+    const total = toPesos(payload.total ?? netAfterDiscount + corkage + serviceCharge);
     const totalLabel = is57mm ? 'TOTAL DUE:' : 'TOTAL AMOUNT DUE:';
     push(padLine(totalLabel, `PHP ${formatPhp(total)}`, cols));
     cmd([0x1d, 0x21, 0x00]); // Normal size

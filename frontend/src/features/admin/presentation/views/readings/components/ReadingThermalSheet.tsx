@@ -70,6 +70,7 @@ export const ReadingThermalSheet: React.FC<ReadingThermalSheetProps> = ({
       </View>
 
       <View className="border-b border-dashed border-stone-400 pb-3 mb-3 space-y-1">
+        {/* TODO(BIR): Uncomment VATABLE SALES & 12% VAT once BIR-registered
         <View className="flex-row justify-between">
           <Text className="text-xs font-mono">VATABLE SALES</Text>
           <Text className="text-xs font-mono">{formatCurrency(reading.vatable_sales)}</Text>
@@ -78,8 +79,9 @@ export const ReadingThermalSheet: React.FC<ReadingThermalSheetProps> = ({
           <Text className="text-xs font-mono">12% VAT</Text>
           <Text className="text-xs font-mono">{formatCurrency(reading.vat_amount)}</Text>
         </View>
+        */}
         <View className="flex-row justify-between">
-          <Text className="text-xs font-mono">10% SERV CHG</Text>
+          <Text className="text-xs font-mono">SERVICE CHARGE</Text>
           <Text className="text-xs font-mono">{formatCurrency(reading.service_charge)}</Text>
         </View>
       </View>

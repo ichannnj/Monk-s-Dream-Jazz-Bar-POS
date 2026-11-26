@@ -77,26 +77,17 @@ Item preparation destination is determined solely by product category, **never**
 
 ### 4. Financial & Pricing Calculations
 
-- **Philippine Statutory 12% VAT (Inclusive Extraction per NIRC Sec. 106/108 & BIR RR 16-2005):**  
-  All menu prices at Monk's Dream are legally VAT-inclusive. The system extracts the VAT components without any surcharge:
-  $$\text{VATable Sales} = \frac{\text{Gross Amount}}{1.12}$$
-  $$\text{12\% VAT Amount} = \text{Gross Amount} - \text{VATable Sales}$$
-  Example: An item listed at ₱150.00 yields ₱133.93 VATable Sales and ₱16.07 VAT.
-- **Station-Aware & Mode-Dependent Service Charge (Dine-in Only, RA 11360):**  
-  Service Charge applies exclusively to Dine-In tabs (Takeout and Delivery orders strictly incur 0% Service Charge). Configurable in Admin Back-Office Settings:
-  - **☀️ Daytime Cafe Mode:** Coffee, artisan tea, and bar drinks (`stationTarget: 'bar'`) incur **0% Service Charge**. Kitchen food items (`stationTarget: 'kitchen'`) incur **10% Service Charge** (configurable via `venue_settings.cafe_food_service_charge_rate`).
-  - **🎷 Event Mode:** All items (Bar and Kitchen) incur **10% Service Charge** (configurable via `venue_settings.event_service_charge_rate`).
-  - **Base:** Service Charge is computed directly from gross menu prices ($\text{Gross} \times \text{Rate}$).
-- **Senior Citizen & PWD Statutory Discounts (RA 9994, RA 10754, BIR RR 7-2010):**  
-  Mandatory 2-step statutory formula for eligible food and beverage items:
-  1. **VAT Exemption Step:** Back out the 12% VAT to determine the VAT-exempt selling price:
-     $$\text{VAT-Exempt Base} = \frac{\text{Item Gross Price}}{1.12}$$
-  2. **20% Discount Step:** Apply the statutory 20% discount on the VAT-exempt base:
-     $$\text{Discount Amount} = \text{VAT-Exempt Base} \times 0.20$$
-     $$\text{Discounted Item Net} = \text{VAT-Exempt Base} - \text{Discount Amount} = \text{VAT-Exempt Base} \times 0.80$$
-  - **Service Charge on Senior Food (BIR RMC 38-2012):** Service Charge is not discounted by 20% and is retained in full for staff tip distribution.
-  - **Mandatory Identification:** Applying a Senior or PWD discount strictly requires entering the customer's OSCA / PWD ID number and Cardholder Full Name in `BillSettlementModal`.
-  - **Receipt & ESC/POS Audit:** Customer receipts explicitly print VATable Sales, VAT Amount (12%), VAT-Exempt Sales, Senior/PWD 20% Discount, Net Service Charge, Cardholder Details, and an official customer signature acknowledgment line.
+- **Pre-BIR VAT Status (Commented Out Across UI & Reports):**  
+  While the venue is not yet BIR-registered, VAT extraction displays (`VATable Sales`, `12% VAT`, `VAT-Exempt Sales`) are commented out (`TODO(BIR)`) across Order Entry, View Bill, Bill Settlement, thermal receipts, Check Inspector, X/Y/Z Readings, Excel exports, and Admin Settings (`payments` VAT columns remain intact in PostgreSQL storing `0.00`).
+- **User-Centered Service Charge (`BillServiceChargeSection.tsx`):**  
+  Cafe Mode and Event Mode are strictly **monitoring-only** tags and never force Service Charge. At Bill Settlement, staff must explicitly choose **"No Service Charge (0%)"** or **"With Service Charge (10%)"** (configured via `venue_settings.service_charge_rate`, neither pre-selected; waived on 100% House Comp). When "With Service Charge" is selected:
+  - Applies uniformly to **all Food & Beverage items** (Kitchen + Bar/Coffee, both Dine-In and Takeout).
+  - Strictly excludes **Event Door Charge** and **Corkage Fee**.
+  - Computed on **original gross menu prices before discounts** ($\text{F\&B Gross} \times \text{Rate}$).
+- **Senior Citizen, PWD & Custom/Promo Discounts:**
+  - **Senior/PWD:** Retains the internal 2-step statutory formula ($\text{Base} = \text{Gross} / 1.12$, $\text{20\% Disc} = \text{Base} \times 0.20$, $\text{Payable} = \text{Base} - \text{20\% Disc}$) on eligible F&B items (excluding Door Charge) and records the full gross-to-payable reduction (`Gross - Payable`) so `Items Subtotal - Total Discount + Corkage + Service Charge = Total Due` reconciles to the exact centavo. Requires OSCA/PWD ID and Cardholder Name in `BillSettlementModal`.
+  - **Custom / Promo (`%` or fixed `₱`):** Applies strictly to Food & Beverage items (excluding Door Charge and Corkage Fee).
+  - **Receipt & Preview Breakdown:** Receipts (`escposBuilder.ts`, `BillThermalReceiptMockup.tsx`, `CheckReceiptInspector.tsx`) print per-item `@ unitPrice`, quantity-multiplied modifier totals, `Items Subtotal`, named `Discount`, `Net After Discount`, `Corkage`, explicit `Service Charge (10% / None)`, `Total Amount Due`, and Payment/Change breakdown.
 - **Tab Item Transfer & Split Tab Architecture (`TableItemTransferModal.tsx`):**  
   To handle tables where only certain diners are Senior Citizens / PWDs, waitstaff can either:
   1. **Transfer Items to a Dedicated Tab:** Open `TableActionModal` $\rightarrow$ "Move Items", select lines and quantities, and transfer them in 1 tap to an existing tab or create a new dedicated tab (e.g. "Senior Citizen Tab") via atomic PostgreSQL RPC `transfer_order_items_to_tab`.

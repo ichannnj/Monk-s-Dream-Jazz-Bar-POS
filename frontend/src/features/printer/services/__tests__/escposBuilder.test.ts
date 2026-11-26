@@ -45,9 +45,12 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
     expect(bytes.length).toBeGreaterThan(0);
 
     const text = new TextDecoder().decode(bytes);
-    // Should have aggregated Cortado to 2x
+    // Should have aggregated Cortado to 2x with unit price breakdown
     expect(text).toContain('Cortado');
+    expect(text).toContain('2 x @160.00');
+    expect(text).toContain('320.00');
     expect(text).toContain('Truffle Mushroom');
+    expect(text).toContain('SERVICE CHARGE (NONE):');
 
     // Header mobile number check
     expect(text).toContain('+63 917 833 3445');
@@ -179,16 +182,46 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
     expect(text).not.toContain('◡');
   });
 
-  it('computes accurate LESS: DISCOUNT for partial Senior/PWD VAT relief on receipts & bills', () => {
+  it('multiplies paid modifier price by quantity on receipts so itemized lines sum to subtotal', () => {
+    const bytes = buildReceiptBytes(
+      {
+        receiptNumber: 'MD-MOD-QTY2',
+        items: [
+          {
+            productName: 'Latte',
+            unitPrice: 200, // 150 base + 50 mod
+            quantity: 2,
+            modifiers: ['Oat Milk (+₱50.00)'],
+          },
+        ],
+        subtotal: 400,
+        serviceCharge: 40,
+        serviceChargeRate: 10,
+        total: 440,
+        paymentMethod: 'CASH',
+        tendered: 500,
+        change: 60,
+      },
+      false,
+      '80mm'
+    );
+    const text = new TextDecoder().decode(bytes);
+    expect(text).toContain('2 x @150.00');
+    expect(text).toContain('300.00');
+    expect(text).toContain('Oat Milk (@50.00)');
+    expect(text).toContain('+100.00');
+    expect(text).toContain('SERVICE CHARGE (10%):');
+  });
+
+  it('computes accurate LESS: SENIOR CITIZEN DISC. and NET AFTER DISCOUNT for partial Senior/PWD receipts', () => {
     // 1x Senior Pasta (300) + 1x Regular Pasta (300) = 600 subtotal, 60 SC
-    // vatExemptSales = 267.86, seniorDiscount = 53.57 -> vatRelief = 32.14, totalDiscount = 85.71
-    // total = 600 - 85.71 + 60 = 574.29
+    // seniorTotalDeduction = 85.71, netAfterDiscount = 514.29, total = 574.29
     const partialSeniorData = {
       receiptNumber: 'MD-PARTIAL-SC',
       subtotal: 600,
-      discountAmount: 53.57,
-      vatExemptSales: 267.86,
+      discountAmount: 85.71,
       serviceCharge: 60,
+      serviceChargeRate: 10,
       total: 574.29,
       discountType: 'SENIOR_CITIZEN',
       seniorPwdId: '1234-5678',
@@ -203,11 +236,15 @@ describe('ESC/POS Receipt & Bill Statement Generation', () => {
     };
 
     const receiptText = new TextDecoder().decode(buildReceiptBytes(partialSeniorData, false));
+    expect(receiptText).toContain('LESS: SENIOR CITIZEN DISC.:');
     expect(receiptText).toContain('-85.71');
+    expect(receiptText).toContain('NET AFTER DISCOUNT:');
+    expect(receiptText).toContain('514.29');
     expect(receiptText).toContain('574.29');
 
     const billText = new TextDecoder().decode(buildBillStatementBytes(partialSeniorData));
     expect(billText).toContain('-85.71');
+    expect(billText).toContain('514.29');
     expect(billText).toContain('574.29');
   });
 });

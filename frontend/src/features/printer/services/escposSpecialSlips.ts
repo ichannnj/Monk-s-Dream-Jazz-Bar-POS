@@ -7,8 +7,9 @@ import {
   padLine,
   divider,
   formatDateTime,
-  formatItemLine,
+  formatItemBreakdownLine,
   formatModifierLine,
+  resolveDiscountReceiptLabel,
   sanitizeForEscPos,
 } from './escposFormatters';
 import { aggregateReceiptItems } from './receiptItemAggregator';
@@ -266,9 +267,6 @@ export function buildReadingSlipBytes(
   if (discounts > 0) {
     builder.text(padLine('LESS: DISCOUNTS:', `-${formatPhp(discounts)}`, cols));
   }
-  if (sc > 0) {
-    builder.text(padLine('SERVICE CHARGE:', formatPhp(sc), cols));
-  }
   builder.line(divider('-', cols));
   builder.bold(true);
   builder.text(padLine('NET SALES (TOTAL):', `PHP ${formatPhp(netSales)}`, cols));
@@ -282,6 +280,9 @@ export function buildReadingSlipBytes(
   }
 
   builder.line(divider('-', cols));
+  builder.text(padLine('SERVICE CHARGE:', formatPhp(sc), cols));
+
+  /* TODO(BIR): Uncomment Tax & Statutory Breakdown once BIR VAT-registered
   builder.line('TAX & STATUTORY BREAKDOWN:');
   builder.text(
     padLine('  VATable Sales (12%):', formatPhp(toPesos(reading.vatable_sales || 0)), cols)
@@ -290,6 +291,7 @@ export function buildReadingSlipBytes(
   builder.text(
     padLine('  VAT-Exempt Sales:', formatPhp(toPesos(reading.vat_exempt_sales || 0)), cols)
   );
+  */
 
   builder.line(divider('-', cols));
   builder.line('PAYMENT TENDER BREAKDOWN:');
@@ -452,16 +454,18 @@ export function buildBillStatementBytes(
     );
     const modTotal = Array.isArray(item.modifiers)
       ? item.modifiers.reduce((sum: number, mod: unknown) => {
-          const match = String(mod).match(/\(\+(?:₱|P)?([\d,]+(?:\.\d+)?)\)\s*$/i);
+          const match = String(mod).match(/\(\+?(?:₱|P|PHP\s*)?([\d,]+(?:\.\d+)?)\)\s*$/i);
           return sum + (match ? (parseFloat(match[1].replace(/,/g, '')) || 0) * qty : 0);
         }, 0)
       : 0;
     const baseItemTotal = modTotal > 0 && itemTotal >= modTotal ? itemTotal - modTotal : itemTotal;
-    builder.text(formatItemLine(qtyStr, desc, formatPhp(baseItemTotal), cols));
+    const baseUnitPrice = qty > 0 ? baseItemTotal / qty : baseItemTotal;
+    builder.line(`${qtyStr} ${sanitizeForEscPos(desc)}`);
+    builder.text(formatItemBreakdownLine(qty, baseUnitPrice, baseItemTotal, cols));
 
     if (Array.isArray(item.modifiers) && item.modifiers.length > 0) {
       for (const mod of item.modifiers) {
-        builder.text(formatModifierLine(mod, cols));
+        builder.text(formatModifierLine(mod, cols, qty));
       }
     }
 
@@ -479,21 +483,19 @@ export function buildBillStatementBytes(
 
   // 7. Financial Summary & Totals
   const subtotal = toPesos(data.subtotal ?? data.amount ?? 0);
-  const subtotalLabel = is57mm ? 'SUBTOTAL (Gross):' : 'SUBTOTAL (Gross Sales):';
+  const subtotalLabel = is57mm ? 'ITEMS SUBTOTAL:' : 'ITEMS SUBTOTAL (Gross):';
   builder.text(padLine(subtotalLabel, formatPhp(subtotal), cols));
 
   const corkage = toPesos(data.corkageFee ?? data.corkageAmount ?? data.corkage_amount ?? 0);
-  if (corkage > 0) {
-    builder.text(padLine('CORKAGE FEE:', formatPhp(corkage), cols));
-  }
-
-  // Combine discounts (e.g. Senior/PWD + custom discount) without advertising 12% VAT exemption on provisional bills
   const serviceCharge = toPesos(data.serviceCharge ?? data.service_charge ?? 0);
+  const scRate = toPesos(
+    data.serviceChargeRate ?? data.service_charge_rate ?? (serviceCharge > 0 ? 10 : 0)
+  );
   const rawVatExempt = toPesos(data.vatExemptSales ?? data.vat_exempt_sales ?? 0);
   const rawDiscount = toPesos(data.discountAmount ?? data.discount ?? data.discount_amount ?? 0);
   const explicitTotal = data.total ?? data.amount;
   const vatRelief =
-    rawVatExempt > 0 && explicitTotal !== undefined && toPesos(explicitTotal) > 0
+    rawVatExempt > 0 && explicitTotal !== undefined && toPesos(explicitTotal) >= 0
       ? Math.max(
           0,
           Math.min(
@@ -505,21 +507,31 @@ export function buildBillStatementBytes(
         ? Math.min(subtotal, toPesos(rawVatExempt * 0.12))
         : 0;
   const totalDiscount = toPesos(rawDiscount + vatRelief);
+  const netAfterDiscount = Math.max(0, toPesos(subtotal - totalDiscount));
 
   if (totalDiscount > 0) {
-    builder.text(padLine('LESS: DISCOUNT:', `-${formatPhp(totalDiscount)}`, cols));
+    const discLabel = resolveDiscountReceiptLabel(
+      data.discountType || data.discount_type,
+      data.discountLabel || data.discount_label
+    );
+    builder.text(padLine(discLabel, `-${formatPhp(totalDiscount)}`, cols));
+    builder.text(padLine('NET AFTER DISCOUNT:', formatPhp(netAfterDiscount), cols));
   }
 
-  if (serviceCharge > 0) {
-    builder.text(padLine('SERVICE CHARGE:', formatPhp(serviceCharge), cols));
+  if (corkage > 0) {
+    builder.text(padLine('CORKAGE FEE:', formatPhp(corkage), cols));
   }
+
+  const scLabel =
+    serviceCharge > 0
+      ? `SERVICE CHARGE (${scRate > 0 ? `${scRate}%` : 'APPLIED'}):`
+      : 'SERVICE CHARGE (NONE):';
+  builder.text(padLine(scLabel, formatPhp(serviceCharge), cols));
 
   // Bold Total Amount Due
   builder.line(divider('=', cols));
   builder.bold(true).doubleHeight(true);
-  const total = toPesos(
-    explicitTotal ?? Math.max(0, subtotal + corkage - totalDiscount + serviceCharge)
-  );
+  const total = toPesos(explicitTotal ?? Math.max(0, netAfterDiscount + corkage + serviceCharge));
   const totalLabel = is57mm ? 'TOTAL DUE:' : 'TOTAL AMOUNT DUE:';
   builder.text(padLine(totalLabel, `PHP ${formatPhp(total)}`, cols));
   builder.doubleHeight(false).bold(false);

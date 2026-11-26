@@ -39,8 +39,7 @@ describe('Event Billing, ESC/POS Receipts & Cashless Reprint Regressions', () =>
         operatingMode: 'CAFE',
         orderType: 'DINE_IN',
         serviceChargeEnabled: true,
-        cafeFoodServiceChargeRate: 10,
-        eventServiceChargeRate: 10,
+        serviceChargeRate: 10,
         discountType: 'SENIOR_CITIZEN',
         corkageAmount: 110,
         seniorPwdId: 'OSCA-1234',
@@ -50,11 +49,12 @@ describe('Event Billing, ESC/POS Receipts & Cashless Reprint Regressions', () =>
 
     // Gross = 600 (Door Charge) + 550 (Food) = 1150
     expect(result.grossSubtotal).toBe(1150);
-    // Food SC only in CAFE mode (10% of 550 = 55; Door Charge = 0 SC)
+    // Food SC only (10% of 550 = 55; Door Charge = 0 SC)
     expect(result.serviceCharge).toBe(55);
-    // Senior VAT-exempt only on 550 food -> 491.07, 20% = 98.21, payable = 392.86
-    expect(result.vatExemptSales).toBe(491.07);
-    expect(result.seniorDiscountAmount).toBe(98.21);
+    // Senior deduction on 550 food -> payable = 392.86, full deduction = 157.14
+    expect(result.seniorTwentyPercentDiscount).toBe(98.21);
+    expect(result.seniorDiscountAmount).toBe(157.14);
+    expect(result.vatExemptSales).toBe(0);
     expect(result.corkageAmount).toBe(110);
     // Total = 600 (door) + 392.86 (senior food) + 55 (SC) + 110 (corkage) = 1157.86
     expect(result.totalAmountDue).toBe(1157.86);

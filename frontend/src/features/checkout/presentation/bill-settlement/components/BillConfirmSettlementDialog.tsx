@@ -16,6 +16,7 @@ interface BillConfirmSettlementDialogProps {
   onClose: () => void;
   handleOpenConfirm: () => void;
   isPaymentValid: boolean;
+  isServiceChargeChosen?: boolean;
   grandTotal: number;
   isConfirmModalOpen: boolean;
   setIsConfirmModalOpen: (open: boolean) => void;
@@ -44,6 +45,7 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
   onClose,
   handleOpenConfirm,
   isPaymentValid,
+  isServiceChargeChosen = true,
   grandTotal,
   isConfirmModalOpen,
   setIsConfirmModalOpen,
@@ -109,19 +111,24 @@ export const BillConfirmSettlementDialog: React.FC<BillConfirmSettlementDialogPr
 
         <Pressable
           onPress={handleOpenConfirm}
-          disabled={!isPaymentValid}
+          disabled={!isPaymentValid && isServiceChargeChosen}
           style={[
             styles.confirmPayBtn,
-            !isPaymentValid && { opacity: 0.5, backgroundColor: '#9ca3af' },
+            (!isPaymentValid || !isServiceChargeChosen) && {
+              opacity: 0.55,
+              backgroundColor: '#9ca3af',
+            },
           ]}
           accessibilityRole="button"
           accessibilityLabel={`Confirm payment of ${formatCurrency(grandTotal)}`}
         >
           <CheckCircle2 size={18} color="#F7F5F2" strokeWidth={2.4} />
           <Text style={styles.confirmPayBtnText}>
-            {isTakeout && takeoutCollectAfterPay
-              ? `Confirm & Hand Off · ${formatCurrency(grandTotal)}`
-              : `Confirm & Settle · ${formatCurrency(grandTotal)}`}
+            {!isServiceChargeChosen
+              ? 'Select Service Charge First'
+              : isTakeout && takeoutCollectAfterPay
+                ? `Confirm & Hand Off · ${formatCurrency(grandTotal)}`
+                : `Confirm & Settle · ${formatCurrency(grandTotal)}`}
           </Text>
         </Pressable>
       </View>

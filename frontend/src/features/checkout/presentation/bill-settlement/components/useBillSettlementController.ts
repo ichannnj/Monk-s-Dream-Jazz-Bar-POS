@@ -10,6 +10,7 @@ import {
   type PricingLineItem,
   type DiscountType,
 } from '../../../utils/taxAndDiscountCalculator';
+import type { ServiceChargeChoice } from './billSettlement.types';
 import { qrPaymentChannelsApi, type QrPaymentChannel } from '../../../data/qrPaymentChannels.api';
 import { extractRawOrderItems, computePricingLineItems } from './settlementItemExtractors';
 import { printerApi, usePrinterStationStore } from '@/features/printer';
@@ -45,10 +46,10 @@ export function useBillSettlementController({
   onConfirmPayment,
 }: UseBillSettlementParams) {
   const { currentUser } = useAuthStore();
-  const { operatingMode, cafeFoodServiceChargeRate, eventServiceChargeRate, serviceChargeEnabled } =
-    useVenueStore();
+  const { operatingMode, serviceChargeRate } = useVenueStore();
   const [settlementMode, setSettlementMode] = useState<'single_tab' | 'entire_table'>('single_tab');
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(activeTab?.tabIndex || 1);
+  const [serviceChargeChoice, setServiceChargeChoice] = useState<ServiceChargeChoice>(null);
   const [tenderTabMode, setTenderTabMode] = useState<'single' | 'split'>('single');
   const [selectedMethod, setSelectedMethod] = useState<'cash' | 'card' | 'digital_wallet' | 'comp'>(
     'cash'
@@ -94,6 +95,7 @@ export function useBillSettlementController({
     setReferenceNumber('');
     setSettlementMode('single_tab');
     setSelectedTabIndex(activeTab?.tabIndex || table?.tabs?.[0]?.tabIndex || 1);
+    setServiceChargeChoice(null);
     setTenderTabMode('single');
     setSelectedMethod('cash');
     setSplitTenders([]);
@@ -136,6 +138,9 @@ export function useBillSettlementController({
     }
     setSeniorItemSelectionMode('all');
     setSelectedSeniorItemIds(new Set());
+    setServiceChargeChoice(null);
+    setTenderedCash('');
+    setSplitTenders([]);
   };
 
   const effectiveOperatingMode = isTakeout
@@ -161,8 +166,10 @@ export function useBillSettlementController({
     );
   }, [rawItems, isSeniorOrPwd, seniorItemSelectionMode, selectedSeniorItemIds]);
 
-  const parsedCustomDiscount = parseFloat(customDiscountValue) || 0;
+  const parsedCustomDiscount = Math.max(0, parseFloat(customDiscountValue) || 0);
   const isComp = tenderTabMode !== 'split' && selectedMethod === 'comp';
+  const effectiveServiceChargeRate = serviceChargeRate ?? 10;
+
   const tableGroupCorkage = useMemo(() => {
     if (settlementMode === 'entire_table' && table?.tabs) {
       return roundPhp(
@@ -179,13 +186,22 @@ export function useBillSettlementController({
     resolvedActiveTab?.corkageAmount,
   ]);
 
+  const previewServiceChargeAmount = useMemo(() => {
+    const preview = calculateTabBilling(pricingItems, {
+      operatingMode: effectiveOperatingMode,
+      orderType: isTakeout ? 'TAKEOUT' : 'DINE_IN',
+      serviceChargeEnabled: true,
+      serviceChargeRate: effectiveServiceChargeRate,
+    });
+    return preview.serviceCharge;
+  }, [pricingItems, effectiveOperatingMode, isTakeout, effectiveServiceChargeRate]);
+
   const billing = useMemo(() => {
     const calculated = calculateTabBilling(pricingItems, {
       operatingMode: effectiveOperatingMode,
       orderType: isTakeout ? 'TAKEOUT' : 'DINE_IN',
-      serviceChargeEnabled: isComp ? false : serviceChargeEnabled,
-      cafeFoodServiceChargeRate,
-      eventServiceChargeRate,
+      serviceChargeEnabled: !isComp && serviceChargeChoice === 'with',
+      serviceChargeRate: effectiveServiceChargeRate,
       discountType: isComp ? 'NONE' : discountType,
       customDiscountAmount: isComp ? 0 : customDiscountMode === 'fixed' ? parsedCustomDiscount : 0,
       customDiscountPercent: isComp
@@ -205,10 +221,12 @@ export function useBillSettlementController({
         totalDiscountAmount: calculated.grossSubtotal,
         customDiscountAmount: calculated.grossSubtotal,
         seniorDiscountAmount: 0,
+        netAfterDiscount: 0,
         vatableSales: 0,
         vatAmount: 0,
         vatExemptSales: 0,
         serviceCharge: 0,
+        serviceChargeRate: 0,
       };
     }
     return calculated;
@@ -217,9 +235,8 @@ export function useBillSettlementController({
     effectiveOperatingMode,
     isTakeout,
     isComp,
-    serviceChargeEnabled,
-    cafeFoodServiceChargeRate,
-    eventServiceChargeRate,
+    serviceChargeChoice,
+    effectiveServiceChargeRate,
     discountType,
     customDiscountMode,
     parsedCustomDiscount,
@@ -227,6 +244,20 @@ export function useBillSettlementController({
     seniorPwdId,
     seniorPwdName,
   ]);
+
+  const discountLabel = useMemo(() => {
+    if (isComp) return 'House Comp (100%)';
+    if (discountType === 'SENIOR_CITIZEN') return 'Senior Citizen (20%)';
+    if (discountType === 'PWD') return 'PWD (20%)';
+    if (discountType === 'PROMO' || discountType === 'CUSTOM') {
+      if (customDiscountMode === 'percent' && parsedCustomDiscount > 0) {
+        const clamped = Math.min(100, parsedCustomDiscount);
+        return `Promo Discount (${clamped}%)`;
+      }
+      return 'Custom Discount';
+    }
+    return undefined;
+  }, [isComp, discountType, customDiscountMode, parsedCustomDiscount]);
 
   const grandTotal = billing.totalAmountDue;
   const subtotal = billing.grossSubtotal;
@@ -243,7 +274,22 @@ export function useBillSettlementController({
     return validateSplitTenders(splitTenders, grandTotal);
   }, [splitTenders, grandTotal]);
 
-  const numericTendered = parseFloat(tenderedCash) || 0;
+  // Keep single-row split tender automatically synced if Grand Total changes before adding extra tenders
+  useEffect(() => {
+    if (tenderTabMode === 'split' && splitTenders.length === 1) {
+      const only = splitTenders[0];
+      if (Math.abs((only.amount || 0) - grandTotal) > 0.005) {
+        setSplitTenders([
+          only.method === 'cash'
+            ? { ...only, amount: grandTotal, tendered: Math.max(only.tendered || 0, grandTotal) }
+            : { ...only, amount: grandTotal },
+        ]);
+      }
+    }
+  }, [grandTotal, tenderTabMode]);
+
+  const numericTendered = Math.max(0, parseFloat(tenderedCash) || 0);
+  const isServiceChargeChosen = isComp || serviceChargeChoice !== null;
   const changeDue =
     tenderTabMode === 'split'
       ? roundPhp(splitBalance.totalCashChange)
@@ -300,6 +346,14 @@ export function useBillSettlementController({
       toast.warning(
         'This tab has no active items to settle. Use "Close Empty Tab" on the table menu instead.',
         { title: 'Empty Tab' }
+      );
+      return;
+    }
+
+    if (!isServiceChargeChosen) {
+      toast.warning(
+        'Please choose With Service Charge or No Service Charge before confirming payment.',
+        { title: 'Service Charge Choice Required' }
       );
       return;
     }
@@ -384,6 +438,7 @@ export function useBillSettlementController({
         {
           ...billing,
           discountType: isComp ? 'COMP' : discountType,
+          discountLabel,
           seniorPwdId: seniorPwdId.trim(),
           seniorPwdName: seniorPwdName.trim(),
           shouldPrintReceipt,
@@ -412,6 +467,13 @@ export function useBillSettlementController({
 
   const handlePrintBillStatement = async () => {
     if (isPrintingBill) return;
+    if (!isServiceChargeChosen) {
+      toast.warning(
+        'Please choose With Service Charge or No Service Charge before printing the bill.',
+        { title: 'Service Charge Choice Required' }
+      );
+      return;
+    }
     try {
       setIsPrintingBill(true);
       const billData = {
@@ -444,12 +506,15 @@ export function useBillSettlementController({
         corkageAmount: isComp ? 0 : tableGroupCorkage,
         discountAmount: billing.totalDiscountAmount,
         discountType: isComp ? 'COMP' : discountType,
+        discountLabel,
+        netAfterDiscount: billing.netAfterDiscount,
         serviceCharge,
+        serviceChargeRate: billing.serviceChargeRate,
         total: grandTotal,
         amount: grandTotal,
-        vatableSales: billing.vatableSales,
-        vatAmount: billing.vatAmount,
-        vatExemptSales: billing.vatExemptSales,
+        vatableSales: 0,
+        vatAmount: 0,
+        vatExemptSales: 0,
         seniorPwdId: seniorPwdId.trim(),
         seniorPwdName: seniorPwdName.trim(),
       };
@@ -534,6 +599,13 @@ export function useBillSettlementController({
     changeDue,
     isRefNumberValid,
     isPaymentValid,
+    isServiceChargeChosen,
+    serviceChargeChoice,
+    setServiceChargeChoice,
+    effectiveServiceChargeRate,
+    previewServiceChargeAmount,
+    isComp,
+    discountLabel,
     isSubmitting,
     isPrintingBill,
     handleOpenConfirm,

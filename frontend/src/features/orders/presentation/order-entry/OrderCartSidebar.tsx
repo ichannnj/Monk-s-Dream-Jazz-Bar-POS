@@ -297,31 +297,23 @@ export const OrderCartSidebar: React.FC<OrderCartSidebarProps> = ({
           </View>
         ) : null}
 
-        {/* Station & Mode-Aware Service Charge */}
-        <View style={styles.summaryLine}>
-          <Text style={styles.summaryLabel}>{serviceChargeLabel || 'Service Charge:'}</Text>
-          <Text
-            style={[
-              styles.summaryValue,
-              serviceCharge > 0 ? { color: '#15803d', fontWeight: '700' } : null,
-            ]}
-          >
-            {serviceCharge > 0 ? `+${formatCurrency(serviceCharge)}` : formatCurrency(0)}
-          </Text>
-        </View>
-
-        {/* 12% VAT Breakdown (Inclusive Extraction) */}
+        {/* Service Charge & Discounts are chosen at Bill Settlement */}
+        {/* TODO(BIR): Uncomment 12% VAT Breakdown once BIR VAT-registered
         <View style={styles.summaryLine}>
           <Text style={[styles.summaryLabel, { color: '#64748b' }]}>VAT (12% Included):</Text>
           <Text style={[styles.summaryValue, { color: '#64748b' }]}>
             {formatCurrency(vatAmount)}
           </Text>
         </View>
+        */}
 
         <View style={[styles.summaryLine, styles.totalLine]}>
-          <Text style={styles.grandTotalLabel}>Total Amount:</Text>
+          <Text style={styles.grandTotalLabel}>Order Total:</Text>
           <Text style={styles.grandTotalValue}>{formatCurrency(grandTotal)}</Text>
         </View>
+        <Text style={{ fontSize: 12, color: '#78716c', marginTop: 4 }}>
+          Discounts &amp; optional Service Charge are selected at bill settlement.
+        </Text>
       </View>
 
       {/* Send Order Action */}

@@ -27,7 +27,7 @@ export const salesAndTablesApi = {
     const mode = filterOptions.filterMode || 'ALL';
 
     let query = (supabase.from as any)('payments').select(
-      'id, amount, payment_method, operating_mode, created_at, drawer_target, tab_id, tabs(order_channel, operating_mode)'
+      'id, amount, service_charge, payment_method, operating_mode, created_at, drawer_target, tab_id, tabs(order_channel, operating_mode)'
     );
 
     if (filterOptions.startDate) {
@@ -88,7 +88,7 @@ export const salesAndTablesApi = {
     });
 
     for (const p of filtered) {
-      const amt = Number(p.amount) || 0;
+      const amt = (Number(p.amount) || 0) - (Number(p.service_charge) || 0);
       const channel = p.tabs?.order_channel || 'CAFE_AREA';
       if (!channelBreakdown[channel]) {
         channelBreakdown[channel] = { sales: 0, count: 0 };
@@ -135,8 +135,7 @@ export const salesAndTablesApi = {
         Number(
           (
             summary.netSales -
-            summary.vatAmount -
-            summary.serviceCharge -
+            /* TODO(BIR): summary.vatAmount - */
             cogsSummary.actualCogs -
             totalLaborExpense
           ).toFixed(2)

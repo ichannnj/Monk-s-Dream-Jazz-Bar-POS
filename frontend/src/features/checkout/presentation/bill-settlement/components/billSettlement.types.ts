@@ -24,3 +24,4 @@ export interface BillSettlementModalProps {
 export type PaymentMethodType =
   'cash' | 'card' | 'digital_wallet' | 'platform_prepaid' | 'comp' | 'split';
 export type SettlementModeType = 'single_tab' | 'entire_table' | 'takeout';
+export type ServiceChargeChoice = 'with' | 'without' | null;
