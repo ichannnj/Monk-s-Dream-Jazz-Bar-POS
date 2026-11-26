@@ -188,6 +188,8 @@ export const checksApi = {
               (pay) =>
                 Number(pay.discount_amount || 0) > 0 ||
                 Number(pay.service_charge || 0) > 0 ||
+                Number(pay.corkage_amount || 0) > 0 ||
+                pay.discount_type !== null ||
                 Number(pay.vatable_sales || 0) > 0 ||
                 Number(pay.vat_exempt_sales || 0) > 0
             ) || tabPayments[tabPayments.length - 1];

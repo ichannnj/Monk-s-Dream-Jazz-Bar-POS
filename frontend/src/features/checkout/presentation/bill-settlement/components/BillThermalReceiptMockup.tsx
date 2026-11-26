@@ -7,6 +7,7 @@ import { QrPaymentChannel } from '../../../data/qrPaymentChannels.api';
 import { aggregateReceiptItems, usePrinterStationStore } from '@/features/printer';
 import { styles } from '../BillSettlementModal.styles';
 import type { PaymentTender } from '../../../domain/splitTender.types';
+import type { ServiceChargeChoice } from './billSettlement.types';
 
 const MONKS_DREAM_LOGO = require('../../../../../../assets/monks-dream-logo-lockup.png');
 
@@ -22,7 +23,9 @@ interface BillThermalReceiptMockupProps {
   subtotal: number;
   billing: any;
   discountType: DiscountType;
+  discountLabel?: string;
   serviceCharge: number;
+  serviceChargeChoice?: ServiceChargeChoice;
   grandTotal: number;
   tenderTabMode?: 'single' | 'split';
   splitTenders?: PaymentTender[];
@@ -51,7 +54,9 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
   subtotal,
   billing,
   discountType,
+  discountLabel,
   serviceCharge,
+  serviceChargeChoice,
   grandTotal,
   tenderTabMode = 'single',
   splitTenders = [],
@@ -237,27 +242,32 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           const parsedMods: Array<{ label: string; unitDelta: number }> = (
             item.modifiers ?? []
           ).map((mod: string) => {
-            const match = mod.match(/^(.*?)\s*\(\+(?:₱|P)?([\d,]+(?:\.\d+)?)\)\s*$/i);
+            const match = mod.match(/^(.*?)\s*\(\+?(?:₱|P|PHP\s*)?([\d,]+(?:\.\d+)?)\)\s*$/i);
             if (!match) return { label: mod, unitDelta: 0 };
             return {
               label: match[1].trim(),
               unitDelta: parseFloat(match[2].replace(/,/g, '')) || 0,
             };
           });
-          const lineTotal = item.unitPrice * item.quantity;
+          const qty = Number(item.quantity || 1);
+          const lineTotal = Number(item.unitPrice || 0) * qty;
           const modTotal = parsedMods.reduce(
-            (sum: number, m: { label: string; unitDelta: number }) =>
-              sum + m.unitDelta * item.quantity,
+            (sum: number, m: { label: string; unitDelta: number }) => sum + m.unitDelta * qty,
             0
           );
           const baseLineTotal =
             modTotal > 0 && lineTotal >= modTotal ? lineTotal - modTotal : lineTotal;
+          const baseUnitPrice = qty > 0 ? baseLineTotal / qty : baseLineTotal;
 
           return (
-            <View key={idx} style={{ marginBottom: 4 }}>
+            <View key={idx} style={{ marginBottom: 5 }}>
+              <Text style={[styles.receiptItemName, { maxWidth: '100%' }]}>
+                {qty}x {item.productName}
+              </Text>
               <View style={styles.receiptRow}>
-                <Text style={[styles.receiptItemName, is57mm && { maxWidth: 180 }]}>
-                  {item.quantity}x {item.productName}
+                <Text style={styles.receiptTaxSub}>
+                  {'   '}
+                  {qty} x @{formatCurrency(baseUnitPrice)}
                 </Text>
                 <Text style={styles.receiptItemPrice}>{formatCurrency(baseLineTotal)}</Text>
               </View>
@@ -265,10 +275,11 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
                 <View key={mIdx} style={styles.receiptRow}>
                   <Text style={[styles.receiptItemNote, { color: '#810021', fontWeight: '600' }]}>
                     {'   '}+ {mod.label}
+                    {mod.unitDelta > 0 ? ` (@${formatCurrency(mod.unitDelta)})` : ''}
                   </Text>
                   {mod.unitDelta > 0 ? (
                     <Text style={[styles.receiptItemNote, { color: '#810021', fontWeight: '600' }]}>
-                      +{formatCurrency(mod.unitDelta * item.quantity)}
+                      +{formatCurrency(mod.unitDelta * qty)}
                     </Text>
                   ) : null}
                 </View>
@@ -287,36 +298,30 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
         {/* Financial Summary */}
         <View style={styles.receiptRow}>
           <Text style={styles.receiptMeta}>
-            {is57mm ? 'SUBTOTAL (Gross):' : 'SUBTOTAL (Gross Sales):'}
+            {is57mm ? 'ITEMS SUBTOTAL:' : 'ITEMS SUBTOTAL (Gross):'}
           </Text>
           <Text style={styles.receiptMeta}>{formatCurrency(subtotal)}</Text>
         </View>
 
-        {billing.seniorDiscountAmount > 0 ||
-        billing.customDiscountAmount > 0 ||
-        billing.vatExemptSales > 0 ? (
-          <View style={styles.receiptRow}>
-            <Text style={styles.receiptMeta}>LESS: DISCOUNT:</Text>
-            <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
-              -
-              {formatCurrency(
-                billing.seniorDiscountAmount +
-                  billing.customDiscountAmount +
-                  (billing.vatExemptSales > 0
-                    ? Math.max(0, billing.seniorItemsGross - billing.vatExemptSales)
-                    : 0)
-              )}
-            </Text>
-          </View>
-        ) : null}
-
-        {serviceCharge > 0 ? (
-          <View style={styles.receiptRow}>
-            <Text style={styles.receiptMeta}>
-              SERVICE CHARGE ({operatingMode === 'EVENT' ? '10%' : 'FOOD 10%'}):
-            </Text>
-            <Text style={styles.receiptMeta}>{formatCurrency(serviceCharge)}</Text>
-          </View>
+        {billing.totalDiscountAmount > 0 ? (
+          <>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptMeta}>
+                LESS: {(discountLabel || 'DISCOUNT').toUpperCase()}:
+              </Text>
+              <Text style={[styles.receiptMeta, { color: '#b91c1c' }]}>
+                -{formatCurrency(billing.totalDiscountAmount)}
+              </Text>
+            </View>
+            <View style={styles.receiptRow}>
+              <Text style={styles.receiptMeta}>NET AFTER DISCOUNT:</Text>
+              <Text style={styles.receiptMeta}>
+                {formatCurrency(
+                  billing.netAfterDiscount ?? Math.max(0, subtotal - billing.totalDiscountAmount)
+                )}
+              </Text>
+            </View>
+          </>
         ) : null}
 
         {billing.corkageAmount > 0 ? (
@@ -325,6 +330,19 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
             <Text style={styles.receiptMeta}>{formatCurrency(billing.corkageAmount)}</Text>
           </View>
         ) : null}
+
+        <View style={styles.receiptRow}>
+          <Text style={styles.receiptMeta}>
+            {serviceCharge > 0
+              ? `SERVICE CHARGE (${billing.serviceChargeRate || 10}%):`
+              : serviceChargeChoice === null
+                ? 'SERVICE CHARGE (SELECT):'
+                : 'SERVICE CHARGE (NONE):'}
+          </Text>
+          <Text style={styles.receiptMeta}>{formatCurrency(serviceCharge)}</Text>
+        </View>
+
+        {/* TODO(BIR): Uncomment Statutory VAT Breakdown once BIR VAT-registered */}
 
         {/* Bold Grand Total */}
         <Text style={styles.receiptDivider} numberOfLines={1}>
@@ -421,7 +439,7 @@ export const BillThermalReceiptMockup: React.FC<BillThermalReceiptMockupProps> =
           </>
         )}
 
-        {billing.vatExemptSales > 0 ? (
+        {discountType === 'SENIOR_CITIZEN' || discountType === 'PWD' ? (
           <>
             <Text style={styles.receiptDivider} numberOfLines={1}>
               {dividerDash}

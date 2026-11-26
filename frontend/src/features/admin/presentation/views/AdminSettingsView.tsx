@@ -117,14 +117,15 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
   const handleSaveAll = async () => {
     setIsSaving(true);
     try {
+      const rate = parseFloat(serviceChargeRate) || 10;
       await adminApi.updateVenueSettings({
         venue_name: venueName.trim(),
         daily_overhead_cost: parseFloat(dailyOverhead) || 150,
         vat_rate: parseFloat(vatRate) || 12,
         vat_inclusive: vatInclusive,
-        service_charge_rate: parseFloat(serviceChargeRate) || 10,
-        cafe_food_service_charge_rate: parseFloat(cafeFoodServiceChargeRate) || 10,
-        event_service_charge_rate: parseFloat(eventServiceChargeRate) || 10,
+        service_charge_rate: rate,
+        cafe_food_service_charge_rate: rate,
+        event_service_charge_rate: rate,
         service_charge_enabled: serviceChargeEnabled,
         discounts_config: {
           senior_pwd_percent: parseFloat(seniorPwdPercent) || 20,
@@ -208,13 +209,14 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
           </View>
         </View>
 
-        {/* SECTION 1: TAXES & SERVICE CHARGE */}
+        {/* SECTION 1: SERVICE CHARGE POLICY (VAT COMMENTED OUT PRE-BIR) */}
         <View className="rounded-2xl border border-stone-200/80 bg-white p-4 sm:p-5 shadow-xs space-y-3">
           <View className="flex-row items-center gap-2 border-b border-stone-100 pb-2.5">
             <Percent size={18} color="#810021" />
-            <Text className="text-base font-bold text-stone-900">Taxes &amp; Service Charge</Text>
+            <Text className="text-base font-bold text-stone-900">Service Charge</Text>
           </View>
 
+          {/* TODO(BIR): Uncomment VAT Rate & Tax-Inclusive controls once BIR-registered
           <View className="flex-col md:flex-row items-start gap-4">
             <View className="flex-1 w-full">
               <AdminNumberInput
@@ -227,84 +229,24 @@ export const AdminSettingsView: React.FC<AdminSettingsViewProps> = ({ onRefresh 
                 helperText="Standard Philippine BIR VAT"
               />
             </View>
-
             <View className="flex-1 w-full md:pt-6">
-              <Pressable
-                onPress={() => setVatInclusive(!vatInclusive)}
-                className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
-                  vatInclusive ? 'bg-[#810021]/10 border-[#810021]' : 'bg-stone-50 border-stone-200'
-                }`}
-              >
-                <View>
-                  <Text className="text-base font-bold text-stone-900">
-                    Prices are Tax-Inclusive
-                  </Text>
-                  <Text className="text-base text-stone-500">Menu prices include 12% VAT</Text>
-                </View>
-                <View
-                  className={`h-6 w-6 rounded-md items-center justify-center border ${
-                    vatInclusive ? 'bg-[#810021] border-[#810021]' : 'bg-white border-stone-400'
-                  }`}
-                >
-                  {vatInclusive && <Check size={16} color="#F7F5F2" />}
-                </View>
-              </Pressable>
+              <Pressable onPress={() => setVatInclusive(!vatInclusive)}>...</Pressable>
             </View>
           </View>
+          */}
 
-          <View className="flex-col md:flex-row items-start gap-4 pt-2">
+          <View className="flex-col md:flex-row items-start gap-4">
             <View className="flex-1 w-full">
               <AdminNumberInput
-                label="Cafe Mode Food SC Rate"
+                label="Standard Service Charge Rate"
                 mode="decimal"
-                value={cafeFoodServiceChargeRate}
-                onChangeText={setCafeFoodServiceChargeRate}
+                value={serviceChargeRate}
+                onChangeText={setServiceChargeRate}
                 placeholder="10.00"
                 suffix="%"
-                helperText="Applied only to Kitchen food during Cafe Mode (Coffee = 0%)"
+                helperText="Applied to all Food & Beverage items when staff selects With Service Charge at Bill Settlement (Cafe/Event Mode is monitoring-only)."
               />
             </View>
-
-            <View className="flex-1 w-full">
-              <AdminNumberInput
-                label="Event Mode All-Items SC Rate"
-                mode="decimal"
-                value={eventServiceChargeRate}
-                onChangeText={setEventServiceChargeRate}
-                placeholder="10.00"
-                suffix="%"
-                helperText="Applied to all items (Bar + Kitchen) during Event Night"
-              />
-            </View>
-          </View>
-
-          <View className="pt-2">
-            <Pressable
-              onPress={() => setServiceChargeEnabled(!serviceChargeEnabled)}
-              className={`min-h-[48px] flex-row items-center justify-between rounded-xl p-4 border transition-all ${
-                serviceChargeEnabled
-                  ? 'bg-[#810021]/10 border-[#810021]'
-                  : 'bg-stone-50 border-stone-200'
-              }`}
-            >
-              <View>
-                <Text className="text-base font-bold text-stone-900">
-                  Enable Dine-In Service Charge
-                </Text>
-                <Text className="text-sm text-stone-500">
-                  Master toggle: when disabled, 0% service charge is collected across all modes
-                </Text>
-              </View>
-              <View
-                className={`h-6 w-6 rounded-md items-center justify-center border ${
-                  serviceChargeEnabled
-                    ? 'bg-[#810021] border-[#810021]'
-                    : 'bg-white border-stone-400'
-                }`}
-              >
-                {serviceChargeEnabled && <Check size={16} color="#F7F5F2" />}
-              </View>
-            </Pressable>
           </View>
         </View>
 

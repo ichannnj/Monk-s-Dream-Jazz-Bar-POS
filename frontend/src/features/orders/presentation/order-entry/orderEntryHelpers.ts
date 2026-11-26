@@ -166,28 +166,12 @@ export function findMatchingVariant(
 }
 
 export function computeServiceChargeLabel(
-  isDineIn: boolean,
-  serviceChargeEnabled: boolean,
-  operatingMode: string,
-  cartItems: OrderLineItem[],
-  cafeFoodServiceChargeRate: number,
-  eventServiceChargeRate: number
+  _isDineIn: boolean,
+  _serviceChargeEnabled: boolean,
+  _operatingMode: string,
+  _cartItems: OrderLineItem[],
+  _cafeFoodServiceChargeRate: number,
+  _eventServiceChargeRate: number
 ): string {
-  if (!isDineIn) return 'Service Charge (Takeout 0%):';
-  if (!serviceChargeEnabled) return 'Service Charge (Disabled):';
-  const billableItems = cartItems.filter(
-    (ci) =>
-      ci.categorySlug !== 'door_charge' &&
-      ci.productId !== 'd1000001-0000-0000-0000-000000000001' &&
-      !ci.productName.toLowerCase().includes('door charge')
-  );
-  if (operatingMode === 'CAFE') {
-    const hasFood = billableItems.some((ci) => ci.stationTarget === 'kitchen');
-    const hasBar = billableItems.some((ci) => ci.stationTarget === 'bar');
-    if (hasFood && !hasBar) return `Service Charge (${cafeFoodServiceChargeRate}% Food):`;
-    if (!hasFood && hasBar) return 'Service Charge (Cafe Drinks 0%):';
-    if (!hasFood && !hasBar) return 'Service Charge (Door Charge 0%):';
-    return `Service Charge (${cafeFoodServiceChargeRate}% Food / 0% Drinks):`;
-  }
-  return `Service Charge (${eventServiceChargeRate}% Event):`;
+  return 'Service Charge (Chosen at Settlement):';
 }

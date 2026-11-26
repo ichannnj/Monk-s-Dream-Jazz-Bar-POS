@@ -6,6 +6,7 @@ import { BillSettlementModalProps } from './components/billSettlement.types';
 import { useBillSettlementController } from './components/useBillSettlementController';
 import { BillModalHeaderAndScope } from './components/BillModalHeaderAndScope';
 import { BillSeniorPwdDiscountSection } from './components/BillSeniorPwdDiscountSection';
+import { BillServiceChargeSection } from './components/BillServiceChargeSection';
 import { BillPaymentMethodPane } from './components/BillPaymentMethodPane';
 import { BillThermalReceiptMockup } from './components/BillThermalReceiptMockup';
 import { BillConfirmSettlementDialog } from './components/BillConfirmSettlementDialog';
@@ -133,6 +134,14 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                   rawItems={ctrl.rawItems}
                 />
 
+                <BillServiceChargeSection
+                  serviceChargeChoice={ctrl.serviceChargeChoice}
+                  onSelectChoice={ctrl.setServiceChargeChoice}
+                  serviceChargeRate={ctrl.effectiveServiceChargeRate}
+                  previewServiceChargeAmount={ctrl.previewServiceChargeAmount}
+                  isComp={ctrl.isComp}
+                />
+
                 <BillPaymentMethodPane
                   tenderTabMode={ctrl.tenderTabMode}
                   setTenderTabMode={ctrl.setTenderTabMode}
@@ -180,7 +189,9 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
                   subtotal={ctrl.subtotal}
                   billing={ctrl.billing}
                   discountType={ctrl.discountType}
+                  discountLabel={ctrl.discountLabel}
                   serviceCharge={ctrl.serviceCharge}
+                  serviceChargeChoice={ctrl.serviceChargeChoice}
                   grandTotal={ctrl.grandTotal}
                   tenderTabMode={ctrl.tenderTabMode}
                   splitTenders={ctrl.splitTenders}
@@ -209,6 +220,7 @@ export const BillSettlementModal: React.FC<BillSettlementModalProps> = ({
             onClose={onClose}
             handleOpenConfirm={ctrl.handleOpenConfirm}
             isPaymentValid={ctrl.isPaymentValid}
+            isServiceChargeChosen={ctrl.isServiceChargeChosen}
             grandTotal={ctrl.grandTotal}
             isConfirmModalOpen={ctrl.isConfirmModalOpen}
             setIsConfirmModalOpen={ctrl.setIsConfirmModalOpen}

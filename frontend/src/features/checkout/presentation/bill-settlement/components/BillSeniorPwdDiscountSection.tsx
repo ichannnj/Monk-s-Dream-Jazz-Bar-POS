@@ -338,7 +338,7 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
             </Text>
             <TextInput
               value={customDiscountValue}
-              onChangeText={setCustomDiscountValue}
+              onChangeText={(txt) => setCustomDiscountValue(txt.replace(/[^0-9.]/g, ''))}
               placeholder={
                 customDiscountMode === 'percent'
                   ? 'Enter discount % (e.g. 10)'
@@ -349,6 +349,15 @@ export const BillSeniorPwdDiscountSection: React.FC<BillSeniorPwdDiscountSection
               className="flex-1 text-base font-bold text-gray-900 py-1.5"
             />
           </View>
+          {rawItems.some(
+            (it) =>
+              it.categorySlug === 'door_charge' ||
+              (it.productName || '').toLowerCase().includes('door charge')
+          ) && (
+            <Text className="text-[11px] font-medium text-stone-500">
+              Applies to Food &amp; Beverage items only (Door Charge is excluded).
+            </Text>
+          )}
         </View>
       )}
     </View>

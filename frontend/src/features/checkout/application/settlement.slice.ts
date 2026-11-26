@@ -84,9 +84,12 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       const corkageFee =
         billingDetails?.corkageAmount ??
         (targetTab?.hasCorkageFee ? targetTab.corkageAmount || 0 : 0);
+      /* TODO(BIR): Uncomment when BIR VAT-registered
       const vatableSales = billingDetails?.vatableSales ?? Number((netSubtotal / 1.12).toFixed(2));
       const vatAmount =
         billingDetails?.vatAmount ?? Number((netSubtotal - vatableSales).toFixed(2));
+      */
+      const vatAmount = 0;
       const grandTotal =
         billingDetails?.totalAmountDue !== undefined
           ? billingDetails.totalAmountDue
@@ -209,14 +212,12 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       const billing = calculateTabBilling(pricingItems, {
         operatingMode: venueState.operatingMode || 'CAFE',
         orderType: 'DINE_IN',
-        serviceChargeEnabled: venueState.serviceChargeEnabled,
-        cafeFoodServiceChargeRate: venueState.cafeFoodServiceChargeRate,
-        eventServiceChargeRate: venueState.eventServiceChargeRate,
+        serviceChargeEnabled: false,
         corkageAmount: totalCorkage,
       });
 
       const subtotal = billingDetails?.grossSubtotal ?? billing.grossSubtotal;
-      const tax = billingDetails?.vatAmount ?? billing.vatAmount;
+      const tax = 0; // TODO(BIR): billingDetails?.vatAmount ?? billing.vatAmount;
       const grandTotal = billingDetails?.totalAmountDue ?? billing.totalAmountDue;
       groupGrandTotal = grandTotal;
 
@@ -337,8 +338,11 @@ export const createSettlementSlice = (set: OrderStoreSet, get: OrderStoreGet) =>
       targetOrderRef = targetOrder;
       const subtotal = targetOrder.total || 0;
       const netSubtotal = Math.max(0, subtotal - discountAmount);
+      /* TODO(BIR): Uncomment when BIR VAT-registered
       const vatableSales = options?.vatableSales ?? Number((netSubtotal / 1.12).toFixed(2));
       const vatAmount = options?.vatAmount ?? Number((netSubtotal - vatableSales).toFixed(2));
+      */
+      const vatAmount = 0;
       const grandTotal =
         options?.totalAmountDue !== undefined ? options.totalAmountDue : netSubtotal;
       grandTotalPaid = grandTotal;

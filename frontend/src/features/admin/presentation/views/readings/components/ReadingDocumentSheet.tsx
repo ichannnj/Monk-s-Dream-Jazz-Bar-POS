@@ -124,12 +124,13 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
             )}
           </View>
 
-          {/* Section 2: Tax & Surcharges */}
+          {/* Section 2: Service Charge & Collections (VAT commented out pre-BIR) */}
           <View className="print-avoid-break bg-stone-50/60 p-3.5 rounded-xl border border-stone-200">
             <Text className="text-sm font-extrabold uppercase tracking-wider text-[#810021] mb-2">
-              2. Tax &amp; Service Charge (BIR)
+              2. Service Charge &amp; Collections
             </Text>
             <View className="divide-y divide-stone-200">
+              {/* TODO(BIR): Uncomment VATable Sales & 12% VAT once BIR-registered
               <View className="flex-row justify-between py-1.5">
                 <Text className="text-sm text-stone-600">VATable Sales</Text>
                 <Text className="text-sm font-bold text-stone-900">
@@ -142,10 +143,17 @@ export const ReadingDocumentSheet: React.FC<ReadingDocumentSheetProps> = ({
                   {formatCurrency(reading.vat_amount)}
                 </Text>
               </View>
+              */}
               <View className="flex-row justify-between py-1.5">
                 <Text className="text-sm text-stone-600">House Service Charge</Text>
                 <Text className="text-sm font-bold text-stone-900">
                   {formatCurrency(reading.service_charge)}
+                </Text>
+              </View>
+              <View className="flex-row justify-between py-1.5">
+                <Text className="text-sm text-stone-600">Total Collected (Net Sales + SC)</Text>
+                <Text className="text-sm font-bold text-stone-900">
+                  {formatCurrency(reading.total_tender)}
                 </Text>
               </View>
             </View>

@@ -40,6 +40,7 @@ export interface SettledCheckItem {
   timestamp: string;
   orderChannel: string;
   operatingMode: string;
+  groupTabIds?: string[];
   notes?: string;
   tenders?: Array<{
     id?: string;

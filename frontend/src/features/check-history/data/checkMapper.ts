@@ -41,31 +41,45 @@ export function mapRawPaymentToCheck(
     tab.opened_by?.name ||
     'Cashier';
   const total = Number(p.amount) || 0;
-  const discountAmount = Number(p.discount_amount || 0);
+  const rawDiscountAmount = Number(p.discount_amount || 0);
   const corkageFee = Number(p.corkage_amount || 0);
 
   const storedSc =
     p.service_charge !== null && p.service_charge !== undefined ? Number(p.service_charge) : null;
+  const vatExemptSales = Number(p.vat_exempt_sales || 0);
+
+  const netBase = Math.max(0, total - corkageFee);
+  // Service charge is explicitly chosen at settlement; never auto-assume 10% if null
+  const serviceCharge = storedSc !== null ? storedSc : 0;
+  /* TODO(BIR): Uncomment when BIR VAT-registered
   const storedVat =
     p.vat_amount !== null && p.vat_amount !== undefined ? Number(p.vat_amount) : null;
   const storedVatable =
     p.vatable_sales !== null && p.vatable_sales !== undefined ? Number(p.vatable_sales) : null;
-  const vatExemptSales = Number(p.vat_exempt_sales || 0);
-
-  const netBase = Math.max(0, total - corkageFee);
-  const fallbackSc =
-    orderType === 'dine_in' && total > 0 ? Number(((netBase * 0.1) / 1.1).toFixed(2)) : 0;
-  const serviceCharge = storedSc !== null ? storedSc : fallbackSc;
   const vatableSales =
     storedVatable !== null ? storedVatable : Number(((netBase - serviceCharge) / 1.12).toFixed(2));
   const vatAmount =
     storedVat !== null ? storedVat : Number((netBase - serviceCharge - vatableSales).toFixed(2));
+  */
+  const vatableSales = 0;
+  const vatAmount = 0;
+
   const items = itemsByTab.get(p.tab_id) || [];
   const computedItemsSubtotal =
     items.length > 0
       ? items.reduce((sum, it) => sum + it.subtotal, 0)
-      : Math.max(0, netBase - serviceCharge + discountAmount);
+      : Math.max(0, netBase - serviceCharge + rawDiscountAmount);
   const subtotal = computedItemsSubtotal;
+
+  // Reconcile historical Senior/PWD records where vat_exempt_sales held the 12% VAT relief portion
+  const impliedFullDiscount =
+    vatExemptSales > 0 && items.length > 0
+      ? Math.max(
+          rawDiscountAmount,
+          Number(Math.max(0, subtotal + corkageFee + serviceCharge - total).toFixed(2))
+        )
+      : rawDiscountAmount;
+  const discountAmount = impliedFullDiscount;
 
   const dateObj = new Date(p.created_at);
   const timestamp = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -102,6 +116,8 @@ export function mapRawPaymentToCheck(
     timestamp,
     orderChannel: tab.order_channel || 'CAFE_AREA',
     operatingMode: tab.operating_mode || p.operating_mode || 'CAFE',
+    groupTabIds:
+      Array.isArray(p.group_tab_ids) && p.group_tab_ids.length > 0 ? p.group_tab_ids : undefined,
     notes: p.notes || tab.notes || undefined,
     tenders: p.tenders || undefined,
   };

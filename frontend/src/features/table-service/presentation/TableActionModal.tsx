@@ -70,8 +70,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
 
   const { height } = useWindowDimensions();
   const isCompactHeight = height < 520;
-  const { operatingMode, cafeFoodServiceChargeRate, eventServiceChargeRate, serviceChargeEnabled } =
-    useVenueStore();
+  const { operatingMode, serviceChargeRate } = useVenueStore();
 
   const [selectedTabIndex, setSelectedTabIndex] = useState<number>(table?.activeTabs?.[0] || 1);
   const [itemToVoid, setItemToVoid] = useState<OrderLineItem | null>(null);
@@ -190,9 +189,8 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     return calculateTabBilling(pricingItems, {
       operatingMode: currentTab?.operatingMode || operatingMode || 'CAFE',
       orderType: 'DINE_IN',
-      serviceChargeEnabled,
-      cafeFoodServiceChargeRate,
-      eventServiceChargeRate,
+      serviceChargeEnabled: false,
+      serviceChargeRate,
       corkageAmount: currentTab?.hasCorkageFee ? currentTab.corkageAmount || 0 : 0,
     });
   }, [
@@ -201,9 +199,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     currentTab?.hasCorkageFee,
     currentTab?.corkageAmount,
     operatingMode,
-    serviceChargeEnabled,
-    cafeFoodServiceChargeRate,
-    eventServiceChargeRate,
+    serviceChargeRate,
   ]);
 
   if (!table) return null;
@@ -275,10 +271,17 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
     await upsertTabDoorCharge(table.id, selectedTabIndex, 0, 0, todayEvent?.id || undefined);
   };
 
-  const handlePrintCustomerBill = async () => {
+  const handlePrintCustomerBill = async (previewWithServiceCharge = false) => {
     if (isPrintingBill || !currentTab) return;
     try {
       setIsPrintingBill(true);
+      const previewBilling = calculateTabBilling(pricingItems, {
+        operatingMode: currentTab.operatingMode || operatingMode || 'CAFE',
+        orderType: 'DINE_IN',
+        serviceChargeEnabled: previewWithServiceCharge,
+        serviceChargeRate,
+        corkageAmount: currentTab.hasCorkageFee ? currentTab.corkageAmount || 0 : 0,
+      });
       const billData = {
         isBillStatement: true,
         receiptNumber: `BILL-${currentTab.id.slice(0, 8).toUpperCase()}`,
@@ -294,16 +297,18 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
         serverName: currentUser?.displayName || 'Floor Staff',
         waiterName: currentUser?.displayName || 'Floor Staff',
         items: activeTabItems,
-        subtotal: billing.grossSubtotal,
-        corkageFee: billing.corkageAmount,
-        corkageAmount: billing.corkageAmount,
-        discountAmount: billing.totalDiscountAmount,
-        serviceCharge: billing.serviceCharge,
-        total: billing.totalAmountDue,
-        amount: billing.totalAmountDue,
-        vatableSales: billing.vatableSales,
-        vatAmount: billing.vatAmount,
-        vatExemptSales: billing.vatExemptSales,
+        subtotal: previewBilling.grossSubtotal,
+        corkageFee: previewBilling.corkageAmount,
+        corkageAmount: previewBilling.corkageAmount,
+        discountAmount: previewBilling.totalDiscountAmount,
+        netAfterDiscount: previewBilling.netAfterDiscount,
+        serviceCharge: previewBilling.serviceCharge,
+        serviceChargeRate: previewBilling.serviceChargeRate,
+        total: previewBilling.totalAmountDue,
+        amount: previewBilling.totalAmountDue,
+        vatableSales: 0,
+        vatAmount: 0,
+        vatExemptSales: 0,
       };
       await printerApi.enqueueBillStatement(billData);
       usePrinterStationStore.getState().drainPendingJobsQueue();
@@ -489,6 +494,7 @@ export const TableActionModal: React.FC<TableActionModalProps> = ({
           vatExemptSales={billing.vatExemptSales}
           corkageAmount={billing.corkageAmount}
           serviceCharge={billing.serviceCharge}
+          serviceChargeRate={serviceChargeRate}
           discountAmount={billing.totalDiscountAmount}
           grandTotal={billing.totalAmountDue}
           onPrintBill={handlePrintCustomerBill}

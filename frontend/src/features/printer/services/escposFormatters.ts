@@ -61,7 +61,7 @@ export function sanitizeForEscPos(text: string): string {
     .replace(/[^\x20-\x7E\n]/g, ''); // strictly enforce printable ASCII (0x20-0x7E) plus newline
 }
 
-export function formatModifierLine(rawMod: any, cols: number = 48): string {
+export function formatModifierLine(rawMod: any, cols: number = 48, qty: number = 1): string {
   try {
     if (!rawMod) return '';
     let mod = '';
@@ -87,10 +87,18 @@ export function formatModifierLine(rawMod: any, cols: number = 48): string {
 
     if (priceMatch && priceMatch.index !== undefined) {
       const namePart = sanitizeForEscPos(mod.substring(0, priceMatch.index).trim());
-      const rawPrice = priceMatch[1].replace(/,/g, '');
-      const pricePart = `+${rawPrice}`;
+      const unitDelta = parseFloat(priceMatch[1].replace(/,/g, '')) || 0;
+      const safeQty = Math.max(1, Number(qty) || 1);
+      const totalModPrice = unitDelta * safeQty;
+      const unitHint = unitDelta > 0 ? ` (@${formatPhp(unitDelta)})` : '';
+      const labelWithUnit = `${namePart}${unitHint}`;
+      const pricePart = `+${formatPhp(totalModPrice)}`;
 
       // If it fits on 1 line with the price right-aligned (matching item prices)
+      if (prefix.length + labelWithUnit.length + pricePart.length + 1 <= cols) {
+        const spaces = Math.max(1, cols - prefix.length - labelWithUnit.length - pricePart.length);
+        return `${prefix}${labelWithUnit}${' '.repeat(spaces)}${pricePart}\n`;
+      }
       if (prefix.length + namePart.length + pricePart.length + 1 <= cols) {
         const spaces = Math.max(1, cols - prefix.length - namePart.length - pricePart.length);
         return `${prefix}${namePart}${' '.repeat(spaces)}${pricePart}\n`;
@@ -123,6 +131,30 @@ export function formatModifierLine(rawMod: any, cols: number = 48): string {
   } catch (err) {
     return `  + ${sanitizeForEscPos(String(rawMod || ''))}\n`;
   }
+}
+
+export function formatItemBreakdownLine(
+  qty: number,
+  unitPrice: number,
+  lineTotal: number,
+  cols: number = 48
+): string {
+  const safeQty = Math.max(1, Number(qty) || 1);
+  const left = `    ${safeQty} x @${formatPhp(unitPrice)}`;
+  const right = formatPhp(lineTotal);
+  return padLine(left, right, cols);
+}
+
+export function resolveDiscountReceiptLabel(discountType?: string, discountLabel?: string): string {
+  if (discountLabel && discountLabel.trim()) {
+    return `LESS: ${sanitizeForEscPos(discountLabel.trim().toUpperCase())}:`;
+  }
+  const dt = (discountType || '').toUpperCase();
+  if (dt === 'SENIOR_CITIZEN') return 'LESS: SENIOR CITIZEN DISC.:';
+  if (dt === 'PWD') return 'LESS: PWD DISCOUNT:';
+  if (dt === 'COMP') return 'LESS: HOUSE COMP (100%):';
+  if (dt === 'PROMO' || dt === 'CUSTOM') return 'LESS: PROMO/CUSTOM DISC.:';
+  return 'LESS: DISCOUNT:';
 }
 
 export function formatItemLine(

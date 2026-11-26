@@ -21,14 +21,17 @@ import { mapTendersToDbPayload } from '../domain/splitTenderCalculator';
 
 export interface SettlementBillingDetails {
   serviceCharge?: number;
+  serviceChargeRate?: number;
   vatableSales?: number;
   vatAmount?: number;
   vatExemptSales?: number;
   discountType?: string;
+  discountLabel?: string;
   seniorPwdId?: string;
   seniorPwdName?: string;
   grossSubtotal?: number;
   totalDiscountAmount?: number;
+  netAfterDiscount?: number;
   totalAmountDue?: number;
   corkageAmount?: number;
   tenderedAmount?: number;

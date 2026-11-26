@@ -32,8 +32,8 @@ export function exportReadingsArchiveToExcel(
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.net_sales}</Data></Cell>
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.cafe_sales ?? r.cafe_net_sales ?? 0}</Data></Cell>
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.event_sales ?? r.event_net_sales ?? 0}</Data></Cell>
-      <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.vatable_sales}</Data></Cell>
-      <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.vat_amount}</Data></Cell>
+      <!-- TODO(BIR): <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.vatable_sales}</Data></Cell> -->
+      <!-- TODO(BIR): <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.vat_amount}</Data></Cell> -->
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.service_charge}</Data></Cell>
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.tender_cash}</Data></Cell>
       <Cell ss:StyleID="DataCurrency"><Data ss:Type="Number">${r.tender_card}</Data></Cell>
@@ -67,8 +67,7 @@ export function exportReadingsArchiveToExcel(
       <Column ss:Width="100"/>
       <Column ss:Width="100"/>
       <Column ss:Width="100"/>
-      <Column ss:Width="100"/>
-      <Column ss:Width="90"/>
+      <!-- TODO(BIR): VATable & 12% VAT columns -->
       <Column ss:Width="90"/>
       <Column ss:Width="90"/>
       <Column ss:Width="90"/>
@@ -80,12 +79,12 @@ export function exportReadingsArchiveToExcel(
       <Column ss:Width="160"/>
 
       <Row ss:Height="30">
-        <Cell ss:MergeAcross="20" ss:StyleID="TitleBanner">
+        <Cell ss:MergeAcross="18" ss:StyleID="TitleBanner">
           <Data ss:Type="String">MONK'S DREAM JAZZ BAR &amp; BISTRO — ${title}</Data>
         </Cell>
       </Row>
       <Row ss:Height="22">
-        <Cell ss:MergeAcross="20" ss:StyleID="SubtitleBanner">
+        <Cell ss:MergeAcross="18" ss:StyleID="SubtitleBanner">
           <Data ss:Type="String">Exported on ${new Date().toLocaleString()} • Official POS Fiscal Audit Trail</Data>
         </Cell>
       </Row>
@@ -102,9 +101,8 @@ export function exportReadingsArchiveToExcel(
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Net Sales</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Cafe Sales</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Event Sales</Data></Cell>
-        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">VATable</Data></Cell>
-        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">12% VAT</Data></Cell>
-        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">10% SC</Data></Cell>
+        <!-- TODO(BIR): VATable & 12% VAT headers -->
+        <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Service Charge</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Cash</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Card</Data></Cell>
         <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Digital</Data></Cell>

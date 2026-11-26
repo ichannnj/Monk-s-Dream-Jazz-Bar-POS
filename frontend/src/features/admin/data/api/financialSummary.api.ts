@@ -157,14 +157,16 @@ async function fetchFallbackSummary(
     if (targetMode === 'CAFE' && operatingMode === 'EVENT') continue;
 
     const amount = num(row.amount);
+    const serviceCharge = num(row.service_charge);
+    const netAmount = amount - serviceCharge;
     const discount = num(row.discount_amount);
-    summary.grossSales += amount + discount;
+    summary.grossSales += netAmount + discount;
     summary.discountTotal += discount;
-    summary.netSales += amount;
+    summary.netSales += netAmount;
     summary.vatableSales += num(row.vatable_sales);
     summary.vatAmount += num(row.vat_amount);
     summary.vatExemptSales += num(row.vat_exempt_sales);
-    summary.serviceCharge += num(row.service_charge);
+    summary.serviceCharge += serviceCharge;
     summary.totalTender += amount;
     summary.transactionCount += 1;
 
@@ -190,10 +192,10 @@ async function fetchFallbackSummary(
     }
 
     if (operatingMode === 'EVENT') {
-      summary.eventNetSales += amount;
+      summary.eventNetSales += netAmount;
       if (row.tab_id) eventTabs.set(row.tab_id, true);
     } else {
-      summary.cafeNetSales += amount;
+      summary.cafeNetSales += netAmount;
       if (row.tab_id) cafeTabs.set(row.tab_id, true);
     }
     if (row.tab_id) tabs.set(row.tab_id, true);

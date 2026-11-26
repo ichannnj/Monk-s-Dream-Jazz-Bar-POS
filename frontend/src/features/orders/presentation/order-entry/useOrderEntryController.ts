@@ -203,20 +203,10 @@ export function useOrderEntryController({
     return calculateTabBilling(pricingItems, {
       operatingMode,
       orderType: isDineIn ? 'DINE_IN' : 'TAKEOUT',
-      serviceChargeEnabled,
-      cafeFoodServiceChargeRate,
-      eventServiceChargeRate,
+      serviceChargeEnabled: false,
       corkageAmount,
     });
-  }, [
-    cartItems,
-    operatingMode,
-    isDineIn,
-    serviceChargeEnabled,
-    cafeFoodServiceChargeRate,
-    eventServiceChargeRate,
-    corkageAmount,
-  ]);
+  }, [cartItems, operatingMode, isDineIn, corkageAmount]);
 
   const serviceCharge = billingResult.serviceCharge;
   const vatAmount = billingResult.vatAmount;

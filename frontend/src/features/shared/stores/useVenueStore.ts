@@ -8,6 +8,7 @@ interface VenueState {
   operatingMode: OperatingMode;
   venueName: string;
   modeSwitchedAt: string | null;
+  serviceChargeRate: number;
   cafeFoodServiceChargeRate: number;
   eventServiceChargeRate: number;
   serviceChargeEnabled: boolean;
@@ -21,6 +22,7 @@ export const useVenueStore = create<VenueState>((set, get) => ({
   operatingMode: 'CAFE',
   venueName: "Monk's Dream Jazz Bar",
   modeSwitchedAt: null,
+  serviceChargeRate: 10,
   cafeFoodServiceChargeRate: 10,
   eventServiceChargeRate: 10,
   serviceChargeEnabled: true,
@@ -47,6 +49,7 @@ export const useVenueStore = create<VenueState>((set, get) => ({
         operatingMode: settings.operating_mode || 'CAFE',
         venueName: settings.venue_name || "Monk's Dream Jazz Bar",
         modeSwitchedAt: settings.mode_switched_at || settings.updated_at || null,
+        serviceChargeRate: settings.service_charge_rate ?? 10,
         cafeFoodServiceChargeRate: settings.cafe_food_service_charge_rate ?? 10,
         eventServiceChargeRate: settings.event_service_charge_rate ?? 10,
         serviceChargeEnabled: settings.service_charge_enabled ?? true,
@@ -83,6 +86,9 @@ export const useVenueStore = create<VenueState>((set, get) => ({
               operatingMode: newRow.operating_mode,
               venueName: newRow.venue_name || "Monk's Dream Jazz Bar",
               modeSwitchedAt: newRow.mode_switched_at || newRow.updated_at || null,
+              ...(newRow.service_charge_rate !== undefined && {
+                serviceChargeRate: Number(newRow.service_charge_rate),
+              }),
               ...(newRow.cafe_food_service_charge_rate !== undefined && {
                 cafeFoodServiceChargeRate: Number(newRow.cafe_food_service_charge_rate),
               }),
